@@ -55,6 +55,7 @@ namespace Elemental.Authoring.Editor
         private const string GestureProfilePath = "Assets/Elemental/Content/Profiles/EarthGestureProfile.asset";
         private const string TechniquePresentationProfilePath =
             "Assets/Elemental/Content/Profiles/EarthTechniquePresentationProfile.asset";
+        private const string MotorFeelProfilePath = "Assets/Elemental/Content/Profiles/PlanetMotorFeelProfile.asset";
         private const string EarthStoneAlbedoPath = "Assets/Elemental/Content/Textures/EarthStoneAlbedo.png";
         private const string MageModelPath = "Assets/ThirdParty/KayKit/Mage/Mage.fbx";
         private const string MageTexturePath = "Assets/ThirdParty/KayKit/Mage/mage_texture.png";
@@ -430,8 +431,10 @@ namespace Elemental.Authoring.Editor
                 style.CameraShoulderOffset);
             cameraRig?.ConfigureFeel(0.14f, 6.5f);
             PlanetMotor motor = character.GetComponent<PlanetMotor>();
-            motor?.ConfigureFeel(6.4f, 28f, 0.28f);
-            motor?.ConfigureTankSteering(true, 145f);
+            motor?.ConfigureFeel(CreateOrLoadProfile<PlanetMotorFeelProfile>(
+                MotorFeelProfilePath,
+                "Planet Motor Feel Profile"));
+            motor?.ConfigureTankSteering(true, 170f);
             if (camera.GetComponent<VisualQaCaptureBehaviour>() == null)
                 camera.gameObject.AddComponent<VisualQaCaptureBehaviour>();
 
@@ -439,7 +442,7 @@ namespace Elemental.Authoring.Editor
             ConfigurePreview(preview, style);
             CreateGroundFootprintPreview(input, preview, style);
             CreateAbilityPreview(input, executor, style);
-            CreateCharacterVisual(character, input, executor, style, gravityWorld);
+            CreateCharacterVisual(character, input, executor, style, gravityWorld, pillarMobility);
             HideTechnicalGravityToyProps();
             CreatePlanetLandmarks(earthMaterial, style, worldProfile.Radius);
             CreateWorldAndSpace(camera, executor, planetCenter, worldProfile, style);
@@ -838,7 +841,8 @@ namespace Elemental.Authoring.Editor
             MagicInputController input,
             MagicExecutor executor,
             EarthCoreVisualStyle style,
-            GravityWorldBehaviour gravityWorld = null)
+            GravityWorldBehaviour gravityWorld = null,
+            EarthPillarMobility pillarMobility = null)
         {
             MeshRenderer capsuleRenderer = character.GetComponent<MeshRenderer>();
             if (capsuleRenderer != null) capsuleRenderer.enabled = false;
@@ -856,7 +860,7 @@ namespace Elemental.Authoring.Editor
             {
                 CreateActivePuppetVisual(
                     character, input, executor, gravityWorld, body, scarf, eye, boot);
-                CreateHumanoidPresentation(character, input, executor);
+                CreateHumanoidPresentation(character, input, executor, pillarMobility);
                 return;
             }
 
@@ -881,7 +885,8 @@ namespace Elemental.Authoring.Editor
         private static void CreateHumanoidPresentation(
             GameObject character,
             MagicInputController input,
-            MagicExecutor executor)
+            MagicExecutor executor,
+            EarthPillarMobility pillarMobility)
         {
             ConfigureKayKitImporters();
             GameObject magePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(MageModelPath);
@@ -976,7 +981,14 @@ namespace Elemental.Authoring.Editor
                 character.GetComponent<Rigidbody>(),
                 puppet,
                 input,
-                executor);
+                executor,
+                CreateOrLoadProfile<EarthTechniquePresentationProfile>(
+                    TechniquePresentationProfilePath,
+                    "Earth Technique Presentation Profile"),
+                pillarMobility);
+            EarthStompContactPresenter stomp = mage.GetComponent<EarthStompContactPresenter>();
+            if (stomp == null) stomp = mage.AddComponent<EarthStompContactPresenter>();
+            stomp.Configure(pillarMobility);
             HumanoidRagdollBridge bridge = mage.GetComponent<HumanoidRagdollBridge>();
             if (bridge == null) bridge = mage.AddComponent<HumanoidRagdollBridge>();
             bridge.Configure(animator, puppet, mage.transform);

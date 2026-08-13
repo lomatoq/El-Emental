@@ -139,6 +139,24 @@ Status: complete
 - PlayMode: 64/64 passed in 126.040 s, preserving the complete fracture, MMB, moving-platform, pillar/wave and recovery suite.
 - Windows Development: 171,075,122 bytes in 62.964 s, 0 warnings/errors (`BuildReports/NativeWindows.json`).
 
+## Task 7 — character feel
+
+Status: complete
+
+- Casts now use simulation-facing Acquire → Root → Load → Strike → Sustain → Recover phases with startup, active, recovery and contact timing in ticks.
+- Immutable `EarthPoseIntent` data carries family, phase, local direction, target, effort, brace, stance width, pelvis compression and torso twist. Mass, acceleration, charge and support feed a bounded pure solver.
+- The KayKit Humanoid receives local-up foot probes, stance widening, planted-foot lock windows, surface-normal foot rotation, pelvis compensation and torso follow-through. Foot locks release when airborne.
+- Wall, fragment, held-body and pillar typed events align the presentation Strike with the authoritative event tick. Stomp dust is presentation-only and echoes that tick.
+- `PlanetMotorFeelProfile` adds separate acceleration/deceleration, turn response, coyote time, jump buffer, slope/traction, ground snap and cast/brace speed limits. Telemetry exposes these windows without giving animation authority over gameplay.
+- `EarthMagicPoseDriver` remains only the primitive fallback; the Humanoid path installs `EarthCharacterPoseController`.
+- Architecture decision: `Docs/adr/0018-earth-character-pose-authority.md`.
+
+### Evidence
+
+- EditMode: 180/180 passed in 1.165 s, including tick-phase boundaries, mass-scaled effort, airborne brace rejection, foot-lock stability, coyote/buffer overlap and bounded pelvis compensation.
+- PlayMode: 64/64 passed in 125.851 s. The EarthCore scene contains a valid in-place Humanoid plus its embodied local-up pose controller; moving-platform, pillar and 100-cycle ragdoll recovery coverage remains green.
+- Windows Development: 171,098,682 bytes in 57.851 s, 0 warnings/errors (`BuildReports/NativeWindows.json`).
+
 ## Next concern
 
-Task 7 consumes the technique lifecycle in full-body anticipation, release, impact and recovery poses.
+Task 8 adds state-aware composition, weighted focus, occlusion hysteresis, shoulder swap and accessibility-scaled camera impulse.

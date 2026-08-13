@@ -20,10 +20,12 @@ namespace Elemental.Runtime.Characters
         [SerializeField] private CapsuleCollider capsule;
         [SerializeField] private MonoBehaviour inputSourceBehaviour;
         [SerializeField] private Transform cameraFrame;
+        [SerializeField] private PlanetMotorFeelProfile feelProfile;
 
         [Header("Movement")]
         [SerializeField, Min(0.1f)] private float maxGroundSpeed = 8f;
         [SerializeField, Min(0.1f)] private float groundAcceleration = 45f;
+        [SerializeField, Min(0.1f)] private float groundDeceleration = 58f;
         [SerializeField, Range(0f, 1f)] private float airControl = 0.35f;
         [SerializeField, Min(0.1f)] private float jumpSpeed = 8f;
         [SerializeField] private bool tankSteering;
@@ -53,12 +55,15 @@ namespace Elemental.Runtime.Characters
         private ActiveRagdollPuppet _puppet;
         private MovingSupportSnapshot _movingSupport;
         private int _movingSupportTicks;
+        private PlanetJumpWindowState _jumpWindow;
+        private float _castBrace01;
 
         public bool IsGrounded { get; private set; }
         public Vector3 LocalUp => _localUp;
         public Vector3 FacingForward => _hasAimForward ? _aimForward : transform.forward;
         public PlanetMotorCommand LastCommand { get; private set; }
         public uint MovingSurfaceId => _movingSupportTicks > 0 ? _movingSupport.SurfaceId : 0u;
+        public PlanetLocomotionTelemetry Telemetry { get; private set; }
 
         public void ApplyMovingSupport(
             in MovingSupportSnapshot support,
@@ -108,6 +113,14 @@ namespace Elemental.Runtime.Characters
             airControl = Mathf.Clamp01(configuredAirControl);
         }
 
+        public void ConfigureFeel(PlanetMotorFeelProfile configuredProfile)
+        {
+            feelProfile = configuredProfile;
+            ApplyFeelProfile();
+        }
+
+        public void SetCastStance(float brace01) => _castBrace01 = Mathf.Clamp01(brace01);
+
         public void ConfigureTankSteering(bool enabled, float turnRateDegreesPerSecond)
         {
             tankSteering = enabled;
@@ -134,6 +147,7 @@ namespace Elemental.Runtime.Characters
         private void Awake()
         {
             ResolveReferences();
+            ApplyFeelProfile();
             targetBody.useGravity = false;
             targetBody.maxAngularVelocity = 20f;
         }
@@ -181,6 +195,14 @@ namespace Elemental.Runtime.Characters
 
                 LastCommand = _inputSource?.SampleCommand(_tick)
                     ?? new PlanetMotorCommand(_tick, float2.zero, false);
+                ushort coyoteTicks = (ushort)Mathf.Clamp(Mathf.CeilToInt(
+                    (feelProfile != null ? feelProfile.CoyoteSeconds : 0.12f) /
+                    Mathf.Max(0.001f, Time.fixedDeltaTime)), 1, ushort.MaxValue);
+                ushort bufferTicks = (ushort)Mathf.Clamp(Mathf.CeilToInt(
+                    (feelProfile != null ? feelProfile.JumpBufferSeconds : 0.14f) /
+                    Mathf.Max(0.001f, Time.fixedDeltaTime)), 1, ushort.MaxValue);
+                _jumpWindow = _jumpWindow.Step(
+                    IsGrounded, LastCommand.JumpPressed, coyoteTicks, bufferTicks);
                 _tick++;
 
                 ApplyMovement(LastCommand);
@@ -300,8 +322,16 @@ namespace Elemental.Runtime.Characters
                 : Vector3.zero;
             Vector3 relativeVelocity = velocity - supportVelocity;
             Vector3 tangentVelocity = Vector3.ProjectOnPlane(relativeVelocity, _localUp);
-            Vector3 desiredVelocity = desiredDirection * maxGroundSpeed;
-            float accelerationLimit = groundAcceleration * (IsGrounded ? 1f : airControl);
+            float castSpeed = feelProfile != null
+                ? Mathf.Lerp(feelProfile.CastSpeedMultiplier, feelProfile.BraceSpeedMultiplier, _castBrace01)
+                : Mathf.Lerp(0.46f, 0.2f, _castBrace01);
+            float speedMultiplier = _castBrace01 > 0.001f ? castSpeed : 1f;
+            Vector3 desiredVelocity = desiredDirection * maxGroundSpeed * speedMultiplier;
+            bool accelerating = desiredVelocity.sqrMagnitude > tangentVelocity.sqrMagnitude + 0.01f;
+            float accelerationLimit = (accelerating ? groundAcceleration : groundDeceleration) *
+                                      (IsGrounded ? 1f : airControl);
+            if (IsGrounded && feelProfile != null)
+                accelerationLimit *= feelProfile.TractionMultiplier;
             Vector3 acceleration = Vector3.ClampMagnitude(
                 (desiredVelocity - tangentVelocity) / Time.fixedDeltaTime,
                 accelerationLimit);
@@ -315,17 +345,45 @@ namespace Elemental.Runtime.Characters
                 targetBody.AddForce(
                     _groundNormal * Mathf.Clamp(adhesion, -adhesionSpring, adhesionSpring),
                     ForceMode.Acceleration);
+                if (feelProfile != null && normalSpeed > 0f)
+                    targetBody.AddForce(-_groundNormal * Mathf.Min(
+                        normalSpeed / Mathf.Max(0.001f, Time.fixedDeltaTime),
+                        feelProfile.GroundSnapSpeed), ForceMode.Acceleration);
             }
 
-            if (command.JumpPressed && IsGrounded)
+            if (_jumpWindow.CanConsume)
             {
                 Vector3 inherited = Vector3.ProjectOnPlane(supportVelocity - velocity, _localUp);
                 targetBody.AddForce(inherited, ForceMode.VelocityChange);
                 targetBody.AddForce(_localUp * jumpSpeed, ForceMode.VelocityChange);
                 IsGrounded = false;
+                _jumpWindow = _jumpWindow.Consume();
                 _ignoreGroundTicks = 4;
                 _movingSupportTicks = 0;
             }
+
+            Telemetry = new PlanetLocomotionTelemetry(
+                _tick,
+                IsGrounded,
+                _localUp,
+                tangentVelocity.magnitude,
+                desiredVelocity.magnitude,
+                _castBrace01,
+                _movingSupportTicks > 0 ? _movingSupport.SurfaceId : 0u,
+                _jumpWindow.CoyoteTicks,
+                _jumpWindow.BufferTicks);
+        }
+
+        private void ApplyFeelProfile()
+        {
+            if (feelProfile == null) return;
+            maxGroundSpeed = Mathf.Max(0.1f, feelProfile.MaximumGroundSpeed);
+            groundAcceleration = Mathf.Max(0.1f, feelProfile.Acceleration);
+            groundDeceleration = Mathf.Max(0.1f, feelProfile.Deceleration);
+            airControl = Mathf.Clamp01(feelProfile.AirControl);
+            jumpSpeed = Mathf.Max(0.1f, feelProfile.JumpSpeed);
+            tankTurnRateDegrees = Mathf.Max(10f, feelProfile.TurnResponseDegrees);
+            maxSlopeAngle = Mathf.Clamp(feelProfile.MaximumSlopeAngle, 1f, 89f);
         }
 
         private Vector3 FeetPoint(Vector3 up)
@@ -373,5 +431,33 @@ namespace Elemental.Runtime.Characters
         {
             return float.IsFinite(value.x) && float.IsFinite(value.y) && float.IsFinite(value.z);
         }
+    }
+
+    public readonly struct PlanetLocomotionTelemetry
+    {
+        public PlanetLocomotionTelemetry(
+            uint tick, bool grounded, Vector3 localUp, float speed, float desiredSpeed,
+            float brace01, uint supportId, ushort coyoteTicks, ushort bufferTicks)
+        {
+            Tick = tick;
+            Grounded = grounded;
+            LocalUp = localUp;
+            Speed = speed;
+            DesiredSpeed = desiredSpeed;
+            Brace01 = brace01;
+            SupportId = supportId;
+            CoyoteTicks = coyoteTicks;
+            BufferTicks = bufferTicks;
+        }
+
+        public uint Tick { get; }
+        public bool Grounded { get; }
+        public Vector3 LocalUp { get; }
+        public float Speed { get; }
+        public float DesiredSpeed { get; }
+        public float Brace01 { get; }
+        public uint SupportId { get; }
+        public ushort CoyoteTicks { get; }
+        public ushort BufferTicks { get; }
     }
 }

@@ -121,3 +121,10 @@ Raw evidence is kept under `BuildReports` and `TestResults`. Interactive P50/P95
 - Technique presentation is data-only; pose, camera and feedback values cannot alter damage, impulses, fracture or reassembly.
 - EditMode: 174/174 passed in 0.818 s; PlayMode: 64/64 passed in 126.040 s.
 - Windows Development: 171,075,122 bytes in 62.964 s, 0 warnings/errors.
+
+## Earth Core MVP polish Task 7 — 2026-08-13
+
+- Pose intent, phase timing, effort, foot planting, pelvis compensation and jump forgiveness use fixed value data and bounded non-allocating queries.
+- Humanoid foot IK uses two fixed eight-hit buffers; no per-frame overlap or collection allocation was added.
+- EditMode: 180/180 passed in 1.165 s; PlayMode: 64/64 passed in 125.851 s.
+- Windows Development: 171,098,682 bytes in 57.851 s, 0 warnings/errors.

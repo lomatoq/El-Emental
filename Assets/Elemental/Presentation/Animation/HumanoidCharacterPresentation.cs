@@ -25,6 +25,9 @@ namespace Elemental.Presentation.Animation
         [SerializeField] private ActiveRagdollPuppet ragdoll;
         [SerializeField] private MagicInputController magicInput;
         [SerializeField] private MagicExecutor executor;
+        [SerializeField] private EarthTechniquePresentationProfile techniqueProfile;
+        [SerializeField] private EarthPillarMobility pillarMobility;
+        [SerializeField] private EarthCharacterPoseController poseController;
 
         private float _castWeight;
         private CharacterPhysicalMode _physicalMode;
@@ -41,7 +44,9 @@ namespace Elemental.Presentation.Animation
             Rigidbody configuredRoot,
             ActiveRagdollPuppet configuredRagdoll,
             MagicInputController configuredInput,
-            MagicExecutor configuredExecutor)
+            MagicExecutor configuredExecutor,
+            EarthTechniquePresentationProfile configuredTechniqueProfile = null,
+            EarthPillarMobility configuredPillarMobility = null)
         {
             profile = configuredProfile;
             animator = configuredAnimator;
@@ -52,7 +57,28 @@ namespace Elemental.Presentation.Animation
             ragdoll = configuredRagdoll;
             magicInput = configuredInput;
             executor = configuredExecutor;
+            techniqueProfile = configuredTechniqueProfile;
+            pillarMobility = configuredPillarMobility;
             if (animator != null) animator.applyRootMotion = false;
+            ConfigurePoseController();
+        }
+
+        private void Awake()
+        {
+            if (animator == null) animator = GetComponent<Animator>();
+            if (motor == null) motor = GetComponentInParent<PlanetMotor>();
+            if (rootBody == null) rootBody = GetComponentInParent<Rigidbody>();
+            if (pillarMobility == null) pillarMobility = GetComponentInParent<EarthPillarMobility>();
+            ConfigurePoseController();
+        }
+
+        private void ConfigurePoseController()
+        {
+            if (animator == null || motor == null || rootBody == null) return;
+            if (poseController == null) poseController = GetComponent<EarthCharacterPoseController>();
+            if (poseController == null) poseController = gameObject.AddComponent<EarthCharacterPoseController>();
+            poseController.Configure(
+                animator, magicInput, executor, motor, rootBody, pillarMobility, techniqueProfile);
         }
 
         private void OnEnable()

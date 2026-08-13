@@ -81,6 +81,7 @@ namespace Elemental.Input.Gestures
         private bool _formingSourceValid;
         private Vector2 _aimScreenPosition;
         private Rigidbody _casterBody;
+        private PlanetMotor _motor;
         private bool _gravityWellHeld;
         private float _gravityWellFocusDistance;
         private EarthGestureResult _lastGestureResult;
@@ -306,6 +307,7 @@ namespace Elemental.Input.Gestures
             EnsureBendSession();
             _holdDistance = initialHoldDistance;
             _casterBody = GetComponent<Rigidbody>();
+            _motor = GetComponent<PlanetMotor>();
             if (playerInput == null)
             {
                 playerInput = GetComponent<PlayerInput>();
@@ -347,6 +349,7 @@ namespace Elemental.Input.Gestures
             _wallGesturePending = false;
             _groundWaveGesturePending = false;
             _bendSession?.Cancel();
+            _motor?.SetCastStance(0f);
             ClearPreview();
         }
 
@@ -364,6 +367,7 @@ namespace Elemental.Input.Gestures
             _bendSession?.Cancel();
             _sampler.Cancel();
             _strokeSampler.Cancel();
+            _motor?.SetCastStance(0f);
             PushChargeChanged?.Invoke(0f);
             ClearPreview();
             StatusChanged?.Invoke("Earth gesture canceled.");
@@ -438,6 +442,24 @@ namespace Elemental.Input.Gestures
                 // Otherwise a body can remain controlled indefinitely beside the player.
                 CommitUnifiedEarthBend(pointerFloat);
             }
+            UpdateCastStance();
+        }
+
+        private void UpdateCastStance()
+        {
+            if (_motor == null) return;
+            bool active = _groundWaveGesturePending || _gravityWellHeld || _pushCharging ||
+                          (_bendSession != null && _bendSession.IsActive) ||
+                          (executor != null && (executor.HeldBody != null || executor.IsRepairActive));
+            if (!active)
+            {
+                _motor.SetCastStance(0f);
+                return;
+            }
+            float mass = executor != null && executor.HeldBody != null ? executor.HeldBody.mass : 0f;
+            float massBrace = 1f - Mathf.Exp(-Mathf.Max(0f, mass) / 220f);
+            float charge = _bendSession != null ? Mathf.Max(_bendSession.Charge01, _bendSession.Amount01) : 0f;
+            _motor.SetCastStance(Mathf.Clamp01(0.2f + (massBrace * 0.5f) + (charge * 0.3f)));
         }
 
         private void UpdateBendPowerInput()

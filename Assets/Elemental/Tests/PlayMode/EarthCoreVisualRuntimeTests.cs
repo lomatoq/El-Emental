@@ -49,6 +49,7 @@ namespace Elemental.Tests.PlayMode
             CelestialSystemBehaviour celestialSystem = FindInScene<CelestialSystemBehaviour>(scene);
             MeteorShowerBehaviour meteorSystem = FindInScene<MeteorShowerBehaviour>(scene);
             HumanoidCharacterPresentation humanoid = FindInScene<HumanoidCharacterPresentation>(scene);
+            EarthCharacterPoseController characterPose = FindInScene<EarthCharacterPoseController>(scene);
             Animator humanoidAnimator = humanoid != null ? humanoid.Animator : null;
             bool hasCelestialSystem = celestialSystem != null;
             bool hasMeteorSystem = meteorSystem != null;
@@ -60,6 +61,7 @@ namespace Elemental.Tests.PlayMode
             bool hasValidHumanoid = humanoidAnimator != null && humanoidAnimator.avatar != null &&
                                     humanoidAnimator.avatar.isValid && humanoidAnimator.avatar.isHuman &&
                                     !humanoidAnimator.applyRootMotion;
+            bool hasEmbodiedPose = characterPose != null;
             GameObject celestialBackdrop = FindByName(scene, "Celestial Diorama Backdrop");
             Camera playableCamera = FindInScene<Camera>(scene);
             bool celestialBackdropIsWorldSpace = celestialBackdrop != null &&
@@ -105,6 +107,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(moonHasNoCollider, Is.True);
             Assert.That(atmosphereHasNoCollider, Is.True);
             Assert.That(hasValidHumanoid, Is.True);
+            Assert.That(hasEmbodiedPose, Is.True);
             Assert.That(celestialBackdrop, Is.Not.Null);
             Assert.That(celestialBackdropIsWorldSpace, Is.True,
                 "Celestial bodies must stay in world space instead of following the player camera.");

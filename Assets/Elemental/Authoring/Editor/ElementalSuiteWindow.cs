@@ -208,6 +208,9 @@ namespace Elemental.Authoring.Editor
             AddProfileEditor<EarthGravityWellProfile>(
                 "MMB gravity grip + fracture",
                 "Assets/Elemental/Content/Profiles/EarthGravityWellProfile.asset");
+            AddProfileEditor<EarthTechniquePresentationProfile>(
+                "Six techniques // timing, pose, camera and feedback",
+                "Assets/Elemental/Content/Profiles/EarthTechniquePresentationProfile.asset");
             _content.Add(ActionButton("Open playable Earth Core", () => OpenScene(M3EarthCoreSetup.EarthCoreScenePath)));
         }
 
@@ -285,6 +288,9 @@ namespace Elemental.Authoring.Editor
             AddProfileEditor<CharacterPresentationProfile>(
                 "Character & Animation // replaceable Humanoid presentation",
                 "Assets/Elemental/Content/Profiles/CharacterPresentationProfile.asset");
+            AddProfileEditor<PlanetMotorFeelProfile>(
+                "Character Feel // locomotion, coyote, buffer and cast stance",
+                "Assets/Elemental/Content/Profiles/PlanetMotorFeelProfile.asset");
             AddProfileEditor<EarthPhysicsFeelProfile>(
                 "Physics Feel // friction, impact energies and CCD",
                 "Assets/Elemental/Content/Profiles/EarthPhysicsFeelProfile.asset");
