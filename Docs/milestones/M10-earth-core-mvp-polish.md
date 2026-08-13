@@ -46,8 +46,6 @@ Status: complete
 - EditMode: 141/141 passed, including 28 new fracture-graph tests and a 1,000-iteration zero-allocation hot-loop check. No new compiler, shader or package warning was emitted.
 - Architecture decision: `Docs/adr/0014-fracture-and-reassembly-v2.md`.
 
-## Next concern
-
 ## Task 2 — baked fracture asset and runtime adapters
 
 Status: complete
@@ -67,6 +65,25 @@ Status: complete
 - Windows Development: 170,811,033 bytes in 54.669 s, 0 warnings/errors (`BuildReports/NativeWindows.json`).
 - D3D11 standalone `wall-collapse` QA exited 0 and produced `BuildReports/Task2-BakedWall-v2.png`; cold-start voxel queue peak was 69.72 ms with zero pending work.
 
+## Task 3 — provenance-aware physical reassembly
+
+Status: complete
+
+- MMB on a fractured baked structure starts one `EarthReassemblyController` session. Selection is limited to the source structure and captured pieces keep their stable structure/piece provenance.
+- The pure ordering solver chooses a foundation/largest-island anchor and expands deterministically through repaired-neighbour depth, height, contact area, volume and stable ID. Missing pieces stay missing and therefore produce an explicit partial result.
+- Every selected piece first moves into a deterministic two-dimensional staging cloud, then seats sequentially at its exact baked rest pose. Translation uses mass-aware bounded PD; rotation uses a bounded shortest-arc controller while collisions remain active.
+- Only bonded neighbours and static terrain needed by an embedded authored seat receive targeted collision suppression. Repair-internal seating contacts cannot feed damage debt back into the structure.
+- A positional settle gate reforms and then repairs bonds. Jam detection expands the staging cloud and retries deterministically rather than teleporting pieces.
+- A full repair disables all piece adapters, restores every baked bond and returns to the intact proxy. Interruption returns unwelded pieces to dynamic physics; a missing piece leaves a stable partial structure without inventing mass.
+- Typed capture, stage, align, weld, bond-reformed, completed, partial and interrupted events expose the repair lifecycle without deriving canonical state from presentation objects.
+
+### Evidence
+
+- EditMode: 153/153 passed in 0.772 s. The repair suite includes deterministic ordering, missing-component handling, bounded finite PD/jam behavior, 100 repeated solve cycles with no drift/NaN and `0 B` managed allocation after warm-up.
+- PlayMode: 63/63 passed in 125.573 s. A focused run against the serialized production profile repaired all 43 pieces in 23.831 s; missing-piece partial repair completed in 22.199 s; interruption safely returned pieces to dynamics in 0.840 s.
+- Windows Development: 170,857,854 bytes in 68.406 s, 0 warnings/errors (`BuildReports/NativeWindows.json`).
+- The standalone D3D11 `reassembly` scenario exited 0 with all 43 pieces selected and one piece physically welded before taking `BuildReports/Task3-Reassembly-final.png`.
+
 ## Next concern
 
-Task 3 adds provenance-aware reassembly: same-structure selection, anchor/BFS order, staged mass-aware seating, jam recovery, partial repair, bond restoration and intact-proxy recovery.
+Task 4 adds authored Earth materials and face-aware presentation without changing fracture or repair truth.

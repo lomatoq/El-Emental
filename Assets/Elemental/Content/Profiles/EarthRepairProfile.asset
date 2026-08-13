@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 642433b1ed71d55449fffa69d318933d, type: 3}
+  m_Name: EarthRepairProfile
+  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Physics.EarthRepairProfile
+  anchorMode: 0
+  maximumSelectedMass: 30000
+  captureSettleTime: 0.08
+  alignmentSettleTime: 0.08
+  stagingDistance: 0.78
+  stagingTolerance: 0.5
+  maximumCaptureSeconds: 1
+  dampingRatio: 1
+  maximumAcceleration: 180
+  maximumForce: 150000
+  maximumAngularAcceleration: 240
+  rotationStiffness: 90
+  rotationDamping: 24
+  positionTolerance: 0.06
+  angleToleranceDegrees: 6
+  maximumRelativeSpeed: 0.45
+  maximumRelativeAngularSpeed: 0.6
+  settleDuration: 0.05
+  jamDuration: 0.35
+  jamProgressEpsilon: 0.002
+  retryDelay: 0.04

@@ -62,6 +62,14 @@ namespace Elemental.Tests.EditMode
             Assert.That(VisualQaCaptureRequest.TryParse(
                 new[]
                 {
+                    "game.exe", VisualQaCaptureRequest.Argument, "repair.png",
+                    VisualQaCaptureRequest.ScenarioArgument, "reassembly"
+                }, out VisualQaCaptureRequest repairRequest), Is.True);
+            Assert.That(repairRequest.Scenario, Is.EqualTo(VisualQaScenario.Reassembly));
+
+            Assert.That(VisualQaCaptureRequest.TryParse(
+                new[]
+                {
                     "game.exe", VisualQaCaptureRequest.Argument, "night.png",
                     VisualQaCaptureRequest.ScenarioArgument, "night"
                 }, out VisualQaCaptureRequest nightRequest), Is.True);

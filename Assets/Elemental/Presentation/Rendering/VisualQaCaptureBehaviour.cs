@@ -174,6 +174,52 @@ namespace Elemental.Presentation.Rendering
                 yield break;
             }
 
+            if (scenario == VisualQaScenario.Reassembly)
+            {
+                EarthWallPool wallPool = FindAnyObjectByType<EarthWallPool>();
+                MagicExecutor executor = input.EarthExecutor;
+                PlanetMotor repairMotor = FindAnyObjectByType<PlanetMotor>();
+                VoxelPlanetBehaviour voxel = FindAnyObjectByType<VoxelPlanetBehaviour>();
+                if (wallPool == null || executor == null || repairMotor == null || voxel == null) yield break;
+                Vector3 planetCenter = voxel.transform.position;
+                Vector3 radial = (repairMotor.transform.position - planetCenter).normalized;
+                Vector3 forward = Vector3.ProjectOnPlane(repairMotor.FacingForward, radial).normalized;
+                Vector3 baseDirection = (radial + forward * (7f / voxel.Radius)).normalized;
+                Vector3 side = Vector3.Cross(baseDirection, forward).normalized;
+                Vector3 start = planetCenter +
+                                (baseDirection - side * (1.9f / voxel.Radius)).normalized * voxel.Radius;
+                Vector3 end = planetCenter +
+                              (baseDirection + side * (1.9f / voxel.Radius)).normalized * voxel.Radius;
+                EarthWall wall = wallPool.Acquire(start, end, planetCenter, 2.6f, 0.58f);
+                yield return new WaitForSecondsRealtime(1.05f);
+                if (wall == null || !wall.ApplyRockImpact(
+                        wall.transform.position + wall.transform.up * 0.2f,
+                        camera.transform.forward,
+                        6200f)) yield break;
+                yield return new WaitForSecondsRealtime(0.18f);
+                Collider pieceCollider = wall.FirstFracturePiece != null
+                    ? wall.FirstFracturePiece.GetComponent<Collider>()
+                    : null;
+                Vector3 focus = wall.transform.position + wall.transform.up * 2.2f;
+                _scenarioSucceeded = pieceCollider != null &&
+                                     executor.TryBeginGravityWell(pieceCollider, focus, wall.transform.up);
+                EarthReassemblyController repair = wall.Reassembly;
+                float repairDeadline = Time.realtimeSinceStartup + 28f;
+                while (repair != null && repair.IsRepairing && repair.WeldedPieceCount < 1 &&
+                       Time.realtimeSinceStartup < repairDeadline)
+                    yield return null;
+                _scenarioSucceeded &= repair != null && repair.SelectedPieceCount == 43 &&
+                                      (repair.WeldedPieceCount >= 1 || !wall.IsCollapsing);
+                Debug.Log($"[Elemental] Reassembly QA wall={wall.WallId}, " +
+                           $"selected={repair?.SelectedPieceCount ?? 0}, " +
+                           $"welded={repair?.WeldedPieceCount ?? 0}, " +
+                           $"progress={(repair?.Progress01 ?? 0f):0.00}, active={repair?.IsRepairing ?? false}, " +
+                           $"piece={repair?.CurrentPieceIndex ?? -1}, phase={repair?.CurrentPiecePhase}, " +
+                           $"error={repair?.CurrentPiecePositionError ?? 0f:0.000}, " +
+                           $"speed={repair?.CurrentPieceSpeed ?? 0f:0.000}, retry={repair?.CurrentPieceRetryCount ?? 0}.");
+                yield break;
+            }
+
             if (scenario == VisualQaScenario.Platform)
             {
                 float2 start = surfaceLine[0];

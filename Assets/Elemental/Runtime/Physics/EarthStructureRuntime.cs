@@ -257,6 +257,116 @@ namespace Elemental.Runtime.Physics
             return index >= 0 && index < _bondRuntimes.Length ? _bondRuntimes[index] : null;
         }
 
+        public EarthPieceRuntime GetPieceRuntime(int index) =>
+            index >= 0 && index < _pieceRuntimes.Length ? _pieceRuntimes[index] : null;
+
+        public EarthPieceDefinition GetPieceDefinition(int index) =>
+            index >= 0 && index < _pieceDefinitions.Length ? _pieceDefinitions[index] : default;
+
+        public EarthPieceState GetPieceState(int index) =>
+            index >= 0 && index < _pieceStates.Length ? _pieceStates[index] : default;
+
+        public EarthBondDefinition GetBondDefinition(int index) =>
+            index >= 0 && index < _bondDefinitions.Length ? _bondDefinitions[index] : default;
+
+        public EarthBondState GetBondState(int index) =>
+            index >= 0 && index < _bondStates.Length ? _bondStates[index] : default;
+
+        public bool CopyRepairDataNonAlloc(
+            EarthPieceDefinition[] pieceDefinitions,
+            EarthPieceState[] pieceStates,
+            EarthBondDefinition[] bondDefinitions,
+            EarthBondState[] bondStates)
+        {
+            if (!IsConfigured || pieceDefinitions == null || pieceStates == null ||
+                bondDefinitions == null || bondStates == null ||
+                pieceDefinitions.Length < PieceCount || pieceStates.Length < PieceCount ||
+                bondDefinitions.Length < BondCount || bondStates.Length < BondCount)
+            {
+                return false;
+            }
+            System.Array.Copy(_pieceDefinitions, pieceDefinitions, PieceCount);
+            System.Array.Copy(_pieceStates, pieceStates, PieceCount);
+            System.Array.Copy(_bondDefinitions, bondDefinitions, BondCount);
+            System.Array.Copy(_bondStates, bondStates, BondCount);
+            return true;
+        }
+
+        public bool BeginRepair(uint tick)
+        {
+            if (!IsConfigured || !IsFractured) return false;
+            _state.Phase = EarthStructurePhase.Repairing;
+            _state.Revision++;
+            _state.LastChangedTick = tick;
+            return true;
+        }
+
+        public void SetPiecePhase(int index, EarthPiecePhase phase, uint tick)
+        {
+            if (index < 0 || index >= _pieceStates.Length) return;
+            EarthPieceState state = _pieceStates[index];
+            state.Phase = phase;
+            state.LastChangedTick = tick;
+            _pieceStates[index] = state;
+        }
+
+        public void SetBondReforming(int index, uint tick)
+        {
+            if (index < 0 || index >= _bondStates.Length ||
+                _bondStates[index].Phase == EarthBondPhase.Repaired) return;
+            EarthBondState state = _bondStates[index];
+            state.Phase = EarthBondPhase.Reforming;
+            state.LastChangedTick = tick;
+            _bondStates[index] = state;
+        }
+
+        public void SetBondRepaired(int index, uint tick)
+        {
+            if (index < 0 || index >= _bondStates.Length) return;
+            EarthBondState state = _bondStates[index];
+            state.Phase = EarthBondPhase.Repaired;
+            state.AccumulatedDamage = 0f;
+            state.LastChangedTick = tick;
+            _bondStates[index] = state;
+            _state.Revision++;
+            _state.LastChangedTick = tick;
+            SolveIslands();
+        }
+
+        public void FinishPartialRepair(uint tick)
+        {
+            if (!IsConfigured) return;
+            _state.Phase = EarthStructurePhase.Fractured;
+            _state.Revision++;
+            _state.LastChangedTick = tick;
+            SolveIslands();
+        }
+
+        public void CompleteRebuild(uint tick)
+        {
+            if (!IsConfigured) return;
+            for (int index = 0; index < _pieceStates.Length; index++)
+            {
+                EarthPieceState piece = _pieceStates[index];
+                piece.Phase = EarthPiecePhase.Intact;
+                piece.LastChangedTick = tick;
+                _pieceStates[index] = piece;
+            }
+            for (int index = 0; index < _bondStates.Length; index++)
+            {
+                EarthBondState bond = _bondStates[index];
+                bond.Phase = EarthBondPhase.Repaired;
+                bond.AccumulatedDamage = 0f;
+                bond.LastChangedTick = tick;
+                _bondStates[index] = bond;
+            }
+            _state.Phase = EarthStructurePhase.Rebuilt;
+            _state.IslandCount = 1;
+            _state.SupportedIslandCount = 1;
+            _state.Revision++;
+            _state.LastChangedTick = tick;
+        }
+
         private void SolveIslands()
         {
             EarthIslandSolveResult result = EarthFractureBatchRunner.SolveIslands(

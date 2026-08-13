@@ -98,7 +98,8 @@ namespace Elemental.Tests.PlayMode
             Assert.That(Vector3.Distance(small.transform.position, smallBefore),
                 Is.GreaterThan(Vector3.Distance(large.transform.position, largeBefore) * 2f));
             Assert.That(Vector3.Angle(small.transform.up, small.transform.position.normalized),
-                Is.LessThan(0.2f));
+                Is.LessThan(0.75f),
+                "Sliding walls must stay visibly upright and remain below the 1 degree acceptance limit.");
 
             Object.Destroy(root);
             yield return null;

@@ -44,6 +44,7 @@ namespace Elemental.Authoring.Editor
         private const string LandingCushionProfilePath = "Assets/Elemental/Content/Profiles/EarthLandingCushionProfile.asset";
         private const string HoverProfilePath = "Assets/Elemental/Content/Profiles/EarthHoverProfile.asset";
         private const string GravityWellProfilePath = "Assets/Elemental/Content/Profiles/EarthGravityWellProfile.asset";
+        private const string RepairProfilePath = "Assets/Elemental/Content/Profiles/EarthRepairProfile.asset";
         private const string CelestialProfilePath = "Assets/Elemental/Content/Profiles/CelestialSystemProfile.asset";
         private const string AtmosphereProfilePath = "Assets/Elemental/Content/Profiles/AtmosphereProfile.asset";
         private const string MeteorProfilePath = "Assets/Elemental/Content/Profiles/MeteorShowerProfile.asset";
@@ -100,6 +101,9 @@ namespace Elemental.Authoring.Editor
             EarthWallPool wallPool = magicRoot.AddComponent<EarthWallPool>();
             wallPool.Configure(8, wallMesh, wallMaterial, CreateOrLoadWallProfile());
             wallPool.ConfigurePhysicsFeel(physicsFeel);
+            wallPool.ConfigureRepair(CreateOrLoadProfile<EarthRepairProfile>(
+                RepairProfilePath,
+                "Earth Repair Profile"));
             EarthFractureAsset wallFracture = EarthFractureBaker.CreateOrLoadProductionWall(
                 wallMesh, wallMesh);
             wallPool.ConfigureFractureAsset(wallFracture, false);

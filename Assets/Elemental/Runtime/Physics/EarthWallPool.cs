@@ -17,6 +17,7 @@ namespace Elemental.Runtime.Physics
         [SerializeField] private Material wallMaterial;
         [SerializeField] private EarthWallProfile wallProfile;
         [SerializeField] private EarthPhysicsFeelProfile physicsFeelProfile;
+        [SerializeField] private EarthRepairProfile repairProfile;
         [SerializeField] private ScriptableObject fractureAsset;
         [SerializeField] private bool allowRuntimeProceduralDebugFallback = true;
 
@@ -43,6 +44,7 @@ namespace Elemental.Runtime.Physics
         }
 
         public void ConfigurePhysicsFeel(EarthPhysicsFeelProfile profile) => physicsFeelProfile = profile;
+        public void ConfigureRepair(EarthRepairProfile profile) => repairProfile = profile;
 
         public void ConfigureFractureAsset(
             ScriptableObject configuredAsset,
@@ -260,7 +262,7 @@ namespace Elemental.Runtime.Physics
             }
 
             wall.ConfigureCollapsePieces(pieces, volumeFractions, bonds);
-            if (!wall.ConfigureBakedRuntime(data))
+            if (!wall.ConfigureBakedRuntime(data, repairProfile))
                 throw new InvalidOperationException("The baked Earth runtime adapter rejected validated data.");
             return true;
         }

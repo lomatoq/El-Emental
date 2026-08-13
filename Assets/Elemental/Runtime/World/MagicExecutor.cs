@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Elemental.Runtime.Physics;
 using Elemental.Simulation.Magic;
 using Elemental.Simulation.Bending;
+using Elemental.Simulation.Structures;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Profiling;
@@ -55,6 +56,7 @@ namespace Elemental.Runtime.World
         private EarthWall _gravityWellWall;
         private EarthPlatform _gravityWellPlatform;
         private bool _gravityWellFracturedStructure;
+        private EarthReassemblyController _repairController;
 
         public MagicWorldEvents Events { get; } = new MagicWorldEvents();
         public MagicReplayRecorder Recorder { get; } = new MagicReplayRecorder();
@@ -85,6 +87,7 @@ namespace Elemental.Runtime.World
         public float VectorFieldCharge => _vectorFieldCharge;
         public float VectorFieldMass => _vectorFieldTarget != null ? _vectorFieldTarget.EarthMass : 0f;
         public bool IsGravityWellActive => _gravityWellActive;
+        public bool IsRepairActive => _repairController != null && _repairController.IsRepairing;
         public Vector3 GravityWellFocus => _gravityWellFocus;
         public float GravityWellStrength => _gravityWellActive
             ? Mathf.Clamp01(_gravityWellElapsed / GravityFractureDelay)
@@ -101,6 +104,20 @@ namespace Elemental.Runtime.World
             _gravityWellWall = aimedCollider.GetComponentInParent<EarthWall>();
             if (_gravityWellWall == null)
                 _gravityWellWall = aimedCollider.GetComponentInParent<EarthWallPiece>()?.Owner;
+            if (_gravityWellWall != null && _gravityWellWall.IsCollapsing &&
+                _gravityWellWall.Reassembly != null)
+            {
+                _gravityWellFocus = focus;
+                _gravityWellUp = SafeDirection(localUp);
+                _gravityWellElapsed = 0f;
+                _repairController = _gravityWellWall.Reassembly;
+                _gravityWellActive = _repairController.TryBeginRepair(
+                    unchecked((uint)Time.frameCount));
+                if (_gravityWellActive) return true;
+                _repairController = null;
+                _gravityWellWall = null;
+                return false;
+            }
             if (_gravityWellWall != null)
                 _gravityWellWall.Collapsed += HandleGravityWellWallFractured;
             _gravityWellPlatform = aimedCollider.GetComponentInParent<EarthPlatform>();
@@ -123,6 +140,10 @@ namespace Elemental.Runtime.World
 
         public void CancelGravityWell()
         {
+            if (_repairController != null && _repairController.IsRepairing)
+                _repairController.Interrupt(
+                    EarthRepairInterruptReason.Released,
+                    unchecked((uint)Time.frameCount));
             if (_gravityWellWall != null)
                 _gravityWellWall.Collapsed -= HandleGravityWellWallFractured;
             _gravityGripSession.ReleaseAll(EarthMagicGripKind.GravityWell);
@@ -132,6 +153,7 @@ namespace Elemental.Runtime.World
             _gravityWellWall = null;
             _gravityWellPlatform = null;
             _gravityWellFracturedStructure = false;
+            _repairController = null;
         }
 
         private void HandleGravityWellWallFractured(EarthWall wall)
@@ -363,7 +385,7 @@ namespace Elemental.Runtime.World
 
         private void FixedUpdate()
         {
-            if (_gravityWellActive) ApplyGravityWell();
+            if (_gravityWellActive && _repairController == null) ApplyGravityWell();
             IEarthPhysicalTarget target = _vectorFieldTarget;
             if (target == null) return;
             if (!target.IsEarthTargetValid || target.Body == null)

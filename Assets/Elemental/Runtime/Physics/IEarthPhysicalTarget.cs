@@ -27,7 +27,8 @@ namespace Elemental.Runtime.Physics
     {
         Telekinesis = 0,
         VectorField = 1,
-        GravityWell = 2
+        GravityWell = 2,
+        Repair = 3
     }
 
     public interface IEarthPhysicalTarget

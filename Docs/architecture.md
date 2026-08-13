@@ -85,6 +85,8 @@ Earth destruction uses explicit tiers. Repairable structural pieces retain prove
 
 Fracture is cause-driven. Structure-local impact batches damage baked bonds through directional tension, shear and compression; deterministic connected components then identify foundation-supported and dynamic islands. Canonical fracture state never comes from GameObject activation, renderer visibility or Rigidbody sleep.
 
+Reassembly is provenance-aware and physical. A repair session selects only pieces owned by one baked structure, stages them in a deterministic bounded cloud, and seats them in graph order with mass-aware PD and active collisions. Bonds pass through reforming and repaired phases only after a pose/velocity settle gate. Full repair restores the intact proxy; missing pieces remain an explicit partial result, and interruption returns unwelded pieces to ordinary dynamics.
+
 Internal Earth verbs (`RaisePlatform`, `VectorFieldPush`, and `LandingCushion`) are selected by the unified input grammar and do not occupy hotbar slots.
 
 ## Terrain authority

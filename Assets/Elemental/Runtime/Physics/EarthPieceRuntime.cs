@@ -14,6 +14,8 @@ namespace Elemental.Runtime.Physics
         private EarthStructureId _structureId;
         private uint _generation;
         private Rigidbody _body;
+        private bool _hasMagicOwner;
+        private EarthMagicGripKind _magicOwner;
 
         public EarthWall Owner { get; private set; }
         public EarthStructureRuntime Structure => _structure;
@@ -33,6 +35,8 @@ namespace Elemental.Runtime.Physics
         public EarthPhysicalTargetKind TargetKind => EarthPhysicalTargetKind.WallPiece;
         public bool IsEarthTargetValid => Owner != null && Owner.IsCollapsing &&
                                           gameObject.activeSelf && Body != null;
+        public bool HasMagicOwner => _hasMagicOwner;
+        public EarthMagicGripKind MagicOwner => _magicOwner;
 
         public void Configure(EarthWall owner, int pieceIndex)
         {
@@ -61,6 +65,7 @@ namespace Elemental.Runtime.Physics
         {
             _structureId = structureId;
             _generation = generation;
+            _hasMagicOwner = false;
             transform.SetParent(Owner != null ? Owner.transform : transform.parent, false);
             transform.localPosition = ToVector3(definition.RestLocalPosition);
             quaternion rotation = definition.RestLocalRotation;
@@ -83,12 +88,36 @@ namespace Elemental.Runtime.Physics
 
         public void OnEarthMagicGrabbed(EarthMagicGripKind grip)
         {
-            Owner?.AcquirePieceForMagic(PieceIndex);
+            if (_hasMagicOwner) return;
+            bool acquired = grip == EarthMagicGripKind.Repair
+                ? Owner != null && Owner.AcquirePieceForRepair(PieceIndex)
+                : Owner != null && Owner.AcquirePieceForMagic(PieceIndex);
+            if (!acquired) return;
+            _hasMagicOwner = true;
+            _magicOwner = grip;
         }
 
         public void OnEarthMagicReleased(EarthMagicGripKind grip)
         {
-            Owner?.ReleasePieceFromMagic(PieceIndex);
+            if (!_hasMagicOwner || _magicOwner != grip) return;
+            if (grip == EarthMagicGripKind.Repair)
+                Owner?.ReleasePieceFromRepair(PieceIndex);
+            else
+                Owner?.ReleasePieceFromMagic(PieceIndex);
+            _hasMagicOwner = false;
+        }
+
+        public bool TryAcquireForRepair()
+        {
+            if (_hasMagicOwner || Owner == null || !Owner.AcquirePieceForRepair(PieceIndex)) return false;
+            _hasMagicOwner = true;
+            _magicOwner = EarthMagicGripKind.Repair;
+            return true;
+        }
+
+        public void ReleaseFromRepair()
+        {
+            OnEarthMagicReleased(EarthMagicGripKind.Repair);
         }
 
         protected virtual void OnCollisionEnter(Collision collision)

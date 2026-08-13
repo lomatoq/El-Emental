@@ -16,6 +16,7 @@ namespace Elemental.Runtime.Physics
         private EarthCohesiveStructure _cohesion;
         private EarthStructureRuntime _structureRuntime;
         private EarthStructureProxySwitcher _proxySwitcher;
+        private EarthReassemblyController _reassembly;
         private Transform[] _pieces;
         private IEarthPhysicalTarget[] _pieceTargets;
         private Rigidbody[] _pieceBodies;
@@ -98,6 +99,7 @@ namespace Elemental.Runtime.Physics
         public uint StructureId => WallId;
         public bool UsesBakedFracture => _structureRuntime != null && _structureRuntime.IsConfigured;
         public EarthStructureRuntime StructureRuntime => _structureRuntime;
+        public EarthReassemblyController Reassembly => _reassembly;
         bool IEarthFractureSource.IsFractured => _fractured;
 
         public int CopyActiveTargetsNonAlloc(IEarthPhysicalTarget[] destination)
@@ -157,7 +159,9 @@ namespace Elemental.Runtime.Physics
             }
         }
 
-        public bool ConfigureBakedRuntime(IEarthFractureAssetRuntimeData asset)
+        public bool ConfigureBakedRuntime(
+            IEarthFractureAssetRuntimeData asset,
+            EarthRepairProfile repairProfile = null)
         {
             if (asset == null || _pieces == null || _bonds == null) return false;
             ResolveReferences();
@@ -167,6 +171,9 @@ namespace Elemental.Runtime.Physics
             if (_proxySwitcher == null) _proxySwitcher = gameObject.AddComponent<EarthStructureProxySwitcher>();
             if (!_structureRuntime.Configure(asset, this, _pieces, _bonds)) return false;
             _proxySwitcher.Configure(_renderer, _collider, _pieces);
+            if (_reassembly == null) _reassembly = GetComponent<EarthReassemblyController>();
+            if (_reassembly == null) _reassembly = gameObject.AddComponent<EarthReassemblyController>();
+            _reassembly.Configure(_structureRuntime, this, repairProfile);
             for (int index = 0; index < _pieces.Length; index++)
                 _pieceTargets[index] = _pieces[index].GetComponent<EarthPieceRuntime>();
             return true;
@@ -182,6 +189,7 @@ namespace Elemental.Runtime.Physics
             uint sourceTick = 0u)
         {
             ResolveReferences();
+            _reassembly?.ResetRepairCollisionPolicy();
             WallId = id;
             _generation = _generation == uint.MaxValue ? 1u : _generation + 1u;
             Start = start;
@@ -318,6 +326,109 @@ namespace Elemental.Runtime.Physics
             return true;
         }
 
+        internal bool AcquirePieceForRepair(int pieceIndex)
+        {
+            if (!_fractured || _cohesion == null || !_cohesion.AcquirePiece(pieceIndex)) return false;
+            if (pieceIndex < 0 || pieceIndex >= _pieces.Length) return false;
+            // Snapshot/order selection happens before capture. Once a piece enters
+            // the repair session, release its old damaged constraints so PhysX is
+            // never asked to satisfy an old island and a new staging pose at once.
+            _structureRuntime?.BreakPieceBonds(pieceIndex, CurrentStructureTick);
+            BreakRemainingPieceBonds(pieceIndex);
+            _pieceShrinking[pieceIndex] = false;
+            Transform piece = _pieces[pieceIndex];
+            if (piece != null)
+            {
+                piece.localScale = _pieceFractureScales[pieceIndex];
+                piece.gameObject.SetActive(true);
+            }
+            Rigidbody body = _pieceBodies[pieceIndex];
+            if (body != null)
+            {
+                body.isKinematic = false;
+                body.detectCollisions = true;
+                body.WakeUp();
+            }
+            return true;
+        }
+
+        internal void ReleasePieceFromRepair(int pieceIndex)
+        {
+            _cohesion?.ReleasePiece(pieceIndex);
+            if (_structureRuntime != null &&
+                _structureRuntime.GetPieceState(pieceIndex).Phase != EarthPiecePhase.Welded)
+            {
+                _structureRuntime.SetPiecePhase(pieceIndex, EarthPiecePhase.Dynamic, CurrentStructureTick);
+            }
+        }
+
+        internal void RestoreBondForRepair(int bondIndex)
+        {
+            if (bondIndex < 0 || bondIndex >= _bonds.Length) return;
+            EarthWallBond bond = _bonds[bondIndex];
+            _bondBroken[bondIndex] = false;
+            _bondDamage[bondIndex] = 0f;
+            EarthBondRuntime runtime = _structureRuntime?.GetBondRuntime(bondIndex);
+            Rigidbody connected = bond.Foundation ? _body : _pieceBodies[bond.PieceB];
+            if (runtime != null) runtime.Activate(connected);
+        }
+
+        internal void SetRepairBondCollisionIgnored(int bondIndex, bool ignored)
+        {
+            if (bondIndex < 0 || bondIndex >= _bonds.Length) return;
+            EarthWallBond bond = _bonds[bondIndex];
+            if (bond.Foundation || bond.PieceA < 0 || bond.PieceB < 0 ||
+                bond.PieceA >= _pieces.Length || bond.PieceB >= _pieces.Length) return;
+            Collider first = _pieces[bond.PieceA].GetComponent<Collider>();
+            Collider second = _pieces[bond.PieceB].GetComponent<Collider>();
+            if (first != null && second != null)
+                UnityEngine.Physics.IgnoreCollision(first, second, ignored);
+        }
+
+        internal void CompletePhysicalRepair(uint tick)
+        {
+            if (!_fractured) return;
+            for (int index = 0; index < _pieces.Length; index++)
+            {
+                EarthPieceDefinition definition = _structureRuntime.GetPieceDefinition(index);
+                Transform piece = _pieces[index];
+                Rigidbody pieceBody = _pieceBodies[index];
+                if (pieceBody != null)
+                {
+                    pieceBody.detectCollisions = false;
+                    pieceBody.isKinematic = true;
+                    pieceBody.linearVelocity = Vector3.zero;
+                    pieceBody.angularVelocity = Vector3.zero;
+                }
+                piece.SetParent(transform, false);
+                piece.localPosition = new Vector3(
+                    definition.RestLocalPosition.x,
+                    definition.RestLocalPosition.y,
+                    definition.RestLocalPosition.z);
+                quaternion rest = definition.RestLocalRotation;
+                piece.localRotation = new Quaternion(rest.value.x, rest.value.y, rest.value.z, rest.value.w);
+                piece.localScale = new Vector3(
+                    definition.RestLocalScale.x,
+                    definition.RestLocalScale.y,
+                    definition.RestLocalScale.z);
+                piece.gameObject.SetActive(false);
+                _pieceAnchored[index] = false;
+                _pieceDetachedAt[index] = -1f;
+                _pieceShrinking[index] = false;
+            }
+            for (int index = 0; index < _bonds.Length; index++)
+                _structureRuntime.GetBondRuntime(index)?.Release();
+            _fractured = false;
+            _cohesion?.ResetCohesion();
+            _structureRuntime.CompleteRebuild(tick);
+            _proxySwitcher?.ShowIntact(true);
+            _renderer.enabled = true;
+            _collider.enabled = true;
+            _body.isKinematic = false;
+            _body.mass = EstimatedMass;
+            _body.WakeUp();
+        }
+
         internal void ReleasePieceFromMagic(int pieceIndex)
         {
             _cohesion?.ReleasePiece(pieceIndex);
@@ -347,6 +458,17 @@ namespace Elemental.Runtime.Physics
         {
             if (!_fractured || collision.contactCount == 0 || collision.impulse.magnitude < MinimumRockImpactImpulse)
                 return;
+            if (_reassembly != null && _reassembly.IsRepairing)
+            {
+                EarthPieceRuntime otherPiece = collision.collider != null
+                    ? collision.collider.GetComponentInParent<EarthPieceRuntime>()
+                    : null;
+                // Seating contacts and the intentional terrain insertion are
+                // solver mechanics, not new gameplay impacts. External dynamic
+                // bodies still pass through the normal damage path.
+                if ((otherPiece != null && otherPiece.Owner == this) || collision.rigidbody == null)
+                    return;
+            }
             ContactPoint contact = collision.GetContact(0);
             Vector3 direction = _pieceBodies[pieceIndex] != null &&
                                 _pieceBodies[pieceIndex].linearVelocity.sqrMagnitude > 0.01f
@@ -397,6 +519,9 @@ namespace Elemental.Runtime.Physics
                 Rigidbody pieceBody = _pieceBodies[index];
                 if (pieceBody == null || pieceBody.isKinematic || _pieces[index] == null ||
                     !_pieces[index].gameObject.activeSelf) continue;
+                EarthPieceRuntime runtimePiece = _pieceTargets[index] as EarthPieceRuntime;
+                if (runtimePiece != null && runtimePiece.HasMagicOwner &&
+                    runtimePiece.MagicOwner == EarthMagicGripKind.Repair) continue;
                 Vector3 inward = _planetCenter - pieceBody.worldCenterOfMass;
                 if (inward.sqrMagnitude < 0.01f) inward = -_up;
                 pieceBody.AddForce(
@@ -698,10 +823,15 @@ namespace Elemental.Runtime.Physics
             _structureRuntime?.MarkBondBroken(index, CurrentStructureTick);
             EarthWallBond bond = _bonds[index];
             ConfigurableJoint joint = bond.Joint;
+            Rigidbody a = _pieceBodies[bond.PieceA];
+            Rigidbody b = bond.Foundation ? _body : _pieceBodies[bond.PieceB];
             EarthBondRuntime runtimeBond = _structureRuntime?.GetBondRuntime(index);
+            SetRepairBondCollisionIgnored(index, false);
             if (runtimeBond != null)
             {
                 runtimeBond.Release();
+                if (a != null) a.isKinematic = false;
+                if (!bond.Foundation && b != null) b.isKinematic = false;
             }
             else
             {
@@ -716,8 +846,6 @@ namespace Elemental.Runtime.Physics
             }
             if (excessImpulse <= 0f) return;
 
-            Rigidbody a = _pieceBodies[bond.PieceA];
-            Rigidbody b = bond.Foundation ? _body : _pieceBodies[bond.PieceB];
             Vector3 releaseDirection = direction.sqrMagnitude > 0.001f ? direction.normalized : _fractureBias;
             float releasedImpulse = Mathf.Min(excessImpulse * ExcessImpulseRelease, EstimatedMass * 1.8f);
             if (a != null && !a.isKinematic)
@@ -840,6 +968,7 @@ namespace Elemental.Runtime.Physics
             {
                 for (int index = 0; index < _bonds.Length; index++)
                 {
+                    SetRepairBondCollisionIgnored(index, false);
                     ConfigurableJoint joint = _bonds[index].Joint;
                     joint.connectedBody = null;
                     joint.xMotion = ConfigurableJointMotion.Free;

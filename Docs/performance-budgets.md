@@ -86,3 +86,12 @@ Raw evidence is kept under `BuildReports` and `TestResults`. Interactive P50/P95
 - Damage and support batches remain under `Elemental.Earth.Fracture.Damage` / `Elemental.Earth.Fracture.Islands`; the PlayMode no-decay scenario observes stable bond count for 3.2 s after pending contact callbacks are isolated.
 - Windows Development: 170,811,033 bytes in 54.669 s, 0 warnings/errors.
 - D3D11 standalone wall-collapse QA exited 0. The captured cold-start voxel queue peak was 69.72 ms with zero pending work; this is not a shipping frame-time percentile.
+
+## Earth Core MVP polish Task 3 — 2026-08-13
+
+- EditMode: 153/153 passed in 0.772 s; PlayMode: 63/63 passed in 125.573 s.
+- Repair ordering and pose integration use caller-owned fixed arrays. A 100-cycle warm test reported `0 B` managed allocation and finite, repeatable pose output without accumulated drift.
+- A focused run against the serialized production profile repaired all 43 pieces in 23.831 s. A missing-piece run completed as partial without invented mass in 22.199 s, and interruption safely restored dynamic motion in 0.840 s.
+- Repair work is isolated under `Elemental.Earth.Repair.Align`; active piece and bond work remains bounded by the capability table above.
+- Windows Development: 170,857,854 bytes in 68.406 s, 0 warnings/errors.
+- D3D11 standalone reassembly QA exited 0 with all 43 pieces selected and one physically welded at capture. The remaining active piece reported a finite `0.015 m` pose error and no retry; startup voxel queue timing remains cold-start evidence, not a frame-time percentile.
