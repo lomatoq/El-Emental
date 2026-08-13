@@ -44,6 +44,21 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void ValidatorRejectsMissingBakedFaceVertexMask()
+        {
+            Mesh mesh = CreateClosedCube();
+            mesh.colors32 = System.Array.Empty<Color32>();
+            EarthFractureAsset asset = CreateAsset(mesh, connected: true, includeInterior: true);
+
+            EarthFractureValidationResult validation = EarthFractureValidator.Validate(asset);
+
+            Assert.That(validation.Error, Is.EqualTo(EarthFractureValidationError.MissingFaceVertexMask));
+            Assert.That(validation.Index, Is.Zero);
+            Object.DestroyImmediate(asset);
+            Object.DestroyImmediate(mesh);
+        }
+
+        [Test]
         public void ValidatorRejectsDisconnectedIntactGraph()
         {
             Mesh mesh = CreateClosedCube();
@@ -178,6 +193,13 @@ namespace Elemental.Tests.EditMode
                 2, 3, 7, 2, 7, 6,
                 3, 0, 4, 3, 4, 7
             }, 1);
+            mesh.colors32 = new[]
+            {
+                new Color32(255, 0, 0, 24), new Color32(255, 0, 0, 24),
+                new Color32(255, 0, 0, 24), new Color32(255, 0, 0, 24),
+                new Color32(0, 255, 0, 150), new Color32(0, 255, 0, 150),
+                new Color32(0, 255, 0, 150), new Color32(0, 255, 0, 150)
+            };
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
             return mesh;

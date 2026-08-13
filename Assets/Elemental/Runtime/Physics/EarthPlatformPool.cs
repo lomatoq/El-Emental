@@ -11,6 +11,7 @@ namespace Elemental.Runtime.Physics
         [SerializeField] private Material platformMaterial;
         [SerializeField] private EarthPlatformProfile profile;
         [SerializeField] private EarthPhysicsFeelProfile physicsFeelProfile;
+        [SerializeField] private Mesh[] pieceMeshVariants;
 
         private readonly List<EarthPlatform> _platforms = new List<EarthPlatform>(6);
         private uint _nextId = 1u;
@@ -40,6 +41,13 @@ namespace Elemental.Runtime.Physics
 
         public void ConfigurePhysicsFeel(EarthPhysicsFeelProfile configuredProfile) =>
             physicsFeelProfile = configuredProfile;
+
+        public void ConfigurePieceMeshes(Mesh[] configuredVariants)
+        {
+            pieceMeshVariants = configuredVariants;
+            for (int index = 0; index < _platforms.Count; index++)
+                _platforms[index].ConfigurePieceMeshes(pieceMeshVariants);
+        }
 
         private void Awake()
         {
@@ -72,7 +80,7 @@ namespace Elemental.Runtime.Physics
             body.isKinematic = true;
             physicsFeelProfile?.Apply(body, collider, EarthPhysicsBodyClass.Structure);
             EarthPlatform platform = go.AddComponent<EarthPlatform>();
-            platform.Configure(platformMaterial, profile, physicsFeelProfile);
+            platform.Configure(platformMaterial, profile, physicsFeelProfile, pieceMeshVariants);
             go.SetActive(false);
             _platforms.Add(platform);
             return platform;

@@ -84,6 +84,25 @@ Status: complete
 - Windows Development: 170,857,854 bytes in 68.406 s, 0 warnings/errors (`BuildReports/NativeWindows.json`).
 - The standalone D3D11 `reassembly` scenario exited 0 with all 43 pieces selected and one piece physically welded before taking `BuildReports/Task3-Reassembly-final.png`.
 
+## Task 4 — material and fracture presentation
+
+Status: complete
+
+- Fracture schema 3 bakes separate compact collider meshes and duplicated render vertices with exterior/interior/cavity masks. The production wall keeps 43 pieces and 140 bonds; every render piece has two material slots while every convex collider stays within the 255-vertex ceiling.
+- `Elemental/SG Earth Master` supplies object-local scale-correct projection for moving Earth and one shared planet-local projection frame for all voxel chunks. The voxel and loose-stone materials are separate, so moving blocks do not swim and chunk boundaries do not reset texture coordinates.
+- `EarthMaterialProfile` owns the warm exterior, cooler fresh break, dust/mineral hierarchy, metre-scale macro/mid/micro response and the `_EARTH_DETAIL_LOW` variant. Native High and Native Low profile assets define explicit quality ceilings.
+- `EarthImpactEvent` now drives bounded dust, irregular mesh chips, exceptional-energy amber accents, camera response and a 40-slot persistent URP decal ring. Visual response never feeds back into bond damage or Rigidbody truth.
+- Platform fracture pieces use the four authored beveled Earth-block variants and matching convex `MeshCollider`s. Production wall/platform/debris creation no longer relies on Unity cube/sphere render primitives.
+- URP remains Forward. Forward+ and GPU Resident Drawer are documented opt-in A/B decisions; dynamic structural pieces are not resident-drawer candidates.
+- Material/vertex/shader policy: `Docs/rendering/earth-master-material.md`; architecture decision: `Docs/adr/0015-earth-material-and-fracture-feedback.md`.
+
+### Evidence
+
+- EditMode: 158/158 passed in 0.749 s; PlayMode: 63/63 passed in 125.612 s.
+- Windows Development: 171,019,694 bytes in 57.634 s, 0 warnings/errors (`BuildReports/NativeWindows.json`).
+- D3D11 standalone `earth-material` QA exited 0 with 43 baked pieces, two distinct surface materials and one active persistent scar (`BuildReports/Task4-EarthMaterial.png`).
+- A 45-frame post-fracture capture on the RTX 4070 measured CPU average/max `4.26/7.00 ms` and GPU average/max `0.59/0.99 ms`. The independent cold-start voxel queue peak was `78.50 ms` with zero pending work and is not presented as steady-state frame time.
+
 ## Next concern
 
-Task 4 adds authored Earth materials and face-aware presentation without changing fracture or repair truth.
+Task 5 adds bounded ambient world simulation without changing Earth structural truth.

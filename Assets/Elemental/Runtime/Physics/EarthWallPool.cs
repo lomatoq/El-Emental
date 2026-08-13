@@ -15,6 +15,7 @@ namespace Elemental.Runtime.Physics
         [SerializeField, Range(1, 24)] private int capacity = 8;
         [SerializeField] private Mesh wallMesh;
         [SerializeField] private Material wallMaterial;
+        [SerializeField] private Material fractureInteriorMaterial;
         [SerializeField] private EarthWallProfile wallProfile;
         [SerializeField] private EarthPhysicsFeelProfile physicsFeelProfile;
         [SerializeField] private EarthRepairProfile repairProfile;
@@ -45,6 +46,12 @@ namespace Elemental.Runtime.Physics
 
         public void ConfigurePhysicsFeel(EarthPhysicsFeelProfile profile) => physicsFeelProfile = profile;
         public void ConfigureRepair(EarthRepairProfile profile) => repairProfile = profile;
+
+        public void ConfigureFractureMaterials(Material exterior, Material freshInterior)
+        {
+            if (exterior != null) wallMaterial = exterior;
+            fractureInteriorMaterial = freshInterior != null ? freshInterior : wallMaterial;
+        }
 
         public void ConfigureFractureAsset(
             ScriptableObject configuredAsset,
@@ -230,7 +237,7 @@ namespace Elemental.Runtime.Physics
                 pieceFilter.sharedMesh = renderMesh;
                 MeshRenderer pieceRenderer = piece.AddComponent<MeshRenderer>();
                 pieceRenderer.sharedMaterials = renderMesh.subMeshCount > 1
-                    ? new[] { wallMaterial, wallMaterial }
+                    ? new[] { wallMaterial, fractureInteriorMaterial != null ? fractureInteriorMaterial : wallMaterial }
                     : new[] { wallMaterial };
                 MeshCollider pieceCollider = piece.AddComponent<MeshCollider>();
                 pieceCollider.sharedMesh = colliderMesh;

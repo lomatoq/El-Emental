@@ -100,7 +100,7 @@ namespace Elemental.Authoring.Fracture
     [CreateAssetMenu(menuName = "Elemental/Earth Fracture Asset", fileName = "EarthFractureAsset")]
     public sealed class EarthFractureAsset : ScriptableObject, IEarthFractureAssetRuntimeData
     {
-        public const int CurrentSchemaVersion = 2;
+        public const int CurrentSchemaVersion = 3;
 
         [SerializeField] private int schemaVersion = CurrentSchemaVersion;
         [SerializeField] private Mesh intactRenderMesh;

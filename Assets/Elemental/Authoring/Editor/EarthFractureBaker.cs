@@ -70,6 +70,7 @@ namespace Elemental.Authoring.Editor
             Mesh intactRenderMesh,
             Mesh intactColliderMesh)
         {
+            RemoveOldPieceMeshes(asset);
             VoronoiFractureCell[] cells = VoronoiFractureSolver.BuildHierarchicalNormalizedForAspect(
                 ProductionSeed, AuthoredAspect);
             int[] areaOrder = new int[cells.Length];
@@ -93,9 +94,10 @@ namespace Elemental.Authoring.Editor
                     float depthCenter = (depthMin + depthMax) * 0.5f;
                     float depth = depthMax - depthMin;
                     int pieceIndex = nextPiece++;
-                    Mesh mesh = BuildPieceMesh(
+                    PieceMeshPair meshes = BuildPieceMeshes(
                         cells[cellIndex], pieceIndex, depthMin - depthCenter, depthMax - depthCenter);
-                    AssetDatabase.AddObjectToAsset(mesh, asset);
+                    AssetDatabase.AddObjectToAsset(meshes.Render, asset);
+                    AssetDatabase.AddObjectToAsset(meshes.Collider, asset);
                     float volume = Mathf.Max(0.0001f, cells[cellIndex].Area * depth);
                     pieces[pieceIndex] = new EarthFracturePieceRecord
                     {
@@ -116,8 +118,8 @@ namespace Elemental.Authoring.Editor
                         volume = volume,
                         localCenterOfMass = Vector3.zero,
                         materialId = 1,
-                        renderMesh = mesh,
-                        colliderMesh = mesh,
+                        renderMesh = meshes.Render,
+                        colliderMesh = meshes.Collider,
                         faceFlags = EarthPieceFaceFlags.HasExterior |
                                     EarthPieceFaceFlags.HasInterior |
                                     EarthPieceFaceFlags.HasMagicMask,
@@ -221,7 +223,7 @@ namespace Elemental.Authoring.Editor
             });
         }
 
-        private static Mesh BuildPieceMesh(
+        private static PieceMeshPair BuildPieceMeshes(
             VoronoiFractureCell cell,
             int pieceIndex,
             float localDepthMin,
@@ -262,14 +264,105 @@ namespace Elemental.Authoring.Editor
                 interior[triangle++] = count + index;
             }
 
-            var mesh = new Mesh { name = $"Earth Wall Baked Piece {pieceIndex + 1:000}" };
-            mesh.vertices = vertices;
-            mesh.subMeshCount = 2;
-            mesh.SetTriangles(exterior, 0, false);
-            mesh.SetTriangles(interior, 1, false);
-            mesh.RecalculateNormals();
-            mesh.RecalculateBounds();
-            return mesh;
+            var collider = new Mesh { name = $"Earth Wall Collider {pieceIndex + 1:000}" };
+            collider.vertices = vertices;
+            collider.subMeshCount = 2;
+            collider.SetTriangles(exterior, 0, false);
+            collider.SetTriangles(interior, 1, false);
+            collider.RecalculateNormals();
+            collider.RecalculateBounds();
+
+            int sideStart = count * 2;
+            var renderVertices = new Vector3[count * 6];
+            var colors = new Color32[renderVertices.Length];
+            var uv = new Vector2[renderVertices.Length];
+            var renderExterior = new int[(count - 2) * 6];
+            var renderInterior = new int[count * 6];
+            for (int index = 0; index < count; index++)
+            {
+                renderVertices[index] = vertices[index];
+                renderVertices[count + index] = vertices[count + index];
+                colors[index] = new Color32(255, 0, 0, 28);
+                colors[count + index] = new Color32(255, 0, 0, 28);
+                uv[index] = new Vector2(vertices[index].x, vertices[index].y);
+                uv[count + index] = uv[index];
+            }
+            triangle = 0;
+            for (int index = 1; index < count - 1; index++)
+            {
+                renderExterior[triangle++] = 0;
+                renderExterior[triangle++] = index + 1;
+                renderExterior[triangle++] = index;
+                renderExterior[triangle++] = count;
+                renderExterior[triangle++] = count + index;
+                renderExterior[triangle++] = count + index + 1;
+            }
+            triangle = 0;
+            for (int index = 0; index < count; index++)
+            {
+                int next = (index + 1) % count;
+                int vertex = sideStart + index * 4;
+                renderVertices[vertex] = vertices[index];
+                renderVertices[vertex + 1] = vertices[next];
+                renderVertices[vertex + 2] = vertices[count + next];
+                renderVertices[vertex + 3] = vertices[count + index];
+                byte cavity = (byte)Mathf.RoundToInt(Mathf.Lerp(118f, 186f, Hash01((uint)(pieceIndex + 1), index)));
+                colors[vertex] = colors[vertex + 1] = colors[vertex + 2] = colors[vertex + 3] =
+                    new Color32(0, 255, 0, cavity);
+                float edgeLength = Vector3.Distance(vertices[index], vertices[next]);
+                uv[vertex] = new Vector2(0f, 0f);
+                uv[vertex + 1] = new Vector2(edgeLength, 0f);
+                uv[vertex + 2] = new Vector2(edgeLength, localDepthMax - localDepthMin);
+                uv[vertex + 3] = new Vector2(0f, localDepthMax - localDepthMin);
+                renderInterior[triangle++] = vertex;
+                renderInterior[triangle++] = vertex + 1;
+                renderInterior[triangle++] = vertex + 2;
+                renderInterior[triangle++] = vertex;
+                renderInterior[triangle++] = vertex + 2;
+                renderInterior[triangle++] = vertex + 3;
+            }
+
+            var render = new Mesh { name = $"Earth Wall Baked Piece {pieceIndex + 1:000}" };
+            render.vertices = renderVertices;
+            render.colors32 = colors;
+            render.uv = uv;
+            render.subMeshCount = 2;
+            render.SetTriangles(renderExterior, 0, false);
+            render.SetTriangles(renderInterior, 1, false);
+            render.RecalculateNormals();
+            render.RecalculateTangents();
+            render.RecalculateBounds();
+            return new PieceMeshPair(render, collider);
+        }
+
+        private static void RemoveOldPieceMeshes(EarthFractureAsset asset)
+        {
+            EarthFracturePieceRecord[] records = asset.PieceRecords;
+            if (records == null || records.Length == 0) return;
+            var removed = new HashSet<Mesh>();
+            for (int index = 0; index < records.Length; index++)
+            {
+                RemoveSubAsset(records[index].renderMesh, asset, removed);
+                RemoveSubAsset(records[index].colliderMesh, asset, removed);
+            }
+        }
+
+        private static void RemoveSubAsset(Mesh mesh, EarthFractureAsset owner, HashSet<Mesh> removed)
+        {
+            if (mesh == null || mesh == owner.IntactRenderMesh || mesh == owner.IntactColliderMesh ||
+                !AssetDatabase.IsSubAsset(mesh) || !removed.Add(mesh)) return;
+            UnityEngine.Object.DestroyImmediate(mesh, true);
+        }
+
+        private static float Hash01(uint seed, int index)
+        {
+            uint value = seed ^ ((uint)(index + 1) * 0x9E3779B9u);
+            value ^= value >> 16;
+            value *= 0x7FEB352Du;
+            value ^= value >> 15;
+            value *= 0x846CA68Bu;
+            value ^= value >> 16;
+            return (value & 0x00FFFFFFu) / 16777215f;
         }
 
         private static bool TryGetSharedEdge(
@@ -342,6 +435,18 @@ namespace Elemental.Authoring.Editor
             public float DepthMin { get; }
             public float DepthMax { get; }
             public Vector3 RestPosition { get; }
+        }
+
+        private readonly struct PieceMeshPair
+        {
+            public PieceMeshPair(Mesh render, Mesh collider)
+            {
+                Render = render;
+                Collider = collider;
+            }
+
+            public Mesh Render { get; }
+            public Mesh Collider { get; }
         }
     }
 }

@@ -74,6 +74,14 @@ namespace Elemental.Tests.EditMode
                     VisualQaCaptureRequest.ScenarioArgument, "night"
                 }, out VisualQaCaptureRequest nightRequest), Is.True);
             Assert.That(nightRequest.Scenario, Is.EqualTo(VisualQaScenario.Night));
+
+            Assert.That(VisualQaCaptureRequest.TryParse(
+                new[]
+                {
+                    "game.exe", VisualQaCaptureRequest.Argument, "earth-material.png",
+                    VisualQaCaptureRequest.ScenarioArgument, "earth-material"
+                }, out VisualQaCaptureRequest materialRequest), Is.True);
+            Assert.That(materialRequest.Scenario, Is.EqualTo(VisualQaScenario.EarthMaterialFracture));
         }
     }
 }

@@ -16,6 +16,7 @@ namespace Elemental.Authoring.Fracture
         NonManifoldPiece,
         MissingFaceMetadata,
         InvalidFaceSubmesh,
+        MissingFaceVertexMask,
         MismatchedRestSeam,
         ImpossibleHierarchy,
         UnsupportedFoundation,
@@ -91,6 +92,9 @@ namespace Elemental.Authoring.Fracture
                 {
                     return new EarthFractureValidationResult(EarthFractureValidationError.InvalidFaceSubmesh, pieceIndex);
                 }
+                if (!HasBakedFaceVertexMasks(renderMesh))
+                    return new EarthFractureValidationResult(
+                        EarthFractureValidationError.MissingFaceVertexMask, pieceIndex);
             }
 
             bool hasFoundation = false;
@@ -123,6 +127,20 @@ namespace Elemental.Authoring.Fracture
             }
 
             return new EarthFractureValidationResult(EarthFractureValidationError.None, -1);
+        }
+
+        private static bool HasBakedFaceVertexMasks(Mesh mesh)
+        {
+            Color32[] colors = mesh.colors32;
+            if (colors == null || colors.Length != mesh.vertexCount) return false;
+            bool exterior = false;
+            bool interior = false;
+            for (int index = 0; index < colors.Length; index++)
+            {
+                exterior |= colors[index].r >= 192 && colors[index].g <= 64;
+                interior |= colors[index].g >= 192 && colors[index].r <= 64;
+            }
+            return exterior && interior;
         }
 
         private static bool IsClosedManifold(Mesh mesh)

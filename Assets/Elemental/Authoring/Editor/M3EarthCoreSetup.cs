@@ -50,6 +50,8 @@ namespace Elemental.Authoring.Editor
         private const string MeteorProfilePath = "Assets/Elemental/Content/Profiles/MeteorShowerProfile.asset";
         private const string CharacterProfilePath = "Assets/Elemental/Content/Profiles/CharacterPresentationProfile.asset";
         private const string PhysicsFeelProfilePath = "Assets/Elemental/Content/Profiles/EarthPhysicsFeelProfile.asset";
+        private const string EarthMaterialProfilePath = "Assets/Elemental/Content/Profiles/EarthMaterialProfile.asset";
+        private const string EarthFeedbackProfilePath = "Assets/Elemental/Content/Profiles/EarthFeedbackProfile.asset";
         private const string EarthStoneAlbedoPath = "Assets/Elemental/Content/Textures/EarthStoneAlbedo.png";
         private const string MageModelPath = "Assets/ThirdParty/KayKit/Mage/Mage.fbx";
         private const string MageTexturePath = "Assets/ThirdParty/KayKit/Mage/mage_texture.png";
@@ -76,7 +78,15 @@ namespace Elemental.Authoring.Editor
             Material earthMaterial = AssetDatabase.LoadAssetAtPath<Material>(
                 "Assets/Elemental/Content/Materials/VoxelPlanetSurface.mat");
             EarthCoreVisualStyle style = CreateOrLoadVisualStyle();
-            ApplyEarthMaterial(earthMaterial, style);
+            EarthMaterialProfile earthMaterialProfile = CreateOrLoadProfile<EarthMaterialProfile>(
+                EarthMaterialProfilePath,
+                "Earth Material Profile");
+            ApplyEarthMaterial(earthMaterial, style, earthMaterialProfile, false);
+            earthMaterial.SetFloat("_UsePlanetFrame", 1f);
+            Material looseEarthMaterial = CreateOrLoadEarthMaterial(
+                "EarthLooseStone.mat", style.StoneColor, style.StoneSmoothness, style.StoneEmission * 0.35f);
+            earthMaterialProfile.Apply(looseEarthMaterial, false);
+            looseEarthMaterial.SetFloat("_UsePlanetFrame", 0f);
             Transform heldFragmentAnchor = CreateHeldFragmentAnchor(character);
             GameObject magicRoot = new GameObject("Earth Magic Runtime");
             magicRoot.SetActive(false);
@@ -87,10 +97,10 @@ namespace Elemental.Authoring.Editor
                 PhysicsFeelProfilePath,
                 "Earth Physics Feel Profile");
             EarthRockDebrisPool debrisPool = magicRoot.AddComponent<EarthRockDebrisPool>();
-            debrisPool.Configure(72, earthMaterial, fragmentMesh, gravityWorld, rockProfile);
+            debrisPool.Configure(72, looseEarthMaterial, fragmentMesh, gravityWorld, rockProfile);
             debrisPool.ConfigureMeshVariants(fragmentMeshes);
             EarthFragmentPool pool = magicRoot.AddComponent<EarthFragmentPool>();
-            pool.Configure(8, earthMaterial, gravityWorld, fragmentMesh, rockProfile, debrisPool);
+            pool.Configure(8, looseEarthMaterial, gravityWorld, fragmentMesh, rockProfile, debrisPool);
             pool.ConfigureMeshVariants(fragmentMeshes);
             pool.ConfigurePhysicsFeel(physicsFeel);
             EarthHoverProfile hoverProfile = CreateOrLoadHoverProfile();
@@ -98,8 +108,13 @@ namespace Elemental.Authoring.Editor
             Mesh wallMesh = CreateOrLoadChippedWallMesh();
             Material wallMaterial = CreateOrLoadEarthMaterial(
                 "EarthWall.mat", style.StoneColor * 0.95f, 0.05f, style.StoneEmission * 0.5f);
+            earthMaterialProfile.Apply(wallMaterial, false);
+            Material fractureInteriorMaterial = CreateOrLoadEarthMaterial(
+                "EarthFractureInterior.mat", earthMaterialProfile.FreshInteriorTint, 0.025f, Color.black);
+            earthMaterialProfile.Apply(fractureInteriorMaterial, true);
             EarthWallPool wallPool = magicRoot.AddComponent<EarthWallPool>();
             wallPool.Configure(8, wallMesh, wallMaterial, CreateOrLoadWallProfile());
+            wallPool.ConfigureFractureMaterials(wallMaterial, fractureInteriorMaterial);
             wallPool.ConfigurePhysicsFeel(physicsFeel);
             wallPool.ConfigureRepair(CreateOrLoadProfile<EarthRepairProfile>(
                 RepairProfilePath,
@@ -111,6 +126,7 @@ namespace Elemental.Authoring.Editor
             EarthPlatformPool platformPool = magicRoot.AddComponent<EarthPlatformPool>();
             platformPool.Configure(6, wallMaterial, platformProfile);
             platformPool.ConfigurePhysicsFeel(physicsFeel);
+            platformPool.ConfigurePieceMeshes(fragmentMeshes);
             EarthPillarWaveProfile waveProfile = CreateOrLoadWaveProfile();
             EarthPillarWavePool wavePool = magicRoot.AddComponent<EarthPillarWavePool>();
             wavePool.Configure(96, wallMesh, wallMaterial, collisionProxy.transform, waveProfile);
@@ -183,10 +199,10 @@ namespace Elemental.Authoring.Editor
 
             feedback.Configure(executor);
             ConfigurePresentation(
-                scene, character, camera, executor, input, pillarMobility, cushion, preview, style, earthMaterial,
+                scene, character, camera, executor, input, pillarMobility, cushion, preview, style, looseEarthMaterial,
                 gravityWorld, wavePool, collisionProxy.transform, worldProfile);
-            CreateImpactDummy(gravityWorld, earthMaterial, style);
-            CreatePushBoulders(gravityWorld, earthMaterial, worldProfile.Radius, physicsFeel);
+            CreateImpactDummy(gravityWorld, looseEarthMaterial, style);
+            CreatePushBoulders(gravityWorld, looseEarthMaterial, worldProfile.Radius, physicsFeel);
             EditorSceneManager.SaveScene(scene, EarthCoreScenePath);
             List<EditorBuildSettingsScene> scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
             if (!scenes.Exists(item => item.path == EarthCoreScenePath))
@@ -299,11 +315,15 @@ namespace Elemental.Authoring.Editor
             return profile;
         }
 
-        private static void ApplyEarthMaterial(Material material, EarthCoreVisualStyle style)
+        private static void ApplyEarthMaterial(
+            Material material,
+            EarthCoreVisualStyle style,
+            EarthMaterialProfile profile,
+            bool freshInterior)
         {
             if (material == null) return;
             ConfigureEarthTextureImport();
-            Shader shader = Shader.Find("Elemental/Earth Triplanar");
+            Shader shader = Shader.Find("Elemental/SG Earth Master");
             if (shader != null && material.shader != shader) material.shader = shader;
             material.color = style.StoneColor;
             material.SetColor("_BaseColor", style.StoneColor);
@@ -313,6 +333,7 @@ namespace Elemental.Authoring.Editor
             material.SetFloat("_TriplanarSharpness", 5.5f);
             Texture2D albedo = AssetDatabase.LoadAssetAtPath<Texture2D>(EarthStoneAlbedoPath);
             if (albedo != null) material.SetTexture("_BaseMap", albedo);
+            profile?.Apply(material, freshInterior);
             EditorUtility.SetDirty(material);
         }
 
@@ -321,9 +342,9 @@ namespace Elemental.Authoring.Editor
         {
             const string folder = "Assets/Elemental/Content/Materials/";
             Material material = AssetDatabase.LoadAssetAtPath<Material>(folder + fileName);
-            Shader shader = Shader.Find("Elemental/Earth Triplanar");
+            Shader shader = Shader.Find("Elemental/SG Earth Master");
             if (shader == null)
-                throw new UnityEditor.Build.BuildFailedException("Elemental/Earth Triplanar shader was not found.");
+                throw new UnityEditor.Build.BuildFailedException("Elemental/SG Earth Master shader was not found.");
             if (material == null)
             {
                 material = new Material(shader) { name = System.IO.Path.GetFileNameWithoutExtension(fileName) };
@@ -1633,6 +1654,56 @@ namespace Elemental.Authoring.Editor
                 planetCenter,
                 new[] { dust, sparks, rubble },
                 new[] { 2.2f, 5.5f, 11.5f });
+            EarthFeedbackProfile feedbackProfile = CreateOrLoadProfile<EarthFeedbackProfile>(
+                EarthFeedbackProfilePath,
+                "Earth Feedback Profile");
+            feedback.ConfigureImpactProfile(feedbackProfile);
+            Material scarMaterial = CreateOrLoadEarthScarDecalMaterial();
+            ConfigureDecalRendererFeature();
+            EarthSurfaceScarPool scarPool = root.AddComponent<EarthSurfaceScarPool>();
+            scarPool.Configure(executor, feedbackProfile, scarMaterial, planetCenter);
+        }
+
+        private static Material CreateOrLoadEarthScarDecalMaterial()
+        {
+            const string path = "Assets/Elemental/Content/Materials/EarthSurfaceScarDecal.mat";
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                Material template = AssetDatabase.LoadAssetAtPath<Material>(
+                    "Packages/com.unity.render-pipelines.universal/Runtime/Materials/Decal.mat");
+                if (template == null)
+                    throw new UnityEditor.Build.BuildFailedException("The URP 17 decal template was not found.");
+                material = new Material(template) { name = "Earth Surface Scar Decal" };
+                AssetDatabase.CreateAsset(material, path);
+            }
+            Color scar = new Color(0.115f, 0.078f, 0.052f, 0.78f);
+            if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", scar);
+            if (material.HasProperty("_Color")) material.SetColor("_Color", scar);
+            if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", 0.01f);
+            material.enableInstancing = true;
+            EditorUtility.SetDirty(material);
+            return material;
+        }
+
+        private static void ConfigureDecalRendererFeature()
+        {
+            UniversalRenderPipelineAsset pipeline = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+            if (pipeline == null) return;
+            SerializedObject pipelineObject = new SerializedObject(pipeline);
+            SerializedProperty rendererList = pipelineObject.FindProperty("m_RendererDataList");
+            ScriptableRendererData rendererData = rendererList != null && rendererList.arraySize > 0
+                ? rendererList.GetArrayElementAtIndex(0).objectReferenceValue as ScriptableRendererData
+                : null;
+            if (rendererData == null) return;
+            for (int index = 0; index < rendererData.rendererFeatures.Count; index++)
+                if (rendererData.rendererFeatures[index] is DecalRendererFeature) return;
+            DecalRendererFeature feature = ScriptableObject.CreateInstance<DecalRendererFeature>();
+            feature.name = "Elemental Earth Surface Scars";
+            AssetDatabase.AddObjectToAsset(feature, rendererData);
+            rendererData.rendererFeatures.Add(feature);
+            EditorUtility.SetDirty(feature);
+            EditorUtility.SetDirty(rendererData);
         }
 
         private static ParticleSystem CreateParticles(
@@ -1667,14 +1738,41 @@ namespace Elemental.Authoring.Editor
                 new Keyframe(0.72f, 0.82f, -0.6f, -0.6f),
                 new Keyframe(1f, 0f, -2.2f, 0f)));
             ParticleSystemRenderer renderer = go.GetComponent<ParticleSystemRenderer>();
-            renderer.renderMode = ParticleSystemRenderMode.Mesh;
-            renderer.mesh = Resources.GetBuiltinResource<Mesh>("Cube.fbx");
+            bool softDust = !glow && string.IsNullOrEmpty(materialName);
+            renderer.renderMode = softDust
+                ? ParticleSystemRenderMode.Billboard
+                : ParticleSystemRenderMode.Mesh;
+            if (!softDust)
+            {
+                Mesh[] variants = LoadEarthParticleMeshVariants();
+                renderer.SetMeshes(variants, variants.Length);
+            }
             renderer.sharedMaterial = CreateOrLoadLitMaterial(
                 materialName ?? (glow ? "AmberShardVfx.mat" : "EarthDustVfx.mat"),
                 color,
                 0.04f,
                 glow ? color * 2f : Color.black);
             return ps;
+        }
+
+        private static Mesh[] LoadEarthParticleMeshVariants()
+        {
+            string[] paths =
+            {
+                FragmentMeshPath,
+                "Assets/Elemental/Content/Meshes/BeveledEarthBlockB.asset",
+                "Assets/Elemental/Content/Meshes/BeveledEarthBlockC.asset",
+                "Assets/Elemental/Content/Meshes/BeveledEarthBlockD.asset"
+            };
+            var variants = new Mesh[paths.Length];
+            for (int index = 0; index < paths.Length; index++)
+            {
+                variants[index] = AssetDatabase.LoadAssetAtPath<Mesh>(paths[index]);
+                if (variants[index] == null)
+                    throw new UnityEditor.Build.BuildFailedException(
+                        $"Earth particle mesh variant is missing: {paths[index]}");
+            }
+            return variants;
         }
 
         private static void CreateGravityWellFeedback(

@@ -20,7 +20,8 @@ namespace Elemental.Presentation.Rendering
         Night = 12,
         Meteor = 13,
         MageCast = 14,
-        Reassembly = 15
+        Reassembly = 15,
+        EarthMaterialFracture = 16
     }
 
     public readonly struct VisualQaCaptureRequest
@@ -85,6 +86,7 @@ namespace Elemental.Presentation.Rendering
             if (string.Equals(value, "meteor", StringComparison.OrdinalIgnoreCase)) return VisualQaScenario.Meteor;
             if (string.Equals(value, "mage-cast", StringComparison.OrdinalIgnoreCase)) return VisualQaScenario.MageCast;
             if (string.Equals(value, "reassembly", StringComparison.OrdinalIgnoreCase)) return VisualQaScenario.Reassembly;
+            if (string.Equals(value, "earth-material", StringComparison.OrdinalIgnoreCase)) return VisualQaScenario.EarthMaterialFracture;
             return VisualQaScenario.None;
         }
     }

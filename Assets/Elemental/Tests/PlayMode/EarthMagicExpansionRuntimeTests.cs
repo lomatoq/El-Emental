@@ -288,6 +288,18 @@ namespace Elemental.Tests.PlayMode
             if (puppet != null)
                 Assert.That(puppet.CurrentState.Mode, Is.Not.EqualTo(Elemental.Simulation.Characters.CharacterPhysicalMode.FullRagdoll));
 
+            Assert.That(platform.ApplyStructureImpact(
+                platform.transform.position + up * platform.Height,
+                forward,
+                2200f), Is.True);
+            yield return new WaitForFixedUpdate();
+            MeshFilter authoredPiece = platform.FirstActivePiece != null
+                ? platform.FirstActivePiece.GetComponent<MeshFilter>()
+                : null;
+            Assert.That(authoredPiece, Is.Not.Null);
+            Assert.That(authoredPiece.sharedMesh.name, Does.Not.StartWith("Debug Platform Piece"));
+            Assert.That(authoredPiece.sharedMesh.vertexCount, Is.GreaterThan(8));
+
             yield return SceneManager.UnloadSceneAsync(scene);
         }
 

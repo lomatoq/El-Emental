@@ -6,6 +6,7 @@ using Elemental.Input.Gestures;
 using Elemental.Runtime.World;
 using Elemental.Runtime.Physics;
 using Elemental.Runtime.Characters;
+using Elemental.Presentation.VFX;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -15,6 +16,8 @@ namespace Elemental.Presentation.Rendering
     public sealed class VisualQaCaptureBehaviour : MonoBehaviour
     {
         [SerializeField, Min(1)] private int settleFrames = 90;
+
+        private readonly FrameTiming[] _latestTiming = new FrameTiming[1];
 
         private IEnumerator Start()
         {
@@ -32,6 +35,8 @@ namespace Elemental.Presentation.Rendering
                     Application.Quit(5);
                     yield break;
                 }
+                if (request.Scenario == VisualQaScenario.EarthMaterialFracture)
+                    yield return CapturePerformanceSample(45);
             }
 
             string fullPath = Path.GetFullPath(request.OutputPath);
@@ -103,7 +108,8 @@ namespace Elemental.Presentation.Rendering
             }
 
             if (scenario == VisualQaScenario.Wall || scenario == VisualQaScenario.WallCollapse ||
-                scenario == VisualQaScenario.WallDebris)
+                scenario == VisualQaScenario.WallDebris ||
+                scenario == VisualQaScenario.EarthMaterialFracture)
             {
                 _scenarioSucceeded = input.SelectEarthAbility(Elemental.Simulation.Magic.EarthAbilityIds.LineWall) &&
                                      input.TryCommitScreenPath(surfaceLine, 0.8f);
@@ -131,6 +137,92 @@ namespace Elemental.Presentation.Rendering
                         camera.transform.forward,
                         6200f);
                     yield return new WaitForSecondsRealtime(1.15f);
+                    yield break;
+                }
+                if (scenario == VisualQaScenario.EarthMaterialFracture)
+                {
+                    yield return new WaitForSecondsRealtime(1.05f);
+                    EarthWall wall = FindAnyObjectByType<EarthWall>();
+                    CelestialSystemBehaviour celestial = FindAnyObjectByType<CelestialSystemBehaviour>();
+                    celestial?.SetTimeOfDayForQa(0.23f);
+                    if (wall == null) yield break;
+                    Vector3 shotTarget = wall.transform.position + wall.transform.up * wall.Height * 0.36f;
+                    Vector3 viewNormal = wall.transform.forward;
+                    if (Vector3.Dot(camera.transform.position - shotTarget, viewNormal) < 0f) viewNormal = -viewNormal;
+                    Vector3 viewSide = wall.transform.right;
+                    if (Vector3.Dot(camera.transform.position - shotTarget, viewSide) < 0f) viewSide = -viewSide;
+                    Elemental.Presentation.Camera.PlanetCameraRig qaCameraRig =
+                        FindAnyObjectByType<Elemental.Presentation.Camera.PlanetCameraRig>();
+                    if (qaCameraRig != null) qaCameraRig.enabled = false;
+                    float wallLength = Vector3.Distance(wall.Start, wall.End);
+                    camera.transform.position = shotTarget + viewNormal * (wallLength * 1.55f + 2.2f) +
+                                                viewSide * (wallLength * 0.22f) + wall.transform.up * 1.1f;
+                    camera.transform.rotation = Quaternion.LookRotation(
+                        shotTarget - camera.transform.position,
+                        wall.transform.up);
+                    camera.fieldOfView = 54f;
+                    PlanetMotor visibleMotor = FindAnyObjectByType<PlanetMotor>();
+                    if (visibleMotor != null)
+                    {
+                        Renderer[] actorRenderers = visibleMotor.GetComponentsInChildren<Renderer>(true);
+                        for (int index = 0; index < actorRenderers.Length; index++)
+                            actorRenderers[index].enabled = false;
+                    }
+                    yield return null;
+                    Vector3 impactPoint = wall != null
+                        ? wall.transform.position + wall.transform.up * wall.Height * 0.18f
+                        : Vector3.zero;
+                    _scenarioSucceeded = wall != null && wall.ApplyRockImpact(
+                        impactPoint, -viewNormal, 58f);
+                    // Freeze only the QA tableau after canonical fracture has run. This keeps the
+                    // exterior/interior face contract readable instead of photographing a random
+                    // later point in the ballistic collapse.
+                    var qaPieces = new IEarthPhysicalTarget[48];
+                    int qaPieceCount = wall.CopyActiveTargetsNonAlloc(qaPieces);
+                    EarthPieceRuntime showcasePiece = null;
+                    float showcaseDistance = float.MaxValue;
+                    for (int index = 0; index < qaPieceCount; index++)
+                    {
+                        if (!(qaPieces[index] is EarthPieceRuntime piece) || piece.Body == null) continue;
+                        piece.Body.linearVelocity = Vector3.zero;
+                        piece.Body.angularVelocity = Vector3.zero;
+                        piece.Body.isKinematic = true;
+                        float distance = (piece.Body.worldCenterOfMass - impactPoint).sqrMagnitude;
+                        if (distance < showcaseDistance)
+                        {
+                            showcaseDistance = distance;
+                            showcasePiece = piece;
+                        }
+                    }
+                    if (showcasePiece != null)
+                        showcasePiece.Body.position += viewNormal * 0.82f + viewSide * 0.28f + wall.transform.up * 0.12f;
+                    MagicExecutor executor = input.EarthExecutor;
+                    if (executor != null && wall != null)
+                    {
+                        executor.Events.Emit(new Elemental.Simulation.Magic.EarthImpactEvent(
+                            900u,
+                            wall.WallId,
+                            1200f,
+                            90000f,
+                            520f,
+                            18f,
+                            (float3)impactPoint,
+                            (float3)viewNormal,
+                            Elemental.Simulation.Magic.EarthImpactMaterialKind.Structure));
+                    }
+                    yield return new WaitForSecondsRealtime(0.55f);
+                    MeshRenderer pieceRenderer = wall != null && wall.FirstFracturePiece != null
+                        ? wall.FirstFracturePiece.GetComponent<MeshRenderer>()
+                        : null;
+                    EarthSurfaceScarPool scarPool = FindAnyObjectByType<EarthSurfaceScarPool>();
+                    bool distinctSurfaces = pieceRenderer != null &&
+                                            pieceRenderer.sharedMaterials.Length == 2 &&
+                                            pieceRenderer.sharedMaterials[0] != pieceRenderer.sharedMaterials[1];
+                    _scenarioSucceeded &= distinctSurfaces && scarPool != null && scarPool.ActiveCount > 0;
+                    Debug.Log($"[Elemental] Earth material QA wall={wall?.WallId ?? 0}, " +
+                              $"pieces={wall?.ActiveFracturePieceCount ?? 0}, " +
+                              $"submeshes={pieceRenderer?.sharedMaterials.Length ?? 0}, " +
+                              $"distinct={distinctSurfaces}, scars={scarPool?.ActiveCount ?? 0}.");
                     yield break;
                 }
                 yield return new WaitForSecondsRealtime(1.05f);
@@ -326,6 +418,36 @@ namespace Elemental.Presentation.Rendering
             input.TryPreviewScreenPath(flickStroke, 0.18f);
             _scenarioSucceeded = input.TryCommitScreenPath(flickStroke, 0.18f);
             for (int frame = 0; frame < 4; frame++) yield return null;
+        }
+
+        private IEnumerator CapturePerformanceSample(int frameCount)
+        {
+            double cpuTotal = 0d;
+            double gpuTotal = 0d;
+            double cpuMaximum = 0d;
+            double gpuMaximum = 0d;
+            int count = 0;
+            for (int frame = 0; frame < frameCount; frame++)
+            {
+                FrameTimingManager.CaptureFrameTimings();
+                yield return null;
+                if (FrameTimingManager.GetLatestTimings(1, _latestTiming) == 0) continue;
+                FrameTiming timing = _latestTiming[0];
+                cpuTotal += timing.cpuFrameTime;
+                gpuTotal += timing.gpuFrameTime;
+                cpuMaximum = Math.Max(cpuMaximum, timing.cpuFrameTime);
+                gpuMaximum = Math.Max(gpuMaximum, timing.gpuFrameTime);
+                count++;
+            }
+
+            if (count == 0)
+            {
+                Debug.LogWarning("[Elemental] Earth material frame timing capture returned no samples.");
+                yield break;
+            }
+            Debug.Log($"[Elemental] Earth material frame timing samples={count}, " +
+                      $"CPU avg={cpuTotal / count:0.00} ms max={cpuMaximum:0.00} ms, " +
+                      $"GPU avg={gpuTotal / count:0.00} ms max={gpuMaximum:0.00} ms.");
         }
 
         private static Material FindEarthMaterial()

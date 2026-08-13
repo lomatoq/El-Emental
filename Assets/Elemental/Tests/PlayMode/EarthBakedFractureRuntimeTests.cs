@@ -32,6 +32,12 @@ namespace Elemental.Tests.PlayMode
             yield return new WaitForSeconds(0.8f);
             Assert.That(wall.UsesBakedFracture, Is.True);
             Assert.That(wall.IsCollapsing, Is.False);
+            MeshRenderer bakedRenderer = wall.FirstFracturePiece.GetComponent<MeshRenderer>();
+            Assert.That(bakedRenderer.sharedMaterials, Has.Length.EqualTo(2));
+            Assert.That(bakedRenderer.sharedMaterials[0], Is.Not.SameAs(bakedRenderer.sharedMaterials[1]));
+            Assert.That(bakedRenderer.sharedMaterials[0].shader.name, Is.EqualTo("Elemental/SG Earth Master"));
+            Assert.That(wall.FirstFracturePiece.GetComponent<MeshFilter>().sharedMesh.colors32,
+                Has.Length.EqualTo(wall.FirstFracturePiece.GetComponent<MeshFilter>().sharedMesh.vertexCount));
 
             Assert.That(wall.ApplyRockImpact(wall.transform.position, wall.transform.forward, 100f), Is.True);
             var targets = new IEarthPhysicalTarget[48];

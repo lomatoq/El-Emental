@@ -20,11 +20,15 @@ namespace Elemental.Presentation.VFX
         [SerializeField] private MagicInputController input;
         [SerializeField] private EarthPillarWavePool wavePool;
         [SerializeField] private Transform planetCenter;
+        [SerializeField] private EarthFeedbackProfile impactFeedbackProfile;
 
         private float _pulse;
         private float _crackLife;
         private float _nextChargePulseTime;
         private float _nextWaveCameraPulse;
+
+        public void ConfigureImpactProfile(EarthFeedbackProfile configuredProfile) =>
+            impactFeedbackProfile = configuredProfile;
 
         public void Configure(
             MagicExecutor configuredExecutor,
@@ -85,6 +89,7 @@ namespace Elemental.Presentation.VFX
                 executor.Events.FragmentSpawned += OnFragmentSpawned;
                 executor.Events.FragmentLaunched += OnFragmentLaunched;
                 executor.Events.ImpactOccurred += OnImpact;
+                executor.Events.EarthImpactOccurred += OnEarthImpact;
                 executor.Events.MagicPushed += OnMagicPushed;
             }
             if (input != null) input.PushChargeChanged += OnPushChargeChanged;
@@ -101,6 +106,7 @@ namespace Elemental.Presentation.VFX
                 executor.Events.FragmentSpawned -= OnFragmentSpawned;
                 executor.Events.FragmentLaunched -= OnFragmentLaunched;
                 executor.Events.ImpactOccurred -= OnImpact;
+                executor.Events.EarthImpactOccurred -= OnEarthImpact;
                 executor.Events.MagicPushed -= OnMagicPushed;
             }
             if (input != null) input.PushChargeChanged -= OnPushChargeChanged;
@@ -128,8 +134,8 @@ namespace Elemental.Presentation.VFX
             {
                 float t = index / 8f;
                 Vector3 alongWall = Vector3.Lerp(start, end, t);
-                // The wall itself is pooled. These short-lived cube particles sell loose
-                // soil and chips being pushed aside without modifying voxel geometry.
+                // The wall itself is pooled. Short-lived irregular chips sell loose
+                // soil being pushed aside without modifying voxel geometry.
                 Emit(alongWall + (up * 0.10f), 5, index % 2 == 0 ? 2 : 1);
                 if (rubble != null)
                 {
@@ -180,12 +186,35 @@ namespace Elemental.Presentation.VFX
 
         private void OnImpact(ImpactEvent value)
         {
+            if (impactFeedbackProfile != null) return;
             Emit(new Vector3(value.Point.x, value.Point.y, value.Point.z),
                 Mathf.Clamp(Mathf.RoundToInt(value.Impulse * 0.025f), 18, 72), 24);
             cameraRig?.AddPresentationImpulse(
                 Mathf.Clamp(value.Impulse * 0.00075f, 0.04f, 0.24f),
                 0.38f,
                 value.FragmentId ^ 0x1A4AC7u);
+        }
+
+        private void OnEarthImpact(EarthImpactEvent value)
+        {
+            if (impactFeedbackProfile == null) return;
+            EarthFeedbackSample sample = impactFeedbackProfile.Evaluate(in value);
+            Vector3 point = new Vector3(value.Point.x, value.Point.y, value.Point.z);
+            Vector3 up = new Vector3(value.Normal.x, value.Normal.y, value.Normal.z);
+            SetEmitterFrame(dust, point, up);
+            SetEmitterFrame(rubble, point + up * 0.025f, up);
+            dust?.Emit(sample.DustCount);
+            rubble?.Emit(sample.ChipCount);
+            // Bright motes are an accent for exceptional energy, never the dominant layer.
+            if (sparks != null && value.KineticEnergy > 18000f)
+            {
+                SetEmitterFrame(sparks, point + up * 0.04f, up);
+                sparks.Emit(value.KineticEnergy > 65000f ? 3 : 1);
+            }
+            cameraRig?.AddPresentationImpulse(
+                Mathf.Clamp(Mathf.Log10(1f + value.KineticEnergy) * 0.022f, 0.025f, 0.19f),
+                0.34f,
+                value.SourceId ^ 0xEA47F11u);
         }
 
         private void OnPushChargeChanged(float charge)

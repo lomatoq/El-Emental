@@ -41,6 +41,8 @@ namespace Elemental.Runtime.Physics
         private readonly Collider[] _temporarilyIgnoredRiders = new Collider[24];
         private int _temporarilyIgnoredRiderCount;
         private uint _generation;
+        private Mesh[] _pieceMeshVariants;
+        private Mesh _fallbackPieceMesh;
 
         public uint PlatformId { get; private set; }
         public float Area { get; private set; }
@@ -85,21 +87,33 @@ namespace Elemental.Runtime.Physics
         public void Configure(
             Material material,
             EarthPlatformProfile profile,
-            EarthPhysicsFeelProfile physicsFeelProfile = null)
+            EarthPhysicsFeelProfile physicsFeelProfile = null,
+            Mesh[] pieceMeshVariants = null)
         {
             Resolve();
             _profile = profile;
             _renderer.sharedMaterial = material;
-            if (_pieces != null) return;
+            _pieceMeshVariants = pieceMeshVariants;
+            if (_pieces != null)
+            {
+                ConfigurePieceMeshes(pieceMeshVariants);
+                return;
+            }
             _pieces = new EarthPlatformPiece[MaximumPieces];
             _pieceReleasedAt = new float[MaximumPieces];
             _pieceFullScale = new Vector3[MaximumPieces];
             for (int index = 0; index < MaximumPieces; index++)
             {
-                GameObject pieceObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                GameObject pieceObject = new GameObject();
                 pieceObject.name = $"Platform Piece {index + 1:00}";
                 pieceObject.transform.SetParent(transform, false);
-                pieceObject.GetComponent<MeshRenderer>().sharedMaterial = material;
+                MeshFilter filter = pieceObject.AddComponent<MeshFilter>();
+                filter.sharedMesh = ResolvePieceMesh(index);
+                MeshRenderer renderer = pieceObject.AddComponent<MeshRenderer>();
+                renderer.sharedMaterial = material;
+                MeshCollider collider = pieceObject.AddComponent<MeshCollider>();
+                collider.sharedMesh = filter.sharedMesh;
+                collider.convex = true;
                 Rigidbody pieceBody = pieceObject.AddComponent<Rigidbody>();
                 pieceBody.useGravity = false;
                 pieceBody.isKinematic = true;
@@ -108,7 +122,7 @@ namespace Elemental.Runtime.Physics
                 pieceBody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
                 physicsFeelProfile?.Apply(
                     pieceBody,
-                    pieceObject.GetComponent<Collider>(),
+                    collider,
                     EarthPhysicsBodyClass.HeavyBlock);
                 EarthPlatformPiece piece = pieceObject.AddComponent<EarthPlatformPiece>();
                 piece.Configure(this, index);
@@ -116,6 +130,24 @@ namespace Elemental.Runtime.Physics
                 _pieces[index] = piece;
             }
             _cohesion.Configure(MaximumPieces);
+        }
+
+        public void ConfigurePieceMeshes(Mesh[] configuredVariants)
+        {
+            if (configuredVariants != null && configuredVariants.Length > 0)
+                _pieceMeshVariants = configuredVariants;
+            if (_pieces == null) return;
+            for (int index = 0; index < _pieces.Length; index++)
+            {
+                EarthPlatformPiece piece = _pieces[index];
+                if (piece == null) continue;
+                Mesh mesh = ResolvePieceMesh(index);
+                piece.GetComponent<MeshFilter>().sharedMesh = mesh;
+                MeshCollider collider = piece.GetComponent<MeshCollider>();
+                collider.sharedMesh = null;
+                collider.sharedMesh = mesh;
+                collider.convex = true;
+            }
         }
 
         public void Initialize(
@@ -334,6 +366,52 @@ namespace Elemental.Runtime.Physics
             if (_cohesion == null) _cohesion = GetComponent<EarthCohesiveStructure>();
             if (_cohesion == null) _cohesion = gameObject.AddComponent<EarthCohesiveStructure>();
             if (_solidMesh == null) _solidMesh = new Mesh { name = "Runtime Earth Platform" };
+        }
+
+        private Mesh ResolvePieceMesh(int index)
+        {
+            if (_pieceMeshVariants != null && _pieceMeshVariants.Length > 0)
+            {
+                Mesh authored = _pieceMeshVariants[index % _pieceMeshVariants.Length];
+                if (authored != null) return authored;
+            }
+            if (_fallbackPieceMesh == null) _fallbackPieceMesh = BuildFallbackPieceMesh();
+            return _fallbackPieceMesh;
+        }
+
+        private static Mesh BuildFallbackPieceMesh()
+        {
+            var mesh = new Mesh { name = "Debug Platform Piece" };
+            mesh.vertices = new[]
+            {
+                new Vector3(-0.5f, -0.42f, -0.46f), new Vector3(0.46f, -0.5f, -0.4f),
+                new Vector3(0.5f, 0.39f, -0.5f), new Vector3(-0.43f, 0.5f, -0.41f),
+                new Vector3(-0.48f, -0.5f, 0.4f), new Vector3(0.5f, -0.4f, 0.5f),
+                new Vector3(0.42f, 0.5f, 0.43f), new Vector3(-0.5f, 0.42f, 0.5f)
+            };
+            mesh.triangles = new[]
+            {
+                0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7,
+                0, 1, 5, 0, 5, 4, 1, 2, 6, 1, 6, 5,
+                2, 3, 7, 2, 7, 6, 3, 0, 4, 3, 4, 7
+            };
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        private void OnDestroy()
+        {
+            if (_solidMesh != null)
+            {
+                if (Application.isPlaying) Destroy(_solidMesh);
+                else DestroyImmediate(_solidMesh);
+            }
+            if (_fallbackPieceMesh != null)
+            {
+                if (Application.isPlaying) Destroy(_fallbackPieceMesh);
+                else DestroyImmediate(_fallbackPieceMesh);
+            }
         }
 
         private void BuildPrismMesh(float2[] polygon, float height, float embed)

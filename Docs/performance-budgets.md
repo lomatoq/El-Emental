@@ -95,3 +95,13 @@ Raw evidence is kept under `BuildReports` and `TestResults`. Interactive P50/P95
 - Repair work is isolated under `Elemental.Earth.Repair.Align`; active piece and bond work remains bounded by the capability table above.
 - Windows Development: 170,857,854 bytes in 68.406 s, 0 warnings/errors.
 - D3D11 standalone reassembly QA exited 0 with all 43 pieces selected and one physically welded at capture. The remaining active piece reported a finite `0.015 m` pose error and no retry; startup voxel queue timing remains cold-start evidence, not a frame-time percentile.
+
+## Earth Core MVP polish Task 4 — 2026-08-13
+
+- EditMode: 158/158 passed in 0.749 s; PlayMode: 63/63 passed in 125.612 s.
+- Production wall presentation remains 43 pieces/140 bonds. Render meshes carry two submeshes and RGBA face masks; collider meshes are separate and remain under 255 vertices. Platform fragments reuse four authored beveled convex variants.
+- Native High uses full micro-normal distance detail and a 40-slot pooled decal ring. Native Low disables the micro-normal sample through `_EARTH_DETAIL_LOW`, shortens detail distance, caps decals at 20, dust at 28 and chips at 8.
+- URP stays Forward pending an equivalent-scene Forward+ A/B capture. GPU Resident Drawer remains excluded for dynamic pieces; no unmeasured renderer switch is claimed as an optimisation.
+- Windows Development: 171,019,694 bytes in 57.634 s, 0 warnings/errors.
+- Standalone D3D11 post-fracture capture: 45 frames, CPU average/max 4.26/7.00 ms and GPU average/max 0.59/0.99 ms. This short capture verifies bounded material/decal cost but is not substituted for a long P95/P99 shipping-content trace.
+- The same run reported a 78.50 ms cold-start voxel render-queue peak and zero pending work at capture. It remains separately labelled startup debt.

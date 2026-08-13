@@ -13,6 +13,9 @@ namespace Elemental.Runtime.World
     {
         private static readonly ProfilerMarker RenderQueueMarker = new ProfilerMarker("Elemental.Voxel.RenderQueue");
         private static readonly ProfilerMarker ColliderQueueMarker = new ProfilerMarker("Elemental.Voxel.ColliderQueue");
+        private static readonly int UsePlanetFrameId = Shader.PropertyToID("_UsePlanetFrame");
+        private static readonly int WorldToPlanetId = Shader.PropertyToID("_ProjectionWorldToPlanet");
+        private static readonly int PlanetToWorldId = Shader.PropertyToID("_ProjectionPlanetToWorld");
 
         private sealed class RuntimeChunk
         {
@@ -53,6 +56,7 @@ namespace Elemental.Runtime.World
         private ChunkMeshBuffers _meshBuffers;
         private VoxelMeshingSettings _meshingSettings;
         private uint _nextEditSequence = 1u;
+        private Material _runtimeSurfaceMaterial;
 
         public VoxelPlanetState State => _state;
         public float Radius => radius;
@@ -108,6 +112,14 @@ namespace Elemental.Runtime.World
 
         private void Awake()
         {
+            if (surfaceMaterial != null)
+            {
+                _runtimeSurfaceMaterial = new Material(surfaceMaterial)
+                {
+                    name = surfaceMaterial.name + " (Planet Runtime)"
+                };
+                UpdatePlanetProjectionFrame();
+            }
             _state = new VoxelPlanetState(radius, seed, chunkResolution, cellSize, noiseAmplitude);
             _meshingSettings = new VoxelMeshingSettings(chunkResolution, cellSize);
             _mesher = new SmoothSdfSurfaceMesher();
@@ -117,6 +129,7 @@ namespace Elemental.Runtime.World
 
         private void Update()
         {
+            UpdatePlanetProjectionFrame();
             UpdateColliderDebt(Time.deltaTime);
             ProcessRenderQueue(renderChunksPerFrame);
             ProcessColliderQueue(colliderChunksPerFrame);
@@ -336,7 +349,7 @@ namespace Elemental.Runtime.World
             MeshFilter filter = chunkObject.AddComponent<MeshFilter>();
             filter.sharedMesh = mesh;
             MeshRenderer renderer = chunkObject.AddComponent<MeshRenderer>();
-            renderer.sharedMaterial = surfaceMaterial;
+            renderer.sharedMaterial = _runtimeSurfaceMaterial != null ? _runtimeSurfaceMaterial : surfaceMaterial;
             MeshCollider collider = chunkObject.AddComponent<MeshCollider>();
 
             runtimeChunk = new RuntimeChunk
@@ -420,6 +433,19 @@ namespace Elemental.Runtime.World
                     DestroyImmediate(pair.Value.Mesh);
                 }
             }
+            if (_runtimeSurfaceMaterial != null)
+            {
+                if (Application.isPlaying) Destroy(_runtimeSurfaceMaterial);
+                else DestroyImmediate(_runtimeSurfaceMaterial);
+            }
+        }
+
+        private void UpdatePlanetProjectionFrame()
+        {
+            if (_runtimeSurfaceMaterial == null) return;
+            _runtimeSurfaceMaterial.SetFloat(UsePlanetFrameId, 1f);
+            _runtimeSurfaceMaterial.SetMatrix(WorldToPlanetId, transform.worldToLocalMatrix);
+            _runtimeSurfaceMaterial.SetMatrix(PlanetToWorldId, transform.localToWorldMatrix);
         }
 
         private void OnDrawGizmosSelected()
