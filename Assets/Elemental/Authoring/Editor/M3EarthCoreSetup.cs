@@ -56,6 +56,7 @@ namespace Elemental.Authoring.Editor
         private const string TechniquePresentationProfilePath =
             "Assets/Elemental/Content/Profiles/EarthTechniquePresentationProfile.asset";
         private const string MotorFeelProfilePath = "Assets/Elemental/Content/Profiles/PlanetMotorFeelProfile.asset";
+        private const string EarthCameraProfilePath = "Assets/Elemental/Content/Profiles/EarthCameraProfile.asset";
         private const string EarthStoneAlbedoPath = "Assets/Elemental/Content/Textures/EarthStoneAlbedo.png";
         private const string MageModelPath = "Assets/ThirdParty/KayKit/Mage/Mage.fbx";
         private const string MageTexturePath = "Assets/ThirdParty/KayKit/Mage/mage_texture.png";
@@ -435,6 +436,22 @@ namespace Elemental.Authoring.Editor
                 MotorFeelProfilePath,
                 "Planet Motor Feel Profile"));
             motor?.ConfigureTankSteering(true, 170f);
+            if (cameraRig != null)
+            {
+                EarthCameraDirector cameraDirector = camera.GetComponent<EarthCameraDirector>();
+                if (cameraDirector == null) cameraDirector = camera.gameObject.AddComponent<EarthCameraDirector>();
+                cameraDirector.Configure(
+                    cameraRig,
+                    camera,
+                    character.transform,
+                    character.GetComponent<Rigidbody>(),
+                    motor,
+                    input,
+                    character.GetComponent<EarthInputAdapter>(),
+                    executor,
+                    character.GetComponent<ActiveRagdollPuppet>(),
+                    CreateOrLoadProfile<EarthCameraProfile>(EarthCameraProfilePath, "Earth Camera Profile"));
+            }
             if (camera.GetComponent<VisualQaCaptureBehaviour>() == null)
                 camera.gameObject.AddComponent<VisualQaCaptureBehaviour>();
 

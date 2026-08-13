@@ -128,3 +128,11 @@ Raw evidence is kept under `BuildReports` and `TestResults`. Interactive P50/P95
 - Humanoid foot IK uses two fixed eight-hit buffers; no per-frame overlap or collection allocation was added.
 - EditMode: 180/180 passed in 1.165 s; PlayMode: 64/64 passed in 125.851 s.
 - Windows Development: 171,098,682 bytes in 57.851 s, 0 warnings/errors.
+
+## Earth Core MVP polish Task 8 - 2026-08-13
+
+- State resolution, weighted focus, shoulder selection and occlusion hysteresis are pure fixed-value operations with no collection allocation.
+- The camera keeps one fixed eight-hit spherecast buffer. The director consumes existing component references and typed events; it performs no overlap queries or runtime object creation.
+- `Elemental.Earth.Camera.Direct` covers the state/focus/profile hot path. Layered impulses are deterministic, bounded presentation offsets and cannot feed back into Rigidbody truth.
+- EditMode: 185/185 passed in 1.471 s; PlayMode: 64/64 passed in 125.879 s.
+- Windows Development: 171,119,134 bytes in 58.631 s, 0 warnings/errors.

@@ -45,12 +45,61 @@ namespace Elemental.Presentation.Camera
         private uint _tick;
         private Vector3 _orbitForward;
         private ActiveRagdollPuppet _targetPuppet;
+        private UnityEngine.Camera _camera;
+        private bool _directorActive;
+        private Vector3 _directorFocus;
+        private float _rotationDamping = 0.09f;
+        private float _impulseGain = 1f;
+        private float _maximumRoll = 3f;
+        private float _motionScale = 1f;
+        private float _occlusionPullInSpeed = 24f;
+        private float _occlusionReleaseSpeed = 4.5f;
+        private float _occlusionReleaseDelay = 0.12f;
+        private EarthCameraOcclusionState _occlusionState;
+        private Transform _ignoredOccluderRoot;
 
         public Vector3 LocalUp => _smoothedUp;
         public Vector3 TangentForward => _orbitForward.sqrMagnitude > 0.5f ? _orbitForward : transform.forward;
         public Vector3 SmoothedFocus => _smoothedFocus;
         public float LastAppliedImpulseMagnitude { get; private set; }
         public float PeakRequestedImpulseAmplitude { get; private set; }
+
+        public void SetDirectorFrame(
+            float configuredDistance,
+            float configuredHeight,
+            float configuredShoulderOffset,
+            float configuredFieldOfView,
+            Vector3 configuredFocus,
+            float configuredPositionDamping,
+            float configuredRotationDamping,
+            float configuredOcclusionRadius,
+            float configuredImpulseGain,
+            float configuredMaximumRoll,
+            float motionScale,
+            float pullInSpeed,
+            float releaseSpeed,
+            float releaseDelay,
+            Transform ignoredOccluderRoot = null)
+        {
+            _directorActive = true;
+            distance = Mathf.Max(0.1f, configuredDistance);
+            height = Mathf.Max(0f, configuredHeight);
+            shoulderOffset = configuredShoulderOffset;
+            _directorFocus = configuredFocus;
+            positionSmoothTime = Mathf.Max(0.01f, configuredPositionDamping);
+            _rotationDamping = Mathf.Max(0.01f, configuredRotationDamping);
+            occlusionRadius = Mathf.Max(0f, configuredOcclusionRadius);
+            _impulseGain = Mathf.Max(0f, configuredImpulseGain);
+            _maximumRoll = Mathf.Max(0f, configuredMaximumRoll);
+            _motionScale = Mathf.Clamp01(motionScale);
+            _occlusionPullInSpeed = Mathf.Max(0.1f, pullInSpeed);
+            _occlusionReleaseSpeed = Mathf.Max(0.1f, releaseSpeed);
+            _occlusionReleaseDelay = Mathf.Max(0f, releaseDelay);
+            _ignoredOccluderRoot = ignoredOccluderRoot;
+            if (_camera == null) _camera = GetComponent<UnityEngine.Camera>();
+            if (_camera != null) _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, configuredFieldOfView,
+                1f - Mathf.Exp(-8f * Time.unscaledDeltaTime));
+        }
 
         public void AddPresentationImpulse(float amplitudeMeters, float durationSeconds, uint seed)
         {
@@ -101,6 +150,7 @@ namespace Elemental.Presentation.Camera
 
         private void Awake()
         {
+            _camera = GetComponent<UnityEngine.Camera>();
             _targetPuppet = target != null
                 ? target.GetComponent<ActiveRagdollPuppet>()
                 : null;
@@ -153,7 +203,7 @@ namespace Elemental.Presentation.Camera
                     speedLookAheadDistance,
                     lookAheadReferenceSpeed,
                     shoulderOffset);
-                Vector3 desiredFocus = ToVector3(framing.Focus);
+                Vector3 desiredFocus = _directorActive ? _directorFocus : ToVector3(framing.Focus);
                 Vector3 desiredPosition = ResolveOcclusion(
                     ToVector3(framing.OcclusionAnchor),
                     ToVector3(framing.Position));
@@ -176,7 +226,9 @@ namespace Elemental.Presentation.Camera
                 Vector3 lookDirection = _smoothedFocus - transform.position;
                 if (lookDirection.sqrMagnitude > 0.001f)
                 {
-                    transform.rotation = Quaternion.LookRotation(lookDirection.normalized, _smoothedUp);
+                    Quaternion desiredRotation = Quaternion.LookRotation(lookDirection.normalized, _smoothedUp);
+                    float rotationBlend = 1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.01f, _rotationDamping));
+                    transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, rotationBlend);
                 }
                 ApplyPresentationImpulse();
             }
@@ -196,16 +248,21 @@ namespace Elemental.Presentation.Camera
             float normalized = Mathf.Clamp01(_impulseElapsed / Mathf.Max(_impulseDuration, 0.001f));
             float envelope = (1f - normalized) * (1f - normalized);
             float phase = (Time.unscaledTime * 39f) + ((_impulseSeed & 1023u) * 0.017f);
-            Vector3 offset = ((transform.right * Mathf.Sin(phase)) +
-                              (_smoothedUp * Mathf.Sin((phase * 1.73f) + 1.1f) * 0.58f)) *
-                             (_impulseAmplitude * envelope);
+            float amplitude = _impulseAmplitude * _impulseGain * _motionScale;
+            float high = Mathf.Sin(phase * 2.31f) * 0.24f;
+            float medium = Mathf.Sin((phase * 1.17f) + 0.9f) * 0.48f;
+            float low = Mathf.Sin((phase * 0.43f) + 2.1f) * 0.72f;
+            Vector3 offset = ((transform.right * (high + medium)) +
+                              (_smoothedUp * (medium * 0.38f + low * 0.62f))) *
+                             (amplitude * envelope);
             _lastImpulseOffset = offset;
             LastAppliedImpulseMagnitude = offset.magnitude;
             transform.position += offset;
             transform.rotation *= Quaternion.Euler(
-                Mathf.Sin(phase * 1.31f) * envelope * _impulseAmplitude * 8f,
+                Mathf.Sin(phase * 1.31f) * envelope * amplitude * 8f,
                 0f,
-                Mathf.Sin(phase * 0.91f) * envelope * _impulseAmplitude * 10f);
+                Mathf.Clamp(Mathf.Sin(phase * 0.91f) * envelope * amplitude * 10f,
+                    -_maximumRoll, _maximumRoll));
         }
 
         protected virtual Vector3 ResolveOcclusion(Vector3 anchor, Vector3 desiredPosition)
@@ -227,20 +284,32 @@ namespace Elemental.Presentation.Camera
                 occlusionMask,
                 QueryTriggerInteraction.Ignore);
             float nearest = castDistance;
+            bool hasHit = false;
 
             for (int index = 0; index < hitCount; index++)
             {
                 RaycastHit hit = _occlusionHits[index];
                 if (hit.collider == null || hit.transform == target || hit.rigidbody == targetBody ||
-                    (_targetPuppet != null && _targetPuppet.OwnsCollider(hit.collider)))
+                    (_targetPuppet != null && _targetPuppet.OwnsCollider(hit.collider)) ||
+                    (_ignoredOccluderRoot != null && hit.transform.IsChildOf(_ignoredOccluderRoot)))
                 {
                     continue;
                 }
 
                 nearest = Mathf.Min(nearest, hit.distance);
+                hasHit = true;
             }
-
-            return anchor + (direction * Mathf.Max(0.05f, nearest - occlusionRadius));
+            float hitDistance = Mathf.Max(0.05f, nearest - occlusionRadius);
+            _occlusionState = EarthCameraOcclusionSolver.Step(
+                in _occlusionState,
+                castDistance,
+                hitDistance,
+                hasHit,
+                Time.unscaledDeltaTime,
+                _occlusionPullInSpeed,
+                _occlusionReleaseSpeed,
+                _occlusionReleaseDelay);
+            return anchor + direction * _occlusionState.Distance;
         }
 
         private static bool IsFinite(Vector3 value)

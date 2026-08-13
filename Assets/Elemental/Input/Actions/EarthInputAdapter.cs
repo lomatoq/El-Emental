@@ -24,6 +24,7 @@ namespace Elemental.Input.Actions
         private InputAction _bendModifier;
         private InputAction _bendParameter;
         private InputAction _cancel;
+        private InputAction _shoulderSwap;
         private InputAction _pointer;
         private InputAction _ability1;
         private InputAction _ability2;
@@ -51,6 +52,7 @@ namespace Elemental.Input.Actions
         public bool BendFieldHeld => _bendField?.IsPressed() == true;
         public bool BendModifierHeld => _bendModifier?.IsPressed() == true;
         public bool CancelPressed => _cancel?.WasPressedThisFrame() == true;
+        public bool ShoulderSwapPressed => _shoulderSwap?.WasPressedThisFrame() == true;
         public bool ElementFirePressed => _elementFire?.WasPressedThisFrame() == true;
         public bool ElementWaterPressed => _elementWater?.WasPressedThisFrame() == true;
 
@@ -123,6 +125,7 @@ namespace Elemental.Input.Actions
             _bendModifier = Find("BendModifier", true);
             _bendParameter = Find("BendParameter", true);
             _cancel = Find("Cancel", true);
+            _shoulderSwap = Find("ShoulderSwap", true);
             _pointer = Find("Pointer", true);
             _ability1 = Find("Ability1", false);
             _ability2 = Find("Ability2", false);
@@ -162,6 +165,7 @@ namespace Elemental.Input.Actions
             _bendModifier = null;
             _bendParameter = null;
             _cancel = null;
+            _shoulderSwap = null;
             _pointer = null;
             _ability1 = null;
             _ability2 = null;

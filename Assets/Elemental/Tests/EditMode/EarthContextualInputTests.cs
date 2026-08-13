@@ -202,7 +202,7 @@ namespace Elemental.Tests.EditMode
             string[] required =
             {
                 "BendPrimary", "BendForce", "BendField", "BendModifier",
-                "JumpOrStomp", "BendParameter", "Cancel"
+                "JumpOrStomp", "BendParameter", "ShoulderSwap", "Cancel"
             };
             for (int index = 0; index < required.Length; index++)
                 StringAssert.Contains($"\"name\": \"{required[index]}\"", actions);

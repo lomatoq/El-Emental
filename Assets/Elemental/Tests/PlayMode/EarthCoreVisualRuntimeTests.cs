@@ -50,6 +50,8 @@ namespace Elemental.Tests.PlayMode
             MeteorShowerBehaviour meteorSystem = FindInScene<MeteorShowerBehaviour>(scene);
             HumanoidCharacterPresentation humanoid = FindInScene<HumanoidCharacterPresentation>(scene);
             EarthCharacterPoseController characterPose = FindInScene<EarthCharacterPoseController>(scene);
+            Elemental.Presentation.Camera.EarthCameraDirector cameraDirector =
+                FindInScene<Elemental.Presentation.Camera.EarthCameraDirector>(scene);
             Animator humanoidAnimator = humanoid != null ? humanoid.Animator : null;
             bool hasCelestialSystem = celestialSystem != null;
             bool hasMeteorSystem = meteorSystem != null;
@@ -62,6 +64,14 @@ namespace Elemental.Tests.PlayMode
                                     humanoidAnimator.avatar.isValid && humanoidAnimator.avatar.isHuman &&
                                     !humanoidAnimator.applyRootMotion;
             bool hasEmbodiedPose = characterPose != null;
+            bool hasAuthoredCameraDirector = cameraDirector != null && cameraDirector.Profile != null;
+            float exploreDistance = 0f;
+            Elemental.Presentation.Camera.EarthCameraStateProfile exploreCamera = default;
+            bool hasExploreProfile = cameraDirector != null && cameraDirector.Profile != null &&
+                                     cameraDirector.Profile.TryGet(
+                                         Elemental.Simulation.Characters.EarthCameraState.Explore,
+                                         out exploreCamera);
+            if (hasExploreProfile) exploreDistance = exploreCamera.Distance;
             GameObject celestialBackdrop = FindByName(scene, "Celestial Diorama Backdrop");
             Camera playableCamera = FindInScene<Camera>(scene);
             bool celestialBackdropIsWorldSpace = celestialBackdrop != null &&
@@ -108,6 +118,9 @@ namespace Elemental.Tests.PlayMode
             Assert.That(atmosphereHasNoCollider, Is.True);
             Assert.That(hasValidHumanoid, Is.True);
             Assert.That(hasEmbodiedPose, Is.True);
+            Assert.That(hasAuthoredCameraDirector, Is.True);
+            Assert.That(hasExploreProfile, Is.True);
+            Assert.That(exploreDistance, Is.InRange(5.5f, 7f));
             Assert.That(celestialBackdrop, Is.Not.Null);
             Assert.That(celestialBackdropIsWorldSpace, Is.True,
                 "Celestial bodies must stay in world space instead of following the player camera.");

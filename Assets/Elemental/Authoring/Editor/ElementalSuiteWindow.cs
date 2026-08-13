@@ -7,6 +7,7 @@ using Elemental.Simulation.Materials;
 using Elemental.Runtime.Physics;
 using Elemental.Runtime.World;
 using Elemental.Runtime.Characters;
+using Elemental.Presentation.Camera;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.UIElements;
@@ -211,6 +212,9 @@ namespace Elemental.Authoring.Editor
             AddProfileEditor<EarthTechniquePresentationProfile>(
                 "Six techniques // timing, pose, camera and feedback",
                 "Assets/Elemental/Content/Profiles/EarthTechniquePresentationProfile.asset");
+            AddProfileEditor<EarthCameraProfile>(
+                "State-aware camera director + accessibility",
+                "Assets/Elemental/Content/Profiles/EarthCameraProfile.asset");
             _content.Add(ActionButton("Open playable Earth Core", () => OpenScene(M3EarthCoreSetup.EarthCoreScenePath)));
         }
 

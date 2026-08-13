@@ -87,6 +87,15 @@
           "initialStateCheck": false
         },
         {
+          "name": "ShoulderSwap",
+          "type": "Button",
+          "id": "50a55f33-035a-4a3d-b07e-64d30a6a0d05",
+          "expectedControlType": "Button",
+          "processors": "",
+          "interactions": "Press",
+          "initialStateCheck": false
+        },
+        {
           "name": "Ability1",
           "type": "Button",
           "id": "e9305e67-18a7-4b1c-904f-6914cf2f2580",
@@ -304,6 +313,17 @@
           "processors": "",
           "groups": "Keyboard&Mouse",
           "action": "Cancel",
+          "isComposite": false,
+          "isPartOfComposite": false
+        },
+        {
+          "name": "",
+          "id": "50a55f33-035a-4a3d-b07e-64d30a6a0d15",
+          "path": "<Keyboard>/q",
+          "interactions": "",
+          "processors": "",
+          "groups": "Keyboard&Mouse",
+          "action": "ShoulderSwap",
           "isComposite": false,
           "isPartOfComposite": false
         },

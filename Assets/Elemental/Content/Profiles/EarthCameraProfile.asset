@@ -1,0 +1,185 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae766d8c28bb4c0ca91fa2daf85923ce, type: 3}
+  m_Name: EarthCameraProfile
+  m_EditorClassIdentifier:
+  states:
+  - state: 0
+    distance: 5.9
+    height: 2.15
+    shoulderOffset: 0.9
+    fieldOfView: 64
+    playerFocusWeight: 1
+    aimFocusWeight: 1.75
+    heldFocusWeight: 0.15
+    constructFocusWeight: 0.12
+    velocityLookAhead: 1.15
+    positionDamping: 0.1
+    rotationDamping: 0.09
+    enterHysteresis: 0.06
+    exitHysteresis: 0.16
+    occlusionRadius: 0.28
+    impulseGain: 0.72
+    maximumRoll: 2
+    returnDelay: 0.14
+  - state: 1
+    distance: 5.8
+    height: 2.1
+    shoulderOffset: 0.95
+    fieldOfView: 60
+    playerFocusWeight: 1
+    aimFocusWeight: 0.78
+    heldFocusWeight: 0.15
+    constructFocusWeight: 0.12
+    velocityLookAhead: 0.8
+    positionDamping: 0.085
+    rotationDamping: 0.08
+    enterHysteresis: 0.04
+    exitHysteresis: 0.14
+    occlusionRadius: 0.28
+    impulseGain: 0.72
+    maximumRoll: 2
+    returnDelay: 0.14
+  - state: 2
+    distance: 5.9
+    height: 2.1
+    shoulderOffset: 0.95
+    fieldOfView: 60
+    playerFocusWeight: 1
+    aimFocusWeight: 0.9
+    heldFocusWeight: 0.2
+    constructFocusWeight: 0.2
+    velocityLookAhead: 1.15
+    positionDamping: 0.085
+    rotationDamping: 0.09
+    enterHysteresis: 0.04
+    exitHysteresis: 0.14
+    occlusionRadius: 0.28
+    impulseGain: 0.78
+    maximumRoll: 2.2
+    returnDelay: 0.14
+  - state: 3
+    distance: 6.25
+    height: 2.15
+    shoulderOffset: 0.9
+    fieldOfView: 59
+    playerFocusWeight: 1
+    aimFocusWeight: 0.7
+    heldFocusWeight: 0.35
+    constructFocusWeight: 0.2
+    velocityLookAhead: 1.15
+    positionDamping: 0.065
+    rotationDamping: 0.12
+    enterHysteresis: 0.04
+    exitHysteresis: 0.18
+    occlusionRadius: 0.3
+    impulseGain: 1
+    maximumRoll: 3.5
+    returnDelay: 0.18
+  - state: 4
+    distance: 7
+    height: 2.55
+    shoulderOffset: 0.72
+    fieldOfView: 66
+    playerFocusWeight: 1
+    aimFocusWeight: 0.85
+    heldFocusWeight: 0
+    constructFocusWeight: 1
+    velocityLookAhead: 0.65
+    positionDamping: 0.075
+    rotationDamping: 0.09
+    enterHysteresis: 0.02
+    exitHysteresis: 0.2
+    occlusionRadius: 0.28
+    impulseGain: 0.72
+    maximumRoll: 2
+    returnDelay: 0.2
+  - state: 5
+    distance: 6.25
+    height: 2.15
+    shoulderOffset: 0.82
+    fieldOfView: 59
+    playerFocusWeight: 1
+    aimFocusWeight: 0.45
+    heldFocusWeight: 1.15
+    constructFocusWeight: 0.12
+    velocityLookAhead: 0.65
+    positionDamping: 0.065
+    rotationDamping: 0.12
+    enterHysteresis: 0.03
+    exitHysteresis: 0.2
+    occlusionRadius: 0.3
+    impulseGain: 1
+    maximumRoll: 3.5
+    returnDelay: 0.2
+  - state: 6
+    distance: 6.8
+    height: 2.7
+    shoulderOffset: 0.82
+    fieldOfView: 65
+    playerFocusWeight: 1
+    aimFocusWeight: 0.45
+    heldFocusWeight: 0.25
+    constructFocusWeight: 0.12
+    velocityLookAhead: 2.1
+    positionDamping: 0.08
+    rotationDamping: 0.11
+    enterHysteresis: 0.02
+    exitHysteresis: 0.18
+    occlusionRadius: 0.28
+    impulseGain: 0.8
+    maximumRoll: 2.4
+    returnDelay: 0.16
+  - state: 7
+    distance: 6.25
+    height: 2.15
+    shoulderOffset: 0.78
+    fieldOfView: 59
+    playerFocusWeight: 1
+    aimFocusWeight: 0.4
+    heldFocusWeight: 0.45
+    constructFocusWeight: 0.2
+    velocityLookAhead: 0.5
+    positionDamping: 0.065
+    rotationDamping: 0.12
+    enterHysteresis: 0
+    exitHysteresis: 0.24
+    occlusionRadius: 0.3
+    impulseGain: 1
+    maximumRoll: 3.5
+    returnDelay: 0.24
+  - state: 8
+    distance: 5.9
+    height: 2.15
+    shoulderOffset: 0.85
+    fieldOfView: 61
+    playerFocusWeight: 1
+    aimFocusWeight: 0.25
+    heldFocusWeight: 0.15
+    constructFocusWeight: 0.12
+    velocityLookAhead: 0.8
+    positionDamping: 0.11
+    rotationDamping: 0.13
+    enterHysteresis: 0.02
+    exitHysteresis: 0.22
+    occlusionRadius: 0.28
+    impulseGain: 0.58
+    maximumRoll: 1.6
+    returnDelay: 0.22
+  maximumFocusDistance: 7.5
+  pullInSpeed: 24
+  releaseSpeed: 4.5
+  occlusionReleaseDelay: 0.12
+  shakeIntensity: 1
+  cameraLag: 1
+  fieldOfViewMotion: 1
+  reducedMotion: 0

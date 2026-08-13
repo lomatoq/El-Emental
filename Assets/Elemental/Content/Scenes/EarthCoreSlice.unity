@@ -333,6 +333,7 @@ GameObject:
   - component: {fileID: 3796695}
   - component: {fileID: 3796703}
   - component: {fileID: 3796702}
+  - component: {fileID: 3796704}
   m_Layer: 0
   m_Name: Planet Character
   m_TagString: Untagged
@@ -850,6 +851,20 @@ MonoBehaviour:
   visualRoot: {fileID: 1059990782}
   leftArm: {fileID: 1590218074}
   rightArm: {fileID: 884630894}
+--- !u!114 &3796704
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3796685}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b16af1f023f6be44bcea9c1d1022321, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Elemental.Input::Elemental.Input.Actions.EarthInputAdapter
+  playerInput: {fileID: 3796690}
+  actionMapName: Gameplay
 --- !u!1 &5764393
 GameObject:
   m_ObjectHideFlags: 0
@@ -24753,6 +24768,7 @@ GameObject:
   - component: {fileID: 1411252089}
   - component: {fileID: 1411252094}
   - component: {fileID: 1411252093}
+  - component: {fileID: 1411252095}
   m_Layer: 0
   m_Name: Gravity Toy Camera
   m_TagString: MainCamera
@@ -24790,6 +24806,28 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   headingFollowSpeed: 10
+--- !u!114 &1411252095
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1411252088}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d32a48cb07d4d1592e41f78c39f292a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.Camera.EarthCameraDirector
+  rig: {fileID: 1411252089}
+  controlledCamera: {fileID: 1411252091}
+  player: {fileID: 3796687}
+  playerBody: {fileID: 3796686}
+  motor: {fileID: 3796688}
+  input: {fileID: 3796700}
+  inputAdapter: {fileID: 3796704}
+  executor: {fileID: 1009772823}
+  puppet: {fileID: 3796695}
+  profile: {fileID: 11400000, guid: 8a59c4a55b814704abea0ee5f95ddc46, type: 2}
 --- !u!114 &1411252090
 MonoBehaviour:
   m_ObjectHideFlags: 0

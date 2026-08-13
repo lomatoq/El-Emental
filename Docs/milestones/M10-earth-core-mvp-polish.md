@@ -157,6 +157,24 @@ Status: complete
 - PlayMode: 64/64 passed in 125.851 s. The EarthCore scene contains a valid in-place Humanoid plus its embodied local-up pose controller; moving-platform, pillar and 100-cycle ragdoll recovery coverage remains green.
 - Windows Development: 171,098,682 bytes in 57.851 s, 0 warnings/errors (`BuildReports/NativeWindows.json`).
 
+## Task 8 - camera director
+
+Status: complete
+
+- `PlanetCameraRig` remains local-gravity placement authority while `EarthCameraDirector` selects Explore, Aim, BendLight, BendHeavy, DrawStructure, HoldMass, Airborne, Impact and Recovery presentation profiles.
+- Focus is a clamped weighted blend of player chest, aim, held mass and construct midpoint. Drawing shifts the shoulder away from the structure; Q performs an explicit shoulder swap through `EarthInputAdapter`.
+- The authored exploration frame is 5.9 m away, 2.15 m high and 64 degrees, with a strong forward lead. Heavy states reduce positional lag and increase rotational stability.
+- Spherecast occlusion now pulls inward quickly, waits through clear-space hysteresis and releases slowly. Character and held-body colliders are ignored.
+- Camera impact uses deterministic high/medium/low bands with bounded roll. Profile sliders control shake, lag and FOV motion; reduced motion suppresses FOV animation and strongly attenuates shake/lag.
+- The EarthCore scene serializes its director and editable profile. No runtime migration component is created.
+- Architecture decision: `Docs/adr/0019-state-aware-local-gravity-camera.md`.
+
+### Evidence
+
+- EditMode: 185/185 passed in 1.471 s, including state priority, clamped weighted focus, pull-in/release hysteresis, shoulder stability and reduced-motion behavior.
+- PlayMode: 64/64 passed in 125.879 s. Close framing, forward lead, explicit profile wiring and the complete Earth physical suite remain green.
+- Windows Development: 171,119,134 bytes in 58.631 s, 0 warnings/errors (`BuildReports/NativeWindows.json`).
+
 ## Next concern
 
-Task 8 adds state-aware composition, weighted focus, occlusion hysteresis, shoulder swap and accessibility-scaled camera impulse.
+Task 9 performs final replay/allocation/stress hardening, visual baselines, platform builds and documentation closure.
