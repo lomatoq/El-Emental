@@ -79,7 +79,7 @@ Commands contain intent, geometry, intensity, tick, stable IDs, modifiers, and s
 
 Simulation emits typed past-tense events such as TerrainEdited, ImpactOccurred, AbilityRejected, and CharacterStateChanged. Presentation may route those events to effects without feeding visual state back into simulation.
 
-Earth destruction visuals obey the physical lifetime: detached chunks keep radial gravity, momentum and collision while their visible scale decays, and leave simulation only when the pooled object reaches zero scale. Particle adapters use the same local planet direction rather than Unity's global gravity modifier.
+Earth destruction uses explicit tiers. Repairable structural pieces retain provenance, scale and collision until repair, reabsorption or bounded pool reuse; they never disappear through an implicit timer. Gameplay chips and cosmetic debris may keep radial gravity, momentum and collision while their visible scale decays, and leave simulation only when the pooled object reaches zero scale. Particle adapters use the same local planet direction rather than Unity's global gravity modifier.
 
 Internal Earth verbs (`RaisePlatform`, `VectorFieldPush`, and `LandingCushion`) are selected by the unified input grammar and do not occupy hotbar slots.
 

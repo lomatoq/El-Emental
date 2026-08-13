@@ -10,11 +10,13 @@ namespace Elemental.Runtime.Physics
         [SerializeField, Range(16, 128)] private int capacity = 72;
         [SerializeField] private Material material;
         [SerializeField] private Mesh mesh;
+        [SerializeField] private Mesh[] meshVariants;
         [SerializeField] private GravityWorldBehaviour gravityWorld;
         [SerializeField] private EarthRockProfile profile;
 
         private readonly List<EarthRockDebris> _pieces = new List<EarthRockDebris>(72);
         private int _reuseCursor;
+        private Mesh _fallbackMesh;
 
         public void Configure(
             int configuredCapacity,
@@ -26,8 +28,18 @@ namespace Elemental.Runtime.Physics
             capacity = Mathf.Clamp(configuredCapacity, 16, 128);
             material = configuredMaterial;
             mesh = configuredMesh;
+            meshVariants = configuredMesh != null ? new[] { configuredMesh } : null;
             gravityWorld = configuredGravityWorld;
             profile = configuredProfile;
+        }
+
+        public void ConfigureMeshVariants(params Mesh[] configuredMeshes)
+        {
+            meshVariants = configuredMeshes;
+            if (mesh == null && configuredMeshes != null && configuredMeshes.Length > 0)
+                mesh = configuredMeshes[0];
+            for (int index = 0; index < _pieces.Count; index++)
+                ApplyShape(_pieces[index].gameObject, ShapeForIndex(index));
         }
 
         private void Awake()
@@ -94,11 +106,17 @@ namespace Elemental.Runtime.Physics
 
         private EarthRockDebris CreatePiece()
         {
-            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            GameObject go = new GameObject();
             go.name = $"Earth Rock Debris {_pieces.Count + 1:00}";
             go.transform.SetParent(transform, false);
-            go.GetComponent<MeshRenderer>().sharedMaterial = material;
-            if (mesh != null) go.GetComponent<MeshFilter>().sharedMesh = mesh;
+            MeshFilter filter = go.AddComponent<MeshFilter>();
+            MeshRenderer renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = material;
+            MeshCollider collider = go.AddComponent<MeshCollider>();
+            Mesh shape = ShapeForIndex(_pieces.Count);
+            filter.sharedMesh = shape;
+            collider.sharedMesh = shape;
+            collider.convex = true;
             Rigidbody body = go.AddComponent<Rigidbody>();
             body.useGravity = false;
             body.interpolation = RigidbodyInterpolation.Interpolate;
@@ -109,6 +127,66 @@ namespace Elemental.Runtime.Physics
             go.SetActive(false);
             _pieces.Add(piece);
             return piece;
+        }
+
+        private Mesh ShapeForIndex(int index)
+        {
+            if (meshVariants != null && meshVariants.Length > 0)
+            {
+                Mesh candidate = meshVariants[index % meshVariants.Length];
+                if (candidate != null) return candidate;
+            }
+            if (mesh != null) return mesh;
+            if (_fallbackMesh == null) _fallbackMesh = BuildFallbackDebrisMesh();
+            return _fallbackMesh;
+        }
+
+        private static void ApplyShape(GameObject target, Mesh shape)
+        {
+            if (target == null || shape == null) return;
+            MeshFilter filter = target.GetComponent<MeshFilter>();
+            MeshCollider collider = target.GetComponent<MeshCollider>();
+            if (filter != null) filter.sharedMesh = shape;
+            if (collider == null) return;
+            collider.sharedMesh = null;
+            collider.sharedMesh = shape;
+            collider.convex = true;
+        }
+
+        private static Mesh BuildFallbackDebrisMesh()
+        {
+            var fallback = new Mesh { name = "Irregular Earth Debris Fallback" };
+            fallback.vertices = new[]
+            {
+                new Vector3(-0.48f, -0.34f, -0.38f),
+                new Vector3( 0.46f, -0.29f, -0.43f),
+                new Vector3( 0.39f, -0.41f,  0.45f),
+                new Vector3(-0.43f, -0.31f,  0.36f),
+                new Vector3(-0.34f,  0.42f, -0.31f),
+                new Vector3( 0.37f,  0.34f, -0.28f),
+                new Vector3( 0.31f,  0.39f,  0.37f),
+                new Vector3(-0.39f,  0.31f,  0.43f)
+            };
+            fallback.triangles = new[]
+            {
+                0, 2, 1, 0, 3, 2,
+                4, 5, 6, 4, 6, 7,
+                0, 1, 5, 0, 5, 4,
+                1, 2, 6, 1, 6, 5,
+                2, 3, 7, 2, 7, 6,
+                3, 0, 4, 3, 4, 7
+            };
+            fallback.RecalculateNormals();
+            fallback.RecalculateBounds();
+            return fallback;
+        }
+
+        private void OnDestroy()
+        {
+            if (_fallbackMesh == null) return;
+            if (Application.isPlaying) Destroy(_fallbackMesh);
+            else DestroyImmediate(_fallbackMesh);
+            _fallbackMesh = null;
         }
 
         private static float Hash01(uint seed, int index)

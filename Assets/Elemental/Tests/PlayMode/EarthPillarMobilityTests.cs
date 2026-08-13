@@ -89,8 +89,9 @@ namespace Elemental.Tests.PlayMode
             Assert.That(Vector3.Angle(initialHeading, cameraRig.TangentForward), Is.GreaterThan(30f));
             Assert.That(Vector3.Distance(initialCameraPosition, cameraRig.transform.position), Is.GreaterThan(1f));
             Assert.That(Vector3.Dot(actual, desired), Is.GreaterThan(0.88f));
-            Assert.That(cameraHeight, Is.GreaterThan(5f));
-            Assert.That(focusAhead, Is.GreaterThan(3.5f));
+            Assert.That(cameraHeight, Is.InRange(1.6f, 3.2f),
+                "The Earth MVP camera should stay close enough to read the caster's body.");
+            Assert.That(focusAhead, Is.GreaterThan(2.4f));
 
             yield return SceneManager.UnloadSceneAsync(scene);
         }

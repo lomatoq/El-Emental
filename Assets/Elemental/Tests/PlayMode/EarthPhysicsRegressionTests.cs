@@ -12,6 +12,18 @@ namespace Elemental.Tests.PlayMode
     public sealed class EarthPhysicsRegressionTests
     {
         [UnityTest]
+        public IEnumerator EarthMvpWallDefaultsRequireCauseAndKeepStructuralPiecesPersistent()
+        {
+            EarthWallProfile profile = ScriptableObject.CreateInstance<EarthWallProfile>();
+
+            Assert.That(profile.AutomaticCrackDelaySeconds, Is.Zero);
+            Assert.That(profile.ShrinkDetachedStructuralPieces, Is.False);
+
+            Object.Destroy(profile);
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator FragmentPoolReusesFixedCapacityAcrossHundredAcquires()
         {
             GameObject root = new GameObject("Fragment Pool Stress");
@@ -143,12 +155,23 @@ namespace Elemental.Tests.PlayMode
                 "A magic shove should slide the wall without making it lean.");
 
             yield return new WaitForSeconds(3.75f);
+            Assert.That(pool.LastAcquired.IsCollapsing, Is.False,
+                "An undamaged MVP wall must remain stable instead of crumbling on a timer.");
+            Assert.That(wallCollider.enabled, Is.True);
+            Assert.That(pool.LastAcquired.GetComponent<MeshRenderer>().enabled, Is.True);
+            Assert.That(collapsedEvents, Is.Zero);
+
+            Assert.That(pool.LastAcquired.ApplyRockImpact(
+                pool.LastAcquired.transform.position,
+                Vector3.forward,
+                100f), Is.True);
+            yield return new WaitForSeconds(0.12f);
             Assert.That(pool.LastAcquired.IsCollapsing, Is.True);
             Assert.That(wallCollider.enabled, Is.False);
             Assert.That(pool.LastAcquired.GetComponent<MeshRenderer>().enabled, Is.False);
             Assert.That(pool.LastAcquired.ActiveFracturePieceCount, Is.EqualTo(43));
             Assert.That(pool.LastAcquired.RemainingBondCount, Is.GreaterThan(0),
-                "Automatic cracking should begin as a cohesive cluster, not instant confetti.");
+                "Impact fracture should begin as a cohesive cluster, not instant confetti.");
             Assert.That(pool.LastAcquired.FirstFracturePiece.parent, Is.EqualTo(root.transform),
                 "Fracture pieces must detach from the non-uniformly scaled wall before tumbling.");
             Rigidbody firstPieceBody = pool.LastAcquired.FirstFracturePiece.GetComponent<Rigidbody>();
@@ -157,21 +180,35 @@ namespace Elemental.Tests.PlayMode
             Assert.That(firstPieceBody.isKinematic, Is.False,
                 "Fractured Voronoi chunks remain physical while bonds still hold them together.");
             Assert.That(firstPieceBody.detectCollisions, Is.True);
-            int bondsBeforeImpact = pool.LastAcquired.RemainingBondCount;
-            pool.LastAcquired.ApplyRockImpact(
-                pool.LastAcquired.transform.position,
-                Vector3.forward,
-                2200f);
-            yield return new WaitForSeconds(0.12f);
-            Assert.That(pool.LastAcquired.RemainingBondCount, Is.LessThan(bondsBeforeImpact),
-                "A heavy rock impulse must overcome part of the wall's cohesion graph.");
             Vector3 fullPieceScale = firstPieceBody.transform.localScale;
             yield return new WaitForSeconds(2.15f);
-            Assert.That(!firstPieceBody.gameObject.activeSelf ||
-                        firstPieceBody.transform.localScale.magnitude < fullPieceScale.magnitude * 0.95f,
-                Is.True,
-                "Detached debris should rest, then shrink toward zero instead of popping away.");
-            Assert.That(collapsedEvents, Is.EqualTo(3), "Every active pooled wall should emit exactly once.");
+            Assert.That(firstPieceBody.gameObject.activeSelf, Is.True,
+                "Repairable structural pieces must remain present after fracture.");
+            Assert.That(firstPieceBody.transform.localScale, Is.EqualTo(fullPieceScale),
+                "Repairable structural pieces must not shrink while they remain interactable.");
+            Assert.That(collapsedEvents, Is.EqualTo(1), "The explicitly fractured wall should emit exactly once.");
+
+            Object.Destroy(root);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator DebrisPoolUsesConvexIrregularMeshesWithoutPrimitiveSphereFallback()
+        {
+            GameObject root = new GameObject("Irregular Debris Pool");
+            root.SetActive(false);
+            EarthRockDebrisPool pool = root.AddComponent<EarthRockDebrisPool>();
+            pool.Configure(16, null, null, null, null);
+            root.SetActive(true);
+            yield return null;
+
+            Transform first = root.transform.GetChild(0);
+            MeshCollider collider = first.GetComponent<MeshCollider>();
+            Assert.That(first.GetComponent<SphereCollider>(), Is.Null);
+            Assert.That(collider, Is.Not.Null);
+            Assert.That(collider.convex, Is.True);
+            Assert.That(collider.sharedMesh, Is.Not.Null);
+            Assert.That(collider.sharedMesh.name, Does.Contain("Irregular Earth Debris"));
 
             Object.Destroy(root);
             yield return null;

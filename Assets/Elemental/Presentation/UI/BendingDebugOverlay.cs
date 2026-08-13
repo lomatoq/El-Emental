@@ -10,6 +10,7 @@ namespace Elemental.Presentation.UI
         [SerializeField] private MagicInputController input;
         [SerializeField] private MagicExecutor executor;
         [SerializeField] private bool expanded;
+        [SerializeField] private bool showLauncherInRelease;
 
         private readonly Rect _toggleRect = new Rect(12f, 12f, 126f, 28f);
         private readonly Rect _panelRect = new Rect(12f, 46f, 390f, 430f);
@@ -34,6 +35,7 @@ namespace Elemental.Presentation.UI
 
         private void OnGUI()
         {
+            if (!Debug.isDebugBuild && !showLauncherInRelease) return;
             if (GUI.Button(_toggleRect, expanded ? "BEND DEBUG ▲" : "BEND DEBUG ▼"))
                 expanded = !expanded;
             if (!expanded || input == null) return;

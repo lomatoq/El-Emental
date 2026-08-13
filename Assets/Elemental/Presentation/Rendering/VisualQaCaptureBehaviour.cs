@@ -122,8 +122,18 @@ namespace Elemental.Presentation.Rendering
                     yield return new WaitForSecondsRealtime(2.25f);
                     yield break;
                 }
-                yield return new WaitForSecondsRealtime(
-                    scenario == VisualQaScenario.WallCollapse ? 4.48f : 1.05f);
+                if (scenario == VisualQaScenario.WallCollapse)
+                {
+                    yield return new WaitForSecondsRealtime(1.05f);
+                    EarthWall wall = FindAnyObjectByType<EarthWall>();
+                    _scenarioSucceeded = wall != null && wall.ApplyRockImpact(
+                        wall.transform.position + (wall.transform.up * wall.Height * 0.12f),
+                        camera.transform.forward,
+                        6200f);
+                    yield return new WaitForSecondsRealtime(1.15f);
+                    yield break;
+                }
+                yield return new WaitForSecondsRealtime(1.05f);
                 yield break;
             }
 

@@ -352,7 +352,8 @@ namespace Elemental.Runtime.Physics
             }
 
             _stableElapsed += Time.deltaTime;
-            if (_stableElapsed >= AutomaticCrackDelaySeconds)
+            float automaticCrackDelay = AutomaticCrackDelaySeconds;
+            if (automaticCrackDelay > 0f && _stableElapsed >= automaticCrackDelay)
             {
                 _fractureOrigin = transform.position - (_up * Height * 0.34f);
                 BeginCohesiveFracture();
@@ -687,6 +688,9 @@ namespace Elemental.Runtime.Physics
         private void UpdatePieceShrink(int index)
         {
             if (_cohesion != null && _cohesion.IsPieceHeld(index)) return;
+            // Structural pieces retain provenance and stay targetable for repair.
+            // Shrink-out is an explicit legacy cleanup policy, never the MVP default.
+            if (!ShrinkDetachedStructuralPieces) return;
             if (_pieceAnchored[index] || _pieceDetachedAt[index] < 0f) return;
             Elemental.Simulation.Structures.DynamicDebrisLifecycleSample lifecycle =
                 Elemental.Simulation.Structures.DynamicDebrisLifecycle.Evaluate(
@@ -824,11 +828,13 @@ namespace Elemental.Runtime.Physics
 
         private float MinimumEmergenceSeconds => _profile != null ? _profile.MinimumEmergenceSeconds : 0.36f;
         private float MaximumEmergenceSeconds => _profile != null ? _profile.MaximumEmergenceSeconds : 0.92f;
-        private float AutomaticCrackDelaySeconds => _profile != null ? _profile.AutomaticCrackDelaySeconds : 3.6f;
+        private float AutomaticCrackDelaySeconds => _profile != null ? _profile.AutomaticCrackDelaySeconds : 0f;
         private float FractureWaveSeconds => _profile != null ? _profile.FractureWaveSeconds : 0.26f;
         private float CohesionDecaySeconds => _profile != null ? _profile.CohesionDecaySeconds : 2.8f;
         private float DebrisRestSeconds => _profile != null ? _profile.DebrisRestSeconds : 1.35f;
         private float DebrisShrinkSeconds => _profile != null ? _profile.DebrisShrinkSeconds : 1.25f;
+        private bool ShrinkDetachedStructuralPieces =>
+            _profile != null && _profile.ShrinkDetachedStructuralPieces;
         private float MinimumRockImpactImpulse => _profile != null ? _profile.MinimumRockImpactImpulse : 55f;
         private float WallSlideDrag => _profile != null ? _profile.WallSlideDrag : 0.72f;
         private float MaximumSlideSpeed => _profile != null ? _profile.MaximumSlideSpeed : 7.5f;

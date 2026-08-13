@@ -10,11 +10,14 @@ namespace Elemental.Runtime.Physics
         [SerializeField, Min(0.05f)] private float minimumEmergenceSeconds = 0.36f;
         [SerializeField, Min(0.05f)] private float maximumEmergenceSeconds = 0.92f;
         [FormerlySerializedAs("automaticCollapseDelaySeconds")]
-        [SerializeField, Min(0f)] private float automaticCrackDelaySeconds = 3.6f;
+        [Tooltip("Seconds before an undamaged wall begins cracking. Zero disables spontaneous cracking (MVP default).")]
+        [SerializeField, Min(0f)] private float automaticCrackDelaySeconds;
         [SerializeField, Min(0f)] private float fractureWaveSeconds = 0.26f;
         [SerializeField, Min(0.05f)] private float cohesionDecaySeconds = 2.8f;
         [SerializeField, Min(0f)] private float debrisRestSeconds = 1.35f;
         [SerializeField, Min(0.05f)] private float debrisShrinkSeconds = 1.25f;
+        [Tooltip("Cleanup-only compatibility path. Keep disabled for repairable structural pieces.")]
+        [SerializeField] private bool shrinkDetachedStructuralPieces;
 
         [Header("Physical response")]
         [SerializeField, Min(0f)] private float minimumRockImpactImpulse = 55f;
@@ -39,6 +42,7 @@ namespace Elemental.Runtime.Physics
         public float CohesionDecaySeconds => cohesionDecaySeconds;
         public float DebrisRestSeconds => debrisRestSeconds;
         public float DebrisShrinkSeconds => debrisShrinkSeconds;
+        public bool ShrinkDetachedStructuralPieces => shrinkDetachedStructuralPieces;
         public float MinimumRockImpactImpulse => minimumRockImpactImpulse;
         public float WallSlideDrag => wallSlideDrag;
         public float MaximumSlideSpeed => maximumSlideSpeed;

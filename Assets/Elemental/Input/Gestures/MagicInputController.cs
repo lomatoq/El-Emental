@@ -601,6 +601,8 @@ namespace Elemental.Input.Gestures
                 Rigidbody body = hit.rigidbody;
                 IEarthPhysicalTarget earthTarget = ResolveEarthTarget(hit.collider);
                 bool releasablePiece = earthTarget is EarthWallPiece || earthTarget is EarthPlatformPiece;
+                if (_casterBody != null && hit.collider != null &&
+                    hit.collider.transform.IsChildOf(_casterBody.transform)) continue;
                 if (body == null || body == _casterBody || (body.isKinematic && !releasablePiece) ||
                     hit.distance >= nearest) continue;
                 if (earthTarget == null && body.GetComponent<GravityBody>() == null &&

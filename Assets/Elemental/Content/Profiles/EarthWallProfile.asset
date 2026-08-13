@@ -14,11 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Physics.EarthWallProfile
   minimumEmergenceSeconds: 0.36
   maximumEmergenceSeconds: 0.92
-  automaticCrackDelaySeconds: 3.6
+  automaticCrackDelaySeconds: 0
   fractureWaveSeconds: 0.26
   cohesionDecaySeconds: 2.8
   debrisRestSeconds: 1.35
   debrisShrinkSeconds: 1.25
+  shrinkDetachedStructuralPieces: 0
   minimumRockImpactImpulse: 55
   wallSlideDrag: 0.72
   maximumSlideSpeed: 7.5

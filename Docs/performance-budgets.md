@@ -52,3 +52,12 @@ Raw evidence is kept under `BuildReports` and `TestResults`. Interactive P50/P95
 - Windowed D3D11 standalone QA exited 0 for dawn, night/moon, 43-piece wall gravity grip, platform lift, physical meteor impact and Mage casting. Evidence is stored as `BuildReports/QA-*.png`; the gravity run reported 43 active fracture pieces, 43 source targets and 46/48 captured Earth targets.
 - Cold-start QA reported 68.81–85.55 ms one-time voxel render-queue peaks and zero pending work at capture. These are startup queue peaks, not P95 frame time. Shipping-content CPU P95 and the 1.5 ms atmosphere/scaled-space GPU target still require an interactive profiler capture and are intentionally not inferred from screenshots.
 - Unity Test Framework 1.7 emits one editor-shutdown persistent-allocation marker after both batch suites while also reporting no leaked weak pointers. The established 0 B claims above apply to measured managed steady-state loops, not Editor/package shutdown.
+
+## Earth Core MVP polish Task 0 — 2026-08-13
+
+- Before first aid: EditMode 113/113 in 0.516 s; PlayMode 56/56 in 74.065 s.
+- After first aid: EditMode 113/113 in 0.483 s; PlayMode 58/58 in 74.064 s. New runtime gates cover cause-only wall fracture, persistent repairable structural pieces and a convex irregular debris fallback.
+- `Scripts/Test-Unity.ps1` now waits for the Unity Windows process and propagates its real exit code; the prior direct GUI-process invocation could return an empty exit code while tests were still running.
+- Capability matrix recaptured at `2026-08-13T12:49:56Z`: three profiles passed 216,000 ticks each, total managed allocation `0 B`, no canonical rule changes.
+- Windows Development build: 170,713,574 bytes in 53.775 s, 0 warnings/errors.
+- D3D11 standalone QA wall capture exited 0. Its one-time voxel render-queue peak was 71.18 ms with zero pending work. This is cold-start evidence only and is not presented as frame-time P95.

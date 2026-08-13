@@ -86,6 +86,7 @@ namespace Elemental.Authoring.Editor
                 "Earth Physics Feel Profile");
             EarthRockDebrisPool debrisPool = magicRoot.AddComponent<EarthRockDebrisPool>();
             debrisPool.Configure(72, earthMaterial, fragmentMesh, gravityWorld, rockProfile);
+            debrisPool.ConfigureMeshVariants(fragmentMeshes);
             EarthFragmentPool pool = magicRoot.AddComponent<EarthFragmentPool>();
             pool.Configure(8, earthMaterial, gravityWorld, fragmentMesh, rockProfile, debrisPool);
             pool.ConfigureMeshVariants(fragmentMeshes);
