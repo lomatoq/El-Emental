@@ -18,6 +18,16 @@ Editor: Unity 6000.5.7f1 (017862109af0). Reference PC: Windows 11, AMD Ryzen 7 5
 | NativeLow | 192 | 4 | 2 | 64 | 48 | 4,500 | 10 | 2,048 |
 | WebLab | 64 | 2 | 1 | 24 | 16 | 1,600 | 6 | 768 |
 
+### Earth structural budgets
+
+| Profile | Hero pieces/structure | Full-detail structures | Active repair pieces | Reforming bonds/tick |
+|---|---:|---:|---:|---:|
+| NativeHigh | 64 | 2 | 64 | 128 |
+| NativeLow | 36 | 1 | 36 | 72 |
+| WebLab | 20 | 1 | 20 | 40 |
+
+Pure graph storage is validated against a separate safety ceiling of 256 pieces and 1,024 bonds per structure. This is not permission to activate that many Rigidbodies: capability budgets still gate adapters and repair work. Damage and island batches reuse caller-owned arrays and are profiled as `Elemental.Earth.Fracture.Damage` and `Elemental.Earth.Fracture.Islands`.
+
 ## Final automated evidence — 2026-08-12
 
 - EditMode: 73/73 passed in 0.332 s (`TestResults/EditMode-Final-v5.xml`).
@@ -61,3 +71,9 @@ Raw evidence is kept under `BuildReports` and `TestResults`. Interactive P50/P95
 - Capability matrix recaptured at `2026-08-13T12:49:56Z`: three profiles passed 216,000 ticks each, total managed allocation `0 B`, no canonical rule changes.
 - Windows Development build: 170,713,574 bytes in 53.775 s, 0 warnings/errors.
 - D3D11 standalone QA wall capture exited 0. Its one-time voxel render-queue peak was 71.18 ms with zero pending work. This is cold-start evidence only and is not presented as frame-time P95.
+
+## Earth Core MVP polish Task 1 — 2026-08-13
+
+- EditMode: 141/141 passed. The 28 new cases cover graph validation, stable identifiers, tension/shear/compression response, radial and area weighting, bounded output overflow, invalid impacts, world/foundation support, missing pieces, deterministic connected components and a 1,000-iteration zero-allocation hot-loop check.
+- The pure solvers use only caller-owned arrays. Runtime profiling scopes are isolated in `EarthFractureBatchRunner`; no UnityEngine type enters the canonical contracts.
+- `Elemental/Diagnostics/Earth Fracture Graph` visualizes bond health, stable component IDs and foundation-supported islands from the same profiled batch boundary.

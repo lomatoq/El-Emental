@@ -63,6 +63,8 @@ Elemental.Authoring
 - BendSessionState owns continuous bending lifecycle data. Runtime Bending adapters own only
   Rigidbody handles and apply the pure BendForceSolver result in the physics clock.
 - ReplayRecorder will own the ordered command stream and seeds.
+- Structural authoring assets own immutable meshes and baked definitions. A runtime Earth structure copies those definitions into caller-owned bounded buffers; `EarthBondDamageSolver` and `EarthIslandSolver` own no Unity objects and allocate no storage.
+- Structural provenance is stable across proxy switches and pooling: structure, piece and bond IDs are canonical, while Rigidbody handles are replaceable adapters. World/foundation bonds use the explicit `-1` endpoint rather than a scene-object reference.
 
 No subsystem may locate these owners through a global static registry.
 
@@ -80,6 +82,8 @@ Commands contain intent, geometry, intensity, tick, stable IDs, modifiers, and s
 Simulation emits typed past-tense events such as TerrainEdited, ImpactOccurred, AbilityRejected, and CharacterStateChanged. Presentation may route those events to effects without feeding visual state back into simulation.
 
 Earth destruction uses explicit tiers. Repairable structural pieces retain provenance, scale and collision until repair, reabsorption or bounded pool reuse; they never disappear through an implicit timer. Gameplay chips and cosmetic debris may keep radial gravity, momentum and collision while their visible scale decays, and leave simulation only when the pooled object reaches zero scale. Particle adapters use the same local planet direction rather than Unity's global gravity modifier.
+
+Fracture is cause-driven. Structure-local impact batches damage baked bonds through directional tension, shear and compression; deterministic connected components then identify foundation-supported and dynamic islands. Canonical fracture state never comes from GameObject activation, renderer visibility or Rigidbody sleep.
 
 Internal Earth verbs (`RaisePlatform`, `VectorFieldPush`, and `LandingCushion`) are selected by the unified input grammar and do not occupy hotbar slots.
 

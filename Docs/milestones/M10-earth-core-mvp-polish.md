@@ -33,6 +33,19 @@ Status: complete
 
 The `71.18 ms` value is a cold-start queue peak, not shipping frame-time P95. Interactive CPU/GPU profiling remains required in the hardening task.
 
+## Task 1 — pure fracture graph
+
+Status: complete
+
+- Added stable structure/piece/bond IDs, baked definition contracts and explicit canonical phases in `Elemental.Simulation.Structures` without UnityEngine dependencies.
+- Added bounded graph validation with hard safety ceilings of 256 pieces and 1,024 bonds. Runtime/capability limits remain lower.
+- `EarthBondDamageSolver` decomposes structure-local impulses into tension, shear and compression, then applies smooth radial, contact-area and material weighting in stable array order.
+- `EarthIslandSolver` writes deterministic connected components into caller-owned buffers and marks support from world bonds or foundation pieces. Missing pieces and broken/reforming bonds cannot bridge islands.
+- Runtime batch boundaries expose the profiler markers `Elemental.Earth.Fracture.Damage` and `Elemental.Earth.Fracture.Islands`.
+- `Elemental/Diagnostics/Earth Fracture Graph` is an interactive debug visualization for damage and support topology.
+- EditMode: 141/141 passed, including 28 new fracture-graph tests and a 1,000-iteration zero-allocation hot-loop check. No new compiler, shader or package warning was emitted.
+- Architecture decision: `Docs/adr/0014-fracture-and-reassembly-v2.md`.
+
 ## Next concern
 
-Task 1 adds pure, Unity-free fracture graph contracts, directional bond damage, deterministic island solving, tests and ADR-EARTH-01. It must not depend on the Task 2 runtime adapter.
+Task 2 adds the baked fracture asset, baker/validator, fixed runtime adapters and exact proxy reset, then migrates one production wall through this graph.
