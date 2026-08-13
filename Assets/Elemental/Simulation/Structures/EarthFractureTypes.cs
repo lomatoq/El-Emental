@@ -118,6 +118,23 @@ namespace Elemental.Simulation.Structures
         public byte MaterialId;
     }
 
+    [Flags]
+    public enum EarthPieceFaceFlags : byte
+    {
+        None = 0,
+        HasExterior = 1 << 0,
+        HasInterior = 1 << 1,
+        HasMagicMask = 1 << 2
+    }
+
+    public struct EarthPieceFaceMetadata
+    {
+        public EarthPieceFaceFlags Flags;
+        public byte ExteriorSubmesh;
+        public byte InteriorSubmesh;
+        public byte MagicMaskChannel;
+    }
+
     public struct EarthBondDefinition
     {
         public EarthBondId Id;

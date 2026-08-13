@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Elemental.Authoring.Assets;
 using Elemental.Authoring.Bakers;
+using Elemental.Authoring.Fracture;
 using Elemental.Input.Gestures;
 using Elemental.Input.Actions;
 using Elemental.Presentation.Camera;
@@ -99,6 +100,9 @@ namespace Elemental.Authoring.Editor
             EarthWallPool wallPool = magicRoot.AddComponent<EarthWallPool>();
             wallPool.Configure(8, wallMesh, wallMaterial, CreateOrLoadWallProfile());
             wallPool.ConfigurePhysicsFeel(physicsFeel);
+            EarthFractureAsset wallFracture = EarthFractureBaker.CreateOrLoadProductionWall(
+                wallMesh, wallMesh);
+            wallPool.ConfigureFractureAsset(wallFracture, false);
             EarthPlatformProfile platformProfile = CreateOrLoadPlatformProfile();
             EarthPlatformPool platformPool = magicRoot.AddComponent<EarthPlatformPool>();
             platformPool.Configure(6, wallMaterial, platformProfile);

@@ -17,6 +17,8 @@ namespace Elemental.Runtime.Physics
         [SerializeField] private Material wallMaterial;
         [SerializeField] private EarthWallProfile wallProfile;
         [SerializeField] private EarthPhysicsFeelProfile physicsFeelProfile;
+        [SerializeField] private ScriptableObject fractureAsset;
+        [SerializeField] private bool allowRuntimeProceduralDebugFallback = true;
 
         private readonly List<EarthWall> _walls = new List<EarthWall>(8);
         private int _reuseCursor;
@@ -24,6 +26,8 @@ namespace Elemental.Runtime.Physics
 
         public int ActiveCount { get; private set; }
         public EarthWall LastAcquired { get; private set; }
+        public bool UsingBakedFractureAsset => fractureAsset is IEarthFractureAssetRuntimeData;
+        public bool RuntimeFallbackUsed { get; private set; }
         public event Action<EarthWall> WallCollapsed;
 
         public void Configure(
@@ -39,6 +43,14 @@ namespace Elemental.Runtime.Physics
         }
 
         public void ConfigurePhysicsFeel(EarthPhysicsFeelProfile profile) => physicsFeelProfile = profile;
+
+        public void ConfigureFractureAsset(
+            ScriptableObject configuredAsset,
+            bool allowDebugFallback = true)
+        {
+            fractureAsset = configuredAsset;
+            allowRuntimeProceduralDebugFallback = allowDebugFallback;
+        }
 
         private void Awake()
         {
@@ -96,6 +108,16 @@ namespace Elemental.Runtime.Physics
             EarthWall wall = wallObject.AddComponent<EarthWall>();
             wall.ConfigureProfile(wallProfile);
             wall.Collapsed += value => WallCollapsed?.Invoke(value);
+            if (TryConfigureBakedWall(
+                    wallObject, filter, wallBody, wall, out Transform[] bakedPieces))
+            {
+                wallObject.SetActive(false);
+                _walls.Add(wall);
+                return wall;
+            }
+            if (!allowRuntimeProceduralDebugFallback)
+                throw new InvalidOperationException("A valid baked Earth fracture asset is required.");
+            RuntimeFallbackUsed = true;
             int patternIndex = _walls.Count;
             VoronoiFractureCell[] cells = VoronoiFractureSolver.BuildHierarchicalNormalizedForAspect(
                 0xE17F0001u + ((uint)patternIndex * 0x9E3779B9u),
@@ -154,6 +176,93 @@ namespace Elemental.Runtime.Physics
             wallObject.SetActive(false);
             _walls.Add(wall);
             return wall;
+        }
+
+        private bool TryConfigureBakedWall(
+            GameObject wallObject,
+            MeshFilter intactFilter,
+            Rigidbody wallBody,
+            EarthWall wall,
+            out Transform[] pieces)
+        {
+            pieces = null;
+            IEarthFractureAssetRuntimeData data = fractureAsset as IEarthFractureAssetRuntimeData;
+            if (data == null || data.SchemaVersion <= 0 || data.PieceCount <= 0 || data.BondCount <= 0)
+                return false;
+
+            var definitions = new EarthPieceDefinition[data.PieceCount];
+            var bondDefinitions = new EarthBondDefinition[data.BondCount];
+            if (!data.CopyDefinitions(definitions, bondDefinitions))
+                throw new InvalidOperationException("The baked Earth fracture asset could not copy its data.");
+            EarthGraphValidationResult validation = EarthBondGraph.Validate(
+                definitions, definitions.Length, bondDefinitions, bondDefinitions.Length);
+            if (!validation.IsValid)
+            {
+                throw new InvalidOperationException(
+                    $"The baked Earth fracture graph is invalid: {validation.Error} at {validation.Index}.");
+            }
+
+            if (data.IntactRenderMesh != null) intactFilter.sharedMesh = data.IntactRenderMesh;
+            pieces = new Transform[data.PieceCount];
+            var volumeFractions = new float[data.PieceCount];
+            float totalVolume = 0f;
+            for (int index = 0; index < definitions.Length; index++)
+                totalVolume += Mathf.Max(0.0001f, definitions[index].Volume);
+
+            for (int pieceIndex = 0; pieceIndex < definitions.Length; pieceIndex++)
+            {
+                EarthPieceDefinition definition = definitions[pieceIndex];
+                Mesh renderMesh = data.GetPieceRenderMesh(pieceIndex);
+                Mesh colliderMesh = data.GetPieceColliderMesh(pieceIndex);
+                if (renderMesh == null || colliderMesh == null)
+                    throw new InvalidOperationException($"Baked Earth piece {pieceIndex} has no render/collider mesh.");
+
+                GameObject piece = new GameObject($"Baked Piece {definition.Id.Value:000}");
+                piece.transform.SetParent(wallObject.transform, false);
+                piece.transform.localPosition = ToVector3(definition.RestLocalPosition);
+                quaternion rotation = definition.RestLocalRotation;
+                piece.transform.localRotation = new Quaternion(
+                    rotation.value.x, rotation.value.y, rotation.value.z, rotation.value.w);
+                piece.transform.localScale = ToVector3(definition.RestLocalScale);
+                MeshFilter pieceFilter = piece.AddComponent<MeshFilter>();
+                pieceFilter.sharedMesh = renderMesh;
+                MeshRenderer pieceRenderer = piece.AddComponent<MeshRenderer>();
+                pieceRenderer.sharedMaterials = renderMesh.subMeshCount > 1
+                    ? new[] { wallMaterial, wallMaterial }
+                    : new[] { wallMaterial };
+                MeshCollider pieceCollider = piece.AddComponent<MeshCollider>();
+                pieceCollider.sharedMesh = colliderMesh;
+                pieceCollider.convex = true;
+                Rigidbody pieceBody = piece.AddComponent<Rigidbody>();
+                pieceBody.useGravity = false;
+                pieceBody.isKinematic = true;
+                pieceBody.detectCollisions = false;
+                pieceBody.interpolation = RigidbodyInterpolation.Interpolate;
+                pieceBody.maxAngularVelocity = 22f;
+                physicsFeelProfile?.Apply(pieceBody, pieceCollider, EarthPhysicsBodyClass.HeavyBlock);
+                piece.SetActive(false);
+                pieces[pieceIndex] = piece.transform;
+                volumeFractions[pieceIndex] = Mathf.Max(0.0001f, definition.Volume) / totalVolume;
+            }
+
+            var bonds = new EarthWallBond[bondDefinitions.Length];
+            for (int bondIndex = 0; bondIndex < bondDefinitions.Length; bondIndex++)
+            {
+                EarthBondDefinition definition = bondDefinitions[bondIndex];
+                bool foundation = definition.PieceB == EarthBondGraph.WorldPieceIndex;
+                bonds[bondIndex] = CreateBond(
+                    pieces,
+                    definition.PieceA,
+                    definition.PieceB,
+                    definition.ContactArea,
+                    foundation,
+                    foundation ? wallBody : null);
+            }
+
+            wall.ConfigureCollapsePieces(pieces, volumeFractions, bonds);
+            if (!wall.ConfigureBakedRuntime(data))
+                throw new InvalidOperationException("The baked Earth runtime adapter rejected validated data.");
+            return true;
         }
 
         private static EarthWallBond[] BuildBonds(
@@ -321,5 +430,7 @@ namespace Elemental.Runtime.Physics
             public float DepthMin { get; }
             public float DepthMax { get; }
         }
+
+        private static Vector3 ToVector3(float3 value) => new Vector3(value.x, value.y, value.z);
     }
 }

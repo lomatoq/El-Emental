@@ -1,4 +1,6 @@
 using System;
+using Elemental.Simulation.Structures;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Elemental.Runtime.Physics
@@ -12,6 +14,8 @@ namespace Elemental.Runtime.Physics
         private Rigidbody _body;
         private EarthWallProfile _profile;
         private EarthCohesiveStructure _cohesion;
+        private EarthStructureRuntime _structureRuntime;
+        private EarthStructureProxySwitcher _proxySwitcher;
         private Transform[] _pieces;
         private IEarthPhysicalTarget[] _pieceTargets;
         private Rigidbody[] _pieceBodies;
@@ -63,6 +67,8 @@ namespace Elemental.Runtime.Physics
         {
             get
             {
+                if (_structureRuntime != null && _structureRuntime.IsConfigured)
+                    return _structureRuntime.RemainingBondCount;
                 if (_bondBroken == null) return 0;
                 int count = 0;
                 for (int index = 0; index < _bondBroken.Length; index++)
@@ -90,6 +96,8 @@ namespace Elemental.Runtime.Physics
         public EarthPhysicalTargetKind TargetKind => EarthPhysicalTargetKind.Wall;
         public bool IsEarthTargetValid => gameObject.activeSelf && !_fractured && _body != null;
         public uint StructureId => WallId;
+        public bool UsesBakedFracture => _structureRuntime != null && _structureRuntime.IsConfigured;
+        public EarthStructureRuntime StructureRuntime => _structureRuntime;
         bool IEarthFractureSource.IsFractured => _fractured;
 
         public int CopyActiveTargetsNonAlloc(IEarthPhysicalTarget[] destination)
@@ -102,7 +110,7 @@ namespace Elemental.Runtime.Physics
                 if (piece == null || !piece.gameObject.activeSelf) continue;
                 IEarthPhysicalTarget target = _pieceTargets != null && index < _pieceTargets.Length
                     ? _pieceTargets[index]
-                    : piece.GetComponent<EarthWallPiece>();
+                    : piece.GetComponent<EarthPieceRuntime>();
                 if (target == null || !target.IsEarthTargetValid) continue;
                 destination[output++] = target;
             }
@@ -147,6 +155,21 @@ namespace Elemental.Runtime.Physics
                 wallPiece.Configure(this, index);
                 _pieceTargets[index] = wallPiece;
             }
+        }
+
+        public bool ConfigureBakedRuntime(IEarthFractureAssetRuntimeData asset)
+        {
+            if (asset == null || _pieces == null || _bonds == null) return false;
+            ResolveReferences();
+            if (_structureRuntime == null) _structureRuntime = GetComponent<EarthStructureRuntime>();
+            if (_structureRuntime == null) _structureRuntime = gameObject.AddComponent<EarthStructureRuntime>();
+            if (_proxySwitcher == null) _proxySwitcher = GetComponent<EarthStructureProxySwitcher>();
+            if (_proxySwitcher == null) _proxySwitcher = gameObject.AddComponent<EarthStructureProxySwitcher>();
+            if (!_structureRuntime.Configure(asset, this, _pieces, _bonds)) return false;
+            _proxySwitcher.Configure(_renderer, _collider, _pieces);
+            for (int index = 0; index < _pieces.Length; index++)
+                _pieceTargets[index] = _pieces[index].GetComponent<EarthPieceRuntime>();
+            return true;
         }
 
         public void Initialize(
@@ -213,6 +236,7 @@ namespace Elemental.Runtime.Physics
             _fractureBias = _forward;
             _magicFieldActive = false;
             _cohesion?.ResetCohesion();
+            _structureRuntime?.ResetExact(new EarthStructureId(id), _generation, sourceTick);
 
             _body.useGravity = false;
             _body.constraints = RigidbodyConstraints.FreezeRotation;
@@ -227,6 +251,7 @@ namespace Elemental.Runtime.Physics
             transform.localScale = new Vector3(_finalScale.x, _finalScale.y * 0.18f, _finalScale.z);
             _collider.enabled = false;
             _renderer.enabled = true;
+            _proxySwitcher?.ShowIntact(false);
             HideFracturePieces();
             gameObject.SetActive(true);
         }
@@ -274,6 +299,7 @@ namespace Elemental.Runtime.Physics
         internal bool AcquirePieceForMagic(int pieceIndex)
         {
             if (!_fractured || _cohesion == null || !_cohesion.AcquirePiece(pieceIndex)) return false;
+            _structureRuntime?.BreakPieceBonds(pieceIndex, CurrentStructureTick);
             BreakRemainingPieceBonds(pieceIndex);
             _pieceShrinking[pieceIndex] = false;
             Transform piece = _pieces[pieceIndex];
@@ -295,6 +321,7 @@ namespace Elemental.Runtime.Physics
         internal void ReleasePieceFromMagic(int pieceIndex)
         {
             _cohesion?.ReleasePiece(pieceIndex);
+            _structureRuntime?.SetPieceReleased(pieceIndex, CurrentStructureTick);
             if (_pieceDetachedAt != null && pieceIndex >= 0 && pieceIndex < _pieceDetachedAt.Length)
                 _pieceDetachedAt[pieceIndex] = _fractureElapsed;
         }
@@ -382,7 +409,8 @@ namespace Elemental.Runtime.Physics
         {
             Vector3 velocity = _body.linearVelocity;
             Vector3 radial = _body.position - _planetCenter;
-            Vector3 localUp = radial.sqrMagnitude > 0.01f ? radial.normalized : _up;
+            Vector3 predictedRadial = radial + (velocity * Time.fixedDeltaTime);
+            Vector3 localUp = predictedRadial.sqrMagnitude > 0.01f ? predictedRadial.normalized : _up;
             float normalOffset = radial.magnitude - _surfaceRootRadius;
             float normalVelocity = Vector3.Dot(velocity, localUp);
             _body.AddForce(-localUp * ((normalOffset * 68f) + (normalVelocity * 14f)), ForceMode.Acceleration);
@@ -491,6 +519,7 @@ namespace Elemental.Runtime.Physics
             if (_fractured) return;
             _fractured = true;
             _cohesion?.BeginFracture();
+            _structureRuntime?.BeginFracture(CurrentStructureTick);
             _fractureElapsed = 0f;
             Vector3 displacement = transform.position - _surfacePosition;
             Start += displacement;
@@ -503,6 +532,7 @@ namespace Elemental.Runtime.Physics
             transform.localScale = _finalScale;
             _collider.enabled = false;
             _renderer.enabled = false;
+            _proxySwitcher?.ShowFractured();
             if (_pieces == null)
             {
                 Collapsed?.Invoke(this);
@@ -549,16 +579,29 @@ namespace Elemental.Runtime.Physics
                 float contactWeight = Mathf.Sqrt(Mathf.Max(0.04f, bond.NormalizedContactArea * _pieces.Length));
                 _bondStrength[index] = EstimatedMass * CohesionImpulsePerMass * contactWeight *
                                        (bond.Foundation ? FoundationStrengthMultiplier : 1f);
-                joint.autoConfigureConnectedAnchor = true;
-                joint.connectedBody = bond.Foundation ? _body : _pieceBodies[bond.PieceB];
-                joint.xMotion = ConfigurableJointMotion.Locked;
-                joint.yMotion = ConfigurableJointMotion.Locked;
-                joint.zMotion = ConfigurableJointMotion.Locked;
-                joint.angularXMotion = ConfigurableJointMotion.Locked;
-                joint.angularYMotion = ConfigurableJointMotion.Locked;
-                joint.angularZMotion = ConfigurableJointMotion.Locked;
-                joint.enableCollision = false;
-                joint.enablePreprocessing = false;
+                _structureRuntime?.SetBondStrengths(
+                    index,
+                    _bondStrength[index],
+                    _bondStrength[index] * 1.18f,
+                    _bondStrength[index] * 3.4f);
+                EarthBondRuntime runtimeBond = _structureRuntime?.GetBondRuntime(index);
+                if (runtimeBond != null)
+                {
+                    runtimeBond.Activate(bond.Foundation ? _body : _pieceBodies[bond.PieceB]);
+                }
+                else
+                {
+                    joint.autoConfigureConnectedAnchor = true;
+                    joint.connectedBody = bond.Foundation ? _body : _pieceBodies[bond.PieceB];
+                    joint.xMotion = ConfigurableJointMotion.Locked;
+                    joint.yMotion = ConfigurableJointMotion.Locked;
+                    joint.zMotion = ConfigurableJointMotion.Locked;
+                    joint.angularXMotion = ConfigurableJointMotion.Locked;
+                    joint.angularYMotion = ConfigurableJointMotion.Locked;
+                    joint.angularZMotion = ConfigurableJointMotion.Locked;
+                    joint.enableCollision = false;
+                    joint.enablePreprocessing = false;
+                }
             }
         }
 
@@ -567,7 +610,7 @@ namespace Elemental.Runtime.Physics
             _fractureElapsed += Time.deltaTime;
             bool connectivityDirty = false;
             float decayStart = FractureWaveSeconds;
-            if (_fractureElapsed >= decayStart)
+            if (_structureRuntime == null && _fractureElapsed >= decayStart)
             {
                 for (int index = 0; index < _bonds.Length; index++)
                 {
@@ -607,6 +650,28 @@ namespace Elemental.Runtime.Physics
                 Mathf.Max(0.65f, Thickness * 1.8f),
                 Mathf.Max(_finalScale.x, Height) * 0.82f,
                 1f - Mathf.Exp(-impactRatio * 0.22f));
+            if (_structureRuntime != null && _structureRuntime.IsConfigured)
+            {
+                Vector3 localPointVector = transform.InverseTransformPoint(point);
+                Vector3 localDirection = transform.InverseTransformDirection(direction).normalized;
+                float localRadius = radius / Mathf.Max(0.25f, Mathf.Max(_finalScale.x, _finalScale.y));
+                _structureRuntime.ApplyImpact(
+                    new float3(localPointVector.x, localPointVector.y, localPointVector.z),
+                    new float3(localDirection.x, localDirection.y, localDirection.z) *
+                    (impulse * ImpactDamageMultiplier),
+                    Mathf.Max(0.05f, localRadius),
+                    1f,
+                    CurrentStructureTick);
+                bool releasedAny = false;
+                for (int index = 0; index < _bonds.Length; index++)
+                {
+                    if (_bondBroken[index] || !_structureRuntime.IsBondBroken(index)) continue;
+                    ReleaseBond(index, 0f, point, direction);
+                    releasedAny = true;
+                }
+                if (releasedAny) RecomputeConnectivity();
+                return;
+            }
             bool connectivityDirty = false;
             for (int index = 0; index < _bonds.Length; index++)
             {
@@ -630,16 +695,25 @@ namespace Elemental.Runtime.Physics
         {
             if (_bondBroken[index]) return;
             _bondBroken[index] = true;
+            _structureRuntime?.MarkBondBroken(index, CurrentStructureTick);
             EarthWallBond bond = _bonds[index];
             ConfigurableJoint joint = bond.Joint;
-            joint.xMotion = ConfigurableJointMotion.Free;
-            joint.yMotion = ConfigurableJointMotion.Free;
-            joint.zMotion = ConfigurableJointMotion.Free;
-            joint.angularXMotion = ConfigurableJointMotion.Free;
-            joint.angularYMotion = ConfigurableJointMotion.Free;
-            joint.angularZMotion = ConfigurableJointMotion.Free;
-            joint.connectedBody = null;
-            joint.enableCollision = true;
+            EarthBondRuntime runtimeBond = _structureRuntime?.GetBondRuntime(index);
+            if (runtimeBond != null)
+            {
+                runtimeBond.Release();
+            }
+            else
+            {
+                joint.xMotion = ConfigurableJointMotion.Free;
+                joint.yMotion = ConfigurableJointMotion.Free;
+                joint.zMotion = ConfigurableJointMotion.Free;
+                joint.angularXMotion = ConfigurableJointMotion.Free;
+                joint.angularYMotion = ConfigurableJointMotion.Free;
+                joint.angularZMotion = ConfigurableJointMotion.Free;
+                joint.connectedBody = null;
+                joint.enableCollision = true;
+            }
             if (excessImpulse <= 0f) return;
 
             Rigidbody a = _pieceBodies[bond.PieceA];
@@ -654,6 +728,16 @@ namespace Elemental.Runtime.Physics
 
         private void RecomputeConnectivity()
         {
+            if (_structureRuntime != null && _structureRuntime.IsConfigured)
+            {
+                for (int index = 0; index < _pieceAnchored.Length; index++)
+                {
+                    _pieceAnchored[index] = _structureRuntime.IsPieceSupported(index);
+                    if (!_pieceAnchored[index] && _pieceDetachedAt[index] < 0f)
+                        _pieceDetachedAt[index] = _fractureElapsed;
+                }
+                return;
+            }
             Array.Clear(_pieceAnchored, 0, _pieceAnchored.Length);
             int head = 0;
             int tail = 0;
@@ -806,6 +890,9 @@ namespace Elemental.Runtime.Physics
                 _body.isKinematic = true;
             }
             _cohesion?.ResetCohesion();
+            _structureRuntime?.ResetExact(
+                new EarthStructureId(WallId), _generation, CurrentStructureTick);
+            _proxySwitcher?.ShowIntact(false);
         }
 
         private void OnCollisionEnter(Collision collision)
@@ -847,6 +934,8 @@ namespace Elemental.Runtime.Physics
         private float SurfaceTolerance => _profile != null ? _profile.SurfaceTolerance : 0.06f;
         private float VisibleVoxelSafetyDepth => _profile != null ? _profile.VisibleVoxelSafetyDepth : 0.55f;
         private float MagicFieldSlideDrag => _profile != null ? _profile.MagicFieldSlideDrag : 0.16f;
+        private uint CurrentStructureTick => SourceTick +
+                                             (uint)Mathf.Max(0, Mathf.RoundToInt(_fractureElapsed * 60f));
 
         private static float Hash01(uint seed, int index)
         {
@@ -861,45 +950,7 @@ namespace Elemental.Runtime.Physics
     }
 
     [DisallowMultipleComponent]
-    public sealed class EarthWallPiece : MonoBehaviour, IEarthPhysicalTarget
+    public sealed class EarthWallPiece : EarthPieceRuntime
     {
-        private int _lastImpactFrame = -100;
-
-        public EarthWall Owner { get; private set; }
-        public int PieceIndex { get; private set; }
-        public Rigidbody Body => GetComponent<Rigidbody>();
-        public uint StableEarthId => Owner != null
-            ? (Owner.WallId * 100u) + (uint)Mathf.Max(0, PieceIndex) + 1u
-            : 0u;
-        public EarthPhysicalTargetHandle TargetHandle => Owner != null
-            ? new EarthPhysicalTargetHandle(StableEarthId, Owner.TargetHandle.Generation)
-            : default;
-        public float EarthMass => Body != null ? Body.mass : 0f;
-        public EarthPhysicalTargetKind TargetKind => EarthPhysicalTargetKind.WallPiece;
-        public bool IsEarthTargetValid => Owner != null && Owner.IsCollapsing &&
-                                          gameObject.activeSelf && Body != null;
-
-        public void Configure(EarthWall owner, int pieceIndex)
-        {
-            Owner = owner;
-            PieceIndex = pieceIndex;
-        }
-
-        public void OnEarthMagicGrabbed(EarthMagicGripKind grip)
-        {
-            Owner?.AcquirePieceForMagic(PieceIndex);
-        }
-
-        public void OnEarthMagicReleased(EarthMagicGripKind grip)
-        {
-            Owner?.ReleasePieceFromMagic(PieceIndex);
-        }
-
-        private void OnCollisionEnter(Collision collision)
-        {
-            if (Owner == null || Time.frameCount - _lastImpactFrame < 2) return;
-            _lastImpactFrame = Time.frameCount;
-            Owner.HandlePieceCollision(PieceIndex, collision);
-        }
     }
 }

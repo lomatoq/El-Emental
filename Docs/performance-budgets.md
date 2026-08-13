@@ -77,3 +77,12 @@ Raw evidence is kept under `BuildReports` and `TestResults`. Interactive P50/P95
 - EditMode: 141/141 passed. The 28 new cases cover graph validation, stable identifiers, tension/shear/compression response, radial and area weighting, bounded output overflow, invalid impacts, world/foundation support, missing pieces, deterministic connected components and a 1,000-iteration zero-allocation hot-loop check.
 - The pure solvers use only caller-owned arrays. Runtime profiling scopes are isolated in `EarthFractureBatchRunner`; no UnityEngine type enters the canonical contracts.
 - `Elemental/Diagnostics/Earth Fracture Graph` visualizes bond health, stable component IDs and foundation-supported islands from the same profiled batch boundary.
+
+## Earth Core MVP polish Task 2 — 2026-08-13
+
+- EditMode: 146/146 passed in 0.812 s; PlayMode: 60/60 passed in 79.324 s.
+- Production wall topology is baked at 43 pieces and 140 bonds. Its convex piece meshes remain below the 255-vertex PhysX ceiling; structural state is copied once into fixed runtime arrays.
+- The production pool does no Voronoi generation or topology collection work at runtime. The procedural path is explicitly debug-only.
+- Damage and support batches remain under `Elemental.Earth.Fracture.Damage` / `Elemental.Earth.Fracture.Islands`; the PlayMode no-decay scenario observes stable bond count for 3.2 s after pending contact callbacks are isolated.
+- Windows Development: 170,811,033 bytes in 54.669 s, 0 warnings/errors.
+- D3D11 standalone wall-collapse QA exited 0. The captured cold-start voxel queue peak was 69.72 ms with zero pending work; this is not a shipping frame-time percentile.
