@@ -1,3 +1,4 @@
+using Unity.Profiling;
 using UnityEngine;
 
 namespace Elemental.Runtime.Physics
@@ -5,6 +6,8 @@ namespace Elemental.Runtime.Physics
     [DisallowMultipleComponent]
     public sealed class EarthStructureProxySwitcher : MonoBehaviour
     {
+        private static readonly ProfilerMarker ProxySwitchMarker =
+            new ProfilerMarker("Elemental.Earth.Proxy.Switch");
         private Renderer _intactRenderer;
         private Collider _intactCollider;
         private Transform[] _pieces = System.Array.Empty<Transform>();
@@ -24,6 +27,7 @@ namespace Elemental.Runtime.Physics
 
         public void ShowIntact(bool colliderEnabled)
         {
+            using var marker = ProxySwitchMarker.Auto();
             if (_intactRenderer != null) _intactRenderer.enabled = true;
             if (_intactCollider != null) _intactCollider.enabled = colliderEnabled;
             for (int index = 0; index < _pieces.Length; index++)
@@ -38,6 +42,7 @@ namespace Elemental.Runtime.Physics
 
         public void ShowFractured()
         {
+            using var marker = ProxySwitchMarker.Auto();
             if (_intactRenderer != null) _intactRenderer.enabled = false;
             if (_intactCollider != null) _intactCollider.enabled = false;
             for (int index = 0; index < _pieces.Length; index++)
@@ -47,6 +52,7 @@ namespace Elemental.Runtime.Physics
 
         public void HideAll()
         {
+            using var marker = ProxySwitchMarker.Auto();
             if (_intactRenderer != null) _intactRenderer.enabled = false;
             if (_intactCollider != null) _intactCollider.enabled = false;
             for (int index = 0; index < _pieces.Length; index++)

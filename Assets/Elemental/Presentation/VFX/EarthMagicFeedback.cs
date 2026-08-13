@@ -3,6 +3,7 @@ using Elemental.Runtime.Physics;
 using Elemental.Simulation.Magic;
 using Elemental.Presentation.Camera;
 using Elemental.Input.Gestures;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace Elemental.Presentation.VFX
@@ -10,6 +11,8 @@ namespace Elemental.Presentation.VFX
     [DisallowMultipleComponent]
     public sealed class EarthMagicFeedback : MonoBehaviour
     {
+        private static readonly ProfilerMarker RouteMarker =
+            new ProfilerMarker("Elemental.Earth.Feedback.Route");
         [SerializeField] private MagicExecutor executor;
         [SerializeField] private ParticleSystem dust;
         [SerializeField] private ParticleSystem sparks;
@@ -26,6 +29,7 @@ namespace Elemental.Presentation.VFX
         private float _crackLife;
         private float _nextChargePulseTime;
         private float _nextWaveCameraPulse;
+        private EarthFeedbackBatchAccumulator _impactBatch;
 
         public void ConfigureImpactProfile(EarthFeedbackProfile configuredProfile) =>
             impactFeedbackProfile = configuredProfile;
@@ -69,6 +73,8 @@ namespace Elemental.Presentation.VFX
 
         private void Update()
         {
+            using var marker = RouteMarker.Auto();
+            FlushImpactBatch();
             if (pulseLight == null) return;
             _pulse = Mathf.MoveTowards(_pulse, 0f, Time.deltaTime * 5f);
             pulseLight.intensity = _pulse * 4.5f;
@@ -199,22 +205,32 @@ namespace Elemental.Presentation.VFX
         {
             if (impactFeedbackProfile == null) return;
             EarthFeedbackSample sample = impactFeedbackProfile.Evaluate(in value);
-            Vector3 point = new Vector3(value.Point.x, value.Point.y, value.Point.z);
-            Vector3 up = new Vector3(value.Normal.x, value.Normal.y, value.Normal.z);
+            _impactBatch.Add(
+                in value,
+                in sample,
+                impactFeedbackProfile.MaximumBatchedDustPerFrame,
+                impactFeedbackProfile.MaximumBatchedChipsPerFrame);
+        }
+
+        private void FlushImpactBatch()
+        {
+            if (!_impactBatch.TryFlush(out EarthFeedbackBatchResult batch)) return;
+            Vector3 point = new Vector3(batch.Point.x, batch.Point.y, batch.Point.z);
+            Vector3 up = new Vector3(batch.Normal.x, batch.Normal.y, batch.Normal.z);
             SetEmitterFrame(dust, point, up);
             SetEmitterFrame(rubble, point + up * 0.025f, up);
-            dust?.Emit(sample.DustCount);
-            rubble?.Emit(sample.ChipCount);
+            dust?.Emit(batch.DustCount);
+            rubble?.Emit(batch.ChipCount);
             // Bright motes are an accent for exceptional energy, never the dominant layer.
-            if (sparks != null && value.KineticEnergy > 18000f)
+            if (sparks != null && batch.MaximumKineticEnergy > 18000f)
             {
                 SetEmitterFrame(sparks, point + up * 0.04f, up);
-                sparks.Emit(value.KineticEnergy > 65000f ? 3 : 1);
+                sparks.Emit(batch.MaximumKineticEnergy > 65000f ? 3 : 1);
             }
             cameraRig?.AddPresentationImpulse(
-                Mathf.Clamp(Mathf.Log10(1f + value.KineticEnergy) * 0.022f, 0.025f, 0.19f),
+                Mathf.Clamp(Mathf.Log10(1f + batch.MaximumKineticEnergy) * 0.022f, 0.025f, 0.19f),
                 0.34f,
-                value.SourceId ^ 0xEA47F11u);
+                batch.Seed ^ 0xEA47F11u);
         }
 
         private void OnPushChargeChanged(float charge)

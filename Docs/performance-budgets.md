@@ -136,3 +136,12 @@ Raw evidence is kept under `BuildReports` and `TestResults`. Interactive P50/P95
 - `Elemental.Earth.Camera.Direct` covers the state/focus/profile hot path. Layered impulses are deterministic, bounded presentation offsets and cannot feed back into Rigidbody truth.
 - EditMode: 185/185 passed in 1.471 s; PlayMode: 64/64 passed in 125.879 s.
 - Windows Development: 171,119,134 bytes in 58.631 s, 0 warnings/errors.
+
+## Earth Core MVP polish Task 9 - 2026-08-13
+
+- `EarthFeedbackBatchAccumulator` combines arbitrary same-frame impact bursts into one bounded presentation emission: at most 72 dust and 20 chip particles by default. It retains weighted contact position/normal, maximum energy and a deterministic seed.
+- Warm tests report `0 B` for 128 impact events and 4,096 camera solver steps. The three capability profiles each report `0 B` over 216,000 ticks and never alter canonical rules.
+- All twelve required Earth profiler markers are asserted by source-level EditMode gates. The completed runtime contains no `TODO`, `FIXME` or `NotImplementedException` stub.
+- EditMode: 191/191 passed in 1.225 s; PlayMode: 64/64 passed in 125.823 s.
+- Windows Development: 171,123,394 bytes in 57.941 s, 0 warnings/errors.
+- Windows Release: 106,003,631 bytes in 60.678 s, 0 warnings/errors.

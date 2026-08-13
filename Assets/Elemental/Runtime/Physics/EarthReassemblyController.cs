@@ -11,6 +11,14 @@ namespace Elemental.Runtime.Physics
     {
         private static readonly ProfilerMarker RepairAlignMarker =
             new ProfilerMarker("Elemental.Earth.Repair.Align");
+        private static readonly ProfilerMarker RepairSelectMarker =
+            new ProfilerMarker("Elemental.Earth.Repair.Select");
+        private static readonly ProfilerMarker RepairOrderMarker =
+            new ProfilerMarker("Elemental.Earth.Repair.Order");
+        private static readonly ProfilerMarker RepairSolveMarker =
+            new ProfilerMarker("Elemental.Earth.Repair.Solve");
+        private static readonly ProfilerMarker RepairWeldMarker =
+            new ProfilerMarker("Elemental.Earth.Repair.Weld");
 
         private EarthStructureRuntime _structure;
         private EarthWall _wall;
@@ -122,31 +130,34 @@ namespace Elemental.Runtime.Physics
             bool conflictingOwner = false;
             EarthStructureId structureId = _structure.State.Id;
             _generation = _structure.Generation;
-            for (int index = 0; index < _pieceDefinitions.Length; index++)
+            using (RepairSelectMarker.Auto())
             {
-                EarthPieceRuntime piece = _structure.GetPieceRuntime(index);
-                bool conflict = piece != null && piece.HasMagicOwner &&
-                                piece.MagicOwner != EarthMagicGripKind.Repair;
-                conflictingOwner |= conflict;
-                bool selectable = piece != null && piece.gameObject.activeSelf &&
-                                  piece.Generation == _generation &&
-                                  EarthRepairOrdering.IsSelectable(
-                                      structureId,
-                                      piece.StructureId,
-                                      in _pieceDefinitions[index],
-                                      in _pieceStateSnapshot[index],
-                                      conflict,
-                                      selectedMass,
-                                      massLimit);
-                _available[index] = selectable;
-                _welded[index] = selectable &&
-                                 _pieceStateSnapshot[index].Phase == EarthPiecePhase.Welded;
-                _phaseElapsed[index] = 0f;
-                _settle[index] = default;
-                _progress[index] = new EarthRepairProgressState { BestError = float.MaxValue };
-                if (!selectable) continue;
-                selectedMass += Mathf.Max(0f, _pieceDefinitions[index].Mass);
-                candidateCount++;
+                for (int index = 0; index < _pieceDefinitions.Length; index++)
+                {
+                    EarthPieceRuntime piece = _structure.GetPieceRuntime(index);
+                    bool conflict = piece != null && piece.HasMagicOwner &&
+                                    piece.MagicOwner != EarthMagicGripKind.Repair;
+                    conflictingOwner |= conflict;
+                    bool selectable = piece != null && piece.gameObject.activeSelf &&
+                                      piece.Generation == _generation &&
+                                      EarthRepairOrdering.IsSelectable(
+                                          structureId,
+                                          piece.StructureId,
+                                          in _pieceDefinitions[index],
+                                          in _pieceStateSnapshot[index],
+                                          conflict,
+                                          selectedMass,
+                                          massLimit);
+                    _available[index] = selectable;
+                    _welded[index] = selectable &&
+                                     _pieceStateSnapshot[index].Phase == EarthPiecePhase.Welded;
+                    _phaseElapsed[index] = 0f;
+                    _settle[index] = default;
+                    _progress[index] = new EarthRepairProgressState { BestError = float.MaxValue };
+                    if (!selectable) continue;
+                    selectedMass += Mathf.Max(0f, _pieceDefinitions[index].Mass);
+                    candidateCount++;
+                }
             }
             if (candidateCount == 0)
             {
@@ -155,17 +166,20 @@ namespace Elemental.Runtime.Physics
                     : EarthRepairRejectReason.NoRepairablePieces);
             }
 
-            _orderResult = EarthRepairOrdering.Build(
-                _pieceDefinitions,
-                _pieceStateSnapshot,
-                _pieceDefinitions.Length,
-                _bondDefinitions,
-                _bondDefinitions.Length,
-                _available,
-                anchorMode,
-                _order,
-                _graphDepth,
-                _visited);
+            using (RepairOrderMarker.Auto())
+            {
+                _orderResult = EarthRepairOrdering.Build(
+                    _pieceDefinitions,
+                    _pieceStateSnapshot,
+                    _pieceDefinitions.Length,
+                    _bondDefinitions,
+                    _bondDefinitions.Length,
+                    _available,
+                    anchorMode,
+                    _order,
+                    _graphDepth,
+                    _visited);
+            }
             if (!_orderResult.IsSuccess)
                 return Reject(tick, EarthRepairRejectReason.InvalidGraph);
             if (!_structure.BeginRepair(tick))
@@ -294,8 +308,9 @@ namespace Elemental.Runtime.Physics
                 float3.zero,
                 Mathf.Max(0.01f, body.mass));
             bool capturePhase = phase == EarthPiecePhase.Captured || phase == EarthPiecePhase.Staging;
-            EarthRepairPoseControlSample sample = EarthRepairPoseSolver.Solve(
-                in input, in _tuning, capturePhase);
+            EarthRepairPoseControlSample sample;
+            using (RepairSolveMarker.Auto())
+                sample = EarthRepairPoseSolver.Solve(in input, in _tuning, capturePhase);
             if (!sample.IsFinite)
             {
                 Interrupt(EarthRepairInterruptReason.SolverRejected, _tick);
@@ -428,6 +443,7 @@ namespace Elemental.Runtime.Physics
 
         private void WeldPiece(int index, Vector3 restPosition, Quaternion restRotation)
         {
+            using var marker = RepairWeldMarker.Auto();
             Rigidbody body = _structure.GetPieceRuntime(index).Body;
             _structure.SetPiecePhase(index, EarthPiecePhase.WeldCandidate, _tick);
             body.linearVelocity = Vector3.zero;

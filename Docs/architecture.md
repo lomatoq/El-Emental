@@ -89,6 +89,8 @@ raw pointer streams and screen pixels are not authoritative.
 
 Simulation emits typed past-tense events such as TerrainEdited, ImpactOccurred, AbilityRejected, and CharacterStateChanged. Presentation may route those events to effects without feeding visual state back into simulation.
 
+Dense same-frame Earth impact bursts are presentation-batched after the typed event boundary. The accumulator caps particles and camera requests while retaining an impulse-weighted contact frame, maximum energy and deterministic seed. It cannot merge, suppress or rewrite the canonical impact, bond damage or replay stream that produced those events.
+
 Earth destruction uses explicit tiers. Repairable structural pieces retain provenance, scale and collision until repair, reabsorption or bounded pool reuse; they never disappear through an implicit timer. Gameplay chips and cosmetic debris may keep radial gravity, momentum and collision while their visible scale decays, and leave simulation only when the pooled object reaches zero scale. Particle adapters use the same local planet direction rather than Unity's global gravity modifier.
 
 Fracture is cause-driven. Structure-local impact batches damage baked bonds through directional tension, shear and compression; deterministic connected components then identify foundation-supported and dynamic islands. Canonical fracture state never comes from GameObject activation, renderer visibility or Rigidbody sleep.

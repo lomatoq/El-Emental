@@ -79,6 +79,40 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void ImpactBatchIsDeterministicFrameCappedAndAllocationFree()
+        {
+            var sample = new EarthFeedbackSample(12, 4, 0.4f, 8f);
+            EarthFeedbackBatchAccumulator batch = default;
+            var warm = new EarthImpactEvent(
+                1u, 2u, 80f, 1200f, 20f, 11f,
+                new float3(2f, 24f, 1f), new float3(0f, 1f, 0f),
+                EarthImpactMaterialKind.Structure);
+            batch.Add(in warm, in sample, 72, 20);
+            Assert.That(batch.TryFlush(out _), Is.True);
+
+            long before = System.GC.GetAllocatedBytesForCurrentThread();
+            for (uint index = 0; index < 128u; index++)
+            {
+                var impact = new EarthImpactEvent(
+                    index + 1u, 900u - index, 90f + index, 2400f + index * 10f, 35f, 12f,
+                    new float3(index * 0.01f, 24f, 0f), new float3(0f, 1f, 0f),
+                    EarthImpactMaterialKind.Structure);
+                batch.Add(in impact, in sample, 72, 20);
+            }
+            long allocated = System.GC.GetAllocatedBytesForCurrentThread() - before;
+
+            Assert.That(batch.TryFlush(out EarthFeedbackBatchResult result), Is.True);
+            Assert.That(allocated, Is.Zero);
+            Assert.That(result.EventCount, Is.EqualTo(128));
+            Assert.That(result.DustCount, Is.EqualTo(72));
+            Assert.That(result.ChipCount, Is.EqualTo(20));
+            Assert.That(result.MaximumKineticEnergy, Is.EqualTo(3670f));
+            Assert.That(math.all(math.isfinite(result.Point)), Is.True);
+            Assert.That(math.length(result.Normal), Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(batch.PendingCount, Is.Zero);
+        }
+
+        [Test]
         public void ProductionFractureUsesSeparateMaskedRenderAndConvexMeshes()
         {
             EarthFractureAsset asset = AssetDatabase.LoadAssetAtPath<EarthFractureAsset>(FractureAssetPath);

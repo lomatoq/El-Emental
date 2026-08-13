@@ -1,6 +1,6 @@
 # M10 Earth Core MVP Polish
 
-Status: in progress  
+Status: complete
 Source brief: `El-Emental_Codex_Execution_Brief_BE.md` (2026-08-13)
 
 ## Task 0 — baseline and immediate visual rescue
@@ -175,6 +175,22 @@ Status: complete
 - PlayMode: 64/64 passed in 125.879 s. Close framing, forward lead, explicit profile wiring and the complete Earth physical suite remain green.
 - Windows Development: 171,119,134 bytes in 58.631 s, 0 warnings/errors (`BuildReports/NativeWindows.json`).
 
-## Next concern
+## Task 9 - hardening
 
-Task 9 performs final replay/allocation/stress hardening, visual baselines, platform builds and documentation closure.
+Status: complete
+
+- Consecutive `EarthImpactEvent` presentation work is accumulated without allocation and flushed once per frame. Dust and chips have explicit frame caps, while the strongest kinetic energy and an impulse-weighted contact frame preserve the readable physical cause.
+- All twelve profiler boundaries required by the execution brief are present and guarded by an EditMode audit: fracture damage/islands, repair select/order/solve/weld, proxy switch, gesture sample/recognize, intent resolve, camera direct and feedback route.
+- Existing deterministic replay, 100-cycle repair/ragdoll, 200-case preview/commit corpus, pool stress and capability degradation suites remain green. Authored scene wiring is enforced so the camera does not depend on migration code.
+- NativeHigh, NativeLow and WebLab each ran 216,000 budget ticks with `0 B` managed allocation, 360 presentation degradations, no canonical rule change and a passing result.
+- Seven fresh standalone Release baselines cover dawn, ground wave, platform, gravity grip, meteor impact, Mage casting and reassembly. PNG integrity, minimum size and hashes are recorded in `Docs/qa/m10-final-evidence.md`.
+
+### Final evidence
+
+- Project validation: 10 scenes, 14 abilities and 3 capability profiles.
+- EditMode: 191/191 passed in 1.225 s, including profiler, build-report, visual-baseline and steady-state allocation gates.
+- PlayMode: 64/64 passed in 125.823 s, preserving fracture, reassembly, MMB, moving support, camera, wave, meteor and Humanoid recovery behavior.
+- Windows Development: 171,123,394 bytes in 57.941 s, 0 warnings/errors.
+- Windows Release: 106,003,631 bytes in 60.678 s, 0 warnings/errors.
+
+The Earth Core MVP polish sequence is complete. Further art/content work can tune the existing profiles and replace presentation assets without changing the established simulation contracts.

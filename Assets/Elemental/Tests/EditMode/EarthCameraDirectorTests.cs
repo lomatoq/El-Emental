@@ -73,5 +73,50 @@ namespace Elemental.Tests.EditMode
             Assert.That(EarthCameraShoulderSolver.Resolve(sign, false), Is.EqualTo(-1f));
             Assert.That(EarthCameraShoulderSolver.Resolve(sign, true), Is.EqualTo(1f));
         }
+
+        [Test]
+        public void CameraPureHotLoopIsDeterministicAndAllocationFree()
+        {
+            var context = new EarthCameraContext(true, true, false, true, false, false, false, 0.82f);
+            var focusInput = new EarthCameraFocusInput(
+                new float3(0f, 24f, 0f), new float3(0f, 23f, 8f),
+                new float3(2f, 25f, 4f), new float3(-2f, 24f, 6f),
+                1f, 0.8f, 1.1f, 0.2f);
+            EarthCameraOcclusionState occlusion = new EarthCameraOcclusionState(6f, 0f);
+            EarthCameraStateResolver.Resolve(in context);
+            EarthCameraFocusSolver.Solve(in focusInput, 7.5f);
+            occlusion = EarthCameraOcclusionSolver.Step(
+                in occlusion, 6f, 3f, true, 0.016f, 24f, 4.5f, 0.12f);
+
+            long before = System.GC.GetAllocatedBytesForCurrentThread();
+            float digest = 0f;
+            for (int index = 0; index < 4096; index++)
+            {
+                EarthCameraState state = EarthCameraStateResolver.Resolve(in context);
+                float3 focus = EarthCameraFocusSolver.Solve(in focusInput, 7.5f);
+                bool hit = (index & 7) < 3;
+                occlusion = EarthCameraOcclusionSolver.Step(
+                    in occlusion, 6f, 3f, hit, 0.016f, 24f, 4.5f, 0.12f);
+                digest += (float)state + focus.z + occlusion.Distance;
+            }
+            long allocated = System.GC.GetAllocatedBytesForCurrentThread() - before;
+
+            Assert.That(allocated, Is.Zero);
+            Assert.That(float.IsFinite(digest), Is.True);
+            Assert.That(digest, Is.GreaterThan(1000f));
+        }
+
+        [Test]
+        public void AuthoredSceneDoesNotDependOnCameraMigrationCode()
+        {
+            string rigSource = System.IO.File.ReadAllText(
+                "Assets/Elemental/Presentation/Camera/PlanetCameraRig.cs");
+            string scene = System.IO.File.ReadAllText(
+                "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity");
+
+            StringAssert.DoesNotContain("AddComponent<EarthCameraDirector>", rigSource);
+            StringAssert.Contains("Elemental.Presentation.Camera.EarthCameraDirector", scene);
+            StringAssert.Contains("guid: 8a59c4a55b814704abea0ee5f95ddc46", scene);
+        }
     }
 }

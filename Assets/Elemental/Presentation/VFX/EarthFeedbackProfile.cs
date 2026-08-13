@@ -25,6 +25,8 @@ namespace Elemental.Presentation.VFX
         [SerializeField, Range(8, 96)] private int decalCapacity = 40;
         [SerializeField, Range(4, 96)] private int maximumDustCount = 52;
         [SerializeField, Range(0, 32)] private int maximumChipCount = 14;
+        [SerializeField, Range(8, 192)] private int maximumBatchedDustPerFrame = 72;
+        [SerializeField, Range(0, 48)] private int maximumBatchedChipsPerFrame = 20;
         [SerializeField, Min(1f)] private float minimumScarImpulse = 45f;
         [SerializeField, Range(0.12f, 2.5f)] private float minimumScarRadius = 0.24f;
         [SerializeField, Range(0.25f, 4f)] private float maximumScarRadius = 1.8f;
@@ -34,6 +36,8 @@ namespace Elemental.Presentation.VFX
         [SerializeField, Range(4f, 80f)] private float decalDrawDistance = 42f;
 
         public int DecalCapacity => decalCapacity;
+        public int MaximumBatchedDustPerFrame => maximumBatchedDustPerFrame;
+        public int MaximumBatchedChipsPerFrame => maximumBatchedChipsPerFrame;
         public float MinimumScarImpulse => minimumScarImpulse;
         public float ScarFadeSeconds => scarFadeSeconds;
         public float DecalDrawDistance => decalDrawDistance;
