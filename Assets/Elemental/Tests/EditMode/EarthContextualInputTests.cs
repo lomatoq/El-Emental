@@ -99,7 +99,7 @@ namespace Elemental.Tests.EditMode
             Assert.That(manipulation.Kind, Is.EqualTo(EarthIntentKind.Manipulate));
 
             var repair = new EarthInputContext(
-                EarthSourceKind.BrokenStructure, false, false, false, true, true);
+                EarthSourceKind.BrokenStructure, false, false, false, true, false);
             Assert.That(EarthIntentResolver.NeedsGestureRecognition(in repair), Is.False);
             EarthResolvedIntent repairIntent = EarthIntentResolver.Resolve(in repair, in invalid);
             Assert.That(repairIntent.Kind, Is.EqualTo(EarthIntentKind.Repair));

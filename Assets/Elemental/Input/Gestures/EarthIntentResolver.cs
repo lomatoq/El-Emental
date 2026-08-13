@@ -34,7 +34,9 @@ namespace Elemental.Input.Gestures
         Throw = 5,
         VectorFieldPush = 6,
         GravityGrip = 7,
-        Repair = 8
+        Repair = 8,
+        Pillar = 9,
+        GroundWave = 10
     }
 
     public readonly struct EarthInputContext
@@ -98,14 +100,16 @@ namespace Elemental.Input.Gestures
         {
             if (context.Source == EarthSourceKind.Invalid || context.Overmass || context.Obstructed)
                 return false;
-            if (context.ActiveSession || context.Field || context.Force) return false;
+            if (context.ActiveSession || context.Field) return false;
             return context.Primary && context.Source == EarthSourceKind.Terrain;
         }
 
         public static EarthGestureTemplateMask RelevantTemplates(in EarthInputContext context)
         {
             if (!NeedsGestureRecognition(in context)) return EarthGestureTemplateMask.None;
-            return EarthGestureTemplateMask.Structures;
+            return context.Force
+                ? EarthGestureTemplateMask.Line | EarthGestureTemplateMask.Flick
+                : EarthGestureTemplateMask.Structures;
         }
 
         public static EarthResolvedIntent Resolve(
@@ -123,13 +127,25 @@ namespace Elemental.Input.Gestures
                     return Accept(EarthIntentKind.Manipulate, gesture);
                 if (context.Field)
                 {
-                    EarthIntentKind fieldIntent = context.Modifier &&
-                                                   context.Source == EarthSourceKind.BrokenStructure
+                    EarthIntentKind fieldIntent = context.Source == EarthSourceKind.BrokenStructure
                         ? EarthIntentKind.Repair
                         : EarthIntentKind.GravityGrip;
                     return Accept(fieldIntent, gesture);
                 }
-                if (context.Force) return Accept(EarthIntentKind.VectorFieldPush, gesture);
+                if (context.Force)
+                {
+                    if (context.Primary && context.Source == EarthSourceKind.Terrain)
+                    {
+                        if (!gesture.Accepted)
+                            return Reject(gesture.Best == EarthGestureKind.Invalid
+                                ? EarthReticleState.Invalid
+                                : EarthReticleState.Ambiguous, gesture);
+                        if (gesture.Best == EarthGestureKind.Line || gesture.Best == EarthGestureKind.Flick)
+                            return Accept(EarthIntentKind.GroundWave, gesture);
+                        return Reject(EarthReticleState.Invalid, gesture);
+                    }
+                    return Accept(EarthIntentKind.VectorFieldPush, gesture);
+                }
                 if (!context.Primary) return Reject(SourceReticle(context.Source), gesture);
                 if (context.Source == EarthSourceKind.Rock ||
                     context.Source == EarthSourceKind.IntactStructure ||

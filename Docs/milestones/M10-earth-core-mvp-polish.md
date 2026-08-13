@@ -122,6 +122,23 @@ Status: complete
 - PlayMode: 64/64 passed in 125.592 s. Invalid input preserves the authoritative command count; the existing 200-case camera/curvature corpus keeps exact preview/commit geometry hashes.
 - Windows Development: 171,058,210 bytes in 57.092 s, 0 warnings/errors (`BuildReports/NativeWindows.json`).
 
+## Task 6 — six Earth techniques
+
+Status: complete
+
+- Grip, Wall, Platform, Pillar, Ground Wave and Repair now share a pure command, a closed rejection vocabulary and the same Intent → Anticipation → Release → Impact → Settle lifecycle.
+- A single authored presentation profile carries per-technique timing, pose effort/bracing, camera impulse/look-ahead and dust/chip/rumble channels without becoming physics authority.
+- RMB plus an LMB terrain sweep casts the bounded moving-crest ground wave through the normalized contextual recognizer. Physical targets still win source selection and remain grippable.
+- The wheel is contextual: wall height / Shift thickness, platform height / Shift tilt, held-object distance and ground-wave sector width. Wall thickness is carried into the authoritative command and committed collider geometry.
+- Existing physical systems remain authoritative for mass-aware Grip/Throw, cause-driven Wall/Platform fracture, moving support, grounded Pillar, bounded wave columns and provenance-aware Repair.
+- Architecture decision: `Docs/adr/0017-six-earth-technique-contract.md`.
+
+### Evidence
+
+- EditMode: 174/174 passed in 0.818 s, including all six context routes, explicit rejection reasons, parameter round-trips and lifecycle boundaries.
+- PlayMode: 64/64 passed in 126.040 s, preserving the complete fracture, MMB, moving-platform, pillar/wave and recovery suite.
+- Windows Development: 171,075,122 bytes in 62.964 s, 0 warnings/errors (`BuildReports/NativeWindows.json`).
+
 ## Next concern
 
-Task 6 implements the six shippable Earth techniques on the contextual grammar.
+Task 7 consumes the technique lifecycle in full-body anticipation, release, impact and recovery poses.

@@ -113,3 +113,11 @@ Raw evidence is kept under `BuildReports` and `TestResults`. Interactive P50/P95
 - A 256-iteration warm recognition loop reports `0 B` managed allocation. Replay commands keep quantized resolved geometry and do not retain raw pointer streams.
 - EditMode: 170/170 passed; PlayMode: 64/64 passed in 125.592 s. The 200-case preview/commit corpus remains hash-identical.
 - Windows Development: 171,058,210 bytes in 57.092 s, 0 warnings/errors.
+
+## Earth Core MVP polish Task 6 — 2026-08-13
+
+- The six-technique resolver and command codec are pure value operations with fixed-size data and no scene queries.
+- Ground Wave reuses the existing maximum 96-column pool and never edits voxel SDF while the crest travels.
+- Technique presentation is data-only; pose, camera and feedback values cannot alter damage, impulses, fracture or reassembly.
+- EditMode: 174/174 passed in 0.818 s; PlayMode: 64/64 passed in 126.040 s.
+- Windows Development: 171,075,122 bytes in 62.964 s, 0 warnings/errors.

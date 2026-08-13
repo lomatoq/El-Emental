@@ -1,5 +1,6 @@
 using System;
 using Elemental.Runtime.Physics;
+using Elemental.Simulation.Bending;
 using UnityEngine;
 
 namespace Elemental.Runtime.Characters
@@ -23,6 +24,7 @@ namespace Elemental.Runtime.Characters
             (Time.unscaledTime - _powerStartedAt) /
             (profile != null ? profile.FullPowerChargeSeconds : 1.1f));
         public int LastColumnCount { get; private set; }
+        public EarthTechniqueRejectReason LastRejection { get; private set; }
 
         public void Configure(
             Rigidbody body,
@@ -38,8 +40,17 @@ namespace Elemental.Runtime.Characters
 
         public bool BeginCharge(float shiftHeldSeconds)
         {
-            if (_charging || casterBody == null || motor == null || wavePool == null || !motor.IsGrounded)
+            if (_charging || casterBody == null || motor == null || wavePool == null)
+            {
+                LastRejection = EarthTechniqueRejectReason.RuntimeUnavailable;
                 return false;
+            }
+            if (!motor.IsGrounded)
+            {
+                LastRejection = EarthTechniqueRejectReason.NotGrounded;
+                return false;
+            }
+            LastRejection = EarthTechniqueRejectReason.None;
             _charging = true;
             _powerStartedAt = Time.unscaledTime;
             SetShiftHeldSeconds(shiftHeldSeconds);
@@ -66,6 +77,42 @@ namespace Elemental.Runtime.Characters
                 surface, up, motor.FacingForward, _sectorCharge01, power, casterBody);
             ChargeChanged?.Invoke(0f, 0f);
             return true;
+        }
+
+        public bool TryCast(
+            Vector3 forward,
+            float sector01,
+            float power01,
+            out EarthTechniqueRejectReason rejection)
+        {
+            if (casterBody == null || motor == null || wavePool == null)
+            {
+                rejection = LastRejection = EarthTechniqueRejectReason.RuntimeUnavailable;
+                return false;
+            }
+            if (!motor.IsGrounded)
+            {
+                rejection = LastRejection = EarthTechniqueRejectReason.NotGrounded;
+                return false;
+            }
+
+            Vector3 up = motor.LocalUp.sqrMagnitude > 0.5f ? motor.LocalUp.normalized : transform.up;
+            Vector3 tangentForward = Vector3.ProjectOnPlane(forward, up).normalized;
+            if (tangentForward.sqrMagnitude < 0.5f) tangentForward = motor.FacingForward;
+            Vector3 surface = casterBody.worldCenterOfMass - (up * 1.25f);
+            LastColumnCount = wavePool.Launch(
+                surface,
+                up,
+                tangentForward,
+                Mathf.Clamp01(sector01),
+                Mathf.Clamp01(power01),
+                casterBody);
+            rejection = LastColumnCount > 0
+                ? EarthTechniqueRejectReason.None
+                : EarthTechniqueRejectReason.PoolExhausted;
+            LastRejection = rejection;
+            ChargeChanged?.Invoke(0f, 0f);
+            return rejection == EarthTechniqueRejectReason.None;
         }
 
         public void CancelCharge()

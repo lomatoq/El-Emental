@@ -53,6 +53,8 @@ namespace Elemental.Authoring.Editor
         private const string EarthMaterialProfilePath = "Assets/Elemental/Content/Profiles/EarthMaterialProfile.asset";
         private const string EarthFeedbackProfilePath = "Assets/Elemental/Content/Profiles/EarthFeedbackProfile.asset";
         private const string GestureProfilePath = "Assets/Elemental/Content/Profiles/EarthGestureProfile.asset";
+        private const string TechniquePresentationProfilePath =
+            "Assets/Elemental/Content/Profiles/EarthTechniquePresentationProfile.asset";
         private const string EarthStoneAlbedoPath = "Assets/Elemental/Content/Textures/EarthStoneAlbedo.png";
         private const string MageModelPath = "Assets/ThirdParty/KayKit/Mage/Mage.fbx";
         private const string MageTexturePath = "Assets/ThirdParty/KayKit/Mage/mage_texture.png";
@@ -196,6 +198,10 @@ namespace Elemental.Authoring.Editor
             input.ConfigureGestureProfile(CreateOrLoadProfile<EarthGestureProfile>(
                 GestureProfilePath,
                 "Earth Gesture Profile"));
+            input.ConfigureEarthTechniques(pillarWave);
+            CreateOrLoadProfile<EarthTechniquePresentationProfile>(
+                TechniquePresentationProfilePath,
+                "Earth Technique Presentation Profile");
             character.SetActive(true);
 
             MagicFeedbackRouter feedback = camera.GetComponent<MagicFeedbackRouter>();

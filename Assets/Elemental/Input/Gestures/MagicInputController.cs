@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Elemental.Input.Actions;
+using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
 using Elemental.Runtime.World;
 using Elemental.Simulation.Bending;
@@ -30,6 +31,7 @@ namespace Elemental.Input.Gestures
         [SerializeField] private LineRenderer previewLine;
         [SerializeField] private EarthPreviewPresenter previewPresenter;
         [SerializeField] private EarthGestureProfile gestureProfile;
+        [SerializeField] private EarthPillarWaveAbility pillarWaveAbility;
         [SerializeField, Range(4, 24)] private int resampleCount = 12;
         [SerializeField, Min(1f)] private float projectionDistance = 200f;
         [Header("Unified bending")]
@@ -62,7 +64,12 @@ namespace Elemental.Input.Gestures
         private BendTuning _bendTuning;
         private bool _earthAcquirePending;
         private bool _wallGesturePending;
-        private float _platformHeight01;
+        private bool _groundWaveGesturePending;
+        private float _platformHeight01 = 0.35f;
+        private float _platformTilt01 = 0.5f;
+        private float _wallHeight01 = 0.35f;
+        private float _wallThickness01 = 0.5f;
+        private float _waveSector01 = 0.32f;
         private float2 _bendStartPointer;
         private float _bendStartedAt;
         private float _holdDistance;
@@ -79,6 +86,7 @@ namespace Elemental.Input.Gestures
         private EarthGestureResult _lastGestureResult;
         private EarthReticleState _reticleState = EarthReticleState.Invalid;
         private EarthResolvedInputCommand _lastResolvedInputCommand;
+        private EarthTechniqueCommand _lastTechniqueCommand;
 
         public AbilityId SelectedAbility => _selectedAbility;
         public ElementId SelectedElement => selectedElement;
@@ -114,12 +122,23 @@ namespace Elemental.Input.Gestures
         public EarthGestureResult LastGestureResult => _lastGestureResult;
         public EarthReticleState ReticleState => _reticleState;
         public EarthResolvedInputCommand LastResolvedInputCommand => _lastResolvedInputCommand;
+        public EarthTechniqueCommand LastTechniqueCommand => _lastTechniqueCommand;
         public string BendParameterLabel => executor != null && executor.HeldBody != null
             ? "HOLD DISTANCE"
-            : _selectedAbility == EarthAbilityIds.RaisePlatform ? "PLATFORM HEIGHT" : "FORM SCALE";
+            : _groundWaveGesturePending ? "WAVE WIDTH"
+            : _selectedAbility == EarthAbilityIds.RaisePlatform
+                ? inputAdapter != null && inputAdapter.BendModifierHeld ? "PLATFORM TILT" : "PLATFORM HEIGHT"
+            : _selectedAbility == EarthAbilityIds.LineWall
+                ? inputAdapter != null && inputAdapter.BendModifierHeld ? "WALL THICKNESS" : "WALL HEIGHT"
+            : "FORM SCALE";
         public float BendParameter01 => executor != null && executor.HeldBody != null
             ? Mathf.InverseLerp(minimumHoldDistance, maximumHoldDistance, _holdDistance)
-            : _platformHeight01;
+            : _groundWaveGesturePending ? _waveSector01
+            : _selectedAbility == EarthAbilityIds.RaisePlatform
+                ? inputAdapter != null && inputAdapter.BendModifierHeld ? _platformTilt01 : _platformHeight01
+            : _selectedAbility == EarthAbilityIds.LineWall
+                ? inputAdapter != null && inputAdapter.BendModifierHeld ? _wallThickness01 : _wallHeight01
+            : _formingAmount01;
         public event Action<string> StatusChanged;
         public event Action<IReadOnlyList<Vector3>> PreviewChanged;
         public event Action PreviewCleared;
@@ -210,6 +229,9 @@ namespace Elemental.Input.Gestures
         public void ConfigureGestureProfile(EarthGestureProfile configuredProfile) =>
             gestureProfile = configuredProfile;
 
+        public void ConfigureEarthTechniques(EarthPillarWaveAbility configuredPillarWave) =>
+            pillarWaveAbility = configuredPillarWave;
+
         private void ConfigurePreviewPresenter(LineRenderer configuredLine)
         {
             previewPresenter = GetComponent<EarthPreviewPresenter>();
@@ -289,6 +311,7 @@ namespace Elemental.Input.Gestures
                 playerInput = GetComponent<PlayerInput>();
             }
             if (inputAdapter == null) ConfigureInputAdapter(playerInput);
+            if (pillarWaveAbility == null) pillarWaveAbility = GetComponent<EarthPillarWaveAbility>();
             if (previewPresenter == null)
             {
                 previewPresenter = GetComponent<EarthPreviewPresenter>();
@@ -322,6 +345,7 @@ namespace Elemental.Input.Gestures
             _strokeSampler.Cancel();
             _earthAcquirePending = false;
             _wallGesturePending = false;
+            _groundWaveGesturePending = false;
             _bendSession?.Cancel();
             ClearPreview();
         }
@@ -336,6 +360,7 @@ namespace Elemental.Input.Gestures
             _pushTargetLocked = false;
             _earthAcquirePending = false;
             _wallGesturePending = false;
+            _groundWaveGesturePending = false;
             _bendSession?.Cancel();
             _sampler.Cancel();
             _strokeSampler.Cancel();
@@ -378,7 +403,10 @@ namespace Elemental.Input.Gestures
                 Vector2 viewport = inputAdapter.PointerViewport01;
                 _strokeSampler.Begin(new float2(viewport.x, viewport.y), Time.unscaledTime);
                 if (selectedElement == ElementId.Earth)
-                    BeginEarthAcquireDecision(pointerFloat);
+                {
+                    if (!TryBeginGroundWaveGesture(pointerFloat))
+                        BeginEarthAcquireDecision(pointerFloat);
+                }
             }
 
             if (_sampler.IsActive)
@@ -386,7 +414,9 @@ namespace Elemental.Input.Gestures
                 _sampler.Sample(pointerFloat);
                 Vector2 viewport = inputAdapter.PointerViewport01;
                 _strokeSampler.Sample(new float2(viewport.x, viewport.y), Time.unscaledTime);
-                if (selectedElement == ElementId.Earth && _bendSession.IsActive)
+                if (_groundWaveGesturePending)
+                    UpdateGroundWavePreview();
+                else if (selectedElement == ElementId.Earth && _bendSession.IsActive)
                     UpdateUnifiedEarthBend(pointerFloat);
                 else
                     UpdatePreview(pointerFloat);
@@ -394,7 +424,9 @@ namespace Elemental.Input.Gestures
 
             if (inputAdapter.BendPrimaryReleased)
             {
-                if (selectedElement == ElementId.Earth && _bendSession.IsActive)
+                if (_groundWaveGesturePending)
+                    CommitGroundWave(pointerFloat);
+                else if (selectedElement == ElementId.Earth && _bendSession.IsActive)
                     CommitUnifiedEarthBend(pointerFloat);
                 else
                     Commit(pointerFloat);
@@ -414,11 +446,22 @@ namespace Elemental.Input.Gestures
                 _bendSession.BeginCharge();
             if (inputAdapter.BendForceReleased)
                 _bendSession.EndCharge();
-            if (_wallGesturePending && _selectedAbility == EarthAbilityIds.RaisePlatform)
+            if (_wallGesturePending && _selectedAbility == EarthAbilityIds.RaisePlatform &&
+                (inputAdapter == null || !inputAdapter.BendModifierHeld))
                 _platformHeight01 = Mathf.Max(_platformHeight01, _bendSession.Charge01);
-            if (_wallGesturePending && Mathf.Abs(inputAdapter.BendParameter) > 0.001f)
-                _platformHeight01 = Mathf.Clamp01(
-                    _platformHeight01 + inputAdapter.BendParameter * 0.001f);
+            if (!_wallGesturePending || Mathf.Abs(inputAdapter.BendParameter) <= 0.001f) return;
+            float delta = inputAdapter.BendParameter * 0.001f;
+            if (_selectedAbility == EarthAbilityIds.RaisePlatform)
+            {
+                if (inputAdapter.BendModifierHeld)
+                    _platformTilt01 = Mathf.Clamp01(_platformTilt01 + delta);
+                else
+                    _platformHeight01 = Mathf.Clamp01(_platformHeight01 + delta);
+            }
+            else if (inputAdapter.BendModifierHeld)
+                _wallThickness01 = Mathf.Clamp01(_wallThickness01 + delta);
+            else
+                _wallHeight01 = Mathf.Clamp01(_wallHeight01 + delta);
         }
 
         private void UpdateStandalonePush(float2 pointer)
@@ -529,6 +572,124 @@ namespace Elemental.Input.Gestures
             return selected.collider != null;
         }
 
+        private bool TryBeginGroundWaveGesture(float2 pointer)
+        {
+            if (inputAdapter == null || !inputAdapter.BendForceHeld || pillarWaveAbility == null ||
+                castCamera == null || planetCollider == null) return false;
+            Ray ray = castCamera.ScreenPointToRay(new Vector2(pointer.x, pointer.y));
+            int hitCount = UnityEngine.Physics.RaycastNonAlloc(
+                ray, _projectionHits, projectionDistance, ~0, QueryTriggerInteraction.Ignore);
+            float nearest = float.PositiveInfinity;
+            Collider selected = null;
+            for (int index = 0; index < hitCount; index++)
+            {
+                RaycastHit hit = _projectionHits[index];
+                if (hit.collider == null || hit.distance >= nearest) continue;
+                if (_casterBody != null && hit.collider.transform.IsChildOf(_casterBody.transform)) continue;
+                nearest = hit.distance;
+                selected = hit.collider;
+            }
+            bool terrain = selected == planetCollider ||
+                           (selected != null && selected.transform.IsChildOf(planetCollider.transform));
+            if (!terrain) return false;
+
+            executor?.CancelVectorField();
+            _pushCharging = false;
+            _pushTargetLocked = false;
+            _groundWaveGesturePending = true;
+            _waveSector01 = 0.32f;
+            _bendStartedAt = Time.unscaledTime;
+            PushChargeChanged?.Invoke(0f);
+            StatusChanged?.Invoke("GROUND WAVE — sweep over the ground; wheel sets crest width.");
+            return true;
+        }
+
+        private void UpdateGroundWavePreview()
+        {
+            if (inputAdapter != null && Mathf.Abs(inputAdapter.BendParameter) > 0.001f)
+                _waveSector01 = Mathf.Clamp01(
+                    _waveSector01 + (inputAdapter.BendParameter * 0.001f));
+            _previewPoints.Clear();
+            if (_sampler.Points.Count < 2)
+            {
+                ClearPreview();
+                return;
+            }
+            GestureResampler.Resample(_sampler.Points, resampleCount, _resampledScreen);
+            for (int index = 0; index < _resampledScreen.Count; index++)
+                if (TryProject(_resampledScreen[index], out Vector3 point)) _previewPoints.Add(point);
+            if (previewPresenter != null) previewPresenter.Present(_previewPoints);
+            PreviewChanged?.Invoke(_previewPoints);
+            PushChargeChanged?.Invoke(PushCharge(Time.unscaledTime - _bendStartedAt));
+        }
+
+        private void CommitGroundWave(float2 pointer)
+        {
+            _sampler.End(pointer);
+            if (_strokeSampler.IsActive && inputAdapter != null)
+            {
+                Vector2 viewport = inputAdapter.PointerViewport01;
+                _strokeSampler.End(new float2(viewport.x, viewport.y), Time.unscaledTime);
+            }
+            EarthGestureSettings settings = gestureProfile != null
+                ? gestureProfile.Settings
+                : EarthGestureSettings.Default;
+            EarthInputContext context = new EarthInputContext(
+                EarthSourceKind.Terrain, false, true, true, false,
+                inputAdapter != null && inputAdapter.BendModifierHeld);
+            _lastGestureResult = _templateRecognizer.Recognize(
+                _strokeSampler.Samples,
+                EarthIntentResolver.RelevantTemplates(in context),
+                in settings);
+            EarthResolvedIntent intent = EarthIntentResolver.Resolve(in context, in _lastGestureResult);
+            _reticleState = intent.Reticle;
+            float elapsed = Mathf.Max(0.001f, Time.unscaledTime - _bendStartedAt);
+            Vector3 start = default;
+            Vector3 end = default;
+            bool projected = _sampler.Points.Count >= 2 &&
+                             TryProject(_sampler.Points[0], out start) &&
+                             TryProject(_sampler.Points[_sampler.Points.Count - 1], out end);
+            if (!intent.Accepted || intent.Kind != EarthIntentKind.GroundWave || !projected)
+            {
+                StatusChanged?.Invoke("Ground wave needs a deliberate sweep across visible terrain.");
+            }
+            else
+            {
+                Vector3 center = planetCollider.bounds.center;
+                Vector3 up = (_casterBody != null ? _casterBody.worldCenterOfMass : transform.position) - center;
+                up = up.sqrMagnitude > 0.01f ? up.normalized : transform.up;
+                Vector3 direction = Vector3.ProjectOnPlane(end - start, up).normalized;
+                if (direction.sqrMagnitude < 0.5f)
+                    direction = Vector3.ProjectOnPlane(castCamera.transform.forward, up).normalized;
+                float power = PushCharge(elapsed);
+                bool cast = pillarWaveAbility.TryCast(
+                    direction, _waveSector01, power, out EarthTechniqueRejectReason rejection);
+                if (cast)
+                {
+                    uint tick = _tick++;
+                    EarthTechniqueModifierFlags modifiers =
+                        EarthTechniqueModifierFlags.Primary | EarthTechniqueModifierFlags.Force;
+                    if (inputAdapter != null && inputAdapter.BendModifierHeld)
+                        modifiers |= EarthTechniqueModifierFlags.Modifier;
+                    _lastTechniqueCommand = new EarthTechniqueCommand(
+                        tick, 1u, EarthTechniqueKind.GroundWave, 0u, 0,
+                        new float3(start.x, start.y, start.z),
+                        new float3(direction.x, direction.y, direction.z),
+                        power, _waveSector01, modifiers,
+                        (tick + 1u) * 2654435761u,
+                        _lastGestureResult.Features.GeometryDigest);
+                    StatusChanged?.Invoke($"Ground wave released — {pillarWaveAbility.LastColumnCount} rising columns.");
+                }
+                else StatusChanged?.Invoke($"Ground wave rejected: {rejection}.");
+            }
+
+            _groundWaveGesturePending = false;
+            _sampler.Cancel();
+            _strokeSampler.Cancel();
+            PushChargeChanged?.Invoke(0f);
+            ClearPreview();
+        }
+
         private void BeginEarthAcquireDecision(float2 pointer)
         {
             BendOriginMode origin = inputAdapter != null && inputAdapter.BendModifierHeld
@@ -543,7 +704,10 @@ namespace Elemental.Input.Gestures
             _smoothedBendTargetVelocity = Vector3.zero;
             _lastBendPointer = pointer;
             _formingAmount01 = 0.18f;
-            _platformHeight01 = 0f;
+            _platformHeight01 = 0.35f;
+            _platformTilt01 = 0.5f;
+            _wallHeight01 = 0.35f;
+            _wallThickness01 = 0.5f;
             if (TryAcquireExistingEarthBody(pointer)) return;
             _formingSourceValid = TryProject(pointer, out _formingSourceWorld);
             StatusChanged?.Invoke(origin == BendOriginMode.Self
@@ -1170,7 +1334,7 @@ namespace Elemental.Input.Gestures
 
             Vector3 origin = new Vector3(_worldPath[0].x, _worldPath[0].y, _worldPath[0].z);
             float intensity = _selectedAbility == EarthAbilityIds.LineWall
-                ? MagicGestureKinematics.WallHoldIntensity(durationSeconds)
+                ? Mathf.Max(MagicGestureKinematics.WallHoldIntensity(durationSeconds), _wallHeight01)
                 : _selectedAbility == EarthAbilityIds.RaisePlatform
                     ? _platformHeight01
                 : Mathf.Clamp01(math.length(drag) / 400f);
@@ -1188,6 +1352,11 @@ namespace Elemental.Input.Gestures
             float intensity)
         {
             uint tick = _tick++;
+            uint modifiers = ability == EarthAbilityIds.LineWall
+                ? EarthTechniqueParameterCodec.Pack(_wallHeight01, _wallThickness01)
+                : ability == EarthAbilityIds.RaisePlatform
+                    ? EarthTechniqueParameterCodec.Pack(_platformHeight01, _platformTilt01)
+                    : 0u;
             return new MagicCommand(
                 tick,
                 1u,
@@ -1197,7 +1366,7 @@ namespace Elemental.Input.Gestures
                 new float3(aim.x, aim.y, aim.z),
                 _worldPath,
                 intensity,
-                0u,
+                modifiers,
                 (tick + 1u) * 2654435761u);
         }
 

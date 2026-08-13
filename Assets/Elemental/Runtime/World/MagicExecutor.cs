@@ -871,12 +871,16 @@ namespace Elemental.Runtime.World
                 Mathf.Min(wallMinimumHeight, wallMaximumHeight),
                 Mathf.Max(wallMinimumHeight, wallMaximumHeight),
                 Mathf.Pow(command.Intensity, 0.78f));
+            float thickness01 = command.Modifiers != 0u
+                ? EarthTechniqueParameterCodec.UnpackSecondary(command.Modifiers)
+                : 0.5f;
+            float committedThickness = wallThickness * Mathf.Lerp(0.65f, 1.65f, thickness01);
             EarthWall wall = wallPool.Acquire(
                 start,
                 end,
                 planetCenter.position,
                 committedHeight,
-                wallThickness,
+                committedThickness,
                 command.Tick);
             WallRaisedEvent raised = new WallRaisedEvent(
                 command.Tick,
@@ -884,7 +888,7 @@ namespace Elemental.Runtime.World
                 footprint[0],
                 footprint[footprint.Length - 1],
                 committedHeight,
-                wallThickness);
+                committedThickness);
             Events.Emit(in raised);
             return true;
         }
