@@ -107,6 +107,9 @@ namespace Elemental.Tests.PlayMode
                 Assert.That(wall, Is.Not.Null);
                 Assert.That(executor.LastCommittedGeometryHash, Is.EqualTo(previewHash),
                     $"Fixture {fixture.Id} preview and commit did not share geometry hash.");
+                Assert.That(input.LastResolvedInputCommand.Intent, Is.EqualTo(EarthIntentKind.RaiseWall));
+                Assert.That(input.LastResolvedInputCommand.QuantizedGeometry.Count, Is.EqualTo(2),
+                    $"Fixture {fixture.Id} did not record resolved quantized input geometry.");
                 Assert.That(Vector3.Distance(preview[0], wall.Start), Is.LessThanOrEqualTo(0.055f));
                 Assert.That(Vector3.Distance(preview[preview.Count - 1], wall.End), Is.LessThanOrEqualTo(0.055f));
             }

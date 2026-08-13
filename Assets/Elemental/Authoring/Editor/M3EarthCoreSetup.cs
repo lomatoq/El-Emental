@@ -52,6 +52,7 @@ namespace Elemental.Authoring.Editor
         private const string PhysicsFeelProfilePath = "Assets/Elemental/Content/Profiles/EarthPhysicsFeelProfile.asset";
         private const string EarthMaterialProfilePath = "Assets/Elemental/Content/Profiles/EarthMaterialProfile.asset";
         private const string EarthFeedbackProfilePath = "Assets/Elemental/Content/Profiles/EarthFeedbackProfile.asset";
+        private const string GestureProfilePath = "Assets/Elemental/Content/Profiles/EarthGestureProfile.asset";
         private const string EarthStoneAlbedoPath = "Assets/Elemental/Content/Textures/EarthStoneAlbedo.png";
         private const string MageModelPath = "Assets/ThirdParty/KayKit/Mage/Mage.fbx";
         private const string MageTexturePath = "Assets/ThirdParty/KayKit/Mage/mage_texture.png";
@@ -146,6 +147,9 @@ namespace Elemental.Authoring.Editor
 
             character.SetActive(false);
             PlayerInput playerInput = character.GetComponent<PlayerInput>();
+            EarthInputAdapter inputAdapter = character.GetComponent<EarthInputAdapter>();
+            if (inputAdapter == null) inputAdapter = character.AddComponent<EarthInputAdapter>();
+            inputAdapter.Configure(playerInput);
             Rigidbody characterBody = character.GetComponent<Rigidbody>();
             PlanetMotor characterMotor = character.GetComponent<PlanetMotor>();
             EarthPillarMobility pillarMobility = character.GetComponent<EarthPillarMobility>();
@@ -165,7 +169,7 @@ namespace Elemental.Authoring.Editor
                 CreateOrLoadLandingCushionProfile(),
                 cushionVisual);
             PlanetInputReader inputReader = character.GetComponent<PlanetInputReader>();
-            inputReader?.Configure(playerInput, pillarMobility, pillarWave, cushion);
+            inputReader?.Configure(inputAdapter, pillarMobility, pillarWave, cushion);
             LineRenderer preview = character.GetComponent<LineRenderer>();
             if (preview == null)
             {
@@ -189,6 +193,9 @@ namespace Elemental.Authoring.Editor
                 executor,
                 collisionProxy.GetComponent<Collider>(),
                 preview);
+            input.ConfigureGestureProfile(CreateOrLoadProfile<EarthGestureProfile>(
+                GestureProfilePath,
+                "Earth Gesture Profile"));
             character.SetActive(true);
 
             MagicFeedbackRouter feedback = camera.GetComponent<MagicFeedbackRouter>();

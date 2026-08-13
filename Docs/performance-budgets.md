@@ -105,3 +105,11 @@ Raw evidence is kept under `BuildReports` and `TestResults`. Interactive P50/P95
 - Windows Development: 171,019,694 bytes in 57.634 s, 0 warnings/errors.
 - Standalone D3D11 post-fracture capture: 45 frames, CPU average/max 4.26/7.00 ms and GPU average/max 0.59/0.99 ms. This short capture verifies bounded material/decal cost but is not substituted for a long P95/P99 shipping-content trace.
 - The same run reported a 78.50 ms cold-start voxel render-queue peak and zero pending work at capture. It remains separately labelled startup debt.
+
+## Earth Core MVP polish Task 5 — 2026-08-13
+
+- The normalized Earth gesture path is bounded to 192 collected samples and 16–64 resampled points (32 by default). Recognition evaluates only the context-relevant templates.
+- `Elemental.Earth.Gesture.Sample`, `Elemental.Earth.Gesture.Recognize`, and `Elemental.Earth.Intent.Resolve` isolate sampling, classification and intent work.
+- A 256-iteration warm recognition loop reports `0 B` managed allocation. Replay commands keep quantized resolved geometry and do not retain raw pointer streams.
+- EditMode: 170/170 passed; PlayMode: 64/64 passed in 125.592 s. The 200-case preview/commit corpus remains hash-identical.
+- Windows Development: 171,058,210 bytes in 57.092 s, 0 warnings/errors.

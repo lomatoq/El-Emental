@@ -15,7 +15,7 @@
           "initialStateCheck": true
         },
         {
-          "name": "Jump",
+          "name": "JumpOrStomp",
           "type": "Button",
           "id": "9bfda0a3-7df5-46cb-8785-2d677b4e9c60",
           "expectedControlType": "Button",
@@ -24,7 +24,7 @@
           "initialStateCheck": false
         },
         {
-          "name": "Cast",
+          "name": "BendPrimary",
           "type": "Button",
           "id": "d39279db-b02f-45bc-a316-faba4a0cf8c6",
           "expectedControlType": "Button",
@@ -33,7 +33,7 @@
           "initialStateCheck": false
         },
         {
-          "name": "Push",
+          "name": "BendForce",
           "type": "Button",
           "id": "8a37c391-3d71-4ccb-a159-2d524b50a84d",
           "expectedControlType": "Button",
@@ -49,6 +49,42 @@
           "processors": "",
           "interactions": "",
           "initialStateCheck": true
+        },
+        {
+          "name": "BendField",
+          "type": "Button",
+          "id": "50a55f33-035a-4a3d-b07e-64d30a6a0d01",
+          "expectedControlType": "Button",
+          "processors": "",
+          "interactions": "",
+          "initialStateCheck": false
+        },
+        {
+          "name": "BendModifier",
+          "type": "Button",
+          "id": "50a55f33-035a-4a3d-b07e-64d30a6a0d02",
+          "expectedControlType": "Button",
+          "processors": "",
+          "interactions": "",
+          "initialStateCheck": false
+        },
+        {
+          "name": "BendParameter",
+          "type": "Value",
+          "id": "50a55f33-035a-4a3d-b07e-64d30a6a0d03",
+          "expectedControlType": "Axis",
+          "processors": "",
+          "interactions": "",
+          "initialStateCheck": true
+        },
+        {
+          "name": "Cancel",
+          "type": "Button",
+          "id": "50a55f33-035a-4a3d-b07e-64d30a6a0d04",
+          "expectedControlType": "Button",
+          "processors": "",
+          "interactions": "Press",
+          "initialStateCheck": false
         },
         {
           "name": "Ability1",
@@ -179,7 +215,7 @@
           "interactions": "",
           "processors": "",
           "groups": "Keyboard&Mouse",
-          "action": "Jump",
+          "action": "JumpOrStomp",
           "isComposite": false,
           "isPartOfComposite": false
         },
@@ -190,7 +226,7 @@
           "interactions": "",
           "processors": "",
           "groups": "Gamepad",
-          "action": "Jump",
+          "action": "JumpOrStomp",
           "isComposite": false,
           "isPartOfComposite": false
         },
@@ -201,7 +237,7 @@
           "interactions": "",
           "processors": "",
           "groups": "Keyboard&Mouse",
-          "action": "Cast",
+          "action": "BendPrimary",
           "isComposite": false,
           "isPartOfComposite": false
         },
@@ -212,7 +248,7 @@
           "interactions": "",
           "processors": "",
           "groups": "Keyboard&Mouse",
-          "action": "Push",
+          "action": "BendForce",
           "isComposite": false,
           "isPartOfComposite": false
         },
@@ -224,6 +260,50 @@
           "processors": "",
           "groups": "Keyboard&Mouse",
           "action": "Pointer",
+          "isComposite": false,
+          "isPartOfComposite": false
+        },
+        {
+          "name": "",
+          "id": "50a55f33-035a-4a3d-b07e-64d30a6a0d11",
+          "path": "<Mouse>/middleButton",
+          "interactions": "",
+          "processors": "",
+          "groups": "Keyboard&Mouse",
+          "action": "BendField",
+          "isComposite": false,
+          "isPartOfComposite": false
+        },
+        {
+          "name": "",
+          "id": "50a55f33-035a-4a3d-b07e-64d30a6a0d12",
+          "path": "<Keyboard>/shift",
+          "interactions": "",
+          "processors": "",
+          "groups": "Keyboard&Mouse",
+          "action": "BendModifier",
+          "isComposite": false,
+          "isPartOfComposite": false
+        },
+        {
+          "name": "",
+          "id": "50a55f33-035a-4a3d-b07e-64d30a6a0d13",
+          "path": "<Mouse>/scroll/y",
+          "interactions": "",
+          "processors": "",
+          "groups": "Keyboard&Mouse",
+          "action": "BendParameter",
+          "isComposite": false,
+          "isPartOfComposite": false
+        },
+        {
+          "name": "",
+          "id": "50a55f33-035a-4a3d-b07e-64d30a6a0d14",
+          "path": "<Keyboard>/escape",
+          "interactions": "",
+          "processors": "",
+          "groups": "Keyboard&Mouse",
+          "action": "Cancel",
           "isComposite": false,
           "isPartOfComposite": false
         },

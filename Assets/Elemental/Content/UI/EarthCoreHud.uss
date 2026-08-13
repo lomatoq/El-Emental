@@ -18,6 +18,10 @@
 .lift-fill { background-color: rgb(226, 134, 58); }
 .landing-fill { background-color: rgb(123, 214, 176); }
 .reticle { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; border-width: 1px; border-color: rgba(255, 196, 92, 0.55); border-radius: 11px; align-items: center; justify-content: center; }
+.reticle--invalid { border-color: rgba(140, 140, 140, 0.38); opacity: 0.55; }
+.reticle--source { border-color: rgba(232, 174, 83, 0.78); }
+.reticle--ambiguous { border-color: rgba(255, 122, 70, 0.95); }
+.reticle--valid { border-color: rgb(255, 218, 126); border-width: 2px; }
 .reticle-dot { width: 4px; height: 4px; background-color: rgb(255, 216, 126); border-radius: 2px; }
 .ability-dock { position: absolute; left: 50%; bottom: 28px; margin-left: -490px; width: 980px; flex-direction: row; justify-content: center; }
 .ability-card { width: 180px; min-height: 72px; padding: 10px 12px; margin-left: 5px; margin-right: 5px; background-color: rgba(16, 12, 10, 0.78); border-bottom-width: 2px; border-bottom-color: rgba(255, 151, 46, 0.72); border-radius: 9px; }

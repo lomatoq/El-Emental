@@ -26,6 +26,10 @@
                 <ui:Label text="RESULT" class="stat-key" />
                 <ui:Label name="result-value" text="READY" class="stat-value" />
             </ui:VisualElement>
+            <ui:VisualElement class="stat-row">
+                <ui:Label text="WHEEL" class="stat-key" />
+                <ui:Label name="parameter-value" text="FORM SCALE  0%" class="stat-value" />
+            </ui:VisualElement>
             <ui:VisualElement class="meter-row"><ui:Label text="FORM" class="meter-key" /><ui:VisualElement class="meter-track"><ui:VisualElement name="amount-fill" class="meter-fill amount-fill" /></ui:VisualElement></ui:VisualElement>
             <ui:VisualElement class="meter-row"><ui:Label text="POWER" class="meter-key" /><ui:VisualElement class="meter-track"><ui:VisualElement name="charge-fill" class="meter-fill charge-fill" /></ui:VisualElement></ui:VisualElement>
             <ui:VisualElement class="meter-row"><ui:Label text="LIFT" class="meter-key" /><ui:VisualElement class="meter-track"><ui:VisualElement name="lift-fill" class="meter-fill lift-fill" /></ui:VisualElement></ui:VisualElement>
@@ -53,9 +57,9 @@
             <ui:Label text="HOLD SHIFT THEN SPACE  WIDEN + POWER PILLAR WAVE" class="control-line strong" />
             <ui:Label text="WHILE FALLING HOLD SPACE  LANDING CUSHION" class="control-line strong" />
             <ui:Label text="LMB  GRIP / FORM / MOVE / RELEASE" class="control-line strong" />
-            <ui:Label text="RMB  VECTOR FORCE / PLATFORM HEIGHT" class="control-line strong" />
+            <ui:Label text="RMB  VECTOR FORCE / CHARGE" class="control-line strong" />
             <ui:Label text="MMB  GRAVITY GRIP / FRACTURE EARTH" class="control-line strong" />
-            <ui:Label text="WHEEL  HOLD DISTANCE" class="control-line" />
+            <ui:Label text="WHEEL  HOLD DISTANCE / PLATFORM HEIGHT" class="control-line" />
             <ui:Label name="status-value" text="Earth responds continuously to shape, mass and momentum." class="status" />
         </ui:VisualElement>
     </ui:VisualElement>

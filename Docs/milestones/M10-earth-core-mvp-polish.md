@@ -103,6 +103,25 @@ Status: complete
 - D3D11 standalone `earth-material` QA exited 0 with 43 baked pieces, two distinct surface materials and one active persistent scar (`BuildReports/Task4-EarthMaterial.png`).
 - A 45-frame post-fracture capture on the RTX 4070 measured CPU average/max `4.26/7.00 ms` and GPU average/max `0.59/0.99 ms`. The independent cold-start voxel queue peak was `78.50 ms` with zero pending work and is not presented as steady-state frame time.
 
+## Task 5 — contextual input grammar
+
+Status: complete
+
+- `EarthInputAdapter` is now the only runtime Input System boundary. The canonical grammar is LMB `BendPrimary`, RMB `BendForce`, MMB `BendField`, Shift `BendModifier`, Space `JumpOrStomp`, wheel `BendParameter`, and Escape `Cancel`.
+- `PlanetInputReader` and `MagicInputController` no longer query physical devices. Ability digits are isolated behind editor/development forcing and Earth has no shipping hotbar dependency.
+- Earth strokes are viewport-normalized, duplicate-filtered, lightly smoothed and resampled to 32 points. The feature vector includes path/direct length, straightness, direction, curvature, signed area, closure, speed, duration, aspect, self-intersections and a quantized digest.
+- The template recognizer returns best/second-best, confidence and ambiguity. Source/session/button context gates template recognition first; invalid, obstructed, over-mass, low-confidence and ambiguous input reject without simulation mutation.
+- Resolved replay input contains source ID/generation, quantized geometry, charge, wheel parameter, modifiers, ticks, seed and digest; raw pointer motion is not authoritative.
+- `EarthPreviewPresenter` owns line geometry. The HUD exposes the active wheel channel and reticle states for source, ambiguity, invalid and valid commit.
+- Profiling scopes cover `Elemental.Earth.Gesture.Sample`, `Elemental.Earth.Gesture.Recognize`, and `Elemental.Earth.Intent.Resolve`.
+- Architecture decision: `Docs/adr/0016-contextual-earth-input-grammar.md`.
+
+### Evidence
+
+- EditMode: 170/170 passed, including 720p/1080p/1440p/ultrawide equivalence, fixed sample count, wall/arc/closed topology, N-best ambiguity, context priority, quantization and a 256-iteration `0 B` recognition loop.
+- PlayMode: 64/64 passed in 125.592 s. Invalid input preserves the authoritative command count; the existing 200-case camera/curvature corpus keeps exact preview/commit geometry hashes.
+- Windows Development: 171,058,210 bytes in 57.092 s, 0 warnings/errors (`BuildReports/NativeWindows.json`).
+
 ## Next concern
 
-Task 5 adds bounded ambient world simulation without changing Earth structural truth.
+Task 6 implements the six shippable Earth techniques on the contextual grammar.

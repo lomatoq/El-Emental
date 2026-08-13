@@ -2,24 +2,18 @@ using Elemental.Simulation.Characters;
 using Elemental.Runtime.Characters;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Elemental.Input.Actions
 {
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(PlayerInput))]
+    [RequireComponent(typeof(UnityEngine.InputSystem.PlayerInput))]
     public sealed class PlanetInputReader : MonoBehaviour, IPlanetMotorInputSource
     {
-        [SerializeField] private PlayerInput playerInput;
-        [SerializeField] private string actionMapName = "Gameplay";
-        [SerializeField] private string moveActionName = "Move";
-        [SerializeField] private string jumpActionName = "Jump";
+        [SerializeField] private EarthInputAdapter inputAdapter;
         [SerializeField] private EarthPillarMobility earthPillarMobility;
         [SerializeField] private EarthPillarWaveAbility earthPillarWave;
         [SerializeField] private EarthLandingCushion earthLandingCushion;
 
-        private InputAction _moveAction;
-        private InputAction _jumpAction;
         private bool _jumpQueued;
         private bool _shiftHeld;
         private float _shiftStartedAt;
@@ -28,12 +22,12 @@ namespace Elemental.Input.Actions
         public bool UsesEarthPillarMobility => earthPillarMobility != null;
 
         public void Configure(
-            PlayerInput configuredPlayerInput,
+            EarthInputAdapter configuredInputAdapter,
             EarthPillarMobility configuredEarthPillarMobility = null,
             EarthPillarWaveAbility configuredEarthPillarWave = null,
             EarthLandingCushion configuredLandingCushion = null)
         {
-            playerInput = configuredPlayerInput;
+            inputAdapter = configuredInputAdapter;
             earthPillarMobility = configuredEarthPillarMobility;
             earthPillarWave = configuredEarthPillarWave;
             earthLandingCushion = configuredLandingCushion;
@@ -41,38 +35,31 @@ namespace Elemental.Input.Actions
 
         private void Awake()
         {
-            if (playerInput == null)
-            {
-                playerInput = GetComponent<PlayerInput>();
-            }
+            if (inputAdapter == null) inputAdapter = GetComponent<EarthInputAdapter>();
+            if (inputAdapter == null) inputAdapter = gameObject.AddComponent<EarthInputAdapter>();
+            inputAdapter.Configure(GetComponent<UnityEngine.InputSystem.PlayerInput>());
         }
 
         private void OnEnable()
         {
-            InputActionMap map = playerInput.actions?.FindActionMap(actionMapName, true);
-            _moveAction = map?.FindAction(moveActionName, true);
-            _jumpAction = map?.FindAction(jumpActionName, true);
-
-            if (_moveAction == null || _jumpAction == null)
+            if (inputAdapter == null)
             {
-                Debug.LogError("[Elemental] Gameplay Move/Jump actions are not configured.", this);
+                Debug.LogError("[Elemental] Earth input adapter is not configured.", this);
                 enabled = false;
                 return;
             }
-
-            _jumpAction.performed += HandleJumpPerformed;
-            _jumpAction.started += HandleJumpStarted;
-            _jumpAction.canceled += HandleJumpCanceled;
-            map.Enable();
+            inputAdapter.JumpPerformed += HandleJumpPerformed;
+            inputAdapter.JumpStarted += HandleJumpStarted;
+            inputAdapter.JumpCanceled += HandleJumpCanceled;
         }
 
         private void OnDisable()
         {
-            if (_jumpAction != null)
+            if (inputAdapter != null)
             {
-                _jumpAction.performed -= HandleJumpPerformed;
-                _jumpAction.started -= HandleJumpStarted;
-                _jumpAction.canceled -= HandleJumpCanceled;
+                inputAdapter.JumpPerformed -= HandleJumpPerformed;
+                inputAdapter.JumpStarted -= HandleJumpStarted;
+                inputAdapter.JumpCanceled -= HandleJumpCanceled;
             }
             earthPillarMobility?.CancelCharge();
             earthPillarWave?.CancelCharge();
@@ -82,8 +69,7 @@ namespace Elemental.Input.Actions
 
         private void Update()
         {
-            bool shift = Keyboard.current != null &&
-                         (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed);
+            bool shift = inputAdapter != null && inputAdapter.BendModifierHeld;
             if (shift && !_shiftHeld) _shiftStartedAt = Time.unscaledTime;
             _shiftHeld = shift;
             if (_jumpCastMode == JumpCastMode.Wave && shift)
@@ -92,19 +78,19 @@ namespace Elemental.Input.Actions
 
         public PlanetMotorCommand SampleCommand(uint tick)
         {
-            Vector2 move = _moveAction?.ReadValue<Vector2>() ?? Vector2.zero;
+            Vector2 move = inputAdapter != null ? inputAdapter.Move : Vector2.zero;
             bool jump = _jumpQueued;
             _jumpQueued = false;
             return new PlanetMotorCommand(tick, new float2(move.x, move.y), jump);
         }
 
-        private void HandleJumpPerformed(InputAction.CallbackContext context)
+        private void HandleJumpPerformed()
         {
             if (earthPillarMobility != null || earthPillarWave != null) return;
             _jumpQueued = true;
         }
 
-        private void HandleJumpStarted(InputAction.CallbackContext context)
+        private void HandleJumpStarted()
         {
             if (_shiftHeld && earthPillarWave != null)
             {
@@ -123,7 +109,7 @@ namespace Elemental.Input.Actions
                 : JumpCastMode.None;
         }
 
-        private void HandleJumpCanceled(InputAction.CallbackContext context)
+        private void HandleJumpCanceled()
         {
             if (_jumpCastMode == JumpCastMode.Wave) earthPillarWave?.ReleaseCharge();
             else if (_jumpCastMode == JumpCastMode.Pillar) earthPillarMobility?.ReleaseCharge();

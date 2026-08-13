@@ -23,6 +23,7 @@ namespace Elemental.Presentation.UI
         private Label _casts;
         private Label _mass;
         private Label _result;
+        private Label _parameter;
         private VisualElement _amountFill;
         private VisualElement _chargeFill;
         private VisualElement _liftFill;
@@ -32,6 +33,7 @@ namespace Elemental.Presentation.UI
         private float _displayPower01;
         private bool _previewActive;
         private bool _subscribed;
+        private EarthReticleState _lastReticleState = (EarthReticleState)255;
 
         public void Configure(
             MagicInputController configuredInput,
@@ -55,6 +57,7 @@ namespace Elemental.Presentation.UI
             _casts = root.Q<Label>("casts-value");
             _mass = root.Q<Label>("mass-value");
             _result = root.Q<Label>("result-value");
+            _parameter = root.Q<Label>("parameter-value");
             _amountFill = root.Q<VisualElement>("amount-fill");
             _chargeFill = root.Q<VisualElement>("charge-fill");
             _liftFill = root.Q<VisualElement>("lift-fill");
@@ -93,7 +96,10 @@ namespace Elemental.Presentation.UI
                     Vector2 pointer = input.AimScreenPosition;
                     _reticle.style.left = pointer.x - 11f;
                     _reticle.style.top = Screen.height - pointer.y - 11f;
+                    UpdateReticleState(input.ReticleState);
                 }
+                if (_parameter != null)
+                    _parameter.text = $"{input.BendParameterLabel}  {input.BendParameter01 * 100f:0}%";
             }
             if (_liftFill != null)
                 _liftFill.style.width = Length.Percent((pillarMobility != null ? pillarMobility.Charge01 : 0f) * 100f);
@@ -166,6 +172,25 @@ namespace Elemental.Presentation.UI
         {
             if (_result != null) _result.text = $"{value.VelocityChange:0.0} M/S EARTH LIFT";
             if (_status != null) _status.text = $"Earth pillar {value.Height:0.0} m — launch committed.";
+        }
+
+        private void UpdateReticleState(EarthReticleState state)
+        {
+            if (_reticle == null || state == _lastReticleState) return;
+            _reticle.RemoveFromClassList("reticle--invalid");
+            _reticle.RemoveFromClassList("reticle--source");
+            _reticle.RemoveFromClassList("reticle--ambiguous");
+            _reticle.RemoveFromClassList("reticle--valid");
+            string className = state switch
+            {
+                EarthReticleState.Valid => "reticle--valid",
+                EarthReticleState.Ambiguous => "reticle--ambiguous",
+                EarthReticleState.Terrain or EarthReticleState.Rock or
+                    EarthReticleState.Intact or EarthReticleState.Broken => "reticle--source",
+                _ => "reticle--invalid"
+            };
+            _reticle.AddToClassList(className);
+            _lastReticleState = state;
         }
 
         private void Subscribe()

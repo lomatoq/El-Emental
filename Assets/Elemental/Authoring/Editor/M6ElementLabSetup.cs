@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Elemental.Authoring.Assets;
 using Elemental.Authoring.Bakers;
+using Elemental.Input.Actions;
 using Elemental.Input.Gestures;
 using Elemental.Presentation.UI;
 using Elemental.Presentation.VFX;
@@ -63,6 +64,9 @@ namespace Elemental.Authoring.Editor
 
             character.SetActive(false);
             PlayerInput playerInput = character.GetComponent<PlayerInput>();
+            EarthInputAdapter inputAdapter = character.GetComponent<EarthInputAdapter>();
+            if (inputAdapter == null) inputAdapter = character.AddComponent<EarthInputAdapter>();
+            inputAdapter.Configure(playerInput);
             LineRenderer preview = character.GetComponent<LineRenderer>();
             if (preview == null) preview = character.AddComponent<LineRenderer>();
             preview.useWorldSpace = true;

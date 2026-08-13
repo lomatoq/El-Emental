@@ -102,8 +102,10 @@ namespace Elemental.Authoring.Editor
             PlayerInput playerInput = character.AddComponent<PlayerInput>();
             playerInput.actions = actions;
             playerInput.defaultActionMap = "Gameplay";
+            EarthInputAdapter inputAdapter = character.AddComponent<EarthInputAdapter>();
+            inputAdapter.Configure(playerInput);
             PlanetInputReader inputReader = character.AddComponent<PlanetInputReader>();
-            inputReader.Configure(playerInput);
+            inputReader.Configure(inputAdapter);
             PlanetMotor planetMotor = character.AddComponent<PlanetMotor>();
 
             GameObject cameraObject = new GameObject("Gravity Toy Camera");

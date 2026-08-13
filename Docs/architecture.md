@@ -38,6 +38,8 @@ Elemental.Presentation
 Elemental.Input
 
 - Input System actions, gesture sampling, intent gates, and replayable input commands.
+- `EarthInputAdapter` is the only runtime action/device boundary. Earth gesture consumers use
+  viewport-normalized samples and never query physical input devices directly.
 
 Elemental.Authoring
 
@@ -78,6 +80,12 @@ No subsystem may locate these owners through a global static registry.
 ## Commands and events
 
 Commands contain intent, geometry, intensity, tick, stable IDs, modifiers, and seed. They do not contain precomputed outcomes or mesh references.
+
+Earth input resolution validates the source and active manipulation context before running any
+gesture templates. Recognition uses a fixed-count normalized path and returns an N-best result
+with confidence and ambiguity. Replays carry the resolved intent plus quantized geometry,
+source ID/generation, charge, wheel parameter, modifiers, ticks, seed, and optional digest;
+raw pointer streams and screen pixels are not authoritative.
 
 Simulation emits typed past-tense events such as TerrainEdited, ImpactOccurred, AbilityRejected, and CharacterStateChanged. Presentation may route those events to effects without feeding visual state back into simulation.
 
