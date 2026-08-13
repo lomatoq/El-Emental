@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b039ac0f2faf8154ab3f6cc6ea8a4d4b, type: 3}
+  m_Name: EarthLandingCushionProfile
+  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Physics.EarthLandingCushionProfile
+  predictionSeconds: 4
+  activationHeight: 3.2
+  maximumLandingSpeed: 4
+  pillarHeight: 2.4
+  pillarWidth: 1.7
+  compressionSeconds: 0.28
+  retreatSeconds: 0.42
+  gravityMagnitude: 14

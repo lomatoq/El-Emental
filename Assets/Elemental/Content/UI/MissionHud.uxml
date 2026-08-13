@@ -1,0 +1,16 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="MissionHud.uss" />
+    <ui:VisualElement class="mission-shell">
+        <ui:Label text="VOLCANO VILLAGE" class="title" />
+        <ui:Label name="mission-status" text="Running" class="status" />
+        <ui:Label name="civilian-status" text="rescued —" class="line" />
+        <ui:Label name="crisis-status" text="active —" class="line" />
+        <ui:Label name="timeline-status" text="seed —" class="debug" />
+        <ui:VisualElement class="strategy-row">
+            <ui:Button name="earth-strategy" text="EARTH · FORTIFY" class="strategy" />
+            <ui:Button name="air-strategy" text="AIR · EVACUATE" class="strategy" />
+            <ui:Button name="water-strategy" text="WATER · COOL" class="strategy" />
+        </ui:VisualElement>
+        <ui:Label name="strategy-status" text="EarthFortify" class="selected" />
+    </ui:VisualElement>
+</ui:UXML>

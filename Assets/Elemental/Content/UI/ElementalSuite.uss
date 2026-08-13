@@ -1,0 +1,71 @@
+.suite-root {
+    background-color: rgb(12, 17, 24);
+    color: rgb(218, 234, 239);
+}
+
+.suite-header {
+    padding: 18px 22px 14px 22px;
+    background-color: rgb(17, 31, 42);
+    border-bottom-width: 2px;
+    border-bottom-color: rgb(54, 209, 180);
+}
+
+.suite-title {
+    font-size: 21px;
+    -unity-font-style: bold;
+    color: rgb(99, 241, 211);
+    margin-bottom: 5px;
+}
+
+.suite-content {
+    padding: 20px;
+}
+
+.page-title {
+    font-size: 18px;
+    -unity-font-style: bold;
+    color: rgb(240, 248, 250);
+    margin-bottom: 5px;
+}
+
+.suite-tab {
+    min-width: 112px;
+}
+
+.suite-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.suite-action {
+    min-width: 135px;
+    height: 32px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    background-color: rgb(29, 64, 73);
+    border-color: rgb(54, 209, 180);
+    color: rgb(231, 249, 246);
+}
+
+.card-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.suite-card {
+    width: 47%;
+    min-height: 92px;
+    margin: 6px;
+    padding: 12px;
+    background-color: rgb(21, 29, 39);
+    border-left-width: 3px;
+    border-left-color: rgb(239, 153, 66);
+}
+
+.card-title {
+    -unity-font-style: bold;
+    color: rgb(255, 187, 107);
+    margin-bottom: 6px;
+}

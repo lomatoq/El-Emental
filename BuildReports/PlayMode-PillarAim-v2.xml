@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="3" result="Failed(Child)" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-12 14:19:26Z" end-time="2026-08-12 14:19:29Z" duration="2.6391158">
+  <test-suite type="TestSuite" id="1062" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="36" result="Failed" site="Child" start-time="2026-08-12 14:19:26Z" end-time="2026-08-12 14:19:29Z" duration="2.639116" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1055" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="36" result="Failed" site="Child" start-time="2026-08-12 14:19:26Z" end-time="2026-08-12 14:19:29Z" duration="2.627018" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="23948" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1056" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="36" result="Failed" site="Child" start-time="2026-08-12 14:19:26Z" end-time="2026-08-12 14:19:29Z" duration="2.625416" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1057" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="36" result="Failed" site="Child" start-time="2026-08-12 14:19:26Z" end-time="2026-08-12 14:19:29Z" duration="2.624479" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1058" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="36" result="Failed" site="Child" start-time="2026-08-12 14:19:26Z" end-time="2026-08-12 14:19:29Z" duration="2.623840" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1019" name="EarthCoreVisualRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthCoreVisualRuntimeTests" classname="Elemental.Tests.PlayMode.EarthCoreVisualRuntimeTests" runstate="Runnable" testcasecount="3" result="Failed" site="Child" start-time="2026-08-12 14:19:26Z" end-time="2026-08-12 14:19:27Z" duration="0.839704" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1020" name="EarthCoreLoadsAsReadableDioramaWithHudAndFeedback" fullname="Elemental.Tests.PlayMode.EarthCoreVisualRuntimeTests.EarthCoreLoadsAsReadableDioramaWithHudAndFeedback" methodname="EarthCoreLoadsAsReadableDioramaWithHudAndFeedback" classname="Elemental.Tests.PlayMode.EarthCoreVisualRuntimeTests" runstate="Runnable" seed="1554827383" result="Failed" start-time="2026-08-12 14:19:26Z" end-time="2026-08-12 14:19:27Z" duration="0.824830" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  The Space input must route into charged Earth mobility in the playable scene.
+  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.EarthCoreVisualRuntimeTests+<EarthCoreLoadsAsReadableDioramaWithHudAndFeedback>d__0.MoveNext () [0x004ba] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\EarthCoreVisualRuntimeTests.cs:93
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1029" name="EarthPillarMobilityTests" fullname="Elemental.Tests.PlayMode.EarthPillarMobilityTests" classname="Elemental.Tests.PlayMode.EarthPillarMobilityTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-08-12 14:19:27Z" end-time="2026-08-12 14:19:29Z" duration="1.778973" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1030" name="HeldSpaceContractRaisesOnePillarAndLaunchesAlongLocalUp" fullname="Elemental.Tests.PlayMode.EarthPillarMobilityTests.HeldSpaceContractRaisesOnePillarAndLaunchesAlongLocalUp" methodname="HeldSpaceContractRaisesOnePillarAndLaunchesAlongLocalUp" classname="Elemental.Tests.PlayMode.EarthPillarMobilityTests" runstate="Runnable" seed="987154703" result="Passed" start-time="2026-08-12 14:19:27Z" end-time="2026-08-12 14:19:28Z" duration="0.621936" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1031" name="MotorTurnsCharacterTowardMouseTangentWithoutOrbitingMovementAuthority" fullname="Elemental.Tests.PlayMode.EarthPillarMobilityTests.MotorTurnsCharacterTowardMouseTangentWithoutOrbitingMovementAuthority" methodname="MotorTurnsCharacterTowardMouseTangentWithoutOrbitingMovementAuthority" classname="Elemental.Tests.PlayMode.EarthPillarMobilityTests" runstate="Runnable" seed="2080117283" result="Passed" start-time="2026-08-12 14:19:28Z" end-time="2026-08-12 14:19:29Z" duration="1.137295" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

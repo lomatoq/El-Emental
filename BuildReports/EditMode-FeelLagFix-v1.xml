@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="7" result="Passed" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-12 12:31:52Z" end-time="2026-08-12 12:31:52Z" duration="0.1065992">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="92" result="Passed" start-time="2026-08-12 12:31:52Z" end-time="2026-08-12 12:31:52Z" duration="0.106599" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1114" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="92" result="Passed" start-time="2026-08-12 12:31:52Z" end-time="2026-08-12 12:31:52Z" duration="0.092436" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="38832" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1115" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="92" result="Passed" start-time="2026-08-12 12:31:52Z" end-time="2026-08-12 12:31:52Z" duration="0.091282" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1116" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="92" result="Passed" start-time="2026-08-12 12:31:52Z" end-time="2026-08-12 12:31:52Z" duration="0.090422" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1117" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="92" result="Passed" start-time="2026-08-12 12:31:52Z" end-time="2026-08-12 12:31:52Z" duration="0.089499" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1004" name="BendSessionTests" fullname="Elemental.Tests.EditMode.BendSessionTests" classname="Elemental.Tests.EditMode.BendSessionTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-08-12 12:31:52Z" end-time="2026-08-12 12:31:52Z" duration="0.079881" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1005" name="AmountAndChargeRemainIndependentAcrossLifecycle" fullname="Elemental.Tests.EditMode.BendSessionTests.AmountAndChargeRemainIndependentAcrossLifecycle" methodname="AmountAndChargeRemainIndependentAcrossLifecycle" classname="Elemental.Tests.EditMode.BendSessionTests" runstate="Runnable" seed="443806309" result="Passed" start-time="2026-08-12 12:31:52Z" end-time="2026-08-12 12:31:52Z" duration="0.043435" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1010" name="AmountChangesExtractedVolumeWithoutChangingCharge" fullname="Elemental.Tests.EditMode.BendSessionTests.AmountChangesExtractedVolumeWithoutChangingCharge" methodname="AmountChangesExtractedVolumeWithoutChangingCharge" classname="Elemental.Tests.EditMode.BendSessionTests" runstate="Runnable" seed="887013553" result="Passed" start-time="2026-08-12 12:31:52Z" end-time="2026-08-12 12:31:52Z" duration="0.001039" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1011" name="HoldingStillFormsAContinuouslyLargerRock" fullname="Elemental.Tests.EditMode.BendSessionTests.HoldingStillFormsAContinuouslyLargerRock" methodname="HoldingStillFormsAContinuouslyLargerRock" classname="Elemental.Tests.EditMode.BendSessionTests" runstate="Runnable" seed="817947865" result="Passed" start-time="2026-08-12 12:31:52Z" end-time="2026-08-12 12:31:52Z" duration="0.001541" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1008" name="PdForceClampsSoHeavyMassLagsMore" fullname="Elemental.Tests.EditMode.BendSessionTests.PdForceClampsSoHeavyMassLagsMore" methodname="PdForceClampsSoHeavyMassLagsMore" classname="Elemental.Tests.EditMode.BendSessionTests" runstate="Runnable" seed="1321200494" result="Passed" start-time="2026-08-12 12:31:52Z" end-time="2026-08-12 12:31:52Z" duration="0.002116" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1006" name="ReleasedChargeIsRememberedThenDecays" fullname="Elemental.Tests.EditMode.BendSessionTests.ReleasedChargeIsRememberedThenDecays" methodname="ReleasedChargeIsRememberedThenDecays" classname="Elemental.Tests.EditMode.BendSessionTests" runstate="Runnable" seed="1274195237" result="Passed" start-time="2026-08-12 12:31:52Z" end-time="2026-08-12 12:31:52Z" duration="0.000839" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1009" name="ReleasePreservesPhysicalAndGestureVelocity" fullname="Elemental.Tests.EditMode.BendSessionTests.ReleasePreservesPhysicalAndGestureVelocity" methodname="ReleasePreservesPhysicalAndGestureVelocity" classname="Elemental.Tests.EditMode.BendSessionTests" runstate="Runnable" seed="720916718" result="Passed" start-time="2026-08-12 12:31:52Z" end-time="2026-08-12 12:31:52Z" duration="0.001282" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1007" name="ShiftChangesOriginModeInsteadOfCreatingAnotherAbility" fullname="Elemental.Tests.EditMode.BendSessionTests.ShiftChangesOriginModeInsteadOfCreatingAnotherAbility" methodname="ShiftChangesOriginModeInsteadOfCreatingAnotherAbility" classname="Elemental.Tests.EditMode.BendSessionTests" runstate="Runnable" seed="870587065" result="Passed" start-time="2026-08-12 12:31:52Z" end-time="2026-08-12 12:31:52Z" duration="0.000741" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

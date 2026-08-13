@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="OnlineSpikeHud.uss" />
+    <ui:VisualElement class="net-shell">
+        <ui:Label text="AUTHORITY SPIKE" class="title" />
+        <ui:Label name="net-summary" text="clients —" class="line" />
+        <ui:Label name="authority-summary" text="commands —" class="line" />
+        <ui:Label name="correction-summary" text="corrections —" class="line" />
+        <ui:Label text="solid · authority   /   wire · predicted + reconciled" class="hint" />
+    </ui:VisualElement>
+</ui:UXML>

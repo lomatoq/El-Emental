@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8b22c552f1f42b4ea60600444976f6b, type: 3}
+  m_Name: AtmosphereProfile
+  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.World.AtmosphereProfile
+  outerRadiusMultiplier: 1.055
+  rayleighColor: {r: 0.24, g: 0.52, b: 1, a: 1}
+  mieColor: {r: 1, g: 0.48, b: 0.2, a: 1}
+  rayleighStrength: 2.1
+  mieStrength: 0.7
+  horizonStrength: 2.4
+  nightOpacity: 0.12

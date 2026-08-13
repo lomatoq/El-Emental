@@ -1,0 +1,25 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:VisualElement name="screen" class="screen">
+        <ui:VisualElement class="ambient ambient--top" />
+        <ui:VisualElement class="ambient ambient--bottom" />
+
+        <ui:VisualElement class="menu-shell">
+            <ui:Label text="EL·EMENTAL" class="eyebrow" />
+            <ui:Label text="Управляй стихиями" class="title" />
+            <ui:Label
+                text="Магия, физика и мир, который отвечает на каждое действие."
+                class="subtitle" />
+
+            <ui:VisualElement class="actions">
+                <ui:Button name="play-button" text="Начать игру" class="button button--primary" />
+                <ui:Button name="settings-button" text="Настройки" class="button" />
+                <ui:Button name="quit-button" text="Выйти" class="button button--quiet" />
+            </ui:VisualElement>
+
+            <ui:Label name="status-label" text="Прототип готов к разработке" class="status" />
+        </ui:VisualElement>
+
+        <ui:Label text="Unity 6.3 LTS · UI Toolkit" class="footer" />
+    </ui:VisualElement>
+</ui:UXML>
+

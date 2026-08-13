@@ -1,0 +1,181 @@
+using System.Collections.Generic;
+using Elemental.Simulation.Bending;
+using Elemental.Simulation.Structures;
+using NUnit.Framework;
+using Unity.Mathematics;
+
+namespace Elemental.Tests.EditMode
+{
+    public sealed class EarthMagicExpansionTests
+    {
+        [Test]
+        public void VectorFieldContinuouslyAcceleratesAndRespectsMassAndSpeedCap()
+        {
+            EarthVectorFieldSample light = EarthVectorFieldSolver.Solve(
+                float3.zero, 50f, new float3(0f, 0f, 1f), 1f, 4200f, 32f, 0.02f);
+            EarthVectorFieldSample heavy = EarthVectorFieldSolver.Solve(
+                float3.zero, 500f, new float3(0f, 0f, 1f), 1f, 4200f, 32f, 0.02f);
+            EarthVectorFieldSample capped = EarthVectorFieldSolver.Solve(
+                new float3(0f, 0f, 31.95f), 50f, new float3(0f, 0f, 1f), 1f, 4200f, 32f, 0.02f);
+
+            Assert.That(light.VelocityChange.z, Is.GreaterThan(heavy.VelocityChange.z * 9f));
+            Assert.That(capped.ResultingForwardSpeed, Is.EqualTo(32f).Within(0.0001f));
+            Assert.That(capped.SpeedLimited, Is.True);
+            Assert.That(EarthVectorFieldSolver.FinalImpulse(1f, 260f, 2400f), Is.EqualTo(2400f).Within(0.01f));
+        }
+
+        [Test]
+        public void GravityWellPullsAndOrbitsWithBoundedSpeed()
+        {
+            EarthGravityWellSample sample = EarthGravityWellSolver.Solve(
+                new float3(4f, 0f, 0f),
+                new float3(0f, 0f, 0f),
+                float3.zero,
+                new float3(0f, 1f, 0f),
+                8f, 0.8f, 38f, 6f, 1.8f, 16f, 0.02f, 1f);
+            EarthGravityWellSample capped = EarthGravityWellSolver.Solve(
+                new float3(4f, 0f, 0f),
+                new float3(-15.95f, 0f, 0f),
+                float3.zero,
+                new float3(0f, 1f, 0f),
+                8f, 0.8f, 80f, 6f, 0f, 16f, 0.1f, 1f);
+
+            Assert.That(sample.Acceleration.x, Is.LessThan(0f));
+            Assert.That(math.abs(sample.Acceleration.z), Is.GreaterThan(0.1f));
+            Assert.That(sample.Weight, Is.InRange(0.45f, 0.55f));
+            Assert.That(capped.SpeedLimited, Is.True);
+            Assert.That(capped.PredictedSpeed, Is.EqualTo(16f).Within(0.001f));
+        }
+
+        [Test]
+        public void StraightStrokeBuildsWallWhileArcAndPiStrokeBuildPlatforms()
+        {
+            var line = new List<float2>
+            {
+                new float2(10f, 10f), new float2(80f, 11f), new float2(160f, 12f)
+            };
+            var arc = new List<float2>
+            {
+                new float2(0f, 0f), new float2(45f, 42f), new float2(95f, 58f),
+                new float2(145f, 39f), new float2(180f, 0f)
+            };
+            var pi = new List<float2>
+            {
+                new float2(0f, 0f), new float2(0f, 100f), new float2(100f, 100f),
+                new float2(100f, 0f)
+            };
+
+            Assert.That(EarthStructureGestureSolver.Classify(line).Kind, Is.EqualTo(EarthStructureGestureKind.Wall));
+            Assert.That(EarthStructureGestureSolver.Classify(arc).Kind, Is.EqualTo(EarthStructureGestureKind.Platform));
+            Assert.That(EarthStructureGestureSolver.Classify(pi).Kind, Is.EqualTo(EarthStructureGestureKind.Platform));
+        }
+
+        [Test]
+        public void PlatformGeometryAutoClosesSelfCrossingStrokeIntoSimpleOuterHull()
+        {
+            var bowTie = new List<float3>
+            {
+                new float3(-2f, 24f, -2f), new float3(2f, 24f, 2f),
+                new float3(-2f, 24f, 2f), new float3(2f, 24f, -2f)
+            };
+            EarthPlatformGeometry geometry = EarthPlatformGeometrySolver.Build(bowTie, float3.zero);
+
+            Assert.That(geometry.IsValid, Is.True);
+            Assert.That(geometry.Polygon.Length, Is.InRange(3, 32));
+            Assert.That(geometry.Area, Is.EqualTo(16f).Within(0.1f));
+            Assert.That(math.length(geometry.Center), Is.EqualTo(geometry.SurfaceRadius).Within(0.001f));
+            Assert.That(EarthPlatformGeometrySolver.RequiredChordEmbedDepth(
+                in geometry, 0.24f, 0.45f),
+                Is.GreaterThan(0.55f));
+        }
+
+        [Test]
+        public void DynamicDebrisShrinksWithoutOwningOrStoppingItsPhysics()
+        {
+            DynamicDebrisLifecycleSample falling = DynamicDebrisLifecycle.Evaluate(0.8f, 1.1f, 0.9f);
+            DynamicDebrisLifecycleSample shrinking = DynamicDebrisLifecycle.Evaluate(1.55f, 1.1f, 0.9f);
+            DynamicDebrisLifecycleSample gone = DynamicDebrisLifecycle.Evaluate(2.1f, 1.1f, 0.9f);
+
+            Assert.That(falling.Shrinking, Is.False);
+            Assert.That(falling.Scale01, Is.EqualTo(1f));
+            Assert.That(shrinking.Shrinking, Is.True);
+            Assert.That(shrinking.Scale01, Is.InRange(0.45f, 0.55f));
+            Assert.That(shrinking.Complete, Is.False);
+            Assert.That(gone.Complete, Is.True);
+            Assert.That(gone.Scale01, Is.Zero);
+        }
+
+        [Test]
+        public void LandingPredictionTargetsSphereAndCapsDownwardSpeed()
+        {
+            EarthLandingPrediction prediction = EarthLandingCushionSolver.Predict(
+                new float3(0f, 32f, 0f),
+                new float3(4f, -8f, 0f),
+                float3.zero,
+                24f,
+                14f,
+                4f);
+
+            Assert.That(prediction.Valid, Is.True);
+            Assert.That(math.length(prediction.SurfacePoint), Is.EqualTo(24f).Within(0.001f));
+            Assert.That(prediction.ImpactSpeed, Is.GreaterThan(8f));
+            Assert.That(EarthLandingCushionSolver.RequiredUpwardVelocityChange(-18f, 4f),
+                Is.EqualTo(14f).Within(0.001f));
+        }
+
+        [Test]
+        public void FullWaveKeepsVisibleGapsAndACompactSmoothCrest()
+        {
+            EarthPillarWaveSample[] samples = EarthPillarWaveSolver.Build(1f, 1f);
+            int maximumRow = 0;
+            for (int index = 0; index < samples.Length; index++)
+            {
+                EarthPillarWaveSample sample = samples[index];
+                maximumRow = math.max(maximumRow, sample.Row);
+                int countInRow = 0;
+                for (int candidate = 0; candidate < samples.Length; candidate++)
+                    if (samples[candidate].Row == sample.Row) countInRow++;
+                float gap = (math.PI * 2f * sample.ArcDistance) / countInRow;
+                Assert.That(sample.Width, Is.LessThan(gap * 0.79f));
+                Assert.That(sample.Width, Is.GreaterThan(gap * 0.25f));
+            }
+
+            var rowHeights = new float[maximumRow + 1];
+            var rowCounts = new int[maximumRow + 1];
+            for (int index = 0; index < samples.Length; index++)
+            {
+                rowHeights[samples[index].Row] += samples[index].Height;
+                rowCounts[samples[index].Row]++;
+            }
+            float maximumAverage = 0f;
+            int crestRow = 0;
+            for (int row = 0; row < rowHeights.Length; row++)
+            {
+                rowHeights[row] /= math.max(1, rowCounts[row]);
+                if (rowHeights[row] <= maximumAverage) continue;
+                maximumAverage = rowHeights[row];
+                crestRow = row;
+            }
+            Assert.That(crestRow, Is.InRange(2, maximumRow - 1));
+            Assert.That(rowHeights[0], Is.LessThan(maximumAverage * 0.25f));
+            Assert.That(rowHeights[maximumRow], Is.LessThan(maximumAverage * 0.30f));
+        }
+
+        [Test]
+        public void WaveColumnMotionEasesUpSettlesAndSmoothlyReturnsIntoGround()
+        {
+            EarthPillarWaveMotionSample start = EarthPillarWaveSolver.EvaluateMotion(0f, 0.36f, 0.08f, 0.46f);
+            EarthPillarWaveMotionSample peak = EarthPillarWaveSolver.EvaluateMotion(0.30f, 0.36f, 0.08f, 0.46f);
+            EarthPillarWaveMotionSample settled = EarthPillarWaveSolver.EvaluateMotion(0.40f, 0.36f, 0.08f, 0.46f);
+            EarthPillarWaveMotionSample retreat = EarthPillarWaveSolver.EvaluateMotion(0.67f, 0.36f, 0.08f, 0.46f);
+            EarthPillarWaveMotionSample complete = EarthPillarWaveSolver.EvaluateMotion(1f, 0.36f, 0.08f, 0.46f);
+
+            Assert.That(start.Height01, Is.InRange(0.02f, 0.03f));
+            Assert.That(peak.Height01, Is.GreaterThan(1f));
+            Assert.That(settled.Height01, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(retreat.Height01, Is.InRange(0.25f, 0.75f));
+            Assert.That(retreat.Sink01, Is.GreaterThan(0f));
+            Assert.That(complete.Complete, Is.True);
+        }
+    }
+}

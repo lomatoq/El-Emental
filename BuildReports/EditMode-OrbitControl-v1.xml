@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Passed" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-12 14:34:05Z" end-time="2026-08-12 14:34:05Z" duration="0.091726">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="95" result="Passed" start-time="2026-08-12 14:34:05Z" end-time="2026-08-12 14:34:05Z" duration="0.091726" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1117" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="95" result="Passed" start-time="2026-08-12 14:34:05Z" end-time="2026-08-12 14:34:05Z" duration="0.076913" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="5784" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1118" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="95" result="Passed" start-time="2026-08-12 14:34:05Z" end-time="2026-08-12 14:34:05Z" duration="0.073496" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1119" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="95" result="Passed" start-time="2026-08-12 14:34:05Z" end-time="2026-08-12 14:34:05Z" duration="0.072290" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1120" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="95" result="Passed" start-time="2026-08-12 14:34:05Z" end-time="2026-08-12 14:34:05Z" duration="0.069982" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1075" name="PlanetMotorMathTests" fullname="Elemental.Tests.EditMode.PlanetMotorMathTests" classname="Elemental.Tests.EditMode.PlanetMotorMathTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-08-12 14:34:05Z" end-time="2026-08-12 14:34:05Z" duration="0.065137" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1080" name="GravityFrame_IsFiniteAndOrthogonalAtPolesAndParallelReference" fullname="Elemental.Tests.EditMode.PlanetMotorMathTests.GravityFrame_IsFiniteAndOrthogonalAtPolesAndParallelReference" classname="Elemental.Tests.EditMode.PlanetMotorMathTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-08-12 14:34:05Z" end-time="2026-08-12 14:34:05Z" duration="0.035851" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1076" name="GravityFrame_IsFiniteAndOrthogonalAtPolesAndParallelReference(0.0f,1.0f,0.0f,0.0f,1.0f,0.0f)" fullname="Elemental.Tests.EditMode.PlanetMotorMathTests.GravityFrame_IsFiniteAndOrthogonalAtPolesAndParallelReference(0.0f,1.0f,0.0f,0.0f,1.0f,0.0f)" methodname="GravityFrame_IsFiniteAndOrthogonalAtPolesAndParallelReference" classname="Elemental.Tests.EditMode.PlanetMotorMathTests" runstate="Runnable" seed="332416605" result="Passed" start-time="2026-08-12 14:34:05Z" end-time="2026-08-12 14:34:05Z" duration="0.025108" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1077" name="GravityFrame_IsFiniteAndOrthogonalAtPolesAndParallelReference(0.0f,-1.0f,0.0f,0.0f,-1.0f,0.0f)" fullname="Elemental.Tests.EditMode.PlanetMotorMathTests.GravityFrame_IsFiniteAndOrthogonalAtPolesAndParallelReference(0.0f,-1.0f,0.0f,0.0f,-1.0f,0.0f)" methodname="GravityFrame_IsFiniteAndOrthogonalAtPolesAndParallelReference" classname="Elemental.Tests.EditMode.PlanetMotorMathTests" runstate="Runnable" seed="481816971" result="Passed" start-time="2026-08-12 14:34:05Z" end-time="2026-08-12 14:34:05Z" duration="0.000239" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1078" name="GravityFrame_IsFiniteAndOrthogonalAtPolesAndParallelReference(1.0f,0.0f,0.0f,1.0f,0.0f,0.0f)" fullname="Elemental.Tests.EditMode.PlanetMotorMathTests.GravityFrame_IsFiniteAndOrthogonalAtPolesAndParallelReference(1.0f,0.0f,0.0f,1.0f,0.0f,0.0f)" methodname="GravityFrame_IsFiniteAndOrthogonalAtPolesAndParallelReference" classname="Elemental.Tests.EditMode.PlanetMotorMathTests" runstate="Runnable" seed="1345427907" result="Passed" start-time="2026-08-12 14:34:05Z" end-time="2026-08-12 14:34:05Z" duration="0.000141" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1079" name="GravityFrame_IsFiniteAndOrthogonalAtPolesAndParallelReference(0.001f,0.999f,0.001f,0.0f,0.0f,1.0f)" fullname="Elemental.Tests.EditMode.PlanetMotorMathTests.GravityFrame_IsFiniteAndOrthogonalAtPolesAndParallelReference(0.001f,0.999f,0.001f,0.0f,0.0f,1.0f)" methodname="GravityFrame_IsFiniteAndOrthogonalAtPolesAndParallelReference" classname="Elemental.Tests.EditMode.PlanetMotorMathTests" runstate="Runnable" seed="1669482052" result="Passed" start-time="2026-08-12 14:34:05Z" end-time="2026-08-12 14:34:05Z" duration="0.000135" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1083" name="HeldSpaceContinuouslyIncreasesPillarHeightAndLaunchSpeed" fullname="Elemental.Tests.EditMode.PlanetMotorMathTests.HeldSpaceContinuouslyIncreasesPillarHeightAndLaunchSpeed" methodname="HeldSpaceContinuouslyIncreasesPillarHeightAndLaunchSpeed" classname="Elemental.Tests.EditMode.PlanetMotorMathTests" runstate="Runnable" seed="1230583304" result="Passed" start-time="2026-08-12 14:34:05Z" end-time="2026-08-12 14:34:05Z" duration="0.004653" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1084" name="MouseDeltaProducesFiniteSphericalYawAndPitchOrbit" fullname="Elemental.Tests.EditMode.PlanetMotorMathTests.MouseDeltaProducesFiniteSphericalYawAndPitchOrbit" methodname="MouseDeltaProducesFiniteSphericalYawAndPitchOrbit" classname="Elemental.Tests.EditMode.PlanetMotorMathTests" runstate="Runnable" seed="847345944" result="Passed" start-time="2026-08-12 14:34:05Z" end-time="2026-08-12 14:34:05Z" duration="0.005290" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1082" name="MouseFacingProjectsOntoLocalPlanetTangent" fullname="Elemental.Tests.EditMode.PlanetMotorMathTests.MouseFacingProjectsOntoLocalPlanetTangent" methodname="MouseFacingProjectsOntoLocalPlanetTangent" classname="Elemental.Tests.EditMode.PlanetMotorMathTests" runstate="Runnable" seed="10799413" result="Passed" start-time="2026-08-12 14:34:05Z" end-time="2026-08-12 14:34:05Z" duration="0.000755" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1081" name="PlanetMotorCommand_ClampsMoveAndRejectsNonFiniteInput" fullname="Elemental.Tests.EditMode.PlanetMotorMathTests.PlanetMotorCommand_ClampsMoveAndRejectsNonFiniteInput" methodname="PlanetMotorCommand_ClampsMoveAndRejectsNonFiniteInput" classname="Elemental.Tests.EditMode.PlanetMotorMathTests" runstate="Runnable" seed="1625928561" result="Passed" start-time="2026-08-12 14:34:05Z" end-time="2026-08-12 14:34:05Z" duration="0.004665" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

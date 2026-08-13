@@ -1,0 +1,131 @@
+/*
+ * El-Emental UI theme.
+ * Change this palette and the dimensions below in UI Builder to re-skin the UI.
+ * Brand: #77F2C8, ink: #091219, panel: #12212B, accent: #FFB866.
+ */
+
+.screen {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(7, 15, 21);
+    color: rgb(232, 245, 242);
+    overflow: hidden;
+}
+
+.ambient {
+    position: absolute;
+    width: 560px;
+    height: 560px;
+    border-radius: 280px;
+    opacity: 0.22;
+}
+
+.ambient--top {
+    top: -260px;
+    right: -170px;
+    background-color: rgb(119, 242, 200);
+}
+
+.ambient--bottom {
+    bottom: -310px;
+    left: -190px;
+    background-color: rgb(255, 184, 102);
+}
+
+.menu-shell {
+    width: 520px;
+    max-width: 86%;
+    padding: 48px;
+    background-color: rgba(18, 33, 43, 0.96);
+    border-left-width: 1px;
+    border-right-width: 1px;
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-left-color: rgba(119, 242, 200, 0.34);
+    border-right-color: rgba(119, 242, 200, 0.16);
+    border-top-color: rgba(119, 242, 200, 0.34);
+    border-bottom-color: rgba(119, 242, 200, 0.16);
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+}
+
+.eyebrow {
+    margin-bottom: 10px;
+    color: rgb(119, 242, 200);
+    font-size: 14px;
+    -unity-font-style: bold;
+    letter-spacing: 4px;
+}
+
+.title {
+    margin-bottom: 12px;
+    color: rgb(246, 255, 252);
+    font-size: 42px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.subtitle {
+    margin-bottom: 34px;
+    color: rgb(166, 190, 188);
+    font-size: 17px;
+    white-space: normal;
+}
+
+.actions {
+    margin-bottom: 24px;
+}
+
+.button {
+    height: 50px;
+    margin-bottom: 10px;
+    padding-left: 18px;
+    padding-right: 18px;
+    background-color: rgb(29, 48, 59);
+    color: rgb(232, 245, 242);
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    font-size: 16px;
+    -unity-font-style: bold;
+}
+
+.button:hover {
+    background-color: rgb(39, 63, 74);
+}
+
+.button--primary {
+    background-color: rgb(119, 242, 200);
+    color: rgb(7, 22, 22);
+}
+
+.button--primary:hover {
+    background-color: rgb(151, 255, 220);
+}
+
+.button--quiet {
+    background-color: rgba(29, 48, 59, 0.28);
+    color: rgb(134, 158, 157);
+}
+
+.status {
+    color: rgb(255, 184, 102);
+    font-size: 13px;
+}
+
+.footer {
+    position: absolute;
+    right: 28px;
+    bottom: 22px;
+    color: rgba(166, 190, 188, 0.58);
+    font-size: 12px;
+}
+

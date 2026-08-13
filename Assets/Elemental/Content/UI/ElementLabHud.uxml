@@ -1,0 +1,13 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="ElementLabHud.uss" />
+    <ui:VisualElement class="hud-shell">
+        <ui:Label text="ELEMENT LAB" class="hud-title" />
+        <ui:Label text="R · Water  /  F · Fire  /  1–4 · Ability  /  Drag LMB · Cast" class="hud-help" />
+        <ui:VisualElement class="telemetry-grid">
+            <ui:Label text="PHASE" class="hud-key" /><ui:Label name="phase-value" text="—" class="hud-value" />
+            <ui:Label text="MASS" class="hud-key" /><ui:Label name="mass-value" text="—" class="hud-value" />
+            <ui:Label text="ENERGY" class="hud-key" /><ui:Label name="energy-value" text="—" class="hud-value" />
+            <ui:Label text="BUDGET" class="hud-key" /><ui:Label name="budget-value" text="—" class="hud-value" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,455 @@
+using System;
+using System.Collections.Generic;
+using Elemental.Simulation.Voxel;
+using Unity.Mathematics;
+using Unity.Profiling;
+using UnityEngine;
+using UnityEngine.Rendering;
+
+namespace Elemental.Runtime.World
+{
+    [DisallowMultipleComponent]
+    public sealed class VoxelPlanetBehaviour : MonoBehaviour
+    {
+        private static readonly ProfilerMarker RenderQueueMarker = new ProfilerMarker("Elemental.Voxel.RenderQueue");
+        private static readonly ProfilerMarker ColliderQueueMarker = new ProfilerMarker("Elemental.Voxel.ColliderQueue");
+
+        private sealed class RuntimeChunk
+        {
+            public GameObject GameObject;
+            public Mesh Mesh;
+            public MeshCollider Collider;
+            public uint VisualVersion;
+            public uint ColliderVersion;
+            public float ColliderDebtAge;
+        }
+
+        [Header("Canonical state")]
+        [SerializeField] private PlanetWorldProfile worldProfile;
+        [SerializeField, Min(1f)] private float radius = 1f;
+        [SerializeField] private uint seed = 0xE1E0u;
+        [SerializeField, Range(4, 32)] private int chunkResolution = 16;
+        [SerializeField, Min(0.1f)] private float cellSize = 1f;
+        [SerializeField, Min(0f)] private float noiseAmplitude = 0.35f;
+
+        [Header("Budgeted caches")]
+        [SerializeField, Min(1)] private int renderChunksPerFrame = 2;
+        [SerializeField, Min(1)] private int colliderChunksPerFrame = 1;
+        [SerializeField] private Material surfaceMaterial;
+
+        private readonly Queue<ChunkCoord> _renderQueue = new Queue<ChunkCoord>();
+        private readonly Queue<ChunkCoord> _colliderQueue = new Queue<ChunkCoord>();
+        private readonly HashSet<ChunkCoord> _renderQueued = new HashSet<ChunkCoord>();
+        private readonly HashSet<ChunkCoord> _colliderQueued = new HashSet<ChunkCoord>();
+        private readonly Dictionary<ChunkCoord, RuntimeChunk> _runtimeChunks =
+            new Dictionary<ChunkCoord, RuntimeChunk>();
+        private readonly List<ChunkCoord> _dirtyScratch = new List<ChunkCoord>(64);
+        private readonly List<Vector3> _uploadVertices = new List<Vector3>(8192);
+        private readonly List<Vector3> _uploadNormals = new List<Vector3>(8192);
+        private readonly List<int> _uploadIndices = new List<int>(12288);
+
+        private VoxelPlanetState _state;
+        private IChunkMesher _mesher;
+        private ChunkMeshBuffers _meshBuffers;
+        private VoxelMeshingSettings _meshingSettings;
+        private uint _nextEditSequence = 1u;
+
+        public VoxelPlanetState State => _state;
+        public float Radius => radius;
+        public PlanetWorldProfile WorldProfile => worldProfile;
+        public int PendingRenderCount => _renderQueue.Count;
+        public int PendingColliderCount => _colliderQueue.Count;
+        public int RuntimeChunkCount => _runtimeChunks.Count;
+        public int ProcessedChunkCount { get; private set; }
+        public int DiscardedStaleBuildCount { get; private set; }
+        public int OutstandingColliderDebtCount { get; private set; }
+        public double LastRenderQueueMilliseconds { get; private set; }
+        public double PeakRenderQueueMilliseconds { get; private set; }
+
+        public void ResetQueueTimingTelemetry()
+        {
+            LastRenderQueueMilliseconds = 0.0;
+            PeakRenderQueueMilliseconds = 0.0;
+        }
+
+        public void Configure(
+            float configuredRadius,
+            uint configuredSeed,
+            int configuredResolution,
+            float configuredCellSize,
+            int configuredRenderBudget,
+            int configuredColliderBudget,
+            Material configuredMaterial)
+        {
+            radius = configuredRadius;
+            seed = configuredSeed;
+            chunkResolution = configuredResolution;
+            cellSize = configuredCellSize;
+            renderChunksPerFrame = configuredRenderBudget;
+            colliderChunksPerFrame = configuredColliderBudget;
+            surfaceMaterial = configuredMaterial;
+        }
+
+        public void Configure(PlanetWorldProfile profile, Material configuredMaterial)
+        {
+            if (Application.isPlaying && _state != null)
+                throw new InvalidOperationException("Planet size is immutable while the world is running. Rebuild the world outside Play Mode.");
+            if (profile == null) throw new ArgumentNullException(nameof(profile));
+            worldProfile = profile;
+            radius = profile.Radius;
+            seed = profile.Seed;
+            noiseAmplitude = profile.NoiseAmplitude;
+            chunkResolution = profile.ChunkResolution;
+            cellSize = profile.CellSize;
+            renderChunksPerFrame = profile.RenderChunksPerFrame;
+            colliderChunksPerFrame = profile.ColliderChunksPerFrame;
+            surfaceMaterial = configuredMaterial;
+        }
+
+        private void Awake()
+        {
+            _state = new VoxelPlanetState(radius, seed, chunkResolution, cellSize, noiseAmplitude);
+            _meshingSettings = new VoxelMeshingSettings(chunkResolution, cellSize);
+            _mesher = new SmoothSdfSurfaceMesher();
+            _meshBuffers = new ChunkMeshBuffers();
+            QueueInitialChunks();
+        }
+
+        private void Update()
+        {
+            UpdateColliderDebt(Time.deltaTime);
+            ProcessRenderQueue(renderChunksPerFrame);
+            ProcessColliderQueue(colliderChunksPerFrame);
+        }
+
+        public bool TryGetColliderDebt(ChunkCoord coord, out ColliderDebt debt)
+        {
+            if (!_runtimeChunks.TryGetValue(coord, out RuntimeChunk runtimeChunk))
+            {
+                debt = default;
+                return false;
+            }
+
+            debt = new ColliderDebt(
+                coord,
+                runtimeChunk.VisualVersion,
+                runtimeChunk.ColliderVersion,
+                runtimeChunk.ColliderDebtAge,
+                float.MaxValue);
+            return true;
+        }
+
+        public void ApplyEditBatch(EditBatch batch)
+        {
+            _state.Apply(batch);
+            QueueDirtyChunks();
+        }
+
+        public void ApplySphereEdit(Vector3 planetLocalCenter, float editRadius, bool additive)
+        {
+            SdfEdit edit = new SdfEdit(
+                _nextEditSequence++,
+                additive ? SdfEditKind.AddSphere : SdfEditKind.SubtractSphere,
+                ToFloat3(planetLocalCenter),
+                ToFloat3(planetLocalCenter),
+                editRadius,
+                new VoxelMaterialId(1));
+            ApplyEditBatch(new EditBatch(edit));
+        }
+
+        public void ApplyCapsuleEdit(Vector3 pointA, Vector3 pointB, float editRadius, bool additive)
+        {
+            SdfEdit edit = new SdfEdit(
+                _nextEditSequence++,
+                additive ? SdfEditKind.AddCapsule : SdfEditKind.SubtractCapsule,
+                ToFloat3(pointA),
+                ToFloat3(pointB),
+                editRadius,
+                new VoxelMaterialId(1));
+            ApplyEditBatch(new EditBatch(edit));
+        }
+
+        public void ApplySplineEdit(Vector3[] planetLocalPath, float editRadius, bool additive)
+        {
+            if (planetLocalPath == null || planetLocalPath.Length < 2)
+            {
+                throw new ArgumentException("A spline edit needs at least two points.", nameof(planetLocalPath));
+            }
+
+            SdfEdit[] edits = new SdfEdit[planetLocalPath.Length - 1];
+            for (int index = 0; index < edits.Length; index++)
+            {
+                edits[index] = new SdfEdit(
+                    _nextEditSequence++,
+                    additive ? SdfEditKind.AddCapsule : SdfEditKind.SubtractCapsule,
+                    ToFloat3(planetLocalPath[index]),
+                    ToFloat3(planetLocalPath[index + 1]),
+                    editRadius,
+                    new VoxelMaterialId(1));
+            }
+
+            ApplyEditBatch(new EditBatch(edits));
+        }
+
+        private void QueueInitialChunks()
+        {
+            float chunkSize = _meshingSettings.ChunkWorldSize;
+            int minimum = Mathf.FloorToInt(-radius / chunkSize);
+            int maximum = Mathf.FloorToInt(radius / chunkSize);
+
+            for (int z = minimum; z <= maximum; z++)
+            {
+                for (int y = minimum; y <= maximum; y++)
+                {
+                    for (int x = minimum; x <= maximum; x++)
+                    {
+                        ChunkCoord coord = new ChunkCoord(x, y, z);
+                        if (!PlanetChunkShellSolver.IntersectsSurfaceShell(
+                                new int3(x, y, z),
+                                chunkSize,
+                                radius,
+                                noiseAmplitude + cellSize * 1.5f))
+                            continue;
+                        _state.Chunks.GetOrCreate(coord);
+                        EnqueueRender(coord);
+                    }
+                }
+            }
+        }
+
+        private void QueueDirtyChunks()
+        {
+            _dirtyScratch.Clear();
+            _state.Chunks.CollectDirty(_dirtyScratch);
+            for (int index = 0; index < _dirtyScratch.Count; index++)
+            {
+                EnqueueRender(_dirtyScratch[index]);
+            }
+        }
+
+        private void EnqueueRender(ChunkCoord coord)
+        {
+            if (_renderQueued.Add(coord))
+            {
+                _renderQueue.Enqueue(coord);
+            }
+        }
+
+        private void EnqueueCollider(ChunkCoord coord)
+        {
+            if (_colliderQueued.Add(coord))
+            {
+                _colliderQueue.Enqueue(coord);
+            }
+        }
+
+        private void ProcessRenderQueue(int budget)
+        {
+            double startedAt = Time.realtimeSinceStartupAsDouble;
+            using (RenderQueueMarker.Auto())
+            {
+                for (int processed = 0; processed < budget && _renderQueue.Count > 0; processed++)
+                {
+                    ChunkCoord coord = _renderQueue.Dequeue();
+                    _renderQueued.Remove(coord);
+                    VoxelChunkState chunkState = _state.Chunks.GetOrCreate(coord);
+                    var request = new MeshBuildRequest(coord, chunkState.Version);
+                    _mesher.Build(_state, coord, _meshingSettings, _meshBuffers);
+                    if (chunkState.Version != request.ExpectedVersion)
+                    {
+                        DiscardedStaleBuildCount++;
+                        EnqueueRender(coord);
+                        continue;
+                    }
+
+                    UploadMesh(coord, request.ExpectedVersion);
+                    ulong hash = _state.ComputeChunkHash(coord);
+                    if (!chunkState.TryMarkBuilt(request.ExpectedVersion, hash))
+                    {
+                        DiscardedStaleBuildCount++;
+                        EnqueueRender(coord);
+                        continue;
+                    }
+
+                    ProcessedChunkCount++;
+                }
+            }
+            LastRenderQueueMilliseconds = (Time.realtimeSinceStartupAsDouble - startedAt) * 1000.0;
+            PeakRenderQueueMilliseconds = Math.Max(PeakRenderQueueMilliseconds, LastRenderQueueMilliseconds);
+        }
+
+        private void UploadMesh(ChunkCoord coord, uint visualVersion)
+        {
+            if (_meshBuffers.Vertices.Length == 0)
+            {
+                if (_runtimeChunks.TryGetValue(coord, out RuntimeChunk emptyChunk))
+                {
+                    emptyChunk.Mesh.Clear();
+                    MarkVisualVersion(emptyChunk, visualVersion);
+                    EnqueueCollider(coord);
+                }
+
+                return;
+            }
+
+            RuntimeChunk runtimeChunk = GetOrCreateRuntimeChunk(coord);
+            MarkVisualVersion(runtimeChunk, visualVersion);
+            _uploadVertices.Clear();
+            _uploadNormals.Clear();
+            _uploadIndices.Clear();
+
+            for (int index = 0; index < _meshBuffers.Vertices.Length; index++)
+            {
+                float3 vertex = _meshBuffers.Vertices[index];
+                float3 normal = _meshBuffers.Normals[index];
+                _uploadVertices.Add(new Vector3(vertex.x, vertex.y, vertex.z));
+                _uploadNormals.Add(new Vector3(normal.x, normal.y, normal.z));
+            }
+
+            for (int index = 0; index < _meshBuffers.Indices.Length; index++)
+            {
+                _uploadIndices.Add(_meshBuffers.Indices[index]);
+            }
+
+            Mesh mesh = runtimeChunk.Mesh;
+            mesh.Clear();
+            mesh.indexFormat = _uploadVertices.Count > ushort.MaxValue
+                ? IndexFormat.UInt32
+                : IndexFormat.UInt16;
+            mesh.SetVertices(_uploadVertices);
+            mesh.SetNormals(_uploadNormals);
+            mesh.SetTriangles(_uploadIndices, 0, true);
+            mesh.RecalculateBounds();
+            EnqueueCollider(coord);
+        }
+
+        private RuntimeChunk GetOrCreateRuntimeChunk(ChunkCoord coord)
+        {
+            if (_runtimeChunks.TryGetValue(coord, out RuntimeChunk runtimeChunk))
+            {
+                return runtimeChunk;
+            }
+
+            GameObject chunkObject = new GameObject($"Voxel Chunk {coord}");
+            chunkObject.transform.SetParent(transform, false);
+            Mesh mesh = new Mesh { name = $"Voxel Chunk {coord}" };
+            MeshFilter filter = chunkObject.AddComponent<MeshFilter>();
+            filter.sharedMesh = mesh;
+            MeshRenderer renderer = chunkObject.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = surfaceMaterial;
+            MeshCollider collider = chunkObject.AddComponent<MeshCollider>();
+
+            runtimeChunk = new RuntimeChunk
+            {
+                GameObject = chunkObject,
+                Mesh = mesh,
+                Collider = collider
+            };
+            _runtimeChunks.Add(coord, runtimeChunk);
+            return runtimeChunk;
+        }
+
+        private void ProcessColliderQueue(int budget)
+        {
+            using (ColliderQueueMarker.Auto())
+            {
+                for (int processed = 0; processed < budget && _colliderQueue.Count > 0; processed++)
+                {
+                    ChunkCoord coord = _colliderQueue.Dequeue();
+                    _colliderQueued.Remove(coord);
+                    if (!_runtimeChunks.TryGetValue(coord, out RuntimeChunk runtimeChunk))
+                    {
+                        continue;
+                    }
+
+                    runtimeChunk.Collider.sharedMesh = null;
+                    if (runtimeChunk.Mesh.vertexCount > 0)
+                    {
+                        runtimeChunk.Collider.sharedMesh = runtimeChunk.Mesh;
+                    }
+
+                    runtimeChunk.ColliderVersion = runtimeChunk.VisualVersion;
+                    runtimeChunk.ColliderDebtAge = 0f;
+                }
+            }
+        }
+
+        private static void MarkVisualVersion(RuntimeChunk runtimeChunk, uint visualVersion)
+        {
+            if (runtimeChunk.VisualVersion != visualVersion)
+            {
+                runtimeChunk.VisualVersion = visualVersion;
+                runtimeChunk.ColliderDebtAge = 0f;
+            }
+        }
+
+        private void UpdateColliderDebt(float deltaTime)
+        {
+            OutstandingColliderDebtCount = 0;
+            foreach (KeyValuePair<ChunkCoord, RuntimeChunk> pair in _runtimeChunks)
+            {
+                RuntimeChunk runtimeChunk = pair.Value;
+                if (runtimeChunk.VisualVersion <= runtimeChunk.ColliderVersion)
+                {
+                    runtimeChunk.ColliderDebtAge = 0f;
+                    continue;
+                }
+
+                runtimeChunk.ColliderDebtAge += Mathf.Max(0f, deltaTime);
+                OutstandingColliderDebtCount++;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (_mesher is IDisposable disposableMesher) disposableMesher.Dispose();
+            _meshBuffers?.Dispose();
+            foreach (KeyValuePair<ChunkCoord, RuntimeChunk> pair in _runtimeChunks)
+            {
+                if (pair.Value.Mesh == null)
+                {
+                    continue;
+                }
+
+                if (Application.isPlaying)
+                {
+                    Destroy(pair.Value.Mesh);
+                }
+                else
+                {
+                    DestroyImmediate(pair.Value.Mesh);
+                }
+            }
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            if (_state == null)
+            {
+                return;
+            }
+
+            Matrix4x4 previousMatrix = Gizmos.matrix;
+            Gizmos.matrix = transform.localToWorldMatrix;
+            float chunkSize = _state.ChunkWorldSize;
+
+            foreach (KeyValuePair<ChunkCoord, RuntimeChunk> pair in _runtimeChunks)
+            {
+                bool dirty = _state.Chunks.TryGet(pair.Key, out VoxelChunkState chunkState) && chunkState.IsDirty;
+                Gizmos.color = dirty
+                    ? new Color(1f, 0.45f, 0.15f, 0.8f)
+                    : new Color(0.15f, 0.8f, 0.75f, 0.35f);
+                float3 minimum = pair.Key.GetPlanetLocalMin(chunkSize);
+                Vector3 center = new Vector3(minimum.x, minimum.y, minimum.z) + (Vector3.one * chunkSize * 0.5f);
+                Gizmos.DrawWireCube(center, Vector3.one * chunkSize);
+            }
+
+            Gizmos.matrix = previousMatrix;
+        }
+
+        private static float3 ToFloat3(Vector3 value)
+        {
+            return new float3(value.x, value.y, value.z);
+        }
+    }
+}

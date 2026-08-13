@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <Style src="CapabilityHud.uss" />
+    <ui:VisualElement class="cap-shell">
+        <ui:Label text="WEB MAGIC LAB" class="title" />
+        <ui:Label name="profile" text="WebLab" class="profile" />
+        <ui:Label name="budgets" text="budgets —" class="line" />
+        <ui:Label name="degradation" text="degradation —" class="line" />
+        <ui:Label name="telemetry" text="telemetry —" class="telemetry" />
+        <ui:Label text="Earth: 1 wall · 2 pull · 3 throw · drag LMB" class="hint" />
+    </ui:VisualElement>
+</ui:UXML>

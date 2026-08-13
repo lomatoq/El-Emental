@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-12 18:52:51Z" end-time="2026-08-12 18:52:52Z" duration="0.7086901">
+  <test-suite type="TestSuite" id="1067" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="41" result="Failed" site="Child" start-time="2026-08-12 18:52:51Z" end-time="2026-08-12 18:52:52Z" duration="0.708690" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1060" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="41" result="Failed" site="Child" start-time="2026-08-12 18:52:51Z" end-time="2026-08-12 18:52:52Z" duration="0.695030" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="19236" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1061" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="41" result="Failed" site="Child" start-time="2026-08-12 18:52:51Z" end-time="2026-08-12 18:52:52Z" duration="0.693505" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1062" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="41" result="Failed" site="Child" start-time="2026-08-12 18:52:51Z" end-time="2026-08-12 18:52:52Z" duration="0.692326" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1063" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="41" result="Failed" site="Child" start-time="2026-08-12 18:52:51Z" end-time="2026-08-12 18:52:52Z" duration="0.691241" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1023" name="EarthPhysicsRegressionTests" fullname="Elemental.Tests.PlayMode.EarthPhysicsRegressionTests" classname="Elemental.Tests.PlayMode.EarthPhysicsRegressionTests" runstate="Runnable" testcasecount="8" result="Failed" site="Child" start-time="2026-08-12 18:52:51Z" end-time="2026-08-12 18:52:52Z" duration="0.686409" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1027" name="WallPoolRaisesRectangularCollidersWithoutGrowingTerrainEditCost" fullname="Elemental.Tests.PlayMode.EarthPhysicsRegressionTests.WallPoolRaisesRectangularCollidersWithoutGrowingTerrainEditCost" methodname="WallPoolRaisesRectangularCollidersWithoutGrowingTerrainEditCost" classname="Elemental.Tests.PlayMode.EarthPhysicsRegressionTests" runstate="Runnable" seed="118450" result="Failed" start-time="2026-08-12 18:52:51Z" end-time="2026-08-12 18:52:52Z" duration="0.669332" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: greater than 25.2890091f
+  But was:  24.2511806f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.EarthPhysicsRegressionTests+<WallPoolRaisesRectangularCollidersWithoutGrowingTerrainEditCost>d__3.MoveNext () [0x00226] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\EarthPhysicsRegressionTests.cs:130
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a8399e3ef91e9043bc75610186e1c3e, type: 3}
+  m_Name: EarthRockProfile
+  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Physics.EarthRockProfile
+  minimumShatterImpulse: 45
+  shatterSpecificImpulse: 7.5
+  shatterPieceCount: 9
+  shatterSpreadSpeed: 3.8
+  craterRadiusPerImpulse: 0.0032
+  minimumCraterRadius: 0.35
+  maximumCraterRadius: 1.5
+  accretionSurfaceDistance: 0.45
+  maximumAccretionSpeed: 1.5
+  accretionIntervalSeconds: 0.25
+  accretionVolumePerPulse: 0.12
+  maximumRadius: 2.4
+  materialDensity: 120
+  accretionChipCount: 4
+  debrisRestSeconds: 1.15
+  debrisShrinkSeconds: 0.9

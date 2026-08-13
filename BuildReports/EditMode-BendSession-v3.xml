@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="5" result="Passed" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-12 11:54:04Z" end-time="2026-08-12 11:54:04Z" duration="0.0993759">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="90" result="Passed" start-time="2026-08-12 11:54:04Z" end-time="2026-08-12 11:54:04Z" duration="0.099376" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1112" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="90" result="Passed" start-time="2026-08-12 11:54:04Z" end-time="2026-08-12 11:54:04Z" duration="0.085063" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="30012" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1113" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="90" result="Passed" start-time="2026-08-12 11:54:04Z" end-time="2026-08-12 11:54:04Z" duration="0.084154" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1114" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="90" result="Passed" start-time="2026-08-12 11:54:04Z" end-time="2026-08-12 11:54:04Z" duration="0.083736" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1115" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="90" result="Passed" start-time="2026-08-12 11:54:04Z" end-time="2026-08-12 11:54:04Z" duration="0.083279" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1004" name="BendSessionTests" fullname="Elemental.Tests.EditMode.BendSessionTests" classname="Elemental.Tests.EditMode.BendSessionTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-08-12 11:54:04Z" end-time="2026-08-12 11:54:04Z" duration="0.076973" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1005" name="AmountAndChargeRemainIndependentAcrossLifecycle" fullname="Elemental.Tests.EditMode.BendSessionTests.AmountAndChargeRemainIndependentAcrossLifecycle" methodname="AmountAndChargeRemainIndependentAcrossLifecycle" classname="Elemental.Tests.EditMode.BendSessionTests" runstate="Runnable" seed="443979334" result="Passed" start-time="2026-08-12 11:54:04Z" end-time="2026-08-12 11:54:04Z" duration="0.042152" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1008" name="PdForceClampsSoHeavyMassLagsMore" fullname="Elemental.Tests.EditMode.BendSessionTests.PdForceClampsSoHeavyMassLagsMore" methodname="PdForceClampsSoHeavyMassLagsMore" classname="Elemental.Tests.EditMode.BendSessionTests" runstate="Runnable" seed="1878498356" result="Passed" start-time="2026-08-12 11:54:04Z" end-time="2026-08-12 11:54:04Z" duration="0.002511" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1006" name="ReleasedChargeIsRememberedThenDecays" fullname="Elemental.Tests.EditMode.BendSessionTests.ReleasedChargeIsRememberedThenDecays" methodname="ReleasedChargeIsRememberedThenDecays" classname="Elemental.Tests.EditMode.BendSessionTests" runstate="Runnable" seed="2015135745" result="Passed" start-time="2026-08-12 11:54:04Z" end-time="2026-08-12 11:54:04Z" duration="0.001246" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1009" name="ReleasePreservesPhysicalAndGestureVelocity" fullname="Elemental.Tests.EditMode.BendSessionTests.ReleasePreservesPhysicalAndGestureVelocity" methodname="ReleasePreservesPhysicalAndGestureVelocity" classname="Elemental.Tests.EditMode.BendSessionTests" runstate="Runnable" seed="928623129" result="Passed" start-time="2026-08-12 11:54:04Z" end-time="2026-08-12 11:54:04Z" duration="0.001750" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1007" name="ShiftChangesOriginModeInsteadOfCreatingAnotherAbility" fullname="Elemental.Tests.EditMode.BendSessionTests.ShiftChangesOriginModeInsteadOfCreatingAnotherAbility" methodname="ShiftChangesOriginModeInsteadOfCreatingAnotherAbility" classname="Elemental.Tests.EditMode.BendSessionTests" runstate="Runnable" seed="1111204147" result="Passed" start-time="2026-08-12 11:54:04Z" end-time="2026-08-12 11:54:04Z" duration="0.001275" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
