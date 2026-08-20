@@ -301,6 +301,46 @@ namespace Elemental.Simulation.Characters
         public bool Locked { get; }
     }
 
+    /// <summary>
+    /// Keeps authored casting braces from pinning a locomoting character to the
+    /// previous frame's foot contacts. Input intent is used in addition to body
+    /// velocity so the lock releases before the root has had time to accelerate.
+    /// </summary>
+    public static class EarthFootPlantMotionGate
+    {
+        private const float LocomotionIntentThresholdSq = 0.0025f;
+
+        public static bool HasLocomotionIntent(float2 moveInput) =>
+            math.lengthsq(moveInput) > LocomotionIntentThresholdSq;
+
+        public static bool ShouldLock(
+            bool supported,
+            bool surfActive,
+            bool poseRequestsLock,
+            float brace01,
+            float tangentSpeed,
+            float2 moveInput)
+        {
+            if (!supported) return false;
+            if (surfActive) return true;
+            if (HasLocomotionIntent(moveInput)) return false;
+            return tangentSpeed < 0.32f || (poseRequestsLock && brace01 > 0.2f);
+        }
+
+        public static float TargetContactWeight(
+            bool supported,
+            bool surfActive,
+            bool locked,
+            float tangentSpeed,
+            float2 moveInput)
+        {
+            if (!supported) return 0f;
+            if (surfActive || locked) return 1f;
+            if (HasLocomotionIntent(moveInput)) return 0f;
+            return math.lerp(0.52f, 0.28f, math.saturate((tangentSpeed - 0.35f) / 7.15f));
+        }
+    }
+
     public static class EarthFootPlantSolver
     {
         public static EarthFootPlantResult SolveContact(

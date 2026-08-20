@@ -136,6 +136,36 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void LocomotionInputImmediatelyReleasesCastingFootBrace()
+        {
+            bool stationary = EarthFootPlantMotionGate.ShouldLock(
+                true, false, true, 0.9f, 0f, float2.zero);
+            bool moving = EarthFootPlantMotionGate.ShouldLock(
+                true, false, true, 0.9f, 0f, new float2(0f, 1f));
+            float movingWeight = EarthFootPlantMotionGate.TargetContactWeight(
+                true, false, moving, 0f, new float2(0f, 1f));
+
+            Assert.That(stationary, Is.True,
+                "A stationary MMB brace should still feel rooted.");
+            Assert.That(moving, Is.False,
+                "Movement input must win before velocity rises so old foot constraints cannot trail behind.");
+            Assert.That(movingWeight, Is.Zero,
+                "Locomotion clips must own both feet while the player moves during MMB.");
+        }
+
+        [Test]
+        public void SurfKeepsItsIntentionalFootLockWhileMotorInputIsHeld()
+        {
+            bool locked = EarthFootPlantMotionGate.ShouldLock(
+                true, true, true, 1f, 12f, new float2(0f, 1f));
+            float weight = EarthFootPlantMotionGate.TargetContactWeight(
+                true, true, locked, 12f, new float2(0f, 1f));
+
+            Assert.That(locked, Is.True);
+            Assert.That(weight, Is.EqualTo(1f));
+        }
+
+        [Test]
         public void KneeHintsStayInTheRadialCharacterFrameAndKeepTheirSide()
         {
             float3 hip = new float3(0f, 24f, 0f);

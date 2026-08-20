@@ -52,6 +52,7 @@ namespace Elemental.Presentation.Animation
         private uint _castStartTick;
         private uint _authoritativeTick;
         private EarthTechniqueKind _technique;
+        private EarthTechniqueId _presentationTechnique;
         private EarthCastTiming _timing;
         private float _eventMass;
         private float _eventAcceleration;
@@ -107,10 +108,14 @@ namespace Elemental.Presentation.Animation
         private void UpdatePoseIntent()
         {
             if (motor == null || rootBody == null) return;
-            bool sustained = ResolveSustainedState(out EarthTechniqueKind sustainedTechnique, out Vector3 focus);
+            bool sustained = ResolveSustainedState(
+                out EarthTechniqueKind sustainedTechnique,
+                out EarthTechniqueId sustainedPresentationTechnique,
+                out Vector3 focus);
             if (sustainedTechnique != EarthTechniqueKind.None)
             {
                 _technique = sustainedTechnique;
+                _presentationTechnique = sustainedPresentationTechnique;
                 _target = focus;
                 if (sustained && !_authoritativeTransient) _castStartTick = _presentationTick;
             }
@@ -128,6 +133,7 @@ namespace Elemental.Presentation.Animation
             {
                 CurrentIntent = default;
                 CurrentRequest = default;
+                _presentationTechnique = EarthTechniqueId.None;
                 return;
             }
 
@@ -166,7 +172,9 @@ namespace Elemental.Presentation.Animation
                 if (identity != null) focusMatter = identity.MatterId;
             }
             CurrentRequest = new BendingPoseRequest(
-                TechniqueId(_technique),
+                _presentationTechnique != EarthTechniqueId.None
+                    ? _presentationTechnique
+                    : TechniqueId(_technique),
                 phase,
                 ToFloat3(actionAxis),
                 ToFloat3(motor.LocalUp),
@@ -196,31 +204,39 @@ namespace Elemental.Presentation.Animation
             };
         }
 
-        private bool ResolveSustainedState(out EarthTechniqueKind technique, out Vector3 focus)
+        private bool ResolveSustainedState(
+            out EarthTechniqueKind technique,
+            out EarthTechniqueId presentationTechnique,
+            out Vector3 focus)
         {
             technique = EarthTechniqueKind.None;
+            presentationTechnique = EarthTechniqueId.None;
             focus = transform.position + transform.forward * 2f;
             if (executor != null && executor.IsRepairActive)
             {
                 technique = EarthTechniqueKind.Repair;
+                presentationTechnique = EarthTechniqueId.Repair;
                 focus = executor.GravityWellFocus;
                 return true;
             }
             if (executor != null && executor.HeldBody != null)
             {
                 technique = EarthTechniqueKind.Grip;
+                presentationTechnique = EarthTechniqueId.PullStone;
                 focus = executor.HeldBody.worldCenterOfMass;
                 return true;
             }
             if (executor != null && executor.IsGravityWellActive)
             {
                 technique = EarthTechniqueKind.Repair;
+                presentationTechnique = EarthTechniqueId.GravityGrip;
                 focus = executor.GravityWellFocus;
                 return true;
             }
             if (executor != null && executor.IsVectorFieldActive)
             {
                 technique = EarthTechniqueKind.Grip;
+                presentationTechnique = EarthTechniqueId.VectorPush;
                 focus = executor.VectorFieldPoint;
                 return true;
             }
@@ -232,6 +248,7 @@ namespace Elemental.Presentation.Animation
                     : input.SelectedAbility == EarthAbilityIds.LineWall
                         ? EarthTechniqueKind.Wall
                         : EarthTechniqueKind.Grip;
+                presentationTechnique = TechniqueId(technique);
                 focus = input.BendTargetPosition;
             }
             return false;
@@ -239,12 +256,14 @@ namespace Elemental.Presentation.Animation
 
         private void BeginAuthoritative(
             EarthTechniqueKind technique,
+            EarthTechniqueId presentationTechnique,
             uint tick,
             Vector3 target,
             float mass,
             float acceleration)
         {
             _technique = technique;
+            _presentationTechnique = presentationTechnique;
             _authoritativeTick = tick;
             _target = target;
             _eventMass = Mathf.Max(0f, mass);
@@ -284,16 +303,22 @@ namespace Elemental.Presentation.Animation
             float tangentSpeed = rootBody != null
                 ? Vector3.ProjectOnPlane(rootBody.linearVelocity, motor.LocalUp).magnitude
                 : 0f;
-            bool idlePlant = supported && tangentSpeed < 0.32f;
-            bool requestLock = supported &&
-                               (idlePlant ||
-                                (CurrentIntent.LocksFeet && CurrentIntent.Brace01 > 0.2f) ||
-                                surfLock);
-            float movingContactWeight = supported
-                ? Mathf.Lerp(0.52f, 0.28f, Mathf.InverseLerp(0.35f, 7.5f, tangentSpeed))
-                : 0f;
-            float targetFootWeight = requestLock ? 1f : movingContactWeight;
-            float blendSeconds = requestLock ? 0.13f : supported ? 0.09f : 0.07f;
+            float2 moveInput = motor.LastCommand.Move;
+            bool requestLock = EarthFootPlantMotionGate.ShouldLock(
+                supported,
+                surfLock,
+                CurrentIntent.LocksFeet,
+                CurrentIntent.Brace01,
+                tangentSpeed,
+                moveInput);
+            float targetFootWeight = EarthFootPlantMotionGate.TargetContactWeight(
+                supported,
+                surfLock,
+                requestLock,
+                tangentSpeed,
+                moveInput);
+            bool locomoting = EarthFootPlantMotionGate.HasLocomotionIntent(moveInput) && !surfLock;
+            float blendSeconds = requestLock ? 0.13f : locomoting ? 0.035f : supported ? 0.09f : 0.07f;
             _footIkWeight = Mathf.MoveTowards(
                 _footIkWeight,
                 targetFootWeight,
@@ -475,6 +500,7 @@ namespace Elemental.Presentation.Animation
                 executor.Events.FragmentLaunched += OnFragmentLaunched;
                 executor.Events.EarthBodyGrabbed += OnBodyGrabbed;
                 executor.Events.EarthBodyReleased += OnBodyReleased;
+                executor.Events.MagicPushed += OnMagicPushed;
             }
             if (pillarMobility != null) pillarMobility.PillarRaised += OnPillarRaised;
             _subscribed = true;
@@ -490,25 +516,35 @@ namespace Elemental.Presentation.Animation
                 executor.Events.FragmentLaunched -= OnFragmentLaunched;
                 executor.Events.EarthBodyGrabbed -= OnBodyGrabbed;
                 executor.Events.EarthBodyReleased -= OnBodyReleased;
+                executor.Events.MagicPushed -= OnMagicPushed;
             }
             if (pillarMobility != null) pillarMobility.PillarRaised -= OnPillarRaised;
             _subscribed = false;
         }
 
         private void OnWallRaised(WallRaisedEvent value) => BeginAuthoritative(
-            EarthTechniqueKind.Wall, value.Tick, ToVector3((value.Start + value.End) * 0.5f),
+            EarthTechniqueKind.Wall, EarthTechniqueId.RaiseWall, value.Tick,
+            ToVector3((value.Start + value.End) * 0.5f),
             value.Height * value.Thickness * math.distance(value.Start, value.End) * 1800f, 8f);
         private void OnFragmentSpawned(FragmentSpawnedEvent value) => BeginAuthoritative(
-            EarthTechniqueKind.Grip, value.Tick, ToVector3(value.Position), value.Mass, 5f);
+            EarthTechniqueKind.Grip, EarthTechniqueId.PullStone,
+            value.Tick, ToVector3(value.Position), value.Mass, 5f);
         private void OnFragmentLaunched(FragmentLaunchedEvent value) => BeginAuthoritative(
-            EarthTechniqueKind.Grip, value.Tick, ToVector3(value.Position), value.Mass, value.VelocityChange);
+            EarthTechniqueKind.Grip, EarthTechniqueId.ThrowStone,
+            value.Tick, ToVector3(value.Position), value.Mass, value.VelocityChange);
         private void OnBodyGrabbed(EarthBodyGrabbedEvent value) => BeginAuthoritative(
-            EarthTechniqueKind.Grip, value.Tick, ToVector3(value.Position), value.Mass, 4f);
+            EarthTechniqueKind.Grip, EarthTechniqueId.PullStone,
+            value.Tick, ToVector3(value.Position), value.Mass, 4f);
         private void OnBodyReleased(EarthBodyReleasedEvent value) => BeginAuthoritative(
-            EarthTechniqueKind.Grip, value.Tick, rootBody != null ? rootBody.worldCenterOfMass + ToVector3(value.Velocity) : transform.position,
+            EarthTechniqueKind.Grip, EarthTechniqueId.ThrowStone, value.Tick,
+            rootBody != null ? rootBody.worldCenterOfMass + ToVector3(value.Velocity) : transform.position,
             value.Mass, math.length(value.Velocity));
+        private void OnMagicPushed(MagicPushEvent value) => BeginAuthoritative(
+            EarthTechniqueKind.Grip, EarthTechniqueId.VectorPush, value.Tick,
+            ToVector3(value.Point), value.TargetMass, value.VelocityChange);
         private void OnPillarRaised(EarthPillarLaunchEvent value) => BeginAuthoritative(
-            EarthTechniqueKind.Pillar, value.Tick, ToVector3(value.SurfaceBase), rootBody != null ? rootBody.mass : 80f,
+            EarthTechniqueKind.Pillar, EarthTechniqueId.PillarJump, value.Tick,
+            ToVector3(value.SurfaceBase), rootBody != null ? rootBody.mass : 80f,
             value.VelocityChange);
 
         private static ushort SecondsToTicks(float seconds, float tickRate) =>

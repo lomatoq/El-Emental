@@ -4,8 +4,10 @@ using Elemental.Input.Gestures;
 using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
 using Elemental.Runtime.World;
+using Elemental.Simulation.Bending;
 using NUnit.Framework;
 using Unity.Mathematics;
+using Elemental.Simulation.Characters;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -120,6 +122,36 @@ namespace Elemental.Tests.PlayMode
             castBody.useGravity = false;
             PhysicalImpactTarget castPhysical = castTarget.AddComponent<PhysicalImpactTarget>();
             castPhysical.Configure(castBody);
+
+            ScriptedMotorInput scriptedInput = presentation.gameObject.AddComponent<ScriptedMotorInput>();
+            motor.ConfigureInputSource(scriptedInput);
+            body.linearVelocity = Vector3.zero;
+            yield return new WaitForSeconds(0.18f);
+            EarthCharacterPoseController pose = presentation.GetComponent<EarthCharacterPoseController>();
+            Assert.That(pose, Is.Not.Null);
+            Assert.That(executor.TryBeginGravityWell(
+                castTarget.GetComponent<Collider>(),
+                castBody.worldCenterOfMass,
+                motor.LocalUp), Is.True);
+            yield return new WaitForSeconds(0.18f);
+            Assert.That(pose.FeetLocked, Is.True,
+                "A stationary MMB hold should retain its grounded casting brace.");
+
+            scriptedInput.Move = new float2(0f, 1f);
+            for (int frame = 0; frame < 5; frame++)
+            {
+                yield return new WaitForFixedUpdate();
+                yield return null;
+            }
+            Assert.That(executor.IsGravityWellActive, Is.True,
+                "Movement must not cancel the MMB session.");
+            Assert.That(pose.FeetLocked, Is.False,
+                "MMB may remain active, but its old foot constraints must release as soon as locomotion begins.");
+            Assert.That(pose.FootIkWeight, Is.LessThan(0.2f),
+                "The walk clip must own the feet instead of dragging them behind the moving root.");
+            executor.CancelGravityWell();
+            scriptedInput.Move = float2.zero;
+
             Assert.That(executor.TryBeginVectorField(
                 castTarget.GetComponent<Collider>(), castBody, castBody.worldCenterOfMass, tangent), Is.True);
             executor.UpdateVectorField(tangent, 1f);
@@ -130,6 +162,10 @@ namespace Elemental.Tests.PlayMode
                 "The Cast parameter alone is insufficient; the authored upper-body layer must receive visible weight.");
             AnimatorStateInfo magicState = animator.GetCurrentAnimatorStateInfo(magicLayer);
             Assert.That(magicState.IsName("Earth Magic Upper Body.Earth Cast") || magicState.IsName("Earth Cast"), Is.True);
+            Assert.That(pose.CurrentRequest.Technique, Is.EqualTo(EarthTechniqueId.VectorPush),
+                "A stone push must request the punch semantic instead of the generic pull/grip pose.");
+            Assert.That(animator.GetInteger("CastKind"), Is.EqualTo(3),
+                "VectorPush is authored as the Mixamo Punching lane in the upper-body blend tree.");
             executor.ReleaseVectorField();
             Object.Destroy(castTarget);
 
@@ -295,6 +331,13 @@ namespace Elemental.Tests.PlayMode
                 nearest = Mathf.Min(nearest, hits[index].distance);
             }
             return float.IsFinite(nearest) ? Mathf.Max(0f, nearest - halfHeight) : float.PositiveInfinity;
+        }
+
+        private sealed class ScriptedMotorInput : MonoBehaviour, IPlanetMotorInputSource
+        {
+            public float2 Move;
+            public PlanetMotorCommand SampleCommand(uint tick) =>
+                new PlanetMotorCommand(tick, Move, false);
         }
 
 

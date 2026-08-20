@@ -14,8 +14,8 @@ namespace Elemental.Runtime.Physics
         [SerializeField, Range(0.15f, 0.6f)] private float assemblySeconds = 0.30f;
         [SerializeField, Range(0.5f, 1.2f)] private float bodyRadius = 0.78f;
         [SerializeField, Range(0.02f, 0.22f)] private float bodySurfaceOffset = 0.028f;
-        [SerializeField, Range(0.9f, 1.35f)] private float bodyPlateScaleMultiplier = 1.12f;
-        [SerializeField, Range(0.9f, 2.2f)] private float expandedPlateScaleMultiplier = 1.02f;
+        [SerializeField, Range(0.9f, 3f)] private float bodyPlateScaleMultiplier = 1.96f;
+        [SerializeField, Range(0.9f, 3f)] private float expandedPlateScaleMultiplier = 2.04f;
         [SerializeField, Range(1.2f, 3f)] private float domeRadius = 2.5f;
         [SerializeField, Range(2f, 4f)] private float orbitRadius = 3.2f;
         [SerializeField, Range(0.04f, 0.30f)] private float phasePerWheelStep = 0.14f;
