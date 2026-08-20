@@ -25,6 +25,74 @@ jobs:
           retention-days: 1
           compression-level: 9
 
+  patch-seismic-shader-temp:
+    name: Patch seismic shader temp
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/earth-core-polish
+          fetch-depth: 0
+      - name: Patch Earth shader
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("Assets/Elemental/Content/Shaders/EarthTriplanar.shader")
+          text = path.read_text(encoding="utf-8")
+          if "_EarthSeismicVision" in text:
+              print("Seismic shader patch already present")
+              raise SystemExit(0)
+
+          global_anchor = "            half _ElementalNight01;\n"
+          global_replacement = """            half _ElementalNight01;
+
+            // Grounded seismic perception is driven globally by EarthSeismicVision.
+            // Keeping it outside UnityPerMaterial lets terrain, walls and loose matter
+            // share one causal pulse without cloning material instances.
+            half _EarthSeismicVision;
+            float4 _EarthSeismicOrigin;
+            float _EarthSeismicRadius;
+"""
+          if global_anchor not in text:
+              raise SystemExit("Global shader anchor not found")
+          text = text.replace(global_anchor, global_replacement, 1)
+
+          color_anchor = """                half magicEmission = lerp(0.18h, 0.54h, saturate(_ElementalNight01));
+                half3 color = albedo * (ambient + direct + additional) +
+                              (mainLight.color * specular) + _EmissionColor.rgb +
+                              (_MagicColor.rgb * magicMask * magicEmission);
+"""
+          color_replacement = """                half magicEmission = lerp(0.18h, 0.54h, saturate(_ElementalNight01));
+                float seismicDistance = distance(input.positionWS, _EarthSeismicOrigin.xyz);
+                float seismicDelta = abs(seismicDistance - max(0.001, _EarthSeismicRadius));
+                half seismicRing = (1.0h - smoothstep(0.10h, 0.62h, seismicDelta)) *
+                                   saturate(_EarthSeismicVision);
+                half seismicInterior = saturate(1.0h - seismicDistance /
+                    max(0.001h, _EarthSeismicRadius)) * 0.055h * saturate(_EarthSeismicVision);
+                half3 seismicEmission = half3(0.055h, 0.78h, 1.48h) *
+                                        (seismicRing * 1.16h + seismicInterior);
+                half3 color = albedo * (ambient + direct + additional) +
+                              (mainLight.color * specular) + _EmissionColor.rgb +
+                              (_MagicColor.rgb * magicMask * magicEmission) + seismicEmission;
+"""
+          if color_anchor not in text:
+              raise SystemExit("Fragment color anchor not found")
+          text = text.replace(color_anchor, color_replacement, 1)
+          path.write_text(text, encoding="utf-8", newline="\n")
+      - name: Commit shader patch
+        run: |
+          if git diff --quiet -- Assets/Elemental/Content/Shaders/EarthTriplanar.shader; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- Assets/Elemental/Content/Shaders/EarthTriplanar.shader
+          git commit -m "Add seismic pulse emission to earth shader"
+          git push origin HEAD:codex/earth-core-polish
+
   tests:
     name: ${{ matrix.os }} / tests
     strategy:
