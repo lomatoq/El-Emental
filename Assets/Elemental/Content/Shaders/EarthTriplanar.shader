@@ -109,6 +109,13 @@ Shader "Elemental/SG Earth Master"
             // without cloning or mutating material instances.
             half _ElementalNight01;
 
+            // Grounded seismic perception is driven globally by EarthSeismicVision.
+            // Keeping it outside UnityPerMaterial lets terrain, walls and loose matter
+            // share one causal pulse without cloning material instances.
+            half _EarthSeismicVision;
+            float4 _EarthSeismicOrigin;
+            float _EarthSeismicRadius;
+
             struct Attributes
             {
                 float4 positionOS : POSITION;
@@ -382,9 +389,17 @@ Shader "Elemental/SG Earth Master"
                                 (materialSmoothness * 0.16h);
                 half magicMask = saturate(_MagicAmount + input.color.b * classified);
                 half magicEmission = lerp(0.18h, 0.54h, saturate(_ElementalNight01));
+                float seismicDistance = distance(input.positionWS, _EarthSeismicOrigin.xyz);
+                float seismicDelta = abs(seismicDistance - max(0.001, _EarthSeismicRadius));
+                half seismicRing = (1.0h - smoothstep(0.10h, 0.62h, seismicDelta)) *
+                                   saturate(_EarthSeismicVision);
+                half seismicInterior = saturate(1.0h - seismicDistance /
+                    max(0.001h, _EarthSeismicRadius)) * 0.055h * saturate(_EarthSeismicVision);
+                half3 seismicEmission = half3(0.055h, 0.78h, 1.48h) *
+                                        (seismicRing * 1.16h + seismicInterior);
                 half3 color = albedo * (ambient + direct + additional) +
                               (mainLight.color * specular) + _EmissionColor.rgb +
-                              (_MagicColor.rgb * magicMask * magicEmission);
+                              (_MagicColor.rgb * magicMask * magicEmission) + seismicEmission;
                 color = MixFog(color, input.fogFactor);
                 return half4(color, _BaseColor.a);
             }
