@@ -7,6 +7,24 @@ on:
     branches: [main]
 
 jobs:
+  source-snapshot-temp:
+    name: Source snapshot temp
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: elemental-source-temp
+          path: |
+            Assets/Elemental
+            Packages
+            ProjectSettings
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 9
+
   tests:
     name: ${{ matrix.os }} / tests
     strategy:
