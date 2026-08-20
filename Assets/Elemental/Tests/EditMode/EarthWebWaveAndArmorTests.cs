@@ -42,15 +42,15 @@ namespace Elemental.Tests.EditMode
             EarthArmorShellSegment[] segments = EarthArmorShellDefinition.CreateDefaultSegments();
             Assert.That(segments, Has.Length.EqualTo(EarthArmorShellDefinition.RequiredSegmentCount));
             Assert.That(System.Array.FindAll(segments, segment => segment.Region == EarthArmorShellRegion.Head),
-                Has.Length.EqualTo(12));
-            Assert.That(System.Array.FindAll(segments, segment => segment.Region == EarthArmorShellRegion.Torso),
-                Has.Length.EqualTo(12));
-            Assert.That(System.Array.FindAll(segments, segment => segment.Region == EarthArmorShellRegion.Pelvis),
-                Has.Length.EqualTo(6));
-            Assert.That(System.Array.FindAll(segments, segment => segment.Region == EarthArmorShellRegion.Arm),
-                Has.Length.EqualTo(16));
-            Assert.That(System.Array.FindAll(segments, segment => segment.Region == EarthArmorShellRegion.Leg),
                 Has.Length.EqualTo(18));
+            Assert.That(System.Array.FindAll(segments, segment => segment.Region == EarthArmorShellRegion.Torso),
+                Has.Length.EqualTo(18));
+            Assert.That(System.Array.FindAll(segments, segment => segment.Region == EarthArmorShellRegion.Pelvis),
+                Has.Length.EqualTo(8));
+            Assert.That(System.Array.FindAll(segments, segment => segment.Region == EarthArmorShellRegion.Arm),
+                Has.Length.EqualTo(24));
+            Assert.That(System.Array.FindAll(segments, segment => segment.Region == EarthArmorShellRegion.Leg),
+                Has.Length.EqualTo(28));
 
             int headFront = 0;
             int headRear = 0;
@@ -59,8 +59,9 @@ namespace Elemental.Tests.EditMode
             {
                 EarthArmorShellSegment segment = segments[index];
                 Assert.That(segment.CharacterDirection.sqrMagnitude, Is.EqualTo(1f).Within(0.001f));
-                Assert.That(segment.Scale.x, Is.InRange(0.20f, 0.72f));
-                Assert.That(segment.Scale.z, Is.InRange(0.30f, 0.62f));
+                Assert.That(segment.Scale.x, Is.InRange(0.10f, 0.35f));
+                Assert.That(segment.Scale.y, Is.InRange(0.04f, 0.09f));
+                Assert.That(segment.Scale.z, Is.InRange(0.14f, 0.35f));
                 if (segment.Region != EarthArmorShellRegion.Head) continue;
                 if (segment.CharacterDirection.z > 0.45f) headFront++;
                 if (segment.CharacterDirection.z < -0.45f) headRear++;

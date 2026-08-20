@@ -9,6 +9,7 @@ Shader "Elemental/SG Earth Master"
         _DustColor("Settled Dust", Color) = (0.52, 0.405, 0.285, 1)
         [HDR] _MagicColor("Magic Accent", Color) = (1.15, 0.42, 0.075, 1)
         _MineralColor("Mineral Vein", Color) = (0.18, 0.24, 0.29, 1)
+        [Enum(Basalt,0,Sandstone,1,Granite,2,Clay,3)] _StoneFamily("Stone Family", Float) = 1
         [Normal] _NormalMap("Stone Normal", 2D) = "bump" {}
         _MaskMap("AO (R) Roughness (G)", 2D) = "white" {}
         _WorldTiling("World Tiling", Range(0.08, 2.0)) = 0.48
@@ -18,6 +19,10 @@ Shader "Elemental/SG Earth Master"
         _MacroFrequency("Macro Frequency", Range(0.02, 0.25)) = 0.075
         _TriplanarSharpness("Projection Sharpness", Range(1.0, 12.0)) = 5.0
         _NormalStrength("Normal Strength", Range(0.0, 2.0)) = 0.7
+        _ProceduralDetail("Procedural Detail", Range(0.0, 1.0)) = 0.72
+        _ProceduralNormalStrength("Procedural Normal", Range(0.0, 1.5)) = 0.5
+        _StrataScale("Strata Scale", Range(0.25, 6.0)) = 1.6
+        _GrainScale("Grain Scale", Range(0.5, 12.0)) = 4.2
         _MacroVariation("Macro Variation", Range(0.0, 0.35)) = 0.12
         _OcclusionStrength("Occlusion Strength", Range(0.0, 1.0)) = 0.55
         _CavityStrength("Cavity Strength", Range(0.0, 1.0)) = 0.46
@@ -81,6 +86,11 @@ Shader "Elemental/SG Earth Master"
                 half _MacroFrequency;
                 half _TriplanarSharpness;
                 half _NormalStrength;
+                half _StoneFamily;
+                half _ProceduralDetail;
+                half _ProceduralNormalStrength;
+                half _StrataScale;
+                half _GrainScale;
                 half _MacroVariation;
                 half _OcclusionStrength;
                 half _CavityStrength;
@@ -93,6 +103,11 @@ Shader "Elemental/SG Earth Master"
                 float4x4 _ProjectionWorldToPlanet;
                 float4x4 _ProjectionPlanetToWorld;
             CBUFFER_END
+
+            // Driven once by CelestialSystemBehaviour. This is deliberately global:
+            // every stone family must retain the same restrained night readability
+            // without cloning or mutating material instances.
+            half _ElementalNight01;
 
             struct Attributes
             {
@@ -198,6 +213,94 @@ Shader "Elemental/SG Earth Master"
                 return mx * weights.x + my * weights.y + mz * weights.z;
             }
 
+            float Hash31(float3 p)
+            {
+                p = frac(p * 0.1031);
+                p += dot(p, p.yzx + 33.33);
+                return frac((p.x + p.y) * p.z);
+            }
+
+            float ValueNoise(float3 p)
+            {
+                float3 cell = floor(p);
+                float3 f = frac(p);
+                f = f * f * (3.0 - 2.0 * f);
+                float n000 = Hash31(cell + float3(0, 0, 0));
+                float n100 = Hash31(cell + float3(1, 0, 0));
+                float n010 = Hash31(cell + float3(0, 1, 0));
+                float n110 = Hash31(cell + float3(1, 1, 0));
+                float n001 = Hash31(cell + float3(0, 0, 1));
+                float n101 = Hash31(cell + float3(1, 0, 1));
+                float n011 = Hash31(cell + float3(0, 1, 1));
+                float n111 = Hash31(cell + float3(1, 1, 1));
+                float x00 = lerp(n000, n100, f.x);
+                float x10 = lerp(n010, n110, f.x);
+                float x01 = lerp(n001, n101, f.x);
+                float x11 = lerp(n011, n111, f.x);
+                return lerp(lerp(x00, x10, f.y), lerp(x01, x11, f.y), f.z);
+            }
+
+            float StoneFbm(float3 p)
+            {
+                float value = ValueNoise(p) * 0.57;
+                value += ValueNoise(p * 2.03 + 11.7) * 0.28;
+                value += ValueNoise(p * 4.11 + 37.1) * 0.15;
+                return value;
+            }
+
+            float FamilyHeight(float3 p)
+            {
+                float family = floor(_StoneFamily + 0.5);
+                float coarse = StoneFbm(p * max(0.25, _StrataScale));
+                float grain = ValueNoise(p * max(0.5, _GrainScale));
+                if (family < 0.5)
+                {
+                    float cells = ValueNoise(p * 3.4);
+                    float pores = 1.0 - smoothstep(0.035, 0.16, abs(cells - 0.16));
+                    return saturate(coarse * 0.70 - pores * 0.26 + grain * 0.18);
+                }
+                if (family < 1.5)
+                {
+                    // Sandstone strata are deliberately warped in two horizontal
+                    // axes. A plain y sine reads as synthetic zebra bands as soon
+                    // as the object grows beyond hand-held scale.
+                    float lateralWarp = StoneFbm(float3(p.x * 0.31, p.z * 0.24, p.y * 0.07));
+                    float strataPhase = p.y + (coarse - 0.5) * 0.17 + (lateralWarp - 0.5) * 0.29;
+                    float primary = sin(strataPhase * _StrataScale * 5.1) * 0.5 + 0.5;
+                    float secondary = sin(strataPhase * _StrataScale * 10.7 + lateralWarp * 4.2) * 0.5 + 0.5;
+                    float strata = lerp(primary, secondary, 0.24);
+                    return saturate(coarse * 0.55 + strata * 0.22 + grain * 0.15);
+                }
+                if (family < 2.5)
+                {
+                    float crystal = smoothstep(0.72, 0.94, grain);
+                    return saturate(coarse * 0.62 + grain * 0.20 + crystal * 0.28);
+                }
+                float clayBand = sin((p.y + StoneFbm(p * 0.45) * 0.35) * _StrataScale * 3.2) * 0.5 + 0.5;
+                return saturate(coarse * 0.68 + clayBand * 0.20 + grain * 0.08);
+            }
+
+            half3 ApplyFamilyPalette(half3 sampled, float3 p, float height)
+            {
+                float family = floor(_StoneFamily + 0.5);
+                if (family < 0.5)
+                    return sampled * lerp(0.58h, 1.18h, height);
+                if (family < 1.5)
+                {
+                    half lateralWarp = StoneFbm(float3(p.x * 0.31h, p.z * 0.24h, p.y * 0.07h));
+                    half phase = p.y + (height - 0.5h) * 0.11h + (lateralWarp - 0.5h) * 0.29h;
+                    half warmBand = 0.93h + 0.13h * sin(phase * _StrataScale * 5.1h);
+                    half brokenBand = smoothstep(0.26h, 0.78h, height) * 0.09h;
+                    return sampled * lerp(0.90h, warmBand + brokenBand, 0.44h);
+                }
+                if (family < 2.5)
+                {
+                    half crystal = smoothstep(0.76h, 0.94h, ValueNoise(p * _GrainScale));
+                    return lerp(sampled * lerp(0.72h, 1.12h, height), _MineralColor.rgb, crystal * 0.42h);
+                }
+                return sampled * lerp(0.82h, 1.12h, smoothstep(0.18h, 0.84h, height));
+            }
+
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
@@ -212,7 +315,19 @@ Shader "Elemental/SG Earth Master"
 #else
                 half3 detailNormalWS = ProjectionToWorld(
                     SampleTriplanarNormal(positionPS, normalPS, weights, _MicroTiling));
-                half3 normalWS = normalize(lerp(baseNormalWS, detailNormalWS, distanceFade));
+                float relief = FamilyHeight(positionPS);
+                const float reliefEpsilon = 0.035;
+                float3 reliefGradient = float3(
+                    FamilyHeight(positionPS + float3(reliefEpsilon, 0, 0)) - relief,
+                    FamilyHeight(positionPS + float3(0, reliefEpsilon, 0)) - relief,
+                    FamilyHeight(positionPS + float3(0, 0, reliefEpsilon)) - relief) / reliefEpsilon;
+                half3 proceduralNormalWS = ProjectionToWorld(normalize(
+                    normalPS - reliefGradient * _ProceduralNormalStrength));
+                half3 mappedNormalWS = normalize(lerp(baseNormalWS, detailNormalWS, distanceFade));
+                half3 normalWS = normalize(lerp(
+                    mappedNormalWS,
+                    proceduralNormalWS,
+                    _ProceduralDetail * distanceFade));
 #endif
                 half2 mask = SampleMask(positionPS, weights);
                 float macroHash = frac(sin(dot(floor(positionPS * max(0.001h, _MacroFrequency)),
@@ -222,7 +337,14 @@ Shader "Elemental/SG Earth Master"
                 half interior = saturate(max(_InteriorAmount, input.color.g * (1.0h - input.color.r)));
                 half cavity = lerp(0.12h, input.color.a, classified);
                 half3 surfaceTint = lerp(_ExteriorColor.rgb, _InteriorColor.rgb, interior);
-                half3 albedo = SampleTriplanar(positionPS, weights) * surfaceTint * macro;
+                float familyHeight = FamilyHeight(positionPS);
+                half3 baseStone = SampleTriplanar(positionPS, weights);
+                half3 sampledStone = ApplyFamilyPalette(
+                    baseStone, positionPS, familyHeight);
+                half3 albedo = lerp(
+                    baseStone,
+                    sampledStone,
+                    _ProceduralDetail) * surfaceTint * macro;
                 albedo *= lerp(1.0h, mask.r, _OcclusionStrength);
                 albedo *= lerp(1.0h, 1.0h - cavity * 0.62h, _CavityStrength);
                 half dust = saturate(_DustAmount * saturate(normalPS.y * 0.75h + 0.25h) *
@@ -237,9 +359,13 @@ Shader "Elemental/SG Earth Master"
                 half wrapped = saturate((ndotl + 0.18h) / 1.18h);
                 half3 direct = mainLight.color * wrapped * mainLight.distanceAttenuation *
                                lerp(0.28h, 1.0h, mainLight.shadowAttenuation);
-                // A restrained warm hemispheric fill preserves chipped silhouettes on
-                // the night-side camera without flattening direct-light contrast.
-                half3 ambient = SampleSH(normalWS) * 0.82h + half3(0.10h, 0.072h, 0.052h);
+                // Preserve geological form at night with a cool hemispheric floor.
+                // It is intentionally weaker than the moon key, so cavities and
+                // chipped silhouettes remain dimensional instead of looking unlit.
+                half3 nightFill = half3(0.20h, 0.245h, 0.38h) *
+                                  saturate(_ElementalNight01);
+                half3 ambient = SampleSH(normalWS) * 0.82h +
+                                half3(0.10h, 0.072h, 0.052h) + nightFill;
 
                 half3 additional = 0;
                 uint additionalCount = GetAdditionalLightsCount();
@@ -255,9 +381,10 @@ Shader "Elemental/SG Earth Master"
                 half specular = pow(saturate(dot(normalWS, halfDirection)), lerp(4.0h, 72.0h, materialSmoothness)) *
                                 (materialSmoothness * 0.16h);
                 half magicMask = saturate(_MagicAmount + input.color.b * classified);
+                half magicEmission = lerp(0.18h, 0.54h, saturate(_ElementalNight01));
                 half3 color = albedo * (ambient + direct + additional) +
                               (mainLight.color * specular) + _EmissionColor.rgb +
-                              (_MagicColor.rgb * magicMask * 0.18h);
+                              (_MagicColor.rgb * magicMask * magicEmission);
                 color = MixFog(color, input.fogFactor);
                 return half4(color, _BaseColor.a);
             }

@@ -131,6 +131,7 @@ namespace Elemental.Runtime.Physics
             GravityBody gravity = go.AddComponent<GravityBody>();
             gravity.Configure(gravityWorld, body);
             EarthRockDebris piece = go.AddComponent<EarthRockDebris>();
+            piece.ConfigureVisualSeed(unchecked((uint)_pieces.Count + 1u));
             go.SetActive(false);
             _pieces.Add(piece);
             return piece;
@@ -272,11 +273,18 @@ namespace Elemental.Runtime.Physics
         private float _shrinkSeconds;
         private Vector3 _fullScale;
         private bool _accreting;
+        private Renderer _visualRenderer;
+        private MaterialPropertyBlock _visualProperties;
+        private uint _visualSeed = 1u;
+
+        public void ConfigureVisualSeed(uint value) => _visualSeed = value == 0u ? 1u : value;
 
         private void Awake()
         {
             _body = GetComponent<Rigidbody>();
             _collider = GetComponent<Collider>();
+            _visualRenderer = GetComponent<Renderer>();
+            _visualProperties = new MaterialPropertyBlock();
         }
 
         public void BeginBallistic(
@@ -305,6 +313,9 @@ namespace Elemental.Runtime.Physics
             _body.angularVelocity = velocity.sqrMagnitude > 0.01f
                 ? Vector3.Cross(velocity.normalized, transform.up) * 4f
                 : Vector3.zero;
+            uint visualSeed = _visualSeed ^
+                              unchecked((uint)Mathf.RoundToInt(position.sqrMagnitude * 997f));
+            EarthStoneVisualVariant.Apply(_visualRenderer, visualSeed, _visualProperties);
         }
 
         public void BeginAccretion(
@@ -328,6 +339,8 @@ namespace Elemental.Runtime.Physics
             _body.detectCollisions = false;
             _collider.enabled = false;
             gameObject.SetActive(true);
+            uint visualSeed = target != null ? target.FragmentId ^ _visualSeed : _visualSeed;
+            EarthStoneVisualVariant.Apply(_visualRenderer, visualSeed, _visualProperties);
         }
 
         public void ResetPiece()

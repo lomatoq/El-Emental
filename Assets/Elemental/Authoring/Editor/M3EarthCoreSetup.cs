@@ -71,8 +71,10 @@ namespace Elemental.Authoring.Editor
         private const string EarthCameraProfilePath = "Assets/Elemental/Content/Profiles/EarthCameraProfile.asset";
         private const string ShapeGrammarProfilePath = "Assets/Elemental/Content/Profiles/EarthShapeGrammarProfile.asset";
         private const string EarthStoneAlbedoPath = "Assets/Elemental/Content/Textures/EarthStoneAlbedo.png";
-        private const string CharacterModelPath = "Assets/ThirdParty/KayKit/Knight/Knight.fbx";
-        private const string CharacterTexturePath = "Assets/ThirdParty/KayKit/Knight/knight_texture.png";
+        private const string CharacterModelPath = "Assets/ThirdParty/Mixamo/X Bot.fbx";
+        private const string MixamoWalkPath = "Assets/ThirdParty/Mixamo/X Bot@Walking.fbx";
+        private const string MixamoWalkBackPath = "Assets/ThirdParty/Mixamo/X Bot@Walking Backwards.fbx";
+        private const string MixamoPunchPath = "Assets/ThirdParty/Mixamo/X Bot@Punching.fbx";
         private const string MageControllerPath = "Assets/Elemental/Content/Animation/KayKitMage.controller";
         private const string MageMaskPath = "Assets/Elemental/Content/Animation/KayKitMageUpperBody.mask";
 
@@ -315,6 +317,17 @@ namespace Elemental.Authoring.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("[Elemental] M3 Earth Core Slice configured.");
+        }
+
+        [MenuItem("Elemental Suite/Character/Refresh Mixamo Presentation Assets")]
+        public static void RefreshCharacterAnimationAssets()
+        {
+            ConfigureCharacterImporters();
+            AnimatorController controller = CreateOrLoadMageController();
+            if (controller == null)
+                throw new System.InvalidOperationException("Mixamo presentation AnimatorController could not be created.");
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Elemental] Mixamo X Bot presentation, locomotion and earth-cast clips refreshed.");
         }
 
         private static EarthCoreVisualStyle CreateOrLoadVisualStyle()
@@ -573,6 +586,8 @@ namespace Elemental.Authoring.Editor
             PlanetMotor motor)
         {
             if (camera == null || character == null || motor == null) return;
+            if (camera.GetComponent<AudioListener>() == null)
+                camera.gameObject.AddComponent<AudioListener>();
             SetTagRecursively(character, "Player");
             GameObject puppetRoot = GameObject.Find("Earth Shaper Puppet");
             if (puppetRoot != null) SetTagRecursively(puppetRoot, "Player");
@@ -1047,18 +1062,18 @@ namespace Elemental.Authoring.Editor
             MagicExecutor executor,
             EarthPillarMobility pillarMobility)
         {
-            ConfigureKayKitImporters();
+            ConfigureCharacterImporters();
             GameObject characterPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CharacterModelPath);
             if (characterPrefab == null)
             {
-                Debug.LogWarning("[Elemental] KayKit Knight is unavailable; keeping the primitive presentation fallback.");
+                Debug.LogWarning("[Elemental] Mixamo X Bot is unavailable; keeping the primitive presentation fallback.");
                 return;
             }
 
             Avatar avatar = FindAvatar(CharacterModelPath);
             if (avatar == null || !avatar.isValid || !avatar.isHuman)
             {
-                Debug.LogWarning("[Elemental] KayKit Knight did not produce a valid Humanoid avatar; keeping the primitive presentation fallback.");
+                Debug.LogWarning("[Elemental] Mixamo X Bot did not produce a valid Humanoid avatar; keeping the primitive presentation fallback.");
                 return;
             }
 
@@ -1081,36 +1096,18 @@ namespace Elemental.Authoring.Editor
             if (old != null) Object.DestroyImmediate(old.gameObject);
             old = character.transform.Find("KayKit Knight Presentation");
             if (old != null) Object.DestroyImmediate(old.gameObject);
+            old = character.transform.Find("Mixamo X Bot Presentation");
+            if (old != null) Object.DestroyImmediate(old.gameObject);
             GameObject presentationObject = PrefabUtility.InstantiatePrefab(characterPrefab) as GameObject;
             if (presentationObject == null) return;
-            presentationObject.name = "KayKit Knight Presentation";
+            presentationObject.name = "Mixamo X Bot Presentation";
             presentationObject.transform.SetParent(character.transform, false);
             presentationObject.transform.localPosition = profile.LocalPosition;
             presentationObject.transform.localRotation = profile.LocalRotation;
             presentationObject.transform.localScale = profile.LocalScale;
 
-            Material characterMaterial = CreateOrLoadLitMaterial(
-                "KayKitKnight.mat",
-                Color.white,
-                0.18f,
-                Color.black);
-            Texture2D characterTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(CharacterTexturePath);
-            if (characterTexture != null)
-            {
-                characterMaterial.SetTexture("_BaseMap", characterTexture);
-                characterMaterial.SetTexture("_MainTex", characterTexture);
-            }
-            foreach (Transform child in presentationObject.GetComponentsInChildren<Transform>(true))
-            {
-                if (child == presentationObject.transform) continue;
-                string lowerName = child.name.ToLowerInvariant();
-                if (lowerName.Contains("cape") || lowerName.Contains("hood") ||
-                    lowerName.Contains("helmet") || lowerName.Contains("visor"))
-                    child.gameObject.SetActive(false);
-            }
             foreach (Renderer renderer in presentationObject.GetComponentsInChildren<Renderer>(true))
             {
-                renderer.sharedMaterial = characterMaterial;
                 renderer.shadowCastingMode = ShadowCastingMode.On;
                 renderer.receiveShadows = true;
             }
@@ -1122,12 +1119,6 @@ namespace Elemental.Authoring.Editor
             animator.applyRootMotion = false;
             animator.updateMode = AnimatorUpdateMode.Normal;
             animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-            BindRigidCharacterPart(presentationObject.transform, animator, "Knight_Body", HumanBodyBones.Hips);
-            BindRigidCharacterPart(presentationObject.transform, animator, "Knight_Head", HumanBodyBones.Head);
-            BindRigidCharacterPart(presentationObject.transform, animator, "Knight_ArmLeft", HumanBodyBones.LeftUpperArm);
-            BindRigidCharacterPart(presentationObject.transform, animator, "Knight_ArmRight", HumanBodyBones.RightUpperArm);
-            BindRigidCharacterPart(presentationObject.transform, animator, "Knight_LegLeft", HumanBodyBones.LeftUpperLeg);
-            BindRigidCharacterPart(presentationObject.transform, animator, "Knight_LegRight", HumanBodyBones.RightUpperLeg);
 
             foreach (Renderer renderer in character.GetComponentsInChildren<Renderer>(true))
             {
@@ -1197,10 +1188,35 @@ namespace Elemental.Authoring.Editor
             part.SetParent(bone, true);
         }
 
-        private static void ConfigureKayKitImporters()
+        private static void ConfigureCharacterImporters()
         {
-            bool avatarChanged = ConfigureHumanoidImporter(CharacterModelPath, null);
+            bool avatarChanged = ConfigureHumanoidImporter(
+                CharacterModelPath,
+                null,
+                isAnimationSource: false);
             Avatar avatar = FindAvatar(CharacterModelPath);
+            string[] mixamoAnimationPaths =
+            {
+                MixamoWalkPath,
+                MixamoWalkBackPath,
+                MixamoPunchPath
+            };
+            for (int index = 0; index < mixamoAnimationPaths.Length; index++)
+                // Mixamo's FBX-for-Unity exporter is not consistent about retaining
+                // the `mixamorig:` namespace between character and motion downloads.
+                // CopyFromOther therefore reports a false hierarchy mismatch. Each
+                // motion owns a valid Humanoid Avatar and Mecanim retargets it onto
+                // X Bot at runtime without requiring identical transform paths.
+                ConfigureHumanoidImporter(
+                    mixamoAnimationPaths[index],
+                    null,
+                    isAnimationSource: true,
+                    forceReimport: avatarChanged);
+
+            // KayKit remains a temporary motion fallback until every curated
+            // Mixamo semantic slot is present. The visible character and all
+            // locomotion deformation are nevertheless driven by the skinned
+            // Mixamo Humanoid, never by the old rigid-part Knight.
             string[] animationPaths =
             {
                 "Assets/ThirdParty/KayKit/Animations/Rig_Medium_General.fbx",
@@ -1209,12 +1225,19 @@ namespace Elemental.Authoring.Editor
                 "Assets/ThirdParty/KayKit/Animations/Rig_Medium_CombatRanged.fbx"
             };
             for (int index = 0; index < animationPaths.Length; index++)
-                ConfigureHumanoidImporter(animationPaths[index], avatar, avatarChanged);
+                // These clips use KayKit transform names and must keep their own
+                // Humanoid Avatar when retargeted onto Mixamo X Bot.
+                ConfigureHumanoidImporter(
+                    animationPaths[index],
+                    null,
+                    isAnimationSource: true,
+                    forceReimport: avatarChanged);
         }
 
         private static bool ConfigureHumanoidImporter(
             string path,
             Avatar sourceAvatar,
+            bool isAnimationSource,
             bool forceReimport = false)
         {
             ModelImporter importer = AssetImporter.GetAtPath(path) as ModelImporter;
@@ -1224,24 +1247,36 @@ namespace Elemental.Authoring.Editor
                 : ModelImporterAvatarSetup.CopyFromOther;
             HumanDescription human = importer.humanDescription;
             bool needsTranslationDof = sourceAvatar == null && !human.hasTranslationDoF;
-            bool animationLoopingChanged = ConfigureAnimationLooping(importer, sourceAvatar != null);
+            bool animationLoopingChanged = ConfigureAnimationLooping(importer, isAnimationSource);
             bool dirty = forceReimport ||
                          importer.animationType != ModelImporterAnimationType.Human ||
                          importer.avatarSetup != desiredSetup ||
                          (sourceAvatar != null && importer.sourceAvatar != sourceAvatar) ||
+                         (sourceAvatar == null && importer.sourceAvatar != null) ||
                          needsTranslationDof ||
                          animationLoopingChanged;
             if (!dirty) return false;
             importer.animationType = ModelImporterAnimationType.Human;
             importer.avatarSetup = desiredSetup;
-            if (sourceAvatar != null) importer.sourceAvatar = sourceAvatar;
-            else if (needsTranslationDof)
+            if (sourceAvatar != null)
             {
+                importer.sourceAvatar = sourceAvatar;
+            }
+            else
+            {
+                // Clear stale CopyFromOther data before switching the importer back
+                // to CreateFromThisModel. Unity otherwise keeps reporting a copied
+                // Avatar hierarchy mismatch even though avatarSetup has changed.
+                importer.sourceAvatar = null;
+
                 // KayKit locomotion contains meaningful upper-leg and hip translation.
                 // Without Humanoid Translate DoF Unity discards those curves during
                 // retargeting, leaving rigid-piece characters visibly frozen.
-                human.hasTranslationDoF = true;
-                importer.humanDescription = human;
+                if (needsTranslationDof)
+                {
+                    human.hasTranslationDoF = true;
+                    importer.humanDescription = human;
+                }
             }
             importer.importAnimation = true;
             importer.SaveAndReimport();
@@ -1304,7 +1339,7 @@ namespace Elemental.Authoring.Editor
             controller.AddParameter("Impact", AnimatorControllerParameterType.Trigger);
             AddChoreographyParameters(controller);
 
-            List<AnimationClip> clips = LoadKayKitClips();
+            List<AnimationClip> clips = LoadCharacterClips();
             AnimationClip idle = FindClip(clips, "idle");
             AnimationClip walk = FindClip(clips, "walk");
             AnimationClip run = FindClip(clips, "run");
@@ -1392,15 +1427,14 @@ namespace Elemental.Authoring.Editor
         private static void UpgradeMageController(AnimatorController controller)
         {
             AddChoreographyParameters(controller);
+            List<AnimationClip> clips = LoadCharacterClips();
+            UpgradeMixamoLocomotion(controller, clips);
             if (controller.layers == null || controller.layers.Length < 2) return;
             AnimatorState castState = FindAnimatorState(
                 controller.layers[1].stateMachine, "Earth Cast");
             if (castState == null) return;
-            if (castState.motion is BlendTree existingTree && existingTree.children.Length >= 8 &&
-                existingTree.blendParameter == "EarthPose") return;
-
-            List<AnimationClip> clips = LoadKayKitClips();
             AnimationClip fallback = FindClip(clips, "Ranged_Magic_Spellcasting", "idle");
+            AnimationClip punch = LoadAnimationClip(MixamoPunchPath);
             string[][] terms =
             {
                 new[] { "Ranged_Magic_Raise", "PickUp" },
@@ -1412,6 +1446,29 @@ namespace Elemental.Authoring.Editor
                 new[] { "Interact", "Ranged_Magic_Raise" },
                 new[] { "Ranged_Bow_Release_Up", "Ranged_Magic_Summon" }
             };
+            if (castState.motion is BlendTree existingTree && existingTree.children.Length >= 8 &&
+                existingTree.blendParameter == "EarthPose")
+            {
+                ChildMotion[] children = existingTree.children;
+                for (int index = 0; index < terms.Length && index < children.Length; index++)
+                {
+                    // Rebind every semantic slot after a Humanoid importer change.
+                    // Unity sub-asset file IDs can legitimately change on reimport,
+                    // leaving serialized BlendTree children null even though the FBX
+                    // and its animation clip are both valid.
+                    AnimationClip motion = index == 2 && punch != null
+                        ? punch
+                        : FindClip(clips, terms[index]) ?? fallback;
+                    children[index].motion = motion;
+                    children[index].threshold = index + 1f;
+                }
+                existingTree.children = children;
+                EditorUtility.SetDirty(existingTree);
+                EditorUtility.SetDirty(controller);
+                AssetDatabase.SaveAssets();
+                return;
+            }
+
             var tree = new BlendTree
             {
                 name = "Earth Hero Casts",
@@ -1421,7 +1478,12 @@ namespace Elemental.Authoring.Editor
             };
             AssetDatabase.AddObjectToAsset(tree, controller);
             for (int index = 0; index < terms.Length; index++)
-                tree.AddChild(FindClip(clips, terms[index]) ?? fallback, index + 1f);
+            {
+                AnimationClip motion = index == 2 && punch != null
+                    ? punch
+                    : FindClip(clips, terms[index]) ?? fallback;
+                tree.AddChild(motion, index + 1f);
+            }
             castState.motion = tree;
             EditorUtility.SetDirty(tree);
             EditorUtility.SetDirty(castState);
@@ -1482,11 +1544,56 @@ namespace Elemental.Authoring.Editor
             transition.AddCondition(mode, threshold, parameter);
         }
 
-        private static List<AnimationClip> LoadKayKitClips()
+        private static void UpgradeMixamoLocomotion(
+            AnimatorController controller,
+            List<AnimationClip> fallbackClips)
+        {
+            if (controller.layers == null || controller.layers.Length == 0) return;
+            AnimatorState locomotionState = FindAnimatorState(
+                controller.layers[0].stateMachine, "Locomotion");
+            if (locomotionState?.motion is not BlendTree locomotion) return;
+
+            AnimationClip walk = LoadAnimationClip(MixamoWalkPath);
+            AnimationClip walkBack = LoadAnimationClip(MixamoWalkBackPath);
+            AnimationClip idle = FindClip(fallbackClips, "idle");
+            AnimationClip run = FindClip(fallbackClips, "run");
+            var motions = new List<ChildMotion>(4);
+            if (walkBack != null)
+                motions.Add(new ChildMotion { motion = walkBack, threshold = -2f, timeScale = 1f });
+            if (idle != null)
+                motions.Add(new ChildMotion { motion = idle, threshold = 0f, timeScale = 1f });
+            if (walk != null)
+                motions.Add(new ChildMotion { motion = walk, threshold = 2f, timeScale = 1f });
+            if (run != null)
+                motions.Add(new ChildMotion { motion = run, threshold = 6f, timeScale = 1f });
+            if (motions.Count < 2) return;
+
+            locomotion.blendType = BlendTreeType.Simple1D;
+            locomotion.blendParameter = "Speed";
+            locomotion.useAutomaticThresholds = false;
+            locomotion.children = motions.ToArray();
+            EditorUtility.SetDirty(locomotion);
+            EditorUtility.SetDirty(controller);
+            AssetDatabase.SaveAssets();
+        }
+
+        private static AnimationClip LoadAnimationClip(string path)
+        {
+            Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
+            for (int index = 0; index < assets.Length; index++)
+                if (assets[index] is AnimationClip clip && !clip.name.StartsWith("__preview__"))
+                    return clip;
+            return null;
+        }
+
+        private static List<AnimationClip> LoadCharacterClips()
         {
             var clips = new List<AnimationClip>(64);
             string[] paths =
             {
+                MixamoWalkPath,
+                MixamoWalkBackPath,
+                MixamoPunchPath,
                 "Assets/ThirdParty/KayKit/Animations/Rig_Medium_General.fbx",
                 "Assets/ThirdParty/KayKit/Animations/Rig_Medium_MovementBasic.fbx",
                 "Assets/ThirdParty/KayKit/Animations/Rig_Medium_MovementAdvanced.fbx",

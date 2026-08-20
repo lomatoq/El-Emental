@@ -81,6 +81,7 @@ namespace Elemental.Presentation.Camera
             armor = configuredPlayer != null ? configuredPlayer.GetComponent<EarthArmorController>() : null;
             worldUpFrame = configuredWorldUpFrame;
             aimPivot = configuredAimPivot;
+            EnsureAudioListener();
             PrepareRig();
             SnapToTarget();
         }
@@ -88,11 +89,14 @@ namespace Elemental.Presentation.Camera
         private void Awake()
         {
             if (controlledCamera == null) controlledCamera = GetComponentInParent<UnityEngine.Camera>();
+            if (controlledCamera == null) controlledCamera = UnityEngine.Camera.main;
+            if (controlledCamera == null) controlledCamera = FindAnyObjectByType<UnityEngine.Camera>();
             if (brain == null && controlledCamera != null) brain = controlledCamera.GetComponent<CinemachineBrain>();
             if (legacyRig == null && controlledCamera != null) legacyRig = controlledCamera.GetComponent<PlanetCameraRig>();
             if (thirdPersonFollow == null && virtualCamera != null)
                 thirdPersonFollow = virtualCamera.GetComponent<CinemachineThirdPersonFollow>();
             if (armor == null && player != null) armor = player.GetComponent<EarthArmorController>();
+            EnsureAudioListener();
             PrepareRig();
         }
 
@@ -100,6 +104,7 @@ namespace Elemental.Presentation.Camera
         {
             UnityEngine.Camera.onPreCull -= HandleCameraPreCull;
             UnityEngine.Camera.onPreCull += HandleCameraPreCull;
+            EnsureAudioListener();
             PrepareRig();
             if (legacyRig != null) legacyRig.SetExternalDriverActive(true);
         }
@@ -149,6 +154,8 @@ namespace Elemental.Presentation.Camera
                 player.position + up * 1.08f,
                 Quaternion.LookRotation(_smoothedForward, up));
             aimPivot.localPosition = Vector3.zero;
+            // Positive local-X pitch turns the target forward vector toward -localUp
+            // in this rig, so profile values remain intuitive: positive looks down.
             aimPivot.localRotation = Quaternion.Euler(_smoothedPitch, 0f, 0f);
             ApplyStateComposition();
             ApplyArmorSafeObstacleFilter();
@@ -240,6 +247,21 @@ namespace Elemental.Presentation.Camera
                 thirdPersonFollow.AvoidObstacles.DampingFromCollision = 0.32f;
             }
             if (legacyRig != null) legacyRig.SetExternalDriverActive(true);
+        }
+
+        private void EnsureAudioListener()
+        {
+            if (controlledCamera == null) return;
+            AudioListener listener = controlledCamera.GetComponent<AudioListener>();
+            if (listener == null) listener = controlledCamera.gameObject.AddComponent<AudioListener>();
+
+            AudioListener[] listeners = FindObjectsByType<AudioListener>(FindObjectsInactive.Include);
+            for (int index = 0; index < listeners.Length; index++)
+            {
+                AudioListener candidate = listeners[index];
+                if (candidate != null && candidate != listener) candidate.enabled = false;
+            }
+            listener.enabled = true;
         }
 
         private void ApplyArmorSafeObstacleFilter()

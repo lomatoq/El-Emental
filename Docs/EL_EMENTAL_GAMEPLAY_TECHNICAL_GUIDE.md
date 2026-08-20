@@ -388,7 +388,7 @@ Repairable structural pieces не исчезают по скрытому тай�
 
 ### Humanoid presentation
 
-Текущий персонаж — KayKit Knight из CC0-набора KayKit Adventurers 2.0; шлем, забрало и плащ скрыты для чистого силуэта камеры. Используются клипы KayKit Character Animations 1.1. Источники, лицензии и SHA-256 записаны в `Docs/THIRD_PARTY_NOTICES.md`.
+Текущий playable-персонаж — Mixamo `X Bot` без шляпы и шлема, импортированный как Unity Humanoid. Он заменил KayKit Knight в production-пути, чтобы очистить обзор и получить устойчивую человеческую походку. Из локального набора Mixamo используются `Walking`, `Walking Backwards` и `Punching`; KayKit-клипы остаются только резервом для бега и части spellcasting-поз. Источники, условия использования и SHA-256 всех четырёх FBX записаны в `Docs/THIRD_PARTY_NOTICES.md`.
 
 `CharacterPresentationProfile` позволяет заменить модель без изменения gameplay-кода. Сейчас:
 
@@ -398,6 +398,8 @@ Repairable structural pieces не исчезают по скрытому тай�
 - casting blend: `0.10 с`;
 - вес hand IK: `0.92`;
 - Animator работает в `AlwaysAnimate` и получает `Speed`, `Grounded`, `VerticalSpeed`, `Cast`, `CastKind`, `Impact`;
+- locomotion blend использует подписанную скорость вдоль `FacingForward`: `Walking Backwards = -2`, `Idle = 0`, `Walking = 2`, резервный `Run = 6`;
+- `VectorPush` использует Mixamo `Punching`, а восемь дочерних earth-motion состояний повторно привязываются после импорта FBX, чтобы импорт не оставлял Animator со stale motion references;
 - upper-body слой `Earth Magic Upper Body` подмешивается независимо от ног;
 - руки IK-направляются к held body, gravity focus или vector-field point;
 - при сильном cast foot IK фиксирует стопы, компенсирует таз и расширяет стойку;
@@ -707,7 +709,7 @@ WebLab build был запущен, но установленный Editor не 
 - armor dome стал направленным многослойным щитом, orbit — пятью неидеальными встречно вращающимися bands в верхней полусфере. Wheel-down возвращает только существующие released plates в их persistent slots;
 - к Cinemachine добавлен final-stage spherical clearance. Длинное camera arm больше не проваливается хордой в планету и не выталкивается obstacle solver-ом в голову персонажа. Armor sightline guard по-прежнему влияет только на renderer, не на collider, mass и targetability.
 
-Evidence финального runtime-state:
+Evidence V4.2 до Mixamo locomotion/armor pass:
 
 - full EditMode: `324/324`, `34.305 с` — `TestResults/v42-full-edit-final.xml`;
 - focused camera EditMode: `14/14`; focused armor formation EditMode после upper-hemisphere fix: `3/3`;
@@ -715,6 +717,14 @@ Evidence финального runtime-state:
 - focused production camera + compact/dome armor: `1/1`;
 - focused surf: `2/2`; focused armor recall: `1/1`;
 - в финальном PlayMode log нет `OpenBoundary`, `MissingOrInvalidNormals` и gameplay assertion failures.
+
+Текущий post-Mixamo locomotion/armor gate на Unity `6000.5.7f1`:
+
+- full EditMode: `331/331`, `34.186 с` — `TestResults/FinalEditMode3.xml`;
+- full PlayMode: `99/99`, `165.722 с` — `TestResults/FinalPlayMode2.xml`;
+- focused armor/anatomy/camera gate: `7/7`, `4.602 с` — `TestResults/ArmorFocusedFinal3.xml`;
+- четырёхсекундный locomotion proof проходит с реальным перемещением `12.71 м`, локальным ходом стопы `1.32 м`, `4.30` gait cycles, устойчивой опорой и конечной скоростью settle `0.00 м/с`;
+- финальная Humanoid-оболочка брони rebake-ится в `96` анатомических пластин: head `18`, torso `18`, pelvis `8`, arms `24`, legs `28`; локальные renderer bounds больше не трактуются как один прямоугольный объём тела.
 
 ## 15. Что является experimental или ещё требует ручной оценки
 

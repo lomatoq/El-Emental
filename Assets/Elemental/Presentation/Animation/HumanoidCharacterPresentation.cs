@@ -150,9 +150,13 @@ namespace Elemental.Presentation.Animation
             if (animator == null || rootBody == null || motor == null) return;
             Vector3 tangentVelocity = Vector3.ProjectOnPlane(rootBody.linearVelocity, motor.LocalUp);
             float verticalSpeed = Vector3.Dot(rootBody.linearVelocity, motor.LocalUp);
-            float presentationSpeed = surfController != null && surfController.IsActive
-                ? 0f
-                : tangentVelocity.magnitude;
+            float presentationSpeed = 0f;
+            if (surfController == null || !surfController.IsActive)
+            {
+                Vector3 facing = Vector3.ProjectOnPlane(motor.FacingForward, motor.LocalUp);
+                if (facing.sqrMagnitude < 0.001f) facing = transform.forward;
+                presentationSpeed = Vector3.Dot(tangentVelocity, facing.normalized);
+            }
             animator.SetFloat(SpeedHash, presentationSpeed, ProfileBlendSeconds, Time.deltaTime);
             UpdateAnimationGrounded(verticalSpeed);
             animator.SetBool(GroundedHash, _animationGrounded);
@@ -214,6 +218,12 @@ namespace Elemental.Presentation.Animation
         private void OnAnimatorIK(int layerIndex)
         {
             if (animator == null) return;
+            // Animation Rigging owns the arm chain when available. Running Mecanim
+            // IK on top of the TwoBoneIK job fights the same joints and produces
+            // elbow flips/reach snapping. The built-in path remains the documented
+            // rollback for a missing rig package or invalid Humanoid.
+            if (animationRigBridge != null && animationRigBridge.IsBuilt) return;
+            if (_magicLayerIndex >= 0 && layerIndex != _magicLayerIndex) return;
             animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, _castWeight);
             animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, _castWeight);
             animator.SetIKPositionWeight(AvatarIKGoal.RightHand, _castWeight);
@@ -238,11 +248,26 @@ namespace Elemental.Presentation.Animation
             else if (executor != null && executor.IsVectorFieldActive) focus = executor.VectorFieldPoint;
             else if (executor != null && executor.HeldBody != null) focus = executor.HeldBody.worldCenterOfMass;
             else focus = transform.position + transform.forward * 1.4f + motor.LocalUp * 0.8f;
-            Vector3 across = Vector3.Cross(motor.LocalUp, focus - transform.position).normalized;
+
+            // Telekinesis points can be many metres away. They define gaze/aim,
+            // not a literal wrist destination. Feeding the distant point directly
+            // into TwoBoneIK fully stretched both arms and flipped the elbows.
+            Transform chest = animator != null && animator.isHuman
+                ? animator.GetBoneTransform(HumanBodyBones.Chest)
+                : null;
+            Vector3 shoulderCenter = chest != null
+                ? chest.position
+                : transform.position + motor.LocalUp * 0.66f;
+            Vector3 aimDirection = focus - shoulderCenter;
+            if (aimDirection.sqrMagnitude < 0.001f) aimDirection = transform.forward;
+            aimDirection.Normalize();
+            float targetReach = Mathf.Lerp(0.43f, 0.72f, Mathf.Clamp01(_castWeight));
+            Vector3 reachableFocus = shoulderCenter + aimDirection * targetReach;
+            Vector3 across = Vector3.Cross(motor.LocalUp, aimDirection).normalized;
             if (across.sqrMagnitude < 0.1f) across = transform.right;
-            leftHandTarget.position = focus - across * 0.16f;
-            rightHandTarget.position = focus + across * 0.16f;
-            Quaternion rotation = Quaternion.LookRotation(focus - transform.position, motor.LocalUp);
+            leftHandTarget.position = reachableFocus - across * 0.17f;
+            rightHandTarget.position = reachableFocus + across * 0.17f;
+            Quaternion rotation = Quaternion.LookRotation(aimDirection, motor.LocalUp);
             leftHandTarget.rotation = rotation;
             rightHandTarget.rotation = rotation;
         }

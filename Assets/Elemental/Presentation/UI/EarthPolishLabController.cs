@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Elemental.Input.Actions;
 using Elemental.Input.Gestures;
@@ -5,7 +6,9 @@ using Elemental.Runtime.Characters;
 using Elemental.Runtime.Geometry;
 using Elemental.Runtime.Matter;
 using Elemental.Runtime.Physics;
+using Elemental.Presentation.Rendering;
 using Elemental.Simulation.Bending;
+using Elemental.Simulation.Characters;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -30,10 +33,13 @@ namespace Elemental.Runtime.World
         private EarthMatterKernelBehaviour _matterKernel;
         private EarthMatterReturnController _matterReturn;
         private EarthTechniqueComboRuntime _comboRuntime;
+        private CelestialSystemBehaviour _celestial;
         private bool _showGeometryIntegrity;
         private int _geometryValidCount;
         private int _geometryBlockedCount;
         private string _firstGeometryFault = string.Empty;
+        private Coroutine _locomotionProof;
+        private string _locomotionProofStatus = "ready";
 
         private void Awake()
         {
@@ -59,11 +65,37 @@ namespace Elemental.Runtime.World
             if (_matterReturn == null) _matterReturn = FindAnyObjectByType<EarthMatterReturnController>();
             _comboRuntime = _executor != null ? _executor.ComboRuntime : null;
             if (_comboRuntime == null) _comboRuntime = FindAnyObjectByType<EarthTechniqueComboRuntime>();
+            _celestial = FindAnyObjectByType<CelestialSystemBehaviour>();
         }
 
         private void OnGUI()
         {
             Event current = Event.current;
+            if (current != null && current.type == EventType.KeyDown)
+            {
+                // Direct visual-court shortcuts remain usable even when the shipping
+                // HUD is intentionally drawn over the non-shipping lab panel.
+                if (current.keyCode == KeyCode.F4)
+                {
+                    _armor?.Begin();
+                    current.Use();
+                }
+                else if (current.keyCode == KeyCode.F5)
+                {
+                    PrimeResonance();
+                    current.Use();
+                }
+                else if (current.keyCode == KeyCode.F6)
+                {
+                    _celestial?.SetTimeOfDayForQa(0.23f);
+                    current.Use();
+                }
+                else if (current.keyCode == KeyCode.F7)
+                {
+                    _celestial?.SetTimeOfDayForQa(0.72f);
+                    current.Use();
+                }
+            }
             if (current != null && current.type == EventType.KeyDown && current.keyCode == KeyCode.F8)
             {
                 _showGeometryIntegrity = !_showGeometryIntegrity;
@@ -91,6 +123,8 @@ namespace Elemental.Runtime.World
                 GUILayout.Label($"MMB targets: {_executor?.GravityWellCapturedCount ?? 0}");
                 GUILayout.Label($"Plough: {_input.SurfSpeed:0.0} m/s");
             }
+            if (_motor != null)
+                GUILayout.Label($"Motor: {_motor.Telemetry.Speed:0.00} m/s / support {_motor.HasStableSupport}");
             GUILayout.Label($"Matter records: {_matterKernel?.ActiveRecordCount ?? 0}  returning: {_matterReturn?.ActiveReturnCount ?? 0}");
             if (_comboRuntime != null && _comboRuntime.OpportunityCount > 0)
             {
@@ -105,6 +139,21 @@ namespace Elemental.Runtime.World
             GUILayout.Space(8f);
             if (GUILayout.Button("Reset golden path"))
                 SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            if (_celestial != null)
+            {
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("QA daylight")) _celestial.SetTimeOfDayForQa(0.23f);
+                if (GUILayout.Button("QA readable night")) _celestial.SetTimeOfDayForQa(0.72f);
+                GUILayout.EndHorizontal();
+            }
+            if (_motor != null)
+            {
+                GUI.enabled = _locomotionProof == null;
+                if (GUILayout.Button("Run 4s locomotion visual proof"))
+                    _locomotionProof = StartCoroutine(RunLocomotionProof());
+                GUI.enabled = true;
+                GUILayout.Label($"Locomotion proof: {_locomotionProofStatus}");
+            }
             if (GUILayout.Button("Spawn V3 control wall")) SpawnControlWall();
             GUI.enabled = _qaWall != null && _qaWall.gameObject.activeInHierarchy;
             if (GUILayout.Button("Light local impact")) ImpactWall(1.2f);
@@ -140,6 +189,7 @@ namespace Elemental.Runtime.World
             GUILayout.Label("Shift+MMB + wheel: armor shell");
             GUILayout.Label("Shift+W: earth plough");
             GUILayout.Label("Hold LMB on structure: pluck cell");
+            GUILayout.Label("F4/F5: armor/resonance  F6/F7: day/night");
             GUILayout.Label("F8: geometry integrity court");
             GUILayout.EndArea();
 
@@ -271,6 +321,93 @@ namespace Elemental.Runtime.World
                 EarthStructureImpactKind.Projectile,
                 0x51410001u);
             _qaWall.ApplyEarthImpact(in impact);
+        }
+
+        private IEnumerator RunLocomotionProof()
+        {
+            if (_motor == null)
+            {
+                _locomotionProofStatus = "motor missing";
+                _locomotionProof = null;
+                yield break;
+            }
+
+            MonoBehaviour gameplayInput = _motor.GetComponent<PlanetInputReader>();
+            LocomotionProofInput proofInput = _motor.GetComponent<LocomotionProofInput>();
+            if (proofInput == null) proofInput = _motor.gameObject.AddComponent<LocomotionProofInput>();
+            proofInput.Move = new float2(0f, 1f);
+            _motor.ConfigureInputSource(proofInput);
+
+            Rigidbody body = _motor.GetComponent<Rigidbody>();
+            Animator animator = _motor.GetComponentInChildren<Animator>(true);
+            Transform leftFoot = animator != null && animator.isHuman
+                ? animator.GetBoneTransform(HumanBodyBones.LeftFoot)
+                : null;
+            Vector3 start = body != null ? body.position : _motor.transform.position;
+            Vector3 firstFoot = leftFoot != null
+                ? animator.transform.InverseTransformPoint(leftFoot.position)
+                : Vector3.zero;
+            float maximumFootTravel = 0f;
+            float firstLocomotionTime = -1f;
+            float lastLocomotionTime = -1f;
+            int sampledFrames = 0;
+            _locomotionProofStatus = "running — watch the legs";
+
+            float end = Time.unscaledTime + 4f;
+            while (Time.unscaledTime < end)
+            {
+                yield return new WaitForFixedUpdate();
+                if (leftFoot != null)
+                {
+                    Vector3 localFoot = animator.transform.InverseTransformPoint(leftFoot.position);
+                    maximumFootTravel = Mathf.Max(maximumFootTravel, Vector3.Distance(firstFoot, localFoot));
+                }
+                if (animator != null)
+                {
+                    AnimatorStateInfo sampledState = animator.GetCurrentAnimatorStateInfo(0);
+                    if (sampledState.IsName("Locomotion"))
+                    {
+                        if (firstLocomotionTime < 0f) firstLocomotionTime = sampledState.normalizedTime;
+                        lastLocomotionTime = sampledState.normalizedTime;
+                    }
+                }
+                sampledFrames++;
+            }
+
+            proofInput.Move = float2.zero;
+            // Leave the zeroed proof input in ownership for a short, deterministic
+            // braking window. This validates the real motor deceleration instead of
+            // hiding residual glide behind the editor-only settle helper. Ten fixed
+            // steps are still comfortably below a perceptible long slide at 50 Hz.
+            const int BrakingSteps = 10;
+            for (int step = 0; step < BrakingSteps; step++)
+                yield return new WaitForFixedUpdate();
+            float travel = body != null
+                ? Vector3.Distance(start, body.position)
+                : Vector3.Distance(start, _motor.transform.position);
+            AnimatorStateInfo state = animator != null ? animator.GetCurrentAnimatorStateInfo(0) : default;
+            float cycles = firstLocomotionTime >= 0f && lastLocomotionTime >= firstLocomotionTime
+                ? lastLocomotionTime - firstLocomotionTime
+                : 0f;
+            bool locomotionState = animator != null && state.IsName("Locomotion");
+            float settledSpeed = body != null
+                ? Vector3.ProjectOnPlane(body.linearVelocity, _motor.Telemetry.LocalUp).magnitude
+                : 0f;
+            if (gameplayInput != null) _motor.ConfigureInputSource(gameplayInput);
+            _motor.SettleTangentialMotion();
+            bool passed = travel >= 3f && maximumFootTravel >= 0.05f && cycles >= 1f &&
+                          locomotionState && _motor.HasStableSupport && settledSpeed <= 0.35f;
+            _locomotionProofStatus =
+                $"{(passed ? "PASS" : "FAIL")} / travel {travel:0.00}m / local foot {maximumFootTravel:0.00}m / " +
+                $"cycles {cycles:0.00} / state {(locomotionState ? "locomotion" : "invalid")} / " +
+                $"support {_motor.HasStableSupport} / settle {settledSpeed:0.00}m/s / samples {sampledFrames}";
+            _locomotionProof = null;
+        }
+
+        private sealed class LocomotionProofInput : MonoBehaviour, IPlanetMotorInputSource
+        {
+            public float2 Move;
+            public PlanetMotorCommand SampleCommand(uint tick) => new PlanetMotorCommand(tick, Move, false);
         }
     }
 }

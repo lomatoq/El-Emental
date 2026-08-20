@@ -64,6 +64,7 @@ namespace Elemental.Presentation.Animation
         public uint LastAuthoritativeTick => _authoritativeTick;
         public uint PresentationTick => _presentationTick;
         public bool FeetLocked => _leftPlant.Locked && _rightPlant.Locked;
+        public float FootIkWeight => _footIkWeight;
 
         public void Configure(
             Animator configuredAnimator,
@@ -273,21 +274,31 @@ namespace Elemental.Presentation.Animation
 
         private void OnAnimatorIK(int layerIndex)
         {
+            // Foot placement has one owner and is evaluated after the base
+            // locomotion layer. Re-applying bodyPosition from every IK-enabled upper
+            // layer compounds pelvis offsets and is the source of visible hovering.
+            if (layerIndex != 0) return;
             if (animator == null || motor == null || _leftFoot == null || _rightFoot == null) return;
             bool supported = motor.HasStableSupport;
             bool surfLock = surfController != null && surfController.IsActive;
+            float tangentSpeed = rootBody != null
+                ? Vector3.ProjectOnPlane(rootBody.linearVelocity, motor.LocalUp).magnitude
+                : 0f;
+            bool idlePlant = supported && tangentSpeed < 0.32f;
             bool requestLock = supported &&
-                               ((CurrentIntent.LocksFeet && CurrentIntent.Brace01 > 0.2f) || surfLock);
-            if (!supported) _footIkWeight = 0f;
-            else
-            {
-                float blendSeconds = requestLock ? 0.13f : 0.17f;
-                _footIkWeight = Mathf.MoveTowards(
-                    _footIkWeight,
-                    requestLock ? 1f : 0f,
-                    Time.deltaTime / blendSeconds);
-            }
-            if (!requestLock)
+                               (idlePlant ||
+                                (CurrentIntent.LocksFeet && CurrentIntent.Brace01 > 0.2f) ||
+                                surfLock);
+            float movingContactWeight = supported
+                ? Mathf.Lerp(0.52f, 0.28f, Mathf.InverseLerp(0.35f, 7.5f, tangentSpeed))
+                : 0f;
+            float targetFootWeight = requestLock ? 1f : movingContactWeight;
+            float blendSeconds = requestLock ? 0.13f : supported ? 0.09f : 0.07f;
+            _footIkWeight = Mathf.MoveTowards(
+                _footIkWeight,
+                targetFootWeight,
+                Time.deltaTime / Mathf.Max(0.01f, blendSeconds));
+            if (!supported)
             {
                 ApplyFoot(AvatarIKGoal.LeftFoot, _leftFoot, in _leftPlant, _footIkWeight);
                 ApplyFoot(AvatarIKGoal.RightFoot, _rightFoot, in _rightPlant, _footIkWeight);
@@ -301,10 +312,15 @@ namespace Elemental.Presentation.Animation
                 }
                 return;
             }
-            ResolveSupportRelativeLocks();
+            if (requestLock) ResolveSupportRelativeLocks();
             _leftPlant = ProbeFoot(_leftFoot, _leftHits, _leftPlant, requestLock, -1f);
             _rightPlant = ProbeFoot(_rightFoot, _rightHits, _rightPlant, requestLock, 1f);
-            CaptureSupportRelativeLocks();
+            if (requestLock) CaptureSupportRelativeLocks();
+            else
+            {
+                _lockedSupportId = 0u;
+                _lockedSupportGeneration = 0u;
+            }
             ApplyFoot(AvatarIKGoal.LeftFoot, _leftFoot, in _leftPlant, _footIkWeight);
             ApplyFoot(AvatarIKGoal.RightFoot, _rightFoot, in _rightPlant, _footIkWeight);
             ApplyKneeHints(_footIkWeight);
@@ -312,8 +328,14 @@ namespace Elemental.Presentation.Animation
             Vector3 up = motor.LocalUp;
             float leftError = Vector3.Dot(ToVector3(_leftPlant.Position) - _leftFoot.position, up);
             float rightError = Vector3.Dot(ToVector3(_rightPlant.Position) - _rightFoot.position, up);
+            float allowedPelvisDrop = requestLock
+                ? maximumPelvisDrop
+                : Mathf.Min(0.08f, maximumPelvisDrop) * _footIkWeight;
             float pelvisOffset = EarthPelvisCompensation.Solve(
-                leftError, rightError, CurrentIntent.PelvisCompression01, maximumPelvisDrop);
+                leftError,
+                rightError,
+                requestLock ? CurrentIntent.PelvisCompression01 : 0f,
+                allowedPelvisDrop);
             animator.bodyPosition += up * pelvisOffset;
             float twist = CurrentIntent.UpperBodyTwist01 * 15f;
             animator.bodyRotation = Quaternion.AngleAxis(twist, up) * animator.bodyRotation;
@@ -342,17 +364,30 @@ namespace Elemental.Presentation.Animation
                 nearest = hit.distance;
                 selected = hit;
             }
-            return EarthFootPlantSolver.Solve(
-                ToFloat3(animated + stanceOffset),
-                selected.collider != null,
-                ToFloat3(selected.point),
-                ToFloat3(selected.collider != null ? selected.normal : up),
-                ToFloat3(up),
-                motor.HasStableSupport,
-                requestLock,
-                previous.Locked,
-                previous.Position,
-                soleOffset);
+            float3 animatedPosition = ToFloat3(animated + stanceOffset);
+            bool hasGround = selected.collider != null;
+            float3 point = ToFloat3(selected.point);
+            float3 normal = ToFloat3(hasGround ? selected.normal : up);
+            return requestLock
+                ? EarthFootPlantSolver.Solve(
+                    animatedPosition,
+                    hasGround,
+                    point,
+                    normal,
+                    ToFloat3(up),
+                    motor.HasStableSupport,
+                    true,
+                    previous.Locked,
+                    previous.Position,
+                    soleOffset)
+                : EarthFootPlantSolver.SolveContact(
+                    animatedPosition,
+                    hasGround,
+                    point,
+                    normal,
+                    ToFloat3(up),
+                    motor.HasStableSupport,
+                    soleOffset);
         }
 
         private void ApplyFoot(

@@ -55,6 +55,12 @@ namespace Elemental.Runtime.Physics
 
         public void Activate(uint generation, Vector3 source, Quaternion rotation)
         {
+            // A released plate may be recalled by starting a fresh armor session
+            // before its visual shrink reaches the pool. Its old canonical record is
+            // still FreeDynamic in that case. Retire that transient proxy before the
+            // GameObject is reused so the new generation never aliases a live matter
+            // handle or spams a misleading registration failure.
+            _matterIdentity?.RetireTransientRepresentation();
             _generation = generation;
             SourcePosition = source;
             _released = false;
@@ -221,6 +227,15 @@ namespace Elemental.Runtime.Physics
                 Mathf.Lerp(0.052f, 0.112f, Hash01((uint)(_pieceIndex * 173 + 37))));
             _visualProperties.SetFloat("_MineralAmount",
                 Mathf.Lerp(0.018f, 0.075f, Hash01((uint)(_pieceIndex * 197 + 43))));
+            // Keep one coherent shell palette but vary grain/strata strongly enough
+            // that adjacent plates do not read as cloned dark rectangles.
+            float familyRoll = Hash01((uint)(_pieceIndex * 239 + 61));
+            _visualProperties.SetFloat("_StoneFamily", familyRoll < 0.18f ? 0f : familyRoll < 0.82f ? 1f : 2f);
+            _visualProperties.SetFloat("_StrataScale",
+                Mathf.Lerp(0.72f, 3.9f, Hash01((uint)(_pieceIndex * 269 + 71))));
+            _visualProperties.SetFloat("_GrainScale",
+                Mathf.Lerp(2.6f, 8.4f, Hash01((uint)(_pieceIndex * 293 + 83))));
+            _visualProperties.SetFloat("_MagicAmount", 0.10f);
             VisualRenderer.SetPropertyBlock(_visualProperties);
         }
 

@@ -23,7 +23,7 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
-        public void AuditedKayKitAssets_PassProjectGate()
+        public void AuditedHumanoidAssets_PassProjectGate()
         {
             EarthAnimationValidationReport report = EarthAnimationAssetValidator.ValidateProject();
             Assert.That(report.IsValid, Is.True, string.Join("\n", report.Errors));

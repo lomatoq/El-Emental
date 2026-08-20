@@ -64,22 +64,13 @@ namespace Elemental.Presentation.Animation
 
         private void HandleState(CharacterPhysicalState state)
         {
-            if (animator == null) return;
-            if (state.Mode == CharacterPhysicalMode.FullRagdoll)
-            {
-                animator.enabled = false;
+            // HumanoidCharacterPresentation is the single owner of Animator enable
+            // state and locomotion recovery. Two subscribers used to race here:
+            // one resumed Locomotion while the other disabled/replayed the same
+            // Animator, producing the characteristic "one step then frozen" pose.
+            // This bridge now owns only the render-root recovery blend.
+            if (state.Mode == CharacterPhysicalMode.FullRagdoll || _blend < 1f)
                 _blend = 0f;
-            }
-            else if (!animator.enabled)
-            {
-                animator.enabled = true;
-                // Do not Rebind: the presentation's rigid mesh parts are parented
-                // to Humanoid bones after instantiation. Rebuilding bindings here
-                // advances Animator state time but can freeze those bone poses.
-                animator.Play("Locomotion", 0, 0f);
-                animator.Update(0f);
-                _blend = 0f;
-            }
         }
 
         private void CaptureDefault()

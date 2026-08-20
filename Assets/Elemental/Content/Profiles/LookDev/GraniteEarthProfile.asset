@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37ed2b78c7d44b628181beb11026bacb, type: 3}
+  m_Name: GraniteEarthProfile
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.Rendering.EarthMaterialProfile
+  exteriorTint: {r: 0.38, g: 0.39, b: 0.41, a: 1}
+  freshInteriorTint: {r: 0.5, g: 0.49, b: 0.47, a: 1}
+  dustTint: {r: 0.52, g: 0.49, b: 0.45, a: 1}
+  magicTint: {r: 1.15, g: 0.42, b: 0.075, a: 1}
+  mineralTint: {r: 0.73, g: 0.7, b: 0.64, a: 1}
+  stoneFamily: 2
+  macroFrequency: 0.075
+  midTiling: 0.48
+  microTiling: 4.2
+  microFadeStart: 9
+  microFadeEnd: 24
+  macroVariation: 0.16
+  cavityStrength: 0.46
+  dustAmount: 0.16
+  exteriorSmoothness: 0.1
+  interiorSmoothness: 0.025
+  normalStrength: 0.78
+  proceduralDetail: 0.72
+  proceduralNormalStrength: 0.58
+  strataScale: 0.85
+  grainScale: 7.2
+  quality: 1

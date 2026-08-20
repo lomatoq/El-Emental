@@ -75,6 +75,28 @@ namespace Elemental.Runtime.Characters
         public SupportFrameSnapshot CurrentSupportFrame => _movingSupportTicks > 0 ? _movingSupport : default;
         public bool HasStableSupport => IsGrounded || _movingSupportTicks > 0;
         public bool AcceptsMovingSupport => _ignoreGroundTicks <= 0;
+
+        /// <summary>
+        /// Removes residual player-authored tangential momentum without cancelling
+        /// gravity or an active moving support. This is intentionally explicit and
+        /// is used by editor proof/reset tooling after it releases synthetic input.
+        /// </summary>
+        public void SettleTangentialMotion()
+        {
+            if (targetBody == null) return;
+            Vector3 up = _localUp.sqrMagnitude > 0.5f ? _localUp.normalized : transform.up;
+            float radialSpeed = Vector3.Dot(targetBody.linearVelocity, up);
+            Vector3 supportVelocity = _movingSupportTicks > 0
+                ? ToVector3(_movingSupport.LinearVelocity)
+                : Vector3.zero;
+            Vector3 supportTangent = Vector3.ProjectOnPlane(supportVelocity, up);
+            // On stable ground an outward residual is always numerical/support debt;
+            // retain only a small inward component so contact can settle naturally.
+            float settledRadial = HasStableSupport ? Mathf.Min(0f, radialSpeed) : radialSpeed;
+            targetBody.linearVelocity = supportTangent + up * settledRadial;
+            targetBody.angularVelocity = Vector3.zero;
+            targetBody.WakeUp();
+        }
         public PlanetLocomotionTelemetry Telemetry { get; private set; }
         public PlanetMotionState MotionState { get; private set; } = PlanetMotionState.AirborneFalling;
         public EarthMotionReproRecorder MotionRecorder => _motionRecorder;

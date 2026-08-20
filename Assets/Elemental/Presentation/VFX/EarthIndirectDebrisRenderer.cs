@@ -85,9 +85,11 @@ namespace Elemental.Presentation.VFX
                 Vector3 up = state.Position.sqrMagnitude > 0.01f ? state.Position.normalized : Vector3.up;
                 state.Velocity -= up * visualGravity * dt;
                 state.Position += state.Velocity * dt;
-                state.Rotation = Quaternion.Euler(state.AngularVelocity * dt) * state.Rotation;
+                state.Rotation = NormalizeSafe(
+                    Quaternion.Euler(state.AngularVelocity * dt) * state.Rotation);
                 float life01 = Mathf.Clamp01(state.Remaining / Mathf.Max(0.001f, state.Lifetime));
                 float scale = state.Scale * Mathf.SmoothStep(0f, 1f, life01);
+                if (!IsFinite(state.Position) || !float.IsFinite(scale)) continue;
                 _states[output] = state;
                 _matrices[output] = Matrix4x4.TRS(state.Position, state.Rotation, Vector3.one * scale);
                 output++;
@@ -212,5 +214,22 @@ namespace Elemental.Presentation.VFX
         }
 
         private static float Hash01(uint value) => (Hash(value) & 0x00FFFFFFu) / 16777215f;
+
+        public static Quaternion NormalizeSafe(Quaternion value)
+        {
+            float magnitudeSquared = value.x * value.x + value.y * value.y +
+                                     value.z * value.z + value.w * value.w;
+            if (!float.IsFinite(magnitudeSquared) || magnitudeSquared < 0.000001f)
+                return Quaternion.identity;
+            float inverseMagnitude = 1f / Mathf.Sqrt(magnitudeSquared);
+            return new Quaternion(
+                value.x * inverseMagnitude,
+                value.y * inverseMagnitude,
+                value.z * inverseMagnitude,
+                value.w * inverseMagnitude);
+        }
+
+        private static bool IsFinite(Vector3 value) =>
+            float.IsFinite(value.x) && float.IsFinite(value.y) && float.IsFinite(value.z);
     }
 }

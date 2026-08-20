@@ -22,3 +22,16 @@
 - Included subset: Rig Medium General, Movement Basic, Movement Advanced and Combat Ranged FBX collections.
 
 The original license text for each archive is stored beside the imported assets under `Assets/ThirdParty/KayKit`.
+
+## Adobe Mixamo — X Bot and curated animation subset
+
+- Source: https://www.mixamo.com/
+- Retrieved: 2026-08-20
+- Terms: Adobe Mixamo content terms; used as embedded game character/animation content.
+- Base character: `X Bot.fbx`
+- Initial animation subset: `Walking`, `Walking Backwards`, `Punching`.
+- `X Bot.fbx` SHA-256: `9F4A262123597A4A5009BDCCAE310855DD6256D60E5DFEB939E4B6B52D2E32CF`
+- `X Bot@Walking.fbx` SHA-256: `826A78DED49739E1B3666ABCA0A9FB91B9814B907A1CA63532AF9972223C0EA0`
+- `X Bot@Walking Backwards.fbx` SHA-256: `8B9EF1349DA960FA1BAE85AAD6952D94E8B91E56C6B03116577912312C6BFF7A`
+- `X Bot@Punching.fbx` SHA-256: `12DF66ED4EFE69968D19555FDB1D1706A2E4546915C0019141848731D361C73C`
+- Root motion is disabled; `PlanetMotor` remains authoritative for movement.

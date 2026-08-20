@@ -109,6 +109,11 @@ namespace Elemental.Runtime.Physics
         {
             EnsureBoard();
             if (!_session.Begin(now) || casterBody == null) return false;
+            // Sample() marks the session inactive on the completion tick before
+            // Cancel() performs presentation cleanup. A previous board can therefore
+            // still own a live matter record even though the session is no longer
+            // Active. Retire it before reusing the single pooled board.
+            _boardMatter?.RetireTransientRepresentation();
             _generation = _generation == uint.MaxValue ? 1u : _generation + 1u;
             _family = EarthSurfControlSolver.SelectFamily(
                 SurfaceId ^ unchecked((uint)Mathf.RoundToInt(casterBody.worldCenterOfMass.sqrMagnitude * 31f)),
@@ -228,7 +233,6 @@ namespace Elemental.Runtime.Physics
 
         public void Cancel()
         {
-            bool wasActive = _session != null && _session.Active;
             _session?.Cancel();
             Speed = 0f;
             SurfaceVelocity = Vector3.zero;
@@ -241,7 +245,7 @@ namespace Elemental.Runtime.Physics
                 _boardVisualRoot.localPosition = Vector3.zero;
                 _boardVisualRoot.localRotation = Quaternion.identity;
             }
-            if (wasActive) _boardMatter?.RetireTransientRepresentation();
+            _boardMatter?.RetireTransientRepresentation();
         }
 
         private void RegisterBoardMatter(Vector3 position)

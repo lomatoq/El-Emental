@@ -48,6 +48,7 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: 1710190104392729854}
   - {fileID: -8370448704513156065}
+  - {fileID: 6842087012945519021}
   m_RendererFeatureMap: 
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 0}
@@ -91,3 +92,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.Rendering.AtmosphereFullscreenFeature
   m_Active: 1
   material: {fileID: 2100000, guid: f811c64c9078be34ba63cab9df56dab4, type: 2}
+--- !u!114 &6842087012945519021
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f62c9c65cf3354c93be831c8bc075510, type: 3}
+  m_Name: Elemental Contact SSAO
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.ScreenSpaceAmbientOcclusion
+  m_Active: 1
+  m_Settings:
+    AOMethod: 0
+    Downsample: 0
+    AfterOpaque: 0
+    Source: 1
+    NormalSamples: 1
+    Intensity: 1.35
+    DirectLightingStrength: 0.16
+    Radius: 0.085
+    Samples: 1
+    BlurQuality: 1
+    Falloff: 28
+    SampleCount: -1

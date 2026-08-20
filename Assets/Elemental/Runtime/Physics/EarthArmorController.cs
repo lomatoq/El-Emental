@@ -40,6 +40,9 @@ namespace Elemental.Runtime.Physics
         private bool _stoneSkinApplied;
         private EarthMatterKernelBehaviour _matterKernel;
         private Vector3 _aimDirection;
+        private float _casterMomentumGuardUntil;
+        private Vector3 _guardedCasterLinearVelocity;
+        private Vector3 _guardedCasterAngularVelocity;
 
         private struct BodySurfaceAnchor
         {
@@ -145,7 +148,7 @@ namespace Elemental.Runtime.Physics
                 Vector3 bodyScale = bodyAnchor.PlateScale;
                 if (bodyScale.sqrMagnitude > 0.001f)
                 {
-                    float silhouetteScale = (_profile != null ? _profile.BodyPlateScaleMultiplier : 0.96f) *
+                    float silhouetteScale = (_profile != null ? _profile.BodyPlateScaleMultiplier : 0.91f) *
                                             AnchorCoverageMultiplier(bodyAnchor, index);
                     float thicknessScale = Mathf.Lerp(1f, silhouetteScale, 0.42f);
                     _pieces[index].SetBaseScale(new Vector3(
@@ -214,6 +217,7 @@ namespace Elemental.Runtime.Physics
             SetStoneSkin(false);
             SetBodyRendererVisibility(true);
             _casterPuppet?.SuppressImpacts(0.45f);
+            ArmCasterMomentumGuard(0.16f);
             Vector3 center = _caster != null ? _caster.worldCenterOfMass : transform.position;
             float minimum = _profile != null ? _profile.MinimumBurstSpeed : 16f;
             float maximum = _profile != null ? _profile.MaximumBurstSpeed : 24f;
@@ -247,6 +251,7 @@ namespace Elemental.Runtime.Physics
             }
             if (best < 0) return false;
             _casterPuppet?.SuppressImpacts(0.35f);
+            ArmCasterMomentumGuard(0.10f);
             float speed = _profile != null ? _profile.AimedProjectileSpeed : 31f;
             _pieces[best].Release(aim * speed, DebrisRestSeconds, DebrisShrinkSeconds);
             EndIfEmpty();
@@ -263,6 +268,7 @@ namespace Elemental.Runtime.Physics
             float baseSpeed = _profile != null ? _profile.AimedProjectileSpeed : 31f;
             int launched = 0;
             _casterPuppet?.SuppressImpacts(0.55f);
+            ArmCasterMomentumGuard(0.14f);
             for (int index = 0; index < _pieceCount; index++)
             {
                 EarthArmorPiece piece = _pieces[index];
@@ -282,8 +288,27 @@ namespace Elemental.Runtime.Physics
             return launched;
         }
 
+        private void ArmCasterMomentumGuard(float duration)
+        {
+            if (_caster == null || _caster.isKinematic) return;
+            _guardedCasterLinearVelocity = _caster.linearVelocity;
+            _guardedCasterAngularVelocity = _caster.angularVelocity;
+            _casterMomentumGuardUntil = Mathf.Max(
+                _casterMomentumGuardUntil,
+                Time.fixedTime + Mathf.Max(Time.fixedDeltaTime, duration));
+        }
+
         private void FixedUpdate()
         {
+            if (_caster != null && !_caster.isKinematic && Time.fixedTime <= _casterMomentumGuardUntil)
+            {
+                // Armor projectiles ignore the caster colliders, but a release can
+                // still perturb a compound/ragdoll body during the physics handoff.
+                // Preserve only the momentum that existed before the spell for a
+                // handful of fixed ticks; external physics resumes immediately after.
+                _caster.linearVelocity = _guardedCasterLinearVelocity;
+                _caster.angularVelocity = _guardedCasterAngularVelocity;
+            }
             if (!IsActive || _caster == null) return;
             _elapsed += Time.fixedDeltaTime;
             Vector3 up = LocalUp;
@@ -408,10 +433,13 @@ namespace Elemental.Runtime.Physics
                 Vector3 boneCenter = anchor.Bone.position;
                 if (anchor.Region == EarthArmorShellRegion.Head)
                 {
-                    // KayKit's Humanoid Head transform sits near the neck/base of the
-                    // oversized chibi skull. Shift to the visual cranium centre before
-                    // distributing the crown and latitude rings.
-                    boneCenter += up * 0.26f;
+                    // Humanoid Head bones usually sit near the skull base. Derive the
+                    // cranium offset from the actual imported rig instead of carrying
+                    // KayKit's oversized fixed shift into Mixamo characters.
+                    float parentSpan = anchor.Bone.parent != null
+                        ? Vector3.Distance(anchor.Bone.position, anchor.Bone.parent.position)
+                        : 0.14f;
+                    boneCenter += up * Mathf.Clamp(parentSpan * 0.58f, 0.075f, 0.16f);
                 }
                 if (IsLongLimb(anchor.BoneId) && anchor.AxisTarget != null)
                 {
@@ -594,10 +622,10 @@ namespace Elemental.Runtime.Physics
 
         private void BuildBodySurfaceAnchors()
         {
-            // Renderer bounds follow KayKit's oversized chibi head and the animated
-            // rigid body parts exactly. Humanoid bone radii remain a portable fallback
-            // for replacement characters that do not expose suitable render meshes.
-            if (_bodyRendererCount <= 0 && TryBuildHumanoidShellAnchors()) return;
+            // Split rigid-body presentations can be packed from their semantic
+            // renderers. A normal Mixamo character is one SkinnedMeshRenderer,
+            // however, so its whole-body AABB is not an anatomical surface. In that
+            // case the baked Humanoid shell is authoritative and follows every limb.
             System.Array.Clear(_colliderAssignmentCounts, 0, _colliderAssignmentCounts.Length);
             System.Array.Clear(_colliderAssignmentRanks, 0, _colliderAssignmentRanks.Length);
             int surfaceCount = _bodyRendererCount > 0 ? _bodyRendererCount : _bodyColliderCount;
@@ -616,6 +644,8 @@ namespace Elemental.Runtime.Physics
                 semanticTotal += semanticCount;
             }
             hasCompleteSemanticBody &= semanticTotal == _pieceCount;
+
+            if (!hasCompleteSemanticBody && TryBuildHumanoidShellAnchors()) return;
 
             if (hasCompleteSemanticBody)
             {
@@ -659,13 +689,28 @@ namespace Elemental.Runtime.Physics
                 Renderer bodyRenderer = _bodyRendererCount > 0 ? _bodyRenderers[colliderIndex] : null;
                 int rank = _colliderAssignmentRanks[colliderIndex]++;
                 int count = Mathf.Max(1, _colliderAssignmentCounts[colliderIndex]);
-                float y = 1f - 2f * ((rank + 0.5f) / count);
-                float planar = Mathf.Sqrt(Mathf.Max(0f, 1f - y * y));
-                float angle = rank * GoldenAngle + colliderIndex * 0.73f;
-                Vector3 localDirection = new Vector3(
-                    Mathf.Cos(angle) * planar,
-                    y,
-                    Mathf.Sin(angle) * planar).normalized;
+                Vector3 localDirection;
+                // Reserve exact crown/sole extrema before filling the rest with a
+                // Fibonacci distribution. A single full-body SkinnedMesh otherwise
+                // misses its full height by half a sample. Width/depth extrema do
+                // not need reserved tiles and keeping them in the distribution
+                // avoids stacking plates along the character's narrow front axis.
+                if (count >= 2 && rank < 2)
+                {
+                    localDirection = rank == 0 ? Vector3.up : Vector3.down;
+                }
+                else
+                {
+                    int distributedRank = count >= 2 ? rank - 2 : rank;
+                    int distributedCount = Mathf.Max(1, count >= 2 ? count - 2 : count);
+                    float y = 1f - 2f * ((distributedRank + 0.5f) / distributedCount);
+                    float planar = Mathf.Sqrt(Mathf.Max(0f, 1f - y * y));
+                    float angle = distributedRank * GoldenAngle + colliderIndex * 0.73f;
+                    localDirection = new Vector3(
+                        Mathf.Cos(angle) * planar,
+                        y,
+                        Mathf.Sin(angle) * planar).normalized;
+                }
                 EarthArmorShellRegion region = RendererRegion(bodyRenderer);
                 // Preserve deliberate face/chest apertures. Central front samples
                 // move toward alternating side seams instead of stacking opaque
@@ -691,23 +736,24 @@ namespace Elemental.Runtime.Physics
                 // between otherwise well-placed tile centres.
                 float surfaceAreaFactor = bodyRenderer != null &&
                                           SemanticBodyPieceCount(bodyRenderer) > 0
-                    ? 2.15f
+                    ? RegionSurfaceAreaFactor(region)
                     : 1f;
                 float span = Mathf.Sqrt(BodySurfaceWeight(colliderIndex) * surfaceAreaFactor / count);
                 // Preserve roughly the same covered area while changing silhouette
                 // aggressively. This creates broad wedges beside narrow splinters
                 // without inflating the whole shell or forcing neighbouring stones
                 // through one another.
-                float plateAspect = Mathf.Lerp(0.62f, 1.62f, Hash01(pieceIndex + 271));
+                float plateAspect = Mathf.Lerp(0.76f, 1.38f, Hash01(pieceIndex + 271));
                 float aspectRoot = Mathf.Sqrt(plateAspect);
+                float maximumSpan = RegionMaximumPlateSpan(region);
                 float width = Mathf.Clamp(
                     span * aspectRoot * Mathf.Lerp(0.90f, 1.10f, Hash01(pieceIndex + 311)),
-                    0.16f,
-                    0.62f);
+                    0.12f,
+                    maximumSpan);
                 float height = Mathf.Clamp(
                     span / aspectRoot * Mathf.Lerp(0.90f, 1.10f, Hash01(pieceIndex + 557)),
-                    0.18f,
-                    0.62f);
+                    0.13f,
+                    maximumSpan);
                 float thickness = Mathf.Lerp(0.050f, 0.078f, Hash01(pieceIndex + 809));
                 _bodyAnchors[pieceIndex] = new BodySurfaceAnchor
                 {
@@ -746,7 +792,7 @@ namespace Elemental.Runtime.Physics
                     segment.Region,
                     segment.CharacterDirection,
                     segment.Scale,
-                    RegionSurfaceRadius(segment.Region));
+                    ResolveSurfaceRadius(animator, segment.Bone, segment.Region));
             }
             return output == _pieceCount;
         }
@@ -813,21 +859,56 @@ namespace Elemental.Runtime.Physics
             bone == HumanBodyBones.LeftUpperLeg || bone == HumanBodyBones.RightUpperLeg ||
             bone == HumanBodyBones.LeftLowerLeg || bone == HumanBodyBones.RightLowerLeg;
 
-        private static float RegionSurfaceRadius(EarthArmorShellRegion region)
+        private static float ResolveSurfaceRadius(
+            Animator animator,
+            HumanBodyBones bone,
+            EarthArmorShellRegion region)
         {
-            // Humanoid bones live inside the mesh, so a percentage of plate size is
-            // not a surface query. These authoring radii put each regional shell on
-            // the visible KayKit silhouette; the profile offset then supplies the
-            // deliberate few-centimetre air gap requested by the spell design.
-            return region switch
+            float humanScale = animator != null ? Mathf.Max(0.75f, animator.humanScale) : 1f;
+            Transform source = animator != null ? ResolveBone(animator, bone) : null;
+            Transform target = animator != null ? ResolveAxisTarget(animator, bone) : null;
+            float segmentLength = source != null && target != null
+                ? Vector3.Distance(source.position, target.position)
+                : 0f;
+            float measured = region switch
             {
-                EarthArmorShellRegion.Head => 0.43f,
-                EarthArmorShellRegion.Torso => 0.37f,
-                EarthArmorShellRegion.Pelvis => 0.31f,
-                EarthArmorShellRegion.Arm => 0.15f,
-                EarthArmorShellRegion.Leg => 0.18f,
-                _ => 0.20f
+                EarthArmorShellRegion.Head => ResolveHeadRadius(animator, humanScale),
+                EarthArmorShellRegion.Torso => ResolveShoulderRadius(animator, humanScale) * 0.66f,
+                EarthArmorShellRegion.Pelvis => ResolveHipRadius(animator, humanScale),
+                EarthArmorShellRegion.Arm when segmentLength > 0f => segmentLength * 0.28f,
+                EarthArmorShellRegion.Leg when segmentLength > 0f => segmentLength * 0.24f,
+                EarthArmorShellRegion.Arm => humanScale * 0.075f,
+                EarthArmorShellRegion.Leg => humanScale * 0.095f,
+                _ => humanScale * 0.12f
             };
+            return Mathf.Clamp(measured, humanScale * 0.055f, humanScale * 0.22f);
+        }
+
+        private static float ResolveHeadRadius(Animator animator, float humanScale)
+        {
+            if (animator == null) return humanScale * 0.13f;
+            Transform head = ResolveBone(animator, HumanBodyBones.Head);
+            Transform neck = ResolveBone(animator, HumanBodyBones.Neck);
+            if (head == null || neck == null) return humanScale * 0.13f;
+            return Mathf.Max(humanScale * 0.11f, Vector3.Distance(head.position, neck.position) * 0.82f);
+        }
+
+        private static float ResolveShoulderRadius(Animator animator, float humanScale)
+        {
+            if (animator == null) return humanScale * 0.20f;
+            Transform left = ResolveBone(animator, HumanBodyBones.LeftUpperArm);
+            Transform right = ResolveBone(animator, HumanBodyBones.RightUpperArm);
+            if (left == null || right == null) return humanScale * 0.20f;
+            return Vector3.Distance(left.position, right.position) * 0.5f;
+        }
+
+        private static float ResolveHipRadius(Animator animator, float humanScale)
+        {
+            if (animator == null) return humanScale * 0.13f;
+            Transform left = ResolveBone(animator, HumanBodyBones.LeftUpperLeg);
+            Transform right = ResolveBone(animator, HumanBodyBones.RightUpperLeg);
+            if (left == null || right == null) return humanScale * 0.13f;
+            return Mathf.Max(humanScale * 0.10f, Vector3.Distance(left.position, right.position) * 0.72f);
         }
 
         private void SetBodyRendererVisibility(bool visible)
@@ -943,11 +1024,11 @@ namespace Elemental.Runtime.Physics
             // arms and legs keep enough independent facets to follow animation
             // without exposing shoulders, hands, knees or feet.
             if (name.EndsWith("_Head", System.StringComparison.OrdinalIgnoreCase)) return 24;
-            if (name.EndsWith("_Body", System.StringComparison.OrdinalIgnoreCase)) return 20;
+            if (name.EndsWith("_Body", System.StringComparison.OrdinalIgnoreCase)) return 24;
             if (name.EndsWith("_ArmLeft", System.StringComparison.OrdinalIgnoreCase) ||
                 name.EndsWith("_ArmRight", System.StringComparison.OrdinalIgnoreCase)) return 12;
             if (name.EndsWith("_LegLeft", System.StringComparison.OrdinalIgnoreCase) ||
-                name.EndsWith("_LegRight", System.StringComparison.OrdinalIgnoreCase)) return 14;
+                name.EndsWith("_LegRight", System.StringComparison.OrdinalIgnoreCase)) return 12;
             return 0;
         }
 
@@ -982,6 +1063,34 @@ namespace Elemental.Runtime.Physics
             if (name.IndexOf("Leg", System.StringComparison.OrdinalIgnoreCase) >= 0)
                 return EarthArmorShellRegion.Leg;
             return EarthArmorShellRegion.Pelvis;
+        }
+
+        private static float RegionSurfaceAreaFactor(EarthArmorShellRegion region)
+        {
+            // Region-aware budgets prevent the oversized chibi head from inflating
+            // every plate into an intersecting spike while preserving a dense torso.
+            return region switch
+            {
+                EarthArmorShellRegion.Head => 0.88f,
+                EarthArmorShellRegion.Torso => 1.32f,
+                EarthArmorShellRegion.Pelvis => 1.32f,
+                EarthArmorShellRegion.Arm => 1.16f,
+                EarthArmorShellRegion.Leg => 1.16f,
+                _ => 1.2f
+            };
+        }
+
+        private static float RegionMaximumPlateSpan(EarthArmorShellRegion region)
+        {
+            return region switch
+            {
+                EarthArmorShellRegion.Head => 0.34f,
+                EarthArmorShellRegion.Torso => 0.44f,
+                EarthArmorShellRegion.Pelvis => 0.42f,
+                EarthArmorShellRegion.Arm => 0.34f,
+                EarthArmorShellRegion.Leg => 0.36f,
+                _ => 0.40f
+            };
         }
 
         private static float ColliderSurfaceWeight(Collider collider)

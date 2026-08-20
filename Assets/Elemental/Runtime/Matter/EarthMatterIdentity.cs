@@ -17,6 +17,13 @@ namespace Elemental.Runtime.Matter
 
         public bool Configure(EarthMatterKernelBehaviour kernel, in EarthMatterRecord authored, Rigidbody body = null)
         {
+            // Additive QA scenes and domain-reload-disabled play sessions can leave a
+            // pooled visual holding a handle issued by a different kernel instance.
+            // Handles are registry-local; carrying one into the new registry can
+            // alias an unrelated live record and makes re-registration fail with a
+            // misleading `None` failure. Drop only the stale binding, never matter in
+            // the still-authoritative registry.
+            if (_kernel != null && _kernel != kernel) MatterId = default;
             _kernel = kernel;
             if (body != null) targetBody = body;
             if (targetBody == null) targetBody = GetComponent<Rigidbody>();

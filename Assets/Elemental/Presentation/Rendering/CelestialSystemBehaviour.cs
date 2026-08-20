@@ -92,12 +92,19 @@ namespace Elemental.Presentation.Rendering
                 profile.StartTime01);
             Vector3 sunDirection = ToVector3(Snapshot.SunDirection);
             Vector3 moonDirection = ToVector3(Snapshot.MoonDirection);
+            Vector3 localUp = planet != null
+                ? (targetCamera.transform.position - planet.position).normalized
+                : targetCamera.transform.up;
+            if (localUp.sqrMagnitude < 0.5f) localUp = targetCamera.transform.up;
+            Vector3 viewTangent = Vector3.ProjectOnPlane(targetCamera.transform.forward, localUp).normalized;
+            if (viewTangent.sqrMagnitude < 0.5f)
+                viewTangent = Vector3.ProjectOnPlane(targetCamera.transform.up, localUp).normalized;
             if (_qaDawnShowcase)
-                sunDirection = (targetCamera.transform.forward + targetCamera.transform.up * 0.18f -
-                                targetCamera.transform.right * 0.38f).normalized;
+                sunDirection = (localUp * 0.42f + viewTangent * 0.42f -
+                                targetCamera.transform.right * 0.48f).normalized;
             if (_qaNightShowcase)
-                moonDirection = (targetCamera.transform.forward + targetCamera.transform.up * 0.28f -
-                                 targetCamera.transform.right * 0.22f).normalized;
+                moonDirection = (localUp * 0.72f + viewTangent * 0.28f -
+                                 targetCamera.transform.right * 0.44f).normalized;
             Vector3 center = targetCamera.transform.position;
             float distance = profile.ScaledSpaceDistance;
             if (sunDisc != null)
@@ -124,13 +131,30 @@ namespace Elemental.Presentation.Rendering
             }
             if (sunLight != null)
             {
-                sunLight.transform.rotation = Quaternion.LookRotation(-sunDirection, Vector3.up);
                 float daylight = 1f - Snapshot.Night01;
+                // A sunset sun points below the local horizon. Reusing that direction
+                // for a brighter blue light still left the gameplay hemisphere black.
+                // Blend ownership of the single shadow-casting key to the visible moon.
+                Vector3 keyDirection = Vector3.Lerp(moonDirection, sunDirection, daylight);
+                if (keyDirection.sqrMagnitude < 0.001f)
+                    keyDirection = daylight >= 0.5f ? sunDirection : moonDirection;
+                sunLight.transform.rotation = Quaternion.LookRotation(
+                    -keyDirection.normalized,
+                    targetCamera.transform.up);
                 float horizon = Mathf.Clamp01(1f - Mathf.Abs(sunDirection.y) * 5f);
-                sunLight.color = Color.Lerp(profile.DayColor, profile.DuskColor, horizon);
+                Color solarColor = Color.Lerp(profile.DayColor, profile.DuskColor, horizon);
+                // The same directional owner becomes a restrained moon key at night.
+                // Keeping the warm dusk tint after sunset made every earth family
+                // collapse into near-black brown even though the sky remained blue.
+                sunLight.color = Color.Lerp(profile.MoonColor, solarColor, daylight);
                 sunLight.intensity = Mathf.Lerp(profile.MoonlightIntensity, profile.DaylightIntensity, daylight);
             }
-            RenderSettings.ambientLight = Color.Lerp(profile.NightAmbient, profile.DayColor * 0.34f, 1f - Snapshot.Night01);
+            float ambientDaylight = 1f - Snapshot.Night01;
+            RenderSettings.ambientLight = Color.Lerp(
+                profile.NightAmbient,
+                profile.DayColor * 0.34f,
+                ambientDaylight);
+            Shader.SetGlobalFloat("_ElementalNight01", Snapshot.Night01);
             _skyController?.Apply(Snapshot, sunDirection);
             Shader.SetGlobalVector("_ElementalSunDirection", new Vector4(sunDirection.x, sunDirection.y, sunDirection.z, 0f));
             float radius = ResolvePlanetRadius();

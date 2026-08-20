@@ -110,6 +110,32 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void MovingFootContactFollowsGroundWithoutFreezingStride()
+        {
+            EarthFootPlantResult contact = EarthFootPlantSolver.SolveContact(
+                new float3(0.2f, 1.1f, 0.4f),
+                true,
+                new float3(0.2f, 0.7f, 0.4f),
+                new float3(0f, 1f, 0f),
+                new float3(0f, 1f, 0f),
+                true,
+                0.035f);
+            Assert.That(contact.Locked, Is.False);
+            Assert.That(contact.Weight01, Is.EqualTo(1f));
+            Assert.That(contact.Position.y, Is.EqualTo(0.735f).Within(0.0001f));
+
+            EarthFootPlantResult airborne = EarthFootPlantSolver.SolveContact(
+                float3.zero,
+                true,
+                new float3(0f, -2f, 0f),
+                new float3(0f, 1f, 0f),
+                new float3(0f, 1f, 0f),
+                false,
+                0.035f);
+            Assert.That(airborne.Weight01, Is.Zero);
+        }
+
+        [Test]
         public void KneeHintsStayInTheRadialCharacterFrameAndKeepTheirSide()
         {
             float3 hip = new float3(0f, 24f, 0f);

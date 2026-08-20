@@ -121,20 +121,32 @@ namespace Elemental.Tests.PlayMode
                 "Armor is an input-owned hold spell and must never assemble on scene startup.");
 
             for (int frame = 0; frame < 12; frame++) yield return null;
-            Renderer[] renderers = presentation.Animator.GetComponentsInChildren<Renderer>(false);
-            Renderer[] bodyRegions =
+            Animator animator = presentation.Animator;
+            SkinnedMeshRenderer visibleBody = FindVisibleHumanoidRenderer(animator);
+            Assert.That(visibleBody, Is.Not.Null,
+                "The production Humanoid must expose one enabled skinned body renderer.");
+            float humanScale = Mathf.Max(0.75f, animator.humanScale);
+            Bounds[] bodyRegions =
             {
-                FindRenderer(renderers, "head"),
-                FindRenderer(renderers, "body"),
-                FindRenderer(renderers, "armleft", "leftarm", "arm_l"),
-                FindRenderer(renderers, "armright", "rightarm", "arm_r"),
-                FindRenderer(renderers, "legleft", "leftleg", "leg_l"),
-                FindRenderer(renderers, "legright", "rightleg", "leg_r")
+                GetHumanoidRegionBounds(animator, humanScale * 0.16f,
+                    HumanBodyBones.Head, HumanBodyBones.Neck),
+                GetHumanoidRegionBounds(animator, humanScale * 0.19f,
+                    HumanBodyBones.Hips, HumanBodyBones.Spine, HumanBodyBones.Chest,
+                    HumanBodyBones.UpperChest, HumanBodyBones.Neck),
+                GetHumanoidRegionBounds(animator, humanScale * 0.11f,
+                    HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftLowerArm, HumanBodyBones.LeftHand),
+                GetHumanoidRegionBounds(animator, humanScale * 0.11f,
+                    HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm, HumanBodyBones.RightHand),
+                GetHumanoidRegionBounds(animator, humanScale * 0.13f,
+                    HumanBodyBones.LeftUpperLeg, HumanBodyBones.LeftLowerLeg, HumanBodyBones.LeftFoot),
+                GetHumanoidRegionBounds(animator, humanScale * 0.13f,
+                    HumanBodyBones.RightUpperLeg, HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot)
             };
             string[] labels = { "head", "torso", "left arm", "right arm", "left leg", "right leg" };
             int[] minimumTiles = { 10, 10, 4, 4, 8, 8 };
             for (int region = 0; region < bodyRegions.Length; region++)
-                Assert.That(bodyRegions[region], Is.Not.Null, $"Missing visible {labels[region]} renderer.");
+                Assert.That(bodyRegions[region].size.sqrMagnitude, Is.GreaterThan(0f),
+                    $"Missing valid Humanoid bones for the visible {labels[region]} region.");
 
             Assert.That(armor.Begin(), Is.True);
             for (int tick = 0; tick < 32; tick++) yield return new WaitForFixedUpdate();
@@ -143,7 +155,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(count, Is.EqualTo(EarthArmorProfile.MaximumPieceCount));
             for (int region = 0; region < bodyRegions.Length; region++)
             {
-                Bounds regionBounds = bodyRegions[region].bounds;
+                Bounds regionBounds = bodyRegions[region];
                 float allowance = Mathf.Max(0.18f, regionBounds.extents.magnitude * 0.34f);
                 int nearby = 0;
                 float farthestFaceGap = 0f;
@@ -173,10 +185,10 @@ namespace Elemental.Tests.PlayMode
 
                 Assert.That(nearby, Is.GreaterThanOrEqualTo(minimumTiles[region]),
                     $"The compact shell leaves the visible {labels[region]} exposed: " +
-                    $"only {nearby} fitted tiles near {bodyRegions[region].name}, bounds={regionBounds}.");
+                    $"only {nearby} fitted tiles near the Humanoid bone region, bounds={regionBounds}.");
                 Assert.That(farthestFaceGap, Is.LessThanOrEqualTo(allowance + 0.16f),
                     $"The compact shell has a large uncovered face on the visible {labels[region]} " +
-                    $"(gap {farthestFaceGap:F3} m, renderer {bodyRegions[region].name}, bounds={regionBounds}).");
+                    $"(gap {farthestFaceGap:F3} m, bounds={regionBounds}).");
             }
 
             armor.ReleaseAsDebris();
@@ -208,13 +220,9 @@ namespace Elemental.Tests.PlayMode
             Animator animator = presentation.Animator;
             Assert.That(body, Is.Not.Null);
             Assert.That(animator, Is.Not.Null);
-            Renderer[] visibleRenderers = animator.GetComponentsInChildren<Renderer>(false);
-            Renderer leftLegRenderer = FindRenderer(visibleRenderers, "legleft", "leftleg", "leg_l");
-            Renderer rightLegRenderer = FindRenderer(visibleRenderers, "legright", "rightleg", "leg_r");
-            Assert.That(leftLegRenderer, Is.Not.Null,
-                "The visible character must expose an enabled left-leg mesh, not only an animated bone.");
-            Assert.That(rightLegRenderer, Is.Not.Null,
-                "The visible character must expose an enabled right-leg mesh, not only an animated bone.");
+            SkinnedMeshRenderer visibleBody = FindVisibleHumanoidRenderer(animator);
+            Assert.That(visibleBody, Is.Not.Null,
+                "The visible character must expose an enabled skinned body mesh, not only animated bones.");
             for (int tick = 0; tick < 150; tick++) yield return new WaitForFixedUpdate();
 
             float idleUpright = Vector3.Dot(body.transform.up, motor.LocalUp);
@@ -234,13 +242,17 @@ namespace Elemental.Tests.PlayMode
             Transform leftFoot = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
             Assert.That(leftFoot, Is.Not.Null);
             Vector3 initialFootLocal = animator.transform.InverseTransformPoint(leftFoot.position);
-            var leftLegProbe = new VisibleGeometryProbe(leftLegRenderer, animator.transform);
-            var rightLegProbe = new VisibleGeometryProbe(rightLegRenderer, animator.transform);
+            var leftLegProbe = new VisibleGeometryProbe(visibleBody, animator.transform,
+                animator.GetBoneTransform(HumanBodyBones.LeftUpperLeg),
+                animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg),
+                animator.GetBoneTransform(HumanBodyBones.LeftFoot));
+            var rightLegProbe = new VisibleGeometryProbe(visibleBody, animator.transform,
+                animator.GetBoneTransform(HumanBodyBones.RightUpperLeg),
+                animator.GetBoneTransform(HumanBodyBones.RightLowerLeg),
+                animator.GetBoneTransform(HumanBodyBones.RightFoot));
             float maximumFootTravel = 0f;
             float maximumVisibleLegTravel = 0f;
             float lateCycleVisibleTravel = 0f;
-            Vector3 lateLeftReference = Vector3.zero;
-            Vector3 lateRightReference = Vector3.zero;
             float minimumUpright = 1f;
             float maximumCameraStep = 0f;
             float maximumCameraAngleStep = 0f;
@@ -256,19 +268,17 @@ namespace Elemental.Tests.PlayMode
                 maximumFootTravel = Mathf.Max(maximumFootTravel, Vector3.Distance(initialFootLocal, footLocal));
                 maximumVisibleLegTravel = Mathf.Max(maximumVisibleLegTravel,
                     Mathf.Max(leftLegProbe.MeasureMaximumTravel(), rightLegProbe.MeasureMaximumTravel()));
-                Vector3 leftCycleSample = leftLegProbe.CurrentSampleCentroid();
-                Vector3 rightCycleSample = rightLegProbe.CurrentSampleCentroid();
                 if (tick == 80)
                 {
-                    lateLeftReference = leftCycleSample;
-                    lateRightReference = rightCycleSample;
+                    leftLegProbe.CaptureReferencePose();
+                    rightLegProbe.CaptureReferencePose();
                 }
                 else if (tick > 80)
                     lateCycleVisibleTravel = Mathf.Max(
                         lateCycleVisibleTravel,
                         Mathf.Max(
-                            Vector3.Distance(lateLeftReference, leftCycleSample),
-                            Vector3.Distance(lateRightReference, rightCycleSample)));
+                            leftLegProbe.MeasureMaximumTravelFromReference(),
+                            rightLegProbe.MeasureMaximumTravelFromReference()));
                 maximumAnimatorSpeed = Mathf.Max(maximumAnimatorSpeed, animator.GetFloat("Speed"));
                 maximumCameraStep = Mathf.Max(maximumCameraStep,
                     Vector3.Distance(previousCameraPosition, cameraRig.transform.position));
@@ -345,8 +355,8 @@ namespace Elemental.Tests.PlayMode
                 yield return new WaitForFixedUpdate();
                 yield return null;
             }
-            Vector3 postLandingLeft = leftLegProbe.CurrentSampleCentroid();
-            Vector3 postLandingRight = rightLegProbe.CurrentSampleCentroid();
+            leftLegProbe.CaptureReferencePose();
+            rightLegProbe.CaptureReferencePose();
             float postLandingGaitTravel = 0f;
             for (int tick = 0; tick < 80; tick++)
             {
@@ -354,8 +364,8 @@ namespace Elemental.Tests.PlayMode
                 yield return null;
                 postLandingGaitTravel = Mathf.Max(postLandingGaitTravel,
                     Mathf.Max(
-                        Vector3.Distance(postLandingLeft, leftLegProbe.CurrentSampleCentroid()),
-                        Vector3.Distance(postLandingRight, rightLegProbe.CurrentSampleCentroid())));
+                        leftLegProbe.MeasureMaximumTravelFromReference(),
+                        rightLegProbe.MeasureMaximumTravelFromReference()));
             }
             AnimatorStateInfo postLandingState = animator.GetCurrentAnimatorStateInfo(0);
             AnimatorStateInfo postLandingNext = animator.GetNextAnimatorStateInfo(0);
@@ -387,7 +397,10 @@ namespace Elemental.Tests.PlayMode
                 $"upDot {Vector3.Dot(gameplayCamera.transform.up, motor.LocalUp):F3}, " +
                 $"aimPitch {cameraController.AimPitch:F2}).");
             Assert.That(-Vector3.Dot(gameplayCamera.transform.forward, motor.LocalUp), Is.InRange(0.1f, 0.58f),
-                "The gameplay camera must have a bounded downward pitch instead of flying level or diving vertically.");
+                $"The gameplay camera must have a bounded downward pitch instead of flying level or diving vertically. " +
+                $"cameraForward={gameplayCamera.transform.forward}, localUp={motor.LocalUp}, " +
+                $"aimForward={cameraController.AimPivot.forward}, aimPitch={cameraController.AimPitch:F2}, " +
+                $"camera={gameplayCamera.transform.position}, body={body.position}.");
             Assert.That(Vector3.Dot(gameplayCamera.transform.up, motor.LocalUp), Is.GreaterThan(0.8f),
                 "Cinemachine world-up must follow the spherical surface without rolling the horizon.");
             Assert.That(maximumCameraStep, Is.LessThan(0.75f),
@@ -415,9 +428,10 @@ namespace Elemental.Tests.PlayMode
             private readonly List<Vector3> _vertices = new List<Vector3>(256);
             private readonly int[] _sampleIndices;
             private readonly Vector3[] _initialPositions;
+            private readonly Vector3[] _referencePositions;
             private readonly Vector3 _initialBoundsCenter;
 
-            public VisibleGeometryProbe(Renderer renderer, Transform reference)
+            public VisibleGeometryProbe(Renderer renderer, Transform reference, params Transform[] anchors)
             {
                 _renderer = renderer;
                 _skinned = renderer as SkinnedMeshRenderer;
@@ -427,22 +441,37 @@ namespace Elemental.Tests.PlayMode
                 {
                     _sampleIndices = System.Array.Empty<int>();
                     _initialPositions = System.Array.Empty<Vector3>();
+                    _referencePositions = System.Array.Empty<Vector3>();
                     return;
                 }
 
                 _baked = new Mesh { name = $"{renderer.name} Golden Path Probe" };
                 _skinned.BakeMesh(_baked);
                 _baked.GetVertices(_vertices);
-                int sampleCount = Mathf.Min(MaximumSamples, _vertices.Count);
+                var rankedVertices = new List<VertexCandidate>(_vertices.Count);
+                for (int vertex = 0; vertex < _vertices.Count; vertex++)
+                {
+                    Vector3 referenceLocal = ToReferenceLocal(_vertices[vertex]);
+                    float nearest = float.PositiveInfinity;
+                    for (int anchor = 0; anchor < anchors.Length; anchor++)
+                    {
+                        if (anchors[anchor] == null) continue;
+                        Vector3 anchorLocal = reference.InverseTransformPoint(anchors[anchor].position);
+                        nearest = Mathf.Min(nearest, (referenceLocal - anchorLocal).sqrMagnitude);
+                    }
+                    rankedVertices.Add(new VertexCandidate(vertex, nearest));
+                }
+                rankedVertices.Sort((left, right) => left.Distance.CompareTo(right.Distance));
+                int sampleCount = Mathf.Min(MaximumSamples, rankedVertices.Count);
                 _sampleIndices = new int[sampleCount];
                 _initialPositions = new Vector3[sampleCount];
+                _referencePositions = new Vector3[sampleCount];
                 for (int sample = 0; sample < sampleCount; sample++)
                 {
-                    int index = sampleCount <= 1
-                        ? 0
-                        : Mathf.RoundToInt(sample * (_vertices.Count - 1f) / (sampleCount - 1f));
+                    int index = rankedVertices[sample].Index;
                     _sampleIndices[sample] = index;
                     _initialPositions[sample] = ToReferenceLocal(_vertices[index]);
+                    _referencePositions[sample] = _initialPositions[sample];
                 }
             }
 
@@ -466,22 +495,31 @@ namespace Elemental.Tests.PlayMode
                 return maximum;
             }
 
-            public Vector3 CurrentSampleCentroid()
+            public void CaptureReferencePose()
             {
-                if (_skinned == null)
-                    return _reference.InverseTransformPoint(_renderer.bounds.center);
+                if (_skinned == null) return;
                 RefreshSkinnedGeometry();
-                if (_sampleIndices.Length == 0 || _vertices.Count == 0) return Vector3.zero;
-                Vector3 sum = Vector3.zero;
-                int count = 0;
                 for (int sample = 0; sample < _sampleIndices.Length; sample++)
                 {
                     int index = _sampleIndices[sample];
                     if (index < 0 || index >= _vertices.Count) continue;
-                    sum += ToReferenceLocal(_vertices[index]);
-                    count++;
+                    _referencePositions[sample] = ToReferenceLocal(_vertices[index]);
                 }
-                return count > 0 ? sum / count : Vector3.zero;
+            }
+
+            public float MeasureMaximumTravelFromReference()
+            {
+                if (_skinned == null) return 0f;
+                RefreshSkinnedGeometry();
+                float maximum = 0f;
+                for (int sample = 0; sample < _sampleIndices.Length; sample++)
+                {
+                    int index = _sampleIndices[sample];
+                    if (index < 0 || index >= _vertices.Count) continue;
+                    maximum = Mathf.Max(maximum,
+                        Vector3.Distance(_referencePositions[sample], ToReferenceLocal(_vertices[index])));
+                }
+                return maximum;
             }
 
             public void Dispose()
@@ -498,6 +536,58 @@ namespace Elemental.Tests.PlayMode
                 _vertices.Clear();
                 _baked.GetVertices(_vertices);
             }
+
+            private readonly struct VertexCandidate
+            {
+                public readonly int Index;
+                public readonly float Distance;
+
+                public VertexCandidate(int index, float distance)
+                {
+                    Index = index;
+                    Distance = distance;
+                }
+            }
+        }
+
+        private static SkinnedMeshRenderer FindVisibleHumanoidRenderer(Animator animator)
+        {
+            SkinnedMeshRenderer[] renderers = animator.GetComponentsInChildren<SkinnedMeshRenderer>(false);
+            SkinnedMeshRenderer best = null;
+            int bestVertices = -1;
+            for (int index = 0; index < renderers.Length; index++)
+            {
+                SkinnedMeshRenderer candidate = renderers[index];
+                if (!candidate.enabled || candidate.sharedMesh == null) continue;
+                int vertices = candidate.sharedMesh.vertexCount;
+                if (vertices <= bestVertices) continue;
+                best = candidate;
+                bestVertices = vertices;
+            }
+            return best;
+        }
+
+        private static Bounds GetHumanoidRegionBounds(
+            Animator animator,
+            float padding,
+            params HumanBodyBones[] bones)
+        {
+            Bounds bounds = default;
+            bool initialized = false;
+            for (int index = 0; index < bones.Length; index++)
+            {
+                Transform bone = animator.GetBoneTransform(bones[index]);
+                if (bone == null) continue;
+                if (!initialized)
+                {
+                    bounds = new Bounds(bone.position, Vector3.zero);
+                    initialized = true;
+                }
+                else
+                    bounds.Encapsulate(bone.position);
+            }
+            if (initialized) bounds.Expand(padding * 2f);
+            return bounds;
         }
 
         private static Renderer FindRenderer(Renderer[] renderers, params string[] tokens)

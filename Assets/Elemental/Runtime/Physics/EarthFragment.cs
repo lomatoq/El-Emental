@@ -1,5 +1,6 @@
 using Elemental.Runtime.World;
 using Elemental.Runtime.Matter;
+using Elemental.Runtime.Geometry;
 using Elemental.Simulation.Bending;
 using Elemental.Simulation.Matter;
 using Unity.Mathematics;
@@ -48,6 +49,8 @@ namespace Elemental.Runtime.Physics
         private EarthMatterIdentity _matterIdentity;
         private EarthPhysicalTargetKind _targetKind = EarthPhysicalTargetKind.Rock;
         private float _controllerCollisionRestoreAt;
+        private Renderer _visualRenderer;
+        private MaterialPropertyBlock _visualProperties;
 
         public uint FragmentId { get; private set; }
         public Rigidbody Body => targetBody;
@@ -122,6 +125,10 @@ namespace Elemental.Runtime.Physics
                                      Mathf.Lerp(-9f, 9f, Hash01(id ^ 0x312Du)),
                                      Hash01(id ^ 0xE71Fu) * 360f,
                                      Mathf.Lerp(-8f, 8f, Hash01(id ^ 0x7A55u)));
+            _visualRenderer ??= GetComponent<Renderer>();
+            _visualProperties ??= new MaterialPropertyBlock();
+            EarthStoneVisualVariant.Apply(_visualRenderer, id, _visualProperties);
+            SetMagicVisual(0f);
             targetBody.mass = Mathf.Max(0.01f, mass);
             targetBody.useGravity = false;
             targetBody.isKinematic = false;
@@ -174,6 +181,14 @@ namespace Elemental.Runtime.Physics
 
         private static uint NextGeneration(uint value) => value == uint.MaxValue ? 1u : value + 1u;
 
+        private void SetMagicVisual(float amount)
+        {
+            if (_visualRenderer == null || _visualProperties == null) return;
+            _visualRenderer.GetPropertyBlock(_visualProperties);
+            _visualProperties.SetFloat("_MagicAmount", Mathf.Clamp01(amount));
+            _visualRenderer.SetPropertyBlock(_visualProperties);
+        }
+
         public void Launch(Vector3 direction, float velocityChange)
         {
             StopBendControl();
@@ -217,6 +232,7 @@ namespace Elemental.Runtime.Physics
             _bendTargetVelocity = targetVelocity;
             _charge01 = Mathf.Clamp01(charge01);
             _isControlled = true;
+            SetMagicVisual(Mathf.Lerp(0.22f, 0.72f, _charge01));
             _matterIdentity?.TryTransition(EarthMatterPhase.Controlled);
             targetBody.isKinematic = false;
             _hoverFrame = EarthHoverPhysics.Capture(targetBody, CurrentLocalUp(), FragmentId);
@@ -246,6 +262,7 @@ namespace Elemental.Runtime.Physics
             _bendTargetPosition = position;
             _bendTargetVelocity = velocity;
             _charge01 = Mathf.Clamp01(charge01);
+            SetMagicVisual(Mathf.Lerp(0.22f, 0.72f, _charge01));
         }
 
         public Vector3 ReleaseBend(Vector3 aimDirection, Vector3 gestureVelocity, float charge01)
@@ -267,6 +284,7 @@ namespace Elemental.Runtime.Physics
         {
             _holdTarget = null;
             _isControlled = false;
+            SetMagicVisual(0f);
             if (_matterIdentity != null && _matterIdentity.TryRead(out EarthMatterRecord matter) &&
                 (matter.Phase == EarthMatterPhase.Controlled || matter.Phase == EarthMatterPhase.Forming))
                 _matterIdentity.TryTransition(EarthMatterPhase.FreeDynamic);

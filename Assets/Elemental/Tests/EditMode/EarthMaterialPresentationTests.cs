@@ -113,6 +113,19 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void IndirectDebrisRotationIsNormalizedBeforeGpuMatrixUpload()
+        {
+            Quaternion drifted = new Quaternion(0.834168f, 0.321042f, -0.026651f, -0.447633f);
+            Quaternion normalized = EarthIndirectDebrisRenderer.NormalizeSafe(drifted);
+            float magnitudeSquared = normalized.x * normalized.x + normalized.y * normalized.y +
+                                     normalized.z * normalized.z + normalized.w * normalized.w;
+
+            Assert.That(magnitudeSquared, Is.EqualTo(1f).Within(0.000001f));
+            Assert.That(EarthIndirectDebrisRenderer.NormalizeSafe(
+                new Quaternion(float.NaN, 0f, 0f, 0f)), Is.EqualTo(Quaternion.identity));
+        }
+
+        [Test]
         public void ProductionFractureUsesSeparateMaskedRenderAndConvexMeshes()
         {
             EarthFractureAsset asset = AssetDatabase.LoadAssetAtPath<EarthFractureAsset>(FractureAssetPath);

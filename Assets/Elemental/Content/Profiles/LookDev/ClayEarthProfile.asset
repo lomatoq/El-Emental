@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37ed2b78c7d44b628181beb11026bacb, type: 3}
+  m_Name: ClayEarthProfile
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.Rendering.EarthMaterialProfile
+  exteriorTint: {r: 0.4, g: 0.18, b: 0.105, a: 1}
+  freshInteriorTint: {r: 0.53, g: 0.27, b: 0.16, a: 1}
+  dustTint: {r: 0.61, g: 0.36, b: 0.24, a: 1}
+  magicTint: {r: 1.15, g: 0.42, b: 0.075, a: 1}
+  mineralTint: {r: 0.29, g: 0.12, b: 0.08, a: 1}
+  stoneFamily: 3
+  macroFrequency: 0.075
+  midTiling: 0.48
+  microTiling: 4.2
+  microFadeStart: 9
+  microFadeEnd: 24
+  macroVariation: 0.16
+  cavityStrength: 0.46
+  dustAmount: 0.16
+  exteriorSmoothness: 0.18
+  interiorSmoothness: 0.025
+  normalStrength: 0.42
+  proceduralDetail: 0.72
+  proceduralNormalStrength: 0.28
+  strataScale: 1.25
+  grainScale: 2.4
+  quality: 1

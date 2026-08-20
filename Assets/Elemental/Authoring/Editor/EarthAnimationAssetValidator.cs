@@ -17,9 +17,16 @@ namespace Elemental.Authoring.Editor
 
     public static class EarthAnimationAssetValidator
     {
-        public const string CharacterModelPath = "Assets/ThirdParty/KayKit/Knight/Knight.fbx";
+        public const string CharacterModelPath = "Assets/ThirdParty/Mixamo/X Bot.fbx";
         public const string ControllerPath = "Assets/Elemental/Content/Animation/KayKitMage.controller";
         public const string PresentationProfilePath = "Assets/Elemental/Content/Profiles/CharacterPresentationProfile.asset";
+
+        private static readonly string[] MixamoAnimationPaths =
+        {
+            "Assets/ThirdParty/Mixamo/X Bot@Walking.fbx",
+            "Assets/ThirdParty/Mixamo/X Bot@Walking Backwards.fbx",
+            "Assets/ThirdParty/Mixamo/X Bot@Punching.fbx"
+        };
 
         private static readonly string[] AnimationPaths =
         {
@@ -46,6 +53,8 @@ namespace Elemental.Authoring.Editor
         {
             var errors = new List<string>(16);
             ValidatePayload(CharacterModelPath, false, errors);
+            for (int index = 0; index < MixamoAnimationPaths.Length; index++)
+                ValidatePayload(MixamoAnimationPaths[index], true, errors);
             for (int index = 0; index < AnimationPaths.Length; index++)
                 ValidatePayload(AnimationPaths[index], true, errors);
             ValidateAvatar(errors);
@@ -108,7 +117,7 @@ namespace Elemental.Authoring.Editor
                 if (assets[index] is Avatar candidate) { avatar = candidate; break; }
             if (avatar == null || !avatar.isValid || !avatar.isHuman)
             {
-                errors.Add("KayKit Knight Avatar is missing or not a valid Humanoid. Set Rig/Animation Type to Humanoid and reimport.");
+                errors.Add("Mixamo X Bot Avatar is missing or not a valid Humanoid. Set Rig/Animation Type to Humanoid and reimport.");
                 return;
             }
             HumanDescription description = avatar.humanDescription;
@@ -118,7 +127,7 @@ namespace Elemental.Authoring.Editor
                 bool found = false;
                 for (int humanIndex = 0; humanIndex < description.human.Length; humanIndex++)
                     if (description.human[humanIndex].humanName == required[requiredIndex]) { found = true; break; }
-                if (!found) errors.Add($"KayKit Knight Humanoid mapping is missing required bone '{required[requiredIndex]}'.");
+                if (!found) errors.Add($"Mixamo X Bot Humanoid mapping is missing required bone '{required[requiredIndex]}'.");
             }
         }
 
@@ -210,11 +219,19 @@ namespace Elemental.Authoring.Editor
             if (tree.useAutomaticThresholds)
                 errors.Add("KayKitMage locomotion thresholds must use authored metre-per-second values, not automatic normalization.");
             ChildMotion[] children = tree.children;
-            if (children.Length != 3 ||
-                Mathf.Abs(children[0].threshold - 0f) > 0.01f ||
-                Mathf.Abs(children[1].threshold - 2f) > 0.01f ||
-                Mathf.Abs(children[2].threshold - 6f) > 0.01f)
-                errors.Add("KayKitMage locomotion thresholds must be Idle/Walk/Run = 0/2/6 m/s.");
+            float[] expected = { -2f, 0f, 2f, 6f };
+            if (children.Length != expected.Length)
+            {
+                errors.Add("KayKitMage locomotion must contain WalkBack/Idle/Walk/Run motions.");
+                return;
+            }
+            for (int index = 0; index < expected.Length; index++)
+            {
+                if (children[index].motion == null)
+                    errors.Add($"KayKitMage locomotion child {index} has no Motion.");
+                if (Mathf.Abs(children[index].threshold - expected[index]) > 0.01f)
+                    errors.Add("KayKitMage locomotion thresholds must be WalkBack/Idle/Walk/Run = -2/0/2/6 m/s.");
+            }
         }
 
         private static void RequireParameter(

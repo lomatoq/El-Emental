@@ -303,6 +303,25 @@ namespace Elemental.Simulation.Characters
 
     public static class EarthFootPlantSolver
     {
+        public static EarthFootPlantResult SolveContact(
+            float3 animatedPosition,
+            bool hasGround,
+            float3 groundPoint,
+            float3 groundNormal,
+            float3 localUp,
+            bool grounded,
+            float soleOffset)
+        {
+            if (!grounded || !hasGround)
+                return new EarthFootPlantResult(animatedPosition, localUp, 0f, false);
+            float3 normal = math.normalizesafe(groundNormal, localUp);
+            return new EarthFootPlantResult(
+                groundPoint + normal * math.max(0f, soleOffset),
+                normal,
+                1f,
+                false);
+        }
+
         public static EarthFootPlantResult Solve(
             float3 animatedPosition,
             bool hasGround,

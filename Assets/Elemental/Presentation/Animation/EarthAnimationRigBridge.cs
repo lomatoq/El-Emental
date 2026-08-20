@@ -43,6 +43,13 @@ namespace Elemental.Presentation.Animation
             BuildIfNeeded();
         }
 
+        private void LateUpdate()
+        {
+            if (rig == null || rig.weight <= 0.001f) return;
+            UpdateArmHint(leftArm, -1f);
+            UpdateArmHint(rightArm, 1f);
+        }
+
         private void BuildIfNeeded()
         {
             if (animator == null || !animator.isHuman ||
@@ -135,6 +142,19 @@ namespace Elemental.Presentation.Animation
             existing.data = data;
             existing.weight = 1f;
             return existing;
+        }
+
+        private void UpdateArmHint(TwoBoneIKConstraint constraint, float side)
+        {
+            if (constraint == null) return;
+            TwoBoneIKConstraintData data = constraint.data;
+            if (data.root == null || data.mid == null || data.target == null || data.hint == null) return;
+            Vector3 up = animator != null ? animator.transform.up : transform.up;
+            Vector3 aim = Vector3.ProjectOnPlane(data.target.position - data.root.position, up).normalized;
+            if (aim.sqrMagnitude < 0.1f) aim = animator != null ? animator.transform.forward : transform.forward;
+            Vector3 outward = Vector3.Cross(up, aim).normalized * side;
+            Vector3 desired = data.mid.position + outward * 0.24f - aim * 0.09f + up * 0.035f;
+            data.hint.position = Vector3.Lerp(data.hint.position, desired, 1f - Mathf.Exp(-18f * Time.deltaTime));
         }
     }
 }
