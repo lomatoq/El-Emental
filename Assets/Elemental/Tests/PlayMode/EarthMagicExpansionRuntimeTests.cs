@@ -439,12 +439,14 @@ namespace Elemental.Tests.PlayMode
             EarthPlatformPool pool = null;
             PlanetMotor motor = null;
             ActiveRagdollPuppet puppet = null;
+            Animator humanoidAnimator = null;
             Collider planet = null;
             foreach (GameObject rootObject in scene.GetRootGameObjects())
             {
                 pool ??= rootObject.GetComponentInChildren<EarthPlatformPool>(true);
                 motor ??= rootObject.GetComponentInChildren<PlanetMotor>(true);
                 puppet ??= rootObject.GetComponentInChildren<ActiveRagdollPuppet>(true);
+                humanoidAnimator ??= rootObject.GetComponentInChildren<Animator>(true);
                 if (rootObject.name == "Planet Collision Proxy") planet = rootObject.GetComponent<Collider>();
             }
             Assert.That(pool, Is.Not.Null);
@@ -466,7 +468,16 @@ namespace Elemental.Tests.PlayMode
             EarthPlatformGeometry geometry = EarthPlatformGeometrySolver.Build(path, ToFloat3(planet.transform.position));
             float initialRadius = Vector3.Distance(rider.worldCenterOfMass, planet.transform.position);
             EarthPlatform platform = pool.Acquire(in geometry, 1.4f, 0.24f);
+            Assert.That(platform.TryPluckCell(platform.SurfaceTopPoint, out _), Is.False,
+                "LMB pluck during emergence must not snap the platform to its completed pose or fracture its support.");
             yield return new WaitForFixedUpdate();
+            Assert.That(platform.Emergence01, Is.LessThan(0.99f));
+            Assert.That(platform.IsFractured, Is.False);
+            if (humanoidAnimator != null)
+            {
+                Assert.That(humanoidAnimator.enabled, Is.True);
+                Assert.That(humanoidAnimator.runtimeAnimatorController, Is.Not.Null);
+            }
             Assert.That(motor.MovingSurfaceId, Is.EqualTo(platform.SurfaceId),
                 "A platform committed below the player must register its rider on the first physics step.");
             CapsuleCollider riderCapsule = motor.GetComponent<CapsuleCollider>();
@@ -505,6 +516,9 @@ namespace Elemental.Tests.PlayMode
             Assert.That(platformWalkDistance, Is.GreaterThan(0.12f),
                 "A stationary moving-surface session must preserve the player's relative locomotion.");
             Assert.That(motor.MovingSurfaceId, Is.EqualTo(platform.SurfaceId));
+            if (humanoidAnimator != null)
+                Assert.That(humanoidAnimator.speed, Is.EqualTo(1f).Within(0.001f),
+                    "Casting choreography must never freeze the locomotion layer on a platform.");
 
             EarthPillarMobility pillar = motor.GetComponent<EarthPillarMobility>();
             Assert.That(pillar, Is.Not.Null);

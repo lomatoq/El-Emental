@@ -112,7 +112,10 @@ namespace Elemental.Tests.PlayMode
                 "Armor stones must follow the actual head/torso/limb surfaces, not a root cylinder.");
 
             for (int step = 0; step < 8; step++) armor.ApplyWheel(120f, Time.unscaledTime);
-            for (int tick = 0; tick < 8; tick++) yield return new WaitForFixedUpdate();
+            // Formation changes are intentionally physical-looking flights rather
+            // than transform snaps. Give the critically damped transition time to
+            // settle before judging the final hemisphere topology.
+            for (int tick = 0; tick < 36; tick++) yield return new WaitForFixedUpdate();
             Vector3 hemisphereCenter = caster.worldCenterOfMass - Vector3.up * 0.29f;
             float minimumHeight = float.PositiveInfinity;
             float minimumHorizontal = float.PositiveInfinity;

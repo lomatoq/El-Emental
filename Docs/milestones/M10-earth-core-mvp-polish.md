@@ -352,3 +352,33 @@ Status: complete (2026-08-15)
 - V3 supersedes the earlier 2D platform cut with true volumetric wall/platform cells,
   routes the complete input grammar through `EarthActionRouter`, and closes this
   iteration with the `235/235` EditMode and `89/89` PlayMode gates recorded above.
+
+## Curated Mixamo motion continuity pass
+
+Status: complete (2026-08-20)
+
+- Imported the provided X Bot motion library and forced every animation-only FBX to
+  reuse the canonical `X Bot.fbx` Humanoid Avatar. Independent auto-T-pose inference,
+  the direct cause of inconsistent hip/knee retargeting, is rejected by the asset gate.
+- Replaced the temporary `Injured Idle` locomotion slot with an upright neutral
+  subclip; the crouch transition remains a separate non-looping motion.
+- Rebuilt locomotion as `Turn × Speed`, added explicit surf/fall/landing states, and
+  removed the AnyState surf re-entry that restarted clips while they were playing.
+- Rebuilt earth casting as an eleven-way normalized Direct BlendTree. One-hot weights
+  crossfade only the requested motions; `EarthMotionTime` holds sustained techniques
+  at an authored pose without stopping the base gait.
+- Removed global Animator slowdown and pelvis `bodyRotation` writes. Stationary casts
+  can brace, while locomotion input releases both foot locks immediately and leaves
+  the MMB session active.
+- Platform pluck cannot force-complete emergence, armor wheel states fly through a
+  damped formation solver, and retired wave cells stay buried for two physics ticks
+  before pool return.
+- Mapping: `Docs/EARTH_HUMANOID_MOTION_MAP.md`; architecture:
+  `Docs/adr/0027-curated-humanoid-motion-tree.md`.
+
+### Evidence
+
+- Isolated Unity Editor compile/import/controller authoring completed with exit code 0.
+- Full EditMode: `340/340` in `38.729 s`.
+- Full PlayMode: `99/99` in `168.776 s`.
+- Windows builds were intentionally not produced for this Editor-only iteration.

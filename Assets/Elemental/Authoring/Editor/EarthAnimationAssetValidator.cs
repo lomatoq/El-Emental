@@ -55,9 +55,12 @@ namespace Elemental.Authoring.Editor
             ValidatePayload(CharacterModelPath, false, errors);
             for (int index = 0; index < MixamoAnimationPaths.Length; index++)
                 ValidatePayload(MixamoAnimationPaths[index], true, errors);
+            for (int index = 0; index < EarthHumanoidMotionSetup.CuratedPaths.Length; index++)
+                ValidatePayload(EarthHumanoidMotionSetup.CuratedPaths[index], true, errors);
             for (int index = 0; index < AnimationPaths.Length; index++)
                 ValidatePayload(AnimationPaths[index], true, errors);
             ValidateAvatar(errors);
+            ValidateSharedMixamoAvatar(errors);
             ValidateController(errors);
             ValidatePresentationProfile(errors);
             return new EarthAnimationValidationReport(errors);
@@ -131,6 +134,45 @@ namespace Elemental.Authoring.Editor
             }
         }
 
+        private static void ValidateSharedMixamoAvatar(List<string> errors)
+        {
+            UnityEngine.Object[] modelAssets = AssetDatabase.LoadAllAssetsAtPath(CharacterModelPath);
+            Avatar canonical = null;
+            for (int index = 0; index < modelAssets.Length; index++)
+                if (modelAssets[index] is Avatar candidate)
+                {
+                    canonical = candidate;
+                    break;
+                }
+            if (canonical == null) return;
+            for (int index = 0; index < EarthHumanoidMotionSetup.CuratedPaths.Length; index++)
+            {
+                string path = EarthHumanoidMotionSetup.CuratedPaths[index];
+                ModelImporter importer = AssetImporter.GetAtPath(path) as ModelImporter;
+                if (importer == null) continue;
+                if (importer.animationType != ModelImporterAnimationType.Human ||
+                    importer.avatarSetup != ModelImporterAvatarSetup.CopyFromOther ||
+                    importer.sourceAvatar != canonical)
+                    errors.Add($"Curated motion does not reuse the canonical X Bot Avatar: {path}.");
+            }
+
+            UnityEngine.Object[] crouchAssets = AssetDatabase.LoadAllAssetsAtPath(
+                EarthHumanoidMotionSetup.StandToCrouchPath);
+            bool hasNeutral = false;
+            bool hasTransition = false;
+            for (int index = 0; index < crouchAssets.Length; index++)
+            {
+                if (crouchAssets[index] is not AnimationClip clip ||
+                    clip.name.StartsWith("__preview__", StringComparison.Ordinal)) continue;
+                if (clip.name == EarthHumanoidMotionSetup.NeutralIdleClipName && clip.isLooping)
+                    hasNeutral = true;
+                if (clip.name == "Standing Idle To Crouch" && !clip.isLooping)
+                    hasTransition = true;
+            }
+            if (!hasNeutral || !hasTransition)
+                errors.Add("StandToCrouch FBX must expose a looping neutral idle segment and a non-looping surf transition.");
+        }
+
         private static void ValidateController(List<string> errors)
         {
             AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
@@ -152,6 +194,12 @@ namespace Elemental.Authoring.Editor
             RequireParameter(controller, "EarthPhase", AnimatorControllerParameterType.Int, errors);
             RequireParameter(controller, "EarthDialect", AnimatorControllerParameterType.Int, errors);
             RequireParameter(controller, "EarthPose", AnimatorControllerParameterType.Float, errors);
+            RequireParameter(controller, "Turn", AnimatorControllerParameterType.Float, errors);
+            RequireParameter(controller, "Surfing", AnimatorControllerParameterType.Bool, errors);
+            RequireParameter(controller, "HardLanding", AnimatorControllerParameterType.Bool, errors);
+            RequireParameter(controller, "EarthMotionTime", AnimatorControllerParameterType.Float, errors);
+            for (int slot = 1; slot <= 11; slot++)
+                RequireParameter(controller, $"EarthPose{slot:00}", AnimatorControllerParameterType.Float, errors);
             if (controller.layers == null || controller.layers.Length < 3)
                 errors.Add("KayKitMage controller must contain base locomotion, upper-body casting and additive impact layers.");
             else
@@ -162,6 +210,8 @@ namespace Elemental.Authoring.Editor
                     errors.Add("KayKitMage upper-body casting layer has no AvatarMask.");
                 ValidateLocomotionBlendTree(controller.layers[0].stateMachine, errors);
                 ValidateHeroCastBlendTree(controller.layers[1].stateMachine, errors);
+                if (controller.layers[2].defaultWeight > 0.001f)
+                    errors.Add("Impact layer must be runtime-weighted from zero instead of overriding the hero continuously.");
             }
             if (controller.layers == null) return;
             for (int layerIndex = 0; layerIndex < controller.layers.Length; layerIndex++)
@@ -175,17 +225,32 @@ namespace Elemental.Authoring.Editor
             AnimatorState cast = FindState(stateMachine, "Earth Cast");
             if (cast == null || cast.motion is not BlendTree tree)
             {
-                errors.Add("KayKitMage Earth Cast state must use the eight-pose hero BlendTree.");
+                errors.Add("KayKitMage Earth Cast state must use the curated semantic BlendTree.");
                 return;
             }
-            if (tree.blendParameter != "EarthPose" || tree.children.Length < 8)
-                errors.Add("KayKitMage hero cast BlendTree must expose at least eight EarthPose values.");
+            if (!cast.timeParameterActive || cast.timeParameter != "EarthMotionTime")
+                errors.Add("KayKitMage Earth Cast must be phase-scrubbed by EarthMotionTime so held magic cannot freeze on the final frame.");
+            if (tree.blendType != BlendTreeType.Direct || !IsDirectBlendNormalized(tree) ||
+                tree.children.Length < 11)
+                errors.Add("KayKitMage hero cast BlendTree must expose eleven normalized direct pose weights.");
             var unique = new HashSet<Motion>();
             ChildMotion[] children = tree.children;
             for (int index = 0; index < children.Length; index++)
+            {
                 if (children[index].motion != null) unique.Add(children[index].motion);
-            if (unique.Count < 6)
-                errors.Add("KayKitMage hero cast BlendTree must use at least six distinct authored clips.");
+                if (children[index].directBlendParameter != $"EarthPose{index + 1:00}")
+                    errors.Add($"KayKitMage direct cast child {index} has the wrong semantic weight parameter.");
+            }
+            if (unique.Count < 8)
+                errors.Add("KayKitMage hero cast BlendTree must use at least eight distinct authored clips.");
+        }
+
+        private static bool IsDirectBlendNormalized(BlendTree tree)
+        {
+            if (tree == null) return false;
+            var serializedTree = new SerializedObject(tree);
+            SerializedProperty property = serializedTree.FindProperty("m_NormalizedBlendValues");
+            return property != null && property.boolValue;
         }
 
         private static AnimatorState FindState(AnimatorStateMachine machine, string stateName)
@@ -214,24 +279,30 @@ namespace Elemental.Authoring.Editor
                 errors.Add("KayKitMage base default state must use a locomotion BlendTree.");
                 return;
             }
-            if (tree.blendParameter != "Speed")
-                errors.Add("KayKitMage locomotion BlendTree must use the Speed parameter.");
+            if (tree.blendType != BlendTreeType.FreeformCartesian2D ||
+                tree.blendParameter != "Turn" || tree.blendParameterY != "Speed")
+                errors.Add("KayKitMage locomotion must be a Turn/Speed Freeform Cartesian 2D BlendTree.");
             if (tree.useAutomaticThresholds)
                 errors.Add("KayKitMage locomotion thresholds must use authored metre-per-second values, not automatic normalization.");
             ChildMotion[] children = tree.children;
-            float[] expected = { -2f, 0f, 2f, 6f };
-            if (children.Length != expected.Length)
+            if (children.Length != 6)
             {
-                errors.Add("KayKitMage locomotion must contain WalkBack/Idle/Walk/Run motions.");
+                errors.Add("KayKitMage locomotion must contain Idle/WalkBack/Walk/Run/LeftTurn/RightTurn motions.");
                 return;
             }
-            for (int index = 0; index < expected.Length; index++)
+            for (int index = 0; index < children.Length; index++)
             {
                 if (children[index].motion == null)
                     errors.Add($"KayKitMage locomotion child {index} has no Motion.");
-                if (Mathf.Abs(children[index].threshold - expected[index]) > 0.01f)
-                    errors.Add("KayKitMage locomotion thresholds must be WalkBack/Idle/Walk/Run = -2/0/2/6 m/s.");
             }
+            AnimatorState surf = FindState(stateMachine, "Surf Crouch");
+            if (surf?.motion == null)
+                errors.Add("KayKitMage base layer must contain a valid 'Surf Crouch' motion.");
+            AnimatorStateTransition[] anyTransitions = stateMachine.anyStateTransitions;
+            for (int index = 0; index < anyTransitions.Length; index++)
+                if (anyTransitions[index].destinationState != null &&
+                    anyTransitions[index].destinationState.name == "Surf Enter")
+                    errors.Add("Surf Enter may not be an AnyState destination because it retriggers the crouch clip while surfing.");
         }
 
         private static void RequireParameter(

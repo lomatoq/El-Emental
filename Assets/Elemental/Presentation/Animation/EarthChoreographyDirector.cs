@@ -72,9 +72,11 @@ namespace Elemental.Presentation.Animation
             if (_hasPhase) animator.SetInteger(PhaseHash, (int)CurrentRequest.Phase);
             if (_hasDialect) animator.SetInteger(DialectHash, (int)CurrentSample.Dialect);
 
-            // Per-character pose hold preserves authoritative physics and every other
-            // simulation system. A tiny non-zero speed keeps Animator internals stable.
-            animator.speed = PoseHoldActive ? 0.02f : 1f;
+            // Never freeze the whole Animator for a casting accent. The base
+            // locomotion/surf layer must keep advancing while the upper-body cast
+            // layer holds its authored silhouette; globally slowing the Animator was
+            // the direct cause of stuck legs and platform T-poses after casting.
+            animator.speed = 1f;
         }
 
         private void CacheParameters()

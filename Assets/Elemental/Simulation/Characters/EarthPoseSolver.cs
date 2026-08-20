@@ -309,6 +309,7 @@ namespace Elemental.Simulation.Characters
     public static class EarthFootPlantMotionGate
     {
         private const float LocomotionIntentThresholdSq = 0.0025f;
+        private const float MinimumCastingBrace = 0.12f;
 
         public static bool HasLocomotionIntent(float2 moveInput) =>
             math.lengthsq(moveInput) > LocomotionIntentThresholdSq;
@@ -324,7 +325,7 @@ namespace Elemental.Simulation.Characters
             if (!supported) return false;
             if (surfActive) return true;
             if (HasLocomotionIntent(moveInput)) return false;
-            return tangentSpeed < 0.32f || (poseRequestsLock && brace01 > 0.2f);
+            return poseRequestsLock && brace01 >= MinimumCastingBrace;
         }
 
         public static float TargetContactWeight(
@@ -336,8 +337,7 @@ namespace Elemental.Simulation.Characters
         {
             if (!supported) return 0f;
             if (surfActive || locked) return 1f;
-            if (HasLocomotionIntent(moveInput)) return 0f;
-            return math.lerp(0.52f, 0.28f, math.saturate((tangentSpeed - 0.35f) / 7.15f));
+            return 0f;
         }
     }
 

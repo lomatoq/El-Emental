@@ -139,7 +139,7 @@ namespace Elemental.Tests.EditMode
         public void LocomotionInputImmediatelyReleasesCastingFootBrace()
         {
             bool stationary = EarthFootPlantMotionGate.ShouldLock(
-                true, false, true, 0.9f, 0f, float2.zero);
+                true, false, true, 0.177f, 0f, float2.zero);
             bool moving = EarthFootPlantMotionGate.ShouldLock(
                 true, false, true, 0.9f, 0f, new float2(0f, 1f));
             float movingWeight = EarthFootPlantMotionGate.TargetContactWeight(
@@ -163,6 +163,19 @@ namespace Elemental.Tests.EditMode
 
             Assert.That(locked, Is.True);
             Assert.That(weight, Is.EqualTo(1f));
+        }
+
+        [Test]
+        public void OrdinaryIdleLeavesLegsToTheAuthoredHumanoidClip()
+        {
+            bool locked = EarthFootPlantMotionGate.ShouldLock(
+                true, false, false, 0f, 0f, float2.zero);
+            float weight = EarthFootPlantMotionGate.TargetContactWeight(
+                true, false, locked, 0f, float2.zero);
+
+            Assert.That(locked, Is.False);
+            Assert.That(weight, Is.Zero,
+                "An idle character must not receive procedural knee/foot constraints unless a cast requests a brace.");
         }
 
         [Test]

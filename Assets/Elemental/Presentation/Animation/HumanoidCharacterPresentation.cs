@@ -12,13 +12,32 @@ namespace Elemental.Presentation.Animation
     public sealed class HumanoidCharacterPresentation : MonoBehaviour
     {
         private static readonly int SpeedHash = Animator.StringToHash("Speed");
+        private static readonly int TurnHash = Animator.StringToHash("Turn");
+        private static readonly int SurfingHash = Animator.StringToHash("Surfing");
+        private static readonly int HardLandingHash = Animator.StringToHash("HardLanding");
         private static readonly int GroundedHash = Animator.StringToHash("Grounded");
         private static readonly int VerticalSpeedHash = Animator.StringToHash("VerticalSpeed");
         private static readonly int CastHash = Animator.StringToHash("Cast");
         private static readonly int CastKindHash = Animator.StringToHash("CastKind");
         private static readonly int EarthPoseHash = Animator.StringToHash("EarthPose");
         private static readonly int ImpactHash = Animator.StringToHash("Impact");
+        private static readonly int MotionTimeHash = Animator.StringToHash("EarthMotionTime");
+        private static readonly int[] EarthPoseWeightHashes =
+        {
+            Animator.StringToHash("EarthPose01"),
+            Animator.StringToHash("EarthPose02"),
+            Animator.StringToHash("EarthPose03"),
+            Animator.StringToHash("EarthPose04"),
+            Animator.StringToHash("EarthPose05"),
+            Animator.StringToHash("EarthPose06"),
+            Animator.StringToHash("EarthPose07"),
+            Animator.StringToHash("EarthPose08"),
+            Animator.StringToHash("EarthPose09"),
+            Animator.StringToHash("EarthPose10"),
+            Animator.StringToHash("EarthPose11")
+        };
         private const string MagicLayerName = "Earth Magic Upper Body";
+        private const string ImpactLayerName = "Impact Additive";
 
         [SerializeField] private CharacterPresentationProfile profile;
         [SerializeField] private Animator animator;
@@ -39,10 +58,16 @@ namespace Elemental.Presentation.Animation
         private float _castWeight;
         private CharacterPhysicalMode _physicalMode;
         private int _magicLayerIndex = -1;
+        private int _impactLayerIndex = -1;
+        private float _impactWeight;
+        private bool _wasCasting;
+        private float _impactUntil;
         private bool _ragdollSubscribed;
         private float _stableGroundedSeconds;
         private bool _animationGrounded = true;
         private float _unsupportedSeconds;
+        private float _minimumAirVerticalSpeed;
+        private float _hardLandingUntil;
 
         public Animator Animator => animator;
         public CharacterPresentationProfile Profile => profile;
@@ -95,8 +120,10 @@ namespace Elemental.Presentation.Animation
             animator.updateMode = AnimatorUpdateMode.Normal;
             animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             _magicLayerIndex = animator.GetLayerIndex(MagicLayerName);
+            _impactLayerIndex = animator.GetLayerIndex(ImpactLayerName);
             animator.SetLayerWeight(0, 1f);
             if (_magicLayerIndex >= 0) animator.SetLayerWeight(_magicLayerIndex, 0f);
+            if (_impactLayerIndex >= 0) animator.SetLayerWeight(_impactLayerIndex, 0f);
             _animationGrounded = true;
             _unsupportedSeconds = 0f;
             animator.SetBool(GroundedHash, true);
@@ -148,41 +175,87 @@ namespace Elemental.Presentation.Animation
         private void Update()
         {
             if (animator == null || rootBody == null || motor == null) return;
-            Vector3 tangentVelocity = Vector3.ProjectOnPlane(rootBody.linearVelocity, motor.LocalUp);
+            Vector3 supportVelocity = Vector3.zero;
+            if (motor.CurrentSupportFrame.IsValid)
+            {
+                var support = motor.CurrentSupportFrame.ContactPointVelocity;
+                supportVelocity = new Vector3(support.x, support.y, support.z);
+            }
+            Vector3 tangentVelocity = Vector3.ProjectOnPlane(
+                rootBody.linearVelocity - supportVelocity,
+                motor.LocalUp);
             float verticalSpeed = Vector3.Dot(rootBody.linearVelocity, motor.LocalUp);
             float presentationSpeed = 0f;
-            if (surfController == null || !surfController.IsActive)
+            bool surfing = surfController != null && surfController.IsActive;
+            if (!surfing)
             {
                 Vector3 facing = Vector3.ProjectOnPlane(motor.FacingForward, motor.LocalUp);
                 if (facing.sqrMagnitude < 0.001f) facing = transform.forward;
                 presentationSpeed = Vector3.Dot(tangentVelocity, facing.normalized);
             }
             animator.SetFloat(SpeedHash, presentationSpeed, ProfileBlendSeconds, Time.deltaTime);
+            animator.SetFloat(TurnHash, motor.LastCommand.Move.x, 0.08f, Time.deltaTime);
+            animator.SetBool(SurfingHash, surfing);
             UpdateAnimationGrounded(verticalSpeed);
             animator.SetBool(GroundedHash, _animationGrounded);
             animator.SetFloat(VerticalSpeedHash, verticalSpeed);
             RecoverGroundedLocomotionState();
-            bool casting = executor != null &&
-                           (executor.HeldBody != null || executor.IsGravityWellActive || executor.IsVectorFieldActive);
+            int castKind = ResolveCastKind();
+            bool casting = castKind > 0 && _physicalMode != CharacterPhysicalMode.FullRagdoll &&
+                           ((poseController != null && poseController.CurrentRequest.IsActive) ||
+                            (executor != null &&
+                             (executor.HeldBody != null || executor.IsGravityWellActive ||
+                              executor.IsVectorFieldActive)));
             float targetWeight = casting && _physicalMode != CharacterPhysicalMode.FullRagdoll
                 ? (profile != null ? profile.HandIkWeight : 0.92f)
                 : 0f;
             _castWeight = Mathf.MoveTowards(_castWeight, targetWeight, Time.deltaTime / Mathf.Max(0.01f, CastingBlendSeconds));
             animator.SetBool(CastHash, casting);
-            int castKind = ResolveCastKind();
             animator.SetInteger(CastKindHash, castKind);
             animator.SetFloat(EarthPoseHash, castKind, 0.055f, Time.deltaTime);
+            float motionTime = casting
+                ? EarthHumanoidMotionResolver.ResolveMotionTime(
+                    poseController != null ? poseController.CurrentRequest.Phase : EarthCastPhase.Sustain)
+                : 0f;
+            if (casting && !_wasCasting) animator.SetFloat(MotionTimeHash, motionTime);
+            else animator.SetFloat(MotionTimeHash, motionTime, 0.075f, Time.deltaTime);
+            for (int index = 0; index < EarthPoseWeightHashes.Length; index++)
+            {
+                float targetPoseWeight = casting && castKind == index + 1 ? 1f : 0f;
+                animator.SetFloat(
+                    EarthPoseWeightHashes[index],
+                    targetPoseWeight,
+                    0.10f,
+                    Time.deltaTime);
+            }
             if (_magicLayerIndex >= 0) animator.SetLayerWeight(_magicLayerIndex, _castWeight);
+            float impactTarget = Time.time < _impactUntil &&
+                                 _physicalMode != CharacterPhysicalMode.FullRagdoll
+                ? 0.56f
+                : 0f;
+            _impactWeight = Mathf.MoveTowards(
+                _impactWeight,
+                impactTarget,
+                Time.deltaTime / (impactTarget > 0f ? 0.045f : 0.18f));
+            if (_impactLayerIndex >= 0) animator.SetLayerWeight(_impactLayerIndex, _impactWeight);
             animationRigBridge?.SetMagicWeight(_castWeight);
             UpdateHandTargets();
+            _wasCasting = casting;
         }
 
         private void UpdateAnimationGrounded(float verticalSpeed)
         {
             if (motor.HasStableSupport)
             {
+                bool justLanded = !_animationGrounded;
                 _unsupportedSeconds = 0f;
                 _animationGrounded = true;
+                if (justLanded)
+                    _hardLandingUntil = _minimumAirVerticalSpeed <= -7.5f
+                        ? Time.time + 0.65f
+                        : 0f;
+                _minimumAirVerticalSpeed = 0f;
+                animator.SetBool(HardLandingHash, Time.time < _hardLandingUntil);
                 return;
             }
 
@@ -193,6 +266,9 @@ namespace Elemental.Presentation.Animation
             // an ordinary fall is accepted after a short unsupported window.
             if (verticalSpeed > 0.75f || _unsupportedSeconds >= 0.11f)
                 _animationGrounded = false;
+            if (!_animationGrounded)
+                _minimumAirVerticalSpeed = Mathf.Min(_minimumAirVerticalSpeed, verticalSpeed);
+            animator.SetBool(HardLandingHash, false);
         }
 
         private void RecoverGroundedLocomotionState()
@@ -204,9 +280,11 @@ namespace Elemental.Presentation.Animation
             }
             _stableGroundedSeconds += Time.deltaTime;
             if (_stableGroundedSeconds < 0.22f || animator.IsInTransition(0)) return;
+            if (surfController != null && surfController.IsActive) return;
             AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
             if (state.IsName("Locomotion")) return;
             if (state.IsName("Land") && state.normalizedTime < 0.68f) return;
+            if (state.IsName("Hard Land") && state.normalizedTime < 0.82f) return;
 
             // A one-frame support miss on a curved surface can enter Jump before
             // locomotion has settled. If its vertical threshold never crosses,
@@ -279,24 +357,13 @@ namespace Elemental.Presentation.Animation
                 : EarthTechniqueId.None;
             if (technique != EarthTechniqueId.None)
             {
-                return technique switch
-                {
-                    EarthTechniqueId.RaiseWall or EarthTechniqueId.RaisePlatform => 1,
-                    EarthTechniqueId.PullStone or EarthTechniqueId.CrestPluck => 2,
-                    EarthTechniqueId.ThrowStone or EarthTechniqueId.VectorPush => 3,
-                    EarthTechniqueId.GravityGrip or EarthTechniqueId.Repair => 4,
-                    EarthTechniqueId.WebWave or EarthTechniqueId.Resonance => 5,
-                    EarthTechniqueId.PillarJump or EarthTechniqueId.Surf => 6,
-                    EarthTechniqueId.Armor or EarthTechniqueId.ArmorDome or
-                        EarthTechniqueId.ArmorOrbit or EarthTechniqueId.ArmorRepack => 7,
-                    _ => 8
-                };
+                return (int)EarthHumanoidMotionResolver.Resolve(technique);
             }
             if (executor == null) return 0;
-            if (executor.IsGravityWellActive) return 4;
-            if (executor.IsVectorFieldActive) return 3;
-            if (executor.HeldBody != null) return 2;
-            return 1;
+            if (executor.IsGravityWellActive) return (int)EarthHumanoidPoseSlot.GravityRepair;
+            if (executor.IsVectorFieldActive) return (int)EarthHumanoidPoseSlot.VectorPush;
+            if (executor.HeldBody != null) return (int)EarthHumanoidPoseSlot.PullStone;
+            return 0;
         }
 
         private void HandlePhysicalState(CharacterPhysicalState state)
@@ -319,7 +386,11 @@ namespace Elemental.Presentation.Animation
                     _unsupportedSeconds = 0f;
                 }
             }
-            if (state.Mode == CharacterPhysicalMode.Stagger) animator.SetTrigger(ImpactHash);
+            if (state.Mode == CharacterPhysicalMode.Stagger)
+            {
+                _impactUntil = Time.time + 0.46f;
+                animator.SetTrigger(ImpactHash);
+            }
         }
 
         private float ProfileBlendSeconds => profile != null ? profile.LocomotionBlendSeconds : 0.12f;

@@ -119,6 +119,8 @@
 
 Платформа реализует `IMovingSurface`: персонаж регистрируется как rider, переносится скоростью опоры, может ходить и прыгать, а при прыжке наследует скорость платформы. Своя поднимающаяся платформа имеет защитный период от ложного impact debt/ragdoll; сильный внешний удар после него остаётся разрушительным.
 
+ЛКМ-pluck во время подъёма отклоняется до `Emergence01 >= 0.999`: ввод не может мгновенно поставить платформу в финальную высоту, включить fracture и выбить собственную опору из-под персонажа. Внешний impact использует независимый damage-путь и этим правилом не маскируется.
+
 На вертикальной грани нелинейный жест платформы отклоняется: там разрешена только перпендикулярная стена.
 
 ### 3.6. Векторное поле — ПКМ
@@ -206,7 +208,7 @@
 - физический/визуальный пул — максимум `96` ячеек;
 - выбранная ячейка может отделиться и стать обычной физической целью.
 
-После прохождения гребня предыдущие ячейки сразу уходят назад, поэтому движется именно волна, а не одновременно поднятая решётка.
+После прохождения гребня предыдущие ячейки сразу уходят назад, поэтому движется именно волна, а не одновременно поднятая решётка. Последний видимый кадр каждой ячейки находится глубже её полного slab-volume под поверхностью; только после двух physics-кадров в заглублённом состоянии объект возвращается в пул. Поэтому на финише нет резкого наклона или исчезновения на линии земли.
 
 ### 3.11. Резонансная полусфера — Shift + Space + ЛКМ
 
@@ -238,6 +240,8 @@
 - колесо вниз возвращает построение к телу;
 - после `100%` две подтверждённые быстрые ступени вверх в течение `0.35 с` запускают радиальный разлёт `16–24 м/с` и полную паутинную волну.
 
+Колесо меняет только целевую формацию. Каждая пластина летит к новой позиции через critically damped solver (`0.24 с`, максимум `18 м/с`) и отдельно сглаживает вращение (`0.16 с`). Никакой wheel-step напрямую не присваивает transform конечного состояния.
+
 В раскрытом состоянии:
 
 - `ЛКМ` выпускает ближайшую к прицелу пластину; удержание стреляет очередью с интервалом `0.13 с`;
@@ -257,7 +261,7 @@
 - платформа выходит за `0.16 с`;
 - размер текущего профиля: ширина `2.35 м`, длина `3.9 м`, поднятый нос `0.82 м`;
 - скорость нелинейно растёт от `4` до `13 м/с` за `1.2 с`;
-- персонаж едет как rider движущейся опоры, а locomotion-анимация ног намеренно получает скорость `0`;
+- персонаж едет как rider движущейся опоры и удерживает отдельный `Surf Crouch` base-state;
 - нос выполняет ограниченный sweep и создаёт настоящие impacts по камням и конструкциям (`noseImpactImpulse = 2400`);
 - след, пыль и мелкие камни показывают разрез земли без постоянной перестройки voxel SDF;
 - после отпускания `Shift` платформа уходит/разрушается за `0.45 с`, персонаж сохраняет ограниченную касательную скорость.
@@ -388,7 +392,7 @@ Repairable structural pieces не исчезают по скрытому тай�
 
 ### Humanoid presentation
 
-Текущий playable-персонаж — Mixamo `X Bot` без шляпы и шлема, импортированный как Unity Humanoid. Он заменил KayKit Knight в production-пути, чтобы очистить обзор и получить устойчивую человеческую походку. Из локального набора Mixamo используются `Walking`, `Walking Backwards` и `Punching`; KayKit-клипы остаются только резервом для бега и части spellcasting-поз. Источники, условия использования и SHA-256 всех четырёх FBX записаны в `Docs/THIRD_PARTY_NOTICES.md`.
+Текущий playable-персонаж — Mixamo `X Bot` без шляпы и шлема, импортированный как Unity Humanoid. Локальная библиотека расширена до locomotion, turn, crouch/surf, fall/landing, impact, throw и семи magic-клипов. Все animation-only FBX используют один canonical Avatar из `X Bot.fbx` через `Copy From Other Avatar`, что устраняет разные auto-T-pose и перекос колен на blend. Временный neutral Idle берёт upright-сегмент `Standing Idle To Crouch`; `Injured Idle` оставлен только для damage-state. Run — ускоренный `Walking`, Jump временно использует `Falling` до следующего подходящего FBX. Полная таблица назначения находится в `Docs/EARTH_HUMANOID_MOTION_MAP.md`, источники и SHA-256 — в `Docs/THIRD_PARTY_NOTICES.md`.
 
 `CharacterPresentationProfile` позволяет заменить модель без изменения gameplay-кода. Сейчас:
 
@@ -397,13 +401,16 @@ Repairable structural pieces не исчезают по скрытому тай�
 - locomotion blend: `0.12 с`;
 - casting blend: `0.10 с`;
 - вес hand IK: `0.92`;
-- Animator работает в `AlwaysAnimate` и получает `Speed`, `Grounded`, `VerticalSpeed`, `Cast`, `CastKind`, `Impact`;
-- locomotion blend использует подписанную скорость вдоль `FacingForward`: `Walking Backwards = -2`, `Idle = 0`, `Walking = 2`, резервный `Run = 6`;
-- `VectorPush` использует Mixamo `Punching`, а восемь дочерних earth-motion состояний повторно привязываются после импорта FBX, чтобы импорт не оставлял Animator со stale motion references;
+- Animator работает в `AlwaysAnimate` и получает `Turn`, `Speed`, `Grounded`, `VerticalSpeed`, `Surfing`, `HardLanding`, `Cast`, `CastKind`, `EarthPose01–11`, `EarthMotionTime` и `Impact`;
+- locomotion — `Freeform Cartesian 2D` по `Turn × Speed`: WalkBack/Idle/Walk/Run и зеркальная пара Left/Right Turn переключаются без дискретного бокового snap;
+- скорость presentation считается относительно moving-support velocity, поэтому поднимающаяся платформа не выглядит как движение ногами;
+- surf входит через `Standing Idle To Crouch` и удерживает `Crouch Idle`, а не Walking или bind pose;
+- `EarthHumanoidMotionResolver` выдаёт 11 стабильных слотов: отдельные Wall, Platform, Pull, HeavyThrow, VectorPush, GravityRepair, WaveResonance, Pillar, ArmorAssemble, ArmorBarrage и Generic;
+- `VectorPush` использует `Lead Jab`, тяжёлый бросок — `Wheelbarrow Dump`, подъём платформы — `Standing 2H Magic Area Attack 02`;
 - upper-body слой `Earth Magic Upper Body` подмешивается независимо от ног;
 - руки IK-направляются к held body, gravity focus или vector-field point;
 - при сильном cast foot IK фиксирует стопы, компенсирует таз и расширяет стойку;
-- на surf presentation speed специально равен нулю, чтобы персонаж не «бежал» по доске.
+- на surf base-state специально удерживает crouch idle, чтобы персонаж не «бежал» по доске.
 
 ### Bending choreography V4.1
 
@@ -416,7 +423,9 @@ Gameplay передаёт presentation не название конкретно�
 
 `EarthPoseSolver` переводит запрос в один из двух диалектов движения. `RootedPower` используется для стены, платформы, столба-прыжка, волны, брони, repair, wall slide и fracture fan; более точные/мобильные действия используют `CompactTactile`. Результат задаёт сжатие таза, ширину стойки, вес верхней части тела и короткий локальный pose hold.
 
-`EarthChoreographyDirector` является только presentation-компонентом. Он передаёт в Animator доступные параметры `EarthEffort`, `EarthBrace`, `EarthGrounding`, `EarthPrecision`, `EarthPhase`, `EarthDialect`. На входе в тяжёлый `Strike` он может замедлить только Animator этого персонажа до `0.02` на `0.025–0.078 с`, после чего возвращает скорость `1`. Глобальный `Time.timeScale`, физический tick и результат заклинания не меняются.
+`EarthChoreographyDirector` является только presentation-компонентом. Он передаёт в Animator доступные параметры `EarthEffort`, `EarthBrace`, `EarthGrounding`, `EarthPrecision`, `EarthPhase`, `EarthDialect`. Тяжёлый `Strike` публикует короткий pose-hold как метаданные, но Animator всегда остаётся на скорости `1`: базовая locomotion/surf-анимация не может замёрзнуть из-за верхнего magic-слоя. Глобальный `Time.timeScale`, физический tick и результат заклинания не меняются.
+
+Верхний magic-слой — normalized Direct BlendTree, а не линейная шкала несвязанных клипов. Переход между приёмами идёт напрямую между двумя one-hot весами. `EarthMotionTime` удерживает длинный cast на смысловой Sustain-позе, не останавливая base layer. Upper-body направление больше не пишется в `Animator.bodyRotation`, поэтому таз и ноги не закручиваются при MMB/RMB.
 
 ### Active ragdoll
 
@@ -720,9 +729,11 @@ Evidence V4.2 до Mixamo locomotion/armor pass:
 
 Текущий post-Mixamo locomotion/armor gate на Unity `6000.5.7f1`:
 
-- full EditMode: `333/333`, `34.464 с` — `TestResults/EditMode.xml`;
-- full PlayMode: `99/99`, `163.930 с` — `TestResults/PlayMode.xml`;
-- production runtime regression удерживает MMB-сессию при начале ходьбы, но немедленно снимает старые foot-lock constraints; `VectorPush` одновременно маршрутизируется в `CastKind 3`, то есть в Mixamo `Punching` lane;
+- full EditMode: `340/340`, `38.729 с`;
+- full PlayMode: `99/99`, `168.776 с`;
+- оба full-gate запущены в изолированной Editor-копии тех же `Assets/Packages/ProjectSettings`, потому что основной Editor был открыт для ручной проверки; в основном проекте тот же controller/importer migration успешно применён;
+- animation asset court доказывает canonical shared X Bot Avatar, отдельные neutral/surf subclips, `Turn×Speed` locomotion, отсутствие AnyState surf-retrigger, 11-way normalized Direct cast и phase-time contract;
+- production runtime regression удерживает MMB-сессию при начале ходьбы, но за `0.035 с` снимает foot-lock constraints; `VectorPush` маршрутизируется в semantic slot `5`, Mixamo `Lead Jab`;
 - focused armor/anatomy/camera gate: `7/7`, `4.602 с` — `TestResults/ArmorFocusedFinal3.xml`;
 - четырёхсекундный locomotion proof проходит с реальным перемещением `12.71 м`, локальным ходом стопы `1.32 м`, `4.30` gait cycles, устойчивой опорой и конечной скоростью settle `0.00 м/с`;
 - финальная Humanoid-оболочка брони rebake-ится в `96` анатомических пластин: head `18`, torso `18`, pelvis `8`, arms `24`, legs `28`; локальные renderer bounds больше не трактуются как один прямоугольный объём тела.

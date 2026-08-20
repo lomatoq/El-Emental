@@ -509,6 +509,15 @@ namespace Elemental.Simulation.Bending
                 retreat01 >= 1f);
         }
 
+        public static float ResolveCellBaseOffset(
+            float sampleHeight,
+            float slabThickness,
+            in EarthPillarWaveMotionSample motion)
+        {
+            float burialDepth = math.max(math.max(0.24f, slabThickness) * 1.12f, 0.42f);
+            return math.max(0.1f, sampleHeight) * motion.Height01 - burialDepth * motion.Sink01;
+        }
+
         private static int[] FitCountsToPool(int[] desiredCounts, int desiredTotal)
         {
             int rows = desiredCounts.Length;

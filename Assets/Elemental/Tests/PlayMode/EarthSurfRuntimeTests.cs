@@ -76,6 +76,7 @@ namespace Elemental.Tests.PlayMode
             PlanetMotor motor = surf != null ? surf.GetComponent<PlanetMotor>() : null;
             Rigidbody body = motor != null ? motor.GetComponent<Rigidbody>() : null;
             ActiveRagdollPuppet puppet = motor != null ? motor.GetComponent<ActiveRagdollPuppet>() : null;
+            Animator animator = motor != null ? motor.GetComponentInChildren<Animator>(true) : null;
             Assert.That(surf, Is.Not.Null);
             Assert.That(motor, Is.Not.Null);
             Assert.That(body, Is.Not.Null);
@@ -90,6 +91,12 @@ namespace Elemental.Tests.PlayMode
             Assert.That(tangentTravel, Is.GreaterThan(0.8f),
                 "Shift+movement must carry the hero with the wedge; moving only the effect is not gameplay.");
             Assert.That(motor.MovingSurfaceId, Is.EqualTo(surf.SurfaceId));
+            Assert.That(animator, Is.Not.Null);
+            Assert.That(animator.GetBool("Surfing"), Is.True);
+            AnimatorStateInfo surfState = animator.GetCurrentAnimatorStateInfo(0);
+            Assert.That(surfState.IsName("Surf Crouch") || surfState.IsName("Surf Enter") ||
+                        surfState.IsName("Base Layer.Surf Crouch") || surfState.IsName("Base Layer.Surf Enter"),
+                Is.True, "The surf wedge must own a crouched base pose instead of a T-pose or walking legs.");
             if (puppet != null)
                 Assert.That(puppet.CurrentState.Mode, Is.Not.EqualTo(
                     Elemental.Simulation.Characters.CharacterPhysicalMode.FullRagdoll));

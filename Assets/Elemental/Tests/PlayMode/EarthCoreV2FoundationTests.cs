@@ -135,7 +135,10 @@ namespace Elemental.Tests.PlayMode
                 motor.LocalUp), Is.True);
             yield return new WaitForSeconds(0.18f);
             Assert.That(pose.FeetLocked, Is.True,
-                "A stationary MMB hold should retain its grounded casting brace.");
+                $"A stationary MMB hold should retain its grounded casting brace. " +
+                $"supported={motor.HasStableSupport}, grounded={motor.IsGrounded}, " +
+                $"phase={pose.CurrentRequest.Phase}, brace={pose.CurrentIntent.Brace01:F3}, " +
+                $"footWeight={pose.FootIkWeight:F3}");
 
             scriptedInput.Move = new float2(0f, 1f);
             for (int frame = 0; frame < 5; frame++)
@@ -164,8 +167,13 @@ namespace Elemental.Tests.PlayMode
             Assert.That(magicState.IsName("Earth Magic Upper Body.Earth Cast") || magicState.IsName("Earth Cast"), Is.True);
             Assert.That(pose.CurrentRequest.Technique, Is.EqualTo(EarthTechniqueId.VectorPush),
                 "A stone push must request the punch semantic instead of the generic pull/grip pose.");
-            Assert.That(animator.GetInteger("CastKind"), Is.EqualTo(3),
-                "VectorPush is authored as the Mixamo Punching lane in the upper-body blend tree.");
+            Assert.That(animator.GetInteger("CastKind"), Is.EqualTo(5),
+                "VectorPush must resolve to the dedicated Mixamo Lead Jab semantic lane.");
+            Assert.That(animator.GetFloat("EarthPose05"), Is.GreaterThan(0.65f),
+                "The categorical push pose must crossfade through its one-hot direct weight.");
+            Assert.That(animator.GetFloat("EarthPose04"), Is.LessThan(0.2f));
+            Assert.That(animator.GetFloat("EarthPose06"), Is.LessThan(0.2f),
+                "A direct semantic tree must not travel through neighbouring unrelated magic clips.");
             executor.ReleaseVectorField();
             Object.Destroy(castTarget);
 

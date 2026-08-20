@@ -24,6 +24,9 @@ namespace Elemental.Runtime.Physics
         private readonly int[] _anchorColliderIndices = new int[MaximumPieces];
         private readonly int[] _colliderAssignmentCounts = new int[MaximumCasterColliders];
         private readonly int[] _colliderAssignmentRanks = new int[MaximumCasterColliders];
+        private readonly Vector3[] _formationPositions = new Vector3[MaximumPieces];
+        private readonly Vector3[] _formationVelocities = new Vector3[MaximumPieces];
+        private readonly Quaternion[] _formationRotations = new Quaternion[MaximumPieces];
         private EarthArmorProfile _profile;
         private Rigidbody _caster;
         private ActiveRagdollPuppet _casterPuppet;
@@ -144,6 +147,9 @@ namespace Elemental.Runtime.Physics
                 Vector3 radial = right * Mathf.Cos(angle) + forward * Mathf.Sin(angle);
                 Vector3 source = ground + radial * Mathf.Lerp(0.55f, 1.1f, Hash01(index)) - up * 0.22f;
                 _pieces[index].Activate(_generation, source, Quaternion.LookRotation(radial, up));
+                _formationPositions[index] = source;
+                _formationVelocities[index] = Vector3.zero;
+                _formationRotations[index] = Quaternion.LookRotation(radial, up);
                 BodySurfaceAnchor bodyAnchor = _bodyAnchors[index];
                 Vector3 bodyScale = bodyAnchor.PlateScale;
                 if (bodyScale.sqrMagnitude > 0.001f)
@@ -387,12 +393,46 @@ namespace Elemental.Runtime.Physics
                 // Ninety-six production plates still need to read as one decisive
                 // spell, not a half-second queue with late stones hovering off-body.
                 float gather01 = Mathf.Clamp01((_elapsed - index * 0.0015f) / Mathf.Max(0.05f, assembly));
-                float eased = 1f - Mathf.Pow(1f - gather01, 3f);
-                Vector3 next = Vector3.Lerp(piece.SourcePosition, target, eased);
                 Vector3 tangent = EvaluateBodySurfaceTangent(index, surfaceNormal, up, forward, right);
-                Quaternion rotation = Quaternion.LookRotation(tangent, surfaceNormal) *
-                                      Quaternion.AngleAxis(Mathf.Sin(_elapsed * 1.7f + index) * 3.5f, Vector3.up);
-                piece.Move(next, rotation);
+                Quaternion targetRotation = Quaternion.LookRotation(tangent, surfaceNormal) *
+                                            Quaternion.AngleAxis(
+                                                Mathf.Sin(_elapsed * 1.7f + index) * 3.5f,
+                                                Vector3.up);
+
+                // The assembly source is only the initial condition. Subsequent
+                // wheel phases are destinations for damped physical-looking flight,
+                // never direct phase-to-transform teleports.
+                if (gather01 <= 0f)
+                {
+                    _formationPositions[index] = piece.SourcePosition;
+                    _formationVelocities[index] = Vector3.zero;
+                    _formationRotations[index] = piece.transform.rotation;
+                    continue;
+                }
+                float transition = _profile != null
+                    ? _profile.FormationTransitionSeconds
+                    : 0.24f;
+                float maxSpeed = _profile != null
+                    ? _profile.FormationMaximumSpeed
+                    : 18f;
+                if (_elapsed <= assembly)
+                    transition = Mathf.Min(transition, Mathf.Max(0.08f, assembly * 0.52f));
+                EarthArmorFlightSample flight = EarthArmorFormationSolver.StepFlight(
+                    ToFloat3(_formationPositions[index]),
+                    ToFloat3(_formationVelocities[index]),
+                    ToFloat3(target),
+                    transition,
+                    maxSpeed,
+                    Time.fixedDeltaTime);
+                _formationPositions[index] = ToVector3(flight.Position);
+                _formationVelocities[index] = ToVector3(flight.Velocity);
+                float rotationResponse = _profile != null
+                    ? _profile.FormationRotationSeconds
+                    : 0.16f;
+                float rotationT = 1f - Mathf.Exp(-Time.fixedDeltaTime / Mathf.Max(0.025f, rotationResponse));
+                _formationRotations[index] = Quaternion.Slerp(
+                    _formationRotations[index], targetRotation, rotationT);
+                piece.Move(_formationPositions[index], _formationRotations[index]);
             }
         }
 

@@ -322,6 +322,7 @@ namespace Elemental.Runtime.Physics
         private int _magicGripCount;
         private float _detachedElapsed;
         private bool _polygonCell;
+        private int _burialFramesRemaining;
         private float _sampleHeight;
         private float _slabThickness;
         private float _footprintArea;
@@ -446,6 +447,7 @@ namespace Elemental.Runtime.Physics
             _magicDetached = false;
             _magicGripCount = 0;
             _detachedElapsed = 0f;
+            _burialFramesRemaining = 0;
             if (_polygonCell)
             {
                 // Every cell keeps the common topology frame. Independent yaw was
@@ -491,6 +493,7 @@ namespace Elemental.Runtime.Physics
             _magicDetached = false;
             _magicGripCount = 0;
             _detachedElapsed = 0f;
+            _burialFramesRemaining = 0;
             if (_body != null && !_body.isKinematic)
             {
                 _body.linearVelocity = Vector3.zero;
@@ -639,6 +642,19 @@ namespace Elemental.Runtime.Physics
                 localTime, rise, hold, retreat);
             if (motion.Complete)
             {
+                if (_burialFramesRemaining <= 0)
+                {
+                    float burialDepth = Mathf.Max(
+                        _polygonCell ? _slabThickness * 1.12f : _fullScale.y * 0.72f,
+                        0.42f);
+                    _body.MovePosition(_surface - _up * burialDepth);
+                    _body.MoveRotation(_baseRotation);
+                    _collider.enabled = false;
+                    _burialFramesRemaining = 2;
+                    return;
+                }
+                _burialFramesRemaining--;
+                if (_burialFramesRemaining > 0) return;
                 ResetColumn();
                 return;
             }
@@ -660,13 +676,14 @@ namespace Elemental.Runtime.Physics
                 // The complete underground rock volume translates upward. No axis
                 // scaling means the silhouette remains a real Voronoi plate instead
                 // of turning back into a stretched rectangular pillar.
-                float lift = _sampleHeight * motion.Height01;
+                float lift = EarthPillarWaveSolver.ResolveCellBaseOffset(
+                    _sampleHeight, _slabThickness, in motion);
                 _body.MovePosition(_surface + (_up * lift) + lateral);
             }
             else
             {
                 float visibleHeight = Mathf.Max(0.012f, _fullScale.y * motion.Height01);
-                float sink = _fullScale.y * 0.18f * motion.Sink01;
+                float sink = Mathf.Max(_fullScale.y * 0.72f, 0.42f) * motion.Sink01;
                 _body.MovePosition(_surface - (_up * sink) + (_up * visibleHeight * 0.5f) + lateral);
             }
             // Geological cells rise along local gravity. A tiny yaw vibration sells

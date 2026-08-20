@@ -2,6 +2,18 @@ using Unity.Mathematics;
 
 namespace Elemental.Simulation.Bending
 {
+    public readonly struct EarthArmorFlightSample
+    {
+        public EarthArmorFlightSample(float3 position, float3 velocity)
+        {
+            Position = position;
+            Velocity = velocity;
+        }
+
+        public float3 Position { get; }
+        public float3 Velocity { get; }
+    }
+
     public readonly struct EarthArmorFormationSample
     {
         public EarthArmorFormationSample(float3 direction, float radiusMultiplier, float scaleMultiplier, int layer)
@@ -21,6 +33,50 @@ namespace Elemental.Simulation.Bending
     public static class EarthArmorFormationSolver
     {
         private const float GoldenAngle = 2.39996323f;
+
+        /// <summary>
+        /// Allocation-free critically damped formation flight. Unlike a direct
+        /// phase-to-position mapping, one wheel notch changes the destination and
+        /// lets every plate visibly travel there over several physics ticks.
+        /// </summary>
+        public static EarthArmorFlightSample StepFlight(
+            float3 position,
+            float3 velocity,
+            float3 target,
+            float responseSeconds,
+            float maximumSpeed,
+            float deltaTime)
+        {
+            if (!math.all(math.isfinite(position)) || !math.all(math.isfinite(velocity)) ||
+                !math.all(math.isfinite(target)) || !math.isfinite(deltaTime) || deltaTime <= 0f)
+                return new EarthArmorFlightSample(position, float3.zero);
+
+            float response = math.max(0.035f, responseSeconds);
+            float speed = math.max(0.1f, maximumSpeed);
+            float omega = 2f / response;
+            float x = omega * deltaTime;
+            float decay = 1f / (1f + x + 0.48f * x * x + 0.235f * x * x * x);
+            float3 change = position - target;
+            float maximumChange = speed * response;
+            float changeLength = math.length(change);
+            if (changeLength > maximumChange)
+                change *= maximumChange / math.max(0.00001f, changeLength);
+
+            float3 adjustedTarget = position - change;
+            float3 temp = (velocity + omega * change) * deltaTime;
+            float3 nextVelocity = (velocity - omega * temp) * decay;
+            float3 nextPosition = adjustedTarget + (change + temp) * decay;
+
+            float3 before = target - position;
+            float3 after = target - nextPosition;
+            if (math.dot(before, after) < 0f)
+            {
+                nextPosition = target;
+                nextVelocity = float3.zero;
+            }
+
+            return new EarthArmorFlightSample(nextPosition, nextVelocity);
+        }
 
         public static EarthArmorFormationSample DirectedDome(
             int index,

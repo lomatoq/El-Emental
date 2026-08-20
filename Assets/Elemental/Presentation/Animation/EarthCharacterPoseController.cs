@@ -59,6 +59,7 @@ namespace Elemental.Presentation.Animation
         private Vector3 _target;
         private bool _authoritativeTransient;
         private bool _subscribed;
+        private int _lastArmorReleaseFrame = -1;
 
         public EarthPoseIntent CurrentIntent { get; private set; }
         public BendingPoseRequest CurrentRequest { get; private set; }
@@ -102,6 +103,19 @@ namespace Elemental.Presentation.Animation
         private void FixedUpdate()
         {
             _presentationTick++;
+            if (input != null && input.LastActionIntent.Kind == EarthActionIntentKind.ArmorRadialRelease &&
+                _lastArmorReleaseFrame != Time.frameCount)
+            {
+                _lastArmorReleaseFrame = Time.frameCount;
+                BeginAuthoritative(
+                    EarthTechniqueKind.Grip,
+                    EarthTechniqueId.ArmorBarrage,
+                    _presentationTick,
+                    transform.position + transform.forward * 3f,
+                    180f,
+                    16f);
+                return;
+            }
             UpdatePoseIntent();
         }
 
@@ -212,6 +226,50 @@ namespace Elemental.Presentation.Animation
             technique = EarthTechniqueKind.None;
             presentationTechnique = EarthTechniqueId.None;
             focus = transform.position + transform.forward * 2f;
+            if (input != null)
+            {
+                EarthActionIntentKind intent = input.LastActionIntent.Kind;
+                if (intent == EarthActionIntentKind.ArmorRadialRelease)
+                {
+                    technique = EarthTechniqueKind.Grip;
+                    presentationTechnique = EarthTechniqueId.ArmorBarrage;
+                    focus = transform.position + transform.forward * 3f;
+                    return true;
+                }
+                switch (input.ActiveActionOwner)
+                {
+                    case EarthActionOwner.Armor:
+                        technique = EarthTechniqueKind.Grip;
+                        presentationTechnique = input.ArmorPhase01 <= 0.30f
+                            ? EarthTechniqueId.Armor
+                            : input.ArmorPhase01 <= 0.78f
+                                ? EarthTechniqueId.ArmorDome
+                                : EarthTechniqueId.ArmorOrbit;
+                        focus = transform.position + transform.forward * 1.5f;
+                        return true;
+                    case EarthActionOwner.Wave:
+                        technique = EarthTechniqueKind.GroundWave;
+                        presentationTechnique = EarthTechniqueId.WebWave;
+                        focus = transform.position + transform.forward * 3f;
+                        return true;
+                    case EarthActionOwner.Resonance:
+                        technique = EarthTechniqueKind.GroundWave;
+                        presentationTechnique = EarthTechniqueId.Resonance;
+                        focus = transform.position + transform.forward * 3f;
+                        return true;
+                    case EarthActionOwner.Surf:
+                        technique = EarthTechniqueKind.Platform;
+                        presentationTechnique = EarthTechniqueId.Surf;
+                        focus = transform.position + transform.forward * 2f;
+                        return true;
+                    case EarthActionOwner.Pillar:
+                    case EarthActionOwner.LandingCushion:
+                        technique = EarthTechniqueKind.Pillar;
+                        presentationTechnique = EarthTechniqueId.PillarJump;
+                        focus = transform.position - motor.LocalUp;
+                        return true;
+                }
+            }
             if (executor != null && executor.IsRepairActive)
             {
                 technique = EarthTechniqueKind.Repair;
@@ -362,8 +420,9 @@ namespace Elemental.Presentation.Animation
                 requestLock ? CurrentIntent.PelvisCompression01 : 0f,
                 allowedPelvisDrop);
             animator.bodyPosition += up * pelvisOffset;
-            float twist = CurrentIntent.UpperBodyTwist01 * 15f;
-            animator.bodyRotation = Quaternion.AngleAxis(twist, up) * animator.bodyRotation;
+            // The upper-body AvatarMask and arm rig own aiming. Editing Mecanim's
+            // bodyRotation here also rotates the pelvis and twists both legs while
+            // the player walks with a sustained MMB/RMB technique.
         }
 
         private EarthFootPlantResult ProbeFoot(

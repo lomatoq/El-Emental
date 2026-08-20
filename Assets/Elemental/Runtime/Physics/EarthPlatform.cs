@@ -303,6 +303,8 @@ namespace Elemental.Runtime.Physics
         public bool TryPluckCell(Vector3 point, out IEarthPhysicalTarget target)
         {
             target = null;
+            if (!EarthEmergingStructureInteractionPolicy.AllowsPluck(_emergence, _fractured))
+                return false;
             if (!_fractured) BeginFracture(point, _surfaceUp, FractureImpulse * 1.05f);
             if (_pieces == null) return false;
             int best = -1;

@@ -1232,6 +1232,8 @@ namespace Elemental.Authoring.Editor
                     null,
                     isAnimationSource: true,
                     forceReimport: avatarChanged);
+
+            EarthHumanoidMotionSetup.ConfigureCuratedImporters();
         }
 
         private static bool ConfigureHumanoidImporter(
@@ -1465,6 +1467,7 @@ namespace Elemental.Authoring.Editor
                 existingTree.children = children;
                 EditorUtility.SetDirty(existingTree);
                 EditorUtility.SetDirty(controller);
+                EarthHumanoidMotionSetup.UpgradeController(controller);
                 AssetDatabase.SaveAssets();
                 return;
             }
@@ -1488,6 +1491,7 @@ namespace Elemental.Authoring.Editor
             EditorUtility.SetDirty(tree);
             EditorUtility.SetDirty(castState);
             EditorUtility.SetDirty(controller);
+            EarthHumanoidMotionSetup.UpgradeController(controller);
             AssetDatabase.SaveAssets();
         }
 

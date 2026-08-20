@@ -12,6 +12,9 @@ namespace Elemental.Runtime.Physics
         private int pieceCount = MaximumPieceCount;
         [SerializeField] private EarthArmorShellDefinition shellDefinition;
         [SerializeField, Range(0.15f, 0.6f)] private float assemblySeconds = 0.30f;
+        [SerializeField, Range(0.08f, 0.5f)] private float formationTransitionSeconds = 0.24f;
+        [SerializeField, Range(4f, 36f)] private float formationMaximumSpeed = 18f;
+        [SerializeField, Range(0.05f, 0.4f)] private float formationRotationSeconds = 0.16f;
         [SerializeField, Range(0.5f, 1.2f)] private float bodyRadius = 0.78f;
         [SerializeField, Range(0.02f, 0.22f)] private float bodySurfaceOffset = 0.028f;
         [SerializeField, Range(0.9f, 3f)] private float bodyPlateScaleMultiplier = 1.96f;
@@ -31,6 +34,9 @@ namespace Elemental.Runtime.Physics
         public EarthArmorShellDefinition ShellDefinition => shellDefinition;
         public void ConfigureShellDefinition(EarthArmorShellDefinition definition) => shellDefinition = definition;
         public float AssemblySeconds => assemblySeconds;
+        public float FormationTransitionSeconds => formationTransitionSeconds;
+        public float FormationMaximumSpeed => formationMaximumSpeed;
+        public float FormationRotationSeconds => formationRotationSeconds;
         public float BodyRadius => bodyRadius;
         public float BodySurfaceOffset => bodySurfaceOffset;
         public float BodyPlateScaleMultiplier => bodyPlateScaleMultiplier;
