@@ -1,4 +1,5 @@
 using System;
+using Elemental.Simulation.Bending;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -51,10 +52,47 @@ namespace Elemental.Input.Actions
         public bool BendFieldReleased => _bendField?.WasReleasedThisFrame() == true;
         public bool BendFieldHeld => _bendField?.IsPressed() == true;
         public bool BendModifierHeld => _bendModifier?.IsPressed() == true;
+        public bool JumpPressed => _jumpOrStomp?.WasPressedThisFrame() == true;
+        public bool JumpReleased => _jumpOrStomp?.WasReleasedThisFrame() == true;
+        public bool JumpHeld => _jumpOrStomp?.IsPressed() == true;
         public bool CancelPressed => _cancel?.WasPressedThisFrame() == true;
         public bool ShoulderSwapPressed => _shoulderSwap?.WasPressedThisFrame() == true;
         public bool ElementFirePressed => _elementFire?.WasPressedThisFrame() == true;
         public bool ElementWaterPressed => _elementWater?.WasPressedThisFrame() == true;
+
+        public EarthGestureFrame CaptureEarthGestureFrame(
+            bool grounded,
+            bool descending,
+            bool landingWaveArmed,
+            bool pointerOverEarthTarget,
+            bool hasControlledTarget,
+            bool hasPrimedQuickStone,
+            bool hasRepairTarget,
+            float primaryHeldSeconds,
+            float pointerTravelViewport)
+        {
+            Vector2 move = Move;
+            return new EarthGestureFrame(
+                CancelPressed,
+                false,
+                grounded,
+                descending,
+                move.magnitude,
+                BendModifierHeld,
+                _jumpOrStomp?.WasPressedThisFrame() == true,
+                landingWaveArmed,
+                BendPrimaryPressed,
+                BendPrimaryHeld,
+                BendPrimaryReleased,
+                primaryHeldSeconds,
+                pointerTravelViewport,
+                BendForceHeld,
+                BendFieldHeld,
+                pointerOverEarthTarget,
+                hasControlledTarget,
+                hasPrimedQuickStone,
+                hasRepairTarget);
+        }
 
         public void Configure(PlayerInput configuredPlayerInput)
         {

@@ -1,6 +1,7 @@
 using System;
 using Elemental.Runtime.Physics;
 using Elemental.Simulation.Bending;
+using Elemental.Simulation.Matter;
 using UnityEngine;
 
 namespace Elemental.Runtime.Characters
@@ -24,6 +25,7 @@ namespace Elemental.Runtime.Characters
             (Time.unscaledTime - _powerStartedAt) /
             (profile != null ? profile.FullPowerChargeSeconds : 1.1f));
         public int LastColumnCount { get; private set; }
+        public EarthMatterId PrimaryMatterId => wavePool != null ? wavePool.PrimaryMatterId : default;
         public EarthTechniqueRejectReason LastRejection { get; private set; }
 
         public void Configure(

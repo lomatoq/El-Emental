@@ -119,8 +119,9 @@ namespace Elemental.Tests.EditMode
 
             Assert.That(asset, Is.Not.Null);
             Assert.That(asset.SchemaVersion, Is.EqualTo(EarthFractureAsset.CurrentSchemaVersion));
-            Assert.That(asset.PieceCount, Is.EqualTo(43));
+            Assert.That(asset.PieceCount, Is.EqualTo(40));
             Assert.That(EarthFractureValidator.Validate(asset).IsValid, Is.True);
+            var physicalAspects = new float[asset.PieceCount];
             for (int pieceIndex = 0; pieceIndex < asset.PieceCount; pieceIndex++)
             {
                 Mesh render = asset.GetPieceRenderMesh(pieceIndex);
@@ -128,6 +129,11 @@ namespace Elemental.Tests.EditMode
                 Assert.That(render, Is.Not.SameAs(collider));
                 Assert.That(render.subMeshCount, Is.EqualTo(2));
                 Assert.That(collider.vertexCount, Is.LessThanOrEqualTo(255));
+                Assert.That(collider.bounds.size.z, Is.GreaterThan(0.035f),
+                    $"Piece {pieceIndex} collapsed to a zero-volume depth sheet.");
+                Vector3 physicalSize = Vector3.Scale(collider.bounds.size, new Vector3(8f, 4f, 0.55f));
+                float smallest = Mathf.Max(0.001f, Mathf.Min(physicalSize.x, physicalSize.y, physicalSize.z));
+                physicalAspects[pieceIndex] = Mathf.Max(physicalSize.x, physicalSize.y, physicalSize.z) / smallest;
                 Assert.That(render.colors32, Has.Length.EqualTo(render.vertexCount));
 
                 bool hasExterior = false;
@@ -140,6 +146,9 @@ namespace Elemental.Tests.EditMode
                 Assert.That(hasExterior, Is.True, $"Piece {pieceIndex} is missing exterior classification.");
                 Assert.That(hasInterior, Is.True, $"Piece {pieceIndex} is missing interior classification.");
             }
+            System.Array.Sort(physicalAspects);
+            Assert.That(physicalAspects[physicalAspects.Length / 2], Is.LessThanOrEqualTo(3.5f));
+            Assert.That(physicalAspects[physicalAspects.Length - 1], Is.LessThanOrEqualTo(6f));
         }
 
         private sealed class MaterialScope : System.IDisposable

@@ -1,5 +1,6 @@
 using System;
 using Elemental.Simulation.Bending;
+using Elemental.Simulation.Matter;
 using Unity.Mathematics;
 
 namespace Elemental.Simulation.Characters
@@ -24,6 +25,106 @@ namespace Elemental.Simulation.Characters
         Stomp = 4,
         Wave = 5,
         Repair = 6
+    }
+
+    public enum EarthBendingDialect : byte
+    {
+        CompactTactile = 0,
+        RootedPower = 1
+    }
+
+    /// <summary>
+    /// Canonical presentation request. Gameplay describes physical intent; the
+    /// choreography layer remains free to choose clips, rig offsets and pose holds.
+    /// </summary>
+    public readonly struct BendingPoseRequest
+    {
+        public BendingPoseRequest(
+            EarthTechniqueId technique,
+            EarthCastPhase phase,
+            float3 actionAxis,
+            float3 localUp,
+            float controlledMass,
+            float effort01,
+            float grounding01,
+            float precision01,
+            bool leftDominant,
+            EarthMatterId focusMatter)
+        {
+            Technique = technique;
+            Phase = phase;
+            LocalUp = math.normalizesafe(localUp, new float3(0f, 1f, 0f));
+            ActionAxis = math.normalizesafe(
+                actionAxis - LocalUp * math.dot(actionAxis, LocalUp),
+                new float3(0f, 0f, 1f));
+            ControlledMass = math.max(0f, controlledMass);
+            Effort01 = math.saturate(effort01);
+            Grounding01 = math.saturate(grounding01);
+            Precision01 = math.saturate(precision01);
+            LeftDominant = leftDominant;
+            FocusMatter = focusMatter;
+        }
+
+        public EarthTechniqueId Technique { get; }
+        public EarthCastPhase Phase { get; }
+        public float3 ActionAxis { get; }
+        public float3 LocalUp { get; }
+        public float ControlledMass { get; }
+        public float Effort01 { get; }
+        public float Grounding01 { get; }
+        public float Precision01 { get; }
+        public bool LeftDominant { get; }
+        public EarthMatterId FocusMatter { get; }
+        public bool IsActive => Technique != EarthTechniqueId.None && Phase != EarthCastPhase.Idle;
+    }
+
+    public readonly struct EarthChoreographySample
+    {
+        public EarthChoreographySample(
+            EarthBendingDialect dialect,
+            float pelvisCompression01,
+            float stanceWidth01,
+            float upperBodyWeight01,
+            float poseHoldSeconds)
+        {
+            Dialect = dialect;
+            PelvisCompression01 = math.saturate(pelvisCompression01);
+            StanceWidth01 = math.saturate(stanceWidth01);
+            UpperBodyWeight01 = math.saturate(upperBodyWeight01);
+            PoseHoldSeconds = math.clamp(poseHoldSeconds, 0f, 0.08f);
+        }
+
+        public EarthBendingDialect Dialect { get; }
+        public float PelvisCompression01 { get; }
+        public float StanceWidth01 { get; }
+        public float UpperBodyWeight01 { get; }
+        public float PoseHoldSeconds { get; }
+    }
+
+    public static class EarthChoreographySolver
+    {
+        public static EarthChoreographySample Solve(in BendingPoseRequest request)
+        {
+            EarthBendingDialect dialect = IsRooted(request.Technique)
+                ? EarthBendingDialect.RootedPower
+                : EarthBendingDialect.CompactTactile;
+            float rooted = dialect == EarthBendingDialect.RootedPower ? 1f : 0.42f;
+            float commit = request.Phase == EarthCastPhase.Strike ? 1f : 0f;
+            float mass01 = 1f - math.exp(-request.ControlledMass / 220f);
+            float load = math.saturate(request.Effort01 * 0.58f + mass01 * 0.42f);
+            return new EarthChoreographySample(
+                dialect,
+                request.Grounding01 * rooted * load,
+                request.Grounding01 * math.lerp(0.28f, 1f, rooted) * load,
+                math.saturate(math.lerp(0.72f, 1f, request.Precision01) * request.Effort01),
+                commit * math.lerp(0.025f, 0.078f, load));
+        }
+
+        private static bool IsRooted(EarthTechniqueId technique) => technique is
+            EarthTechniqueId.RaiseWall or EarthTechniqueId.RaisePlatform or
+            EarthTechniqueId.PillarJump or EarthTechniqueId.WebWave or
+            EarthTechniqueId.Armor or EarthTechniqueId.Repair or
+            EarthTechniqueId.WallSlide or EarthTechniqueId.FractureFan;
     }
 
     [Serializable]
@@ -216,10 +317,12 @@ namespace Elemental.Simulation.Characters
         {
             if (!grounded || !hasGround)
                 return new EarthFootPlantResult(animatedPosition, localUp, 0f, false);
+            if (!requestLock)
+                return new EarthFootPlantResult(animatedPosition, groundNormal, 0f, false);
             float3 planted = groundPoint + math.normalizesafe(groundNormal, localUp) * math.max(0f, soleOffset);
             bool locked = requestLock;
             if (requestLock && wasLocked) planted = previousLockPosition;
-            return new EarthFootPlantResult(planted, groundNormal, requestLock ? 1f : 0.72f, locked);
+            return new EarthFootPlantResult(planted, groundNormal, 1f, locked);
         }
     }
 

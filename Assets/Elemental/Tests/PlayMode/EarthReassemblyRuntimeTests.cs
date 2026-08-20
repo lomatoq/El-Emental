@@ -43,7 +43,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(wall.IsCollapsing, Is.False);
             Assert.That(wall.StructureRuntime.State.Phase, Is.EqualTo(EarthStructurePhase.Rebuilt));
             Assert.That(wall.ActiveFracturePieceCount, Is.Zero);
-            Assert.That(wall.GetComponent<MeshRenderer>().enabled, Is.True);
+            Assert.That(wall.VisualEmergenceRoot.GetComponent<MeshRenderer>().enabled, Is.True);
             Assert.That(wall.GetComponent<BoxCollider>().enabled, Is.True);
             Assert.That(repairedBonds, Is.EqualTo(wall.StructureRuntime.BondCount));
             Assert.That(rebuiltEvents, Is.EqualTo(1));
@@ -87,7 +87,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(repair.WeldedPieceCount, Is.EqualTo(targetCount - 1));
             Assert.That(wall.IsCollapsing, Is.True);
             Assert.That(wall.StructureRuntime.State.Phase, Is.EqualTo(EarthStructurePhase.Fractured));
-            Assert.That(wall.GetComponent<MeshRenderer>().enabled, Is.False);
+            Assert.That(wall.VisualEmergenceRoot.GetComponent<MeshRenderer>().enabled, Is.False);
             Assert.That(missing.gameObject.activeSelf, Is.False, "Repair must not invent missing mass.");
 
             yield return SceneManager.UnloadSceneAsync(scene);
@@ -130,6 +130,55 @@ namespace Elemental.Tests.PlayMode
             }
             Assert.That(foundDynamic, Is.True);
 
+            yield return SceneManager.UnloadSceneAsync(scene);
+        }
+
+        [UnityTest]
+        public IEnumerator CircularPhaseRepairsOnlyRequestedFractionUntilGestureContinues()
+        {
+            yield return SceneManager.LoadSceneAsync(ScenePath, LoadSceneMode.Additive);
+            Scene scene = SceneManager.GetSceneByPath(ScenePath);
+            EarthWall wall = SpawnFracturedWall(scene, 840u);
+            yield return new WaitForSeconds(0.75f);
+            wall.ApplyRockImpact(wall.transform.position, wall.transform.forward, 6000f);
+            yield return new WaitForFixedUpdate();
+
+            EarthReassemblyController repair = wall.Reassembly;
+            Assert.That(repair.TryBeginRepair(940u, 0.25f), Is.True);
+            Assert.That(repair.TargetPieceCount, Is.GreaterThan(0));
+            Assert.That(repair.TargetPieceCount, Is.LessThan(repair.SelectedPieceCount));
+            int initialTarget = repair.TargetPieceCount;
+            Assert.That(repair.SetTargetProgress(0.50f, 941u), Is.True);
+            Assert.That(repair.TargetPieceCount, Is.GreaterThan(initialTarget));
+            Assert.That(repair.TargetPieceCount, Is.LessThan(repair.SelectedPieceCount));
+            Assert.That(repair.IsRepairing, Is.True);
+            Assert.That(wall.IsCollapsing, Is.True);
+
+            repair.Interrupt(EarthRepairInterruptReason.Released, 942u);
+            Assert.That(repair.IsRepairing, Is.False);
+            Assert.That(wall.IsCollapsing, Is.True);
+            yield return SceneManager.UnloadSceneAsync(scene);
+        }
+
+        [UnityTest]
+        public IEnumerator CounterClockwisePhaseBreaksDeterministicFractionOfWallBonds()
+        {
+            yield return SceneManager.LoadSceneAsync(ScenePath, LoadSceneMode.Additive);
+            Scene scene = SceneManager.GetSceneByPath(ScenePath);
+            EarthWall wall = SpawnFracturedWall(scene, 850u);
+            yield return new WaitForSeconds(0.75f);
+            int totalBonds = wall.StructureRuntime.BondCount;
+
+            Assert.That(wall.SetMagicDisassemblyProgress(
+                0.25f, wall.transform.position, wall.transform.forward), Is.True);
+            yield return new WaitForFixedUpdate();
+            int quarterRemaining = wall.RemainingBondCount;
+            Assert.That(quarterRemaining, Is.GreaterThan(0));
+            Assert.That(quarterRemaining, Is.LessThan(totalBonds));
+
+            wall.SetMagicDisassemblyProgress(1f, wall.transform.position, wall.transform.forward);
+            yield return new WaitForFixedUpdate();
+            Assert.That(wall.RemainingBondCount, Is.Zero);
             yield return SceneManager.UnloadSceneAsync(scene);
         }
 

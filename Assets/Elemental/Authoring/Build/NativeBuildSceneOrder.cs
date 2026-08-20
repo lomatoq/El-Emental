@@ -30,6 +30,9 @@ namespace Elemental.Authoring.Build
             for (int index = 0; index < enabledScenes.Count; index++)
             {
                 string scene = enabledScenes[index];
+                if (scene.EndsWith("/EarthPolishLab.unity", StringComparison.OrdinalIgnoreCase) ||
+                    scene.EndsWith("\\EarthPolishLab.unity", StringComparison.OrdinalIgnoreCase))
+                    continue;
                 if (!string.Equals(scene, playableStartupScene, StringComparison.Ordinal))
                     ordered.Add(scene);
             }

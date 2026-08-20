@@ -76,8 +76,28 @@ namespace Elemental.Presentation.UI
         {
             if (input != null && _ability != null)
             {
-                _ability.text = input.IsGravityWellActive
-                    ? $"GRAVITY GRIP / {input.GravityWellStrength * 100f:0}%"
+                _ability.text = input.ActiveActionOwner == EarthActionOwner.Resonance || input.IsResonanceVolleyActive
+                    ? input.IsResonanceVolleyActive
+                        ? $"RESONANCE VOLLEY / {input.ResonanceStoneCount} STONES"
+                        : $"RESONANCE / {input.ResonanceCharge01 * 100f:0}%"
+                    : input.ActiveActionOwner == EarthActionOwner.Wave
+                        ? "WEB WAVE / CHARGING"
+                    : input.ActiveActionOwner == EarthActionOwner.Surf
+                        ? $"EARTH PLOUGH / {input.SurfSpeed:0.0} M/S"
+                    : input.IsArmorActive
+                    ? input.ArmorPhase01 < 0.3f
+                        ? $"EARTH ARMOR / {input.ArmorPhase01 * 100f:0}%"
+                        : input.ArmorPhase01 < 0.78f
+                            ? $"ARMOR DOME / {input.ArmorPhase01 * 100f:0}%"
+                            : $"ARMOR ORBIT / {input.ArmorPhase01 * 100f:0}%"
+                    : input.IsQuickStonePrimed
+                    ? $"QUICK STONE / {input.QuickStonePrime01 * 100f:0}%"
+                    : input.IsGravityWellActive
+                    ? input.GravityGestureDirection == EarthCircularGestureDirection.Clockwise
+                        ? $"REWEAVE CW / {input.GravityGesturePhase01 * 100f:0}%"
+                        : input.GravityGestureDirection == EarthCircularGestureDirection.CounterClockwise
+                            ? $"UNWEAVE CCW / {input.GravityGesturePhase01 * 100f:0}%"
+                            : $"GRAVITY GRIP / {input.GravityWellStrength * 100f:0}%"
                     : input.IsVectorFieldActive
                     ? $"VECTOR FIELD / {executor.VectorFieldCharge * 100f:0}%"
                     : input.SelectedAbility == EarthAbilityIds.RaisePlatform
@@ -108,11 +128,21 @@ namespace Elemental.Presentation.UI
                     landingCushion != null && landingCushion.IsHolding ? 100f : 0f);
             if (_gravityFill != null)
                 _gravityFill.style.width = Length.Percent(
-                    input != null ? input.GravityWellStrength * 100f : 0f);
+                    input != null
+                        ? input.IsArmorActive
+                            ? input.ArmorPhase01 * 100f
+                            : input.IsQuickStonePrimed
+                                ? input.QuickStonePrime01 * 100f
+                                : (input.GravityGestureDirection != EarthCircularGestureDirection.None
+                                    ? input.GravityGesturePhase01
+                                    : input.GravityWellStrength) * 100f
+                        : 0f);
             if (executor != null && _mass != null)
             {
                 float mass = executor.HeldMass > 0.01f ? executor.HeldMass : executor.VectorFieldMass;
                 if (mass > 0.01f) _mass.text = $"{mass:0} KG HELD";
+                else if (input != null && input.IsResonanceVolleyActive)
+                    _mass.text = $"{input.ResonanceStoneCount} RESONANT STONES";
                 else if (_previewActive && input != null && input.SelectedAbility == EarthAbilityIds.PullRock &&
                          executor.TryGetPreviewMetrics(EarthAbilityIds.PullRock, out MagicPreviewMetrics metrics))
                     _mass.text = $"~{metrics.EstimatedMass:0} KG SELECTED";

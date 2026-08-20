@@ -18,7 +18,32 @@ ModelImporter:
     removeConstantScaleCurves: 0
     motionNodeName: 
     animationImportErrors: 
-    animationImportWarnings: 
+    animationImportWarnings: "\nClip 'Crawling' has import animation warnings that
+      might lower retargeting quality:\n\t'chest' is inbetween humanoid transforms
+      and has rotation animation that will be discarded.\n\nClip 'Crouching' has
+      import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Dodge_Backward' has import animation warnings that might lower retargeting
+      quality:\n\t'chest' is inbetween humanoid transforms and has rotation animation
+      that will be discarded.\n\nClip 'Dodge_Forward' has import animation warnings
+      that might lower retargeting quality:\n\t'chest' is inbetween humanoid transforms
+      and has rotation animation that will be discarded.\n\nClip 'Dodge_Left' has
+      import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Dodge_Right' has import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Running_HoldingBow' has import animation warnings that might lower retargeting
+      quality:\n\t'chest' is inbetween humanoid transforms and has rotation animation
+      that will be discarded.\n\nClip 'Running_Strafe_Left' has import animation
+      warnings that might lower retargeting quality:\n\t'chest' is inbetween humanoid
+      transforms and has rotation animation that will be discarded.\n\nClip 'Running_Strafe_Right'
+      has import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Sneaking' has import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Walking_Backwards' has import animation warnings that might lower retargeting
+      quality:\n\t'chest' is inbetween humanoid transforms and has rotation animation
+      that will be discarded.\n"
     animationRetargetingWarnings: 
     animationDoRetargetingWarnings: 0
     importAnimatedCustomProperties: 0
@@ -30,7 +55,384 @@ ModelImporter:
     animationWrapMode: 0
     extraExposedTransformPaths: []
     extraUserProperties: []
-    clipAnimations: []
+    clipAnimations:
+    - serializedVersion: 16
+      name: T-Pose
+      takeName: T-Pose
+      internalID: -8312538846858333772
+      firstFrame: 0
+      lastFrame: 1
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Crawling
+      takeName: Crawling
+      internalID: -8582564530929982758
+      firstFrame: 0
+      lastFrame: 32
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Crouching
+      takeName: Crouching
+      internalID: 5147928276633869896
+      firstFrame: 0
+      lastFrame: 32
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Dodge_Backward
+      takeName: Dodge_Backward
+      internalID: 650242174318006946
+      firstFrame: 0
+      lastFrame: 12
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Dodge_Forward
+      takeName: Dodge_Forward
+      internalID: -3851722262833059593
+      firstFrame: 0
+      lastFrame: 12
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Dodge_Left
+      takeName: Dodge_Left
+      internalID: -8338831036711338807
+      firstFrame: 0
+      lastFrame: 12
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Dodge_Right
+      takeName: Dodge_Right
+      internalID: 2188323905074769703
+      firstFrame: 0
+      lastFrame: 12
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Running_HoldingBow
+      takeName: Running_HoldingBow
+      internalID: -8238821394337881913
+      firstFrame: 0
+      lastFrame: 24
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Running_HoldingRifle
+      takeName: Running_HoldingRifle
+      internalID: 8109067013064585702
+      firstFrame: 0
+      lastFrame: 24
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Running_Strafe_Left
+      takeName: Running_Strafe_Left
+      internalID: -1640272175068026219
+      firstFrame: 0
+      lastFrame: 24
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Running_Strafe_Right
+      takeName: Running_Strafe_Right
+      internalID: -6877218540166537120
+      firstFrame: 0
+      lastFrame: 24
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Sneaking
+      takeName: Sneaking
+      internalID: -2142295610736234269
+      firstFrame: 0
+      lastFrame: 64
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Walking_Backwards
+      takeName: Walking_Backwards
+      internalID: -6411013857362534180
+      firstFrame: 0
+      lastFrame: 32
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
     isReadable: 0
   meshes:
     lODScreenPercentages: []
@@ -224,53 +626,58 @@ ModelImporter:
         length: 0
         modified: 0
     skeleton:
-    - name: Mage(Clone)
+    - name: Knight(Clone)
       parentName: 
       position: {x: 0, y: 0, z: 0}
       rotation: {x: 0, y: 0, z: 0, w: 1}
       scale: {x: 1, y: 1, z: 1}
-    - name: Mage_LegLeft
-      parentName: Mage(Clone)
+    - name: Knight_Head
+      parentName: Knight(Clone)
+      position: {x: -0, y: 1.2158912, z: -0.0000001406604}
+      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Knight_Helmet
+      parentName: Knight(Clone)
+      position: {x: -0, y: 1.2158912, z: -0.0000001406604}
+      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Knight_HelmetVisor
+      parentName: Knight(Clone)
+      position: {x: -0, y: 1.7451358, z: 0.00058345794}
+      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Knight_Body
+      parentName: Knight(Clone)
       position: {x: -0, y: 0, z: 0}
       rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
       scale: {x: 1, y: 1, z: 1}
-    - name: Mage_ArmLeft
-      parentName: Mage(Clone)
+    - name: Knight_ArmLeft
+      parentName: Knight(Clone)
       position: {x: -0, y: 0, z: 0}
       rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
       scale: {x: 1, y: 1, z: 1}
-    - name: Mage_ArmRight
-      parentName: Mage(Clone)
+    - name: Knight_LegLeft
+      parentName: Knight(Clone)
+      position: {x: -0.0000032901762, y: 0, z: 0}
+      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Knight_LegRight
+      parentName: Knight(Clone)
+      position: {x: -0.0000032901762, y: 0, z: 0}
+      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Knight_ArmRight
+      parentName: Knight(Clone)
       position: {x: -0, y: 0, z: 0}
       rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
       scale: {x: 1, y: 1, z: 1}
-    - name: Mage_Cape
-      parentName: Mage(Clone)
-      position: {x: -0, y: 1.2158737, z: -0.000000102332564}
-      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
-      scale: {x: 1, y: 1, z: 1}
-    - name: Mage_Head
-      parentName: Mage(Clone)
-      position: {x: -0, y: 1.2158737, z: -0.000000102332564}
-      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
-      scale: {x: 1, y: 1, z: 1}
-    - name: Mage_LegRight
-      parentName: Mage(Clone)
-      position: {x: -0, y: 0, z: 0}
-      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
-      scale: {x: 1, y: 1, z: 1}
-    - name: Mage_Hat
-      parentName: Mage(Clone)
-      position: {x: -0, y: 1.2158737, z: -0.00000054856537}
-      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
-      scale: {x: 1, y: 1, z: 1}
-    - name: Mage_Body
-      parentName: Mage(Clone)
-      position: {x: -0, y: 0, z: 0}
+    - name: Knight_Cape
+      parentName: Knight(Clone)
+      position: {x: -0, y: 1.2158912, z: -0.0000001406604}
       rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
       scale: {x: 1, y: 1, z: 1}
     - name: Rig_Medium
-      parentName: Mage(Clone)
+      parentName: Knight(Clone)
       position: {x: -0, y: 0, z: 0}
       rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
       scale: {x: 1, y: 1, z: 1}
@@ -398,10 +805,10 @@ ModelImporter:
     feetSpacing: 0
     globalScale: 1
     rootMotionBoneName: 
-    hasTranslationDoF: 0
+    hasTranslationDoF: 1
     hasExtraRoot: 0
     skeletonHasParents: 1
-  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 71f40971a6aa5bc4e8beb5d9ee638073, type: 3}
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 5a6e4461de12da44d842c72bcacba25e, type: 3}
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 3
   humanoidOversampling: 1

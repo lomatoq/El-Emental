@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &950621655
+--- !u!1 &30085243
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,9 +127,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 950621658}
-  - component: {fileID: 950621657}
-  - component: {fileID: 950621656}
+  - component: {fileID: 30085246}
+  - component: {fileID: 30085245}
+  - component: {fileID: 30085244}
   m_Layer: 0
   m_Name: Bootstrap Camera
   m_TagString: MainCamera
@@ -137,13 +137,13 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &950621656
+--- !u!114 &30085244
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 950621655}
+  m_GameObject: {fileID: 30085243}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
@@ -181,13 +181,13 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
---- !u!20 &950621657
+--- !u!20 &30085245
 Camera:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 950621655}
+  m_GameObject: {fileID: 30085243}
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
@@ -232,13 +232,13 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!4 &950621658
+--- !u!4 &30085246
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 950621655}
+  m_GameObject: {fileID: 30085243}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -247,7 +247,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2106191824
+--- !u!1 &1742254519
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -255,8 +255,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2106191826}
-  - component: {fileID: 2106191825}
+  - component: {fileID: 1742254521}
+  - component: {fileID: 1742254520}
   m_Layer: 0
   m_Name: Elemental World Bootstrap
   m_TagString: Untagged
@@ -264,26 +264,26 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2106191825
+--- !u!114 &1742254520
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2106191824}
+  m_GameObject: {fileID: 1742254519}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8abaab532bfe89f4ead4d83acdc599e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Bootstrap.WorldBootstrap
   physicsTickRate: 60
---- !u!4 &2106191826
+--- !u!4 &1742254521
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2106191824}
+  m_GameObject: {fileID: 1742254519}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -296,5 +296,5 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 2106191826}
-  - {fileID: 950621658}
+  - {fileID: 1742254521}
+  - {fileID: 30085246}

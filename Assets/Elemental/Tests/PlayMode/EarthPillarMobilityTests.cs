@@ -48,7 +48,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(raised.Height, Is.GreaterThan(1.5f));
             Assert.That(pillarVisible, Is.True);
             Assert.That(Vector3.Dot(body.position - startPosition, motor.LocalUp), Is.GreaterThan(0.35f));
-            Assert.That(Vector3.Dot(body.linearVelocity, motor.LocalUp), Is.GreaterThan(4f));
+            Assert.That(Vector3.Dot(body.linearVelocity, motor.LocalUp), Is.GreaterThan(8f));
             Assert.That(feedback, Is.Not.Null);
 
             yield return SceneManager.UnloadSceneAsync(scene);
@@ -89,8 +89,8 @@ namespace Elemental.Tests.PlayMode
             Assert.That(Vector3.Angle(initialHeading, cameraRig.TangentForward), Is.GreaterThan(30f));
             Assert.That(Vector3.Distance(initialCameraPosition, cameraRig.transform.position), Is.GreaterThan(1f));
             Assert.That(Vector3.Dot(actual, desired), Is.GreaterThan(0.88f));
-            Assert.That(cameraHeight, Is.InRange(1.6f, 3.2f),
-                "The Earth MVP camera should stay close enough to read the caster's body.");
+            Assert.That(cameraHeight, Is.InRange(3.4f, 5.2f),
+                "Camera V2 should keep an elevated three-quarter view that reveals ground techniques.");
             Assert.That(focusAhead, Is.GreaterThan(2.4f));
 
             yield return SceneManager.UnloadSceneAsync(scene);

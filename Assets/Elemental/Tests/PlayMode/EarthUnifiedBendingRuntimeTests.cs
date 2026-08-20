@@ -120,6 +120,34 @@ namespace Elemental.Tests.PlayMode
             yield return SceneManager.UnloadSceneAsync(scene);
         }
 
+        [UnityTest]
+        public IEnumerator TwoQuickTapsExtractAndLaunchARealStoneOnTheNextPhysicsSteps()
+        {
+            const string scenePath = "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
+            yield return SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
+            Scene scene = SceneManager.GetSceneByPath(scenePath);
+            MagicInputController input = FindInScene<MagicInputController>(scene);
+            MagicExecutor executor = FindInScene<MagicExecutor>(scene);
+            Camera camera = FindInScene<Camera>(scene);
+            Collider proxy = FindByName(scene, "Planet Collision Proxy")?.GetComponent<Collider>();
+            Physics.SyncTransforms();
+            Assert.That(TryFindSurfacePoint(camera, proxy, out float2 screenPoint, out _), Is.True);
+
+            Assert.That(input.TryQuickStoneTapAtScreenPoint(screenPoint), Is.True);
+            EarthFragment primed = executor.HeldFragment;
+            Assert.That(primed, Is.Not.Null);
+            Assert.That(input.IsQuickStonePrimed, Is.True);
+            Assert.That(input.TryQuickStoneTapAtScreenPoint(screenPoint), Is.True,
+                "The second click must buffer even while the stone is still emerging.");
+            for (int tick = 0; tick < 12; tick++) yield return new WaitForFixedUpdate();
+
+            Assert.That(input.IsQuickStonePrimed, Is.False);
+            Assert.That(executor.HeldFragment, Is.Null);
+            Assert.That(primed.Body.linearVelocity.magnitude, Is.InRange(29.5f, 38.5f));
+            Assert.That(primed.IsHeld, Is.False);
+            yield return SceneManager.UnloadSceneAsync(scene);
+        }
+
         private static bool TryFindSurfacePoint(
             Camera camera,
             Collider proxy,

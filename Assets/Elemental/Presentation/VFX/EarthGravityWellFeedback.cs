@@ -1,5 +1,6 @@
 using Elemental.Presentation.Camera;
 using Elemental.Runtime.World;
+using Elemental.Simulation.Bending;
 using UnityEngine;
 
 namespace Elemental.Presentation.VFX
@@ -47,14 +48,27 @@ namespace Elemental.Presentation.VFX
             Vector3 up = focus - center;
             up = up.sqrMagnitude > 0.01f ? up.normalized : Vector3.up;
             ringRoot.SetPositionAndRotation(focus, Quaternion.FromToRotation(Vector3.up, up));
-            float strength = executor.GravityWellStrength;
+            EarthGravityStructureIntent intent = executor.GravityStructureIntent;
+            float strength = intent == EarthGravityStructureIntent.Neutral
+                ? executor.GravityWellStrength
+                : executor.GravityStructurePhase;
+            float rotationSign = intent == EarthGravityStructureIntent.Disassemble ? -1f : 1f;
+            Color gestureColor = intent == EarthGravityStructureIntent.Repair
+                ? new Color(0.28f, 1f, 0.72f, 0.92f)
+                : intent == EarthGravityStructureIntent.Disassemble
+                    ? new Color(1f, 0.30f, 0.18f, 0.92f)
+                    : new Color(0.78f, 0.58f, 0.24f, 0.88f);
             for (int index = 0; index < rings.Length; index++)
             {
                 float phase = Time.unscaledTime * (1.6f + (index * 0.31f)) + index * 1.9f;
                 float radius = Mathf.Lerp(0.48f + (index * 0.34f),
                     1.05f + (index * 0.62f), strength) * (1f + Mathf.Sin(phase) * 0.055f);
                 rings[index].transform.localScale = Vector3.one * radius;
-                rings[index].transform.localRotation = Quaternion.Euler(0f, phase * Mathf.Rad2Deg, 0f);
+                rings[index].transform.localRotation = Quaternion.Euler(
+                    0f, phase * Mathf.Rad2Deg * rotationSign, 0f);
+                rings[index].startColor = gestureColor;
+                rings[index].endColor = new Color(
+                    gestureColor.r, gestureColor.g, gestureColor.b, gestureColor.a * 0.18f);
             }
             if (focusLight != null)
             {

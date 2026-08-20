@@ -9,6 +9,7 @@ namespace Elemental.Runtime.Physics
         Vector3 SurfaceVelocity { get; }
         Vector3 SurfaceUp { get; }
         bool IsEmerging { get; }
+        SupportFrameSnapshot SupportFrame { get; }
         MovingSupportSnapshot Snapshot { get; }
     }
 }

@@ -11,6 +11,7 @@ namespace Elemental.Presentation.Rendering
     {
         [SerializeField] private CelestialSystemProfile profile;
         [SerializeField] private AtmosphereProfile atmosphereProfile;
+        [SerializeField] private EarthSkyProfile skyProfile;
         [SerializeField] private Transform planet;
         [SerializeField] private UnityEngine.Camera targetCamera;
         [SerializeField] private Light sunLight;
@@ -24,10 +25,10 @@ namespace Elemental.Presentation.Rendering
         private MaterialPropertyBlock _atmosphereProperties;
         private bool _qaDawnShowcase;
         private bool _qaNightShowcase;
-        private Material _runtimeStarSkybox;
+        private EarthSkyController _skyController;
 
         public CelestialSnapshot Snapshot { get; private set; }
-        public Material StarSkybox => _runtimeStarSkybox != null ? _runtimeStarSkybox : starSkybox;
+        public Material StarSkybox => _skyController != null ? _skyController.RuntimeSkybox : starSkybox;
 
         public void SetTimeOfDayForQa(float timeOfDay01)
         {
@@ -41,6 +42,7 @@ namespace Elemental.Presentation.Rendering
         public void Configure(
             CelestialSystemProfile configuredProfile,
             AtmosphereProfile configuredAtmosphere,
+            EarthSkyProfile configuredSky,
             Transform planetTransform,
             UnityEngine.Camera camera,
             Light directionalLight,
@@ -52,6 +54,7 @@ namespace Elemental.Presentation.Rendering
         {
             profile = configuredProfile;
             atmosphereProfile = configuredAtmosphere;
+            skyProfile = configuredSky;
             planet = planetTransform;
             targetCamera = camera;
             sunLight = directionalLight;
@@ -60,21 +63,19 @@ namespace Elemental.Presentation.Rendering
             distantPlanet = visibleDistantPlanet;
             atmosphereShell = shell;
             starSkybox = skybox;
+            _skyController = GetComponent<EarthSkyController>();
+            _skyController?.Configure(skyProfile, targetCamera, starSkybox);
             ApplyStaticAtmosphere();
         }
 
         private void Awake()
         {
             if (targetCamera == null) targetCamera = UnityEngine.Camera.main;
-            if (starSkybox != null)
-            {
-                _runtimeStarSkybox = new Material(starSkybox)
-                {
-                    name = starSkybox.name + " (Runtime)"
-                };
-                RenderSettings.skybox = _runtimeStarSkybox;
-            }
-            if (targetCamera != null && starSkybox != null) targetCamera.clearFlags = CameraClearFlags.Skybox;
+            _skyController = GetComponent<EarthSkyController>();
+            if (_skyController == null)
+                Debug.LogError("[Elemental] Celestial system requires an authored EarthSkyController.", this);
+            else
+                _skyController.Configure(skyProfile, targetCamera, starSkybox);
             ApplyStaticAtmosphere();
         }
 
@@ -130,12 +131,7 @@ namespace Elemental.Presentation.Rendering
                 sunLight.intensity = Mathf.Lerp(profile.MoonlightIntensity, profile.DaylightIntensity, daylight);
             }
             RenderSettings.ambientLight = Color.Lerp(profile.NightAmbient, profile.DayColor * 0.34f, 1f - Snapshot.Night01);
-            Material activeSkybox = StarSkybox;
-            if (activeSkybox != null)
-            {
-                activeSkybox.SetFloat("_Rotation", Snapshot.Orbit01 * 360f);
-                activeSkybox.SetFloat("_Exposure", Mathf.Lerp(1.25f, 0.32f, 1f - Snapshot.Night01));
-            }
+            _skyController?.Apply(Snapshot, sunDirection);
             Shader.SetGlobalVector("_ElementalSunDirection", new Vector4(sunDirection.x, sunDirection.y, sunDirection.z, 0f));
             float radius = ResolvePlanetRadius();
             Shader.SetGlobalVector("_ElementalPlanetCenterRadius", new Vector4(
@@ -151,14 +147,6 @@ namespace Elemental.Presentation.Rendering
                 Shader.SetGlobalColor("_ElementalMieColor", atmosphereProfile.MieColor);
             }
             UpdateAtmosphereProperties();
-        }
-
-        private void OnDestroy()
-        {
-            if (_runtimeStarSkybox == null) return;
-            if (RenderSettings.skybox == _runtimeStarSkybox) RenderSettings.skybox = starSkybox;
-            Destroy(_runtimeStarSkybox);
-            _runtimeStarSkybox = null;
         }
 
         private void ApplyStaticAtmosphere()

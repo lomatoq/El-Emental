@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Elemental.Runtime.Physics
 {
     [DisallowMultipleComponent]
-    public sealed class EarthReassemblyController : MonoBehaviour
+    public sealed class EarthReassemblyController : MonoBehaviour, IEarthRepairController
     {
         private static readonly ProfilerMarker RepairAlignMarker =
             new ProfilerMarker("Elemental.Earth.Repair.Align");
@@ -30,6 +30,7 @@ namespace Elemental.Runtime.Physics
         private bool[] _available = Array.Empty<bool>();
         private bool[] _visited = Array.Empty<bool>();
         private bool[] _welded = Array.Empty<bool>();
+        private bool[] _acquired = Array.Empty<bool>();
         private int[] _order = Array.Empty<int>();
         private int[] _graphDepth = Array.Empty<int>();
         private float[] _phaseElapsed = Array.Empty<float>();
@@ -45,6 +46,7 @@ namespace Elemental.Runtime.Physics
         private uint _generation;
         private uint _tick;
         private int _nextOrderSlot;
+        private int _targetPieceCount;
         private int _weldedPieceCount;
         private byte _congestionExpansion;
 
@@ -60,8 +62,9 @@ namespace Elemental.Runtime.Physics
         public bool IsRepairing { get; private set; }
         public bool LastRepairWasPartial { get; private set; }
         public int SelectedPieceCount => _orderResult.OrderedPieceCount;
+        public int TargetPieceCount => _targetPieceCount;
         public int WeldedPieceCount => _weldedPieceCount;
-        public int CurrentPieceIndex => _nextOrderSlot < _orderResult.OrderedPieceCount
+        public int CurrentPieceIndex => _nextOrderSlot < _targetPieceCount
             ? _order[_nextOrderSlot]
             : -1;
         public EarthPiecePhase CurrentPiecePhase => CurrentPieceIndex >= 0
@@ -95,6 +98,7 @@ namespace Elemental.Runtime.Physics
             _available = new bool[pieceCount];
             _visited = new bool[pieceCount];
             _welded = new bool[pieceCount];
+            _acquired = new bool[pieceCount];
             _order = new int[pieceCount];
             _graphDepth = new int[pieceCount];
             _phaseElapsed = new float[pieceCount];
@@ -108,7 +112,9 @@ namespace Elemental.Runtime.Physics
             IsRepairing = false;
         }
 
-        public bool TryBeginRepair(uint tick)
+        public bool TryBeginRepair(uint tick) => TryBeginRepair(tick, 1f);
+
+        public bool TryBeginRepair(uint tick, float targetProgress01)
         {
             if (_structure == null || _wall == null || !_structure.IsConfigured || !_wall.IsCollapsing)
                 return Reject(tick, EarthRepairRejectReason.StructureNotFractured);
@@ -151,6 +157,7 @@ namespace Elemental.Runtime.Physics
                     _available[index] = selectable;
                     _welded[index] = selectable &&
                                      _pieceStateSnapshot[index].Phase == EarthPiecePhase.Welded;
+                    _acquired[index] = false;
                     _phaseElapsed[index] = 0f;
                     _settle[index] = default;
                     _progress[index] = new EarthRepairProgressState { BestError = float.MaxValue };
@@ -187,6 +194,7 @@ namespace Elemental.Runtime.Physics
 
             _tick = tick;
             _nextOrderSlot = 0;
+            _targetPieceCount = TargetCount(targetProgress01);
             _weldedPieceCount = 0;
             _congestionExpansion = 0;
             LastRepairWasPartial = false;
@@ -199,19 +207,56 @@ namespace Elemental.Runtime.Physics
                     _weldedPieceCount++;
                     continue;
                 }
-                EarthPieceRuntime piece = _structure.GetPieceRuntime(pieceIndex);
-                if (piece == null || !piece.TryAcquireForRepair())
+                if (orderIndex >= _targetPieceCount) continue;
+                if (!TryAcquireOrderedPiece(orderIndex, tick))
                 {
                     Interrupt(EarthRepairInterruptReason.TargetInvalidated, tick);
                     return false;
                 }
-                _structure.SetPiecePhase(pieceIndex, EarthPiecePhase.Captured, tick);
-                PieceCaptured?.Invoke(new EarthPieceCapturedEvent(
-                    tick, structureId, _pieceDefinitions[pieceIndex].Id, orderIndex));
             }
             AdvanceOrderCursor();
             RepairStarted?.Invoke(new EarthRepairStartedEvent(
                 tick, structureId, _orderResult.OrderedPieceCount, _orderResult.SelectedMass));
+            return true;
+        }
+
+        public bool SetTargetProgress(float targetProgress01, uint tick = 0u)
+        {
+            if (!IsRepairing) return false;
+            if (tick == 0u) tick = _tick;
+            int requestedCount = TargetCount(targetProgress01);
+            if (requestedCount <= _targetPieceCount) return true;
+            int previousCount = _targetPieceCount;
+            _targetPieceCount = requestedCount;
+            for (int orderIndex = previousCount; orderIndex < _targetPieceCount; orderIndex++)
+            {
+                int pieceIndex = _order[orderIndex];
+                if (_welded[pieceIndex] || TryAcquireOrderedPiece(orderIndex, tick)) continue;
+                Interrupt(EarthRepairInterruptReason.TargetInvalidated, tick);
+                return false;
+            }
+            AdvanceOrderCursor();
+            return true;
+        }
+
+        private int TargetCount(float targetProgress01)
+        {
+            int count = _orderResult.OrderedPieceCount;
+            if (count <= 0) return 0;
+            return Mathf.Clamp(Mathf.CeilToInt(Mathf.Clamp01(targetProgress01) * count), 1, count);
+        }
+
+        private bool TryAcquireOrderedPiece(int orderIndex, uint tick)
+        {
+            if (orderIndex < 0 || orderIndex >= _orderResult.OrderedPieceCount) return false;
+            int pieceIndex = _order[orderIndex];
+            if (_welded[pieceIndex] || _acquired[pieceIndex]) return true;
+            EarthPieceRuntime piece = _structure.GetPieceRuntime(pieceIndex);
+            if (piece == null || !piece.TryAcquireForRepair()) return false;
+            _acquired[pieceIndex] = true;
+            _structure.SetPiecePhase(pieceIndex, EarthPiecePhase.Captured, tick);
+            PieceCaptured?.Invoke(new EarthPieceCapturedEvent(
+                tick, _structure.State.Id, _pieceDefinitions[pieceIndex].Id, orderIndex));
             return true;
         }
 
@@ -225,9 +270,10 @@ namespace Elemental.Runtime.Physics
             ClearSeatingCollisionIgnores(false);
             for (int index = 0; index < _available.Length; index++)
             {
-                if (!_available[index] || _welded[index]) continue;
+                if (!_available[index] || !_acquired[index] || _welded[index]) continue;
                 EarthPieceRuntime piece = _structure.GetPieceRuntime(index);
                 piece?.ReleaseFromRepair();
+                _acquired[index] = false;
                 _structure.SetPiecePhase(index, EarthPiecePhase.Dynamic, tick);
             }
             _structure.FinishPartialRepair(tick);
@@ -248,12 +294,12 @@ namespace Elemental.Runtime.Physics
                 }
 
                 float dt = Mathf.Max(0.0001f, deltaTime);
-                int activePiece = _nextOrderSlot < _orderResult.OrderedPieceCount
+                int activePiece = _nextOrderSlot < _targetPieceCount
                     ? _order[_nextOrderSlot]
                     : -1;
                 for (int index = 0; index < _available.Length; index++)
                 {
-                    if (!_available[index] || _welded[index]) continue;
+                    if (!_available[index] || !_acquired[index] || _welded[index]) continue;
                     EarthPieceRuntime piece = _structure.GetPieceRuntime(index);
                     if (piece == null || !piece.gameObject.activeSelf ||
                         piece.Generation != _generation || piece.Body == null)
@@ -265,9 +311,16 @@ namespace Elemental.Runtime.Physics
                     if (!IsRepairing) return;
                 }
 
-                if (_weldedPieceCount >= _orderResult.OrderedPieceCount)
+                if (_targetPieceCount >= _orderResult.OrderedPieceCount && TargetIsWelded())
                     FinishRepair();
             }
+        }
+
+        private bool TargetIsWelded()
+        {
+            for (int orderIndex = 0; orderIndex < _targetPieceCount; orderIndex++)
+                if (!_welded[_order[orderIndex]]) return false;
+            return true;
         }
 
         private void FixedUpdate() => TickRepair(Time.fixedDeltaTime);
@@ -453,6 +506,7 @@ namespace Elemental.Runtime.Physics
             body.isKinematic = true;
             _structure.SetPiecePhase(index, EarthPiecePhase.Welded, _tick);
             _welded[index] = true;
+            _acquired[index] = false;
             _weldedPieceCount++;
 
             for (int bondIndex = 0; bondIndex < _bondDefinitions.Length; bondIndex++)
@@ -583,7 +637,7 @@ namespace Elemental.Runtime.Physics
 
         private void AdvanceOrderCursor()
         {
-            while (_nextOrderSlot < _orderResult.OrderedPieceCount)
+            while (_nextOrderSlot < _targetPieceCount)
             {
                 int piece = _order[_nextOrderSlot];
                 if (piece >= 0 && !_welded[piece]) break;

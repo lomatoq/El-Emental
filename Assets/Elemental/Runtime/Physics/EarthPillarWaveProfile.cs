@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Elemental.Runtime.Physics
 {
     [CreateAssetMenu(menuName = "Elemental/Magic/Earth Pillar Wave Profile", fileName = "EarthPillarWaveProfile")]
-    public sealed class EarthPillarWaveProfile : ScriptableObject
+    public class EarthPillarWaveProfile : ScriptableObject
     {
         [SerializeField, Min(0.1f)] private float fullSectorChargeSeconds = 1.4f;
         [SerializeField, Min(0.1f)] private float fullPowerChargeSeconds = 1.1f;
@@ -26,7 +26,8 @@ namespace Elemental.Runtime.Physics
         [SerializeField, Min(0.1f)] private float crestHeight = 3.4f;
         [SerializeField, Min(0.1f)] private float waveSpeed = 5.4f;
         [SerializeField, Min(0.03f)] private float crestHoldSeconds = 0.04f;
-        [SerializeField, Range(0.1f, 0.55f)] private float visualGapRatio = 0.38f;
+        [Tooltip("Small overlap between adjacent Voronoi-like ground cells. Prevents light leaks while the crest moves.")]
+        [SerializeField, Range(0.02f, 0.16f)] private float cellOverlapRatio = 0.07f;
 
         public float FullSectorChargeSeconds => fullSectorChargeSeconds;
         public float FullPowerChargeSeconds => fullPowerChargeSeconds;
@@ -48,6 +49,6 @@ namespace Elemental.Runtime.Physics
             crestHeight,
             waveSpeed,
             crestHoldSeconds,
-            visualGapRatio);
+            cellOverlapRatio);
     }
 }

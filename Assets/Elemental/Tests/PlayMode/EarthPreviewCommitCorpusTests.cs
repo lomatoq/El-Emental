@@ -112,6 +112,8 @@ namespace Elemental.Tests.PlayMode
                     $"Fixture {fixture.Id} did not record resolved quantized input geometry.");
                 Assert.That(Vector3.Distance(preview[0], wall.Start), Is.LessThanOrEqualTo(0.055f));
                 Assert.That(Vector3.Distance(preview[preview.Count - 1], wall.End), Is.LessThanOrEqualTo(0.055f));
+                Assert.That(wallPool.ReleaseTransient(wall), Is.True,
+                    $"Fixture {fixture.Id} could not retire its replay-only wall representation.");
             }
 
             Assert.That(executor.SuccessfulCommandCount, Is.EqualTo(fixtures.Count));

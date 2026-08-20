@@ -137,7 +137,7 @@ namespace Elemental.Tests.EditMode
             EarthPillarLaunchProfile profile = EarthPillarLaunchProfile.Default;
             EarthPillarLaunchResult tap = EarthPillarLaunchSolver.Solve(0f, in profile);
             EarthPillarLaunchResult medium = EarthPillarLaunchSolver.Solve(0.7f, in profile);
-            EarthPillarLaunchResult full = EarthPillarLaunchSolver.Solve(1.35f, in profile);
+            EarthPillarLaunchResult full = EarthPillarLaunchSolver.Solve(profile.FullChargeSeconds, in profile);
             EarthPillarLaunchResult overheld = EarthPillarLaunchSolver.Solve(4f, in profile);
 
             Assert.That(medium.Height, Is.GreaterThan(tap.Height));
@@ -146,6 +146,10 @@ namespace Elemental.Tests.EditMode
             Assert.That(full.VelocityChange, Is.GreaterThan(medium.VelocityChange));
             Assert.That(overheld.Height, Is.EqualTo(full.Height).Within(0.0001f));
             Assert.That(overheld.VelocityChange, Is.EqualTo(full.VelocityChange).Within(0.0001f));
+            Assert.That(medium.Charge01, Is.GreaterThan(0.6f),
+                "The launch curve must be deliberately non-linear: a medium hold already feels substantial.");
+            Assert.That(tap.VelocityChange, Is.GreaterThanOrEqualTo(10f),
+                "Even a tap should produce a readable mobility burst.");
         }
 
         [Test]

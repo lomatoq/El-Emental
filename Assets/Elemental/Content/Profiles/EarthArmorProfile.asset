@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcef6ea994f3b374e95558599c3d73b0, type: 3}
+  m_Name: EarthArmorProfile
+  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Physics.EarthArmorProfile
+  pieceCount: 96
+  shellDefinition: {fileID: 11400000, guid: c178bdc92af892144930de89e7c42cb7, type: 2}
+  assemblySeconds: 0.3
+  bodyRadius: 0.78
+  bodySurfaceOffset: 0.028
+  bodyPlateScaleMultiplier: 1.12
+  expandedPlateScaleMultiplier: 1.02
+  domeRadius: 2.5
+  orbitRadius: 3.2
+  phasePerWheelStep: 0.14
+  overscrollConfirmationSeconds: 0.35
+  minimumBurstSpeed: 16
+  maximumBurstSpeed: 24
+  aimedProjectileSpeed: 31
+  automaticFireInterval: 0.13
+  debrisRestSeconds: 1.2
+  debrisShrinkSeconds: 1.1

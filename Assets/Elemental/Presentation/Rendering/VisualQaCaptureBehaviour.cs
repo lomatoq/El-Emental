@@ -7,6 +7,9 @@ using Elemental.Runtime.World;
 using Elemental.Runtime.Physics;
 using Elemental.Runtime.Characters;
 using Elemental.Presentation.VFX;
+using Elemental.Simulation.Bending;
+using Elemental.Simulation.Characters;
+using Elemental.Simulation.Magic;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -18,11 +21,24 @@ namespace Elemental.Presentation.Rendering
         [SerializeField, Min(1)] private int settleFrames = 90;
 
         private readonly FrameTiming[] _latestTiming = new FrameTiming[1];
+        private string _requestedOutputPath;
+        private int _successfulSupplementalCaptures;
 
         private IEnumerator Start()
         {
             if (!VisualQaCaptureRequest.TryParse(Environment.GetCommandLineArgs(), out VisualQaCaptureRequest request))
                 yield break;
+
+            string fullPath = Path.GetFullPath(request.OutputPath);
+            string directory = Path.GetDirectoryName(fullPath);
+            if (string.IsNullOrWhiteSpace(directory))
+            {
+                Debug.LogError("[Elemental] Visual QA output directory could not be resolved.");
+                Application.Quit(3);
+                yield break;
+            }
+            Directory.CreateDirectory(directory);
+            _requestedOutputPath = fullPath;
 
             for (int frame = 0; frame < settleFrames; frame++) yield return null;
 
@@ -39,21 +55,7 @@ namespace Elemental.Presentation.Rendering
                     yield return CapturePerformanceSample(45);
             }
 
-            string fullPath = Path.GetFullPath(request.OutputPath);
-            string directory = Path.GetDirectoryName(fullPath);
-            if (string.IsNullOrWhiteSpace(directory))
-            {
-                Debug.LogError("[Elemental] Visual QA output directory could not be resolved.");
-                Application.Quit(3);
-                yield break;
-            }
-
-            Directory.CreateDirectory(directory);
-            yield return new WaitForEndOfFrame();
-            ScreenCapture.CaptureScreenshot(fullPath, 1);
-
-            float deadline = Time.realtimeSinceStartup + 10f;
-            while (!File.Exists(fullPath) && Time.realtimeSinceStartup < deadline) yield return null;
+            yield return CaptureFrameToPng(fullPath);
             yield return new WaitForSecondsRealtime(0.5f);
 
             bool captured = File.Exists(fullPath) && new FileInfo(fullPath).Length > 0;
@@ -107,9 +109,128 @@ namespace Elemental.Presentation.Rendering
                 yield break;
             }
 
+            if (scenario == VisualQaScenario.Armor)
+            {
+                EarthArmorController armor = input.GetComponent<EarthArmorController>();
+                if (armor == null || !armor.Begin()) yield break;
+                FrameArmorQaCamera(camera, armor, false);
+                _successfulSupplementalCaptures = 0;
+                // The last body plate starts 3.5 ms after each preceding plate; wait
+                // through the stagger as well as the 0.30 s assembly motion.
+                yield return new WaitForSecondsRealtime(0.55f);
+                yield return CaptureSupplementalFrame("body-shell");
+                // Open the gathered plates into a readable protective dome without
+                // consuming the overscroll confirmation used by the radial release.
+                for (int step = 0; step < 5; step++)
+                    armor.ApplyWheel(120f, Time.unscaledTime + step * 0.04f);
+                yield return new WaitForSecondsRealtime(0.42f);
+                FrameArmorQaCamera(camera, armor, true);
+                int piecesBeforeShot = armor.ControllablePieceCount;
+                Rigidbody armorCaster = armor.GetComponent<Rigidbody>();
+                Vector3 casterVelocityBeforeShot = armorCaster != null
+                    ? armorCaster.linearVelocity
+                    : Vector3.zero;
+                bool fired = armor.FireNearest(camera.transform.forward);
+                yield return new WaitForSecondsRealtime(0.08f);
+                yield return CaptureSupplementalFrame("aimed-shot");
+                bool casterStayedStable = armorCaster == null ||
+                    (armorCaster.linearVelocity - casterVelocityBeforeShot).sqrMagnitude < 0.0001f;
+                _scenarioSucceeded = armor.IsActive && armor.ActivePieceCount >= 12 &&
+                                     armor.Phase01 > 0.3f && armor.Phase01 < 1f &&
+                                     fired && armor.ControllablePieceCount == piecesBeforeShot - 1 &&
+                                     casterStayedStable && _successfulSupplementalCaptures == 2;
+                yield break;
+            }
+
+            if (scenario == VisualQaScenario.QuickStone)
+            {
+                MagicExecutor executor = FindAnyObjectByType<MagicExecutor>();
+                if (executor == null || surfaceLine.Count == 0 ||
+                    !input.SelectEarthAbility(EarthAbilityIds.PullRock)) yield break;
+                var primePath = new List<float2>(1) { surfaceLine[0] };
+                if (!input.TryCommitScreenPath(primePath, 0.18f)) yield break;
+                yield return new WaitForSecondsRealtime(0.16f);
+                EarthFragment stone = executor.HeldFragment;
+                if (stone == null || stone.Body == null) yield break;
+                Vector3 direction = Vector3.ProjectOnPlane(camera.transform.forward, stone.transform.up).normalized;
+                if (direction.sqrMagnitude < 0.5f) direction = camera.transform.forward.normalized;
+                bool fired = executor.ReleaseHeldEarthAtSpeed(direction, 35f, 0u, out Vector3 velocity);
+                yield return new WaitForSecondsRealtime(0.10f);
+                _scenarioSucceeded = fired && velocity.magnitude >= 30f && stone.Body != null &&
+                                     stone.Body.linearVelocity.magnitude >= 20f;
+                yield break;
+            }
+
+            if (scenario == VisualQaScenario.MageWalk)
+            {
+                PlanetMotor sceneMotor = FindAnyObjectByType<PlanetMotor>();
+                Rigidbody body = sceneMotor != null ? sceneMotor.GetComponent<Rigidbody>() : null;
+                Animator animator = sceneMotor != null ? sceneMotor.GetComponentInChildren<Animator>(true) : null;
+                if (sceneMotor == null || body == null || animator == null || animator.runtimeAnimatorController == null)
+                    yield break;
+                VisualQaMotorInput scripted = sceneMotor.gameObject.AddComponent<VisualQaMotorInput>();
+                scripted.Move = new float2(0f, 1f);
+                sceneMotor.ConfigureInputSource(scripted);
+                _successfulSupplementalCaptures = 0;
+                Vector3 start = body.position;
+                Transform leftFoot = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
+                if (leftFoot == null) yield break;
+                Vector3 firstFootLocal = animator.transform.InverseTransformPoint(leftFoot.position);
+                Vector3 lateFootLocal = firstFootLocal;
+                float maximumFootTravel = 0f;
+                float lateFootTravel = 0f;
+                float firstLocomotionTime = -1f;
+                float lastLocomotionTime = -1f;
+                int gaitCaptureIndex = 0;
+                for (int frame = 0; frame < 150; frame++)
+                {
+                    yield return new WaitForFixedUpdate();
+                    yield return null;
+                    Vector3 currentFootLocal = animator.transform.InverseTransformPoint(leftFoot.position);
+                    maximumFootTravel = Mathf.Max(maximumFootTravel,
+                        Vector3.Distance(firstFootLocal, currentFootLocal));
+                    if (frame == 80) lateFootLocal = currentFootLocal;
+                    if (frame > 80)
+                        lateFootTravel = Mathf.Max(lateFootTravel,
+                            Vector3.Distance(lateFootLocal, currentFootLocal));
+
+                    AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+                    if (state.IsName("Locomotion"))
+                    {
+                        if (firstLocomotionTime < 0f) firstLocomotionTime = state.normalizedTime;
+                        lastLocomotionTime = state.normalizedTime;
+                    }
+
+                    if (frame == 82 || frame == 100 || frame == 118)
+                    {
+                        yield return CaptureSupplementalFrame($"gait-{(char)('a' + gaitCaptureIndex)}");
+                        gaitCaptureIndex++;
+                    }
+                }
+                bool activeClipsLoop = true;
+                AnimatorClipInfo[] clips = animator.GetCurrentAnimatorClipInfo(0);
+                for (int index = 0; index < clips.Length; index++)
+                    if (clips[index].weight > 0.01f) activeClipsLoop &= clips[index].clip.isLooping;
+                AnimatorStateInfo finalState = animator.GetCurrentAnimatorStateInfo(0);
+                float locomotionCycles = firstLocomotionTime >= 0f && lastLocomotionTime >= firstLocomotionTime
+                    ? lastLocomotionTime - firstLocomotionTime
+                    : 0f;
+                float travel = Vector3.Distance(start, body.position);
+                _scenarioSucceeded = travel > 3f && maximumFootTravel > 0.05f &&
+                                     lateFootTravel > 0.015f && locomotionCycles > 1.1f &&
+                                     finalState.IsName("Locomotion") && clips.Length > 0 &&
+                                     activeClipsLoop && gaitCaptureIndex == 3 &&
+                                     _successfulSupplementalCaptures == 3;
+                Debug.Log($"[Elemental] Continuous gait QA: travel={travel:0.000} m, " +
+                          $"foot={maximumFootTravel:0.000}, lateFoot={lateFootTravel:0.000}, " +
+                          $"cycles={locomotionCycles:0.00}, state={finalState.fullPathHash}, looping={activeClipsLoop}.");
+                yield break;
+            }
+
             if (scenario == VisualQaScenario.Wall || scenario == VisualQaScenario.WallCollapse ||
                 scenario == VisualQaScenario.WallDebris ||
-                scenario == VisualQaScenario.EarthMaterialFracture)
+                scenario == VisualQaScenario.EarthMaterialFracture ||
+                scenario == VisualQaScenario.WallPush)
             {
                 _scenarioSucceeded = input.SelectEarthAbility(Elemental.Simulation.Magic.EarthAbilityIds.LineWall) &&
                                      input.TryCommitScreenPath(surfaceLine, 0.8f);
@@ -126,6 +247,40 @@ namespace Elemental.Presentation.Rendering
                         yield break;
                     }
                     yield return new WaitForSecondsRealtime(2.25f);
+                    yield break;
+                }
+                if (scenario == VisualQaScenario.WallPush)
+                {
+                    yield return new WaitForSecondsRealtime(1.05f);
+                    EarthWall wall = FindAnyObjectByType<EarthWall>();
+                    PlanetMotor sceneMotor = FindAnyObjectByType<PlanetMotor>();
+                    Rigidbody caster = sceneMotor != null ? sceneMotor.GetComponent<Rigidbody>() : null;
+                    MagicExecutor executor = input.EarthExecutor;
+                    if (wall == null || caster == null || executor == null || wall.SurfaceCollider == null)
+                    {
+                        _scenarioSucceeded = false;
+                        yield break;
+                    }
+                    Vector3 wallStart = wall.transform.position;
+                    Vector3 casterStart = caster.position;
+                    Vector3 push = Vector3.ProjectOnPlane(
+                        wall.transform.position - caster.position,
+                        wall.SurfaceUp).normalized;
+                    if (push.sqrMagnitude < 0.5f) push = wall.transform.forward;
+                    if (!executor.TryBeginVectorField(
+                            wall.SurfaceCollider, wall.Body, wall.transform.position, push))
+                    {
+                        _scenarioSucceeded = false;
+                        yield break;
+                    }
+                    executor.UpdateVectorField(push, 1f);
+                    for (int frame = 0; frame < 70; frame++) yield return new WaitForFixedUpdate();
+                    executor.ReleaseVectorField();
+                    for (int frame = 0; frame < 8; frame++) yield return new WaitForFixedUpdate();
+                    float wallTravel = Vector3.Distance(wallStart, wall.transform.position);
+                    float casterTravel = Vector3.Distance(casterStart, caster.position);
+                    _scenarioSucceeded = wallTravel >= 2f && casterTravel < 0.75f;
+                    Debug.Log($"[Elemental] Wall push QA: wall={wallTravel:0.000} m, caster={casterTravel:0.000} m.");
                     yield break;
                 }
                 if (scenario == VisualQaScenario.WallCollapse)
@@ -300,7 +455,8 @@ namespace Elemental.Presentation.Rendering
                 while (repair != null && repair.IsRepairing && repair.WeldedPieceCount < 1 &&
                        Time.realtimeSinceStartup < repairDeadline)
                     yield return null;
-                _scenarioSucceeded &= repair != null && repair.SelectedPieceCount == 43 &&
+                _scenarioSucceeded &= repair != null && wall != null &&
+                                      repair.SelectedPieceCount == wall.StructureRuntime.PieceCount &&
                                       (repair.WeldedPieceCount >= 1 || !wall.IsCollapsing);
                 Debug.Log($"[Elemental] Reassembly QA wall={wall.WallId}, " +
                            $"selected={repair?.SelectedPieceCount ?? 0}, " +
@@ -314,20 +470,116 @@ namespace Elemental.Presentation.Rendering
 
             if (scenario == VisualQaScenario.Platform)
             {
-                float2 start = surfaceLine[0];
-                float2 end = surfaceLine[1];
-                float heightOffset = Mathf.Min(54f, Screen.height * 0.07f);
-                var outline = new List<float2>(5)
+                EarthPlatformPool pool = FindAnyObjectByType<EarthPlatformPool>();
+                PlanetMotor motor = FindAnyObjectByType<PlanetMotor>();
+                Rigidbody rider = motor != null ? motor.GetComponent<Rigidbody>() : null;
+                CapsuleCollider capsule = motor != null ? motor.GetComponent<CapsuleCollider>() : null;
+                if (pool == null || motor == null || rider == null || capsule == null) yield break;
+                Vector3 center = proxy.bounds.center;
+                Vector3 up = (rider.worldCenterOfMass - center).normalized;
+                Vector3 surface = proxy.ClosestPoint(rider.worldCenterOfMass);
+                Vector3 forward = Vector3.ProjectOnPlane(motor.FacingForward, up).normalized;
+                if (forward.sqrMagnitude < 0.5f) forward = Vector3.Cross(up, Vector3.right).normalized;
+                Vector3 right = Vector3.Cross(up, forward).normalized;
+                var path = new List<float3>(4)
                 {
-                    start,
-                    start + new float2(0f, heightOffset),
-                    end + new float2(0f, heightOffset),
-                    end,
-                    math.lerp(start, end, 0.5f) - new float2(0f, heightOffset * 0.25f)
+                    ToFloat3(surface - right * 1.65f - forward * 1.65f),
+                    ToFloat3(surface + right * 1.65f - forward * 1.65f),
+                    ToFloat3(surface + right * 1.65f + forward * 1.65f),
+                    ToFloat3(surface - right * 1.65f + forward * 1.65f)
                 };
-                _scenarioSucceeded = input.SelectEarthAbility(Elemental.Simulation.Magic.EarthAbilityIds.RaisePlatform) &&
-                                     input.TryCommitScreenPath(outline, 1.1f);
-                yield return new WaitForSecondsRealtime(0.35f);
+                EarthPlatformGeometry geometry = EarthPlatformGeometrySolver.Build(path, ToFloat3(center));
+                float initialRadius = Vector3.Distance(rider.worldCenterOfMass, center);
+                EarthPlatform platform = pool.Acquire(in geometry, 1.4f, 0.24f);
+                if (platform == null) yield break;
+                yield return new WaitForFixedUpdate();
+                bool immediateRider = motor.MovingSurfaceId == platform.SurfaceId;
+                float minimumClearance = float.PositiveInfinity;
+                for (int tick = 0; tick < 65; tick++)
+                {
+                    yield return new WaitForFixedUpdate();
+                    float radius = capsule.radius * Mathf.Max(
+                        Mathf.Abs(motor.transform.lossyScale.x),
+                        Mathf.Abs(motor.transform.lossyScale.z));
+                    float halfHeight = Mathf.Max(
+                        radius,
+                        capsule.height * 0.5f * Mathf.Abs(motor.transform.lossyScale.y));
+                    Vector3 feet = motor.transform.TransformPoint(capsule.center) - up * halfHeight;
+                    minimumClearance = Mathf.Min(minimumClearance,
+                        Vector3.Dot(feet - platform.SurfaceTopPoint, up));
+                    if (tick == 18) yield return CaptureSupplementalFrame("rising");
+                }
+                float lift = Vector3.Distance(rider.worldCenterOfMass, center) - initialRadius;
+                VisualQaMotorInput scripted = motor.gameObject.AddComponent<VisualQaMotorInput>();
+                motor.ConfigureInputSource(scripted);
+                Vector3 walkStart = rider.position;
+                scripted.Move = new float2(0f, 0.55f);
+                for (int tick = 0; tick < 12; tick++) yield return new WaitForFixedUpdate();
+                scripted.Move = float2.zero;
+                float walk = Vector3.ProjectOnPlane(rider.position - walkStart, up).magnitude;
+                yield return CaptureSupplementalFrame("walking");
+
+                EarthPillarMobility pillarMobility = motor.GetComponent<EarthPillarMobility>();
+                bool launched = pillarMobility != null && pillarMobility.BeginCharge();
+                if (launched)
+                {
+                    yield return new WaitForSecondsRealtime(0.18f);
+                    launched = pillarMobility.ReleaseCharge();
+                }
+                bool descending = false;
+                bool landed = false;
+                float descentClearance = float.PositiveInfinity;
+                bool capturedAirborne = false;
+                for (int tick = 0; launched && tick < 240; tick++)
+                {
+                    yield return new WaitForFixedUpdate();
+                    float verticalSpeed = Vector3.Dot(rider.linearVelocity, up);
+                    float clearance = Vector3.Dot(
+                        motor.SupportFeetPoint(up) - platform.SurfaceTopPoint,
+                        up);
+                    if (verticalSpeed < -0.25f) descending = true;
+                    if (descending)
+                    {
+                        descentClearance = Mathf.Min(descentClearance, clearance);
+                        if (!capturedAirborne)
+                        {
+                            capturedAirborne = true;
+                            yield return CaptureSupplementalFrame("pillar-airborne");
+                        }
+                    }
+                    if (descending && motor.HasStableSupport && clearance < 0.25f)
+                    {
+                        landed = true;
+                        break;
+                    }
+                }
+                GameObject launchPillar = null;
+                int activeLaunchChips = 0;
+                GameObject feedbackRoot = GameObject.Find("Earth Pillar Feedback");
+                if (feedbackRoot != null)
+                {
+                    Transform[] feedbackChildren = feedbackRoot.GetComponentsInChildren<Transform>(true);
+                    for (int index = 0; index < feedbackChildren.Length; index++)
+                    {
+                        if (feedbackChildren[index].name == "Rising Earth Pillar")
+                            launchPillar = feedbackChildren[index].gameObject;
+                        if (feedbackChildren[index].name.StartsWith("Lift Ground Chip") &&
+                            feedbackChildren[index].gameObject.activeSelf)
+                            activeLaunchChips++;
+                    }
+                }
+                bool pillarRetreated = launchPillar != null && !launchPillar.activeSelf &&
+                                       activeLaunchChips == 0;
+                _scenarioSucceeded = immediateRider && !platform.IsFractured && lift > 0.35f &&
+                                     minimumClearance > -0.08f && walk > 0.12f && launched &&
+                                     landed && descentClearance > -0.14f && pillarRetreated &&
+                                     motor.MovingSurfaceId == platform.SurfaceId;
+                Debug.Log($"[Elemental] Platform rider QA: immediate={immediateRider}, " +
+                          $"lift={lift:0.000} m, walk={walk:0.000} m, " +
+                          $"riseClearance={minimumClearance:0.000} m, " +
+                          $"descentClearance={descentClearance:0.000} m, landed={landed}, " +
+                          $"pillarRetreated={pillarRetreated}, chips={activeLaunchChips}, " +
+                          $"surface={motor.MovingSurfaceId}, fractured={platform.IsFractured}.");
                 yield break;
             }
 
@@ -420,6 +672,109 @@ namespace Elemental.Presentation.Rendering
             for (int frame = 0; frame < 4; frame++) yield return null;
         }
 
+        private IEnumerator CaptureSupplementalFrame(string suffix)
+        {
+            if (string.IsNullOrWhiteSpace(_requestedOutputPath)) yield break;
+            string directory = Path.GetDirectoryName(_requestedOutputPath);
+            string name = Path.GetFileNameWithoutExtension(_requestedOutputPath);
+            string extension = Path.GetExtension(_requestedOutputPath);
+            string path = Path.Combine(directory ?? string.Empty, $"{name}-{suffix}{extension}");
+            DateTime previousWrite = File.Exists(path) ? File.GetLastWriteTimeUtc(path) : DateTime.MinValue;
+            yield return CaptureFrameToPng(path);
+            float deadline = Time.realtimeSinceStartup + 5f;
+            while (Time.realtimeSinceStartup < deadline &&
+                   (!File.Exists(path) || File.GetLastWriteTimeUtc(path) <= previousWrite))
+                yield return null;
+            if (!File.Exists(path) || new FileInfo(path).Length == 0 ||
+                File.GetLastWriteTimeUtc(path) <= previousWrite)
+            {
+                Debug.LogError($"[Elemental] Supplemental gait capture failed: {path}");
+                yield break;
+            }
+            _successfulSupplementalCaptures++;
+            Debug.Log($"[Elemental] Supplemental gait captured: {path}");
+        }
+
+        private static void FrameArmorQaCamera(
+            UnityEngine.Camera camera,
+            EarthArmorController armor,
+            bool expanded)
+        {
+            if (camera == null || armor == null) return;
+            PlanetMotor motor = FindAnyObjectByType<PlanetMotor>();
+            Rigidbody body = motor != null ? motor.GetComponent<Rigidbody>() : null;
+            if (motor == null || body == null) return;
+
+            // This is evidence framing, not gameplay camera behaviour. Freeze both
+            // camera drivers so the explicitly rendered QA frame can show whether
+            // stones really trace the limbs instead of hiding the result in a wide
+            // action composition.
+            Elemental.Presentation.Camera.PlanetCameraRig legacy =
+                FindAnyObjectByType<Elemental.Presentation.Camera.PlanetCameraRig>();
+            if (legacy != null) legacy.enabled = false;
+            Elemental.Presentation.Camera.EarthCinemachineCameraController localRig =
+                FindAnyObjectByType<Elemental.Presentation.Camera.EarthCinemachineCameraController>();
+            if (localRig != null) localRig.enabled = false;
+            Unity.Cinemachine.CinemachineBrain brain = camera.GetComponent<Unity.Cinemachine.CinemachineBrain>();
+            if (brain != null) brain.enabled = false;
+            GameObject landmarks = GameObject.Find("Earth Diorama Landmarks");
+            if (landmarks != null) landmarks.SetActive(false);
+
+            Vector3 up = motor.LocalUp.sqrMagnitude > 0.5f ? motor.LocalUp.normalized : body.transform.up;
+            Vector3 forward = Vector3.ProjectOnPlane(motor.FacingForward, up).normalized;
+            if (forward.sqrMagnitude < 0.5f)
+                forward = Vector3.ProjectOnPlane(body.transform.forward, up).normalized;
+            Vector3 right = Vector3.Cross(up, forward).normalized;
+            Vector3 focus = body.worldCenterOfMass + up * (expanded ? 0.62f : 0.18f);
+            float back = expanded ? 6.1f : 3.15f;
+            float side = expanded ? 1.3f : 1.05f;
+            float lift = expanded ? 1.25f : 0.48f;
+            camera.transform.SetPositionAndRotation(
+                focus - forward * back + right * side + up * lift,
+                Quaternion.LookRotation(
+                    focus - (focus - forward * back + right * side + up * lift),
+                    up));
+            camera.fieldOfView = expanded ? 49f : 42f;
+        }
+
+        private static IEnumerator CaptureFrameToPng(string path)
+        {
+            UnityEngine.Camera camera = UnityEngine.Camera.main;
+            if (camera == null) yield break;
+            int width = Mathf.Max(320, Screen.width);
+            int height = Mathf.Max(180, Screen.height);
+            RenderTexture target = RenderTexture.GetTemporary(
+                width,
+                height,
+                24,
+                RenderTextureFormat.ARGB32,
+                RenderTextureReadWrite.Default);
+            RenderTexture previousTarget = camera.targetTexture;
+            RenderTexture previousActive = RenderTexture.active;
+            camera.targetTexture = target;
+            target.Create();
+            // A hidden batchmode player does not guarantee a normal backbuffer camera
+            // pass. Render the URP camera explicitly into the owned target so a black
+            // PNG can never masquerade as visual evidence.
+            camera.Render();
+            yield return null;
+            RenderTexture.active = target;
+            var pixels = new Texture2D(width, height, TextureFormat.RGB24, false);
+            pixels.ReadPixels(new Rect(0f, 0f, width, height), 0, 0, false);
+            pixels.Apply(false, false);
+            File.WriteAllBytes(path, pixels.EncodeToPNG());
+            camera.targetTexture = previousTarget;
+            RenderTexture.active = previousActive;
+            RenderTexture.ReleaseTemporary(target);
+            Destroy(pixels);
+        }
+
+        private sealed class VisualQaMotorInput : MonoBehaviour, IPlanetMotorInputSource
+        {
+            public float2 Move;
+            public PlanetMotorCommand SampleCommand(uint tick) => new PlanetMotorCommand(tick, Move, false);
+        }
+
         private IEnumerator CapturePerformanceSample(int frameCount)
         {
             double cpuTotal = 0d;
@@ -499,5 +854,7 @@ namespace Elemental.Presentation.Rendering
             int chosen = Mathf.Clamp(Mathf.RoundToInt((candidates.Count - 1) * 0.62f), 0, candidates.Count - 1);
             return candidates[chosen];
         }
+
+        private static float3 ToFloat3(Vector3 value) => new float3(value.x, value.y, value.z);
     }
 }

@@ -30,6 +30,25 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void GravityGripStagesLargeMatterInBrokenSideArcsOutsideSightline()
+        {
+            float3 up = new float3(0f, 1f, 0f);
+            float3 forward = new float3(0f, 0f, 1f);
+            float3 first = EarthGravityGripSolver.CameraAwareSlotOffset(
+                11u, 1.35f, up, forward, 0.55f);
+            float3 second = EarthGravityGripSolver.CameraAwareSlotOffset(
+                12u, 1.35f, up, forward, 0.05f);
+            float3 right = math.cross(up, forward);
+
+            Assert.That(math.abs(math.dot(first, right)), Is.GreaterThan(1.3f),
+                "A hero-large chunk must be staged clear of the camera-to-action corridor.");
+            Assert.That(math.abs(math.dot(second, right)), Is.GreaterThan(0.8f));
+            Assert.That(math.sign(math.dot(first, right)), Is.Not.EqualTo(math.sign(math.dot(second, right))),
+                "Neighbouring stable IDs should populate opposing broken arcs rather than one clump.");
+            Assert.That(math.distance(first, second), Is.GreaterThan(1f));
+        }
+
+        [Test]
         public void MovingSupportCarryIsFiniteAndAccelerationLimited()
         {
             float3 acceleration = MovingSurfaceSolver.CarryAcceleration(
@@ -44,6 +63,31 @@ namespace Elemental.Tests.EditMode
             Assert.That(math.all(math.isfinite(acceleration)), Is.True);
             Assert.That(math.length(acceleration), Is.LessThanOrEqualTo(55.001f));
             Assert.That(acceleration.y, Is.GreaterThan(0f));
+        }
+
+        [Test]
+        public void MovingSupportTangentCarryPreservesRiderLocomotion()
+        {
+            float3 stationary = MovingSurfaceSolver.TangentCarryVelocityChange(
+                float3.zero,
+                float3.zero,
+                new float3(0f, 1f, 0f),
+                true,
+                55f,
+                0.02f);
+            float3 acceleratingPlatform = MovingSurfaceSolver.TangentCarryVelocityChange(
+                new float3(0.2f, 4f, 0f),
+                new float3(1.7f, 7f, 0f),
+                new float3(0f, 1f, 0f),
+                true,
+                55f,
+                0.02f);
+
+            Assert.That(math.length(stationary), Is.EqualTo(0f).Within(0.000001f),
+                "A stationary support must not cancel the rider's own tangent velocity.");
+            Assert.That(acceleratingPlatform.y, Is.EqualTo(0f).Within(0.000001f));
+            Assert.That(acceleratingPlatform.x, Is.EqualTo(1.1f).Within(0.0001f),
+                "Only the platform's bounded tangent velocity delta is inherited.");
         }
 
         [Test]

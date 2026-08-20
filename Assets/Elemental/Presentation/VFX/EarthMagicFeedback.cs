@@ -97,6 +97,7 @@ namespace Elemental.Presentation.VFX
                 executor.Events.ImpactOccurred += OnImpact;
                 executor.Events.EarthImpactOccurred += OnEarthImpact;
                 executor.Events.MagicPushed += OnMagicPushed;
+                executor.Events.EarthReturnOccurred += OnEarthReturn;
             }
             if (input != null) input.PushChargeChanged += OnPushChargeChanged;
             if (wavePool != null) wavePool.ColumnBurst += OnWaveColumnBurst;
@@ -114,6 +115,7 @@ namespace Elemental.Presentation.VFX
                 executor.Events.ImpactOccurred -= OnImpact;
                 executor.Events.EarthImpactOccurred -= OnEarthImpact;
                 executor.Events.MagicPushed -= OnMagicPushed;
+                executor.Events.EarthReturnOccurred -= OnEarthReturn;
             }
             if (input != null) input.PushChargeChanged -= OnPushChargeChanged;
             if (wavePool != null) wavePool.ColumnBurst -= OnWaveColumnBurst;
@@ -249,6 +251,39 @@ namespace Elemental.Presentation.VFX
                 Mathf.Lerp(0.035f, 0.105f, value.Charge),
                 Mathf.Lerp(0.16f, 0.32f, value.Charge),
                 value.Tick ^ 0x50555348u);
+        }
+
+        private void OnEarthReturn(EarthReturnEvent value)
+        {
+            Vector3 point = new Vector3(value.Position.x, value.Position.y, value.Position.z);
+            int massBand = Mathf.Clamp(Mathf.RoundToInt(Mathf.Log10(1f + value.Mass) * 4f), 2, 14);
+            switch (value.Stage)
+            {
+                case EarthReturnEventStage.Captured:
+                    Emit(point, massBand, 0);
+                    break;
+                case EarthReturnEventStage.Subsurface:
+                    Emit(point, massBand + 4, 1);
+                    if (rubble != null)
+                    {
+                        SetEmitterFrame(rubble, point, LocalUp(point));
+                        rubble.Emit(Mathf.Clamp(massBand / 2, 2, 7));
+                    }
+                    break;
+                case EarthReturnEventStage.Completed:
+                    Emit(point, massBand + 7, 1);
+                    cameraRig?.AddPresentationImpulse(
+                        Mathf.Clamp(0.025f + Mathf.Log10(1f + value.Mass) * 0.016f, 0.025f, 0.11f),
+                        0.26f,
+                        value.MatterId ^ 0x5E771Eu);
+                    break;
+                case EarthReturnEventStage.Reversed:
+                    Emit(point, massBand, 1);
+                    break;
+                case EarthReturnEventStage.Jammed:
+                    Emit(point, massBand + 2, 0);
+                    break;
+            }
         }
 
         private void OnWaveColumnBurst(EarthPillarWavePulse pulse)

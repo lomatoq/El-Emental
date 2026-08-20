@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6c81de9211348ff4385dec411ea7b90e, type: 3}
-  m_Name: EarthPillarWaveProfile
-  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Physics.EarthPillarWaveProfile
+  m_Script: {fileID: 11500000, guid: f274877bc21f4f22a09f0c6a0c59004e, type: 3}
+  m_Name: EarthWebWaveProfile
+  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Physics.EarthWebWaveProfile
   fullSectorChargeSeconds: 1.4
   fullPowerChargeSeconds: 1.1
   columnRiseSeconds: 0.3
@@ -28,7 +28,7 @@ MonoBehaviour:
   minimumWidth: 0.64
   maximumWidth: 1.28
   minimumHeight: 0.28
-  crestHeight: 3.4
+  crestHeight: 1.55
   waveSpeed: 5.4
   crestHoldSeconds: 0.04
-  visualGapRatio: 0.38
+  cellOverlapRatio: 0.07

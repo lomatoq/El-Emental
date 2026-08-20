@@ -34,8 +34,72 @@ namespace Elemental.Simulation.Bending
         public bool IsValid => Polygon != null && Polygon.Length >= 3 && Area > 0.001f;
     }
 
+    public readonly struct EarthPlatformBudgetSample
+    {
+        public EarthPlatformBudgetSample(
+            float acceptedHeight,
+            float aspectRatio,
+            float costMultiplier,
+            float stability01,
+            bool aboveSoftLimit,
+            bool hardLimited)
+        {
+            AcceptedHeight = acceptedHeight;
+            AspectRatio = aspectRatio;
+            CostMultiplier = costMultiplier;
+            Stability01 = stability01;
+            AboveSoftLimit = aboveSoftLimit;
+            HardLimited = hardLimited;
+        }
+
+        public float AcceptedHeight { get; }
+        public float AspectRatio { get; }
+        public float CostMultiplier { get; }
+        public float Stability01 { get; }
+        public bool AboveSoftLimit { get; }
+        public bool HardLimited { get; }
+    }
+
     public static class EarthPlatformGeometrySolver
     {
+        public static EarthPlatformBudgetSample EvaluateHeightBudget(
+            in EarthPlatformGeometry geometry,
+            float requestedHeight,
+            float softHeight,
+            float hardHeight,
+            float heightCostExponent = 1.65f,
+            float aspectCost = 0.18f)
+        {
+            float soft = math.max(0.1f, softHeight);
+            float hard = math.max(soft, hardHeight);
+            float accepted = math.clamp(requestedHeight, 0.1f, hard);
+            float2 minimum = new float2(float.PositiveInfinity);
+            float2 maximum = new float2(float.NegativeInfinity);
+            if (geometry.Polygon != null)
+            {
+                for (int index = 0; index < geometry.Polygon.Length; index++)
+                {
+                    minimum = math.min(minimum, geometry.Polygon[index]);
+                    maximum = math.max(maximum, geometry.Polygon[index]);
+                }
+            }
+            float2 size = math.max(new float2(0.1f), maximum - minimum);
+            float aspect = math.max(size.x, size.y) / math.max(0.1f, math.min(size.x, size.y));
+            if (!math.isfinite(aspect)) aspect = 1f;
+            float heightRatio = accepted / soft;
+            float heightPenalty = math.pow(math.max(1f, heightRatio), math.max(1f, heightCostExponent));
+            float aspectPenalty = 1f + math.max(0f, aspect - 1f) * math.max(0f, aspectCost);
+            float cost = heightPenalty * aspectPenalty;
+            float stability = math.saturate(1f / math.sqrt(math.max(1f, cost)));
+            return new EarthPlatformBudgetSample(
+                accepted,
+                aspect,
+                cost,
+                stability,
+                accepted > soft + 0.001f,
+                requestedHeight > hard + 0.001f);
+        }
+
         public static EarthPlatformGeometry Build(IReadOnlyList<float3> worldPath, float3 planetCenter, int maximumVertices = 32)
         {
             if (worldPath == null || worldPath.Count < 3) return default;

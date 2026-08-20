@@ -1,6 +1,19 @@
 Shader "Elemental/Procedural Stars"
 {
-    Properties { _Tint("Tint", Color)=(0.42,0.58,1,1) _Exposure("Exposure", Range(0,2))=1 _Rotation("Rotation", Range(0,360))=0 _Seed("Seed", Float)=3607 }
+    Properties
+    {
+        _Tint("Nebula Tint", Color)=(0.42,0.58,1,1)
+        _ZenithColor("Zenith", Color)=(0.075,0.31,0.72,1)
+        _HorizonColor("Horizon", Color)=(0.56,0.79,0.98,1)
+        _StarVisibility("Star Visibility", Range(0,1))=0
+        _Exposure("Star Exposure", Range(0,2))=1
+        _Rotation("Rotation", Range(0,360))=0
+        _Seed("Seed", Float)=3607
+        _SunDirection("Sun Direction", Vector)=(0,1,0,0)
+        _SunColor("Sun Color", Color)=(1,0.88,0.62,1)
+        _SunDiscDegrees("Sun Disc Degrees", Range(0.05,2))=0.44
+        _SunGlow("Sun Glow", Range(0,2))=0.72
+    }
     SubShader
     {
         Tags { "Queue"="Background" "RenderType"="Background" "PreviewType"="Skybox" }
@@ -11,7 +24,9 @@ Shader "Elemental/Procedural Stars"
             #pragma vertex Vert
             #pragma fragment Frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            half4 _Tint; float _Exposure, _Rotation, _Seed;
+            half4 _Tint, _ZenithColor, _HorizonColor, _SunColor;
+            float _Exposure, _Rotation, _Seed, _StarVisibility, _SunDiscDegrees, _SunGlow;
+            float3 _SunDirection;
             struct A { float4 positionOS:POSITION; }; struct V { float4 positionCS:SV_POSITION; float3 dir:TEXCOORD0; };
             V Vert(A i)
             {
@@ -35,9 +50,17 @@ Shader "Elemental/Procedural Stars"
                 float heroStar=smoothstep(0.99935,0.99998,heroNoise)*2.0;
                 float temperature=StableHash(fineCell+71.0);
                 half3 starTint=lerp(half3(1.0,0.72,0.5),half3(0.62,0.78,1.0),temperature);
-                float nebula=pow(saturate(1.0-abs(d.y+sin(d.x*4.0)*0.12)),8.0)*0.026;
-                half3 baseColor=half3(0.0025,0.005,0.018)+_Tint.rgb*nebula;
-                return half4((baseColor+starTint*(fineStar+heroStar)*1.45)*_Exposure,1);
+                float horizon01=saturate(abs(d.y));
+                float zenithBlend=smoothstep(0.0,0.72,horizon01);
+                half3 baseColor=lerp(_HorizonColor.rgb,_ZenithColor.rgb,zenithBlend);
+                float nebula=pow(saturate(1.0-abs(d.y+sin(d.x*4.0)*0.12)),8.0)*0.026*_StarVisibility;
+                baseColor+=_Tint.rgb*nebula;
+                float sunDot=saturate(dot(d,normalize(_SunDirection)));
+                float sunRadius=max(0.00001,1.0-cos(radians(_SunDiscDegrees)));
+                float sunDisc=smoothstep(1.0-sunRadius*2.2,1.0-sunRadius*0.2,sunDot);
+                float sunGlow=pow(sunDot,256.0)*_SunGlow;
+                half3 stars=starTint*(fineStar+heroStar)*1.45*_Exposure*_StarVisibility;
+                return half4(baseColor+stars+_SunColor.rgb*(sunDisc+sunGlow),1);
             }
             ENDHLSL
         }

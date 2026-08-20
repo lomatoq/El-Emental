@@ -2,10 +2,13 @@ using System;
 using System.Collections.Generic;
 using Elemental.Input.Gestures;
 using Elemental.Runtime.Characters;
+using Elemental.Runtime.Matter;
+using Elemental.Runtime.Physics;
 using Elemental.Runtime.World;
 using Elemental.Simulation.Bending;
 using Elemental.Simulation.Characters;
 using Elemental.Simulation.Magic;
+using Elemental.Simulation.Matter;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -23,6 +26,7 @@ namespace Elemental.Presentation.Animation
         [SerializeField] private PlanetMotor motor;
         [SerializeField] private Rigidbody rootBody;
         [SerializeField] private EarthPillarMobility pillarMobility;
+        [SerializeField] private EarthSurfController surfController;
         [SerializeField] private EarthTechniquePresentationProfile profile;
         [SerializeField, Min(0.01f)] private float footProbeLift = 0.42f;
         [SerializeField, Min(0.05f)] private float footProbeDistance = 0.95f;
@@ -33,8 +37,17 @@ namespace Elemental.Presentation.Animation
         private readonly RaycastHit[] _rightHits = new RaycastHit[FootHitCapacity];
         private Transform _leftFoot;
         private Transform _rightFoot;
+        private Transform _leftUpperLeg;
+        private Transform _rightUpperLeg;
         private EarthFootPlantResult _leftPlant;
         private EarthFootPlantResult _rightPlant;
+        private float _footIkWeight;
+        private float3 _leftKneeDirection;
+        private float3 _rightKneeDirection;
+        private float3 _leftSupportLocal;
+        private float3 _rightSupportLocal;
+        private uint _lockedSupportId;
+        private uint _lockedSupportGeneration;
         private uint _presentationTick;
         private uint _castStartTick;
         private uint _authoritativeTick;
@@ -47,6 +60,7 @@ namespace Elemental.Presentation.Animation
         private bool _subscribed;
 
         public EarthPoseIntent CurrentIntent { get; private set; }
+        public BendingPoseRequest CurrentRequest { get; private set; }
         public uint LastAuthoritativeTick => _authoritativeTick;
         public uint PresentationTick => _presentationTick;
         public bool FeetLocked => _leftPlant.Locked && _rightPlant.Locked;
@@ -67,6 +81,7 @@ namespace Elemental.Presentation.Animation
             motor = configuredMotor;
             rootBody = configuredRootBody;
             pillarMobility = configuredPillar;
+            if (surfController == null) surfController = GetComponentInParent<EarthSurfController>();
             profile = configuredProfile;
             ResolveFeet();
             if (isActiveAndEnabled) Subscribe();
@@ -75,6 +90,7 @@ namespace Elemental.Presentation.Animation
         private void Awake()
         {
             if (animator == null) animator = GetComponent<Animator>();
+            if (surfController == null) surfController = GetComponentInParent<EarthSurfController>();
             ResolveFeet();
         }
 
@@ -110,6 +126,7 @@ namespace Elemental.Presentation.Animation
             if (_technique == EarthTechniqueKind.None || phase == EarthCastPhase.Idle)
             {
                 CurrentIntent = default;
+                CurrentRequest = default;
                 return;
             }
 
@@ -136,6 +153,28 @@ namespace Elemental.Presentation.Animation
                 motor.IsGrounded,
                 authoredEffort,
                 authoredBrace);
+            float controlledMass = _eventMass > 0f
+                ? _eventMass
+                : executor != null && executor.HeldBody != null ? executor.HeldBody.mass : 0f;
+            Vector3 actionAxis = Vector3.ProjectOnPlane(
+                _target - rootBody.worldCenterOfMass, motor.LocalUp);
+            EarthMatterId focusMatter = default;
+            if (executor != null && executor.HeldBody != null)
+            {
+                EarthMatterIdentity identity = executor.HeldBody.GetComponent<EarthMatterIdentity>();
+                if (identity != null) focusMatter = identity.MatterId;
+            }
+            CurrentRequest = new BendingPoseRequest(
+                TechniqueId(_technique),
+                phase,
+                ToFloat3(actionAxis),
+                ToFloat3(motor.LocalUp),
+                controlledMass,
+                CurrentIntent.Effort01,
+                motor.HasStableSupport ? 1f : 0f,
+                Precision(_technique),
+                localDirection.x < 0f,
+                focusMatter);
             if (animator != null) animator.SetInteger(CastKindHash, (int)CurrentIntent.Family);
         }
 
@@ -235,11 +274,40 @@ namespace Elemental.Presentation.Animation
         private void OnAnimatorIK(int layerIndex)
         {
             if (animator == null || motor == null || _leftFoot == null || _rightFoot == null) return;
-            bool requestLock = CurrentIntent.LocksFeet && motor.IsGrounded && CurrentIntent.Brace01 > 0.2f;
+            bool supported = motor.HasStableSupport;
+            bool surfLock = surfController != null && surfController.IsActive;
+            bool requestLock = supported &&
+                               ((CurrentIntent.LocksFeet && CurrentIntent.Brace01 > 0.2f) || surfLock);
+            if (!supported) _footIkWeight = 0f;
+            else
+            {
+                float blendSeconds = requestLock ? 0.13f : 0.17f;
+                _footIkWeight = Mathf.MoveTowards(
+                    _footIkWeight,
+                    requestLock ? 1f : 0f,
+                    Time.deltaTime / blendSeconds);
+            }
+            if (!requestLock)
+            {
+                ApplyFoot(AvatarIKGoal.LeftFoot, _leftFoot, in _leftPlant, _footIkWeight);
+                ApplyFoot(AvatarIKGoal.RightFoot, _rightFoot, in _rightPlant, _footIkWeight);
+                ApplyKneeHints(_footIkWeight);
+                if (_footIkWeight <= 0.001f)
+                {
+                    _leftPlant = default;
+                    _rightPlant = default;
+                    _lockedSupportId = 0u;
+                    _lockedSupportGeneration = 0u;
+                }
+                return;
+            }
+            ResolveSupportRelativeLocks();
             _leftPlant = ProbeFoot(_leftFoot, _leftHits, _leftPlant, requestLock, -1f);
             _rightPlant = ProbeFoot(_rightFoot, _rightHits, _rightPlant, requestLock, 1f);
-            ApplyFoot(AvatarIKGoal.LeftFoot, _leftFoot, in _leftPlant);
-            ApplyFoot(AvatarIKGoal.RightFoot, _rightFoot, in _rightPlant);
+            CaptureSupportRelativeLocks();
+            ApplyFoot(AvatarIKGoal.LeftFoot, _leftFoot, in _leftPlant, _footIkWeight);
+            ApplyFoot(AvatarIKGoal.RightFoot, _rightFoot, in _rightPlant, _footIkWeight);
+            ApplyKneeHints(_footIkWeight);
 
             Vector3 up = motor.LocalUp;
             float leftError = Vector3.Dot(ToVector3(_leftPlant.Position) - _leftFoot.position, up);
@@ -280,17 +348,23 @@ namespace Elemental.Presentation.Animation
                 ToFloat3(selected.point),
                 ToFloat3(selected.collider != null ? selected.normal : up),
                 ToFloat3(up),
-                motor.IsGrounded,
+                motor.HasStableSupport,
                 requestLock,
                 previous.Locked,
                 previous.Position,
                 soleOffset);
         }
 
-        private void ApplyFoot(AvatarIKGoal goal, Transform animatedFoot, in EarthFootPlantResult plant)
+        private void ApplyFoot(
+            AvatarIKGoal goal,
+            Transform animatedFoot,
+            in EarthFootPlantResult plant,
+            float weight)
         {
-            animator.SetIKPositionWeight(goal, plant.Weight01);
-            animator.SetIKRotationWeight(goal, plant.Weight01);
+            float appliedWeight = plant.Weight01 * Mathf.Clamp01(weight);
+            animator.SetIKPositionWeight(goal, appliedWeight);
+            animator.SetIKRotationWeight(goal, appliedWeight);
+            if (appliedWeight <= 0.001f) return;
             animator.SetIKPosition(goal, ToVector3(plant.Position));
             Vector3 forward = Vector3.ProjectOnPlane(animatedFoot.forward, ToVector3(plant.Normal)).normalized;
             if (forward.sqrMagnitude < 0.1f) forward = Vector3.ProjectOnPlane(transform.forward, ToVector3(plant.Normal));
@@ -302,6 +376,58 @@ namespace Elemental.Presentation.Animation
             if (animator == null || !animator.isHuman) return;
             _leftFoot = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
             _rightFoot = animator.GetBoneTransform(HumanBodyBones.RightFoot);
+            _leftUpperLeg = animator.GetBoneTransform(HumanBodyBones.LeftUpperLeg);
+            _rightUpperLeg = animator.GetBoneTransform(HumanBodyBones.RightUpperLeg);
+        }
+
+        private void ApplyKneeHints(float weight)
+        {
+            float applied = Mathf.Clamp01(weight) * 0.86f;
+            animator.SetIKHintPositionWeight(AvatarIKHint.LeftKnee, applied);
+            animator.SetIKHintPositionWeight(AvatarIKHint.RightKnee, applied);
+            if (applied <= 0.001f || _leftUpperLeg == null || _rightUpperLeg == null) return;
+            float3 forward = ToFloat3(Vector3.ProjectOnPlane(transform.forward, motor.LocalUp).normalized);
+            float3 right = ToFloat3(Vector3.Cross(motor.LocalUp, ToVector3(forward)).normalized);
+            float3 up = ToFloat3(motor.LocalUp);
+            float3 left = EarthStableKneeHintSolver.Solve(
+                ToFloat3(_leftUpperLeg.position), forward, right, up, -1f, _leftKneeDirection);
+            float3 rightHint = EarthStableKneeHintSolver.Solve(
+                ToFloat3(_rightUpperLeg.position), forward, right, up, 1f, _rightKneeDirection);
+            _leftKneeDirection = math.normalizesafe(left - ToFloat3(_leftUpperLeg.position), forward);
+            _rightKneeDirection = math.normalizesafe(rightHint - ToFloat3(_rightUpperLeg.position), forward);
+            animator.SetIKHintPosition(AvatarIKHint.LeftKnee, ToVector3(left));
+            animator.SetIKHintPosition(AvatarIKHint.RightKnee, ToVector3(rightHint));
+        }
+
+        private void ResolveSupportRelativeLocks()
+        {
+            SupportFrameSnapshot support = motor.CurrentSupportFrame;
+            if (!EarthSupportFootLockSolver.SameSupport(
+                    _lockedSupportId,
+                    _lockedSupportGeneration,
+                    in support)) return;
+            if (_leftPlant.Locked)
+                _leftPlant = new EarthFootPlantResult(
+                    EarthSupportFootLockSolver.ResolveWorld(_leftSupportLocal, in support),
+                    support.Up,
+                    _leftPlant.Weight01,
+                    true);
+            if (_rightPlant.Locked)
+                _rightPlant = new EarthFootPlantResult(
+                    EarthSupportFootLockSolver.ResolveWorld(_rightSupportLocal, in support),
+                    support.Up,
+                    _rightPlant.Weight01,
+                    true);
+        }
+
+        private void CaptureSupportRelativeLocks()
+        {
+            SupportFrameSnapshot support = motor.CurrentSupportFrame;
+            if (!support.IsValid || !_leftPlant.Locked || !_rightPlant.Locked) return;
+            _lockedSupportId = support.SurfaceId;
+            _lockedSupportGeneration = support.Generation;
+            _leftSupportLocal = EarthSupportFootLockSolver.CaptureLocal(_leftPlant.Position, in support);
+            _rightSupportLocal = EarthSupportFootLockSolver.CaptureLocal(_rightPlant.Position, in support);
         }
 
         private void Subscribe()
@@ -354,6 +480,28 @@ namespace Elemental.Presentation.Animation
             (ushort)Mathf.Clamp(Mathf.CeilToInt(Mathf.Max(0f, seconds) * tickRate), 1, ushort.MaxValue);
         private static float3 ToFloat3(Vector3 value) => new float3(value.x, value.y, value.z);
         private static Vector3 ToVector3(float3 value) => new Vector3(value.x, value.y, value.z);
+
+        private static EarthTechniqueId TechniqueId(EarthTechniqueKind technique) => technique switch
+        {
+            EarthTechniqueKind.Grip => EarthTechniqueId.PullStone,
+            EarthTechniqueKind.Wall => EarthTechniqueId.RaiseWall,
+            EarthTechniqueKind.Platform => EarthTechniqueId.RaisePlatform,
+            EarthTechniqueKind.Pillar => EarthTechniqueId.PillarJump,
+            EarthTechniqueKind.GroundWave => EarthTechniqueId.WebWave,
+            EarthTechniqueKind.Repair => EarthTechniqueId.Repair,
+            _ => EarthTechniqueId.None
+        };
+
+        private static float Precision(EarthTechniqueKind technique) => technique switch
+        {
+            EarthTechniqueKind.Repair => 1f,
+            EarthTechniqueKind.Grip => 0.82f,
+            EarthTechniqueKind.Platform => 0.66f,
+            EarthTechniqueKind.Wall => 0.48f,
+            EarthTechniqueKind.Pillar => 0.28f,
+            EarthTechniqueKind.GroundWave => 0.22f,
+            _ => 0.5f
+        };
     }
 
 }

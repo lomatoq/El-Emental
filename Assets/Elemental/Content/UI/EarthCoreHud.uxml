@@ -42,24 +42,23 @@
         </ui:VisualElement>
 
         <ui:VisualElement class="ability-dock">
-            <ui:VisualElement class="ability-card"><ui:Label text="LMB ON ROCK" class="verb-tag" /><ui:Label text="GRIP STONE" class="ability-name" /><ui:Label text="Aim at any loose stone" class="ability-help" /></ui:VisualElement>
+            <ui:VisualElement class="ability-card"><ui:Label text="TAP LMB x2" class="verb-tag" /><ui:Label text="QUICK STONE" class="ability-name" /><ui:Label text="Prime from ground, click again to fire" class="ability-help" /></ui:VisualElement>
             <ui:VisualElement class="ability-card"><ui:Label text="DRAG LMB" class="verb-tag" /><ui:Label text="WALL / PLATFORM" class="ability-name" /><ui:Label text="Straight line or closed curved outline" class="ability-help" /></ui:VisualElement>
             <ui:VisualElement class="ability-card"><ui:Label text="MOVE" class="verb-tag" /><ui:Label text="LIFT + CONTROL" class="ability-name" /><ui:Label text="Move after forming the rock" class="ability-help" /></ui:VisualElement>
             <ui:VisualElement class="ability-card"><ui:Label text="RMB" class="verb-tag" /><ui:Label text="VECTOR FIELD" class="ability-name" /><ui:Label text="Hold to accelerate, release to punch" class="ability-help" /></ui:VisualElement>
-            <ui:VisualElement class="ability-card"><ui:Label text="MMB" class="verb-tag" /><ui:Label text="GRAVITY GRIP" class="ability-name" /><ui:Label text="Pull shards; hold on structures to fracture" class="ability-help" /></ui:VisualElement>
-            <ui:VisualElement class="ability-card"><ui:Label text="SHIFT + SPACE" class="verb-tag" /><ui:Label text="PILLAR WAVE" class="ability-name" /><ui:Label text="Shift widens sector, Space adds power" class="ability-help" /></ui:VisualElement>
+            <ui:VisualElement class="ability-card"><ui:Label text="MMB + CIRCLE" class="verb-tag" /><ui:Label text="GRAVITY WEAVE" class="ability-name" /><ui:Label text="CW repairs, CCW fractures" class="ability-help" /></ui:VisualElement>
+            <ui:VisualElement class="ability-card"><ui:Label text="SHIFT + MMB" class="verb-tag" /><ui:Label text="EARTH ARMOR" class="ability-name" /><ui:Label text="Wheel: armor / dome / orbit / burst" class="ability-help" /></ui:VisualElement>
         </ui:VisualElement>
 
         <ui:VisualElement class="controls-card">
             <ui:Label text="FREE MOUSE  AIM + DRAW     A / D  TURN" class="control-line" />
             <ui:Label text="W / S  FORWARD / BACK     CAMERA FOLLOWS" class="control-line" />
             <ui:Label text="HOLD SPACE  CHARGE EARTH PILLAR LAUNCH" class="control-line strong" />
-            <ui:Label text="HOLD SHIFT THEN SPACE  WIDEN + POWER PILLAR WAVE" class="control-line strong" />
             <ui:Label text="WHILE FALLING HOLD SPACE  LANDING CUSHION" class="control-line strong" />
-            <ui:Label text="LMB  GRIP / FORM / MOVE / RELEASE" class="control-line strong" />
+            <ui:Label text="LMB  QUICK STONE / GRIP / FORM / RELEASE" class="control-line strong" />
             <ui:Label text="RMB  VECTOR FORCE / CHARGE" class="control-line strong" />
-            <ui:Label text="MMB  GRAVITY GRIP / FRACTURE EARTH" class="control-line strong" />
-            <ui:Label text="WHEEL  HOLD DISTANCE / PLATFORM HEIGHT" class="control-line" />
+            <ui:Label text="MMB  GRAVITY WEAVE     SHIFT+MMB  ARMOR" class="control-line strong" />
+            <ui:Label text="WHEEL  HOLD DISTANCE / HEIGHT / ARMOR PHASE" class="control-line" />
             <ui:Label name="status-value" text="Earth responds continuously to shape, mass and momentum." class="status" />
         </ui:VisualElement>
     </ui:VisualElement>

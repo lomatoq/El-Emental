@@ -22,7 +22,7 @@ namespace Elemental.Runtime.Physics
         [Header("Physical response")]
         [SerializeField, Min(0f)] private float minimumRockImpactImpulse = 55f;
         [SerializeField, Min(0f)] private float wallSlideDrag = 0.72f;
-        [SerializeField, Min(0.1f)] private float maximumSlideSpeed = 7.5f;
+        [SerializeField, Min(0.1f)] private float maximumSlideSpeed = 14f;
         [SerializeField, Min(0.001f)] private float cohesionImpulsePerMass = 0.12f;
         [SerializeField, Min(0f)] private float impactDamageMultiplier = 0.92f;
         [SerializeField, Min(0f)] private float excessImpulseRelease = 0.18f;

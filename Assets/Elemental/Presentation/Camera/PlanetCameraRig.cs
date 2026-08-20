@@ -57,12 +57,65 @@ namespace Elemental.Presentation.Camera
         private float _occlusionReleaseDelay = 0.12f;
         private EarthCameraOcclusionState _occlusionState;
         private Transform _ignoredOccluderRoot;
+        private float _maximumFocusSpeed = 18f;
+        private float _springResetDistance = 8f;
+        private Vector3 _lastTargetPosition;
+        private Vector3 _lastSampledUp;
+        private bool _hasSpringReference;
+        private bool _externalDriverActive;
 
         public Vector3 LocalUp => _smoothedUp;
         public Vector3 TangentForward => _orbitForward.sqrMagnitude > 0.5f ? _orbitForward : transform.forward;
         public Vector3 SmoothedFocus => _smoothedFocus;
         public float LastAppliedImpulseMagnitude { get; private set; }
         public float PeakRequestedImpulseAmplitude { get; private set; }
+        public bool ExternalDriverActive => _externalDriverActive;
+
+        public void SetExternalDriverActive(bool active)
+        {
+            if (_externalDriverActive == active) return;
+            transform.position -= _lastImpulseOffset;
+            _lastImpulseOffset = Vector3.zero;
+            LastAppliedImpulseMagnitude = 0f;
+            _externalDriverActive = active;
+            ResetSprings();
+        }
+
+        /// <summary>
+        /// Keeps the legacy rig's gameplay-facing frame authoritative while
+        /// Cinemachine owns the rendered camera transform. Targeting, tests and
+        /// other camera consumers must not observe the stale heading from the
+        /// moment the external driver was enabled.
+        /// </summary>
+        public void SyncExternalFrame(Vector3 localUp, Vector3 tangentForward, Vector3 focus)
+        {
+            if (!_externalDriverActive) return;
+            Vector3 safeUp = localUp.sqrMagnitude > 0.5f ? localUp.normalized : _smoothedUp;
+            Vector3 safeForward = Vector3.ProjectOnPlane(tangentForward, safeUp);
+            if (safeForward.sqrMagnitude < 0.001f)
+                safeForward = Vector3.ProjectOnPlane(_orbitForward, safeUp);
+            if (safeForward.sqrMagnitude < 0.001f)
+                safeForward = Vector3.Cross(safeUp, Vector3.right);
+            _smoothedUp = safeUp;
+            _orbitForward = safeForward.normalized;
+            _smoothedFocus = focus;
+            _hasSmoothedFocus = true;
+        }
+
+        public void ConfigureMotionLimits(float maximumFocusSpeed, float springResetDistance)
+        {
+            _maximumFocusSpeed = Mathf.Max(0.1f, maximumFocusSpeed);
+            _springResetDistance = Mathf.Max(0.5f, springResetDistance);
+        }
+
+        public void ResetSprings()
+        {
+            _positionVelocity = Vector3.zero;
+            _focusVelocity = Vector3.zero;
+            _hasSmoothedFocus = false;
+            _occlusionState = default;
+            _hasSpringReference = false;
+        }
 
         public void SetDirectorFrame(
             float configuredDistance,
@@ -145,7 +198,7 @@ namespace Elemental.Presentation.Camera
                 ? configuredTarget.GetComponent<ActiveRagdollPuppet>()
                 : null;
             _orbitForward = Vector3.zero;
-            _hasSmoothedFocus = false;
+            ResetSprings();
         }
 
         private void Awake()
@@ -161,6 +214,7 @@ namespace Elemental.Presentation.Camera
             transform.position -= _lastImpulseOffset;
             _lastImpulseOffset = Vector3.zero;
             LastAppliedImpulseMagnitude = 0f;
+            if (_externalDriverActive) return;
             if (target == null || gravityWorld == null || !gravityWorld.IsReady)
             {
                 return;
@@ -176,6 +230,16 @@ namespace Elemental.Presentation.Camera
                 {
                     return;
                 }
+
+                if (_hasSpringReference &&
+                    (Vector3.Distance(target.position, _lastTargetPosition) > _springResetDistance ||
+                     Vector3.Angle(sampledUp, _lastSampledUp) > 55f))
+                {
+                    ResetSprings();
+                }
+                _lastTargetPosition = target.position;
+                _lastSampledUp = sampledUp;
+                _hasSpringReference = true;
 
                 float upBlend = 1f - Mathf.Exp(-upSmoothing * Time.deltaTime);
                 _smoothedUp = Vector3.Slerp(_smoothedUp, sampledUp, upBlend).normalized;
@@ -216,7 +280,9 @@ namespace Elemental.Presentation.Camera
                     _smoothedFocus,
                     desiredFocus,
                     ref _focusVelocity,
-                    focusSmoothTime);
+                    focusSmoothTime,
+                    _maximumFocusSpeed,
+                    Time.deltaTime);
 
                 transform.position = Vector3.SmoothDamp(
                     transform.position,

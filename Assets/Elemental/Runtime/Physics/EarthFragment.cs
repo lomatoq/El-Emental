@@ -1,5 +1,7 @@
 using Elemental.Runtime.World;
+using Elemental.Runtime.Matter;
 using Elemental.Simulation.Bending;
+using Elemental.Simulation.Matter;
 using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine;
@@ -24,6 +26,7 @@ namespace Elemental.Runtime.Physics
         private Collider _bodyCollider;
         private MeshFilter _meshFilter;
         private MeshCollider _meshCollider;
+        private EarthProjectileSweepGuard _sweepGuard;
         private Collider _ignoredSourceCollider;
         private Collider _ignoredControllerCollider;
         private Transform _holdTarget;
@@ -42,6 +45,9 @@ namespace Elemental.Runtime.Physics
         private float _nextAccretionAt;
         private EarthHoverFrame _hoverFrame;
         private uint _generation;
+        private EarthMatterIdentity _matterIdentity;
+        private EarthPhysicalTargetKind _targetKind = EarthPhysicalTargetKind.Rock;
+        private float _controllerCollisionRestoreAt;
 
         public uint FragmentId { get; private set; }
         public Rigidbody Body => targetBody;
@@ -57,8 +63,9 @@ namespace Elemental.Runtime.Physics
         public uint StableEarthId => FragmentId;
         public EarthPhysicalTargetHandle TargetHandle => new EarthPhysicalTargetHandle(FragmentId, _generation);
         public float EarthMass => Mass;
-        public EarthPhysicalTargetKind TargetKind => EarthPhysicalTargetKind.Rock;
+        public EarthPhysicalTargetKind TargetKind => _targetKind;
         public bool IsEarthTargetValid => targetBody != null && !targetBody.isKinematic && gameObject.activeSelf;
+        public EarthMatterIdentity MatterIdentity => _matterIdentity;
 
         public void ConfigureHover(EarthHoverProfile profile) => hoverProfile = profile;
 
@@ -87,6 +94,8 @@ namespace Elemental.Runtime.Physics
         {
             FragmentId = id;
             _generation = NextGeneration(_generation);
+            _targetKind = EarthPhysicalTargetKind.Rock;
+            gameObject.layer = 0;
             _executor = executor;
             _sourcePool = sourcePool;
             _profile = profile;
@@ -126,6 +135,36 @@ namespace Elemental.Runtime.Physics
             if (_bodyCollider != null && _ignoredControllerCollider != null)
                 UnityEngine.Physics.IgnoreCollision(
                     _bodyCollider, _ignoredControllerCollider, true);
+            if (executor != null && executor.MatterKernel != null)
+            {
+                float volume = Mathf.Max(0.000001f, mass / executor.EarthMaterialDensity);
+                var source = new EarthSourceProvenance(
+                    EarthSourceKind.TerrainEdit,
+                    id,
+                    _generation >= ushort.MaxValue
+                        ? ushort.MaxValue
+                        : (ushort)Mathf.Max(1, (int)_generation),
+                    -1,
+                    unchecked((uint)Time.frameCount),
+                    executor.VoxelPlanet != null
+                        ? ToFloat3(executor.VoxelPlanet.transform.InverseTransformPoint(position))
+                        : ToFloat3(position),
+                    volume,
+                    EarthProvenanceFlags.ExactReturnSupported |
+                    EarthProvenanceFlags.SourceCavityValid |
+                    EarthProvenanceFlags.VolumeReserved);
+                _matterIdentity = EarthMatterRuntimeBridge.EnsureIdentity(
+                    this,
+                    executor.MatterKernel,
+                    targetBody,
+                    holdTarget != null ? EarthMatterPhase.Controlled : EarthMatterPhase.Forming,
+                    EarthRepresentationTier.HeroPhysical,
+                    EarthMaterialKind.Stone,
+                    EarthShapeSemantic.NaturalRock,
+                    volume,
+                    mass,
+                    source);
+            }
             if (holdTarget != null)
             {
                 BeginBendControl(holdTarget.position, Vector3.zero, 0f, BendTuning.Default);
@@ -138,9 +177,30 @@ namespace Elemental.Runtime.Physics
         public void Launch(Vector3 direction, float velocityChange)
         {
             StopBendControl();
+            _sweepGuard?.Arm();
             targetBody.AddForce(direction.normalized * (velocityChange * targetBody.mass), ForceMode.Impulse);
             targetBody.AddTorque(Vector3.Cross(direction.normalized, transform.up) * (targetBody.mass * 0.45f), ForceMode.Impulse);
         }
+
+        public void LaunchProjectile(
+            Vector3 direction,
+            float velocityChange,
+            Collider casterCollider,
+            float collisionGraceSeconds = 0.45f)
+        {
+            StopBendControl();
+            _ignoredControllerCollider = casterCollider;
+            _controllerCollisionRestoreAt = Time.fixedTime + Mathf.Max(0.05f, collisionGraceSeconds);
+            if (_bodyCollider != null && _ignoredControllerCollider != null)
+                UnityEngine.Physics.IgnoreCollision(_bodyCollider, _ignoredControllerCollider, true);
+            targetBody.linearVelocity = direction.sqrMagnitude > 0.0001f
+                ? direction.normalized * Mathf.Max(0f, velocityChange)
+                : Vector3.zero;
+            targetBody.angularVelocity = Vector3.Cross(direction.normalized, transform.up) * 2.1f;
+            _sweepGuard?.Arm();
+        }
+
+        public void SetTargetKind(EarthPhysicalTargetKind kind) => _targetKind = kind;
 
         public void BeginBendControl(
             Vector3 targetPosition,
@@ -157,6 +217,7 @@ namespace Elemental.Runtime.Physics
             _bendTargetVelocity = targetVelocity;
             _charge01 = Mathf.Clamp01(charge01);
             _isControlled = true;
+            _matterIdentity?.TryTransition(EarthMatterPhase.Controlled);
             targetBody.isKinematic = false;
             _hoverFrame = EarthHoverPhysics.Capture(targetBody, CurrentLocalUp(), FragmentId);
             targetBody.WakeUp();
@@ -198,6 +259,7 @@ namespace Elemental.Runtime.Physics
             Vector3 releaseVelocity = ToVector3(solved);
             StopBendControl();
             targetBody.linearVelocity = releaseVelocity;
+            _sweepGuard?.Arm();
             return releaseVelocity;
         }
 
@@ -205,11 +267,38 @@ namespace Elemental.Runtime.Physics
         {
             _holdTarget = null;
             _isControlled = false;
+            if (_matterIdentity != null && _matterIdentity.TryRead(out EarthMatterRecord matter) &&
+                (matter.Phase == EarthMatterPhase.Controlled || matter.Phase == EarthMatterPhase.Forming))
+                _matterIdentity.TryTransition(EarthMatterPhase.FreeDynamic);
             LastControlError = Vector3.zero;
             LastAppliedControlForce = Vector3.zero;
             LastControlForceWasClamped = false;
             if (targetBody != null) targetBody.isKinematic = false;
             RestoreControllerCollision();
+        }
+
+        public void CompleteReintegration()
+        {
+            StopBendControl();
+            _sourcePool?.NotifyReleased(this);
+            gameObject.SetActive(false);
+        }
+
+        public void MarkConsumedForPool()
+        {
+            if (_matterIdentity == null || !_matterIdentity.TryRead(out EarthMatterRecord record)) return;
+            if (record.Phase == EarthMatterPhase.Sleeping)
+                _matterIdentity.TryTransition(EarthMatterPhase.FreeDynamic);
+            _matterIdentity.TryRead(out record);
+            if (record.Phase == EarthMatterPhase.Controlled || record.Phase == EarthMatterPhase.Forming)
+                _matterIdentity.TryTransition(EarthMatterPhase.FreeDynamic);
+            if (_matterIdentity.TryRead(out record) && record.Phase == EarthMatterPhase.FreeDynamic)
+                _matterIdentity.TryTransition(EarthMatterPhase.CapturedForReturn);
+            if (_matterIdentity.TryRead(out record) && record.Phase == EarthMatterPhase.CapturedForReturn)
+                _matterIdentity.TryTransition(EarthMatterPhase.Returning);
+            if (_matterIdentity.TryRead(out record) && record.Phase == EarthMatterPhase.Returning)
+                _matterIdentity.TryTransition(EarthMatterPhase.Reintegrating);
+            _matterIdentity.TryTransition(EarthMatterPhase.Consumed);
         }
 
         public bool TryShatter(Vector3 point, Vector3 normal, float impulse)
@@ -261,6 +350,7 @@ namespace Elemental.Runtime.Physics
         private void FixedUpdate()
         {
             UpdateEmergenceCollision();
+            UpdateControllerCollision();
             if (!IsHeld) return;
             _executor?.TryAccreteHeldFragment(this);
             using (BendControlMarker.Auto())
@@ -311,6 +401,7 @@ namespace Elemental.Runtime.Physics
             _bodyCollider = GetComponent<Collider>();
             _meshFilter = GetComponent<MeshFilter>();
             _meshCollider = GetComponent<MeshCollider>();
+            _sweepGuard = GetComponent<EarthProjectileSweepGuard>();
         }
 
         private void OnDisable()
@@ -340,6 +431,20 @@ namespace Elemental.Runtime.Physics
                 UnityEngine.Physics.IgnoreCollision(
                     _bodyCollider, _ignoredControllerCollider, false);
             _ignoredControllerCollider = null;
+            _controllerCollisionRestoreAt = 0f;
+        }
+
+        private void UpdateControllerCollision()
+        {
+            if (_ignoredControllerCollider == null || _isControlled) return;
+            float clearance = _bodyCollider != null
+                ? Vector3.Distance(_bodyCollider.bounds.center, _ignoredControllerCollider.bounds.center)
+                : 0f;
+            float safeDistance = _bodyCollider != null
+                ? _bodyCollider.bounds.extents.magnitude + _ignoredControllerCollider.bounds.extents.magnitude * 0.55f
+                : 1.5f;
+            if (clearance >= safeDistance || Time.fixedTime >= _controllerCollisionRestoreAt)
+                RestoreControllerCollision();
         }
 
         private void OnCollisionEnter(Collision collision)
@@ -357,6 +462,13 @@ namespace Elemental.Runtime.Physics
 
             _lastImpactFrame = Time.frameCount;
             _executor.HandleFragmentImpact(this, collision, impulse);
+        }
+
+        internal void HandleSweptImpact(Collider hitCollider, Vector3 point, Vector3 normal, float impulse)
+        {
+            if (_executor == null || impulse < 1f || Time.frameCount - _lastImpactFrame < 3) return;
+            _lastImpactFrame = Time.frameCount;
+            _executor.HandleFragmentSweptImpact(this, hitCollider, point, normal, impulse);
         }
 
         private static float3 ToFloat3(Vector3 value) => new float3(value.x, value.y, value.z);

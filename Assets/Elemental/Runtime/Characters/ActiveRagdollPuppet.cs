@@ -34,6 +34,7 @@ namespace Elemental.Runtime.Characters
         [SerializeField, Min(0.1f)] private float groundProbeDistance = 2.2f;
         [SerializeField, Min(0f)] private float balanceGain = 160f;
         [SerializeField, Min(0f)] private float maximumBalanceTorque = 220f;
+        [SerializeField, Min(0f)] private float startupImpactGraceSeconds = 0.8f;
         [SerializeField] private LayerMask groundMask = ~0;
 
         private readonly RaycastHit[] _groundHits = new RaycastHit[GroundHitCapacity];
@@ -44,10 +45,15 @@ namespace Elemental.Runtime.Characters
         private CharacterPhysicalMode _lastPublishedMode;
         private bool _hasPublishedMode;
         private float _suppressImpactsUntil;
+        private bool _rootConstraintsCaptured;
+        private RigidbodyConstraints _motorRootConstraints;
+        private RigidbodyConstraints _ragdollRootConstraints;
 
         public CharacterPhysicalState CurrentState { get; private set; }
         public Vector3 LastBalanceTorque { get; private set; }
         public float MaximumJointError { get; private set; }
+        public PhysicalCollisionImpact LastCollisionImpact { get; private set; }
+        public bool LastCollisionWasSupport { get; private set; }
         public event Action<CharacterPhysicalState> StateChanged;
         public event Action<Vector3, float> ImpactObserved;
 
@@ -115,7 +121,12 @@ namespace Elemental.Runtime.Characters
             if (impactTarget != null)
             {
                 impactTarget.ImpactApplied += HandleImpact;
+                impactTarget.CollisionImpactApplied += HandleCollisionImpact;
             }
+            if (gravityWorld != null)
+                _suppressImpactsUntil = Mathf.Max(
+                    _suppressImpactsUntil,
+                    Time.time + Mathf.Max(0f, startupImpactGraceSeconds));
         }
 
         private void OnDisable()
@@ -123,6 +134,7 @@ namespace Elemental.Runtime.Characters
             if (impactTarget != null)
             {
                 impactTarget.ImpactApplied -= HandleImpact;
+                impactTarget.CollisionImpactApplied -= HandleCollisionImpact;
             }
         }
 
@@ -173,6 +185,14 @@ namespace Elemental.Runtime.Characters
             bool motorAllowed = state.Mode == CharacterPhysicalMode.AnimatedMotor ||
                                 state.Mode == CharacterPhysicalMode.PhysicalAssist ||
                                 state.Mode == CharacterPhysicalMode.Stagger;
+            if (rootBody != null)
+            {
+                CaptureRootConstraints();
+                RigidbodyConstraints required = motorAllowed
+                    ? _motorRootConstraints
+                    : _ragdollRootConstraints;
+                if (rootBody.constraints != required) rootBody.constraints = required;
+            }
             if (motor != null)
             {
                 motor.enabled = motorAllowed;
@@ -276,6 +296,21 @@ namespace Elemental.Runtime.Characters
             ImpactObserved?.Invoke(point, impulse);
         }
 
+        private void HandleCollisionImpact(PhysicalCollisionImpact impact)
+        {
+            if (Time.time < _suppressImpactsUntil || rootBody == null) return;
+            LastCollisionImpact = impact;
+            LastCollisionWasSupport = CharacterSupportImpactSolver.IsSupportContact(
+                    ToFloat3(_gravityUp),
+                    ToFloat3(rootBody.worldCenterOfMass),
+                    ToFloat3(impact.Point),
+                    ToFloat3(impact.Normal),
+                    impact.OtherBodyIsDynamic);
+            if (LastCollisionWasSupport) return;
+            InjectImpact(impact.Impulse);
+            ImpactObserved?.Invoke(impact.Point, impact.Impulse);
+        }
+
         private void PublishStateIfChanged()
         {
             if (_hasPublishedMode && CurrentState.Mode == _lastPublishedMode)
@@ -306,7 +341,16 @@ namespace Elemental.Runtime.Characters
             }
 
             EnsureController();
+            CaptureRootConstraints();
             ConfigureSelfCollisionFiltering();
+        }
+
+        private void CaptureRootConstraints()
+        {
+            if (_rootConstraintsCaptured || rootBody == null) return;
+            _rootConstraintsCaptured = true;
+            _ragdollRootConstraints = rootBody.constraints & ~RigidbodyConstraints.FreezeRotation;
+            _motorRootConstraints = _ragdollRootConstraints | RigidbodyConstraints.FreezeRotation;
         }
 
         private void EnsureController()

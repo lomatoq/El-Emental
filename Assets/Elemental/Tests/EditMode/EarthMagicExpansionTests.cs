@@ -25,6 +25,50 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void VectorReleaseSeparatesControlledHoldQuickPulseAndProjectileFlick()
+        {
+            EarthVectorGestureSample controlled = EarthVectorGestureSolver.Classify(
+                0.8f, 0.01f, new float2(0.02f, 0.01f));
+            EarthVectorGestureSample tap = EarthVectorGestureSolver.Classify(
+                0.12f, 0.005f, float2.zero);
+            EarthVectorGestureSample flick = EarthVectorGestureSolver.Classify(
+                0.32f, 0.12f, new float2(2.4f, 0.35f));
+
+            Assert.That(controlled.Intent, Is.EqualTo(EarthVectorReleaseIntent.Controlled));
+            Assert.That(tap.Intent, Is.EqualTo(EarthVectorReleaseIntent.QuickPulse));
+            Assert.That(flick.Intent, Is.EqualTo(EarthVectorReleaseIntent.ProjectileFlick));
+            Assert.That(flick.Strength01, Is.GreaterThan(0.5f));
+            Assert.That(math.length(flick.ScreenDirection), Is.EqualTo(1f).Within(0.0001f));
+        }
+
+        [Test]
+        public void CircularGestureMapsClockwiseToRepairAndCounterClockwiseToDisassembly()
+        {
+            EarthCircularGestureState clockwise = EarthCircularGestureSolver.Begin(float2.zero);
+            EarthCircularGestureSample clockwiseSample = default;
+            for (int index = 0; index <= 12; index++)
+            {
+                float radians = -index * math.PI * 2f / 12f;
+                clockwiseSample = EarthCircularGestureSolver.Step(
+                    ref clockwise, new float2(math.cos(radians), math.sin(radians)) * 100f);
+            }
+
+            EarthCircularGestureState counter = EarthCircularGestureSolver.Begin(float2.zero);
+            EarthCircularGestureSample counterSample = default;
+            for (int index = 0; index <= 7; index++)
+            {
+                float radians = index * math.PI / 7f;
+                counterSample = EarthCircularGestureSolver.Step(
+                    ref counter, new float2(math.cos(radians), math.sin(radians)) * 100f);
+            }
+
+            Assert.That(clockwiseSample.Direction, Is.EqualTo(EarthCircularGestureDirection.Clockwise));
+            Assert.That(clockwiseSample.Phase01, Is.GreaterThan(0.95f));
+            Assert.That(counterSample.Direction, Is.EqualTo(EarthCircularGestureDirection.CounterClockwise));
+            Assert.That(counterSample.Phase01, Is.InRange(0.45f, 0.65f));
+        }
+
+        [Test]
         public void GravityWellPullsAndOrbitsWithBoundedSpeed()
         {
             EarthGravityWellSample sample = EarthGravityWellSolver.Solve(
@@ -124,7 +168,7 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
-        public void FullWaveKeepsVisibleGapsAndACompactSmoothCrest()
+        public void FullWaveFormsContiguousVoronoiCellsAndACompactSmoothCrest()
         {
             EarthPillarWaveSample[] samples = EarthPillarWaveSolver.Build(1f, 1f);
             int maximumRow = 0;
@@ -136,8 +180,10 @@ namespace Elemental.Tests.EditMode
                 for (int candidate = 0; candidate < samples.Length; candidate++)
                     if (samples[candidate].Row == sample.Row) countInRow++;
                 float gap = (math.PI * 2f * sample.ArcDistance) / countInRow;
-                Assert.That(sample.Width, Is.LessThan(gap * 0.79f));
-                Assert.That(sample.Width, Is.GreaterThan(gap * 0.25f));
+                Assert.That(sample.Width, Is.GreaterThan(gap * 1.01f),
+                    "Angular neighbours must overlap slightly instead of leaving lanes.");
+                Assert.That(sample.Width, Is.LessThan(gap * 1.3f));
+                Assert.That(sample.Depth, Is.GreaterThan(0.5f));
             }
 
             var rowHeights = new float[maximumRow + 1];

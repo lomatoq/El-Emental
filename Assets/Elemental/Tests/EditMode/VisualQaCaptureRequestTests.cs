@@ -82,6 +82,38 @@ namespace Elemental.Tests.EditMode
                     VisualQaCaptureRequest.ScenarioArgument, "earth-material"
                 }, out VisualQaCaptureRequest materialRequest), Is.True);
             Assert.That(materialRequest.Scenario, Is.EqualTo(VisualQaScenario.EarthMaterialFracture));
+
+            Assert.That(VisualQaCaptureRequest.TryParse(
+                new[]
+                {
+                    "game.exe", VisualQaCaptureRequest.Argument, "wall-push.png",
+                    VisualQaCaptureRequest.ScenarioArgument, "wall-push"
+                }, out VisualQaCaptureRequest wallPushRequest), Is.True);
+            Assert.That(wallPushRequest.Scenario, Is.EqualTo(VisualQaScenario.WallPush));
+
+            Assert.That(VisualQaCaptureRequest.TryParse(
+                new[]
+                {
+                    "game.exe", VisualQaCaptureRequest.Argument, "mage-walk.png",
+                    VisualQaCaptureRequest.ScenarioArgument, "mage-walk"
+                }, out VisualQaCaptureRequest mageWalkRequest), Is.True);
+            Assert.That(mageWalkRequest.Scenario, Is.EqualTo(VisualQaScenario.MageWalk));
+
+            Assert.That(VisualQaCaptureRequest.TryParse(
+                new[]
+                {
+                    "game.exe", VisualQaCaptureRequest.Argument, "armor.png",
+                    VisualQaCaptureRequest.ScenarioArgument, "armor"
+                }, out VisualQaCaptureRequest armorRequest), Is.True);
+            Assert.That(armorRequest.Scenario, Is.EqualTo(VisualQaScenario.Armor));
+
+            Assert.That(VisualQaCaptureRequest.TryParse(
+                new[]
+                {
+                    "game.exe", VisualQaCaptureRequest.Argument, "quick-stone.png",
+                    VisualQaCaptureRequest.ScenarioArgument, "quick-stone"
+                }, out VisualQaCaptureRequest quickStoneRequest), Is.True);
+            Assert.That(quickStoneRequest.Scenario, Is.EqualTo(VisualQaScenario.QuickStone));
         }
     }
 }

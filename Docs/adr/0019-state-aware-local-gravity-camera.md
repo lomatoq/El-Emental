@@ -21,6 +21,10 @@ The Earth slice already had a stable local-up camera, but one fixed composition 
 
 The camera reads the active Earth action without becoming simulation authority. Pure state, focus, shoulder and occlusion solvers are replayable and testable without a scene. The authored EarthCore scene owns its director explicitly; no runtime migration component is added.
 
+## V2 amendment (2026-08-14)
+
+The exploration composition is now an elevated three-quarter view: 7.4 m distance, 3.85 m height and 60 degree FOV. `EarthCameraPointerIntentSolver` maps normalized pointer position through a soft central dead zone into bounded horizontal, vertical and ground-distance bias. `PlanetCameraRig` clamps focus velocity and resets springs after teleports or extreme local-up discontinuities. The director/rig ownership decision is unchanged; see ADR 0020 for the cross-system foundation pass.
+
 ## Rollback
 
 Disabling `EarthCameraDirector` restores the existing `PlanetCameraRig` framing. The local-gravity placement, occlusion cast and gameplay input contracts remain intact.

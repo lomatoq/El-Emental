@@ -18,6 +18,7 @@ namespace Elemental.Runtime.Characters
         [SerializeField] private Collider planetCollider;
         [SerializeField] private EarthLandingCushionProfile profile;
         [SerializeField] private Transform cushionVisual;
+        [SerializeField] private EarthSurfaceQueryService surfaceQueries;
 
         private bool _holding;
         private bool _cushioning;
@@ -30,6 +31,26 @@ namespace Elemental.Runtime.Characters
         public Vector3 PredictedLandingPoint => _landingPoint;
         public EarthLandingPrediction LastPrediction { get; private set; }
         public float LastLandingSpeed { get; private set; }
+        public EarthSurfaceSample LastLandingSurface { get; private set; }
+
+        public bool TryResolveLandingSurface(
+            Vector3 origin,
+            Vector3 predictedPlanetPoint,
+            out EarthSurfaceSample sample)
+        {
+            sample = default;
+            if (surfaceQueries == null) return false;
+            Vector3 direction = predictedPlanetPoint - origin;
+            float distance = direction.magnitude;
+            if (distance <= 0.05f) return false;
+            var query = new EarthSurfaceQuery(
+                ToFloat3(origin),
+                ToFloat3(direction / distance),
+                distance + 1.5f,
+                EarthSurfaceCapabilities.Support | EarthSurfaceCapabilities.LandingCushion,
+                0.16f);
+            return surfaceQueries.TrySample(in query, out sample);
+        }
 
         public void Configure(
             Rigidbody body,
@@ -37,7 +58,8 @@ namespace Elemental.Runtime.Characters
             ActiveRagdollPuppet configuredPuppet,
             Collider configuredPlanetCollider,
             EarthLandingCushionProfile configuredProfile,
-            Transform configuredVisual)
+            Transform configuredVisual,
+            EarthSurfaceQueryService configuredSurfaceQueries = null)
         {
             targetBody = body;
             motor = configuredMotor;
@@ -45,12 +67,14 @@ namespace Elemental.Runtime.Characters
             planetCollider = configuredPlanetCollider;
             profile = configuredProfile;
             cushionVisual = configuredVisual;
+            surfaceQueries = configuredSurfaceQueries;
             if (cushionVisual != null) cushionVisual.gameObject.SetActive(false);
         }
 
         public bool BeginHold()
         {
-            if (_holding || targetBody == null || motor == null || motor.IsGrounded || planetCollider == null)
+            if (_holding || targetBody == null || motor == null || motor.IsGrounded ||
+                (planetCollider == null && surfaceQueries == null))
                 return false;
             Vector3 up = motor.LocalUp.sqrMagnitude > 0.5f ? motor.LocalUp.normalized : transform.up;
             if (Vector3.Dot(targetBody.linearVelocity, up) >= -0.15f) return false;
@@ -76,15 +100,18 @@ namespace Elemental.Runtime.Characters
 
         private void FixedUpdate()
         {
-            if (!_holding || targetBody == null || motor == null || planetCollider == null) return;
+            if (!_holding || targetBody == null || motor == null ||
+                (planetCollider == null && surfaceQueries == null)) return;
             if (puppet == null) puppet = GetComponent<ActiveRagdollPuppet>();
             using (CushionMarker.Auto())
             {
-                Vector3 center = planetCollider.bounds.center;
+                Vector3 center = planetCollider != null ? planetCollider.bounds.center : Vector3.zero;
                 Vector3 up = motor.LocalUp.sqrMagnitude > 0.5f
                     ? motor.LocalUp.normalized
                     : (targetBody.worldCenterOfMass - center).normalized;
-                Vector3 closest = planetCollider.ClosestPoint(targetBody.worldCenterOfMass);
+                Vector3 closest = planetCollider != null
+                    ? planetCollider.ClosestPoint(targetBody.worldCenterOfMass)
+                    : targetBody.worldCenterOfMass - (up * 24f);
                 float surfaceRadius = Mathf.Max(0.1f, Vector3.Distance(center, closest));
                 LastPrediction = EarthLandingCushionSolver.Predict(
                     ToFloat3(targetBody.worldCenterOfMass),
@@ -96,17 +123,26 @@ namespace Elemental.Runtime.Characters
                 if (!LastPrediction.Valid) return;
                 _landingPoint = ToVector3(LastPrediction.SurfacePoint);
                 _landingUp = (_landingPoint - center).normalized;
+                LastLandingSurface = default;
+                if (TryResolveLandingSurface(
+                        targetBody.worldCenterOfMass, _landingPoint, out EarthSurfaceSample sample))
+                {
+                    LastLandingSurface = sample;
+                    _landingPoint = ToVector3(sample.Point);
+                    _landingUp = ToVector3(sample.Normal);
+                }
                 ShowPrediction();
 
-                float clearance = Vector3.Distance(targetBody.worldCenterOfMass, center) -
-                                  surfaceRadius - 1.05f;
-                float currentUpSpeed = Vector3.Dot(targetBody.linearVelocity, up);
+                float clearance = Vector3.Dot(
+                    targetBody.worldCenterOfMass - _landingPoint, _landingUp) - 1.05f;
+                float currentUpSpeed = Vector3.Dot(targetBody.linearVelocity -
+                    ToVector3(LastLandingSurface.Velocity), _landingUp);
                 if (clearance <= ActivationHeight && currentUpSpeed < -MaximumLandingSpeed)
                 {
                     float velocityChange = EarthLandingCushionSolver.RequiredUpwardVelocityChange(
                         currentUpSpeed,
                         MaximumLandingSpeed);
-                    ApplyVelocityChange(up * velocityChange);
+                    ApplyVelocityChange(_landingUp * velocityChange);
                     LastLandingSpeed = Mathf.Max(0f, -(currentUpSpeed + velocityChange));
                     _cushioning = true;
                     motor.BeginExternalLaunch(3);
@@ -114,7 +150,8 @@ namespace Elemental.Runtime.Characters
 
                 if (_cushioning) CompressVisual(clearance);
                 if (clearance > 0.22f && !motor.IsGrounded) return;
-                LastLandingSpeed = Mathf.Max(0f, -Vector3.Dot(targetBody.linearVelocity, up));
+                LastLandingSpeed = Mathf.Max(0f, -Vector3.Dot(
+                    targetBody.linearVelocity - ToVector3(LastLandingSurface.Velocity), _landingUp));
                 _holding = false;
                 _cushioning = true;
                 _retreatElapsed = 0f;

@@ -1,5 +1,6 @@
 using System.Collections;
 using Elemental.Runtime.World;
+using Elemental.Simulation.Voxel;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -45,6 +46,44 @@ namespace Elemental.Tests.PlayMode
             Assert.That(planet.PeakRenderQueueMilliseconds, Is.LessThan(30.0),
                 $"A bounded edited-chunk render pass took {planet.PeakRenderQueueMilliseconds:0.00} ms.");
             Debug.Log($"[Elemental.Tests] Edited voxel render queue peak: {planet.PeakRenderQueueMilliseconds:0.00} ms.");
+
+            Object.Destroy(planetObject);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator TransactionCommitsOnlyAfterAffectedVisualAndColliderVersions()
+        {
+            GameObject planetObject = new GameObject("Voxel Transaction Test");
+            planetObject.SetActive(false);
+            VoxelPlanetBehaviour planet = planetObject.AddComponent<VoxelPlanetBehaviour>();
+            planet.Configure(8f, 43u, 8, 1f, 1, 1, null);
+            planetObject.SetActive(true);
+            for (int frame = 0; frame < 80 &&
+                 (planet.PendingRenderCount > 0 || planet.PendingColliderCount > 0); frame++) yield return null;
+
+            bool callback = false;
+            VoxelEditReceipt committed = default;
+            planet.EditCommitted += receipt =>
+            {
+                callback = true;
+                committed = receipt;
+            };
+            VoxelEditReceipt submitted = planet.ApplySphereEditTransactional(
+                new Vector3(0f, 8f, 0f), 1.5f, true);
+
+            Assert.That(submitted.IsValid, Is.True);
+            Assert.That(planet.IsEditCommitted(submitted), Is.False);
+            Assert.That(callback, Is.False);
+            Assert.That(planet.PendingEditTransactionCount, Is.EqualTo(1));
+            for (int frame = 0; frame < 80 && !callback; frame++) yield return null;
+
+            Assert.That(callback, Is.True);
+            Assert.That(committed, Is.EqualTo(submitted));
+            Assert.That(planet.IsEditCommitted(submitted), Is.True);
+            Assert.That(planet.PendingEditTransactionCount, Is.Zero);
+            Assert.That(planet.PendingRenderCount, Is.Zero);
+            Assert.That(planet.PendingColliderCount, Is.Zero);
 
             Object.Destroy(planetObject);
             yield return null;

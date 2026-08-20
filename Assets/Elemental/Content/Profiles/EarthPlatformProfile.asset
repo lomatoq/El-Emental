@@ -16,12 +16,16 @@ MonoBehaviour:
   maximumArea: 75
   maximumActivePlatforms: 6
   minimumHeight: 0.6
-  maximumHeight: 3
+  maximumHeight: 22
+  softHeightLimit: 8
+  heightCostExponent: 1.65
+  aspectCost: 0.18
+  serializedVersion: 4
   topThickness: 0.45
   emergenceSeconds: 0.52
   minimumEmbedDepth: 0.24
   visibleVoxelSafetyDepth: 0.45
   fractureImpulse: 1150
-  fracturePieceCount: 12
+  fracturePieceCount: 36
   debrisRestSeconds: 2.2
   debrisShrinkSeconds: 1.4

@@ -37,5 +37,22 @@ namespace Elemental.Tests.EditMode
             Assert.That(exception.Message, Does.Contain("EarthCoreSlice.unity"));
             Assert.That(exception.Message, Does.Contain("not enabled"));
         }
+
+        [Test]
+        public void Create_ExcludesEditorOnlyPolishLabEvenWhenEnabledForPlayModeTests()
+        {
+            string[] result = NativeBuildSceneOrder.Create(new[]
+            {
+                "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity",
+                "Assets/Elemental/Content/Scenes/EarthPolishLab.unity",
+                "Assets/Elemental/Content/Scenes/Bootstrap.unity"
+            }, "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity");
+
+            Assert.That(result, Is.EqualTo(new[]
+            {
+                "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity",
+                "Assets/Elemental/Content/Scenes/Bootstrap.unity"
+            }));
+        }
     }
 }

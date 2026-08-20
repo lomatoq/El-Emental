@@ -245,6 +245,45 @@ namespace Elemental.Simulation.Magic
         public bool Wall { get; }
     }
 
+    public enum EarthReturnEventStage : byte
+    {
+        Captured = 0,
+        Subsurface = 1,
+        CommitSubmitted = 2,
+        Completed = 3,
+        Reversed = 4,
+        Jammed = 5
+    }
+
+    public readonly struct EarthReturnEvent
+    {
+        public EarthReturnEvent(
+            uint tick,
+            uint matterId,
+            ushort generation,
+            EarthReturnEventStage stage,
+            float3 position,
+            float volume,
+            float mass)
+        {
+            Tick = tick;
+            MatterId = matterId;
+            Generation = generation;
+            Stage = stage;
+            Position = position;
+            Volume = math.max(0f, volume);
+            Mass = math.max(0f, mass);
+        }
+
+        public uint Tick { get; }
+        public uint MatterId { get; }
+        public ushort Generation { get; }
+        public EarthReturnEventStage Stage { get; }
+        public float3 Position { get; }
+        public float Volume { get; }
+        public float Mass { get; }
+    }
+
     public readonly struct AbilityRejectedEvent
     {
         public AbilityRejectedEvent(uint tick, AbilityId ability, string reason)

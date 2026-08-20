@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Elemental.Runtime.Geometry;
 using Elemental.Runtime.World;
 using UnityEngine;
 
@@ -16,13 +17,25 @@ namespace Elemental.Runtime.Physics
         [SerializeField] private EarthRockDebrisPool debrisPool;
         [SerializeField] private EarthHoverProfile hoverProfile;
         [SerializeField] private EarthPhysicsFeelProfile physicsFeelProfile;
+        [SerializeField] private EarthShapeGrammarProfile shapeGrammarProfile;
 
         private readonly List<EarthFragment> _fragments = new List<EarthFragment>(8);
-        private int _reuseCursor;
+        private EarthShapeDiversityTracker _shapeDiversity;
+        private Mesh[] _runtimeShapeVariants;
         private uint _nextId = 1u;
 
         public int ActiveCount { get; private set; }
         public EarthFragment LastAcquired { get; private set; }
+        public Material SharedMaterial => fragmentMaterial;
+        public GravityWorldBehaviour GravityWorld => gravityWorld;
+
+        public Mesh ResolveShapeVariant(int stableIndex)
+        {
+            Mesh[] variants = AvailableShapeVariants;
+            if (variants != null && variants.Length > 0)
+                return variants[Mathf.Abs(stableIndex) % variants.Length];
+            return fragmentMesh;
+        }
 
         public void Configure(
             int configuredCapacity,
@@ -54,10 +67,25 @@ namespace Elemental.Runtime.Physics
                 _fragments[index].ConfigureHover(profile);
         }
 
-        public void ConfigurePhysicsFeel(EarthPhysicsFeelProfile profile) => physicsFeelProfile = profile;
+        public void ConfigurePhysicsFeel(EarthPhysicsFeelProfile profile)
+        {
+            physicsFeelProfile = profile;
+            for (int index = 0; index < _fragments.Count; index++)
+                _fragments[index].GetComponent<EarthProjectileSweepGuard>()?.Configure(_fragments[index], profile);
+        }
+
+        public void ConfigureShapeGrammar(EarthShapeGrammarProfile profile)
+        {
+            shapeGrammarProfile = profile;
+            _shapeDiversity = new EarthShapeDiversityTracker(
+                profile != null ? profile.LocalHistoryLength : 16);
+        }
 
         private void Awake()
         {
+            _shapeDiversity ??= new EarthShapeDiversityTracker(
+                shapeGrammarProfile != null ? shapeGrammarProfile.LocalHistoryLength : 16);
+            EnsureRuntimeShapeLibrary();
             for (int index = 0; index < capacity; index++)
             {
                 CreateFragment();
@@ -83,8 +111,13 @@ namespace Elemental.Runtime.Physics
 
             if (fragment == null)
             {
-                fragment = _fragments[_reuseCursor];
-                _reuseCursor = (_reuseCursor + 1) % _fragments.Count;
+                if (_fragments.Count >= capacity)
+                {
+                    Debug.LogWarning("[EarthMatter] Hero fragment budget exhausted; acquisition rejected without reusing live matter.", this);
+                    return null;
+                }
+                fragment = CreateFragment();
+                ActiveCount++;
             }
             else
             {
@@ -92,9 +125,14 @@ namespace Elemental.Runtime.Physics
             }
 
             uint fragmentId = _nextId++;
-            Mesh[] variants = fragmentMeshVariants;
+            Mesh[] variants = AvailableShapeVariants;
+            int shapeIndex = (int)_shapeDiversity.Select(
+                EarthShapeSeed.Compose(
+                    shapeGrammarProfile != null ? shapeGrammarProfile.LibrarySeed : 0xE17F0411u,
+                    fragmentId, 1u, fragmentId, 0u).Value,
+                shapeGrammarProfile != null ? shapeGrammarProfile.CandidateAttempts : 12);
             Mesh shape = variants != null && variants.Length > 0
-                ? variants[(int)((fragmentId - 1u) % (uint)variants.Length)]
+                ? variants[shapeIndex % variants.Length]
                 : fragmentMesh;
             fragment.Initialize(
                 fragmentId, executor, position, radius, mass, holdTarget,
@@ -127,8 +165,16 @@ namespace Elemental.Runtime.Physics
                 fragment.Mass,
                 fragment.FragmentId);
             fragment.StopBendControl();
+            fragment.MarkConsumedForPool();
+            NotifyReleased(fragment);
             fragment.gameObject.SetActive(false);
             return true;
+        }
+
+        internal void NotifyReleased(EarthFragment fragment)
+        {
+            if (fragment == null) return;
+            ActiveCount = Mathf.Max(0, ActiveCount - 1);
         }
 
         public void EmitAccretion(
@@ -162,11 +208,55 @@ namespace Elemental.Runtime.Physics
             physicsFeelProfile?.Apply(body, collider, EarthPhysicsBodyClass.HeavyBlock);
             EarthFragment fragment = fragmentObject.AddComponent<EarthFragment>();
             fragment.ConfigureHover(hoverProfile);
+            EarthProjectileSweepGuard sweepGuard = fragmentObject.AddComponent<EarthProjectileSweepGuard>();
+            sweepGuard.Configure(fragment, physicsFeelProfile);
             GravityBody gravityBody = fragmentObject.AddComponent<GravityBody>();
             gravityBody.Configure(gravityWorld, body);
             fragmentObject.SetActive(false);
             _fragments.Add(fragment);
             return fragment;
+        }
+
+        private Mesh[] AvailableShapeVariants =>
+            _runtimeShapeVariants != null && _runtimeShapeVariants.Length > 0
+                ? _runtimeShapeVariants
+                : fragmentMeshVariants;
+
+        private void EnsureRuntimeShapeLibrary()
+        {
+            if (_runtimeShapeVariants != null) return;
+            bool legacyLibrary = shapeGrammarProfile != null ||
+                                 fragmentMeshVariants == null || fragmentMeshVariants.Length == 0;
+            if (!legacyLibrary)
+            {
+                Mesh first = fragmentMeshVariants[0];
+                legacyLibrary = first != null && first.name.StartsWith(
+                    "Beveled Earth Block", System.StringComparison.OrdinalIgnoreCase);
+            }
+            if (!legacyLibrary) return;
+
+            _runtimeShapeVariants = new Mesh[EarthRockMeshFactory.ArchetypeCount];
+            for (int index = 0; index < _runtimeShapeVariants.Length; index++)
+            {
+                uint seed = EarthShapeSeed.Compose(
+                    shapeGrammarProfile != null ? shapeGrammarProfile.LibrarySeed : 0xE17F0411u,
+                    (uint)(index + 1), 1u, 1u, 0u).Value;
+                _runtimeShapeVariants[index] = EarthRockMeshFactory.Create((EarthRockArchetype)index, seed);
+            }
+            if (_runtimeShapeVariants.Length > 0) fragmentMesh = _runtimeShapeVariants[0];
+        }
+
+        private void OnDestroy()
+        {
+            if (_runtimeShapeVariants == null) return;
+            for (int index = 0; index < _runtimeShapeVariants.Length; index++)
+            {
+                Mesh generated = _runtimeShapeVariants[index];
+                if (generated == null) continue;
+                if (Application.isPlaying) Destroy(generated);
+                else DestroyImmediate(generated);
+            }
+            _runtimeShapeVariants = null;
         }
     }
 }

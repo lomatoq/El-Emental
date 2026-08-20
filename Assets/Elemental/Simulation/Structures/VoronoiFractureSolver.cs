@@ -23,6 +23,21 @@ namespace Elemental.Simulation.Structures
         public float2[] Vertices { get; }
     }
 
+    public readonly struct EarthStructureFracturePlan
+    {
+        public EarthStructureFracturePlan(uint seed, float2[] boundary, VoronoiFractureCell[] cells)
+        {
+            Seed = seed;
+            Boundary = boundary ?? Array.Empty<float2>();
+            Cells = cells ?? Array.Empty<VoronoiFractureCell>();
+        }
+
+        public uint Seed { get; }
+        public float2[] Boundary { get; }
+        public VoronoiFractureCell[] Cells { get; }
+        public bool IsValid => Boundary.Length >= 3 && Cells.Length >= 4;
+    }
+
     public static class VoronoiFractureSolver
     {
         private const float HalfExtent = 0.5f;
@@ -96,6 +111,129 @@ namespace Elemental.Simulation.Structures
             return BuildNormalizedCells(sites, aspect, halfExtents);
         }
 
+        /// <summary>
+        /// Prefractures an arbitrary convex platform footprint. Sparse parent sites
+        /// create a few large plates while clustered child sites form small chips.
+        /// Every returned cell is already clipped to the exact authored boundary.
+        /// </summary>
+        public static EarthStructureFracturePlan BuildHierarchicalClipped(
+            uint seed,
+            float2[] convexBoundary,
+            int requestedCellCount = 24)
+        {
+            if (convexBoundary == null || convexBoundary.Length < 3)
+                return new EarthStructureFracturePlan(seed, convexBoundary, Array.Empty<VoronoiFractureCell>());
+            int count = math.clamp(requestedCellCount, 18, 28);
+            float2 minimum = new float2(float.PositiveInfinity);
+            float2 maximum = new float2(float.NegativeInfinity);
+            for (int index = 0; index < convexBoundary.Length; index++)
+            {
+                minimum = math.min(minimum, convexBoundary[index]);
+                maximum = math.max(maximum, convexBoundary[index]);
+            }
+
+            float2[] sites = GenerateHierarchicalSitesInBoundary(seed, convexBoundary, minimum, maximum, count);
+            var cells = new VoronoiFractureCell[count];
+            for (int siteIndex = 0; siteIndex < sites.Length; siteIndex++)
+            {
+                var polygon = new List<float2>(convexBoundary.Length + 8);
+                polygon.AddRange(convexBoundary);
+                for (int otherIndex = 0; otherIndex < sites.Length && polygon.Count >= 3; otherIndex++)
+                {
+                    if (otherIndex == siteIndex) continue;
+                    ClipToNearestHalfPlane(polygon, sites[siteIndex], sites[otherIndex]);
+                }
+                float2[] vertices = polygon.ToArray();
+                if (vertices.Length < 3)
+                {
+                    vertices = new[]
+                    {
+                        sites[siteIndex] + new float2(-0.02f, -0.02f),
+                        sites[siteIndex] + new float2(0.02f, -0.02f),
+                        sites[siteIndex] + new float2(0f, 0.02f)
+                    };
+                }
+                ComputeAreaAndCentroid(vertices, out float area, out float2 centroid);
+                cells[siteIndex] = new VoronoiFractureCell(
+                    (uint)(siteIndex + 1), sites[siteIndex], centroid, area, vertices);
+            }
+            return new EarthStructureFracturePlan(seed, (float2[])convexBoundary.Clone(), cells);
+        }
+
+        /// <summary>
+        /// Builds exact shared-boundary cells from caller-authored sites. This is
+        /// used by the radial/spiral ground wave: the solver owns topology, while
+        /// the generic Voronoi clipper guarantees that adjacent plates reuse the
+        /// same bisector instead of approximating neighbours with scaled boxes.
+        /// </summary>
+        public static EarthStructureFracturePlan BuildClippedFromSites(
+            uint seed,
+            float2[] convexBoundary,
+            float2[] sites)
+        {
+            if (convexBoundary == null || convexBoundary.Length < 3 ||
+                sites == null || sites.Length < 4)
+                return new EarthStructureFracturePlan(seed, convexBoundary, Array.Empty<VoronoiFractureCell>());
+            var cells = new VoronoiFractureCell[sites.Length];
+            for (int siteIndex = 0; siteIndex < sites.Length; siteIndex++)
+            {
+                var polygon = new List<float2>(convexBoundary.Length + 8);
+                polygon.AddRange(convexBoundary);
+                for (int otherIndex = 0; otherIndex < sites.Length && polygon.Count >= 3; otherIndex++)
+                {
+                    if (otherIndex == siteIndex) continue;
+                    ClipToNearestHalfPlane(polygon, sites[siteIndex], sites[otherIndex]);
+                }
+                float2[] vertices = polygon.ToArray();
+                if (vertices.Length < 3)
+                {
+                    vertices = new[]
+                    {
+                        sites[siteIndex] + new float2(-0.01f, -0.008f),
+                        sites[siteIndex] + new float2(0.012f, -0.006f),
+                        sites[siteIndex] + new float2(0f, 0.012f)
+                    };
+                }
+                ComputeAreaAndCentroid(vertices, out float area, out float2 centroid);
+                cells[siteIndex] = new VoronoiFractureCell(
+                    (uint)(siteIndex + 1), sites[siteIndex], centroid, area, vertices);
+            }
+            return new EarthStructureFracturePlan(seed, (float2[])convexBoundary.Clone(), cells);
+        }
+
+        public static float2[] BuildChippedOutline(VoronoiFractureCell cell, uint seed)
+        {
+            if (cell.Vertices == null || cell.Vertices.Length < 3)
+                return cell.Vertices ?? Array.Empty<float2>();
+            var outline = new float2[cell.Vertices.Length * 3];
+            int output = 0;
+            for (int edgeIndex = 0; edgeIndex < cell.Vertices.Length; edgeIndex++)
+            {
+                float2 a = cell.Vertices[edgeIndex];
+                float2 b = cell.Vertices[(edgeIndex + 1) % cell.Vertices.Length];
+                bool canonicalForward = a.x < b.x ||
+                                        (math.abs(a.x - b.x) <= Epsilon && a.y <= b.y);
+                float2 p0 = canonicalForward ? a : b;
+                float2 p1 = canonicalForward ? b : a;
+                float2 edge = p1 - p0;
+                float length = math.length(edge);
+                float2 normal = length > Epsilon
+                    ? new float2(-edge.y, edge.x) / length
+                    : float2.zero;
+                uint hash = HashEdge(seed, p0, p1);
+                float amplitude = math.min(0.032f, length * 0.085f);
+                float firstOffset = SignedChipping(hash) * amplitude;
+                float secondOffset = SignedChipping(Hash(hash ^ 0xA511E9B3u)) * amplitude;
+                float2 first = math.lerp(p0, p1, 0.34f) + normal * firstOffset;
+                float2 second = math.lerp(p0, p1, 0.67f) + normal * secondOffset;
+
+                outline[output++] = a;
+                outline[output++] = canonicalForward ? first : second;
+                outline[output++] = canonicalForward ? second : first;
+            }
+            return outline;
+        }
+
         private static VoronoiFractureCell[] BuildNormalizedCells(
             float2[] sites,
             float aspect,
@@ -134,11 +272,11 @@ namespace Elemental.Simulation.Structures
             var sites = new float2[largeCount + mediumCount + smallCount];
             float2[] largePattern =
             {
-                new float2(-0.62f, -0.56f),
-                new float2(0.58f, -0.57f),
-                new float2(-0.66f, 0.52f),
-                new float2(0.64f, 0.50f),
-                new float2(0.00f, 0.02f)
+                new float2(-0.77f, -0.32f),
+                new float2(0.46f, -0.73f),
+                new float2(-0.38f, 0.69f),
+                new float2(0.78f, 0.31f),
+                new float2(0.03f, 0.08f)
             };
             for (int index = 0; index < largeCount; index++)
             {
@@ -148,10 +286,13 @@ namespace Elemental.Simulation.Structures
             }
 
             var random = new DeterministicRandom(seed ^ 0x51A7C0DEu);
+            float angularOffset = random.NextFloat01() * math.PI * 2f;
             for (int index = 0; index < mediumCount; index++)
             {
-                float angle = (index * 2.3999632f) + (random.NextFloat01() * 0.42f);
-                float radius = math.lerp(0.42f, 0.78f, random.NextFloat01());
+                float angle = angularOffset + (index * 2.3999632f) +
+                              math.lerp(-0.34f, 0.34f, random.NextFloat01());
+                float radius = math.lerp(0.32f, 0.88f,
+                    random.NextFloat01() * random.NextFloat01());
                 sites[largeCount + index] = new float2(
                     math.cos(angle) * halfExtents.x * radius,
                     math.sin(angle) * halfExtents.y * radius);
@@ -160,9 +301,11 @@ namespace Elemental.Simulation.Structures
             float typicalSpacing = math.sqrt((halfExtents.x * halfExtents.y * 4f) / sites.Length);
             for (int index = 0; index < smallCount; index++)
             {
-                int parentIndex = largeCount + (index % mediumCount);
+                int parentIndex = largeCount + math.min(
+                    mediumCount - 1,
+                    (int)math.floor(random.NextFloat01() * mediumCount));
                 float angle = (index * 2.3999632f) + (random.NextFloat01() * 0.65f);
-                float radius = typicalSpacing * math.lerp(0.13f, 0.27f, random.NextFloat01());
+                float radius = typicalSpacing * math.lerp(0.12f, 0.42f, random.NextFloat01());
                 float2 offset = new float2(math.cos(angle), math.sin(angle)) * radius;
                 float2 candidate = sites[parentIndex] + offset;
                 sites[largeCount + mediumCount + index] = math.clamp(
@@ -172,6 +315,97 @@ namespace Elemental.Simulation.Structures
             }
 
             return sites;
+        }
+
+        private static float2[] GenerateHierarchicalSitesInBoundary(
+            uint seed,
+            float2[] boundary,
+            float2 minimum,
+            float2 maximum,
+            int count)
+        {
+            var random = new DeterministicRandom(seed ^ 0xA17E5EEDu);
+            var sites = new float2[count];
+            float2 center = (minimum + maximum) * 0.5f;
+            float2 half = math.max(new float2(0.1f), (maximum - minimum) * 0.5f);
+            int largeCount = math.clamp((int)math.round(count * 0.18f), 3, 5);
+            int mediumCount = math.clamp((int)math.round(count * 0.32f), 6, 9);
+            float angularOffset = random.NextFloat01() * math.PI * 2f;
+            for (int index = 0; index < largeCount + mediumCount; index++)
+            {
+                float angle = angularOffset + index * 2.3999632f + math.lerp(-0.18f, 0.18f, random.NextFloat01());
+                float radius01 = index < largeCount
+                    ? math.lerp(0.18f, 0.72f, (index + 0.5f) / largeCount)
+                    : math.lerp(0.22f, 0.88f, random.NextFloat01());
+                float2 candidate = center + new float2(
+                    math.cos(angle) * half.x * radius01,
+                    math.sin(angle) * half.y * radius01);
+                sites[index] = PullInside(candidate, center, boundary);
+            }
+
+            float typicalSpacing = math.sqrt(math.max(0.01f, half.x * half.y * 4f / count));
+            for (int index = largeCount + mediumCount; index < count; index++)
+            {
+                int parent = largeCount + ((index - largeCount - mediumCount) % mediumCount);
+                float angle = angularOffset + index * 2.3999632f + random.NextFloat01() * 0.7f;
+                float radius = typicalSpacing * math.lerp(0.10f, 0.34f, random.NextFloat01());
+                float2 candidate = sites[parent] + new float2(math.cos(angle), math.sin(angle)) * radius;
+                sites[index] = PullInside(candidate, sites[parent], boundary);
+            }
+            return sites;
+        }
+
+        private static float2 PullInside(float2 candidate, float2 fallback, float2[] boundary)
+        {
+            if (IsInsideConvex(candidate, boundary)) return candidate;
+            float2 current = candidate;
+            for (int attempt = 0; attempt < 8; attempt++)
+            {
+                current = math.lerp(current, fallback, 0.5f);
+                if (IsInsideConvex(current, boundary)) return current;
+            }
+            return fallback;
+        }
+
+        private static bool IsInsideConvex(float2 point, float2[] polygon)
+        {
+            float sign = 0f;
+            for (int index = 0; index < polygon.Length; index++)
+            {
+                float2 a = polygon[index];
+                float2 b = polygon[(index + 1) % polygon.Length];
+                float cross = ((b.x - a.x) * (point.y - a.y)) -
+                              ((b.y - a.y) * (point.x - a.x));
+                if (math.abs(cross) <= Epsilon) continue;
+                if (sign == 0f) sign = math.sign(cross);
+                else if (math.sign(cross) != sign) return false;
+            }
+            return true;
+        }
+
+        private static uint HashEdge(uint seed, float2 p0, float2 p1)
+        {
+            uint hash = seed ^ 0x9E3779B9u;
+            hash = Hash(hash ^ unchecked((uint)math.round(p0.x * 100000f)));
+            hash = Hash(hash ^ unchecked((uint)math.round(p0.y * 100000f)));
+            hash = Hash(hash ^ unchecked((uint)math.round(p1.x * 100000f)));
+            return Hash(hash ^ unchecked((uint)math.round(p1.y * 100000f)));
+        }
+
+        private static float SignedChipping(uint hash)
+        {
+            float magnitude = math.lerp(0.38f, 1f, (hash & 0xFFFFu) / 65535f);
+            return (hash & 0x10000u) == 0u ? -magnitude : magnitude;
+        }
+
+        private static uint Hash(uint value)
+        {
+            value ^= value >> 16;
+            value *= 0x7FEB352Du;
+            value ^= value >> 15;
+            value *= 0x846CA68Bu;
+            value ^= value >> 16;
+            return value;
         }
 
         private static List<float2> BuildCellPolygon(

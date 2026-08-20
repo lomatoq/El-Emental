@@ -1,5 +1,6 @@
 using Elemental.Simulation.Characters;
 using Elemental.Simulation.Gravity;
+using Elemental.Runtime.Diagnostics;
 using Elemental.Runtime.Physics;
 using Unity.Mathematics;
 using Unity.Profiling;
@@ -42,50 +43,130 @@ namespace Elemental.Runtime.Characters
         [SerializeField, Min(0f)] private float orientationSpring = 35f;
         [SerializeField, Min(0f)] private float orientationDamping = 8f;
         [SerializeField, Min(0.1f)] private float maxOrientationTorque = 80f;
+        [SerializeField, Min(30f)] private float maximumOrientationDegreesPerSecond = 540f;
 
         private readonly RaycastHit[] _groundHits = new RaycastHit[GroundHitCapacity];
         private IPlanetMotorInputSource _inputSource;
         private uint _tick;
         private int _ignoreGroundTicks;
+        private byte _groundContactCount;
         private Vector3 _localUp = Vector3.up;
         private Vector3 _groundNormal = Vector3.up;
         private float _groundDistance;
         private Vector3 _aimForward;
         private bool _hasAimForward;
         private ActiveRagdollPuppet _puppet;
-        private MovingSupportSnapshot _movingSupport;
+        private SupportFrameSnapshot _movingSupport;
         private int _movingSupportTicks;
+        private uint _lastCarrySurfaceId;
+        private uint _lastCarryGeneration;
+        private Vector3 _lastCarrySurfaceVelocity;
         private PlanetJumpWindowState _jumpWindow;
         private float _castBrace01;
+        private EarthMotionReproRecorder _motionRecorder;
+        private MotionFaultKind _pendingMotionFaults;
 
         public bool IsGrounded { get; private set; }
         public Vector3 LocalUp => _localUp;
         public Vector3 FacingForward => _hasAimForward ? _aimForward : transform.forward;
         public PlanetMotorCommand LastCommand { get; private set; }
         public uint MovingSurfaceId => _movingSupportTicks > 0 ? _movingSupport.SurfaceId : 0u;
+        public uint MovingSurfaceGeneration => _movingSupportTicks > 0 ? _movingSupport.Generation : 0u;
+        public SupportFrameSnapshot CurrentSupportFrame => _movingSupportTicks > 0 ? _movingSupport : default;
+        public bool HasStableSupport => IsGrounded || _movingSupportTicks > 0;
+        public bool AcceptsMovingSupport => _ignoreGroundTicks <= 0;
         public PlanetLocomotionTelemetry Telemetry { get; private set; }
+        public PlanetMotionState MotionState { get; private set; } = PlanetMotionState.AirborneFalling;
+        public EarthMotionReproRecorder MotionRecorder => _motionRecorder;
+
+        public Vector3 SupportFeetPoint(Vector3 up) => FeetPoint(
+            up.sqrMagnitude > 0.5f ? up.normalized : _localUp);
 
         public void ApplyMovingSupport(
-            in MovingSupportSnapshot support,
+            in SupportFrameSnapshot support,
             Vector3 supportTopPoint,
             float maximumSpeed,
             float maximumAcceleration)
         {
             if (targetBody == null || !support.IsValid) return;
-            Vector3 up = ToVector3(support.Up);
+            SupportFrameSnapshot contactSupport = support.WithContactPoint(ToFloat3(supportTopPoint));
+            SupportFrameContinuity continuity = MovingSurfaceSolver.ClassifyContinuity(
+                _movingSupport,
+                contactSupport,
+                Mathf.Max(0.75f, maximumSpeed * Time.fixedDeltaTime * 2.5f),
+                70f * Mathf.Deg2Rad);
+            if (continuity == SupportFrameContinuity.Discontinuous)
+                _pendingMotionFaults |= MotionFaultKind.SupportDiscontinuity;
+            else if (continuity == SupportFrameContinuity.NewGeneration &&
+                     _movingSupport.IsValid && _movingSupport.SurfaceId == contactSupport.SurfaceId)
+                _pendingMotionFaults |= MotionFaultKind.SupportGenerationMismatch;
+            Vector3 up = ToVector3(contactSupport.Up);
             Vector3 feet = FeetPoint(up);
             float verticalError = Vector3.Dot(supportTopPoint - feet, up);
+            if (contactSupport.Emerging)
+                verticalError = Mathf.Max(0f, verticalError);
             float3 acceleration = MovingSurfaceSolver.CarryAcceleration(
                 ToFloat3(targetBody.linearVelocity),
-                support.PointVelocity,
-                support.Up,
+                contactSupport.ContactPointVelocity,
+                contactSupport.Up,
                 verticalError,
                 maximumSpeed,
                 maximumAcceleration,
                 Time.fixedDeltaTime);
-            targetBody.AddForce(ToVector3(acceleration), ForceMode.Acceleration);
-            _movingSupport = support;
+            Vector3 upAcceleration = ToVector3(acceleration);
+            Vector3 supportVelocity = ToVector3(contactSupport.ContactPointVelocity);
+            bool sameSupport = continuity == SupportFrameContinuity.Stable &&
+                               _lastCarrySurfaceId == contactSupport.SurfaceId &&
+                               _lastCarryGeneration == contactSupport.Generation;
+            Vector3 tangentVelocityChange = ToVector3(
+                MovingSurfaceSolver.TangentCarryVelocityChange(
+                    ToFloat3(_lastCarrySurfaceVelocity),
+                    contactSupport.ContactPointVelocity,
+                    contactSupport.Up,
+                    sameSupport,
+                    maximumAcceleration,
+                    Time.fixedDeltaTime));
+            // A discontinuous pooled/repositioned support establishes a new frame but
+            // never injects its teleport delta into the character.
+            if (continuity == SupportFrameContinuity.Discontinuous)
+                tangentVelocityChange = Vector3.zero;
+            Vector3 carryAcceleration = Vector3.ClampMagnitude(
+                upAcceleration + (tangentVelocityChange / Mathf.Max(0.0001f, Time.fixedDeltaTime)),
+                Mathf.Max(0.1f, maximumAcceleration));
+            if (_puppet != null)
+                _puppet.ApplyUniformVelocityChange(carryAcceleration * Time.fixedDeltaTime);
+            else
+                targetBody.AddForce(carryAcceleration, ForceMode.Acceleration);
+            _movingSupport = contactSupport;
             _movingSupportTicks = 3;
+            _lastCarrySurfaceId = contactSupport.SurfaceId;
+            _lastCarryGeneration = contactSupport.Generation;
+            _lastCarrySurfaceVelocity = supportVelocity;
+        }
+
+        public void ApplyMovingSupport(
+            in MovingSupportSnapshot support,
+            Vector3 supportTopPoint,
+            float maximumSpeed,
+            float maximumAcceleration) =>
+            ApplyMovingSupport(support.Frame, supportTopPoint, maximumSpeed, maximumAcceleration);
+
+        public void ApplyMovingSupportAnchorCorrection(
+            Vector3 desiredRiderCenter,
+            float stiffness,
+            float maximumAcceleration)
+        {
+            if (targetBody == null || _movingSupportTicks <= 0 || !_movingSupport.IsValid) return;
+            Vector3 delta = ToVector3(MovingSurfaceSolver.AnchorCorrectionVelocityChange(
+                ToFloat3(targetBody.worldCenterOfMass),
+                ToFloat3(desiredRiderCenter),
+                _movingSupport.Up,
+                stiffness,
+                maximumAcceleration,
+                Time.fixedDeltaTime));
+            if (delta.sqrMagnitude <= 0f) return;
+            if (_puppet != null) _puppet.ApplyUniformVelocityChange(delta);
+            else targetBody.AddForce(delta, ForceMode.VelocityChange);
         }
 
         public void Configure(
@@ -119,6 +200,12 @@ namespace Elemental.Runtime.Characters
             ApplyFeelProfile();
         }
 
+        public void ConfigureInputSource(MonoBehaviour configuredInputSource)
+        {
+            inputSourceBehaviour = configuredInputSource;
+            _inputSource = configuredInputSource as IPlanetMotorInputSource;
+        }
+
         public void SetCastStance(float brace01) => _castBrace01 = Mathf.Clamp01(brace01);
 
         public void ConfigureTankSteering(bool enabled, float turnRateDegreesPerSecond)
@@ -126,6 +213,16 @@ namespace Elemental.Runtime.Characters
             tankSteering = enabled;
             tankTurnRateDegrees = Mathf.Max(10f, turnRateDegreesPerSecond);
             if (enabled && !_hasAimForward) SetAimDirection(transform.forward);
+        }
+
+        public void ConfigureOrientationFeel(
+            float spring,
+            float damping,
+            float maximumTorque)
+        {
+            orientationSpring = Mathf.Max(0f, spring);
+            orientationDamping = Mathf.Max(0f, damping);
+            maxOrientationTorque = Mathf.Max(0.1f, maximumTorque);
         }
 
         public void SetAimDirection(Vector3 worldDirection)
@@ -166,6 +263,16 @@ namespace Elemental.Runtime.Characters
 
             _inputSource = inputSourceBehaviour as IPlanetMotorInputSource;
             if (_puppet == null) _puppet = GetComponent<ActiveRagdollPuppet>();
+            if (_motionRecorder == null) _motionRecorder = GetComponent<EarthMotionReproRecorder>();
+            if (_motionRecorder == null) _motionRecorder = gameObject.AddComponent<EarthMotionReproRecorder>();
+            uint profileHash = feelProfile != null
+                ? math.hash(new float4(
+                    feelProfile.MaximumGroundSpeed,
+                    feelProfile.Acceleration,
+                    feelProfile.JumpSpeed,
+                    feelProfile.MaximumSlopeAngle))
+                : 0u;
+            _motionRecorder.Configure(0u, profileHash);
         }
 
         private void FixedUpdate()
@@ -202,13 +309,23 @@ namespace Elemental.Runtime.Characters
                     (feelProfile != null ? feelProfile.JumpBufferSeconds : 0.14f) /
                     Mathf.Max(0.001f, Time.fixedDeltaTime)), 1, ushort.MaxValue);
                 _jumpWindow = _jumpWindow.Step(
-                    IsGrounded, LastCommand.JumpPressed, coyoteTicks, bufferTicks);
+                    HasStableSupport, LastCommand.JumpPressed, coyoteTicks, bufferTicks);
                 _tick++;
 
                 ApplyMovement(LastCommand);
                 ApplyOrientation();
+                RecordMotionFrame();
 
-                if (_movingSupportTicks > 0) _movingSupportTicks--;
+                if (_movingSupportTicks > 0)
+                {
+                    _movingSupportTicks--;
+                    if (_movingSupportTicks == 0)
+                    {
+                        _lastCarrySurfaceId = 0u;
+                        _lastCarryGeneration = 0u;
+                        _lastCarrySurfaceVelocity = Vector3.zero;
+                    }
+                }
 
                 if (_ignoreGroundTicks > 0)
                 {
@@ -226,6 +343,7 @@ namespace Elemental.Runtime.Characters
         private void UpdateGrounding()
         {
             IsGrounded = false;
+            _groundContactCount = 0;
             _groundNormal = _localUp;
             _groundDistance = groundProbeDistance;
 
@@ -262,10 +380,13 @@ namespace Elemental.Runtime.Characters
                 }
 
                 float slopeDot = Vector3.Dot(hit.normal, _localUp);
-                if (slopeDot < minimumSlopeDot || hit.distance >= bestDistance)
+                if (slopeDot < minimumSlopeDot)
                 {
                     continue;
                 }
+
+                _groundContactCount++;
+                if (hit.distance >= bestDistance) continue;
 
                 bestDistance = hit.distance;
                 _groundNormal = hit.normal;
@@ -310,15 +431,19 @@ namespace Elemental.Runtime.Characters
                 desiredDirection = (forward * move.y) + (right * move.x);
             }
 
-            if (IsGrounded)
+            bool stableSupport = HasStableSupport;
+            if (stableSupport)
             {
-                desiredDirection = Vector3.ProjectOnPlane(desiredDirection, _groundNormal);
+                Vector3 supportNormal = IsGrounded
+                    ? _groundNormal
+                    : ToVector3(_movingSupport.Up);
+                desiredDirection = Vector3.ProjectOnPlane(desiredDirection, supportNormal);
             }
 
             desiredDirection = Vector3.ClampMagnitude(desiredDirection, 1f);
             Vector3 velocity = targetBody.linearVelocity;
             Vector3 supportVelocity = _movingSupportTicks > 0
-                ? ToVector3(_movingSupport.PointVelocity)
+                ? ToVector3(_movingSupport.ContactPointVelocity)
                 : Vector3.zero;
             Vector3 relativeVelocity = velocity - supportVelocity;
             Vector3 tangentVelocity = Vector3.ProjectOnPlane(relativeVelocity, _localUp);
@@ -329,7 +454,7 @@ namespace Elemental.Runtime.Characters
             Vector3 desiredVelocity = desiredDirection * maxGroundSpeed * speedMultiplier;
             bool accelerating = desiredVelocity.sqrMagnitude > tangentVelocity.sqrMagnitude + 0.01f;
             float accelerationLimit = (accelerating ? groundAcceleration : groundDeceleration) *
-                                      (IsGrounded ? 1f : airControl);
+                                      (stableSupport ? 1f : airControl);
             if (IsGrounded && feelProfile != null)
                 accelerationLimit *= feelProfile.TractionMultiplier;
             Vector3 acceleration = Vector3.ClampMagnitude(
@@ -339,27 +464,31 @@ namespace Elemental.Runtime.Characters
 
             if (IsGrounded)
             {
-                float compression = Mathf.Clamp01(1f - (_groundDistance / groundProbeDistance));
                 float normalSpeed = Vector3.Dot(relativeVelocity, _groundNormal);
-                float adhesion = (compression * adhesionSpring) - (normalSpeed * adhesionDamping);
-                targetBody.AddForce(
-                    _groundNormal * Mathf.Clamp(adhesion, -adhesionSpring, adhesionSpring),
-                    ForceMode.Acceleration);
-                if (feelProfile != null && normalSpeed > 0f)
-                    targetBody.AddForce(-_groundNormal * Mathf.Min(
-                        normalSpeed / Mathf.Max(0.001f, Time.fixedDeltaTime),
-                        feelProfile.GroundSnapSpeed), ForceMode.Acceleration);
+                float inwardAdhesion = PlanetGroundAdhesionSolver.SolveInwardAcceleration(
+                    _groundDistance,
+                    groundProbeDistance,
+                    normalSpeed,
+                    adhesionSpring,
+                    adhesionDamping);
+                if (inwardAdhesion > 0f)
+                    targetBody.AddForce(-_groundNormal * inwardAdhesion, ForceMode.Acceleration);
             }
 
             if (_jumpWindow.CanConsume)
             {
-                Vector3 inherited = Vector3.ProjectOnPlane(supportVelocity - velocity, _localUp);
-                targetBody.AddForce(inherited, ForceMode.VelocityChange);
-                targetBody.AddForce(_localUp * jumpSpeed, ForceMode.VelocityChange);
+                Vector3 jumpVelocityChange = _localUp * jumpSpeed;
+                if (_puppet != null)
+                    _puppet.ApplyUniformVelocityChange(jumpVelocityChange);
+                else
+                    targetBody.AddForce(jumpVelocityChange, ForceMode.VelocityChange);
                 IsGrounded = false;
                 _jumpWindow = _jumpWindow.Consume();
                 _ignoreGroundTicks = 4;
                 _movingSupportTicks = 0;
+                _lastCarrySurfaceId = 0u;
+                _lastCarryGeneration = 0u;
+                _lastCarrySurfaceVelocity = Vector3.zero;
             }
 
             Telemetry = new PlanetLocomotionTelemetry(
@@ -386,6 +515,44 @@ namespace Elemental.Runtime.Characters
             maxSlopeAngle = Mathf.Clamp(feelProfile.MaximumSlopeAngle, 1f, 89f);
         }
 
+        private void RecordMotionFrame()
+        {
+            if (_motionRecorder == null || targetBody == null) return;
+            CharacterPhysicalMode physicalMode = _puppet != null
+                ? _puppet.CurrentState.Mode
+                : CharacterPhysicalMode.AnimatedMotor;
+            float verticalSpeed = Vector3.Dot(targetBody.linearVelocity, _localUp);
+            bool jumpStarting = !IsGrounded && _ignoreGroundTicks >= 3 && verticalSpeed > 0f;
+            bool surfRiding = _movingSupportTicks > 0 &&
+                              (_movingSupport.SurfaceId & 0xFF000000u) == 0x5F000000u;
+            MotionState = PlanetMotionIntegritySolver.ResolveState(
+                IsGrounded,
+                IsGrounded && _groundContactCount <= 1,
+                _movingSupportTicks > 0,
+                jumpStarting,
+                verticalSpeed,
+                _castBrace01,
+                physicalMode,
+                surfRiding,
+                false);
+            var frame = new PlanetMotionFrame(
+                _tick,
+                MotionState,
+                ToFloat3(targetBody.position),
+                ToMathQuaternion(targetBody.rotation),
+                ToFloat3(targetBody.linearVelocity),
+                ToFloat3(targetBody.angularVelocity),
+                LastCommand.Move,
+                LastCommand.JumpPressed,
+                IsGrounded,
+                _groundContactCount,
+                _movingSupportTicks > 0 ? _movingSupport : default);
+            MotionFaultKind faults = PlanetMotionIntegritySolver.Evaluate(frame, 80f, 45f) |
+                                     _pendingMotionFaults;
+            _pendingMotionFaults = MotionFaultKind.None;
+            _motionRecorder.Record(frame, faults);
+        }
+
         private Vector3 FeetPoint(Vector3 up)
         {
             Vector3 scale = transform.lossyScale;
@@ -399,6 +566,26 @@ namespace Elemental.Runtime.Characters
             Quaternion desiredRotation = _hasAimForward
                 ? Quaternion.LookRotation(_aimForward, _localUp)
                 : Quaternion.FromToRotation(transform.up, _localUp) * targetBody.rotation;
+            CharacterPhysicalMode mode = _puppet != null
+                ? _puppet.CurrentState.Mode
+                : CharacterPhysicalMode.AnimatedMotor;
+            if (mode == CharacterPhysicalMode.AnimatedMotor ||
+                mode == CharacterPhysicalMode.PhysicalAssist ||
+                mode == CharacterPhysicalMode.Stagger)
+            {
+                quaternion solved = PlanetOrientationSolver.Step(
+                    ToMathQuaternion(targetBody.rotation),
+                    ToMathQuaternion(desiredRotation),
+                    Mathf.Sqrt(Mathf.Max(0.01f, orientationSpring)) * 1.8f,
+                    maximumOrientationDegreesPerSecond,
+                    Time.fixedDeltaTime);
+                targetBody.angularVelocity = Vector3.Lerp(
+                    targetBody.angularVelocity,
+                    Vector3.zero,
+                    1f - Mathf.Exp(-orientationDamping * Time.fixedDeltaTime));
+                targetBody.MoveRotation(ToUnityQuaternion(solved));
+                return;
+            }
             Quaternion error = desiredRotation * Quaternion.Inverse(targetBody.rotation);
             error.ToAngleAxis(out float angleDegrees, out Vector3 axis);
 
@@ -426,6 +613,12 @@ namespace Elemental.Runtime.Characters
         {
             return new Vector3(value.x, value.y, value.z);
         }
+
+        private static quaternion ToMathQuaternion(Quaternion value) =>
+            new quaternion(value.x, value.y, value.z, value.w);
+
+        private static Quaternion ToUnityQuaternion(quaternion value) =>
+            new Quaternion(value.value.x, value.value.y, value.value.z, value.value.w);
 
         private static bool IsFinite(Vector3 value)
         {

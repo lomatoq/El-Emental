@@ -24,7 +24,7 @@ namespace Elemental.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator FragmentPoolReusesFixedCapacityAcrossHundredAcquires()
+        public IEnumerator FragmentPoolRejectsOverflowWithoutOverwritingLiveMatter()
         {
             GameObject root = new GameObject("Fragment Pool Stress");
             root.SetActive(false);
@@ -32,12 +32,15 @@ namespace Elemental.Tests.PlayMode
             pool.Configure(4, null, null);
             root.SetActive(true);
 
+            int accepted = 0;
             for (int index = 0; index < 100; index++)
-                pool.Acquire(null, new Vector3(index * 0.01f, 20f, 0f), 0.5f, 10f);
+                if (pool.Acquire(null, new Vector3(index * 0.01f, 20f, 0f), 0.5f, 10f) != null)
+                    accepted++;
 
             Assert.That(root.transform.childCount, Is.EqualTo(4));
             Assert.That(pool.ActiveCount, Is.EqualTo(4));
-            Assert.That(pool.LastAcquired.FragmentId, Is.EqualTo(100u));
+            Assert.That(accepted, Is.EqualTo(4));
+            Assert.That(pool.LastAcquired.FragmentId, Is.EqualTo(4u));
 
             Object.Destroy(root);
             yield return null;
@@ -95,8 +98,15 @@ namespace Elemental.Tests.PlayMode
             yield return new WaitForSeconds(0.2f);
 
             Assert.That(smallVelocityChange, Is.GreaterThan(largeVelocityChange * 4f));
-            Assert.That(Vector3.Distance(small.transform.position, smallBefore),
-                Is.GreaterThan(Vector3.Distance(large.transform.position, largeBefore) * 2f));
+            float smallTravel = Vector3.Distance(small.transform.position, smallBefore);
+            float largeTravel = Vector3.Distance(large.transform.position, largeBefore);
+            Assert.That(smallTravel,
+                Is.GreaterThan(largeTravel * 2f),
+                $"smallTravel={smallTravel:F3}, largeTravel={largeTravel:F3}, " +
+                $"smallMass={small.EstimatedMass:F1}, largeMass={large.EstimatedMass:F1}, " +
+                $"smallVelocity={small.Body.linearVelocity}, largeVelocity={large.Body.linearVelocity}, " +
+                $"smallBefore={smallBefore}, smallAfter={small.transform.position}, " +
+                $"largeBefore={largeBefore}, largeAfter={large.transform.position}");
             Assert.That(Vector3.Angle(small.transform.up, small.transform.position.normalized),
                 Is.LessThan(0.75f),
                 "Sliding walls must stay visibly upright and remain below the 1 degree acceptance limit.");
@@ -118,28 +128,33 @@ namespace Elemental.Tests.PlayMode
 
             for (int index = 0; index < 40; index++)
             {
-                // Keep the three recycled instances apart: wall-on-wall contact now
-                // intentionally fractures both structures and is tested as gameplay.
                 float offset = ((index % 3) - 1) * 2f;
-                pool.Acquire(
+                EarthWall acquired = pool.Acquire(
                     new Vector3(-3f, 24f, offset),
                     new Vector3(3f, 24f, offset),
                     Vector3.zero,
                     2.5f,
                     0.55f);
+                Assert.That(acquired, Is.Not.Null);
+                if (index < 39) Assert.That(pool.ReleaseTransient(acquired), Is.True);
             }
 
             Assert.That(root.transform.childCount, Is.EqualTo(3));
-            Assert.That(pool.ActiveCount, Is.EqualTo(3));
+            Assert.That(pool.ActiveCount, Is.EqualTo(1));
             Assert.That(pool.LastAcquired.WallId, Is.EqualTo(40u));
             BoxCollider wallCollider = pool.LastAcquired.GetComponent<BoxCollider>();
             Assert.That(wallCollider, Is.Not.Null);
             Assert.That(wallCollider.enabled, Is.False, "A buried wall must not create invisible collision.");
-            float buriedY = pool.LastAcquired.transform.position.y;
+            Vector3 stableRootPosition = pool.LastAcquired.transform.position;
+            float buriedVisualY = pool.LastAcquired.VisualEmergenceRoot.localPosition.y;
             Assert.That(pool.LastAcquired.transform.localScale.x, Is.EqualTo(6f).Within(0.01f));
 
             yield return new WaitForSeconds(0.65f);
-            Assert.That(pool.LastAcquired.transform.position.y, Is.GreaterThan(buriedY + 1.5f));
+            Assert.That(pool.LastAcquired.VisualEmergenceRoot.localPosition.y,
+                Is.GreaterThan(buriedVisualY + 0.8f));
+            Assert.That(Vector3.Distance(pool.LastAcquired.transform.position, stableRootPosition),
+                Is.LessThan(0.02f), "Emergence must never animate the Rigidbody root.");
+            Assert.That(pool.LastAcquired.PeakRootEmergenceDisplacementMeters, Is.LessThan(0.02f));
             Assert.That(pool.LastAcquired.transform.localScale.y, Is.EqualTo(2.5f).Within(0.01f));
             Assert.That(wallCollider.enabled, Is.True);
             Assert.That(pool.LastAcquired.PeakEmergenceTremorMeters, Is.GreaterThan(0.08f));
@@ -149,7 +164,10 @@ namespace Elemental.Tests.PlayMode
             Vector3 positionBeforePush = pool.LastAcquired.transform.position;
             yield return new WaitForSeconds(0.18f);
             Assert.That(Vector3.Distance(pool.LastAcquired.transform.position, positionBeforePush),
-                Is.GreaterThan(0.08f), "The anchored shove must be visible, not just telemetry.");
+                Is.GreaterThan(0.08f),
+                $"The anchored shove must be visible, not just telemetry. " +
+                $"velocity={pool.LastAcquired.Body.linearVelocity}, kinematic={pool.LastAcquired.Body.isKinematic}, " +
+                $"before={positionBeforePush}, after={pool.LastAcquired.transform.position}.");
             Assert.That(Vector3.Angle(
                     pool.LastAcquired.transform.up,
                     pool.LastAcquired.transform.position.normalized), Is.LessThan(0.1f),
@@ -159,7 +177,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(pool.LastAcquired.IsCollapsing, Is.False,
                 "An undamaged MVP wall must remain stable instead of crumbling on a timer.");
             Assert.That(wallCollider.enabled, Is.True);
-            Assert.That(pool.LastAcquired.GetComponent<MeshRenderer>().enabled, Is.True);
+            Assert.That(pool.LastAcquired.VisualEmergenceRoot.GetComponent<MeshRenderer>().enabled, Is.True);
             Assert.That(collapsedEvents, Is.Zero);
 
             Assert.That(pool.LastAcquired.ApplyRockImpact(
@@ -169,8 +187,8 @@ namespace Elemental.Tests.PlayMode
             yield return new WaitForSeconds(0.12f);
             Assert.That(pool.LastAcquired.IsCollapsing, Is.True);
             Assert.That(wallCollider.enabled, Is.False);
-            Assert.That(pool.LastAcquired.GetComponent<MeshRenderer>().enabled, Is.False);
-            Assert.That(pool.LastAcquired.ActiveFracturePieceCount, Is.EqualTo(43));
+            Assert.That(pool.LastAcquired.VisualEmergenceRoot.GetComponent<MeshRenderer>().enabled, Is.False);
+            Assert.That(pool.LastAcquired.ActiveFracturePieceCount, Is.EqualTo(40));
             Assert.That(pool.LastAcquired.RemainingBondCount, Is.GreaterThan(0),
                 "Impact fracture should begin as a cohesive cluster, not instant confetti.");
             Assert.That(pool.LastAcquired.FirstFracturePiece.parent, Is.EqualTo(root.transform),
@@ -209,7 +227,8 @@ namespace Elemental.Tests.PlayMode
             Assert.That(collider, Is.Not.Null);
             Assert.That(collider.convex, Is.True);
             Assert.That(collider.sharedMesh, Is.Not.Null);
-            Assert.That(collider.sharedMesh.name, Does.Contain("Irregular Earth Debris"));
+            Assert.That(collider.sharedMesh.name,
+                Does.Contain("EarthRock_").Or.Contain("Irregular Earth Debris"));
 
             Object.Destroy(root);
             yield return null;
@@ -236,7 +255,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(fractured, Is.True);
             Assert.That(wall.IsCollapsing, Is.True);
             Assert.That(wall.GetComponent<BoxCollider>().enabled, Is.False);
-            Assert.That(wall.ActiveFracturePieceCount, Is.EqualTo(43));
+            Assert.That(wall.ActiveFracturePieceCount, Is.EqualTo(40));
             Assert.That(wall.RemainingBondCount, Is.GreaterThan(0));
 
             Object.Destroy(root);

@@ -16,6 +16,7 @@ namespace Elemental.Runtime.World
         public event Action<EarthImpactEvent> EarthImpactOccurred;
         public event Action<MeteorImpactEvent> MeteorImpactOccurred;
         public event Action<MagicPushEvent> MagicPushed;
+        public event Action<EarthReturnEvent> EarthReturnOccurred;
         public event Action<AbilityRejectedEvent> AbilityRejected;
         public event Action<FieldSpawnedEvent> FieldSpawned;
         public event Action<PhaseChangedEvent> PhaseChanged;
@@ -74,6 +75,11 @@ namespace Elemental.Runtime.World
         public void Emit(in MagicPushEvent value)
         {
             MagicPushed?.Invoke(value);
+        }
+
+        public void Emit(in EarthReturnEvent value)
+        {
+            EarthReturnOccurred?.Invoke(value);
         }
 
         public void Emit(in AbilityRejectedEvent value)

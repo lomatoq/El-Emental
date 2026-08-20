@@ -97,6 +97,90 @@ namespace Elemental.Simulation.Characters
         }
     }
 
+    public readonly struct EarthCameraPointerIntent
+    {
+        public EarthCameraPointerIntent(
+            float2 viewport,
+            float2 deadZoneDisplacement,
+            float horizontalBias,
+            float verticalBias,
+            float groundFocusDistance,
+            float aimElevation)
+        {
+            Viewport = math.saturate(viewport);
+            DeadZoneDisplacement = deadZoneDisplacement;
+            HorizontalBias = math.clamp(horizontalBias, -1f, 1f);
+            VerticalBias = math.clamp(verticalBias, -1f, 1f);
+            GroundFocusDistance = math.max(0f, groundFocusDistance);
+            AimElevation = aimElevation;
+        }
+
+        public float2 Viewport { get; }
+        public float2 DeadZoneDisplacement { get; }
+        public float HorizontalBias { get; }
+        public float VerticalBias { get; }
+        public float GroundFocusDistance { get; }
+        public float AimElevation { get; }
+    }
+
+    public static class EarthCameraPointerIntentSolver
+    {
+        public static EarthCameraPointerIntent Solve(
+            float2 viewport,
+            float2 deadZoneHalfExtents,
+            float nearGroundDistance,
+            float farGroundDistance,
+            float lowerAimElevation,
+            float upperAimElevation)
+        {
+            float2 clampedViewport = math.saturate(viewport);
+            float2 centered = clampedViewport - 0.5f;
+            float2 deadZone = math.clamp(deadZoneHalfExtents, new float2(0.05f), new float2(0.45f));
+            float horizontal = RemapAxis(centered.x, deadZone.x);
+            float vertical = RemapAxis(centered.y, deadZone.y);
+            float vertical01 = (vertical + 1f) * 0.5f;
+            return new EarthCameraPointerIntent(
+                clampedViewport,
+                new float2(horizontal, vertical),
+                horizontal,
+                vertical,
+                math.lerp(math.max(0f, nearGroundDistance), math.max(nearGroundDistance, farGroundDistance), vertical01),
+                math.lerp(lowerAimElevation, upperAimElevation, vertical01));
+        }
+
+        private static float RemapAxis(float centered, float deadZoneHalfExtent)
+        {
+            float magnitude = math.abs(centered);
+            if (magnitude <= deadZoneHalfExtent) return 0f;
+            float normalized = math.saturate((magnitude - deadZoneHalfExtent) /
+                                             math.max(0.001f, 0.5f - deadZoneHalfExtent));
+            float smooth = normalized * normalized * (3f - (2f * normalized));
+            float shaped = smooth * smooth;
+            return math.sign(centered) * shaped;
+        }
+    }
+
+    public static class EarthCameraPointerInfluenceSolver
+    {
+        public static float Resolve(EarthCameraState state)
+        {
+            switch (state)
+            {
+                case EarthCameraState.Aim:
+                    return 0.72f;
+                case EarthCameraState.BendLight:
+                    return 0.82f;
+                case EarthCameraState.BendHeavy:
+                case EarthCameraState.DrawStructure:
+                    return 1f;
+                case EarthCameraState.HoldMass:
+                    return 0.78f;
+                default:
+                    return 0f;
+            }
+        }
+    }
+
     public readonly struct EarthCameraOcclusionState
     {
         public EarthCameraOcclusionState(float distance, float clearSeconds)

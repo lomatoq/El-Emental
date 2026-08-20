@@ -27,6 +27,13 @@ namespace Elemental.Runtime.World
             public float ColliderDebtAge;
         }
 
+        private sealed class PendingEditTransaction
+        {
+            public VoxelEditReceipt Receipt;
+            public ChunkCoord[] Coords;
+            public uint[] RequiredVersions;
+        }
+
         [Header("Canonical state")]
         [SerializeField] private PlanetWorldProfile worldProfile;
         [SerializeField, Min(1f)] private float radius = 1f;
@@ -50,12 +57,16 @@ namespace Elemental.Runtime.World
         private readonly List<Vector3> _uploadVertices = new List<Vector3>(8192);
         private readonly List<Vector3> _uploadNormals = new List<Vector3>(8192);
         private readonly List<int> _uploadIndices = new List<int>(12288);
+        private readonly List<PendingEditTransaction> _pendingTransactions =
+            new List<PendingEditTransaction>(16);
+        private readonly List<ChunkCoord> _transactionCoordScratch = new List<ChunkCoord>(32);
 
         private VoxelPlanetState _state;
         private IChunkMesher _mesher;
         private ChunkMeshBuffers _meshBuffers;
         private VoxelMeshingSettings _meshingSettings;
         private uint _nextEditSequence = 1u;
+        private uint _nextTransactionId = 1u;
         private Material _runtimeSurfaceMaterial;
 
         public VoxelPlanetState State => _state;
@@ -69,6 +80,8 @@ namespace Elemental.Runtime.World
         public int OutstandingColliderDebtCount { get; private set; }
         public double LastRenderQueueMilliseconds { get; private set; }
         public double PeakRenderQueueMilliseconds { get; private set; }
+        public int PendingEditTransactionCount => _pendingTransactions.Count;
+        public event Action<VoxelEditReceipt> EditCommitted;
 
         public void ResetQueueTimingTelemetry()
         {
@@ -133,6 +146,7 @@ namespace Elemental.Runtime.World
             UpdateColliderDebt(Time.deltaTime);
             ProcessRenderQueue(renderChunksPerFrame);
             ProcessColliderQueue(colliderChunksPerFrame);
+            ConfirmCompletedEditTransactions();
         }
 
         public bool TryGetColliderDebt(ChunkCoord coord, out ColliderDebt debt)
@@ -158,6 +172,42 @@ namespace Elemental.Runtime.World
             QueueDirtyChunks();
         }
 
+        public VoxelEditReceipt ApplyEditBatchTransactional(EditBatch batch)
+        {
+            if (batch == null || batch.Count <= 0) return default;
+            uint firstSequence = batch[0].Sequence;
+            uint lastSequence = batch[batch.Count - 1].Sequence;
+            _state.Apply(batch);
+            QueueDirtyChunks();
+
+            _transactionCoordScratch.Clear();
+            for (int editIndex = 0; editIndex < batch.Count; editIndex++)
+            {
+                VoxelBounds bounds = batch[editIndex].GetBounds();
+                ChunkCoord minimum = ChunkCoord.FromPlanetLocal(bounds.Min, _state.ChunkWorldSize);
+                ChunkCoord maximum = ChunkCoord.FromPlanetLocal(bounds.Max, _state.ChunkWorldSize);
+                for (int z = minimum.Z; z <= maximum.Z; z++)
+                for (int y = minimum.Y; y <= maximum.Y; y++)
+                for (int x = minimum.X; x <= maximum.X; x++)
+                {
+                    ChunkCoord coord = new ChunkCoord(x, y, z);
+                    if (!_transactionCoordScratch.Contains(coord)) _transactionCoordScratch.Add(coord);
+                }
+            }
+
+            var receipt = new VoxelEditReceipt(AllocateTransactionId(), firstSequence, lastSequence);
+            var pending = new PendingEditTransaction
+            {
+                Receipt = receipt,
+                Coords = _transactionCoordScratch.ToArray(),
+                RequiredVersions = new uint[_transactionCoordScratch.Count]
+            };
+            for (int index = 0; index < pending.Coords.Length; index++)
+                pending.RequiredVersions[index] = _state.Chunks.GetOrCreate(pending.Coords[index]).Version;
+            _pendingTransactions.Add(pending);
+            return receipt;
+        }
+
         public void ApplySphereEdit(Vector3 planetLocalCenter, float editRadius, bool additive)
         {
             SdfEdit edit = new SdfEdit(
@@ -168,6 +218,29 @@ namespace Elemental.Runtime.World
                 editRadius,
                 new VoxelMaterialId(1));
             ApplyEditBatch(new EditBatch(edit));
+        }
+
+        public VoxelEditReceipt ApplySphereEditTransactional(
+            Vector3 planetLocalCenter,
+            float editRadius,
+            bool additive)
+        {
+            SdfEdit edit = new SdfEdit(
+                _nextEditSequence++,
+                additive ? SdfEditKind.AddSphere : SdfEditKind.SubtractSphere,
+                ToFloat3(planetLocalCenter),
+                ToFloat3(planetLocalCenter),
+                editRadius,
+                new VoxelMaterialId(1));
+            return ApplyEditBatchTransactional(new EditBatch(edit));
+        }
+
+        public bool IsEditCommitted(VoxelEditReceipt receipt)
+        {
+            if (!receipt.IsValid) return false;
+            for (int index = 0; index < _pendingTransactions.Count; index++)
+                if (_pendingTransactions[index].Receipt.Equals(receipt)) return false;
+            return receipt.TransactionId < _nextTransactionId;
         }
 
         public void ApplyCapsuleEdit(Vector3 pointA, Vector3 pointB, float editRadius, bool additive)
@@ -295,12 +368,10 @@ namespace Elemental.Runtime.World
         {
             if (_meshBuffers.Vertices.Length == 0)
             {
-                if (_runtimeChunks.TryGetValue(coord, out RuntimeChunk emptyChunk))
-                {
-                    emptyChunk.Mesh.Clear();
-                    MarkVisualVersion(emptyChunk, visualVersion);
-                    EnqueueCollider(coord);
-                }
+                RuntimeChunk emptyChunk = GetOrCreateRuntimeChunk(coord);
+                emptyChunk.Mesh.Clear();
+                MarkVisualVersion(emptyChunk, visualVersion);
+                EnqueueCollider(coord);
 
                 return;
             }
@@ -411,6 +482,38 @@ namespace Elemental.Runtime.World
                 runtimeChunk.ColliderDebtAge += Mathf.Max(0f, deltaTime);
                 OutstandingColliderDebtCount++;
             }
+        }
+
+        private void ConfirmCompletedEditTransactions()
+        {
+            for (int transactionIndex = _pendingTransactions.Count - 1; transactionIndex >= 0; transactionIndex--)
+            {
+                PendingEditTransaction pending = _pendingTransactions[transactionIndex];
+                bool ready = true;
+                for (int index = 0; index < pending.Coords.Length; index++)
+                {
+                    ChunkCoord coord = pending.Coords[index];
+                    uint required = pending.RequiredVersions[index];
+                    if (!_state.Chunks.TryGet(coord, out VoxelChunkState state) || state.IsDirty ||
+                        !_runtimeChunks.TryGetValue(coord, out RuntimeChunk runtime) ||
+                        runtime.VisualVersion < required || runtime.ColliderVersion < required)
+                    {
+                        ready = false;
+                        break;
+                    }
+                }
+                if (!ready) continue;
+                VoxelEditReceipt receipt = pending.Receipt;
+                _pendingTransactions.RemoveAt(transactionIndex);
+                EditCommitted?.Invoke(receipt);
+            }
+        }
+
+        private uint AllocateTransactionId()
+        {
+            uint value = _nextTransactionId++;
+            if (_nextTransactionId == 0u) _nextTransactionId = 1u;
+            return value == 0u ? _nextTransactionId++ : value;
         }
 
         private void OnDestroy()

@@ -1,7 +1,9 @@
 using Elemental.Input.Gestures;
 using Elemental.Runtime.Characters;
 using Elemental.Runtime.World;
+using Elemental.Runtime.Physics;
 using Elemental.Simulation.Characters;
+using Elemental.Simulation.Bending;
 using UnityEngine;
 
 namespace Elemental.Presentation.Animation
@@ -14,7 +16,9 @@ namespace Elemental.Presentation.Animation
         private static readonly int VerticalSpeedHash = Animator.StringToHash("VerticalSpeed");
         private static readonly int CastHash = Animator.StringToHash("Cast");
         private static readonly int CastKindHash = Animator.StringToHash("CastKind");
+        private static readonly int EarthPoseHash = Animator.StringToHash("EarthPose");
         private static readonly int ImpactHash = Animator.StringToHash("Impact");
+        private const string MagicLayerName = "Earth Magic Upper Body";
 
         [SerializeField] private CharacterPresentationProfile profile;
         [SerializeField] private Animator animator;
@@ -28,9 +32,17 @@ namespace Elemental.Presentation.Animation
         [SerializeField] private EarthTechniquePresentationProfile techniqueProfile;
         [SerializeField] private EarthPillarMobility pillarMobility;
         [SerializeField] private EarthCharacterPoseController poseController;
+        [SerializeField] private EarthChoreographyDirector choreographyDirector;
+        [SerializeField] private EarthSurfController surfController;
+        [SerializeField] private EarthAnimationRigBridge animationRigBridge;
 
         private float _castWeight;
         private CharacterPhysicalMode _physicalMode;
+        private int _magicLayerIndex = -1;
+        private bool _ragdollSubscribed;
+        private float _stableGroundedSeconds;
+        private bool _animationGrounded = true;
+        private float _unsupportedSeconds;
 
         public Animator Animator => animator;
         public CharacterPresentationProfile Profile => profile;
@@ -48,6 +60,7 @@ namespace Elemental.Presentation.Animation
             EarthTechniquePresentationProfile configuredTechniqueProfile = null,
             EarthPillarMobility configuredPillarMobility = null)
         {
+            UnsubscribeRagdoll();
             profile = configuredProfile;
             animator = configuredAnimator;
             leftHandTarget = leftTarget;
@@ -59,8 +72,9 @@ namespace Elemental.Presentation.Animation
             executor = configuredExecutor;
             techniqueProfile = configuredTechniqueProfile;
             pillarMobility = configuredPillarMobility;
-            if (animator != null) animator.applyRootMotion = false;
+            PrepareAnimator();
             ConfigurePoseController();
+            if (isActiveAndEnabled) SubscribeRagdoll();
         }
 
         private void Awake()
@@ -69,7 +83,23 @@ namespace Elemental.Presentation.Animation
             if (motor == null) motor = GetComponentInParent<PlanetMotor>();
             if (rootBody == null) rootBody = GetComponentInParent<Rigidbody>();
             if (pillarMobility == null) pillarMobility = GetComponentInParent<EarthPillarMobility>();
+            if (surfController == null) surfController = GetComponentInParent<EarthSurfController>();
+            PrepareAnimator();
             ConfigurePoseController();
+        }
+
+        private void PrepareAnimator()
+        {
+            if (animator == null) return;
+            animator.applyRootMotion = false;
+            animator.updateMode = AnimatorUpdateMode.Normal;
+            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            _magicLayerIndex = animator.GetLayerIndex(MagicLayerName);
+            animator.SetLayerWeight(0, 1f);
+            if (_magicLayerIndex >= 0) animator.SetLayerWeight(_magicLayerIndex, 0f);
+            _animationGrounded = true;
+            _unsupportedSeconds = 0f;
+            animator.SetBool(GroundedHash, true);
         }
 
         private void ConfigurePoseController()
@@ -79,25 +109,55 @@ namespace Elemental.Presentation.Animation
             if (poseController == null) poseController = gameObject.AddComponent<EarthCharacterPoseController>();
             poseController.Configure(
                 animator, magicInput, executor, motor, rootBody, pillarMobility, techniqueProfile);
+            if (choreographyDirector == null)
+                choreographyDirector = GetComponent<EarthChoreographyDirector>();
+            if (choreographyDirector == null)
+                choreographyDirector = gameObject.AddComponent<EarthChoreographyDirector>();
+            choreographyDirector.Configure(animator, poseController);
+            if (animationRigBridge == null)
+                animationRigBridge = GetComponent<EarthAnimationRigBridge>();
+            if (animationRigBridge == null)
+                animationRigBridge = gameObject.AddComponent<EarthAnimationRigBridge>();
+            animationRigBridge.Configure(animator, leftHandTarget, rightHandTarget);
         }
 
         private void OnEnable()
         {
-            if (ragdoll != null) ragdoll.StateChanged += HandlePhysicalState;
+            SubscribeRagdoll();
         }
 
         private void OnDisable()
         {
+            UnsubscribeRagdoll();
+        }
+
+        private void SubscribeRagdoll()
+        {
+            if (_ragdollSubscribed || ragdoll == null) return;
+            ragdoll.StateChanged += HandlePhysicalState;
+            _ragdollSubscribed = true;
+        }
+
+        private void UnsubscribeRagdoll()
+        {
+            if (!_ragdollSubscribed) return;
             if (ragdoll != null) ragdoll.StateChanged -= HandlePhysicalState;
+            _ragdollSubscribed = false;
         }
 
         private void Update()
         {
             if (animator == null || rootBody == null || motor == null) return;
             Vector3 tangentVelocity = Vector3.ProjectOnPlane(rootBody.linearVelocity, motor.LocalUp);
-            animator.SetFloat(SpeedHash, tangentVelocity.magnitude, ProfileBlendSeconds, Time.deltaTime);
-            animator.SetBool(GroundedHash, motor.IsGrounded);
-            animator.SetFloat(VerticalSpeedHash, Vector3.Dot(rootBody.linearVelocity, motor.LocalUp));
+            float verticalSpeed = Vector3.Dot(rootBody.linearVelocity, motor.LocalUp);
+            float presentationSpeed = surfController != null && surfController.IsActive
+                ? 0f
+                : tangentVelocity.magnitude;
+            animator.SetFloat(SpeedHash, presentationSpeed, ProfileBlendSeconds, Time.deltaTime);
+            UpdateAnimationGrounded(verticalSpeed);
+            animator.SetBool(GroundedHash, _animationGrounded);
+            animator.SetFloat(VerticalSpeedHash, verticalSpeed);
+            RecoverGroundedLocomotionState();
             bool casting = executor != null &&
                            (executor.HeldBody != null || executor.IsGravityWellActive || executor.IsVectorFieldActive);
             float targetWeight = casting && _physicalMode != CharacterPhysicalMode.FullRagdoll
@@ -105,8 +165,50 @@ namespace Elemental.Presentation.Animation
                 : 0f;
             _castWeight = Mathf.MoveTowards(_castWeight, targetWeight, Time.deltaTime / Mathf.Max(0.01f, CastingBlendSeconds));
             animator.SetBool(CastHash, casting);
-            animator.SetInteger(CastKindHash, ResolveCastKind());
+            int castKind = ResolveCastKind();
+            animator.SetInteger(CastKindHash, castKind);
+            animator.SetFloat(EarthPoseHash, castKind, 0.055f, Time.deltaTime);
+            if (_magicLayerIndex >= 0) animator.SetLayerWeight(_magicLayerIndex, _castWeight);
+            animationRigBridge?.SetMagicWeight(_castWeight);
             UpdateHandTargets();
+        }
+
+        private void UpdateAnimationGrounded(float verticalSpeed)
+        {
+            if (motor.HasStableSupport)
+            {
+                _unsupportedSeconds = 0f;
+                _animationGrounded = true;
+                return;
+            }
+
+            _unsupportedSeconds += Time.deltaTime;
+            // Curved-ground probes can miss for one rendered frame at chunk or
+            // structure seams. Do not let that false negative enter a one-shot
+            // jump state. A real launch is accepted immediately from velocity;
+            // an ordinary fall is accepted after a short unsupported window.
+            if (verticalSpeed > 0.75f || _unsupportedSeconds >= 0.11f)
+                _animationGrounded = false;
+        }
+
+        private void RecoverGroundedLocomotionState()
+        {
+            if (!motor.HasStableSupport)
+            {
+                _stableGroundedSeconds = 0f;
+                return;
+            }
+            _stableGroundedSeconds += Time.deltaTime;
+            if (_stableGroundedSeconds < 0.22f || animator.IsInTransition(0)) return;
+            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+            if (state.IsName("Locomotion")) return;
+            if (state.IsName("Land") && state.normalizedTime < 0.68f) return;
+
+            // A one-frame support miss on a curved surface can enter Jump before
+            // locomotion has settled. If its vertical threshold never crosses,
+            // that one-shot state freezes until the player performs a real jump.
+            // Stable support is the authoritative escape back to locomotion.
+            animator.CrossFade("Locomotion", 0.08f, 0, 0f);
         }
 
         private void OnAnimatorIK(int layerIndex)
@@ -147,6 +249,24 @@ namespace Elemental.Presentation.Animation
 
         private int ResolveCastKind()
         {
+            EarthTechniqueId technique = poseController != null
+                ? poseController.CurrentRequest.Technique
+                : EarthTechniqueId.None;
+            if (technique != EarthTechniqueId.None)
+            {
+                return technique switch
+                {
+                    EarthTechniqueId.RaiseWall or EarthTechniqueId.RaisePlatform => 1,
+                    EarthTechniqueId.PullStone or EarthTechniqueId.CrestPluck => 2,
+                    EarthTechniqueId.ThrowStone or EarthTechniqueId.VectorPush => 3,
+                    EarthTechniqueId.GravityGrip or EarthTechniqueId.Repair => 4,
+                    EarthTechniqueId.WebWave or EarthTechniqueId.Resonance => 5,
+                    EarthTechniqueId.PillarJump or EarthTechniqueId.Surf => 6,
+                    EarthTechniqueId.Armor or EarthTechniqueId.ArmorDome or
+                        EarthTechniqueId.ArmorOrbit or EarthTechniqueId.ArmorRepack => 7,
+                    _ => 8
+                };
+            }
             if (executor == null) return 0;
             if (executor.IsGravityWellActive) return 4;
             if (executor.IsVectorFieldActive) return 3;
@@ -159,7 +279,21 @@ namespace Elemental.Presentation.Animation
             _physicalMode = state.Mode;
             if (animator == null) return;
             bool animatorEnabled = state.Mode != CharacterPhysicalMode.FullRagdoll;
-            if (animator.enabled != animatorEnabled) animator.enabled = animatorEnabled;
+            if (animator.enabled != animatorEnabled)
+            {
+                animator.enabled = animatorEnabled;
+                if (animatorEnabled)
+                {
+                    // The visible rigid-part hierarchy is intentionally parented
+                    // below Humanoid bones. Animator.Rebind after that runtime
+                    // parenting can leave the state clock running while the bone
+                    // transforms stay frozen, so resume without rebuilding bindings.
+                    animator.Play("Locomotion", 0, 0f);
+                    animator.Update(0f);
+                    _animationGrounded = true;
+                    _unsupportedSeconds = 0f;
+                }
+            }
             if (state.Mode == CharacterPhysicalMode.Stagger) animator.SetTrigger(ImpactHash);
         }
 

@@ -54,13 +54,13 @@ namespace Elemental.Presentation.Camera
             return new EarthCameraStateProfile
             {
                 state = state,
-                distance = structure ? 7f : airborne ? 6.8f : heavy ? 6.25f : 5.9f,
-                height = structure ? 2.55f : airborne ? 2.7f : 2.15f,
-                shoulderOffset = structure ? 0.72f : 0.9f,
-                fieldOfView = structure ? 66f : airborne ? 65f : heavy ? 59f :
-                    state == EarthCameraState.Explore ? 64f : 61f,
-                playerFocusWeight = 1f,
-                aimFocusWeight = state == EarthCameraState.Explore ? 1.75f : 0.7f,
+                distance = structure ? 8.1f : airborne ? 8f : heavy ? 7.55f : 7.4f,
+                height = structure ? 4.55f : airborne ? 4.7f : heavy ? 4.05f : 3.85f,
+                shoulderOffset = structure ? 0.62f : 0.74f,
+                fieldOfView = structure ? 63f : airborne ? 64f : heavy ? 59f :
+                    state == EarthCameraState.Explore ? 60f : 60f,
+                playerFocusWeight = state == EarthCameraState.Explore ? 0.8f : 1f,
+                aimFocusWeight = state == EarthCameraState.Explore ? 2f : 0.7f,
                 heldFocusWeight = state == EarthCameraState.HoldMass ? 1.15f : 0.15f,
                 constructFocusWeight = structure ? 1f : 0.12f,
                 velocityLookAhead = airborne ? 2.1f : 1.15f,
@@ -85,6 +85,15 @@ namespace Elemental.Presentation.Camera
         [SerializeField, Min(0.1f)] private float pullInSpeed = 24f;
         [SerializeField, Min(0.1f)] private float releaseSpeed = 4.5f;
         [SerializeField, Min(0f)] private float occlusionReleaseDelay = 0.12f;
+        [Header("Pointer intent")]
+        [SerializeField] private Vector2 pointerDeadZoneHalfExtents = new Vector2(0.2f, 0.18f);
+        [SerializeField, Min(0f)] private float pointerHorizontalFocusMeters = 2.15f;
+        [SerializeField, Min(0f)] private float pointerNearGroundDistance = 4.4f;
+        [SerializeField, Min(0f)] private float pointerFarGroundDistance = 11.4f;
+        [SerializeField] private float pointerLowerAimElevation = -0.65f;
+        [SerializeField] private float pointerUpperAimElevation = 2.35f;
+        [SerializeField, Min(0.1f)] private float maximumFocusSpeed = 18f;
+        [SerializeField, Min(0.5f)] private float springResetDistance = 8f;
         [Header("Accessibility")]
         [SerializeField, Range(0f, 1f)] private float shakeIntensity = 1f;
         [SerializeField, Range(0f, 1f)] private float cameraLag = 1f;
@@ -95,6 +104,14 @@ namespace Elemental.Presentation.Camera
         public float PullInSpeed => pullInSpeed;
         public float ReleaseSpeed => releaseSpeed;
         public float OcclusionReleaseDelay => occlusionReleaseDelay;
+        public Vector2 PointerDeadZoneHalfExtents => pointerDeadZoneHalfExtents;
+        public float PointerHorizontalFocusMeters => pointerHorizontalFocusMeters;
+        public float PointerNearGroundDistance => pointerNearGroundDistance;
+        public float PointerFarGroundDistance => pointerFarGroundDistance;
+        public float PointerLowerAimElevation => pointerLowerAimElevation;
+        public float PointerUpperAimElevation => pointerUpperAimElevation;
+        public float MaximumFocusSpeed => maximumFocusSpeed;
+        public float SpringResetDistance => springResetDistance;
         public EarthCameraAccessibilitySettings Accessibility =>
             new EarthCameraAccessibilitySettings(shakeIntensity, cameraLag, fieldOfViewMotion, reducedMotion);
         public float ShakeIntensity => Accessibility.EffectiveShake;

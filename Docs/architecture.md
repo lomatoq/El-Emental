@@ -60,6 +60,7 @@ Elemental.Authoring
 - PlanetRuntime will own local coordinates, chunk store, edit history, and gravity source.
 - Physics adapters own Unity component references only.
 - MagicExecutor will be the single authority that applies compiled ability operators.
+- `EarthActionRouter` is the sole owner of overlapping Earth input. Runtime readers receive only unconsumed movement/jump, while resonance, armor, surf, MMB and drawing execute through one routed session.
 - MagicExecutor also owns the single-target Earth vector-field session; runtime target adapters expose explicit acquire/release hooks and never become global registries.
 - MagicExecutor owns the bounded Earth-only MMB gravity-well session. It queries a fixed-size collider buffer and admits only explicit Earth target adapters; presentation rings, motes and camera pulses remain consumers of its read-only state.
 - BendSessionState owns continuous bending lifecycle data. Runtime Bending adapters own only
@@ -94,6 +95,10 @@ Dense same-frame Earth impact bursts are presentation-batched after the typed ev
 Earth destruction uses explicit tiers. Repairable structural pieces retain provenance, scale and collision until repair, reabsorption or bounded pool reuse; they never disappear through an implicit timer. Gameplay chips and cosmetic debris may keep radial gravity, momentum and collision while their visible scale decays, and leave simulation only when the pooled object reaches zero scale. Particle adapters use the same local planet direction rather than Unity's global gravity modifier.
 
 Fracture is cause-driven. Structure-local impact batches damage baked bonds through directional tension, shear and compression; deterministic connected components then identify foundation-supported and dynamic islands. Canonical fracture state never comes from GameObject activation, renderer visibility or Rigidbody sleep.
+
+Earth structure geometry is a true 3D prefracture. Deterministic power cells occupy all three local axes, retain matched neighbour planes and cook convex colliders before impact. An impact releases local cells/islands; supported foundation cells remain collision-bearing and damageable. Full-height extrusion of a 2D cell is not a production fracture representation.
+
+Drawing fixes one generation-safe surface handle and local frame at pointer-down. Providers expose only stable faces: planet/top faces support platforms and walls, side faces support perpendicular walls, and free fragments expose no construction surface. Child structure foundations bind to a parent support cell after parent fracture.
 
 Reassembly is provenance-aware and physical. A repair session selects only pieces owned by one baked structure, stages them in a deterministic bounded cloud, and seats them in graph order with mass-aware PD and active collisions. Bonds pass through reforming and repaired phases only after a pose/velocity settle gate. Full repair restores the intact proxy; missing pieces remain an explicit partial result, and interruption returns unwelded pieces to ordinary dynamics.
 

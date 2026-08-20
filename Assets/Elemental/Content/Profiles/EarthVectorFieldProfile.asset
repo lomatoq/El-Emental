@@ -14,8 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Physics.EarthVectorFieldProfile
   continuousForce: 4200
   minimumReleaseImpulse: 260
+  minimumWallReleaseImpulse: 650
   maximumReleaseImpulse: 2400
   rockSpeedLimit: 32
   wallSpeedLimit: 14
-  wallForceMultiplier: 3.4
+  controlledRockSpeedLimit: 9
+  controlledWallSpeedLimit: 6.5
+  wallForceMultiplier: 72
   fullChargeSeconds: 1.35

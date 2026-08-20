@@ -1,5 +1,40 @@
 # M10 Earth Core MVP Polish
 
+## Self-armor camera and plate variety follow-up (2026-08-19)
+
+- Cinemachine obstacle avoidance excludes the controlled-magic layer, so compact
+  armor, dome, orbit and released plates cannot push the camera through the hero.
+- A pure sightline solver and render-only pre-cull adapter hide only armor renderers
+  that cover the protected head/chest corridors. Colliders, mass, interception and
+  target handles remain active.
+- Compact armor no longer replaces the Humanoid's authored materials. The visible
+  hero stays identifiable underneath the physical shell.
+- The repeated regular tile was replaced by deterministic convex geological plates
+  with varied side counts, hulls, chips, crown offsets, aspect ratios and bounded
+  per-renderer stone variation. Matching convex colliders retain valid outward normals.
+- Fresh isolated Unity evidence: `238/238` EditMode in `2.204 s` and `92/92`
+  PlayMode in `157.525 s` (`BuildReports/CameraArmor-20260819-Edit.xml` and
+  `BuildReports/CameraArmor-20260819-Play.xml`). Focused camera and armor gates also
+  pass independently.
+
+## V3 editor-first extension (2026-08-15)
+
+- `EarthActionRouter` now owns the complete overlapping Earth input grammar, including the deterministic Shift+Space wave/resonance chord and Shift+W surf.
+- Production walls bake to 40 true 3D convex cells and 126 bonds. Platforms prepare 28–48 true 3D cells and release local damage while foundation cells remain supported.
+- Unified target capabilities cover structures, pieces, rocks, pillars, armor and resonance projectiles; fracture activation is captured by the live MMB session in the same physics tick.
+- Surface drawing locks one face frame. Stable side faces create perpendicular attached walls; vertical faces reject platforms.
+- Added resonance volley, a baked 64-segment bone-aware Humanoid stone shell, and a kinematic impact-capable earth plough.
+- `EarthPolishLab` is the V3 golden-path scene. Validation stays in Unity Editor/Test Runner; no Windows build is required for this iteration.
+- Architecture rationale and rollback are recorded in [ADR 0025](../adr/0025-earth-core-v3-volumetric-grammar.md).
+
+### Final V3 evidence
+
+- Full EditMode after armor packing/camera follow-up: `237/237` passed in `2.320 s` (`TestResults/FullEditArmorFix.xml`).
+- Full PlayMode after armor packing/camera follow-up: `91/91` passed in `157.995 s` (`TestResults/FullPlayArmorFix.xml`).
+- Focused runtime gates cover the continuous 64-piece external armor shell, outward normals, inter-plate packing, head coverage, armor-safe camera collision, aimed single-plate and remaining-shell volleys without caster recoil, production-player surf carry, two-click quick stone, resonance dome fire, and attached/intersecting structures.
+- `EarthPolishLab` enters Play Mode with zero runtime exceptions in `Editor.log`. Automated runtime geometry gates verify the visible hero inside the armor gaps, a filled upper-hemisphere resonance gradient, camera exclusion for controlled formations, and `Shift+W` movement on the enlarged physical plough. The local DX11 editor Game View capture remains white and is therefore not claimed as visual acceptance evidence.
+- Windows Development/Release builds were intentionally not produced; V3 acceptance is Editor-only by decision.
+
 Status: complete
 Source brief: `El-Emental_Codex_Execution_Brief_BE.md` (2026-08-13)
 
@@ -20,7 +55,7 @@ Status: complete
 ### Reproducible lab
 
 - `Elemental/Setup/Create Earth Polish Lab` rebuilds the M3 scene and creates `Assets/Elemental/Content/Scenes/EarthPolishLab.unity`.
-- The lab is present in Editor Build Settings but disabled, so it cannot become a shipping entry point accidentally.
+- V3 enables the lab in Editor Build Settings so PlayMode tests can load the golden-path scene. Shipping build scripts must explicitly exclude it; player builds are not a V3 acceptance gate.
 - The Windows test wrapper now waits for Unity's GUI-subsystem process and propagates its real exit code even when the project path contains spaces.
 
 ### Evidence
@@ -194,3 +229,126 @@ Status: complete
 - Windows Release: 106,003,631 bytes in 60.678 s, 0 warnings/errors.
 
 The Earth Core MVP polish sequence is complete. Further art/content work can tune the existing profiles and replace presentation assets without changing the established simulation contracts.
+
+## V2 Phase 0/1 foundations
+
+Status: complete (2026-08-14)
+
+- Recorded a standalone visual baseline at audited commit `7bdce0dac855007ec14e1f7114a6af37e563614a`; evidence and SHA-256 hashes live in `BuildReports/EarthV2/Baseline/README.md`.
+- Added a fail-fast KayKit animation gate covering Git LFS payloads, clip duration, Humanoid mapping, Animator parameters/layers/motions/mask and presentation profile wiring. The gate found and fixed a missing upper-body `AvatarMask`.
+- Refactored wall emergence to a fixed physics root plus animated `VisualEmergenceRoot`, delayed safe collider activation and explicit magic-time dynamic activation. Profiler scopes: `Elemental.Earth.Wall.Emergence` and `Elemental.Earth.Wall.ColliderValidation`.
+- Added the single-owner profiled `EarthSkyController` with blue day gradient, dusk/night blend, sun glow and daylight star suppression.
+- Raised Camera V2 into a 7.4 m / 3.85 m / 60 degree baseline, added pure normalized pointer intent, ground near/far mapping, focus speed limits and spring reset behavior.
+- Proved real KayKit locomotion data, valid Humanoid/runtime controller state and root-motion-off behavior in PlayMode.
+
+### Evidence
+
+- EditMode: 195/195 passed in 1.300 s.
+- PlayMode: 66/66 passed in 127.972 s.
+- Windows Development: 171,138,506 bytes in 76.496 s, 0 warnings/errors.
+- Windows Release: 106,015,551 bytes in 55.817 s, 0 warnings/errors; EXE SHA-256 `D05C5848F7CC2EB32FF6016F54762EE3C666A69B862BE297DF2390830C1EA8CF`.
+- Standalone D3D11 post-pass frames in `BuildReports/EarthV2/PostPhase1/` confirm a blue day, a graded dawn, readable stars/planets at night, elevated ground framing and stable wall presentation.
+- `FrameTimingManager` returned no samples in the automated Release capture; no CPU/GPU claim is made for this phase. The cold-start voxel queue peak was 65.22–70.44 ms with zero pending work and is not steady-state frame time.
+
+Next dependency: Phase 2 intent resolver and shared Earth-surface abstraction. Quick cast, Wave V2 and Surf remain intentionally deferred.
+
+## V2 Phase 2 semantic intent and shared surfaces
+
+Status: complete (2026-08-14)
+
+- Fixed the production character rescue regressions before expanding systems: grounded adhesion now accelerates inward, ordinary locomotion releases foot IK, the upper-body cast layer receives its authored weight, the locomotion blend tree uses `0/2/6 m/s` thresholds, and character colliders cannot become vector-field targets.
+- Increased orientation authority to a critically damped `60/12/140` production frame and moved the camera's nearest ground focus from `3.5 m` to `4.4 m`, keeping the Mage responsive and the play space visible.
+- Added the fixed-priority `EarthActionIntentResolver` and one normalized `EarthGestureFrame` capture at the existing single input boundary. Cancel, landing wave, surf, self-wave, target manipulation, quick intent, full bend, MMB and pillar ownership are deterministic.
+- Added stable-generation Earth surface contracts plus explicitly injected planet, platform and wall-top providers. Pillar and landing cushion now select the nearest capable support and account for its velocity.
+- Replaced the old 3 m platform ceiling with an 8 m soft / 22 m hard budget; cost increases and stability decreases with height and footprint aspect ratio.
+- Repaired the authored `EarthGestureProfile` MonoScript binding by moving the ScriptableObject into its correctly named file. A fail-fast EditMode asset test prevents another silent build-time loss.
+- Tuned wall vector-field leverage against standalone physics rather than only synthetic fixtures. A full hold moves the production wall `2.294 m`, while the caster remains untargeted and moved `0.421 m` from ordinary world physics.
+- Architecture decision: `Docs/adr/0021-semantic-earth-intents-and-shared-surfaces.md`.
+
+### Evidence
+
+- EditMode: 206/206 passed in 1.521 s; focused semantic/surface suite 9/9 passed.
+- PlayMode: 70/70 passed in 130.536 s; focused surface runtime suite 3/3 and character rescue suite 3/3 passed.
+- Windows Development: 171,173,794 bytes in 45.380 s, 0 warnings/errors.
+- Windows Release: 106,043,223 bytes in 55.289 s, 0 warnings/errors; EXE SHA-256 `D05C5848F7CC2EB32FF6016F54762EE3C666A69B862BE297DF2390830C1EA8CF`.
+- Standalone D3D11: `BuildReports/EarthV2/Phase2/WallPush.png` and `MageWalk.png`; both exited 0. Wall-push telemetry is recorded in the adjacent log.
+- Cold-start voxel queue peaks were `70.62-71.50 ms` with zero pending work at capture; these remain startup debt, not a steady-state frame percentile.
+
+Next dependency: Phase 3 quick stomp-stone-punch. Wave V2 and Surf remain deferred to their ordered backlog phases.
+
+## Camera and character rescue pass
+
+Status: complete (2026-08-14)
+
+- Replaced the unstable camera transform writer with Cinemachine 3.1.7 using a
+  spherical local-up frame, independent pitch pivot, third-person obstacle solver,
+  explicit camera priority and an immediate 60-degree startup composition.
+- Replaced the hat-obscured Mage presentation with the KayKit Knight subset. Helmet,
+  visor and cape meshes are disabled for a clean back silhouette; locomotion validation measures movement of
+  the enabled rendered leg meshes, not only hidden skeleton state.
+- Fixed production quick wall selection so an exact camera ray beats the broad
+  target-assist volume. A click-release shove now locks and moves the visible wall
+  instead of a nearby dummy or the caster.
+- Retuned wide-wall vector leverage from `24x` to `38x`; the standalone visual-QA
+  contract requires a charged production wall to clear 2 m while caster drift stays
+  below 0.75 m.
+- Raised the nonlinear charged pillar range to `12-25 m/s` velocity change, retaining
+  the existing ease-out charge curve and stronger long-hold tail.
+- Architecture decision: `Docs/adr/0022-cinemachine-spherical-camera-rescue.md`.
+
+### Evidence
+
+- EditMode: 212/212 passed.
+- PlayMode: 73/73 passed, including visible gait, spherical camera composition,
+  production camera-ray wall shove, pillar mobility, fracture and reassembly.
+
+## Gesture and locomotion rescue
+
+- Replaced the obscuring hooded/long-haired presentation with a removable-helmet
+  KayKit Knight subset; helmet, visor and cape are disabled for a clean camera
+  silhouette. Humanoid translation DoF is enabled on the shared source avatar.
+- The locomotion golden path now bakes the visible skinned leg meshes every frame
+  and proves gait deformation while a real `PlanetMotor` command moves the actor.
+- RMB hold is the low-speed precision vector field, quick tap is a compact pulse,
+  and a viewport-normalized swipe/release is the full-speed projectile launch.
+- Active wave pillars implement `IEarthPhysicalTarget`, detach from the wave pool
+  when grabbed and remain angularly damped under radial gravity.
+- MMB circles add signed phase control: clockwise progressively reweaves a wall;
+  counter-clockwise progressively releases deterministic bonds. Partial results
+  remain physical when the button is released.
+- Architecture decision: `Docs/adr/0023-vector-flick-and-circular-earth-grammar.md`.
+- Replaced the last uniform wall cut with a 24-cell, 61-bond production bake.
+  Deterministic chipped shared edges produce five collider-vertex families and a
+  broad chunk-volume distribution, preserving full wall depth without thin strips.
+- Platforms register an overlapping rider immediately, keep collision ignored only
+  until the rider is above the rising top plane, and carry the complete physical
+  puppet. Platform support remains valid during emergence, including charged pillar
+  launch and inherited support velocity.
+- Final gesture-rescue regression: EditMode 215/215; PlayMode 76/76. The standalone
+  Release QA measured a 1.317 m platform lift with first-step rider capture and no
+  fracture/ragdoll; the charged wall shove travelled 2.675 m with 0.297 m caster drift.
+- Platform/pillar follow-up: support carry now preserves relative walking velocity,
+  collision pairs restore after the safe emergence envelope, and an external launch
+  cannot be reacquired as a rider. Jump pillars retreat before the return arc while
+  every cosmetic chip continues ballistic shrink to deactivation.
+- Final follow-up regression: EditMode 216/216; PlayMode 76/76. Windows Release built
+  106,776,381 bytes with 0 warnings/errors. Standalone D3D11 measured a 1.343 m lift,
+  0.698 m platform walk, successful return with 0.072 m descent clearance, retired
+  pillar and 0 active chips.
+
+## Web wave, quick cast and armor iteration
+
+Status: complete (2026-08-15)
+
+- Replaced production wave boxes with six instanced 3-8-sided geological mesh families
+  driven by six radial/spiral seeded topologies. Physics remains a bounded 96-cell pool.
+- Platforms now prefracture into 18-28 exact contour-clipped Voronoi meshes and repair
+  through the same controller contract as walls. Collider handoff is piece-first.
+- Added viewport-normalized CW repair / CCW disassembly, 0.42-second two-click quick
+  stone, direct wall projectile-flick velocity and an oriented projectile sweep guard.
+- Added `Shift+MMB` armor with wheel-controlled body/dome/orbit phases and confirmed
+  radial overscroll release. Space is not consumed by armor or wave release.
+- Architecture decision: `Docs/adr/0024-web-wave-quick-cast-and-armor-grammar.md`.
+- V3 supersedes the earlier 2D platform cut with true volumetric wall/platform cells,
+  routes the complete input grammar through `EarthActionRouter`, and closes this
+  iteration with the `235/235` EditMode and `89/89` PlayMode gates recorded above.

@@ -3,6 +3,26 @@ using UnityEngine;
 
 namespace Elemental.Runtime.Physics
 {
+    public readonly struct PhysicalCollisionImpact
+    {
+        public PhysicalCollisionImpact(
+            Vector3 point,
+            Vector3 normal,
+            float impulse,
+            bool otherBodyIsDynamic)
+        {
+            Point = point;
+            Normal = normal;
+            Impulse = impulse;
+            OtherBodyIsDynamic = otherBodyIsDynamic;
+        }
+
+        public Vector3 Point { get; }
+        public Vector3 Normal { get; }
+        public float Impulse { get; }
+        public bool OtherBodyIsDynamic { get; }
+    }
+
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody))]
     public sealed class PhysicalImpactTarget : MonoBehaviour, IEarthPhysicalTarget
@@ -15,6 +35,7 @@ namespace Elemental.Runtime.Physics
         public int ImpactCount { get; private set; }
         public float AccumulatedImpulse { get; private set; }
         public event Action<Vector3, float> ImpactApplied;
+        public event Action<PhysicalCollisionImpact> CollisionImpactApplied;
         public uint StableEarthId => unchecked((uint)GetHashCode());
         public EarthPhysicalTargetHandle TargetHandle => new EarthPhysicalTargetHandle(StableEarthId, 1u);
         public float EarthMass => targetBody != null ? targetBody.mass : 0f;
@@ -60,7 +81,17 @@ namespace Elemental.Runtime.Physics
                 return;
             }
 
-            RecordImpact(collision.GetContact(0).point, impulse);
+            ContactPoint contact = collision.GetContact(0);
+            float scaledImpulse = impulse * impulseScale;
+            if (scaledImpulse <= 0.01f) return;
+            ImpactCount++;
+            AccumulatedImpulse += scaledImpulse;
+            Rigidbody otherBody = collision.rigidbody;
+            CollisionImpactApplied?.Invoke(new PhysicalCollisionImpact(
+                contact.point,
+                contact.normal,
+                scaledImpulse,
+                otherBody != null && !otherBody.isKinematic));
         }
 
         public void SuppressImpacts(float seconds)

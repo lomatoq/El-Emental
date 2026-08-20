@@ -53,6 +53,7 @@ namespace Elemental.Presentation.VFX
             executor.Events.FragmentSpawned += HandleFragmentSpawned;
             executor.Events.FragmentLaunched += HandleFragmentLaunched;
             executor.Events.ImpactOccurred += HandleImpact;
+            executor.Events.EarthReturnOccurred += HandleEarthReturn;
         }
 
         private void Unsubscribe()
@@ -63,6 +64,7 @@ namespace Elemental.Presentation.VFX
             executor.Events.FragmentSpawned -= HandleFragmentSpawned;
             executor.Events.FragmentLaunched -= HandleFragmentLaunched;
             executor.Events.ImpactOccurred -= HandleImpact;
+            executor.Events.EarthReturnOccurred -= HandleEarthReturn;
         }
 
         private void HandleTerrainEdited(TerrainEditedEvent value)
@@ -124,6 +126,22 @@ namespace Elemental.Presentation.VFX
                 earthDust.transform.position = new Vector3(value.Point.x, value.Point.y, value.Point.z);
                 earthDust.Emit(Mathf.Clamp(Mathf.RoundToInt(value.Impulse * 0.02f), 4, 40));
             }
+        }
+
+        private void HandleEarthReturn(EarthReturnEvent value)
+        {
+            if (earthDust != null)
+            {
+                earthDust.transform.position = new Vector3(value.Position.x, value.Position.y, value.Position.z);
+                int count = value.Stage == EarthReturnEventStage.Completed ? 18 : 7;
+                earthDust.Emit(count);
+            }
+            if (impactAudio == null ||
+                (value.Stage != EarthReturnEventStage.Subsurface &&
+                 value.Stage != EarthReturnEventStage.Completed)) return;
+            impactAudio.pitch = value.Stage == EarthReturnEventStage.Subsurface ? 0.72f : 0.88f;
+            impactAudio.volume = Mathf.Clamp01(0.22f + Mathf.Log10(1f + value.Mass) * 0.14f);
+            impactAudio.Play();
         }
     }
 }

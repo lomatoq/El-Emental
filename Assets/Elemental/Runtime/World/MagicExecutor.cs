@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using Elemental.Runtime.Physics;
+using Elemental.Runtime.Matter;
 using Elemental.Simulation.Magic;
 using Elemental.Simulation.Bending;
+using Elemental.Simulation.Matter;
 using Elemental.Simulation.Structures;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -28,6 +30,9 @@ namespace Elemental.Runtime.World
         [SerializeField] private EarthGravityWellProfile gravityWellProfile;
         [SerializeField] private Transform planetCenter;
         [SerializeField] private Transform heldFragmentAnchor;
+        [SerializeField] private EarthMatterKernelBehaviour matterKernel;
+        [SerializeField] private EarthMatterReturnController matterReturnController;
+        [SerializeField] private EarthTechniqueComboRuntime comboRuntime;
         [SerializeField, Min(1f)] private float earthMaterialDensity = 120f;
         [SerializeField, Min(0.1f)] private float wallMaximumHeight = 6.25f;
         [SerializeField, Min(0.1f)] private float wallMinimumHeight = 1.25f;
@@ -45,22 +50,40 @@ namespace Elemental.Runtime.World
         private Vector3 _vectorFieldPoint;
         private Vector3 _vectorFieldDirection;
         private float _vectorFieldCharge;
-        private readonly Collider[] _gravityWellHits = new Collider[64];
         private readonly HashSet<Rigidbody> _gravityWellBodies = new HashSet<Rigidbody>();
         private readonly EarthGravityGripSession _gravityGripSession = new EarthGravityGripSession(48);
         private readonly IEarthPhysicalTarget[] _gravityWellStructureTargets = new IEarthPhysicalTarget[48];
+        private readonly IEarthPhysicalTarget[] _comboFractureTargets = new IEarthPhysicalTarget[48];
+        private readonly EarthMatterIdentity[] _gravityReturnIdentities = new EarthMatterIdentity[48];
         private bool _gravityWellActive;
         private Vector3 _gravityWellFocus;
         private Vector3 _gravityWellUp;
+        private Vector3 _gravityWellViewForward;
         private float _gravityWellElapsed;
         private EarthWall _gravityWellWall;
         private EarthPlatform _gravityWellPlatform;
+        private IEarthFractureSource _gravityFractureSource;
         private bool _gravityWellFracturedStructure;
-        private EarthReassemblyController _repairController;
+        private IEarthRepairController _repairController;
+        private bool _gravityGestureControlled;
+        private EarthGravityStructureIntent _gravityStructureIntent;
+        private float _gravityStructurePhase;
+        private float _gravityPlatformDisassemblyPhase;
+        private bool _gravityThrowCharging;
+        private float _gravityThrowStartedAt;
+        private float _gravityThrowCharge01;
+        private Vector3 _gravityThrowDirection;
 
         public MagicWorldEvents Events { get; } = new MagicWorldEvents();
         public MagicReplayRecorder Recorder { get; } = new MagicReplayRecorder();
         public int SuccessfulCommandCount { get; private set; }
+        public EarthFragmentPool FragmentPool => fragmentPool;
+        public VoxelPlanetBehaviour VoxelPlanet => voxelPlanet;
+        public EarthMatterKernelBehaviour MatterKernel => matterKernel;
+        public EarthMatterReturnController MatterReturnController => matterReturnController;
+        public EarthTechniqueComboRuntime ComboRuntime => comboRuntime;
+        public float EarthMaterialDensity => Mathf.Max(1f, earthMaterialDensity);
+        public Transform PlanetCenterTransform => planetCenter;
         public EarthFragment HeldFragment => _heldFragment != null && _heldFragment.IsHeld ? _heldFragment : null;
         public Rigidbody HeldBody => HeldFragment != null
             ? HeldFragment.Body
@@ -80,6 +103,7 @@ namespace Elemental.Runtime.World
         public ulong LastPreviewGeometryHash { get; private set; }
         public ulong LastCommittedGeometryHash { get; private set; }
         public bool IsVectorFieldActive => _vectorFieldTarget != null && _vectorFieldTarget.IsEarthTargetValid;
+        public Rigidbody VectorFieldBody => _vectorFieldTarget != null ? _vectorFieldTarget.Body : null;
         public Vector3 VectorFieldDirection => _vectorFieldDirection;
         public Vector3 VectorFieldPoint => _vectorFieldTarget != null && _vectorFieldTarget.Body != null
             ? _vectorFieldTarget.Body.worldCenterOfMass
@@ -96,15 +120,83 @@ namespace Elemental.Runtime.World
         public float GravityWellFocusLift => gravityWellProfile != null ? gravityWellProfile.FocusLift : 0.75f;
         public int GravityWellCapturedCount => _gravityGripSession.Count;
         public int GravityWellMaximumCapturedTargets => GravityMaximumCapturedTargets;
+        public bool HasGravityStructureTarget => _gravityWellWall != null || _gravityWellPlatform != null;
+        public EarthGravityStructureIntent GravityStructureIntent => _gravityStructureIntent;
+        public float GravityStructurePhase => _gravityStructurePhase;
+        public bool IsGravityClusterThrowCharging => _gravityThrowCharging;
+        public float GravityClusterThrowCharge01 => _gravityThrowCharge01;
 
-        public bool TryBeginGravityWell(Collider aimedCollider, Vector3 focus, Vector3 localUp)
+        private void Awake()
+        {
+            if (matterKernel == null) matterKernel = EarthMatterKernelBehaviour.FindOrCreate(this);
+            if (matterReturnController == null)
+                matterReturnController = GetComponent<EarthMatterReturnController>() ??
+                                         gameObject.AddComponent<EarthMatterReturnController>();
+            matterReturnController.Configure(voxelPlanet, matterKernel, EarthMaterialDensity);
+            matterReturnController.ReturnStageChanged -= HandleReturnStageForCombo;
+            matterReturnController.ReturnStageChanged += HandleReturnStageForCombo;
+            if (comboRuntime == null)
+                comboRuntime = GetComponent<EarthTechniqueComboRuntime>() ??
+                               gameObject.AddComponent<EarthTechniqueComboRuntime>();
+            if (platformPool != null)
+            {
+                platformPool.PlatformFractured -= HandlePlatformFractured;
+                platformPool.PlatformFractured += HandlePlatformFractured;
+            }
+        }
+
+        public bool TryReturnMatter(IEarthPhysicalTarget target, Vector3 fallbackSurfaceWorld)
+        {
+            if (target == null || target.Body == null || matterReturnController == null) return false;
+            EarthMatterIdentity identity = target.Body.GetComponent<EarthMatterIdentity>() ??
+                                           target.Body.GetComponentInParent<EarthMatterIdentity>();
+            return identity != null && matterReturnController.TryBeginReturn(identity, fallbackSurfaceWorld);
+        }
+
+        public int TryReturnGravityCaptured(Vector3 fallbackSurfaceWorld)
+        {
+            if (matterReturnController == null || _gravityGripSession.Count <= 0) return 0;
+            int identityCount = 0;
+            for (int index = 0; index < _gravityGripSession.Count &&
+                                identityCount < _gravityReturnIdentities.Length; index++)
+            {
+                IEarthPhysicalTarget target = _gravityGripSession.GetTarget(index);
+                if (target == null || target.Body == null) continue;
+                EarthMatterIdentity identity = target.Body.GetComponent<EarthMatterIdentity>() ??
+                                               target.Body.GetComponentInParent<EarthMatterIdentity>();
+                if (identity != null && identity.IsRegistered)
+                    _gravityReturnIdentities[identityCount++] = identity;
+            }
+            if (identityCount <= 0) return 0;
+
+            // Release the grip first so physical targets leave Controlled cleanly;
+            // the return controller then atomically claims them as CapturedForReturn.
+            CancelGravityWell();
+            int started = matterReturnController.TryBeginReturnsNonAlloc(
+                _gravityReturnIdentities, identityCount, fallbackSurfaceWorld);
+            for (int index = 0; index < identityCount; index++) _gravityReturnIdentities[index] = null;
+            return started;
+        }
+
+        public bool ReverseMatterReturnBeforeCommit() =>
+            matterReturnController != null && matterReturnController.ReverseBeforeCommit();
+
+        public bool TryBeginGravityWell(
+            Collider aimedCollider,
+            Vector3 focus,
+            Vector3 localUp,
+            bool gestureControlled = false)
         {
             CancelGravityWell();
             if (aimedCollider == null) return false;
+            _gravityGestureControlled = gestureControlled;
+            _gravityStructureIntent = EarthGravityStructureIntent.Neutral;
+            _gravityStructurePhase = 0f;
+            _gravityPlatformDisassemblyPhase = 0f;
             _gravityWellWall = aimedCollider.GetComponentInParent<EarthWall>();
             if (_gravityWellWall == null)
                 _gravityWellWall = aimedCollider.GetComponentInParent<EarthWallPiece>()?.Owner;
-            if (_gravityWellWall != null && _gravityWellWall.IsCollapsing &&
+            if (!gestureControlled && _gravityWellWall != null && _gravityWellWall.IsCollapsing &&
                 _gravityWellWall.Reassembly != null)
             {
                 _gravityWellFocus = focus;
@@ -123,12 +215,34 @@ namespace Elemental.Runtime.World
             _gravityWellPlatform = aimedCollider.GetComponentInParent<EarthPlatform>();
             if (_gravityWellPlatform == null)
                 _gravityWellPlatform = aimedCollider.GetComponentInParent<EarthPlatformPiece>()?.Owner;
+            _gravityFractureSource = _gravityWellWall != null
+                ? (IEarthFractureSource)_gravityWellWall
+                : _gravityWellPlatform;
+            if (_gravityFractureSource != null)
+                _gravityFractureSource.TargetsActivated += HandleGravityTargetsActivated;
             _gravityWellFocus = focus;
             _gravityWellUp = SafeDirection(localUp);
+            _gravityWellViewForward = Vector3.ProjectOnPlane(focus - transform.position, _gravityWellUp).normalized;
             _gravityWellElapsed = 0f;
             _gravityWellFracturedStructure = false;
             _gravityWellActive = true;
+            // MMB is a press-owned session. Capture the explicitly aimed target once;
+            // newly fractured children join through IEarthFractureSource.TargetsActivated.
+            // Never grow the selection from an overlap query while the button is held.
+            IEarthPhysicalTarget aimedTarget = ResolveExplicitGravityTarget(aimedCollider);
+            TryLatchGravityTarget(aimedTarget);
             return true;
+        }
+
+        public void SetGravityStructureGesture(EarthGravityStructureIntent intent, float phase01)
+        {
+            if (!_gravityWellActive || !_gravityGestureControlled) return;
+            _gravityStructureIntent = intent;
+            _gravityStructurePhase = Mathf.Clamp01(phase01);
+            if (intent == EarthGravityStructureIntent.Repair)
+                ApplyGestureRepair();
+            else if (intent == EarthGravityStructureIntent.Disassemble)
+                ApplyGestureDisassembly();
         }
 
         public void UpdateGravityWell(Vector3 focus, Vector3 localUp)
@@ -136,6 +250,77 @@ namespace Elemental.Runtime.World
             if (!_gravityWellActive) return;
             _gravityWellFocus = focus;
             if (localUp.sqrMagnitude > 0.001f) _gravityWellUp = localUp.normalized;
+        }
+
+        public void UpdateGravityWell(Vector3 focus, Vector3 localUp, Vector3 viewForward)
+        {
+            UpdateGravityWell(focus, localUp);
+            Vector3 tangentForward = Vector3.ProjectOnPlane(viewForward, _gravityWellUp);
+            if (tangentForward.sqrMagnitude > 0.01f)
+                _gravityWellViewForward = tangentForward.normalized;
+        }
+
+        public bool BeginGravityClusterThrow(Vector3 aimDirection)
+        {
+            if (!_gravityWellActive || _repairController != null || _gravityGripSession.Count <= 0)
+                return false;
+            _gravityThrowCharging = true;
+            _gravityThrowStartedAt = Time.unscaledTime;
+            _gravityThrowCharge01 = 0f;
+            _gravityThrowDirection = SafeDirection(aimDirection);
+            return true;
+        }
+
+        public void UpdateGravityClusterThrow(Vector3 aimDirection)
+        {
+            if (!_gravityThrowCharging) return;
+            _gravityThrowDirection = SafeDirection(aimDirection);
+            _gravityThrowCharge01 = EarthGravityClusterThrowSolver.Charge01(
+                Mathf.Max(0f, Time.unscaledTime - _gravityThrowStartedAt), 1.05f);
+        }
+
+        public int ReleaseGravityClusterThrow(Vector3 aimDirection)
+        {
+            if (!_gravityThrowCharging || !_gravityWellActive) return 0;
+            UpdateGravityClusterThrow(aimDirection);
+            float heldSeconds = Mathf.Max(0f, Time.unscaledTime - _gravityThrowStartedAt);
+            EarthGravityClusterReleaseMode mode = heldSeconds <= 0.22f
+                ? EarthGravityClusterReleaseMode.Direct
+                : EarthGravityClusterReleaseMode.CompressionBlast;
+            EarthGravityClusterThrowTuning tuning = EarthGravityClusterThrowTuning.Default;
+            Vector3 direction = SafeDirection(_gravityThrowDirection);
+            Vector3 up = SafeDirection(_gravityWellUp);
+            int launched = 0;
+            int targetCount = _gravityGripSession.Count;
+            for (int index = 0; index < targetCount; index++)
+            {
+                IEarthPhysicalTarget target = _gravityGripSession.GetTarget(index);
+                if (target == null || target.Body == null || !target.IsEarthTargetValid) continue;
+                Rigidbody body = target.Body;
+                EarthGravityClusterLaunchSample sample = EarthGravityClusterThrowSolver.Solve(
+                    target.StableEarthId,
+                    index,
+                    targetCount,
+                    Mathf.Max(0.1f, target.EarthMass),
+                    ToFloat3(direction),
+                    ToFloat3(up),
+                    mode,
+                    _gravityThrowCharge01,
+                    in tuning);
+                body.linearVelocity = ToVector3(sample.Velocity);
+                body.angularVelocity = ToVector3(sample.AngularVelocity);
+                body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+                EarthLaunchCollisionGrace grace = body.GetComponent<EarthLaunchCollisionGrace>() ??
+                                                  body.gameObject.AddComponent<EarthLaunchCollisionGrace>();
+                grace.Begin(transform, direction);
+                body.WakeUp();
+                launched++;
+            }
+            LastLaunchVelocityChange = mode == EarthGravityClusterReleaseMode.Direct
+                ? tuning.DirectSpeed
+                : Mathf.Lerp(tuning.MinimumBlastSpeed, tuning.MaximumBlastSpeed, _gravityThrowCharge01);
+            CancelGravityWell();
+            return launched;
         }
 
         public void CancelGravityWell()
@@ -146,19 +331,37 @@ namespace Elemental.Runtime.World
                     unchecked((uint)Time.frameCount));
             if (_gravityWellWall != null)
                 _gravityWellWall.Collapsed -= HandleGravityWellWallFractured;
+            if (_gravityFractureSource != null)
+                _gravityFractureSource.TargetsActivated -= HandleGravityTargetsActivated;
             _gravityGripSession.ReleaseAll(EarthMagicGripKind.GravityWell);
             _gravityWellBodies.Clear();
             _gravityWellActive = false;
             _gravityWellElapsed = 0f;
+            _gravityWellViewForward = Vector3.zero;
             _gravityWellWall = null;
             _gravityWellPlatform = null;
+            _gravityFractureSource = null;
             _gravityWellFracturedStructure = false;
             _repairController = null;
+            _gravityGestureControlled = false;
+            _gravityStructureIntent = EarthGravityStructureIntent.Neutral;
+            _gravityStructurePhase = 0f;
+            _gravityPlatformDisassemblyPhase = 0f;
+            _gravityThrowCharging = false;
+            _gravityThrowCharge01 = 0f;
+            _gravityThrowDirection = Vector3.zero;
         }
 
         private void HandleGravityWellWallFractured(EarthWall wall)
         {
             if (!_gravityWellActive || wall == null || wall != _gravityWellWall) return;
+            _gravityWellFracturedStructure = true;
+            CaptureFracturedStructureTargets();
+        }
+
+        private void HandleGravityTargetsActivated(IEarthFractureSource source)
+        {
+            if (!_gravityWellActive || source == null || source != _gravityFractureSource) return;
             _gravityWellFracturedStructure = true;
             CaptureFracturedStructureTargets();
         }
@@ -257,6 +460,34 @@ namespace Elemental.Runtime.World
             return true;
         }
 
+        public bool ReleaseHeldEarthAtSpeed(
+            Vector3 direction,
+            float targetSpeed,
+            uint tick,
+            out Vector3 releaseVelocity)
+        {
+            releaseVelocity = Vector3.zero;
+            EarthFragment fragment = HeldFragment;
+            if (fragment == null || fragment.Body == null) return false;
+            Vector3 safeDirection = SafeDirection(direction);
+            releaseVelocity = safeDirection * Mathf.Clamp(targetSpeed, 1f, VectorRockSpeedLimit);
+            fragment.StopBendControl();
+            fragment.Body.linearVelocity = releaseVelocity;
+            fragment.Body.angularVelocity *= 0.2f;
+            fragment.Body.WakeUp();
+            LastLaunchVelocityChange = releaseVelocity.magnitude;
+            FragmentLaunchedEvent launched = new FragmentLaunchedEvent(
+                tick,
+                fragment.FragmentId,
+                fragment.Mass,
+                ToFloat3(fragment.transform.position),
+                ToFloat3(safeDirection),
+                releaseVelocity.magnitude);
+            Events.Emit(in launched);
+            _heldFragment = null;
+            return true;
+        }
+
         public void CancelHeldEarthControl()
         {
             if (_heldFragment != null)
@@ -274,6 +505,7 @@ namespace Elemental.Runtime.World
             Vector3 direction)
         {
             CancelVectorField();
+            if (IsCharacterBody(body)) return false;
             IEarthPhysicalTarget target = ResolveEarthTarget(hitCollider, body);
             if (target == null || !target.IsEarthTargetValid || target.Body == null) return false;
             _vectorFieldTarget = target;
@@ -291,42 +523,70 @@ namespace Elemental.Runtime.World
             _vectorFieldCharge = Mathf.Clamp01(charge01);
         }
 
-        public bool ReleaseVectorField()
+        public bool ReleaseVectorField() => ReleaseVectorField(
+            EarthVectorReleaseIntent.ChargedPulse,
+            _vectorFieldDirection,
+            _vectorFieldCharge);
+
+        public bool ReleaseVectorField(
+            EarthVectorReleaseIntent intent,
+            Vector3 releaseDirection,
+            float strength01)
         {
             IEarthPhysicalTarget target = _vectorFieldTarget;
             if (target == null) return false;
             bool valid = target.IsEarthTargetValid && target.Body != null;
             float mass = Mathf.Max(0.01f, target.EarthMass);
             float velocityChange = 0f;
-            if (valid)
+            if (valid && intent != EarthVectorReleaseIntent.Controlled)
             {
-                float impulse = EarthVectorFieldSolver.FinalImpulse(
-                    _vectorFieldCharge,
-                    VectorMinimumReleaseImpulse,
-                    VectorMaximumReleaseImpulse);
-                float multiplier = target.TargetKind == EarthPhysicalTargetKind.Wall
-                    ? VectorWallForceMultiplier
-                    : 1f;
-                float speedLimit = target.TargetKind == EarthPhysicalTargetKind.Wall
-                    ? VectorWallSpeedLimit
-                    : VectorRockSpeedLimit;
+                _vectorFieldDirection = SafeDirection(releaseDirection);
+                float releaseStrength = intent switch
+                {
+                    EarthVectorReleaseIntent.QuickPulse => Mathf.Lerp(0.18f, 0.46f, Mathf.Clamp01(strength01)),
+                    EarthVectorReleaseIntent.ProjectileFlick => Mathf.Lerp(0.62f, 1f, Mathf.Clamp01(strength01)),
+                    _ => Mathf.Max(_vectorFieldCharge, Mathf.Clamp01(strength01))
+                };
                 Vector3 direction = FieldDirectionFor(target);
-                EarthVectorFieldSample sample = EarthVectorFieldSolver.Solve(
-                    ToFloat3(target.Body.linearVelocity),
-                    mass,
-                    ToFloat3(direction),
-                    1f,
-                    impulse * multiplier / Mathf.Max(0.0001f, Time.fixedDeltaTime),
-                    speedLimit,
-                    Time.fixedDeltaTime);
-                Vector3 delta = ToVector3(sample.VelocityChange);
-                target.Body.AddForce(delta, ForceMode.VelocityChange);
-                velocityChange = delta.magnitude;
+                if (intent == EarthVectorReleaseIntent.ProjectileFlick && target is EarthWall wall)
+                {
+                    float sizeResponse = Mathf.Clamp(Mathf.Sqrt(2400f / mass), 0.82f, 1.45f);
+                    float targetSpeed = Mathf.Min(
+                        VectorWallSpeedLimit,
+                        Mathf.Lerp(8f, 11f, releaseStrength) * sizeResponse);
+                    velocityChange = wall.ApplyMagicLaunchVelocity(direction, targetSpeed);
+                }
+                else
+                {
+                    float impulse = EarthVectorFieldSolver.FinalImpulse(
+                        releaseStrength,
+                        target.TargetKind == EarthPhysicalTargetKind.Wall
+                            ? VectorMinimumWallReleaseImpulse
+                            : VectorMinimumReleaseImpulse,
+                        VectorMaximumReleaseImpulse);
+                    float multiplier = target.TargetKind == EarthPhysicalTargetKind.Wall
+                        ? VectorWallForceMultiplier
+                        : 1f;
+                    float speedLimit = target.TargetKind == EarthPhysicalTargetKind.Wall
+                        ? VectorWallSpeedLimit
+                        : VectorRockSpeedLimit;
+                    EarthVectorFieldSample sample = EarthVectorFieldSolver.Solve(
+                        ToFloat3(target.Body.linearVelocity),
+                        mass,
+                        ToFloat3(direction),
+                        1f,
+                        impulse * multiplier / Mathf.Max(0.0001f, Time.fixedDeltaTime),
+                        speedLimit,
+                        Time.fixedDeltaTime);
+                    Vector3 delta = ToVector3(sample.VelocityChange);
+                    target.Body.AddForce(delta, ForceMode.VelocityChange);
+                    velocityChange = delta.magnitude;
+                }
                 LastMagicPushVelocityChange = velocityChange;
                 MagicPushEvent pushed = new MagicPushEvent(
                     unchecked((uint)Time.frameCount),
                     ToFloat3(_vectorFieldPoint),
-                    _vectorFieldCharge,
+                    releaseStrength,
                     mass,
                     velocityChange,
                     target.TargetKind == EarthPhysicalTargetKind.Wall);
@@ -365,7 +625,7 @@ namespace Elemental.Runtime.World
             }
             else
             {
-                if (body == null || body.isKinematic) return false;
+                if (body == null || body.isKinematic || IsCharacterBody(body)) return false;
                 mass = Mathf.Max(0.01f, body.mass);
                 velocityChange = impulse / mass;
                 body.AddForceAtPosition(direction.normalized * impulse, point, ForceMode.Impulse);
@@ -400,8 +660,8 @@ namespace Elemental.Runtime.World
                     ? VectorWallForceMultiplier
                     : 1f;
                 float speedLimit = target.TargetKind == EarthPhysicalTargetKind.Wall
-                    ? VectorWallSpeedLimit
-                    : VectorRockSpeedLimit;
+                    ? VectorControlledWallSpeedLimit
+                    : VectorControlledRockSpeedLimit;
                 Vector3 direction = FieldDirectionFor(target);
                 EarthVectorFieldSample sample = EarthVectorFieldSolver.Solve(
                     ToFloat3(target.Body.linearVelocity),
@@ -431,6 +691,7 @@ namespace Elemental.Runtime.World
             wallPool = configuredWallPool;
             heldFragmentAnchor = configuredHeldFragmentAnchor;
             if (wallPool != null) wallPool.WallCollapsed += HandleWallCollapsed;
+            matterReturnController?.Configure(voxelPlanet, matterKernel, EarthMaterialDensity);
         }
 
         public void ConfigureTelekinesis(EarthTelekinesisController configuredTelekinesis)
@@ -444,8 +705,18 @@ namespace Elemental.Runtime.World
             EarthGravityWellProfile configuredGravityWellProfile = null)
         {
             vectorFieldProfile = configuredVectorFieldProfile;
+            if (platformPool != null) platformPool.PlatformFractured -= HandlePlatformFractured;
             platformPool = configuredPlatformPool;
+            if (platformPool != null) platformPool.PlatformFractured += HandlePlatformFractured;
             gravityWellProfile = configuredGravityWellProfile;
+        }
+
+        private void OnDestroy()
+        {
+            if (wallPool != null) wallPool.WallCollapsed -= HandleWallCollapsed;
+            if (platformPool != null) platformPool.PlatformFractured -= HandlePlatformFractured;
+            if (matterReturnController != null)
+                matterReturnController.ReturnStageChanged -= HandleReturnStageForCombo;
         }
 
         private void ApplyGravityWell()
@@ -453,30 +724,10 @@ namespace Elemental.Runtime.World
             using (GravityWellMarker.Auto())
             {
                 _gravityWellElapsed += Time.fixedDeltaTime;
-                StressGravityWellStructure();
+                if (!_gravityGestureControlled) StressGravityWellStructure();
                 _gravityWellBodies.Clear();
                 CaptureFracturedStructureTargets();
-                int hitCount = UnityEngine.Physics.OverlapSphereNonAlloc(
-                    _gravityWellFocus,
-                    GravityRadius,
-                    _gravityWellHits,
-                    ~0,
-                    QueryTriggerInteraction.Ignore);
                 Vector3 planetPosition = planetCenter != null ? planetCenter.position : Vector3.zero;
-                for (int index = 0; index < hitCount; index++)
-                {
-                    Collider hit = _gravityWellHits[index];
-                    if (hit == null) continue;
-                    Rigidbody body = hit.attachedRigidbody;
-                    IEarthPhysicalTarget target = ResolveExplicitGravityTarget(hit);
-                    if (target == null || !target.IsEarthTargetValid) continue;
-                    if (body == null) body = target.Body;
-                    if (body == null || body.isKinematic ||
-                        body.GetComponent<PlanetMotor>() != null ||
-                        body.GetComponent<ActiveRagdollPuppet>() != null) continue;
-                    TryLatchGravityTarget(target);
-                }
-
                 for (int targetIndex = _gravityGripSession.Count - 1; targetIndex >= 0; targetIndex--)
                 {
                     IEarthPhysicalTarget target = _gravityGripSession.GetTarget(targetIndex);
@@ -491,10 +742,23 @@ namespace Elemental.Runtime.World
                     Vector3 localUp = body.worldCenterOfMass - planetPosition;
                     if (localUp.sqrMagnitude < 0.01f) localUp = _gravityWellUp;
                     localUp.Normalize();
-                    float3 offset = EarthGravityGripSolver.SlotOffset(
+                    float clusterRadius = _gravityThrowCharging
+                        ? EarthGravityClusterThrowSolver.CompressedRadius(
+                            GravityClusterOrbitRadius, _gravityThrowCharge01)
+                        : GravityClusterOrbitRadius;
+                    Vector3 viewForward = _gravityWellViewForward.sqrMagnitude > 0.01f
+                        ? _gravityWellViewForward
+                        : Vector3.ProjectOnPlane(_gravityWellFocus - transform.position, localUp).normalized;
+                    float objectClearance = Mathf.Lerp(
+                        0.04f,
+                        0.62f,
+                        Mathf.InverseLerp(12f, 1100f, Mathf.Max(0f, body.mass)));
+                    float3 offset = EarthGravityGripSolver.CameraAwareSlotOffset(
                         target.StableEarthId,
-                        GravityClusterOrbitRadius,
-                        ToFloat3(localUp));
+                        clusterRadius,
+                        ToFloat3(localUp),
+                        ToFloat3(viewForward),
+                        objectClearance);
                     EarthGravityGripSample sample = EarthGravityGripSolver.Solve(
                         ToFloat3(body.worldCenterOfMass),
                         ToFloat3(body.linearVelocity),
@@ -514,6 +778,70 @@ namespace Elemental.Runtime.World
             }
         }
 
+        private void ApplyGestureRepair()
+        {
+            bool wallRepairable = _gravityWellWall != null && _gravityWellWall.IsCollapsing;
+            bool platformRepairable = _gravityWellPlatform != null && _gravityWellPlatform.IsFractured;
+            if ((!wallRepairable && !platformRepairable) || _gravityStructurePhase <= 0f) return;
+            if (_repairController == null)
+            {
+                _gravityGripSession.ReleaseAll(EarthMagicGripKind.GravityWell);
+                _gravityWellBodies.Clear();
+                _repairController = wallRepairable
+                    ? (IEarthRepairController)_gravityWellWall.Reassembly
+                    : _gravityWellPlatform.RepairController;
+                if (_repairController == null || !_repairController.TryBeginRepair(
+                        unchecked((uint)Time.frameCount), _gravityStructurePhase))
+                {
+                    _repairController = null;
+                    return;
+                }
+            }
+            else
+            {
+                _repairController.SetTargetProgress(
+                    _gravityStructurePhase,
+                    unchecked((uint)Time.frameCount));
+            }
+        }
+
+        private void ApplyGestureDisassembly()
+        {
+            if (_gravityStructurePhase <= 0f) return;
+            if (_repairController != null)
+            {
+                _repairController.Interrupt(
+                    EarthRepairInterruptReason.ExplicitCancel,
+                    unchecked((uint)Time.frameCount));
+                _repairController = null;
+            }
+            Vector3 structurePosition = _gravityWellWall != null
+                ? _gravityWellWall.transform.position
+                : _gravityWellPlatform != null
+                    ? _gravityWellPlatform.transform.position
+                    : _gravityWellFocus - _gravityWellUp;
+            Vector3 direction = SafeDirection(_gravityWellFocus - structurePosition);
+            if (_gravityWellWall != null)
+            {
+                _gravityWellWall.SetMagicDisassemblyProgress(
+                    _gravityStructurePhase, _gravityWellFocus, direction);
+                _gravityWellFracturedStructure = _gravityWellWall.IsCollapsing;
+                CaptureFracturedStructureTargets();
+                return;
+            }
+            if (_gravityWellPlatform == null ||
+                _gravityStructurePhase <= _gravityPlatformDisassemblyPhase) return;
+            _gravityPlatformDisassemblyPhase = _gravityStructurePhase;
+            _gravityWellFracturedStructure |= _gravityWellPlatform.ApplyStructureImpact(
+                _gravityWellFocus,
+                direction,
+                Mathf.Lerp(
+                    GravityFractureImpulse * 0.20f,
+                    GravityFractureImpulse * 1.25f,
+                    Mathf.Pow(_gravityStructurePhase, 0.72f)));
+            if (_gravityWellFracturedStructure) CaptureFracturedStructureTargets();
+        }
+
         private void CaptureFracturedStructureTargets()
         {
             IEarthFractureSource source = _gravityWellWall != null
@@ -523,7 +851,17 @@ namespace Elemental.Runtime.World
             int count = source.CopyActiveTargetsNonAlloc(_gravityWellStructureTargets);
             for (int index = 0; index < count; index++)
             {
-                TryLatchGravityTarget(_gravityWellStructureTargets[index]);
+                IEarthPhysicalTarget target = _gravityWellStructureTargets[index];
+                if (_gravityGestureControlled &&
+                    _gravityStructureIntent == EarthGravityStructureIntent.Disassemble &&
+                    target is EarthWallPiece wallPiece &&
+                    _gravityWellWall != null &&
+                    _gravityWellWall.IsPieceStructurallySupported(wallPiece.PieceIndex))
+                {
+                    _gravityWellStructureTargets[index] = null;
+                    continue;
+                }
+                TryLatchGravityTarget(target);
                 _gravityWellStructureTargets[index] = null;
             }
         }
@@ -572,6 +910,12 @@ namespace Elemental.Runtime.World
             if (platformPiece != null) return platformPiece;
             EarthFragment fragment = hitCollider.GetComponentInParent<EarthFragment>();
             if (fragment != null) return fragment;
+            EarthPillarWaveColumn pillar = hitCollider.GetComponentInParent<EarthPillarWaveColumn>();
+            if (pillar != null) return pillar;
+            EarthArmorPiece armorPiece = hitCollider.GetComponentInParent<EarthArmorPiece>();
+            if (armorPiece != null) return armorPiece;
+            EarthWall wall = hitCollider.GetComponentInParent<EarthWall>();
+            if (wall != null) return wall;
             PhysicalImpactTarget physical = hitCollider.GetComponentInParent<PhysicalImpactTarget>();
             return physical;
         }
@@ -627,8 +971,26 @@ namespace Elemental.Runtime.World
 
                 Recorder.Record(in command);
                 SuccessfulCommandCount++;
+                comboRuntime?.RecordAbility(
+                    command.Ability,
+                    ResolveCommandMatter(command.Ability),
+                    command.Tick,
+                    command.Intensity,
+                    command.Aim);
                 return true;
             }
+        }
+
+        private EarthMatterId ResolveCommandMatter(AbilityId ability)
+        {
+            EarthMatterIdentity identity = null;
+            if (ability == EarthAbilityIds.LineWall && wallPool != null && wallPool.LastAcquired != null)
+                identity = wallPool.LastAcquired.GetComponent<EarthMatterIdentity>();
+            else if (ability == EarthAbilityIds.RaisePlatform && platformPool != null && platformPool.LastAcquired != null)
+                identity = platformPool.LastAcquired.GetComponent<EarthMatterIdentity>();
+            else if (_heldFragment != null)
+                identity = _heldFragment.MatterIdentity;
+            return identity != null ? identity.MatterId : default;
         }
 
         public void BuildPreview(in MagicCommand command, List<Vector3> output)
@@ -747,6 +1109,27 @@ namespace Elemental.Runtime.World
             ApplyFragmentImpact(
                 fragment, contact.point, contact.normal, impulse, target, direction,
                 terrainHit && wall == null);
+        }
+
+        public void HandleFragmentSweptImpact(
+            EarthFragment fragment,
+            Collider hitCollider,
+            Vector3 point,
+            Vector3 normal,
+            float impulse)
+        {
+            if (fragment == null || hitCollider == null) return;
+            Vector3 direction = fragment.Body != null && fragment.Body.linearVelocity.sqrMagnitude > 0.0001f
+                ? fragment.Body.linearVelocity.normalized
+                : -normal;
+            EarthWall wall = hitCollider.GetComponentInParent<EarthWall>();
+            if (wall == null) wall = hitCollider.GetComponent<EarthWallPiece>()?.Owner;
+            EarthPlatform platform = hitCollider.GetComponentInParent<EarthPlatform>();
+            if (platform == null) platform = hitCollider.GetComponent<EarthPlatformPiece>()?.Owner;
+            PhysicalImpactTarget physical = hitCollider.GetComponentInParent<PhysicalImpactTarget>();
+            wall?.ApplyRockImpact(point, direction, impulse);
+            platform?.ApplyStructureImpact(point, direction, impulse);
+            ApplyFragmentImpact(fragment, point, normal, impulse, physical, direction, false);
         }
 
         public void TryAccreteHeldFragment(EarthFragment fragment)
@@ -882,6 +1265,8 @@ namespace Elemental.Runtime.World
                 committedHeight,
                 committedThickness,
                 command.Tick);
+            if (wall == null)
+                return Reject(command, "Earth wall physical budget is full; return or destroy a structure first.");
             WallRaisedEvent raised = new WallRaisedEvent(
                 command.Tick,
                 wall.WallId,
@@ -890,6 +1275,178 @@ namespace Elemental.Runtime.World
                 committedHeight,
                 committedThickness);
             Events.Emit(in raised);
+            return true;
+        }
+
+        public bool TryRaiseWallOnSurface(
+            IReadOnlyList<float3> worldPath,
+            Vector3 supportNormal,
+            float height01,
+            float thickness01,
+            uint sourceTick,
+            out EarthWall wall,
+            uint supportStructureId = 0u,
+            EarthSurfaceKind supportKind = EarthSurfaceKind.Invalid,
+            uint supportGeneration = 0u,
+            Vector3 supportTangent = default)
+        {
+            wall = null;
+            if (wallPool == null || worldPath == null || worldPath.Count < 2 ||
+                supportNormal.sqrMagnitude < 0.5f) return false;
+            Vector3 start = ToVector3(worldPath[0]);
+            Vector3 end = ToVector3(worldPath[worldPath.Count - 1]);
+            Vector3 chord = end - start;
+            if (chord.sqrMagnitude < 0.16f) return false;
+            if (chord.magnitude > wallMaxLength) end = start + chord.normalized * wallMaxLength;
+            float height = Mathf.Lerp(wallMinimumHeight, wallMaximumHeight, Mathf.Pow(Mathf.Clamp01(height01), 0.78f));
+            float thickness = wallThickness * Mathf.Lerp(0.65f, 1.65f, Mathf.Clamp01(thickness01));
+            wall = wallPool.Acquire(
+                start,
+                end,
+                planetCenter != null ? planetCenter.position : Vector3.zero,
+                height,
+                thickness,
+                sourceTick,
+                supportNormal.normalized,
+                supportStructureId);
+            if (wall != null && supportStructureId != 0u)
+            {
+                IEarthFractureSource parent = supportKind == EarthSurfaceKind.WallSide ||
+                                               supportKind == EarthSurfaceKind.WallTop
+                    ? wallPool.FindActive(supportStructureId)
+                    : platformPool != null ? platformPool.FindActive(supportStructureId) : null;
+                if (parent != null && !ReferenceEquals(parent, wall))
+                {
+                    MonoBehaviour parentBehaviour = parent as MonoBehaviour;
+                    Quaternion supportRotation = parentBehaviour != null
+                        ? parentBehaviour.transform.rotation
+                        : Quaternion.identity;
+                    EarthConstructionFrameRuntime authoredFrame =
+                        wall.GetComponent<EarthConstructionFrameRuntime>();
+                    if (authoredFrame == null)
+                        authoredFrame = wall.gameObject.AddComponent<EarthConstructionFrameRuntime>();
+                    authoredFrame.Configure(
+                        supportStructureId,
+                        supportGeneration,
+                        (start + end) * 0.5f,
+                        supportNormal,
+                        supportTangent.sqrMagnitude > 0.2f ? supportTangent : (end - start),
+                        wall.transform.rotation,
+                        supportRotation,
+                        ConstructionOrientationMode.PreserveAuthoredFrame);
+                    EarthStructureAttachment attachment = wall.GetComponent<EarthStructureAttachment>();
+                    if (attachment == null) attachment = wall.gameObject.AddComponent<EarthStructureAttachment>();
+                    attachment.Configure(wall, parent, (start + end) * 0.5f);
+                }
+            }
+            return wall != null;
+        }
+
+        public bool TryRaisePlatformOnSurface(
+            IReadOnlyList<float3> worldPath,
+            Vector3 supportNormal,
+            Vector3 supportTangent,
+            float height01,
+            uint sourceTick,
+            out EarthPlatform platform,
+            uint supportStructureId,
+            uint supportGeneration,
+            EarthSurfaceKind supportKind)
+        {
+            platform = null;
+            if (platformPool == null || platformPool.Profile == null || worldPath == null ||
+                worldPath.Count < 3 || supportNormal.sqrMagnitude < 0.5f) return false;
+            Vector3 center = Vector3.zero;
+            for (int index = 0; index < worldPath.Count; index++) center += ToVector3(worldPath[index]);
+            center /= worldPath.Count;
+            Vector3 planet = planetCenter != null ? planetCenter.position : Vector3.zero;
+            Vector3 gravityUp = (center - planet).normalized;
+            if (gravityUp.sqrMagnitude < 0.5f) gravityUp = Vector3.up;
+            EarthPlatformProfile profile = platformPool.Profile;
+            float requestedHeight = Mathf.Lerp(profile.MinimumHeight, profile.MaximumHeight, Mathf.Clamp01(height01));
+            EarthPlatformGeometry geometry;
+            float faceAlignment = Mathf.Abs(Vector3.Dot(supportNormal.normalized, gravityUp));
+            if (faceAlignment >= 0.72f)
+            {
+                _platformPathScratch.Clear();
+                for (int index = 0; index < worldPath.Count; index++) _platformPathScratch.Add(worldPath[index]);
+                geometry = EarthPlatformGeometrySolver.Build(_platformPathScratch, ToFloat3(planet), 32);
+            }
+            else
+            {
+                Vector3 horizontal = Vector3.Cross(gravityUp, supportNormal).normalized;
+                if (horizontal.sqrMagnitude < 0.5f)
+                    horizontal = Vector3.ProjectOnPlane(supportTangent, gravityUp).normalized;
+                float horizontalSpan = 0f;
+                float verticalSpan = 0f;
+                float minHorizontal = float.PositiveInfinity;
+                float maxHorizontal = float.NegativeInfinity;
+                float minVertical = float.PositiveInfinity;
+                float maxVertical = float.NegativeInfinity;
+                for (int index = 0; index < worldPath.Count; index++)
+                {
+                    Vector3 offset = ToVector3(worldPath[index]) - center;
+                    float x = Vector3.Dot(offset, horizontal);
+                    float y = Vector3.Dot(offset, gravityUp);
+                    minHorizontal = Mathf.Min(minHorizontal, x);
+                    maxHorizontal = Mathf.Max(maxHorizontal, x);
+                    minVertical = Mathf.Min(minVertical, y);
+                    maxVertical = Mathf.Max(maxVertical, y);
+                }
+                horizontalSpan = Mathf.Max(1.2f, maxHorizontal - minHorizontal);
+                verticalSpan = Mathf.Max(0.35f, maxVertical - minVertical);
+                requestedHeight = Mathf.Clamp(
+                    Mathf.Lerp(0.46f, 1.15f, Mathf.Pow(Mathf.Clamp01(height01), 0.72f)),
+                    profile.MinimumHeight,
+                    Mathf.Min(profile.MaximumHeight, 1.4f));
+                geometry = EarthCantileverPlatformSolver.Build(
+                    ToFloat3(center),
+                    ToFloat3(supportNormal),
+                    ToFloat3(supportTangent),
+                    ToFloat3(planet),
+                    horizontalSpan,
+                    verticalSpan,
+                    requestedHeight);
+            }
+            if (!geometry.IsValid || geometry.Area < profile.MinimumArea || geometry.Area > profile.MaximumArea)
+                return false;
+            float embedDepth = faceAlignment >= 0.72f
+                ? EarthPlatformGeometrySolver.RequiredChordEmbedDepth(
+                    in geometry,
+                    Mathf.Max(profile.MinimumEmbedDepth, profile.TopThickness * 0.45f),
+                    profile.VisibleVoxelSafetyDepth)
+                : Mathf.Max(0.12f, profile.MinimumEmbedDepth * 0.55f);
+            platform = platformPool.Acquire(in geometry, requestedHeight, embedDepth);
+            if (platform == null) return false;
+
+            IEarthFractureSource parent = supportKind == EarthSurfaceKind.WallSide ||
+                                           supportKind == EarthSurfaceKind.WallTop
+                ? wallPool != null ? wallPool.FindActive(supportStructureId) : null
+                : platformPool.FindActive(supportStructureId);
+            if (parent != null && !ReferenceEquals(parent, platform))
+            {
+                MonoBehaviour parentBehaviour = parent as MonoBehaviour;
+                Quaternion supportRotation = parentBehaviour != null
+                    ? parentBehaviour.transform.rotation
+                    : Quaternion.identity;
+                EarthConstructionFrameRuntime authoredFrame =
+                    platform.GetComponent<EarthConstructionFrameRuntime>();
+                if (authoredFrame == null)
+                    authoredFrame = platform.gameObject.AddComponent<EarthConstructionFrameRuntime>();
+                authoredFrame.Configure(
+                    supportStructureId,
+                    supportGeneration,
+                    center,
+                    supportNormal,
+                    supportTangent,
+                    platform.transform.rotation,
+                    supportRotation,
+                    ConstructionOrientationMode.FollowSupportFrame);
+                EarthStructureAttachment attachment = platform.GetComponent<EarthStructureAttachment>();
+                if (attachment == null)
+                    attachment = platform.gameObject.AddComponent<EarthStructureAttachment>();
+                attachment.Configure(platform, parent, center);
+            }
             return true;
         }
 
@@ -937,6 +1494,55 @@ namespace Elemental.Runtime.World
                 ToFloat3(wall.End),
                 wall.Height);
             Events.Emit(in collapsed);
+            RecordFractureForCombo(wall, wall.SourceTick, wall.transform.forward);
+        }
+
+        private void HandlePlatformFractured(EarthPlatform platform)
+        {
+            if (platform == null) return;
+            RecordFractureForCombo(
+                platform,
+                unchecked((uint)Time.frameCount),
+                platform.transform.forward);
+        }
+
+        private void RecordFractureForCombo(
+            IEarthFractureSource source,
+            uint tick,
+            Vector3 direction)
+        {
+            if (comboRuntime == null || source == null) return;
+            int count = source.CopyActiveTargetsNonAlloc(_comboFractureTargets);
+            EarthMatterId matter = default;
+            for (int index = 0; index < count; index++)
+            {
+                IEarthPhysicalTarget target = _comboFractureTargets[index];
+                _comboFractureTargets[index] = null;
+                if (target == null || target.Body == null) continue;
+                EarthMatterIdentity identity = target.Body.GetComponent<EarthMatterIdentity>() ??
+                                               target.Body.GetComponentInParent<EarthMatterIdentity>();
+                if (!matter.IsValid && identity != null && identity.MatterId.IsValid)
+                    matter = identity.MatterId;
+            }
+            comboRuntime.RecordTechnique(
+                EarthTechniqueId.FractureFan,
+                matter,
+                EarthEventTag.Fractured,
+                tick,
+                1f,
+                direction);
+        }
+
+        private void HandleReturnStageForCombo(EarthReturnEvent value)
+        {
+            if (comboRuntime == null || value.Stage != EarthReturnEventStage.Completed) return;
+            comboRuntime.RecordTechnique(
+                EarthTechniqueId.SubsurfaceReturn,
+                new EarthMatterId(value.MatterId, value.Generation),
+                EarthEventTag.Reintegrated,
+                value.Tick,
+                value.Mass,
+                Vector3.zero);
         }
 
         private bool ExecuteSubtract(CompiledAbilityRecipe recipe, in MagicCommand command)
@@ -962,6 +1568,8 @@ namespace Elemental.Runtime.World
             Vector3 position = ToVector3(extraction.EmergencePosition);
             _heldFragment = fragmentPool.Acquire(
                 this, position, extractionRadius, mass, heldFragmentAnchor);
+            if (_heldFragment == null)
+                return Reject(command, "Earth matter physical budget is full; release or return a stone first.");
             Vector3 surface = ToVector3(extraction.SurfaceAnchor);
             Vector3 up = (surface - planetCenter.position).normalized;
             _heldFragment.BeginSurfaceEmergence(
@@ -1035,6 +1643,10 @@ namespace Elemental.Runtime.World
                 if (platformPiece != null) return platformPiece;
                 EarthFragment fragment = hitCollider.GetComponentInParent<EarthFragment>();
                 if (fragment != null) return fragment;
+                EarthPillarWaveColumn pillar = hitCollider.GetComponentInParent<EarthPillarWaveColumn>();
+                if (pillar != null) return pillar;
+                EarthArmorPiece armorPiece = hitCollider.GetComponentInParent<EarthArmorPiece>();
+                if (armorPiece != null) return armorPiece;
                 EarthWall wall = hitCollider.GetComponentInParent<EarthWall>();
                 if (wall != null) return wall;
                 PhysicalImpactTarget physical = hitCollider.GetComponentInParent<PhysicalImpactTarget>();
@@ -1057,12 +1669,24 @@ namespace Elemental.Runtime.World
         private static Vector3 SafeDirection(Vector3 direction) =>
             direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.forward;
 
+        private static bool IsCharacterBody(Rigidbody body) =>
+            body != null &&
+            (body.GetComponentInParent<PlanetMotor>() != null ||
+             body.GetComponentInParent<ActiveRagdollPuppet>() != null);
+
         private float VectorContinuousForce => vectorFieldProfile != null ? vectorFieldProfile.ContinuousForce : 4200f;
         private float VectorMinimumReleaseImpulse => vectorFieldProfile != null ? vectorFieldProfile.MinimumReleaseImpulse : 260f;
+        private float VectorMinimumWallReleaseImpulse => vectorFieldProfile != null ? vectorFieldProfile.MinimumWallReleaseImpulse : 650f;
         private float VectorMaximumReleaseImpulse => vectorFieldProfile != null ? vectorFieldProfile.MaximumReleaseImpulse : 2400f;
         private float VectorRockSpeedLimit => vectorFieldProfile != null ? vectorFieldProfile.RockSpeedLimit : 32f;
         private float VectorWallSpeedLimit => vectorFieldProfile != null ? vectorFieldProfile.WallSpeedLimit : 14f;
-        private float VectorWallForceMultiplier => vectorFieldProfile != null ? vectorFieldProfile.WallForceMultiplier : 3.4f;
+        private float VectorControlledRockSpeedLimit => vectorFieldProfile != null
+            ? vectorFieldProfile.ControlledRockSpeedLimit
+            : 9f;
+        private float VectorControlledWallSpeedLimit => vectorFieldProfile != null
+            ? vectorFieldProfile.ControlledWallSpeedLimit
+            : 6.5f;
+        private float VectorWallForceMultiplier => vectorFieldProfile != null ? vectorFieldProfile.WallForceMultiplier : 72f;
         private float GravityRadius => gravityWellProfile != null ? gravityWellProfile.Radius : 7.5f;
         private float GravityCoreRadius => gravityWellProfile != null ? gravityWellProfile.CoreRadius : 0.9f;
         private float GravityPullAcceleration => gravityWellProfile != null ? gravityWellProfile.PullAcceleration : 38f;

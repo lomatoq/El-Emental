@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Elemental.Runtime.Geometry;
+using Elemental.Runtime.Matter;
+using Elemental.Simulation.Matter;
 using Elemental.Simulation.Structures;
 using Unity.Mathematics;
 using UnityEngine;
@@ -9,8 +12,10 @@ namespace Elemental.Runtime.Physics
     [DisallowMultipleComponent]
     public sealed class EarthWallPool : MonoBehaviour
     {
-        private const float AuthoredFractureAspect = 1.65f;
-        private const int LargeFullDepthCellCount = 5;
+        private const float FallbackWidth = 8f;
+        private const float FallbackHeight = 4f;
+        private const float FallbackDepth = 0.55f;
+        private const int FallbackVolumetricCellCount = 40;
 
         [SerializeField, Range(1, 24)] private int capacity = 8;
         [SerializeField] private Mesh wallMesh;
@@ -21,16 +26,55 @@ namespace Elemental.Runtime.Physics
         [SerializeField] private EarthRepairProfile repairProfile;
         [SerializeField] private ScriptableObject fractureAsset;
         [SerializeField] private bool allowRuntimeProceduralDebugFallback = true;
+        [SerializeField] private EarthSurfaceQueryService surfaceQueries;
+        [SerializeField] private EarthStructureFractureProfile structureFractureProfile;
+        [SerializeField] private EarthMatterKernelBehaviour matterKernel;
+        [SerializeField] private EarthShapeGrammarProfile shapeGrammarProfile;
 
         private readonly List<EarthWall> _walls = new List<EarthWall>(8);
-        private int _reuseCursor;
+        private readonly Dictionary<EarthWall, MeshFilter> _wallFilters = new Dictionary<EarthWall, MeshFilter>(8);
+        private readonly Dictionary<EarthWall, Mesh> _runtimeWallMeshes = new Dictionary<EarthWall, Mesh>(8);
+        private EarthWallShapeDiversityTracker _wallShapeDiversity;
         private uint _nextId = 1u;
+        private readonly Collider[] _constructionHits = new Collider[48];
+        private readonly IEarthDamageableStructure[] _constructionTargets = new IEarthDamageableStructure[24];
 
-        public int ActiveCount { get; private set; }
+        public int ActiveCount
+        {
+            get
+            {
+                int active = 0;
+                for (int index = 0; index < _walls.Count; index++)
+                    if (_walls[index].gameObject.activeSelf) active++;
+                return active;
+            }
+        }
         public EarthWall LastAcquired { get; private set; }
         public bool UsingBakedFractureAsset => fractureAsset is IEarthFractureAssetRuntimeData;
         public bool RuntimeFallbackUsed { get; private set; }
+        public int RuntimeIntegrityFallbackCount { get; private set; }
         public event Action<EarthWall> WallCollapsed;
+
+        public EarthWall FindActive(uint structureId)
+        {
+            for (int index = 0; index < _walls.Count; index++)
+            {
+                EarthWall wall = _walls[index];
+                if (wall.gameObject.activeSelf && wall.WallId == structureId) return wall;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Explicitly retires a transient/replay wall. Live gameplay walls are never
+        /// selected implicitly for reuse when the representation budget is full.
+        /// </summary>
+        public bool ReleaseTransient(EarthWall wall)
+        {
+            if (wall == null || !_walls.Contains(wall)) return false;
+            wall.ReturnToPoolAsTransientProxy();
+            return true;
+        }
 
         public void Configure(
             int configuredCapacity,
@@ -45,7 +89,25 @@ namespace Elemental.Runtime.Physics
         }
 
         public void ConfigurePhysicsFeel(EarthPhysicsFeelProfile profile) => physicsFeelProfile = profile;
+        public void ConfigureSurfaceQueries(EarthSurfaceQueryService configuredService)
+        {
+            surfaceQueries = configuredService;
+            for (int index = 0; index < _walls.Count; index++)
+            {
+                EarthWallSurfaceProvider provider = _walls[index].GetComponent<EarthWallSurfaceProvider>();
+                provider?.Configure(_walls[index], surfaceQueries);
+            }
+        }
         public void ConfigureRepair(EarthRepairProfile profile) => repairProfile = profile;
+        public void ConfigureStructureFracture(EarthStructureFractureProfile profile) =>
+            structureFractureProfile = profile;
+
+        public void ConfigureShapeGrammar(EarthShapeGrammarProfile profile)
+        {
+            shapeGrammarProfile = profile;
+            _wallShapeDiversity = new EarthWallShapeDiversityTracker(
+                profile != null ? profile.LocalHistoryLength : 16);
+        }
 
         public void ConfigureFractureMaterials(Material exterior, Material freshInterior)
         {
@@ -63,7 +125,22 @@ namespace Elemental.Runtime.Physics
 
         private void Awake()
         {
+            if (matterKernel == null) matterKernel = EarthMatterKernelBehaviour.FindOrCreate(this);
+            _wallShapeDiversity ??= new EarthWallShapeDiversityTracker(
+                shapeGrammarProfile != null ? shapeGrammarProfile.LocalHistoryLength : 16);
             for (int index = 0; index < capacity; index++) CreateWall();
+        }
+
+        private void OnDestroy()
+        {
+            foreach (KeyValuePair<EarthWall, Mesh> pair in _runtimeWallMeshes)
+            {
+                if (pair.Value == null) continue;
+                if (Application.isPlaying) Destroy(pair.Value);
+                else DestroyImmediate(pair.Value);
+            }
+            _runtimeWallMeshes.Clear();
+            _wallFilters.Clear();
         }
 
         public EarthWall Acquire(
@@ -72,7 +149,9 @@ namespace Elemental.Runtime.Physics
             Vector3 planetCenter,
             float height,
             float thickness,
-            uint sourceTick = 0u)
+            uint sourceTick = 0u,
+            Vector3 supportNormal = default,
+            uint excludedSupportId = 0u)
         {
             EarthWall wall = null;
             for (int index = 0; index < _walls.Count; index++)
@@ -84,26 +163,121 @@ namespace Elemental.Runtime.Physics
 
             if (wall == null)
             {
-                wall = _walls[_reuseCursor];
-                _reuseCursor = (_reuseCursor + 1) % _walls.Count;
-            }
-            else
-            {
-                ActiveCount = Mathf.Min(capacity, ActiveCount + 1);
+                if (_walls.Count >= 24)
+                {
+                    Debug.LogWarning("[EarthMatter] Wall representation budget exhausted; construction rejected without overwriting a live wall.", this);
+                    return null;
+                }
+                wall = CreateWall();
+                capacity = Mathf.Max(capacity, _walls.Count);
             }
 
-            wall.Initialize(_nextId++, start, end, planetCenter, height, thickness, sourceTick);
+            ApplyVisualShapeVariant(wall, sourceTick);
+            ApplyConstructionIntersection(
+                wall,
+                start,
+                end,
+                planetCenter,
+                height,
+                thickness,
+                supportNormal,
+                sourceTick,
+                excludedSupportId);
+            wall.Initialize(_nextId++, start, end, planetCenter, height, thickness, sourceTick, supportNormal);
+            float volume = Mathf.Max(0.000001f, Vector3.Distance(start, end) * height * thickness);
+            var source = new EarthSourceProvenance(
+                EarthSourceKind.TerrainEdit,
+                wall.WallId,
+                wall.Generation >= ushort.MaxValue ? ushort.MaxValue : (ushort)Mathf.Max(1, (int)wall.Generation),
+                -1,
+                sourceTick,
+                new float3((start.x + end.x) * 0.5f, (start.y + end.y) * 0.5f, (start.z + end.z) * 0.5f),
+                volume,
+                EarthProvenanceFlags.ExactReturnSupported |
+                EarthProvenanceFlags.SourceCavityValid |
+                EarthProvenanceFlags.VolumeReserved);
+            EarthMatterRuntimeBridge.EnsureIdentity(
+                wall,
+                matterKernel,
+                wall.Body,
+                EarthMatterPhase.Forming,
+                EarthRepresentationTier.HeroPhysical,
+                EarthMaterialKind.Stone,
+                EarthShapeSemantic.Slab,
+                volume,
+                wall.EstimatedMass,
+                source);
             LastAcquired = wall;
             return wall;
+        }
+
+        private void ApplyConstructionIntersection(
+            EarthWall newWall,
+            Vector3 start,
+            Vector3 end,
+            Vector3 planetCenter,
+            float height,
+            float thickness,
+            Vector3 supportNormal,
+            uint sourceTick,
+            uint excludedSupportId)
+        {
+            Vector3 chord = end - start;
+            if (chord.sqrMagnitude < 0.04f) return;
+            Vector3 tangent = chord.normalized;
+            Vector3 midpoint = (start + end) * 0.5f;
+            Vector3 up = supportNormal.sqrMagnitude > 0.5f
+                ? Vector3.ProjectOnPlane(supportNormal, tangent).normalized
+                : Vector3.ProjectOnPlane(midpoint - planetCenter, tangent).normalized;
+            if (up.sqrMagnitude < 0.5f) up = Vector3.up;
+            Vector3 forward = Vector3.Cross(tangent, up).normalized;
+            Quaternion rotation = Quaternion.LookRotation(forward, up);
+            Vector3 center = midpoint + up * (height * 0.5f - 0.12f);
+            Vector3 halfExtents = new Vector3(chord.magnitude * 0.5f, height * 0.5f, thickness * 0.65f);
+            int hitCount = UnityEngine.Physics.OverlapBoxNonAlloc(
+                center,
+                halfExtents,
+                _constructionHits,
+                rotation,
+                ~0,
+                QueryTriggerInteraction.Ignore);
+            int targetCount = 0;
+            for (int index = 0; index < hitCount && targetCount < _constructionTargets.Length; index++)
+            {
+                Collider hit = _constructionHits[index];
+                if (hit == null || hit.transform.IsChildOf(newWall.transform)) continue;
+                EarthWall wall = hit.GetComponentInParent<EarthWall>();
+                EarthPlatform platform = wall == null ? hit.GetComponentInParent<EarthPlatform>() : null;
+                IEarthDamageableStructure target = wall != null ? wall : platform;
+                if (target == null || !((MonoBehaviour)target).gameObject.activeInHierarchy ||
+                    target.StructureId == excludedSupportId) continue;
+                bool duplicate = false;
+                for (int existing = 0; existing < targetCount; existing++)
+                    if (ReferenceEquals(_constructionTargets[existing], target)) duplicate = true;
+                if (duplicate) continue;
+                _constructionTargets[targetCount++] = target;
+                var impact = new EarthStructureImpact(
+                    hit.ClosestPoint(midpoint),
+                    up + forward * 0.18f,
+                    structureFractureProfile != null
+                        ? structureFractureProfile.ConstructionImpactImpulse
+                        : 2850f,
+                    EarthStructureImpactKind.Construction,
+                    sourceTick);
+                target.ApplyEarthImpact(in impact);
+            }
+            for (int index = 0; index < targetCount; index++) _constructionTargets[index] = null;
         }
 
         private EarthWall CreateWall()
         {
             GameObject wallObject = new GameObject($"Earth Wall {_walls.Count + 1:00}");
             wallObject.transform.SetParent(transform, false);
-            MeshFilter filter = wallObject.AddComponent<MeshFilter>();
+            GameObject visualObject = new GameObject("VisualEmergenceRoot");
+            visualObject.transform.SetParent(wallObject.transform, false);
+            MeshFilter filter = visualObject.AddComponent<MeshFilter>();
             filter.sharedMesh = wallMesh;
-            MeshRenderer renderer = wallObject.AddComponent<MeshRenderer>();
+            MeshRenderer renderer = visualObject.AddComponent<MeshRenderer>();
             renderer.sharedMaterial = wallMaterial;
             BoxCollider collider = wallObject.AddComponent<BoxCollider>();
             collider.size = Vector3.one;
@@ -115,6 +289,9 @@ namespace Elemental.Runtime.Physics
             wallBody.constraints = RigidbodyConstraints.FreezeRotation;
             physicsFeelProfile?.Apply(wallBody, collider, EarthPhysicsBodyClass.Structure);
             EarthWall wall = wallObject.AddComponent<EarthWall>();
+            _wallFilters[wall] = filter;
+            EarthWallSurfaceProvider surfaceProvider = wallObject.AddComponent<EarthWallSurfaceProvider>();
+            surfaceProvider.Configure(wall, surfaceQueries);
             wall.ConfigureProfile(wallProfile);
             wall.Collapsed += value => WallCollapsed?.Invoke(value);
             if (TryConfigureBakedWall(
@@ -128,64 +305,163 @@ namespace Elemental.Runtime.Physics
                 throw new InvalidOperationException("A valid baked Earth fracture asset is required.");
             RuntimeFallbackUsed = true;
             int patternIndex = _walls.Count;
-            VoronoiFractureCell[] cells = VoronoiFractureSolver.BuildHierarchicalNormalizedForAspect(
-                0xE17F0001u + ((uint)patternIndex * 0x9E3779B9u),
-                AuthoredFractureAspect);
-            int[] areaOrder = new int[cells.Length];
-            bool[] fullDepthCells = new bool[cells.Length];
-            for (int index = 0; index < areaOrder.Length; index++) areaOrder[index] = index;
-            Array.Sort(areaOrder, (a, b) => cells[b].Area.CompareTo(cells[a].Area));
-            for (int index = 0; index < Mathf.Min(LargeFullDepthCellCount, areaOrder.Length); index++)
-                fullDepthCells[areaOrder[index]] = true;
-
-            int pieceCount = (LargeFullDepthCellCount * 1) +
-                             ((cells.Length - LargeFullDepthCellCount) * 2);
-            Transform[] collapsePieces = new Transform[pieceCount];
-            float[] volumeFractions = new float[pieceCount];
-            var slices = new List<PieceSlice>(pieceCount);
-            int nextPiece = 0;
-            for (int cellIndex = 0; cellIndex < cells.Length; cellIndex++)
+            uint fractureSeed = 0xE17F1002u + ((uint)patternIndex * 0x9E3779B9u);
+            float2[] boundary =
             {
-                VoronoiFractureCell cell = cells[cellIndex];
-                int depthLayers = fullDepthCells[cellIndex] ? 1 : 2;
-                for (int depthIndex = 0; depthIndex < depthLayers; depthIndex++)
-                {
-                    int pieceIndex = nextPiece++;
-                    float depthMin = Mathf.Lerp(-0.5f, 0.5f, depthIndex / (float)depthLayers);
-                    float depthMax = Mathf.Lerp(-0.5f, 0.5f, (depthIndex + 1f) / depthLayers);
-                    GameObject piece = new GameObject(
-                        $"Voronoi Piece {cellIndex + 1:00}-{depthIndex + 1:00}");
-                    piece.transform.SetParent(wallObject.transform, false);
-                    piece.transform.localPosition = new Vector3(cell.Centroid.x, cell.Centroid.y, 0f);
-                    Mesh mesh = BuildVoronoiPrismMesh(
-                        cell, patternIndex, pieceIndex, depthMin, depthMax);
-                    MeshFilter pieceFilter = piece.AddComponent<MeshFilter>();
-                    pieceFilter.sharedMesh = mesh;
-                    MeshRenderer pieceRenderer = piece.AddComponent<MeshRenderer>();
-                    pieceRenderer.sharedMaterial = wallMaterial;
-                    MeshCollider pieceCollider = piece.AddComponent<MeshCollider>();
-                    pieceCollider.sharedMesh = mesh;
-                    pieceCollider.convex = true;
-                    Rigidbody pieceBody = piece.AddComponent<Rigidbody>();
-                    pieceBody.useGravity = false;
-                    pieceBody.isKinematic = true;
-                    pieceBody.detectCollisions = false;
-                    pieceBody.interpolation = RigidbodyInterpolation.Interpolate;
-                    pieceBody.maxAngularVelocity = 22f;
-                    physicsFeelProfile?.Apply(pieceBody, pieceCollider, EarthPhysicsBodyClass.HeavyBlock);
-                    piece.SetActive(false);
-                    collapsePieces[pieceIndex] = piece.transform;
-                    volumeFractions[pieceIndex] = cell.Area / depthLayers;
-                    slices.Add(new PieceSlice(cellIndex, pieceIndex, depthMin, depthMax));
-                }
+                new float2(-FallbackWidth * 0.5f, -FallbackDepth * 0.5f),
+                new float2(FallbackWidth * 0.5f, -FallbackDepth * 0.5f),
+                new float2(FallbackWidth * 0.5f, FallbackDepth * 0.5f),
+                new float2(-FallbackWidth * 0.5f, FallbackDepth * 0.5f)
+            };
+            EarthVolumetricFracturePlan plan = EarthVolumetricFractureSolver.BuildConvexPrism(
+                fractureSeed,
+                boundary,
+                -FallbackHeight * 0.5f,
+                FallbackHeight * 0.5f,
+                FallbackVolumetricCellCount);
+            if (!plan.IsValid)
+                throw new InvalidOperationException("Runtime volumetric wall fallback failed conservation.");
+            Transform[] collapsePieces = new Transform[plan.Cells.Length];
+            float[] volumeFractions = new float[plan.Cells.Length];
+            for (int pieceIndex = 0; pieceIndex < plan.Cells.Length; pieceIndex++)
+            {
+                EarthVolumetricFractureCell cell = plan.Cells[pieceIndex];
+                GameObject piece = new GameObject($"Volume Piece {pieceIndex + 1:00}");
+                piece.transform.SetParent(wallObject.transform, false);
+                piece.transform.localPosition = MapFallbackPoint(cell.Centroid);
+                Mesh mesh = BuildVolumetricFallbackMesh(cell, patternIndex, pieceIndex);
+                piece.AddComponent<MeshFilter>().sharedMesh = mesh;
+                piece.AddComponent<MeshRenderer>().sharedMaterial = wallMaterial;
+                MeshCollider pieceCollider = piece.AddComponent<MeshCollider>();
+                pieceCollider.sharedMesh = mesh;
+                pieceCollider.convex = true;
+                Rigidbody pieceBody = piece.AddComponent<Rigidbody>();
+                pieceBody.useGravity = false;
+                pieceBody.isKinematic = true;
+                pieceBody.detectCollisions = false;
+                pieceBody.interpolation = RigidbodyInterpolation.Interpolate;
+                pieceBody.maxAngularVelocity = 22f;
+                physicsFeelProfile?.Apply(pieceBody, pieceCollider, EarthPhysicsBodyClass.HeavyBlock);
+                piece.SetActive(false);
+                collapsePieces[pieceIndex] = piece.transform;
+                volumeFractions[pieceIndex] = cell.Volume / Mathf.Max(0.0001f, plan.SourceVolume);
             }
-            EarthWallBond[] bonds = BuildBonds(
-                wallBody, collapsePieces, cells, slices);
+            EarthWallBond[] bonds = BuildVolumetricFallbackBonds(wallBody, collapsePieces, plan);
             wall.ConfigureCollapsePieces(collapsePieces, volumeFractions, bonds);
             wallObject.SetActive(false);
             _walls.Add(wall);
             return wall;
         }
+
+        private void ApplyVisualShapeVariant(EarthWall wall, uint sourceTick)
+        {
+            if (wall == null || !_wallFilters.TryGetValue(wall, out MeshFilter filter) || filter == null)
+                return;
+            _wallShapeDiversity ??= new EarthWallShapeDiversityTracker(
+                shapeGrammarProfile != null ? shapeGrammarProfile.LocalHistoryLength : 16);
+            uint librarySeed = shapeGrammarProfile != null ? shapeGrammarProfile.LibrarySeed : 0xE17F0411u;
+            uint seed = EarthShapeSeed.Compose(
+                librarySeed,
+                _nextId,
+                0x57414C4Cu,
+                wall.Generation + 1u,
+                sourceTick).Value;
+            EarthWallArchetype archetype = _wallShapeDiversity.Select(
+                seed,
+                shapeGrammarProfile != null ? shapeGrammarProfile.CandidateAttempts : 12);
+            Mesh replacement = EarthWallMeshFactory.Create(archetype, seed);
+            if (_runtimeWallMeshes.TryGetValue(wall, out Mesh previous) && previous != null)
+            {
+                if (Application.isPlaying) Destroy(previous);
+                else DestroyImmediate(previous);
+            }
+            _runtimeWallMeshes[wall] = replacement;
+            filter.sharedMesh = replacement;
+        }
+
+        private Mesh BuildVolumetricFallbackMesh(
+            EarthVolumetricFractureCell cell,
+            int patternIndex,
+            int pieceIndex)
+        {
+            Vector3 center = MapFallbackPoint(cell.Centroid);
+            var vertices = new Vector3[cell.Vertices.Length];
+            for (int index = 0; index < vertices.Length; index++)
+                vertices[index] = MapFallbackPoint(cell.Vertices[index]) - center;
+            var mesh = new Mesh { name = $"Earth Wall Volume {patternIndex:00}-{pieceIndex:00}" };
+            mesh.vertices = vertices;
+            mesh.triangles = cell.Triangles;
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+            EarthMeshIntegrityReport report = EarthMeshIntegrityValidator.Validate(
+                mesh, EarthMeshIntegrityPolicy.ConvexCollider);
+            if (!report.IsValid)
+            {
+                Bounds bounds = mesh.bounds;
+                string name = mesh.name;
+                if (Application.isPlaying) Destroy(mesh);
+                else DestroyImmediate(mesh);
+                mesh = EarthSafeMeshFactory.CreateSkewedBlock(
+                    $"{name}_IntegrityFallback",
+                    bounds,
+                    unchecked((uint)(patternIndex * 397) ^ (uint)pieceIndex ^ cell.Id));
+                RuntimeIntegrityFallbackCount++;
+            }
+            return mesh;
+        }
+
+        private static EarthWallBond[] BuildVolumetricFallbackBonds(
+            Rigidbody wallBody,
+            Transform[] pieces,
+            in EarthVolumetricFracturePlan plan)
+        {
+            var bonds = new List<EarthWallBond>(160);
+            for (int cellIndex = 0; cellIndex < plan.Cells.Length; cellIndex++)
+            {
+                EarthVolumetricFractureCell cell = plan.Cells[cellIndex];
+                for (int faceIndex = 0; faceIndex < cell.Faces.Length; faceIndex++)
+                {
+                    EarthVolumetricFractureFace face = cell.Faces[faceIndex];
+                    if (face.NeighbourCellIndex < 0 || face.NeighbourCellIndex <= cellIndex) continue;
+                    bonds.Add(CreateBond(
+                        pieces,
+                        cellIndex,
+                        face.NeighbourCellIndex,
+                        MappedFallbackFaceArea(cell, face),
+                        false));
+                }
+                if (cell.Foundation)
+                    bonds.Add(CreateBond(
+                        pieces,
+                        cellIndex,
+                        -1,
+                        Mathf.Max(0.01f, cell.Volume / Mathf.Max(0.0001f, plan.SourceVolume)),
+                        true,
+                        wallBody));
+            }
+            return bonds.ToArray();
+        }
+
+        private static float MappedFallbackFaceArea(
+            EarthVolumetricFractureCell cell,
+            EarthVolumetricFractureFace face)
+        {
+            if (face.VertexIndices.Length < 3) return 0.0001f;
+            Vector3 origin = MapFallbackPoint(cell.Vertices[face.VertexIndices[0]]);
+            float area = 0f;
+            for (int index = 1; index < face.VertexIndices.Length - 1; index++)
+            {
+                Vector3 a = MapFallbackPoint(cell.Vertices[face.VertexIndices[index]]) - origin;
+                Vector3 b = MapFallbackPoint(cell.Vertices[face.VertexIndices[index + 1]]) - origin;
+                area += Vector3.Cross(a, b).magnitude * 0.5f;
+            }
+            return Mathf.Max(0.0001f, area);
+        }
+
+        private static Vector3 MapFallbackPoint(float3 point) => new Vector3(
+            point.x / FallbackWidth,
+            point.y / FallbackHeight,
+            point.z / FallbackDepth);
 
         private bool TryConfigureBakedWall(
             GameObject wallObject,
@@ -379,17 +655,19 @@ namespace Elemental.Runtime.Physics
 
         private static Mesh BuildVoronoiPrismMesh(
             VoronoiFractureCell cell,
+            uint fractureSeed,
             int patternIndex,
             int pieceIndex,
             float depthMin,
             float depthMax)
         {
-            int count = cell.Vertices.Length;
+            float2[] outline = VoronoiFractureSolver.BuildChippedOutline(cell, fractureSeed);
+            int count = outline.Length;
             var vertices = new Vector3[count * 2];
             for (int index = 0; index < count; index++)
             {
-                float x = cell.Vertices[index].x - cell.Centroid.x;
-                float y = cell.Vertices[index].y - cell.Centroid.y;
+                float x = outline[index].x - cell.Centroid.x;
+                float y = outline[index].y - cell.Centroid.y;
                 vertices[index] = new Vector3(x, y, depthMin);
                 vertices[count + index] = new Vector3(x, y, depthMax);
             }
@@ -421,6 +699,11 @@ namespace Elemental.Runtime.Physics
             mesh.triangles = triangles;
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
+            EarthMeshIntegrityGate.ValidateInPlaceOrUseFallback(
+                mesh,
+                EarthMeshIntegrityPolicy.ConvexCollider,
+                mesh.name,
+                mesh.bounds);
             return mesh;
         }
 

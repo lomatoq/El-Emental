@@ -33,6 +33,11 @@ namespace Elemental.Runtime.Physics
         [SerializeField, Min(1f)] private float lightMaximumDepenetrationSpeed = 16f;
         [SerializeField, Min(1f)] private float heavyMaximumDepenetrationSpeed = 10f;
         [SerializeField, Min(1f)] private float structureMaximumDepenetrationSpeed = 5f;
+        [Header("Projectile sweep guard")]
+        [SerializeField, Range(5f, 40f)] private float projectileSweepMinimumSpeed = 16f;
+        [SerializeField, Range(0.5f, 1f)] private float projectileSweepExtentRatio = 0.82f;
+        [SerializeField, Range(0.001f, 0.08f)] private float projectileSweepSkin = 0.015f;
+        [SerializeField, Range(0f, 0.35f)] private float projectileSweepRebound = 0.06f;
 
         [System.NonSerialized] private PhysicsMaterial _lightMaterial;
         [System.NonSerialized] private PhysicsMaterial _heavyMaterial;
@@ -46,6 +51,10 @@ namespace Elemental.Runtime.Physics
         public float CatastrophicImpactEnergy => Mathf.Max(HeavyImpactEnergy, catastrophicImpactEnergy);
         public float FastBodyCcdSpeed => fastBodyCcdSpeed;
         public float MaximumAngularSpeed => maximumAngularSpeed;
+        public float ProjectileSweepMinimumSpeed => projectileSweepMinimumSpeed;
+        public float ProjectileSweepExtentRatio => projectileSweepExtentRatio;
+        public float ProjectileSweepSkin => projectileSweepSkin;
+        public float ProjectileSweepRebound => projectileSweepRebound;
 
         public void Apply(Rigidbody body, Collider collider, EarthPhysicsBodyClass bodyClass)
         {

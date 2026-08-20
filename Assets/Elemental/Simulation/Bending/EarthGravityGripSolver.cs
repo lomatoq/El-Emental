@@ -32,6 +32,35 @@ namespace Elemental.Simulation.Bending
                    up * height * math.max(0f, orbitRadius);
         }
 
+        /// <summary>
+        /// Places controlled matter in two broken side arcs instead of a uniform cloud
+        /// through the camera-to-action corridor. The body remains fully physical;
+        /// only its spring target is presentation-aware.
+        /// </summary>
+        public static float3 CameraAwareSlotOffset(
+            uint stableId,
+            float orbitRadius,
+            float3 localUp,
+            float3 viewForward,
+            float objectClearance)
+        {
+            uint hash = stableId * 0x9E3779B9u + 0x7F4A7C15u;
+            float3 up = math.normalizesafe(localUp, new float3(0f, 1f, 0f));
+            float3 forward = math.normalizesafe(
+                viewForward - up * math.dot(viewForward, up),
+                new float3(0f, 0f, 1f));
+            float3 right = math.normalizesafe(math.cross(up, forward), new float3(1f, 0f, 0f));
+            float side = (hash & 1u) == 0u ? -1f : 1f;
+            float arc01 = ((hash >> 1) & 0xFFu) / 255f;
+            float height01 = ((hash >> 9) & 0xFFu) / 255f;
+            float depth01 = ((hash >> 17) & 0xFFu) / 255f;
+            float radius = math.max(0.1f, orbitRadius);
+            float lateral = radius * math.lerp(0.58f, 1.08f, arc01) + math.max(0f, objectClearance);
+            float height = radius * math.lerp(-0.20f, 0.62f, height01);
+            float depth = radius * math.lerp(-0.30f, 0.16f, depth01);
+            return right * side * lateral + up * height + forward * depth;
+        }
+
         public static EarthGravityGripSample Solve(
             float3 position,
             float3 velocity,

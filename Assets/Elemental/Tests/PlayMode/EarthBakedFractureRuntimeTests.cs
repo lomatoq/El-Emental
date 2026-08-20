@@ -42,7 +42,19 @@ namespace Elemental.Tests.PlayMode
             Assert.That(wall.ApplyRockImpact(wall.transform.position, wall.transform.forward, 100f), Is.True);
             var targets = new IEarthPhysicalTarget[48];
             int targetCount = wall.CopyActiveTargetsNonAlloc(targets);
-            Assert.That(targetCount, Is.EqualTo(43));
+            Assert.That(targetCount, Is.EqualTo(40));
+            var depthBands = new System.Collections.Generic.HashSet<int>();
+            for (int index = 0; index < targetCount; index++)
+            {
+                EarthPieceRuntime piece = targets[index] as EarthPieceRuntime;
+                MeshCollider pieceCollider = piece?.GetComponent<MeshCollider>();
+                Assert.That(pieceCollider, Is.Not.Null);
+                Assert.That(pieceCollider.sharedMesh.bounds.size.z, Is.GreaterThan(0.035f),
+                    "Every fracture cell must retain real volume through wall depth.");
+                depthBands.Add(Mathf.RoundToInt(piece.transform.localPosition.z * 20f));
+            }
+            Assert.That(depthBands.Count, Is.GreaterThanOrEqualTo(3),
+                "The wall must fracture through at least three depth layers, not use full-depth prisms.");
             for (int index = 0; index < targetCount; index++)
             {
                 EarthPieceRuntime piece = targets[index] as EarthPieceRuntime;
@@ -56,14 +68,14 @@ namespace Elemental.Tests.PlayMode
             yield return new WaitForSeconds(0.5f);
             Assert.That(wall.StructureRuntime.State.Phase,
                 Is.EqualTo(EarthStructurePhase.Fractured).Or.EqualTo(EarthStructurePhase.Damaged));
-            Assert.That(wall.ActiveFracturePieceCount, Is.EqualTo(43));
+            Assert.That(wall.ActiveFracturePieceCount, Is.EqualTo(40));
             int bondsAfterImpact = wall.RemainingBondCount;
             Assert.That(bondsAfterImpact, Is.GreaterThan(0));
 
             yield return new WaitForSeconds(3.2f);
             Assert.That(wall.RemainingBondCount, Is.EqualTo(bondsAfterImpact),
                 "Baked structural bonds may change only from impacts/repair, never a decay timer.");
-            Assert.That(wall.ActiveFracturePieceCount, Is.EqualTo(43));
+            Assert.That(wall.ActiveFracturePieceCount, Is.EqualTo(40));
 
             yield return SceneManager.UnloadSceneAsync(scene);
         }
@@ -93,19 +105,15 @@ namespace Elemental.Tests.PlayMode
             yield return new WaitForFixedUpdate();
             Assert.That(first.IsCollapsing, Is.True);
 
-            EarthWall recycled = null;
-            for (int index = 0; index < 8; index++)
-            {
-                float z = -5f + (index * 2f);
-                recycled = pool.Acquire(
-                    new Vector3(-2f, 24f, z), new Vector3(2f, 24f, z),
-                    Vector3.zero, 2.5f, 0.55f, (uint)(201 + index));
-            }
+            Assert.That(pool.ReleaseTransient(first), Is.True);
+            EarthWall recycled = pool.Acquire(
+                new Vector3(-2f, 24f, -5f), new Vector3(2f, 24f, -5f),
+                Vector3.zero, 2.5f, 0.55f, 201u);
 
             Assert.That(recycled, Is.SameAs(first));
             Assert.That(recycled.IsCollapsing, Is.False);
             Assert.That(recycled.ActiveFracturePieceCount, Is.Zero);
-            Assert.That(recycled.GetComponent<MeshRenderer>().enabled, Is.True);
+            Assert.That(recycled.VisualEmergenceRoot.GetComponent<MeshRenderer>().enabled, Is.True);
             Assert.That(recycled.GetComponent<BoxCollider>().enabled, Is.False);
             Assert.That(recycled.StructureRuntime.State.Phase, Is.EqualTo(EarthStructurePhase.Intact));
             Assert.That(recycled.FirstFracturePiece.parent, Is.EqualTo(recycled.transform));

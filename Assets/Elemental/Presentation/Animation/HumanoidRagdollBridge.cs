@@ -15,25 +15,42 @@ namespace Elemental.Presentation.Animation
         private Vector3 _defaultLocalPosition;
         private Quaternion _defaultLocalRotation;
         private float _blend = 1f;
+        private bool _subscribed;
 
         public void Configure(Animator configuredAnimator, ActiveRagdollPuppet configuredPuppet, Transform configuredVisualRoot)
         {
+            Unsubscribe();
             animator = configuredAnimator;
             puppet = configuredPuppet;
             visualRoot = configuredVisualRoot;
             CaptureDefault();
+            if (isActiveAndEnabled) Subscribe();
         }
 
         private void Awake() => CaptureDefault();
 
         private void OnEnable()
         {
-            if (puppet != null) puppet.StateChanged += HandleState;
+            Subscribe();
         }
 
         private void OnDisable()
         {
+            Unsubscribe();
+        }
+
+        private void Subscribe()
+        {
+            if (_subscribed || puppet == null) return;
+            puppet.StateChanged += HandleState;
+            _subscribed = true;
+        }
+
+        private void Unsubscribe()
+        {
+            if (!_subscribed) return;
             if (puppet != null) puppet.StateChanged -= HandleState;
+            _subscribed = false;
         }
 
         private void LateUpdate()
@@ -56,7 +73,10 @@ namespace Elemental.Presentation.Animation
             else if (!animator.enabled)
             {
                 animator.enabled = true;
-                animator.Rebind();
+                // Do not Rebind: the presentation's rigid mesh parts are parented
+                // to Humanoid bones after instantiation. Rebuilding bindings here
+                // advances Animator state time but can freeze those bone poses.
+                animator.Play("Locomotion", 0, 0f);
                 animator.Update(0f);
                 _blend = 0f;
             }

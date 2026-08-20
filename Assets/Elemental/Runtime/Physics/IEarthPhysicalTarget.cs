@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Elemental.Runtime.Physics
@@ -20,7 +21,26 @@ namespace Elemental.Runtime.Physics
         Rock = 0,
         Wall = 1,
         WallPiece = 2,
-        PlatformPiece = 3
+        PlatformPiece = 3,
+        Pillar = 4,
+        Platform = 5,
+        WaveCell = 6,
+        ArmorPiece = 7,
+        ResonanceProjectile = 8
+    }
+
+    [Flags]
+    public enum EarthTargetCapabilities : ushort
+    {
+        None = 0,
+        Grab = 1 << 0,
+        Push = 1 << 1,
+        Gravity = 1 << 2,
+        Damage = 1 << 3,
+        Pluck = 1 << 4,
+        Repair = 1 << 5,
+        Surface = 1 << 6,
+        Draw = 1 << 7
     }
 
     public enum EarthMagicGripKind : byte
@@ -110,6 +130,7 @@ namespace Elemental.Runtime.Physics
 
     public interface IEarthFractureSource
     {
+        event Action<IEarthFractureSource> TargetsActivated;
         uint StructureId { get; }
         bool IsFractured { get; }
         int CopyActiveTargetsNonAlloc(IEarthPhysicalTarget[] destination);

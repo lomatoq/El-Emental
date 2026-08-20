@@ -6,12 +6,15 @@ using Elemental.Input.Gestures;
 using Elemental.Input.Actions;
 using Elemental.Presentation.Camera;
 using Elemental.Presentation.Animation;
+using Elemental.Presentation.Diagnostics;
 using Elemental.Presentation.Rendering;
 using Elemental.Presentation.UI;
 using Elemental.Presentation.VFX;
 using Elemental.Runtime.Physics;
 using Elemental.Runtime.Characters;
+using Elemental.Runtime.Matter;
 using Elemental.Runtime.World;
+using Elemental.Runtime.Geometry;
 using Elemental.Simulation.Magic;
 using UnityEditor;
 using UnityEditor.Animations;
@@ -22,6 +25,8 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UIElements;
 using UnityEngine.SceneManagement;
+using Unity.Cinemachine;
+using UnityEngine.VFX;
 
 namespace Elemental.Authoring.Editor
 {
@@ -47,9 +52,16 @@ namespace Elemental.Authoring.Editor
         private const string RepairProfilePath = "Assets/Elemental/Content/Profiles/EarthRepairProfile.asset";
         private const string CelestialProfilePath = "Assets/Elemental/Content/Profiles/CelestialSystemProfile.asset";
         private const string AtmosphereProfilePath = "Assets/Elemental/Content/Profiles/AtmosphereProfile.asset";
+        private const string SkyProfilePath = "Assets/Elemental/Content/Profiles/EarthSkyProfile.asset";
         private const string MeteorProfilePath = "Assets/Elemental/Content/Profiles/MeteorShowerProfile.asset";
         private const string CharacterProfilePath = "Assets/Elemental/Content/Profiles/CharacterPresentationProfile.asset";
         private const string PhysicsFeelProfilePath = "Assets/Elemental/Content/Profiles/EarthPhysicsFeelProfile.asset";
+        private const string QuickCastProfilePath = "Assets/Elemental/Content/Profiles/EarthQuickCastProfile.asset";
+        private const string ArmorProfilePath = "Assets/Elemental/Content/Profiles/EarthArmorProfile.asset";
+        private const string ArmorShellPath = "Assets/Elemental/Content/Profiles/EarthArmorShellDefinition.asset";
+        private const string ResonanceProfilePath = "Assets/Elemental/Content/Profiles/EarthResonanceProfile.asset";
+        private const string SurfProfilePath = "Assets/Elemental/Content/Profiles/EarthSurfProfile.asset";
+        private const string StructureFractureProfilePath = "Assets/Elemental/Content/Profiles/EarthStructureFractureProfile.asset";
         private const string EarthMaterialProfilePath = "Assets/Elemental/Content/Profiles/EarthMaterialProfile.asset";
         private const string EarthFeedbackProfilePath = "Assets/Elemental/Content/Profiles/EarthFeedbackProfile.asset";
         private const string GestureProfilePath = "Assets/Elemental/Content/Profiles/EarthGestureProfile.asset";
@@ -57,9 +69,10 @@ namespace Elemental.Authoring.Editor
             "Assets/Elemental/Content/Profiles/EarthTechniquePresentationProfile.asset";
         private const string MotorFeelProfilePath = "Assets/Elemental/Content/Profiles/PlanetMotorFeelProfile.asset";
         private const string EarthCameraProfilePath = "Assets/Elemental/Content/Profiles/EarthCameraProfile.asset";
+        private const string ShapeGrammarProfilePath = "Assets/Elemental/Content/Profiles/EarthShapeGrammarProfile.asset";
         private const string EarthStoneAlbedoPath = "Assets/Elemental/Content/Textures/EarthStoneAlbedo.png";
-        private const string MageModelPath = "Assets/ThirdParty/KayKit/Mage/Mage.fbx";
-        private const string MageTexturePath = "Assets/ThirdParty/KayKit/Mage/mage_texture.png";
+        private const string CharacterModelPath = "Assets/ThirdParty/KayKit/Knight/Knight.fbx";
+        private const string CharacterTexturePath = "Assets/ThirdParty/KayKit/Knight/knight_texture.png";
         private const string MageControllerPath = "Assets/Elemental/Content/Animation/KayKitMage.controller";
         private const string MageMaskPath = "Assets/Elemental/Content/Animation/KayKitMageUpperBody.mask";
 
@@ -95,6 +108,13 @@ namespace Elemental.Authoring.Editor
             Transform heldFragmentAnchor = CreateHeldFragmentAnchor(character);
             GameObject magicRoot = new GameObject("Earth Magic Runtime");
             magicRoot.SetActive(false);
+            EarthMatterKernelBehaviour matterKernel = magicRoot.AddComponent<EarthMatterKernelBehaviour>();
+            EarthSurfaceQueryService surfaceQueries = magicRoot.AddComponent<EarthSurfaceQueryService>();
+            VoxelPlanetEarthSurfaceProvider planetSurface =
+                collisionProxy.GetComponent<VoxelPlanetEarthSurfaceProvider>();
+            if (planetSurface == null)
+                planetSurface = collisionProxy.AddComponent<VoxelPlanetEarthSurfaceProvider>();
+            planetSurface.Configure(collisionProxy.GetComponent<Collider>(), voxelPlanet, surfaceQueries);
             Mesh[] fragmentMeshes = CreateOrLoadFragmentMeshes();
             Mesh fragmentMesh = fragmentMeshes[0];
             EarthRockProfile rockProfile = CreateOrLoadRockProfile();
@@ -104,9 +124,13 @@ namespace Elemental.Authoring.Editor
             EarthRockDebrisPool debrisPool = magicRoot.AddComponent<EarthRockDebrisPool>();
             debrisPool.Configure(72, looseEarthMaterial, fragmentMesh, gravityWorld, rockProfile);
             debrisPool.ConfigureMeshVariants(fragmentMeshes);
+            EarthShapeGrammarProfile shapeGrammar = CreateOrLoadProfile<EarthShapeGrammarProfile>(
+                ShapeGrammarProfilePath, "Earth Shape Grammar Profile");
+            debrisPool.ConfigureShapeGrammar(shapeGrammar);
             EarthFragmentPool pool = magicRoot.AddComponent<EarthFragmentPool>();
-            pool.Configure(8, looseEarthMaterial, gravityWorld, fragmentMesh, rockProfile, debrisPool);
+            pool.Configure(32, looseEarthMaterial, gravityWorld, fragmentMesh, rockProfile, debrisPool);
             pool.ConfigureMeshVariants(fragmentMeshes);
+            pool.ConfigureShapeGrammar(shapeGrammar);
             pool.ConfigurePhysicsFeel(physicsFeel);
             EarthHoverProfile hoverProfile = CreateOrLoadHoverProfile();
             pool.ConfigureHover(hoverProfile);
@@ -119,6 +143,13 @@ namespace Elemental.Authoring.Editor
             earthMaterialProfile.Apply(fractureInteriorMaterial, true);
             EarthWallPool wallPool = magicRoot.AddComponent<EarthWallPool>();
             wallPool.Configure(8, wallMesh, wallMaterial, CreateOrLoadWallProfile());
+            wallPool.ConfigureShapeGrammar(shapeGrammar);
+            EarthStructureFractureProfile structureFracture =
+                CreateOrLoadProfile<EarthStructureFractureProfile>(
+                    StructureFractureProfilePath,
+                    "Earth Structure Fracture Profile");
+            wallPool.ConfigureStructureFracture(structureFracture);
+            wallPool.ConfigureSurfaceQueries(surfaceQueries);
             wallPool.ConfigureFractureMaterials(wallMaterial, fractureInteriorMaterial);
             wallPool.ConfigurePhysicsFeel(physicsFeel);
             wallPool.ConfigureRepair(CreateOrLoadProfile<EarthRepairProfile>(
@@ -130,6 +161,8 @@ namespace Elemental.Authoring.Editor
             EarthPlatformProfile platformProfile = CreateOrLoadPlatformProfile();
             EarthPlatformPool platformPool = magicRoot.AddComponent<EarthPlatformPool>();
             platformPool.Configure(6, wallMaterial, platformProfile);
+            platformPool.ConfigureFractureProfile(structureFracture);
+            platformPool.ConfigureSurfaceQueries(surfaceQueries);
             platformPool.ConfigurePhysicsFeel(physicsFeel);
             platformPool.ConfigurePieceMeshes(fragmentMeshes);
             EarthPillarWaveProfile waveProfile = CreateOrLoadWaveProfile();
@@ -144,6 +177,19 @@ namespace Elemental.Authoring.Editor
             executor.ConfigureEarthExtensions(
                 CreateOrLoadVectorFieldProfile(), platformPool, CreateOrLoadGravityWellProfile());
             executor.ConfigureWallProfile(1.25f, 10.5f, 22f);
+            EarthAudioDirector audioDirector = magicRoot.AddComponent<EarthAudioDirector>();
+            audioDirector.Configure(executor);
+            Material indirectDebrisMaterial = CreateOrLoadShaderMaterial(
+                "EarthIndirectDebris.mat", "Elemental/Earth Indirect Debris");
+            indirectDebrisMaterial.SetColor("_BaseColor", style.StoneColor * 0.82f);
+            EarthIndirectDebrisRenderer indirectDebris = magicRoot.AddComponent<EarthIndirectDebrisRenderer>();
+            indirectDebris.Configure(executor, fragmentMesh, indirectDebrisMaterial);
+            EarthPerformanceTelemetry performanceTelemetry = magicRoot.AddComponent<EarthPerformanceTelemetry>();
+            performanceTelemetry.Configure(matterKernel, indirectDebris);
+            EarthVfxGraphBridge vfxGraphBridge = magicRoot.AddComponent<EarthVfxGraphBridge>();
+            VisualEffect impactGraph = CreateVfxGraphLayer(magicRoot.transform, "Earth Impact VFX Graph");
+            VisualEffect returnGraph = CreateVfxGraphLayer(magicRoot.transform, "Earth Return VFX Graph");
+            vfxGraphBridge.Configure(executor, impactGraph, returnGraph);
             AbilityRecipeAsset[] recipes = CreateOrLoadRecipes();
             AbilityRegistryBootstrap registry = magicRoot.AddComponent<AbilityRegistryBootstrap>();
             registry.Configure(executor, recipes);
@@ -158,7 +204,12 @@ namespace Elemental.Authoring.Editor
             PlanetMotor characterMotor = character.GetComponent<PlanetMotor>();
             EarthPillarMobility pillarMobility = character.GetComponent<EarthPillarMobility>();
             if (pillarMobility == null) pillarMobility = character.AddComponent<EarthPillarMobility>();
-            pillarMobility.Configure(characterBody, characterMotor);
+            SerializedObject pillarSettings = new SerializedObject(pillarMobility);
+            pillarSettings.FindProperty("minimumVelocityChange").floatValue = 12f;
+            pillarSettings.FindProperty("maximumVelocityChange").floatValue = 25f;
+            pillarSettings.FindProperty("chargeExponent").floatValue = 1.55f;
+            pillarSettings.ApplyModifiedPropertiesWithoutUndo();
+            pillarMobility.Configure(characterBody, characterMotor, surfaceQueries);
             EarthPillarWaveAbility pillarWave = character.GetComponent<EarthPillarWaveAbility>();
             if (pillarWave == null) pillarWave = character.AddComponent<EarthPillarWaveAbility>();
             pillarWave.Configure(characterBody, characterMotor, wavePool, waveProfile);
@@ -171,7 +222,8 @@ namespace Elemental.Authoring.Editor
                 character.GetComponent<ActiveRagdollPuppet>(),
                 collisionProxy.GetComponent<Collider>(),
                 CreateOrLoadLandingCushionProfile(),
-                cushionVisual);
+                cushionVisual,
+                surfaceQueries);
             PlanetInputReader inputReader = character.GetComponent<PlanetInputReader>();
             inputReader?.Configure(inputAdapter, pillarMobility, pillarWave, cushion);
             LineRenderer preview = character.GetComponent<LineRenderer>();
@@ -201,6 +253,40 @@ namespace Elemental.Authoring.Editor
                 GestureProfilePath,
                 "Earth Gesture Profile"));
             input.ConfigureEarthTechniques(pillarWave);
+            input.ConfigureEarthSurfaceQueries(surfaceQueries);
+            EarthArmorProfile armorProfile = CreateOrLoadProfile<EarthArmorProfile>(
+                ArmorProfilePath,
+                "Earth Armor Profile");
+            EarthArmorShellDefinition armorShell = CreateOrLoadProfile<EarthArmorShellDefinition>(
+                ArmorShellPath,
+                "Earth Armor Shell Definition");
+            if (!armorShell.IsValid)
+            {
+                armorShell.BakeDefaultHumanoidShell();
+                EditorUtility.SetDirty(armorShell);
+            }
+            armorProfile.ConfigureShellDefinition(armorShell);
+            EditorUtility.SetDirty(armorProfile);
+            input.ConfigureEarthFeatureProfiles(
+                CreateOrLoadProfile<EarthQuickCastProfile>(QuickCastProfilePath, "Earth Quick Cast Profile"),
+                armorProfile);
+            EarthResonanceController resonance = character.GetComponent<EarthResonanceController>();
+            if (resonance == null) resonance = character.AddComponent<EarthResonanceController>();
+            resonance.Configure(
+                characterBody,
+                characterMotor,
+                collisionProxy.transform,
+                pool,
+                executor,
+                CreateOrLoadProfile<EarthResonanceProfile>(ResonanceProfilePath, "Earth Resonance Profile"));
+            EarthSurfController surf = character.GetComponent<EarthSurfController>();
+            if (surf == null) surf = character.AddComponent<EarthSurfController>();
+            surf.Configure(
+                characterBody,
+                characterMotor,
+                collisionProxy.transform,
+                CreateOrLoadProfile<EarthSurfProfile>(SurfProfilePath, "Earth Surf Profile"),
+                looseEarthMaterial);
             CreateOrLoadProfile<EarthTechniquePresentationProfile>(
                 TechniquePresentationProfilePath,
                 "Earth Technique Presentation Profile");
@@ -436,6 +522,7 @@ namespace Elemental.Authoring.Editor
                 MotorFeelProfilePath,
                 "Planet Motor Feel Profile"));
             motor?.ConfigureTankSteering(true, 170f);
+            motor?.ConfigureOrientationFeel(60f, 12f, 140f);
             if (cameraRig != null)
             {
                 EarthCameraDirector cameraDirector = camera.GetComponent<EarthCameraDirector>();
@@ -460,6 +547,13 @@ namespace Elemental.Authoring.Editor
             CreateGroundFootprintPreview(input, preview, style);
             CreateAbilityPreview(input, executor, style);
             CreateCharacterVisual(character, input, executor, style, gravityWorld, pillarMobility);
+            if (cameraRig != null)
+                ConfigureCinemachineCamera(
+                    camera,
+                    character,
+                    cameraRig,
+                    camera.GetComponent<EarthCameraDirector>(),
+                    motor);
             HideTechnicalGravityToyProps();
             CreatePlanetLandmarks(earthMaterial, style, worldProfile.Radius);
             CreateWorldAndSpace(camera, executor, planetCenter, worldProfile, style);
@@ -469,6 +563,54 @@ namespace Elemental.Authoring.Editor
             CreateHud(input, executor, pillarMobility, landingCushion);
             CreatePostProcessing();
             EditorSceneManager.MarkSceneDirty(scene);
+        }
+
+        private static void ConfigureCinemachineCamera(
+            Camera camera,
+            GameObject character,
+            PlanetCameraRig legacyRig,
+            EarthCameraDirector director,
+            PlanetMotor motor)
+        {
+            if (camera == null || character == null || motor == null) return;
+            SetTagRecursively(character, "Player");
+            GameObject puppetRoot = GameObject.Find("Earth Shaper Puppet");
+            if (puppetRoot != null) SetTagRecursively(puppetRoot, "Player");
+
+            GameObject oldSystem = GameObject.Find("Earth Cinemachine System");
+            if (oldSystem != null) Object.DestroyImmediate(oldSystem);
+            GameObject system = new GameObject("Earth Cinemachine System");
+            GameObject worldUpObject = new GameObject("Earth Camera World Up");
+            worldUpObject.transform.SetParent(system.transform, false);
+            GameObject aimObject = new GameObject("Earth Camera Aim Pivot");
+            aimObject.transform.SetParent(worldUpObject.transform, false);
+            GameObject virtualCameraObject = new GameObject("Earth Gameplay Camera");
+            virtualCameraObject.transform.SetParent(system.transform, false);
+
+            CinemachineBrain brain = camera.GetComponent<CinemachineBrain>();
+            if (brain == null) brain = camera.gameObject.AddComponent<CinemachineBrain>();
+            CinemachineCamera virtualCamera = virtualCameraObject.AddComponent<CinemachineCamera>();
+            CinemachineThirdPersonFollow follow = virtualCameraObject.AddComponent<CinemachineThirdPersonFollow>();
+            EarthCinemachineCameraController controller = system.AddComponent<EarthCinemachineCameraController>();
+            controller.Configure(
+                camera,
+                brain,
+                virtualCamera,
+                follow,
+                legacyRig,
+                director,
+                motor,
+                character.transform,
+                worldUpObject.transform,
+                aimObject.transform);
+        }
+
+        private static void SetTagRecursively(GameObject root, string tag)
+        {
+            if (root == null) return;
+            Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
+            for (int index = 0; index < transforms.Length; index++)
+                transforms[index].gameObject.tag = tag;
         }
 
         private static Transform CreateHeldFragmentAnchor(GameObject character)
@@ -906,17 +1048,17 @@ namespace Elemental.Authoring.Editor
             EarthPillarMobility pillarMobility)
         {
             ConfigureKayKitImporters();
-            GameObject magePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(MageModelPath);
-            if (magePrefab == null)
+            GameObject characterPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CharacterModelPath);
+            if (characterPrefab == null)
             {
-                Debug.LogWarning("[Elemental] KayKit Mage is unavailable; keeping the primitive presentation fallback.");
+                Debug.LogWarning("[Elemental] KayKit Knight is unavailable; keeping the primitive presentation fallback.");
                 return;
             }
 
-            Avatar avatar = FindAvatar(MageModelPath);
+            Avatar avatar = FindAvatar(CharacterModelPath);
             if (avatar == null || !avatar.isValid || !avatar.isHuman)
             {
-                Debug.LogWarning("[Elemental] KayKit Mage did not produce a valid Humanoid avatar; keeping the primitive presentation fallback.");
+                Debug.LogWarning("[Elemental] KayKit Knight did not produce a valid Humanoid avatar; keeping the primitive presentation fallback.");
                 return;
             }
 
@@ -925,7 +1067,7 @@ namespace Elemental.Authoring.Editor
                 CharacterProfilePath,
                 "Character Presentation Profile");
             profile.Configure(
-                magePrefab,
+                characterPrefab,
                 controller,
                 avatar,
                 new Vector3(0f, -1.02f, 0f),
@@ -935,43 +1077,61 @@ namespace Elemental.Authoring.Editor
 
             Transform old = character.transform.Find("KayKit Mage Presentation");
             if (old != null) Object.DestroyImmediate(old.gameObject);
-            GameObject mage = PrefabUtility.InstantiatePrefab(magePrefab) as GameObject;
-            if (mage == null) return;
-            mage.name = "KayKit Mage Presentation";
-            mage.transform.SetParent(character.transform, false);
-            mage.transform.localPosition = profile.LocalPosition;
-            mage.transform.localRotation = profile.LocalRotation;
-            mage.transform.localScale = profile.LocalScale;
+            old = character.transform.Find("KayKit Rogue Presentation");
+            if (old != null) Object.DestroyImmediate(old.gameObject);
+            old = character.transform.Find("KayKit Knight Presentation");
+            if (old != null) Object.DestroyImmediate(old.gameObject);
+            GameObject presentationObject = PrefabUtility.InstantiatePrefab(characterPrefab) as GameObject;
+            if (presentationObject == null) return;
+            presentationObject.name = "KayKit Knight Presentation";
+            presentationObject.transform.SetParent(character.transform, false);
+            presentationObject.transform.localPosition = profile.LocalPosition;
+            presentationObject.transform.localRotation = profile.LocalRotation;
+            presentationObject.transform.localScale = profile.LocalScale;
 
-            Material mageMaterial = CreateOrLoadLitMaterial(
-                "KayKitMage.mat",
+            Material characterMaterial = CreateOrLoadLitMaterial(
+                "KayKitKnight.mat",
                 Color.white,
                 0.18f,
                 Color.black);
-            Texture2D mageTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(MageTexturePath);
-            if (mageTexture != null)
+            Texture2D characterTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(CharacterTexturePath);
+            if (characterTexture != null)
             {
-                mageMaterial.SetTexture("_BaseMap", mageTexture);
-                mageMaterial.SetTexture("_MainTex", mageTexture);
+                characterMaterial.SetTexture("_BaseMap", characterTexture);
+                characterMaterial.SetTexture("_MainTex", characterTexture);
             }
-            foreach (Renderer renderer in mage.GetComponentsInChildren<Renderer>(true))
+            foreach (Transform child in presentationObject.GetComponentsInChildren<Transform>(true))
             {
-                renderer.sharedMaterial = mageMaterial;
+                if (child == presentationObject.transform) continue;
+                string lowerName = child.name.ToLowerInvariant();
+                if (lowerName.Contains("cape") || lowerName.Contains("hood") ||
+                    lowerName.Contains("helmet") || lowerName.Contains("visor"))
+                    child.gameObject.SetActive(false);
+            }
+            foreach (Renderer renderer in presentationObject.GetComponentsInChildren<Renderer>(true))
+            {
+                renderer.sharedMaterial = characterMaterial;
                 renderer.shadowCastingMode = ShadowCastingMode.On;
                 renderer.receiveShadows = true;
             }
 
-            Animator animator = mage.GetComponentInChildren<Animator>(true);
-            if (animator == null) animator = mage.AddComponent<Animator>();
+            Animator animator = presentationObject.GetComponentInChildren<Animator>(true);
+            if (animator == null) animator = presentationObject.AddComponent<Animator>();
             animator.avatar = avatar;
             animator.runtimeAnimatorController = controller;
             animator.applyRootMotion = false;
             animator.updateMode = AnimatorUpdateMode.Normal;
-            animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            BindRigidCharacterPart(presentationObject.transform, animator, "Knight_Body", HumanBodyBones.Hips);
+            BindRigidCharacterPart(presentationObject.transform, animator, "Knight_Head", HumanBodyBones.Head);
+            BindRigidCharacterPart(presentationObject.transform, animator, "Knight_ArmLeft", HumanBodyBones.LeftUpperArm);
+            BindRigidCharacterPart(presentationObject.transform, animator, "Knight_ArmRight", HumanBodyBones.RightUpperArm);
+            BindRigidCharacterPart(presentationObject.transform, animator, "Knight_LegLeft", HumanBodyBones.LeftUpperLeg);
+            BindRigidCharacterPart(presentationObject.transform, animator, "Knight_LegRight", HumanBodyBones.RightUpperLeg);
 
             foreach (Renderer renderer in character.GetComponentsInChildren<Renderer>(true))
             {
-                if (renderer.transform.IsChildOf(mage.transform)) continue;
+                if (renderer.transform.IsChildOf(presentationObject.transform)) continue;
                 if (renderer is LineRenderer || renderer is ParticleSystemRenderer) continue;
                 renderer.enabled = false;
             }
@@ -987,8 +1147,8 @@ namespace Elemental.Authoring.Editor
             Transform rightTarget = CreatePoseTarget("Right Hand IK", targetRoot.transform, new Vector3(0.34f, 0.55f, 0.58f));
 
             ActiveRagdollPuppet puppet = character.GetComponent<ActiveRagdollPuppet>();
-            HumanoidCharacterPresentation presentation = mage.GetComponent<HumanoidCharacterPresentation>();
-            if (presentation == null) presentation = mage.AddComponent<HumanoidCharacterPresentation>();
+            HumanoidCharacterPresentation presentation = presentationObject.GetComponent<HumanoidCharacterPresentation>();
+            if (presentation == null) presentation = presentationObject.AddComponent<HumanoidCharacterPresentation>();
             presentation.Configure(
                 profile,
                 animator,
@@ -1003,18 +1163,44 @@ namespace Elemental.Authoring.Editor
                     TechniquePresentationProfilePath,
                     "Earth Technique Presentation Profile"),
                 pillarMobility);
-            EarthStompContactPresenter stomp = mage.GetComponent<EarthStompContactPresenter>();
-            if (stomp == null) stomp = mage.AddComponent<EarthStompContactPresenter>();
+            EarthStompContactPresenter stomp = presentationObject.GetComponent<EarthStompContactPresenter>();
+            if (stomp == null) stomp = presentationObject.AddComponent<EarthStompContactPresenter>();
             stomp.Configure(pillarMobility);
-            HumanoidRagdollBridge bridge = mage.GetComponent<HumanoidRagdollBridge>();
-            if (bridge == null) bridge = mage.AddComponent<HumanoidRagdollBridge>();
-            bridge.Configure(animator, puppet, mage.transform);
+            HumanoidRagdollBridge bridge = presentationObject.GetComponent<HumanoidRagdollBridge>();
+            if (bridge == null) bridge = presentationObject.AddComponent<HumanoidRagdollBridge>();
+            bridge.Configure(animator, puppet, presentationObject.transform);
+        }
+
+        private static void BindRigidCharacterPart(
+            Transform presentationRoot,
+            Animator animator,
+            string partName,
+            HumanBodyBones targetBone)
+        {
+            if (presentationRoot == null || animator == null) return;
+            Transform part = null;
+            foreach (Transform candidate in presentationRoot.GetComponentsInChildren<Transform>(true))
+            {
+                if (candidate.name != partName) continue;
+                part = candidate;
+                break;
+            }
+            Transform bone = animator.GetBoneTransform(targetBone);
+            if (part == null || bone == null || part == bone || part.IsChildOf(bone)) return;
+            Renderer renderer = part.GetComponent<Renderer>();
+            if (renderer == null || renderer is SkinnedMeshRenderer) return;
+
+            // KayKit characters use separate rigid visual pieces beside the Humanoid
+            // skeleton. Humanoid retargeting animates the bones but not those sibling
+            // mesh transforms, so bind each visible piece to its semantic bone while
+            // preserving the authored bind pose.
+            part.SetParent(bone, true);
         }
 
         private static void ConfigureKayKitImporters()
         {
-            ConfigureHumanoidImporter(MageModelPath, null);
-            Avatar avatar = FindAvatar(MageModelPath);
+            bool avatarChanged = ConfigureHumanoidImporter(CharacterModelPath, null);
+            Avatar avatar = FindAvatar(CharacterModelPath);
             string[] animationPaths =
             {
                 "Assets/ThirdParty/KayKit/Animations/Rig_Medium_General.fbx",
@@ -1023,25 +1209,73 @@ namespace Elemental.Authoring.Editor
                 "Assets/ThirdParty/KayKit/Animations/Rig_Medium_CombatRanged.fbx"
             };
             for (int index = 0; index < animationPaths.Length; index++)
-                ConfigureHumanoidImporter(animationPaths[index], avatar);
+                ConfigureHumanoidImporter(animationPaths[index], avatar, avatarChanged);
         }
 
-        private static void ConfigureHumanoidImporter(string path, Avatar sourceAvatar)
+        private static bool ConfigureHumanoidImporter(
+            string path,
+            Avatar sourceAvatar,
+            bool forceReimport = false)
         {
             ModelImporter importer = AssetImporter.GetAtPath(path) as ModelImporter;
-            if (importer == null) return;
+            if (importer == null) return false;
             ModelImporterAvatarSetup desiredSetup = sourceAvatar == null
                 ? ModelImporterAvatarSetup.CreateFromThisModel
                 : ModelImporterAvatarSetup.CopyFromOther;
-            bool dirty = importer.animationType != ModelImporterAnimationType.Human ||
+            HumanDescription human = importer.humanDescription;
+            bool needsTranslationDof = sourceAvatar == null && !human.hasTranslationDoF;
+            bool animationLoopingChanged = ConfigureAnimationLooping(importer, sourceAvatar != null);
+            bool dirty = forceReimport ||
+                         importer.animationType != ModelImporterAnimationType.Human ||
                          importer.avatarSetup != desiredSetup ||
-                         (sourceAvatar != null && importer.sourceAvatar != sourceAvatar);
-            if (!dirty) return;
+                         (sourceAvatar != null && importer.sourceAvatar != sourceAvatar) ||
+                         needsTranslationDof ||
+                         animationLoopingChanged;
+            if (!dirty) return false;
             importer.animationType = ModelImporterAnimationType.Human;
             importer.avatarSetup = desiredSetup;
             if (sourceAvatar != null) importer.sourceAvatar = sourceAvatar;
+            else if (needsTranslationDof)
+            {
+                // KayKit locomotion contains meaningful upper-leg and hip translation.
+                // Without Humanoid Translate DoF Unity discards those curves during
+                // retargeting, leaving rigid-piece characters visibly frozen.
+                human.hasTranslationDoF = true;
+                importer.humanDescription = human;
+            }
             importer.importAnimation = true;
             importer.SaveAndReimport();
+            return true;
+        }
+
+        private static bool ConfigureAnimationLooping(ModelImporter importer, bool animationSource)
+        {
+            if (!animationSource) return false;
+            ModelImporterClipAnimation[] clips = importer.clipAnimations;
+            if (clips == null || clips.Length == 0) clips = importer.defaultClipAnimations;
+            if (clips == null || clips.Length == 0) return false;
+            bool changed = false;
+            for (int index = 0; index < clips.Length; index++)
+            {
+                ModelImporterClipAnimation clip = clips[index];
+                bool shouldLoop = IsLoopingLocomotionClip(clip.name);
+                if (clip.loopTime == shouldLoop && clip.loopPose == shouldLoop) continue;
+                clip.loopTime = shouldLoop;
+                clip.loopPose = shouldLoop;
+                changed = true;
+            }
+            if (changed) importer.clipAnimations = clips;
+            return changed;
+        }
+
+        private static bool IsLoopingLocomotionClip(string clipName)
+        {
+            if (string.IsNullOrEmpty(clipName)) return false;
+            string value = clipName.ToLowerInvariant();
+            return value.Contains("idle") || value.Contains("walk") ||
+                   value.Contains("run") || value.Contains("sprint") ||
+                   value.Contains("strafe") || value.Contains("crouch") ||
+                   value.Contains("crawl");
         }
 
         private static Avatar FindAvatar(string path)
@@ -1055,7 +1289,11 @@ namespace Elemental.Authoring.Editor
         private static AnimatorController CreateOrLoadMageController()
         {
             AnimatorController existing = AssetDatabase.LoadAssetAtPath<AnimatorController>(MageControllerPath);
-            if (existing != null) return existing;
+            if (existing != null)
+            {
+                UpgradeMageController(existing);
+                return existing;
+            }
             EnsureFolder("Assets/Elemental/Content/Animation");
             AnimatorController controller = AnimatorController.CreateAnimatorControllerAtPath(MageControllerPath);
             controller.AddParameter("Speed", AnimatorControllerParameterType.Float);
@@ -1064,6 +1302,7 @@ namespace Elemental.Authoring.Editor
             controller.AddParameter("Cast", AnimatorControllerParameterType.Bool);
             controller.AddParameter("CastKind", AnimatorControllerParameterType.Int);
             controller.AddParameter("Impact", AnimatorControllerParameterType.Trigger);
+            AddChoreographyParameters(controller);
 
             List<AnimationClip> clips = LoadKayKitClips();
             AnimationClip idle = FindClip(clips, "idle");
@@ -1079,6 +1318,7 @@ namespace Elemental.Authoring.Editor
             AnimatorState locomotionState = controller.CreateBlendTreeInController("Locomotion", out locomotion, 0);
             locomotion.blendType = BlendTreeType.Simple1D;
             locomotion.blendParameter = "Speed";
+            locomotion.useAutomaticThresholds = false;
             if (idle != null) locomotion.AddChild(idle, 0f);
             if (walk != null) locomotion.AddChild(walk, 2f);
             if (run != null) locomotion.AddChild(run, 6f);
@@ -1145,7 +1385,86 @@ namespace Elemental.Authoring.Editor
             controller.layers = layers;
             EditorUtility.SetDirty(controller);
             AssetDatabase.SaveAssets();
+            UpgradeMageController(controller);
             return controller;
+        }
+
+        private static void UpgradeMageController(AnimatorController controller)
+        {
+            AddChoreographyParameters(controller);
+            if (controller.layers == null || controller.layers.Length < 2) return;
+            AnimatorState castState = FindAnimatorState(
+                controller.layers[1].stateMachine, "Earth Cast");
+            if (castState == null) return;
+            if (castState.motion is BlendTree existingTree && existingTree.children.Length >= 8 &&
+                existingTree.blendParameter == "EarthPose") return;
+
+            List<AnimationClip> clips = LoadKayKitClips();
+            AnimationClip fallback = FindClip(clips, "Ranged_Magic_Spellcasting", "idle");
+            string[][] terms =
+            {
+                new[] { "Ranged_Magic_Raise", "PickUp" },
+                new[] { "Throw", "Ranged_Magic_Shoot" },
+                new[] { "Ranged_Magic_Shoot", "Throw" },
+                new[] { "Ranged_Magic_Spellcasting_Long", "Ranged_Magic_Spellcasting" },
+                new[] { "Ranged_Magic_Summon", "Ranged_Magic_Raise" },
+                new[] { "Ranged_2H_Shoot", "Ranged_Magic_Shoot" },
+                new[] { "Interact", "Ranged_Magic_Raise" },
+                new[] { "Ranged_Bow_Release_Up", "Ranged_Magic_Summon" }
+            };
+            var tree = new BlendTree
+            {
+                name = "Earth Hero Casts",
+                blendType = BlendTreeType.Simple1D,
+                blendParameter = "EarthPose",
+                useAutomaticThresholds = false
+            };
+            AssetDatabase.AddObjectToAsset(tree, controller);
+            for (int index = 0; index < terms.Length; index++)
+                tree.AddChild(FindClip(clips, terms[index]) ?? fallback, index + 1f);
+            castState.motion = tree;
+            EditorUtility.SetDirty(tree);
+            EditorUtility.SetDirty(castState);
+            EditorUtility.SetDirty(controller);
+            AssetDatabase.SaveAssets();
+        }
+
+        private static void AddChoreographyParameters(AnimatorController controller)
+        {
+            AddParameterIfMissing(controller, "EarthEffort", AnimatorControllerParameterType.Float);
+            AddParameterIfMissing(controller, "EarthBrace", AnimatorControllerParameterType.Float);
+            AddParameterIfMissing(controller, "EarthGrounding", AnimatorControllerParameterType.Float);
+            AddParameterIfMissing(controller, "EarthPrecision", AnimatorControllerParameterType.Float);
+            AddParameterIfMissing(controller, "EarthPhase", AnimatorControllerParameterType.Int);
+            AddParameterIfMissing(controller, "EarthDialect", AnimatorControllerParameterType.Int);
+            AddParameterIfMissing(controller, "EarthPose", AnimatorControllerParameterType.Float);
+        }
+
+        private static void AddParameterIfMissing(
+            AnimatorController controller,
+            string parameterName,
+            AnimatorControllerParameterType type)
+        {
+            AnimatorControllerParameter[] parameters = controller.parameters;
+            for (int index = 0; index < parameters.Length; index++)
+                if (parameters[index].name == parameterName) return;
+            controller.AddParameter(parameterName, type);
+        }
+
+        private static AnimatorState FindAnimatorState(AnimatorStateMachine machine, string stateName)
+        {
+            if (machine == null) return null;
+            ChildAnimatorState[] states = machine.states;
+            for (int index = 0; index < states.Length; index++)
+                if (states[index].state != null && states[index].state.name == stateName)
+                    return states[index].state;
+            ChildAnimatorStateMachine[] children = machine.stateMachines;
+            for (int index = 0; index < children.Length; index++)
+            {
+                AnimatorState found = FindAnimatorState(children[index].stateMachine, stateName);
+                if (found != null) return found;
+            }
+            return null;
         }
 
         private static void AddConditionTransition(
@@ -1440,6 +1759,7 @@ namespace Elemental.Authoring.Editor
 
             CelestialSystemProfile celestial = CreateOrLoadProfile<CelestialSystemProfile>(CelestialProfilePath, "Celestial System Profile");
             AtmosphereProfile atmosphere = CreateOrLoadProfile<AtmosphereProfile>(AtmosphereProfilePath, "Atmosphere Profile");
+            EarthSkyProfile skyProfile = CreateOrLoadProfile<EarthSkyProfile>(SkyProfilePath, "Earth Sky Profile");
             MeteorShowerProfile meteors = CreateOrLoadProfile<MeteorShowerProfile>(MeteorProfilePath, "Meteor Shower Profile");
             CreateOrLoadProfile<CharacterPresentationProfile>(CharacterProfilePath, "Character Presentation Profile");
             CreateOrLoadProfile<EarthPhysicsFeelProfile>(PhysicsFeelProfilePath, "Earth Physics Feel Profile");
@@ -1477,10 +1797,13 @@ namespace Elemental.Authoring.Editor
             atmosphereRenderer.receiveShadows = false;
 
             Light sunLight = GameObject.Find("Sun")?.GetComponent<Light>();
+            EarthSkyController skyController = backdrop.AddComponent<EarthSkyController>();
+            skyController.Configure(skyProfile, camera, sky);
             CelestialSystemBehaviour system = backdrop.AddComponent<CelestialSystemBehaviour>();
             system.Configure(
                 celestial,
                 atmosphere,
+                skyProfile,
                 planetCenter,
                 camera,
                 sunLight,
@@ -1566,6 +1889,32 @@ namespace Elemental.Authoring.Editor
             else if (material.shader != shader) material.shader = shader;
             EditorUtility.SetDirty(material);
             return material;
+        }
+
+        private static VisualEffect CreateVfxGraphLayer(Transform parent, string name)
+        {
+            const string template = "Packages/com.unity.visualeffectgraph/Editor/Templates/Simple_Burst.vfx";
+            string assetName = name.Replace(" ", string.Empty) + ".vfx";
+            string path = "Assets/Elemental/Content/VFX/" + assetName;
+            VisualEffectAsset asset = AssetDatabase.LoadAssetAtPath<VisualEffectAsset>(path);
+            if (asset == null)
+            {
+                System.IO.Directory.CreateDirectory("Assets/Elemental/Content/VFX");
+                if (!AssetDatabase.CopyAsset(template, path))
+                    throw new UnityEditor.Build.BuildFailedException($"Unable to create VFX Graph asset from {template}.");
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+                asset = AssetDatabase.LoadAssetAtPath<VisualEffectAsset>(path);
+            }
+            if (asset == null)
+                throw new UnityEditor.Build.BuildFailedException($"VFX Graph asset was not imported: {path}");
+
+            GameObject layer = new GameObject(name);
+            layer.transform.SetParent(parent, false);
+            VisualEffect effect = layer.AddComponent<VisualEffect>();
+            effect.visualEffectAsset = asset;
+            effect.pause = false;
+            effect.Stop();
+            return effect;
         }
 
         private static void ConfigureAtmosphereRendererFeature(Material atmosphereMaterial)
@@ -2160,6 +2509,72 @@ namespace Elemental.Authoring.Editor
             gravityBody.Configure(gravityWorld, body);
             PhysicalImpactTarget target = dummy.AddComponent<PhysicalImpactTarget>();
             target.Configure(body, 0.35f);
+            EarthCombatDummy combat = dummy.AddComponent<EarthCombatDummy>();
+            combat.Configure(EarthCombatArchetype.Shaper, 150f, 620f);
+
+            CreateCombatArchetype(
+                "Earth Combat Scout",
+                new Vector3(-4.4f, 26.4f, 8.2f),
+                new Vector3(0.82f, 1.05f, 0.82f),
+                12f,
+                105f,
+                430f,
+                EarthCombatArchetype.Scout,
+                gravityWorld,
+                material);
+            CreateCombatArchetype(
+                "Earth Combat Sentinel",
+                new Vector3(4.8f, 27.3f, 8.8f),
+                new Vector3(1.35f, 1.65f, 1.35f),
+                42f,
+                260f,
+                1050f,
+                EarthCombatArchetype.Sentinel,
+                gravityWorld,
+                material);
+            CreateCombatTrap(material);
+        }
+
+        private static void CreateCombatTrap(Material material)
+        {
+            if (GameObject.Find("Earth Combat Trap") != null) return;
+            GameObject trap = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            trap.name = "Earth Combat Trap";
+            trap.transform.position = new Vector3(0f, 24.5f, 10.2f);
+            trap.transform.rotation = Quaternion.FromToRotation(Vector3.up, trap.transform.position.normalized);
+            trap.transform.localScale = new Vector3(1.55f, 0.08f, 1.55f);
+            trap.GetComponent<MeshRenderer>().sharedMaterial = material;
+            EarthTrapController controller = trap.AddComponent<EarthTrapController>();
+            controller.Configure(2.4f, 380f, true);
+        }
+
+        private static void CreateCombatArchetype(
+            string name,
+            Vector3 position,
+            Vector3 scale,
+            float mass,
+            float staggerImpulse,
+            float ragdollImpulse,
+            EarthCombatArchetype archetype,
+            GravityWorldBehaviour gravityWorld,
+            Material material)
+        {
+            GameObject actor = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            actor.name = name;
+            actor.transform.position = position;
+            actor.transform.localScale = scale;
+            actor.GetComponent<MeshRenderer>().sharedMaterial = material;
+            Rigidbody body = actor.AddComponent<Rigidbody>();
+            body.mass = mass;
+            body.useGravity = false;
+            body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            GravityBody gravity = actor.AddComponent<GravityBody>();
+            gravity.Configure(gravityWorld, body);
+            PhysicalImpactTarget target = actor.AddComponent<PhysicalImpactTarget>();
+            target.Configure(body, 0.35f);
+            EarthCombatDummy combat = actor.AddComponent<EarthCombatDummy>();
+            combat.Configure(archetype, staggerImpulse, ragdollImpulse);
+            combat.SetBraced(archetype == EarthCombatArchetype.Sentinel);
         }
 
         private static void CreatePushBoulders(

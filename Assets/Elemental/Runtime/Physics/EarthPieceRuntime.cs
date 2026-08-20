@@ -1,4 +1,6 @@
 using Elemental.Simulation.Structures;
+using Elemental.Runtime.Matter;
+using Elemental.Simulation.Matter;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -16,6 +18,7 @@ namespace Elemental.Runtime.Physics
         private Rigidbody _body;
         private bool _hasMagicOwner;
         private EarthMagicGripKind _magicOwner;
+        private EarthMatterIdentity _matterIdentity;
 
         public EarthWall Owner { get; private set; }
         public EarthStructureRuntime Structure => _structure;
@@ -37,6 +40,8 @@ namespace Elemental.Runtime.Physics
                                           gameObject.activeSelf && Body != null;
         public bool HasMagicOwner => _hasMagicOwner;
         public EarthMagicGripKind MagicOwner => _magicOwner;
+        public EarthMatterIdentity MatterIdentity =>
+            _matterIdentity != null ? _matterIdentity : (_matterIdentity = GetComponent<EarthMatterIdentity>());
 
         public void Configure(EarthWall owner, int pieceIndex)
         {
@@ -95,6 +100,7 @@ namespace Elemental.Runtime.Physics
             if (!acquired) return;
             _hasMagicOwner = true;
             _magicOwner = grip;
+            MatterIdentity?.TryTransition(EarthMatterPhase.Controlled);
         }
 
         public void OnEarthMagicReleased(EarthMagicGripKind grip)
@@ -105,6 +111,9 @@ namespace Elemental.Runtime.Physics
             else
                 Owner?.ReleasePieceFromMagic(PieceIndex);
             _hasMagicOwner = false;
+            if (MatterIdentity != null && MatterIdentity.TryRead(out EarthMatterRecord record) &&
+                record.Phase == EarthMatterPhase.Controlled)
+                MatterIdentity.TryTransition(EarthMatterPhase.FreeDynamic);
         }
 
         public bool TryAcquireForRepair()

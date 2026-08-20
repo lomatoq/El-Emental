@@ -18,7 +18,49 @@ ModelImporter:
     removeConstantScaleCurves: 0
     motionNodeName: 
     animationImportErrors: 
-    animationImportWarnings: 
+    animationImportWarnings: "\nClip 'Ranged_1H_Aiming' has import animation warnings
+      that might lower retargeting quality:\n\t'chest' is inbetween humanoid transforms
+      and has rotation animation that will be discarded.\n\nClip 'Ranged_1H_Reload'
+      has import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Ranged_1H_Shoot' has import animation warnings that might lower retargeting
+      quality:\n\t'chest' is inbetween humanoid transforms and has rotation animation
+      that will be discarded.\n\nClip 'Ranged_1H_Shooting' has import animation warnings
+      that might lower retargeting quality:\n\t'chest' is inbetween humanoid transforms
+      and has rotation animation that will be discarded.\n\nClip 'Ranged_2H_Aiming'
+      has import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Ranged_2H_Reload' has import animation warnings that might lower retargeting
+      quality:\n\t'chest' is inbetween humanoid transforms and has rotation animation
+      that will be discarded.\n\nClip 'Ranged_2H_Shoot' has import animation warnings
+      that might lower retargeting quality:\n\t'chest' is inbetween humanoid transforms
+      and has rotation animation that will be discarded.\n\nClip 'Ranged_2H_Shooting'
+      has import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Ranged_Bow_Aiming_Idle' has import animation warnings that might lower retargeting
+      quality:\n\t'chest' is inbetween humanoid transforms and has rotation animation
+      that will be discarded.\n\nClip 'Ranged_Bow_Draw' has import animation warnings
+      that might lower retargeting quality:\n\t'chest' is inbetween humanoid transforms
+      and has rotation animation that will be discarded.\n\nClip 'Ranged_Bow_Draw_Up'
+      has import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Ranged_Bow_Idle' has import animation warnings that might lower retargeting
+      quality:\n\t'chest' is inbetween humanoid transforms and has rotation animation
+      that will be discarded.\n\nClip 'Ranged_Bow_Release' has import animation warnings
+      that might lower retargeting quality:\n\t'chest' is inbetween humanoid transforms
+      and has rotation animation that will be discarded.\n\nClip 'Ranged_Bow_Release_Up'
+      has import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Ranged_Magic_Raise' has import animation warnings that might lower retargeting
+      quality:\n\t'chest' is inbetween humanoid transforms and has rotation animation
+      that will be discarded.\n\nClip 'Ranged_Magic_Shoot' has import animation warnings
+      that might lower retargeting quality:\n\t'chest' is inbetween humanoid transforms
+      and has rotation animation that will be discarded.\n\nClip 'Ranged_Magic_Spellcasting_Long'
+      has import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Ranged_Magic_Summon' has import animation warnings that might lower retargeting
+      quality:\n\t'chest' is inbetween humanoid transforms and has rotation animation
+      that will be discarded.\n"
     animationRetargetingWarnings: 
     animationDoRetargetingWarnings: 0
     importAnimatedCustomProperties: 0
@@ -30,7 +72,587 @@ ModelImporter:
     animationWrapMode: 0
     extraExposedTransformPaths: []
     extraUserProperties: []
-    clipAnimations: []
+    clipAnimations:
+    - serializedVersion: 16
+      name: T-Pose
+      takeName: T-Pose
+      internalID: -8312538846858333772
+      firstFrame: 0
+      lastFrame: 1
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_1H_Aiming
+      takeName: Ranged_1H_Aiming
+      internalID: 3522209230858616809
+      firstFrame: 0
+      lastFrame: 32
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_1H_Reload
+      takeName: Ranged_1H_Reload
+      internalID: -874035235834337175
+      firstFrame: 0
+      lastFrame: 35
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_1H_Shoot
+      takeName: Ranged_1H_Shoot
+      internalID: 3433596340313048746
+      firstFrame: 0
+      lastFrame: 32
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_1H_Shooting
+      takeName: Ranged_1H_Shooting
+      internalID: 8447088436964320739
+      firstFrame: 0
+      lastFrame: 48
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_2H_Aiming
+      takeName: Ranged_2H_Aiming
+      internalID: -344612289506265405
+      firstFrame: 0
+      lastFrame: 48
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_2H_Reload
+      takeName: Ranged_2H_Reload
+      internalID: -3392515364123630709
+      firstFrame: 0
+      lastFrame: 48
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_2H_Shoot
+      takeName: Ranged_2H_Shoot
+      internalID: 384764189124304619
+      firstFrame: 0
+      lastFrame: 32
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_2H_Shooting
+      takeName: Ranged_2H_Shooting
+      internalID: -783918219615172242
+      firstFrame: 0
+      lastFrame: 32
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_Bow_Aiming_Idle
+      takeName: Ranged_Bow_Aiming_Idle
+      internalID: 3187361540735442547
+      firstFrame: 0
+      lastFrame: 55
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_Bow_Draw
+      takeName: Ranged_Bow_Draw
+      internalID: -4457504429419621214
+      firstFrame: 0
+      lastFrame: 40
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_Bow_Draw_Up
+      takeName: Ranged_Bow_Draw_Up
+      internalID: -179111974726513152
+      firstFrame: 0
+      lastFrame: 40
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_Bow_Idle
+      takeName: Ranged_Bow_Idle
+      internalID: 1916961860785133836
+      firstFrame: 0
+      lastFrame: 47
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_Bow_Release
+      takeName: Ranged_Bow_Release
+      internalID: 1020120997136478934
+      firstFrame: 0
+      lastFrame: 40
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_Bow_Release_Up
+      takeName: Ranged_Bow_Release_Up
+      internalID: -763324781632951077
+      firstFrame: 0
+      lastFrame: 41
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_Magic_Raise
+      takeName: Ranged_Magic_Raise
+      internalID: 7719806121101089419
+      firstFrame: 0
+      lastFrame: 63
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_Magic_Shoot
+      takeName: Ranged_Magic_Shoot
+      internalID: 4467039709948147482
+      firstFrame: 0
+      lastFrame: 28
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_Magic_Spellcasting
+      takeName: Ranged_Magic_Spellcasting
+      internalID: 5420664022460959746
+      firstFrame: 0
+      lastFrame: 20
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_Magic_Spellcasting_Long
+      takeName: Ranged_Magic_Spellcasting_Long
+      internalID: -4515646335448768399
+      firstFrame: 0
+      lastFrame: 76
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Ranged_Magic_Summon
+      takeName: Ranged_Magic_Summon
+      internalID: 3076280148986900518
+      firstFrame: 0
+      lastFrame: 129
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
     isReadable: 0
   meshes:
     lODScreenPercentages: []
@@ -224,53 +846,58 @@ ModelImporter:
         length: 0
         modified: 0
     skeleton:
-    - name: Mage(Clone)
+    - name: Knight(Clone)
       parentName: 
       position: {x: 0, y: 0, z: 0}
       rotation: {x: 0, y: 0, z: 0, w: 1}
       scale: {x: 1, y: 1, z: 1}
-    - name: Mage_LegLeft
-      parentName: Mage(Clone)
+    - name: Knight_Head
+      parentName: Knight(Clone)
+      position: {x: -0, y: 1.2158912, z: -0.0000001406604}
+      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Knight_Helmet
+      parentName: Knight(Clone)
+      position: {x: -0, y: 1.2158912, z: -0.0000001406604}
+      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Knight_HelmetVisor
+      parentName: Knight(Clone)
+      position: {x: -0, y: 1.7451358, z: 0.00058345794}
+      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Knight_Body
+      parentName: Knight(Clone)
       position: {x: -0, y: 0, z: 0}
       rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
       scale: {x: 1, y: 1, z: 1}
-    - name: Mage_ArmLeft
-      parentName: Mage(Clone)
+    - name: Knight_ArmLeft
+      parentName: Knight(Clone)
       position: {x: -0, y: 0, z: 0}
       rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
       scale: {x: 1, y: 1, z: 1}
-    - name: Mage_ArmRight
-      parentName: Mage(Clone)
+    - name: Knight_LegLeft
+      parentName: Knight(Clone)
+      position: {x: -0.0000032901762, y: 0, z: 0}
+      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Knight_LegRight
+      parentName: Knight(Clone)
+      position: {x: -0.0000032901762, y: 0, z: 0}
+      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Knight_ArmRight
+      parentName: Knight(Clone)
       position: {x: -0, y: 0, z: 0}
       rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
       scale: {x: 1, y: 1, z: 1}
-    - name: Mage_Cape
-      parentName: Mage(Clone)
-      position: {x: -0, y: 1.2158737, z: -0.000000102332564}
-      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
-      scale: {x: 1, y: 1, z: 1}
-    - name: Mage_Head
-      parentName: Mage(Clone)
-      position: {x: -0, y: 1.2158737, z: -0.000000102332564}
-      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
-      scale: {x: 1, y: 1, z: 1}
-    - name: Mage_LegRight
-      parentName: Mage(Clone)
-      position: {x: -0, y: 0, z: 0}
-      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
-      scale: {x: 1, y: 1, z: 1}
-    - name: Mage_Hat
-      parentName: Mage(Clone)
-      position: {x: -0, y: 1.2158737, z: -0.00000054856537}
-      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
-      scale: {x: 1, y: 1, z: 1}
-    - name: Mage_Body
-      parentName: Mage(Clone)
-      position: {x: -0, y: 0, z: 0}
+    - name: Knight_Cape
+      parentName: Knight(Clone)
+      position: {x: -0, y: 1.2158912, z: -0.0000001406604}
       rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
       scale: {x: 1, y: 1, z: 1}
     - name: Rig_Medium
-      parentName: Mage(Clone)
+      parentName: Knight(Clone)
       position: {x: -0, y: 0, z: 0}
       rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
       scale: {x: 1, y: 1, z: 1}
@@ -398,10 +1025,10 @@ ModelImporter:
     feetSpacing: 0
     globalScale: 1
     rootMotionBoneName: 
-    hasTranslationDoF: 0
+    hasTranslationDoF: 1
     hasExtraRoot: 0
     skeletonHasParents: 1
-  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 71f40971a6aa5bc4e8beb5d9ee638073, type: 3}
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 5a6e4461de12da44d842c72bcacba25e, type: 3}
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 3
   humanoidOversampling: 1

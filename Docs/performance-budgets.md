@@ -106,6 +106,12 @@ Raw evidence is kept under `BuildReports` and `TestResults`. Interactive P50/P95
 - Standalone D3D11 post-fracture capture: 45 frames, CPU average/max 4.26/7.00 ms and GPU average/max 0.59/0.99 ms. This short capture verifies bounded material/decal cost but is not substituted for a long P95/P99 shipping-content trace.
 - The same run reported a 78.50 ms cold-start voxel render-queue peak and zero pending work at capture. It remains separately labelled startup debt.
 
+## Earth Core V2 Phase 2 evidence
+
+- Shared surface queries use a fixed 32-provider array and profiler scope `Elemental.Earth.Surface.Query`; intent resolution uses `Elemental.Earth.ActionIntent.Resolve`. Neither loop performs scene-wide discovery.
+- Standalone D3D11 wall-push and Mage-walk captures exited 0. The production wall moved `2.294 m` over the full field hold while the caster moved `0.421 m` from ordinary world physics and was never the selected target.
+- The captures reported `70.62-71.50 ms` cold-start voxel queue peaks and zero pending work. These are explicitly startup measurements, not steady-state P95/P99 claims.
+
 ## Earth Core MVP polish Task 5 — 2026-08-13
 
 - The normalized Earth gesture path is bounded to 192 collected samples and 16–64 resampled points (32 by default). Recognition evaluates only the context-relevant templates.
@@ -145,3 +151,29 @@ Raw evidence is kept under `BuildReports` and `TestResults`. Interactive P50/P95
 - EditMode: 191/191 passed in 1.225 s; PlayMode: 64/64 passed in 125.823 s.
 - Windows Development: 171,123,394 bytes in 57.941 s, 0 warnings/errors.
 - Windows Release: 106,003,631 bytes in 60.678 s, 0 warnings/errors.
+
+## Earth web wave and armor budget - 2026-08-14
+
+- Web wave canonical solve is bounded to 96 samples and six seeded layouts. Rendering
+  submits at most six instanced mesh families; normal cells have no individual enabled
+  renderer and only a detached physical cell leaves the batch.
+- Platform fracture planning is bounded to 28 cells and runs once when the platform is
+  created. The collision callback only activates prepared meshes and rigidbodies.
+- Armor owns a fixed pool of 64 Humanoid shell pieces. Its steady follow loop performs
+  no overlap queries or collection growth; release uses the existing debris lifecycle.
+- Projectile sweep uses one fixed 16-hit `BoxCastNonAlloc` buffer and only runs above
+  its configured displacement/speed threshold. Impact-frame dedupe prevents double VFX
+  and gameplay events.
+- Target budgets remain `<=0.25 ms CPU` for wave solve/interactions and `<=0.35 ms GPU`
+  for the wave visual on Native High. These are acceptance targets until a standalone
+  profiler capture records P95/P99; they are not inferred from unit-test duration.
+
+## Earth Core V3 editor budget - 2026-08-14
+
+- A wall owns 40 baked convex 3D cells; a platform owns 28–48 cells from its created volume. Mesh generation and `Physics.BakeMesh` are creation/authoring work and are forbidden in collision callbacks.
+- MMB owns fixed arrays for 48 targets and receives fracture activation by event. Action routing, target handles, resonance session state and damage propagation add no steady-state managed allocation.
+- Resonance admits at most 28 projectiles from the shared 32-fragment pool. Armor owns exactly 64 baked shell pieces in fixed arrays; its camera-safe layer is excluded from Cinemachine obstacle queries without changing physical collision. Surf performs one 16-hit `BoxCastNonAlloc` nose query per physics tick while active.
+- `EarthPolishLab` GUI/debug geometry is editor-only and excluded from gameplay allocation targets.
+- This iteration validates in Unity Editor/Test Runner. No Development or Release player build is an acceptance gate.
+- Latest Editor evidence: EditMode `236/236` passed in `2.150 s`; PlayMode `90/90` passed in `154.804 s`. These suite durations are regression evidence, not frame-time measurements. `EarthPolishLab` entered Play Mode with zero runtime exceptions; the local white DX11 Game View capture is tracked as an editor-visualization issue and is not counted as visual acceptance evidence.
+- Armor packing/camera follow-up: EditMode `237/237` passed in `2.320 s`; PlayMode `91/91` passed in `157.995 s`. This validates fixed-size 64-piece loops and camera masking, but does not substitute for a profiler P95/P99 capture.

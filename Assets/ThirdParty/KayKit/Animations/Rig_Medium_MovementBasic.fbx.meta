@@ -18,7 +18,25 @@ ModelImporter:
     removeConstantScaleCurves: 0
     motionNodeName: 
     animationImportErrors: 
-    animationImportWarnings: 
+    animationImportWarnings: "\nClip 'Jump_Full_Long' has import animation warnings
+      that might lower retargeting quality:\n\t'chest' is inbetween humanoid transforms
+      and has rotation animation that will be discarded.\n\nClip 'Jump_Full_Short'
+      has import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Jump_Idle' has import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Jump_Land' has import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Jump_Start' has import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Running_A' has import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Running_B' has import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Walking_A' has import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n\nClip
+      'Walking_B' has import animation warnings that might lower retargeting quality:\n\t'chest'
+      is inbetween humanoid transforms and has rotation animation that will be discarded.\n"
     animationRetargetingWarnings: 
     animationDoRetargetingWarnings: 0
     importAnimatedCustomProperties: 0
@@ -30,7 +48,326 @@ ModelImporter:
     animationWrapMode: 0
     extraExposedTransformPaths: []
     extraUserProperties: []
-    clipAnimations: []
+    clipAnimations:
+    - serializedVersion: 16
+      name: T-Pose
+      takeName: T-Pose
+      internalID: -8312538846858333772
+      firstFrame: 0
+      lastFrame: 1
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Jump_Full_Long
+      takeName: Jump_Full_Long
+      internalID: -8358797001615306126
+      firstFrame: 0
+      lastFrame: 70
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Jump_Full_Short
+      takeName: Jump_Full_Short
+      internalID: 1683828920807373193
+      firstFrame: 0
+      lastFrame: 35
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Jump_Idle
+      takeName: Jump_Idle
+      internalID: 5069180758234724613
+      firstFrame: 0
+      lastFrame: 32
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Jump_Land
+      takeName: Jump_Land
+      internalID: 3282281275607961068
+      firstFrame: 0
+      lastFrame: 20
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Jump_Start
+      takeName: Jump_Start
+      internalID: -6402709644054655732
+      firstFrame: 0
+      lastFrame: 18
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Running_A
+      takeName: Running_A
+      internalID: 3543698089625107784
+      firstFrame: 0
+      lastFrame: 24
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Running_B
+      takeName: Running_B
+      internalID: -1640158340307531623
+      firstFrame: 0
+      lastFrame: 24
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Walking_A
+      takeName: Walking_A
+      internalID: 7060811993321468294
+      firstFrame: 0
+      lastFrame: 32
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Walking_B
+      takeName: Walking_B
+      internalID: 3174661419259135242
+      firstFrame: 0
+      lastFrame: 32
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: Walking_C
+      takeName: Walking_C
+      internalID: 455867200774271528
+      firstFrame: 0
+      lastFrame: 48
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 1
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
     isReadable: 0
   meshes:
     lODScreenPercentages: []
@@ -224,53 +561,58 @@ ModelImporter:
         length: 0
         modified: 0
     skeleton:
-    - name: Mage(Clone)
+    - name: Knight(Clone)
       parentName: 
       position: {x: 0, y: 0, z: 0}
       rotation: {x: 0, y: 0, z: 0, w: 1}
       scale: {x: 1, y: 1, z: 1}
-    - name: Mage_LegLeft
-      parentName: Mage(Clone)
+    - name: Knight_Head
+      parentName: Knight(Clone)
+      position: {x: -0, y: 1.2158912, z: -0.0000001406604}
+      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Knight_Helmet
+      parentName: Knight(Clone)
+      position: {x: -0, y: 1.2158912, z: -0.0000001406604}
+      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Knight_HelmetVisor
+      parentName: Knight(Clone)
+      position: {x: -0, y: 1.7451358, z: 0.00058345794}
+      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Knight_Body
+      parentName: Knight(Clone)
       position: {x: -0, y: 0, z: 0}
       rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
       scale: {x: 1, y: 1, z: 1}
-    - name: Mage_ArmLeft
-      parentName: Mage(Clone)
+    - name: Knight_ArmLeft
+      parentName: Knight(Clone)
       position: {x: -0, y: 0, z: 0}
       rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
       scale: {x: 1, y: 1, z: 1}
-    - name: Mage_ArmRight
-      parentName: Mage(Clone)
+    - name: Knight_LegLeft
+      parentName: Knight(Clone)
+      position: {x: -0.0000032901762, y: 0, z: 0}
+      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Knight_LegRight
+      parentName: Knight(Clone)
+      position: {x: -0.0000032901762, y: 0, z: 0}
+      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Knight_ArmRight
+      parentName: Knight(Clone)
       position: {x: -0, y: 0, z: 0}
       rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
       scale: {x: 1, y: 1, z: 1}
-    - name: Mage_Cape
-      parentName: Mage(Clone)
-      position: {x: -0, y: 1.2158737, z: -0.000000102332564}
-      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
-      scale: {x: 1, y: 1, z: 1}
-    - name: Mage_Head
-      parentName: Mage(Clone)
-      position: {x: -0, y: 1.2158737, z: -0.000000102332564}
-      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
-      scale: {x: 1, y: 1, z: 1}
-    - name: Mage_LegRight
-      parentName: Mage(Clone)
-      position: {x: -0, y: 0, z: 0}
-      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
-      scale: {x: 1, y: 1, z: 1}
-    - name: Mage_Hat
-      parentName: Mage(Clone)
-      position: {x: -0, y: 1.2158737, z: -0.00000054856537}
-      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
-      scale: {x: 1, y: 1, z: 1}
-    - name: Mage_Body
-      parentName: Mage(Clone)
-      position: {x: -0, y: 0, z: 0}
+    - name: Knight_Cape
+      parentName: Knight(Clone)
+      position: {x: -0, y: 1.2158912, z: -0.0000001406604}
       rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
       scale: {x: 1, y: 1, z: 1}
     - name: Rig_Medium
-      parentName: Mage(Clone)
+      parentName: Knight(Clone)
       position: {x: -0, y: 0, z: 0}
       rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
       scale: {x: 1, y: 1, z: 1}
@@ -398,10 +740,10 @@ ModelImporter:
     feetSpacing: 0
     globalScale: 1
     rootMotionBoneName: 
-    hasTranslationDoF: 0
+    hasTranslationDoF: 1
     hasExtraRoot: 0
     skeletonHasParents: 1
-  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 71f40971a6aa5bc4e8beb5d9ee638073, type: 3}
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: 5a6e4461de12da44d842c72bcacba25e, type: 3}
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 3
   humanoidOversampling: 1

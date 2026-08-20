@@ -10,13 +10,17 @@ namespace Elemental.Input.Gestures
             Collider collider,
             Rigidbody body,
             IEarthPhysicalTarget physicalTarget,
-            IEarthFractureSource fractureSource)
+            IEarthFractureSource fractureSource,
+            EarthTargetCapabilities capabilities = EarthTargetCapabilities.None)
         {
             Source = source;
             Collider = collider;
             Body = body;
             PhysicalTarget = physicalTarget;
             FractureSource = fractureSource;
+            Capabilities = capabilities != EarthTargetCapabilities.None
+                ? capabilities
+                : EarthTargetCapabilityResolver.Resolve(source, physicalTarget, fractureSource);
         }
 
         public EarthSourceKind Source { get; }
@@ -24,6 +28,7 @@ namespace Elemental.Input.Gestures
         public Rigidbody Body { get; }
         public IEarthPhysicalTarget PhysicalTarget { get; }
         public IEarthFractureSource FractureSource { get; }
+        public EarthTargetCapabilities Capabilities { get; }
         public bool IsValid => Source != EarthSourceKind.Invalid && Collider != null;
     }
 
@@ -48,6 +53,14 @@ namespace Elemental.Input.Gestures
             if (fragment != null)
                 return new EarthResolvedTarget(
                     EarthSourceKind.Rock, collider, fragment.Body, fragment, null);
+            EarthPillarWaveColumn pillar = collider.GetComponentInParent<EarthPillarWaveColumn>();
+            if (pillar != null)
+                return new EarthResolvedTarget(
+                    EarthSourceKind.Rock, collider, pillar.Body, pillar, null);
+            EarthArmorPiece armorPiece = collider.GetComponentInParent<EarthArmorPiece>();
+            if (armorPiece != null)
+                return new EarthResolvedTarget(
+                    EarthSourceKind.Rock, collider, armorPiece.Body, armorPiece, null);
             EarthWall wall = collider.GetComponentInParent<EarthWall>();
             if (wall != null)
                 return new EarthResolvedTarget(
@@ -61,13 +74,22 @@ namespace Elemental.Input.Gestures
                 return new EarthResolvedTarget(
                     platform.IsFractured ? EarthSourceKind.BrokenStructure : EarthSourceKind.IntactStructure,
                     collider,
-                    collider.attachedRigidbody,
-                    null,
+                    platform.Body,
+                    platform,
                     platform);
             PhysicalImpactTarget physical = collider.GetComponentInParent<PhysicalImpactTarget>();
             if (physical != null)
                 return new EarthResolvedTarget(
                     EarthSourceKind.Rock, collider, physical.Body, physical, null);
+            Rigidbody genericBody = collider.attachedRigidbody;
+            if (genericBody != null && !genericBody.isKinematic)
+                return new EarthResolvedTarget(
+                    EarthSourceKind.Rock,
+                    collider,
+                    genericBody,
+                    null,
+                    null,
+                    EarthTargetCapabilities.Push | EarthTargetCapabilities.Damage);
             return default;
         }
 
@@ -81,5 +103,48 @@ namespace Elemental.Input.Gestures
             IEarthFractureSource source) =>
             new EarthResolvedTarget(
                 EarthSourceKind.BrokenStructure, collider, body, target, source);
+    }
+
+    public static class EarthTargetCapabilityResolver
+    {
+        private const EarthTargetCapabilities DynamicEarth =
+            EarthTargetCapabilities.Grab | EarthTargetCapabilities.Push |
+            EarthTargetCapabilities.Gravity | EarthTargetCapabilities.Damage;
+
+        public static EarthTargetCapabilities Resolve(
+            EarthSourceKind source,
+            IEarthPhysicalTarget target,
+            IEarthFractureSource fractureSource)
+        {
+            if (source == EarthSourceKind.Terrain)
+                return EarthTargetCapabilities.Gravity | EarthTargetCapabilities.Damage |
+                       EarthTargetCapabilities.Pluck | EarthTargetCapabilities.Surface |
+                       EarthTargetCapabilities.Draw;
+            if (fractureSource != null)
+            {
+                EarthTargetCapabilities structure = EarthTargetCapabilities.Gravity |
+                                                    EarthTargetCapabilities.Damage |
+                                                    EarthTargetCapabilities.Repair |
+                                                    EarthTargetCapabilities.Surface |
+                                                    EarthTargetCapabilities.Draw |
+                                                    EarthTargetCapabilities.Pluck;
+                if (target != null) structure |= DynamicEarth;
+                else structure |= EarthTargetCapabilities.Push;
+                return structure;
+            }
+            if (target == null) return EarthTargetCapabilities.None;
+            return target.TargetKind switch
+            {
+                EarthPhysicalTargetKind.Wall => DynamicEarth | EarthTargetCapabilities.Repair |
+                                                EarthTargetCapabilities.Surface |
+                                                EarthTargetCapabilities.Draw |
+                                                EarthTargetCapabilities.Pluck,
+                EarthPhysicalTargetKind.Platform => DynamicEarth | EarthTargetCapabilities.Repair |
+                                                    EarthTargetCapabilities.Surface |
+                                                    EarthTargetCapabilities.Draw |
+                                                    EarthTargetCapabilities.Pluck,
+                _ => DynamicEarth
+            };
+        }
     }
 }

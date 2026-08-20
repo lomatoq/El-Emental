@@ -117,5 +117,35 @@ namespace Elemental.Tests.EditMode
             Assert.That(smallCells, Is.GreaterThanOrEqualTo(4));
             Assert.That(largeCells, Is.GreaterThanOrEqualTo(3));
         }
+
+        [Test]
+        public void ProductionPatternUsesMultiplePolygonFamiliesAndChippedSharedOutlines()
+        {
+            const uint seed = 0xE17F1002u;
+            VoronoiFractureCell[] cells =
+                VoronoiFractureSolver.BuildHierarchicalNormalizedForAspect(seed, 1.65f);
+            var polygonFamilies = new System.Collections.Generic.HashSet<int>();
+            int quadrilaterals = 0;
+            float minimumArea = float.PositiveInfinity;
+            float maximumArea = 0f;
+            for (int index = 0; index < cells.Length; index++)
+            {
+                VoronoiFractureCell cell = cells[index];
+                polygonFamilies.Add(cell.Vertices.Length);
+                if (cell.Vertices.Length == 4) quadrilaterals++;
+                minimumArea = math.min(minimumArea, cell.Area);
+                maximumArea = math.max(maximumArea, cell.Area);
+                float2[] chipped = VoronoiFractureSolver.BuildChippedOutline(cell, seed);
+                Assert.That(chipped.Length, Is.EqualTo(cell.Vertices.Length * 3));
+                Assert.That(chipped.Length, Is.GreaterThanOrEqualTo(9));
+            }
+
+            Assert.That(polygonFamilies.Count, Is.GreaterThanOrEqualTo(4),
+                "The visible fracture must mix triangles, pentagons and higher-order cells instead of repeating one tile.");
+            Assert.That(quadrilaterals, Is.LessThanOrEqualTo(cells.Length / 2),
+                "Four-sided cells may exist, but they may not dominate the production fracture.");
+            Assert.That(maximumArea / minimumArea, Is.GreaterThanOrEqualTo(3.5f),
+                "The production fracture needs visibly distinct small, medium and hero chunks.");
+        }
     }
 }

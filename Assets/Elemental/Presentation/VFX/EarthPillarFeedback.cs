@@ -14,12 +14,15 @@ namespace Elemental.Presentation.VFX
         [SerializeField] private PlanetCameraRig cameraRig;
 
         private readonly Vector3[] _chipVelocities = new Vector3[20];
+        private readonly Vector3[] _chipInitialScales = new Vector3[20];
         private Vector3 _surfaceBase;
         private Vector3 _up;
         private Vector3 _side;
         private float _height;
         private float _radius;
         private float _riseSeconds;
+        private float _holdSeconds;
+        private float _retreatSeconds;
         private float _elapsed;
         private bool _active;
 
@@ -46,6 +49,7 @@ namespace Elemental.Presentation.VFX
         private void OnDisable()
         {
             if (mobility != null) mobility.PillarRaised -= OnPillarRaised;
+            HideAll();
         }
 
         private void Update()
@@ -65,15 +69,20 @@ namespace Elemental.Presentation.VFX
             pillar.localScale = new Vector3(_radius, visibleHeight * 0.5f, _radius);
 
             UpdateChips();
-            float lifetime = _riseSeconds + 1.15f;
-            if (_elapsed <= lifetime) return;
-            float sink = Mathf.Clamp01((_elapsed - lifetime) / 0.42f);
-            pillar.position = fullyRaisedCenter - (_up * (_height * sink * sink));
+            float retreatStart = _riseSeconds + _holdSeconds;
+            if (_elapsed <= retreatStart) return;
+            float sink = Mathf.Clamp01((_elapsed - retreatStart) / Mathf.Max(0.05f, _retreatSeconds));
+            float smoothSink = sink * sink * (3f - (2f * sink));
+            // The launch tooth is presentation, not a permanent invisible floor.
+            // Put it fully back below its source surface before the ballistic arc
+            // returns, so the character never appears to fall through visible rock.
+            pillar.position = fullyRaisedCenter - (_up * (_height * smoothSink));
             if (sink >= 1f) HideAll();
         }
 
         private void OnPillarRaised(EarthPillarLaunchEvent value)
         {
+            HideAll();
             _surfaceBase = ToVector3(value.SurfaceBase);
             _up = ToVector3(value.LocalUp).normalized;
             _side = Vector3.Cross(_up, UnityEngine.Camera.main != null
@@ -83,6 +92,8 @@ namespace Elemental.Presentation.VFX
             _height = value.Height;
             _radius = value.Radius;
             _riseSeconds = value.RiseSeconds;
+            _holdSeconds = Mathf.Lerp(0.08f, 0.22f, value.Charge01);
+            _retreatSeconds = Mathf.Lerp(0.34f, 0.48f, value.Charge01);
             _elapsed = 0f;
             _active = true;
             if (pillar != null) pillar.gameObject.SetActive(true);
@@ -108,6 +119,7 @@ namespace Elemental.Presentation.VFX
                 chip.rotation = Quaternion.FromToRotation(Vector3.up, _up) *
                                 Quaternion.Euler(index * 17f, index * 29f, index * 11f);
                 chip.localScale = Vector3.one * Mathf.Lerp(0.09f, 0.24f, (index % 5) / 4f);
+                _chipInitialScales[index] = chip.localScale;
                 _chipVelocities[index] = (radial * Mathf.Lerp(1.4f, 4.2f, (index % 7) / 6f)) +
                                          (_up * Mathf.Lerp(0.8f, 2.5f, (index % 4) / 3f));
                 chip.gameObject.SetActive(true);
@@ -116,7 +128,7 @@ namespace Elemental.Presentation.VFX
 
         private void UpdateChips()
         {
-            if (groundChips == null || _elapsed > 0.85f) return;
+            if (groundChips == null) return;
             int count = Mathf.Min(groundChips.Length, _chipVelocities.Length);
             for (int index = 0; index < count; index++)
             {
@@ -126,8 +138,10 @@ namespace Elemental.Presentation.VFX
                 _chipVelocities[index] = velocity;
                 chip.position += velocity * Time.deltaTime;
                 chip.Rotate(new Vector3(31f, 47f, 23f) * Time.deltaTime, Space.Self);
-                if (_elapsed > 0.58f)
-                    chip.localScale *= Mathf.Max(0f, 1f - (Time.deltaTime * 5f));
+                float shrink01 = Mathf.Clamp01((_elapsed - 0.30f) / 0.50f);
+                float scale01 = 1f - (shrink01 * shrink01 * (3f - (2f * shrink01)));
+                chip.localScale = _chipInitialScales[index] * scale01;
+                if (scale01 <= 0.001f) chip.gameObject.SetActive(false);
             }
         }
 

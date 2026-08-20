@@ -15,9 +15,14 @@ namespace Elemental.Authoring.Editor
             "Assets/Elemental/Content/Fracture/EarthWallFracture.asset";
         private const string DefaultWallMeshPath =
             "Assets/Elemental/Content/Meshes/ChippedEarthWall.asset";
-        private const float AuthoredAspect = 1.65f;
-        private const int LargeFullDepthCellCount = 5;
-        private const uint ProductionSeed = 0xE17F0001u;
+        // Solve in representative metres, then normalize into the authored wall.
+        // Voronoi distance in a unit cube made every chunk inherit the whole wall's
+        // aspect ratio after runtime scaling, which is another form of "straw".
+        private const float AuthoredWidth = 8f;
+        private const float AuthoredHeight = 4f;
+        private const float AuthoredDepth = 0.55f;
+        private const int VolumetricCellCount = 40;
+        private const uint ProductionSeed = 0xE17F1002u;
 
         [MenuItem("Elemental/Fracture/Bake Production Earth Wall")]
         public static void BakeProductionWallFromMenu()
@@ -37,7 +42,9 @@ namespace Elemental.Authoring.Editor
         {
             EarthFractureAsset asset = AssetDatabase.LoadAssetAtPath<EarthFractureAsset>(
                 ProductionWallAssetPath);
-            if (asset != null && EarthFractureValidator.Validate(asset).IsValid)
+            if (asset != null && asset.PieceCount == VolumetricCellCount &&
+                HasProductionShapeQuality(asset) &&
+                EarthFractureValidator.Validate(asset).IsValid)
                 return asset;
 
             if (intactRenderMesh == null || intactColliderMesh == null)
@@ -71,125 +78,93 @@ namespace Elemental.Authoring.Editor
             Mesh intactColliderMesh)
         {
             RemoveOldPieceMeshes(asset);
-            VoronoiFractureCell[] cells = VoronoiFractureSolver.BuildHierarchicalNormalizedForAspect(
-                ProductionSeed, AuthoredAspect);
-            int[] areaOrder = new int[cells.Length];
-            bool[] fullDepth = new bool[cells.Length];
-            for (int index = 0; index < areaOrder.Length; index++) areaOrder[index] = index;
-            Array.Sort(areaOrder, (a, b) => cells[b].Area.CompareTo(cells[a].Area));
-            for (int index = 0; index < Mathf.Min(LargeFullDepthCellCount, areaOrder.Length); index++)
-                fullDepth[areaOrder[index]] = true;
-
-            int pieceCount = LargeFullDepthCellCount + ((cells.Length - LargeFullDepthCellCount) * 2);
-            var pieces = new EarthFracturePieceRecord[pieceCount];
-            var slices = new List<BakedSlice>(pieceCount);
-            int nextPiece = 0;
-            for (int cellIndex = 0; cellIndex < cells.Length; cellIndex++)
+            float2[] physicalBoundary =
             {
-                int depthLayers = fullDepth[cellIndex] ? 1 : 2;
-                for (int depthIndex = 0; depthIndex < depthLayers; depthIndex++)
+                new float2(-AuthoredWidth * 0.5f, -AuthoredDepth * 0.5f),
+                new float2(AuthoredWidth * 0.5f, -AuthoredDepth * 0.5f),
+                new float2(AuthoredWidth * 0.5f, AuthoredDepth * 0.5f),
+                new float2(-AuthoredWidth * 0.5f, AuthoredDepth * 0.5f)
+            };
+            EarthVolumetricFracturePlan plan = BuildProductionPlan(physicalBoundary);
+            if (!plan.IsValid || plan.Cells.Length != VolumetricCellCount)
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"Volumetric wall fracture failed conservation: {plan.RelativeVolumeError:P2}.");
+
+            var pieces = new EarthFracturePieceRecord[plan.Cells.Length];
+            float volumeScale = 1f / Mathf.Max(0.0001f, plan.SourceVolume);
+            for (int pieceIndex = 0; pieceIndex < plan.Cells.Length; pieceIndex++)
+            {
+                EarthVolumetricFractureCell cell = plan.Cells[pieceIndex];
+                PieceMeshPair meshes = BuildPieceMeshes(cell, pieceIndex);
+                AssetDatabase.AddObjectToAsset(meshes.Render, asset);
+                AssetDatabase.AddObjectToAsset(meshes.Collider, asset);
+                UnityEngine.Physics.BakeMesh(meshes.Collider.GetEntityId(), true);
+                float volume = Mathf.Max(0.0001f, cell.Volume * volumeScale);
+                pieces[pieceIndex] = new EarthFracturePieceRecord
                 {
-                    float depthMin = Mathf.Lerp(-0.5f, 0.5f, depthIndex / (float)depthLayers);
-                    float depthMax = Mathf.Lerp(-0.5f, 0.5f, (depthIndex + 1f) / depthLayers);
-                    float depthCenter = (depthMin + depthMax) * 0.5f;
-                    float depth = depthMax - depthMin;
-                    int pieceIndex = nextPiece++;
-                    PieceMeshPair meshes = BuildPieceMeshes(
-                        cells[cellIndex], pieceIndex, depthMin - depthCenter, depthMax - depthCenter);
-                    AssetDatabase.AddObjectToAsset(meshes.Render, asset);
-                    AssetDatabase.AddObjectToAsset(meshes.Collider, asset);
-                    float volume = Mathf.Max(0.0001f, cells[cellIndex].Area * depth);
-                    pieces[pieceIndex] = new EarthFracturePieceRecord
-                    {
-                        id = (ushort)(pieceIndex + 1),
-                        parentPieceIndex = EarthBondGraph.WorldPieceIndex,
-                        hierarchyLevel = 0,
-                        flags = EarthPieceFlags.Structural | EarthPieceFlags.Repairable |
-                                (cells[cellIndex].Area >= 0.055f
-                                    ? EarthPieceFlags.HeroPiece
-                                    : EarthPieceFlags.None),
-                        restLocalPosition = new Vector3(
-                            cells[cellIndex].Centroid.x,
-                            cells[cellIndex].Centroid.y,
-                            depthCenter),
-                        restLocalRotation = Quaternion.identity,
-                        restLocalScale = Vector3.one,
-                        mass = volume * 2600f,
-                        volume = volume,
-                        localCenterOfMass = Vector3.zero,
-                        materialId = 1,
-                        renderMesh = meshes.Render,
-                        colliderMesh = meshes.Collider,
-                        faceFlags = EarthPieceFaceFlags.HasExterior |
-                                    EarthPieceFaceFlags.HasInterior |
-                                    EarthPieceFaceFlags.HasMagicMask,
-                        exteriorSubmesh = 0,
-                        interiorSubmesh = 1,
-                        magicMaskChannel = 2
-                    };
-                    slices.Add(new BakedSlice(
-                        cellIndex, pieceIndex, depthMin, depthMax,
-                        pieces[pieceIndex].restLocalPosition));
-                }
+                    id = (ushort)(pieceIndex + 1),
+                    parentPieceIndex = EarthBondGraph.WorldPieceIndex,
+                    hierarchyLevel = 0,
+                    flags = EarthPieceFlags.Structural | EarthPieceFlags.Repairable |
+                            (volume >= 1.35f / VolumetricCellCount
+                                ? EarthPieceFlags.HeroPiece
+                                : EarthPieceFlags.None),
+                    restLocalPosition = MapPoint(cell.Centroid),
+                    restLocalRotation = Quaternion.identity,
+                    restLocalScale = Vector3.one,
+                    mass = volume * 2600f,
+                    volume = volume,
+                    localCenterOfMass = Vector3.zero,
+                    materialId = 1,
+                    renderMesh = meshes.Render,
+                    colliderMesh = meshes.Collider,
+                    faceFlags = EarthPieceFaceFlags.HasExterior |
+                                EarthPieceFaceFlags.HasInterior |
+                                EarthPieceFaceFlags.HasMagicMask,
+                    exteriorSubmesh = 0,
+                    interiorSubmesh = 1,
+                    magicMaskChannel = 2
+                };
             }
 
-            var bonds = new List<EarthFractureBondRecord>(96);
-            for (int first = 0; first < slices.Count; first++)
+            var bonds = new List<EarthFractureBondRecord>(192);
+            for (int cellIndex = 0; cellIndex < plan.Cells.Length; cellIndex++)
             {
-                BakedSlice a = slices[first];
-                for (int second = first + 1; second < slices.Count; second++)
+                EarthVolumetricFractureCell cell = plan.Cells[cellIndex];
+                for (int faceIndex = 0; faceIndex < cell.Faces.Length; faceIndex++)
                 {
-                    BakedSlice b = slices[second];
-                    float area;
-                    Vector3 centroid;
-                    if (a.CellIndex == b.CellIndex)
-                    {
-                        bool adjacent = Mathf.Abs(a.DepthMax - b.DepthMin) < 0.001f ||
-                                        Mathf.Abs(b.DepthMax - a.DepthMin) < 0.001f;
-                        if (!adjacent) continue;
-                        area = cells[a.CellIndex].Area;
-                        centroid = new Vector3(
-                            cells[a.CellIndex].Centroid.x,
-                            cells[a.CellIndex].Centroid.y,
-                            Mathf.Abs(a.DepthMax - b.DepthMin) < 0.001f ? a.DepthMax : b.DepthMax);
-                    }
-                    else
-                    {
-                        float depthOverlap = Mathf.Min(a.DepthMax, b.DepthMax) -
-                                             Mathf.Max(a.DepthMin, b.DepthMin);
-                        if (depthOverlap <= 0.0001f ||
-                            !TryGetSharedEdge(cells[a.CellIndex], cells[b.CellIndex], out float2 e0, out float2 e1))
-                        {
-                            continue;
-                        }
-                        area = math.distance(e0, e1) * depthOverlap;
-                        float2 edgeMid = (e0 + e1) * 0.5f;
-                        centroid = new Vector3(
-                            edgeMid.x,
-                            edgeMid.y,
-                            (Mathf.Max(a.DepthMin, b.DepthMin) + Mathf.Min(a.DepthMax, b.DepthMax)) * 0.5f);
-                    }
-
-                    Vector3 normal = (b.RestPosition - a.RestPosition).normalized;
-                    AddBond(bonds, a.PieceIndex, b.PieceIndex, centroid, normal, area, false);
+                    EarthVolumetricFractureFace face = cell.Faces[faceIndex];
+                    int neighbour = face.NeighbourCellIndex;
+                    if (neighbour < 0 || neighbour <= cellIndex) continue;
+                    Vector3 centroid = MapFaceCentroid(cell, face);
+                    Vector3 normal = (pieces[neighbour].restLocalPosition -
+                                      pieces[cellIndex].restLocalPosition).normalized;
+                    AddBond(
+                        bonds,
+                        cellIndex,
+                        neighbour,
+                        centroid,
+                        normal,
+                        MappedFaceArea(cell, face),
+                        false);
                 }
-            }
 
-            for (int index = 0; index < slices.Count; index++)
-            {
-                BakedSlice slice = slices[index];
-                if (!TouchesBottom(cells[slice.CellIndex])) continue;
-                float depth = slice.DepthMax - slice.DepthMin;
+                if (!cell.Foundation) continue;
+                EarthVolumetricFractureFace foundationFace = FindFoundationFace(cell);
+                bool hasFoundationFace = foundationFace.VertexIndices != null &&
+                                         foundationFace.VertexIndices.Length >= 3;
                 AddBond(
                     bonds,
-                    slice.PieceIndex,
+                    cellIndex,
                     EarthBondGraph.WorldPieceIndex,
-                    new Vector3(
-                        cells[slice.CellIndex].Centroid.x,
-                        -0.5f,
-                        (slice.DepthMin + slice.DepthMax) * 0.5f),
+                    hasFoundationFace
+                        ? MapFaceCentroid(cell, foundationFace)
+                        : new Vector3(pieces[cellIndex].restLocalPosition.x, -0.5f,
+                            pieces[cellIndex].restLocalPosition.z),
                     Vector3.down,
-                    Mathf.Max(0.02f, cells[slice.CellIndex].Area * depth),
+                    hasFoundationFace
+                        ? MappedFaceArea(cell, foundationFace)
+                        : Mathf.Max(0.015f, volumeScale * cell.Volume),
                     true);
             }
 
@@ -224,108 +199,51 @@ namespace Elemental.Authoring.Editor
         }
 
         private static PieceMeshPair BuildPieceMeshes(
-            VoronoiFractureCell cell,
-            int pieceIndex,
-            float localDepthMin,
-            float localDepthMax)
+            EarthVolumetricFractureCell cell,
+            int pieceIndex)
         {
-            int count = cell.Vertices.Length;
-            var vertices = new Vector3[count * 2];
-            for (int index = 0; index < count; index++)
-            {
-                float x = cell.Vertices[index].x - cell.Centroid.x;
-                float y = cell.Vertices[index].y - cell.Centroid.y;
-                vertices[index] = new Vector3(x, y, localDepthMin);
-                vertices[count + index] = new Vector3(x, y, localDepthMax);
-            }
-
-            var exterior = new int[(count - 2) * 6];
-            int triangle = 0;
-            for (int index = 1; index < count - 1; index++)
-            {
-                exterior[triangle++] = 0;
-                exterior[triangle++] = index + 1;
-                exterior[triangle++] = index;
-                exterior[triangle++] = count;
-                exterior[triangle++] = count + index;
-                exterior[triangle++] = count + index + 1;
-            }
-
-            var interior = new int[count * 6];
-            triangle = 0;
-            for (int index = 0; index < count; index++)
-            {
-                int next = (index + 1) % count;
-                interior[triangle++] = index;
-                interior[triangle++] = next;
-                interior[triangle++] = count + next;
-                interior[triangle++] = index;
-                interior[triangle++] = count + next;
-                interior[triangle++] = count + index;
-            }
-
+            var vertices = new Vector3[cell.Vertices.Length];
+            for (int index = 0; index < vertices.Length; index++)
+                vertices[index] = MapPoint(cell.Vertices[index]) - MapPoint(cell.Centroid);
             var collider = new Mesh { name = $"Earth Wall Collider {pieceIndex + 1:000}" };
             collider.vertices = vertices;
-            collider.subMeshCount = 2;
-            collider.SetTriangles(exterior, 0, false);
-            collider.SetTriangles(interior, 1, false);
+            collider.triangles = cell.Triangles;
             collider.RecalculateNormals();
             collider.RecalculateBounds();
-
-            int sideStart = count * 2;
-            var renderVertices = new Vector3[count * 6];
-            var colors = new Color32[renderVertices.Length];
-            var uv = new Vector2[renderVertices.Length];
-            var renderExterior = new int[(count - 2) * 6];
-            var renderInterior = new int[count * 6];
-            for (int index = 0; index < count; index++)
+            var renderVertices = new List<Vector3>(cell.Triangles.Length);
+            var colors = new List<Color32>(cell.Triangles.Length);
+            var uv = new List<Vector2>(cell.Triangles.Length);
+            var renderExterior = new List<int>(cell.Triangles.Length);
+            var renderInterior = new List<int>(cell.Triangles.Length);
+            for (int faceIndex = 0; faceIndex < cell.Faces.Length; faceIndex++)
             {
-                renderVertices[index] = vertices[index];
-                renderVertices[count + index] = vertices[count + index];
-                colors[index] = new Color32(255, 0, 0, 28);
-                colors[count + index] = new Color32(255, 0, 0, 28);
-                uv[index] = new Vector2(vertices[index].x, vertices[index].y);
-                uv[count + index] = uv[index];
-            }
-            triangle = 0;
-            for (int index = 1; index < count - 1; index++)
-            {
-                renderExterior[triangle++] = 0;
-                renderExterior[triangle++] = index + 1;
-                renderExterior[triangle++] = index;
-                renderExterior[triangle++] = count;
-                renderExterior[triangle++] = count + index;
-                renderExterior[triangle++] = count + index + 1;
-            }
-            triangle = 0;
-            for (int index = 0; index < count; index++)
-            {
-                int next = (index + 1) % count;
-                int vertex = sideStart + index * 4;
-                renderVertices[vertex] = vertices[index];
-                renderVertices[vertex + 1] = vertices[next];
-                renderVertices[vertex + 2] = vertices[count + next];
-                renderVertices[vertex + 3] = vertices[count + index];
-                byte cavity = (byte)Mathf.RoundToInt(Mathf.Lerp(118f, 186f, Hash01((uint)(pieceIndex + 1), index)));
-                colors[vertex] = colors[vertex + 1] = colors[vertex + 2] = colors[vertex + 3] =
-                    new Color32(0, 255, 0, cavity);
-                float edgeLength = Vector3.Distance(vertices[index], vertices[next]);
-                uv[vertex] = new Vector2(0f, 0f);
-                uv[vertex + 1] = new Vector2(edgeLength, 0f);
-                uv[vertex + 2] = new Vector2(edgeLength, localDepthMax - localDepthMin);
-                uv[vertex + 3] = new Vector2(0f, localDepthMax - localDepthMin);
-                renderInterior[triangle++] = vertex;
-                renderInterior[triangle++] = vertex + 1;
-                renderInterior[triangle++] = vertex + 2;
-                renderInterior[triangle++] = vertex;
-                renderInterior[triangle++] = vertex + 2;
-                renderInterior[triangle++] = vertex + 3;
+                EarthVolumetricFractureFace face = cell.Faces[faceIndex];
+                if (face.VertexIndices.Length < 3) continue;
+                int start = renderVertices.Count;
+                byte cavity = (byte)Mathf.RoundToInt(Mathf.Lerp(
+                    118f, 186f, Hash01((uint)(pieceIndex + 1), faceIndex)));
+                for (int index = 0; index < face.VertexIndices.Length; index++)
+                {
+                    Vector3 vertex = vertices[face.VertexIndices[index]];
+                    renderVertices.Add(vertex);
+                    colors.Add(face.IsExterior
+                        ? new Color32(255, 0, 0, 28)
+                        : new Color32(0, 255, 0, cavity));
+                    uv.Add(new Vector2(vertex.x, vertex.y));
+                }
+                List<int> destination = face.IsExterior ? renderExterior : renderInterior;
+                for (int triangle = 1; triangle < face.VertexIndices.Length - 1; triangle++)
+                {
+                    destination.Add(start);
+                    destination.Add(start + triangle);
+                    destination.Add(start + triangle + 1);
+                }
             }
 
             var render = new Mesh { name = $"Earth Wall Baked Piece {pieceIndex + 1:000}" };
-            render.vertices = renderVertices;
-            render.colors32 = colors;
-            render.uv = uv;
+            render.SetVertices(renderVertices);
+            render.SetColors(colors);
+            render.SetUVs(0, uv);
             render.subMeshCount = 2;
             render.SetTriangles(renderExterior, 0, false);
             render.SetTriangles(renderInterior, 1, false);
@@ -333,6 +251,139 @@ namespace Elemental.Authoring.Editor
             render.RecalculateTangents();
             render.RecalculateBounds();
             return new PieceMeshPair(render, collider);
+        }
+
+        private static bool HasProductionShapeQuality(EarthFractureAsset asset)
+        {
+            EarthFracturePieceRecord[] records = asset.PieceRecords;
+            if (records == null || records.Length != VolumetricCellCount) return false;
+            float minimumVolume = float.PositiveInfinity;
+            float maximumVolume = 0f;
+            var aspects = new float[records.Length];
+            var vertexFamilies = new HashSet<int>();
+            for (int index = 0; index < records.Length; index++)
+            {
+                Mesh collider = records[index].colliderMesh;
+                if (collider == null || collider.vertexCount < 4 ||
+                    collider.triangles.Length / 3 > 255) return false;
+                vertexFamilies.Add(collider.vertexCount);
+                minimumVolume = Mathf.Min(minimumVolume, records[index].volume);
+                maximumVolume = Mathf.Max(maximumVolume, records[index].volume);
+                Vector3 physicalSize = Vector3.Scale(
+                    collider.bounds.size,
+                    new Vector3(AuthoredWidth, AuthoredHeight, AuthoredDepth));
+                float smallest = Mathf.Max(0.001f,
+                    Mathf.Min(physicalSize.x, physicalSize.y, physicalSize.z));
+                aspects[index] = Mathf.Max(physicalSize.x, physicalSize.y, physicalSize.z) / smallest;
+            }
+            Array.Sort(aspects);
+            return vertexFamilies.Count >= 4 && minimumVolume > 0.0001f &&
+                   maximumVolume / minimumVolume >= 3f &&
+                   aspects[aspects.Length / 2] <= 3.5f &&
+                   aspects[aspects.Length - 1] <= 6f;
+        }
+
+        private static EarthVolumetricFracturePlan BuildProductionPlan(float2[] physicalBoundary)
+        {
+            EarthVolumetricFracturePlan best = default;
+            float bestPenalty = float.PositiveInfinity;
+            for (int attempt = 0; attempt < 24; attempt++)
+            {
+                uint seed = ProductionSeed + (uint)attempt * 0x9E3779B9u;
+                EarthVolumetricFracturePlan candidate = EarthVolumetricFractureSolver.BuildConvexPrism(
+                    seed,
+                    physicalBoundary,
+                    -AuthoredHeight * 0.5f,
+                    AuthoredHeight * 0.5f,
+                    VolumetricCellCount);
+                float penalty = ProductionShapePenalty(candidate);
+                if (penalty < bestPenalty)
+                {
+                    best = candidate;
+                    bestPenalty = penalty;
+                }
+                if (penalty <= 0.0001f) break;
+            }
+            return best;
+        }
+
+        private static float ProductionShapePenalty(EarthVolumetricFracturePlan plan)
+        {
+            if (!plan.IsValid || plan.Cells.Length != VolumetricCellCount)
+                return float.PositiveInfinity;
+
+            var aspects = new float[plan.Cells.Length];
+            var volumes = new float[plan.Cells.Length];
+            for (int index = 0; index < plan.Cells.Length; index++)
+            {
+                EarthVolumetricFractureCell cell = plan.Cells[index];
+                if (cell.Vertices.Length < 4 || cell.TriangleCount > 255 || cell.Volume <= 0.0001f)
+                    return float.PositiveInfinity;
+                aspects[index] = cell.AspectRatio;
+                volumes[index] = cell.Volume;
+            }
+            Array.Sort(aspects);
+            Array.Sort(volumes);
+            float medianAspect = aspects[aspects.Length / 2];
+            float maximumAspect = aspects[aspects.Length - 1];
+            float p10 = volumes[Mathf.Clamp(Mathf.FloorToInt((volumes.Length - 1) * 0.10f), 0, volumes.Length - 1)];
+            float p90 = volumes[Mathf.Clamp(Mathf.FloorToInt((volumes.Length - 1) * 0.90f), 0, volumes.Length - 1)];
+            float volumeTail = p90 / Mathf.Max(0.0001f, p10);
+            return Mathf.Max(0f, medianAspect - 3.5f) * 4f +
+                   Mathf.Max(0f, maximumAspect - 6f) * 2f +
+                   Mathf.Max(0f, 3f - volumeTail) * 3f +
+                   plan.RelativeVolumeError * 10f;
+        }
+
+        private static Vector3 MapPoint(float3 point) => new Vector3(
+            point.x / AuthoredWidth,
+            point.y / AuthoredHeight,
+            point.z / AuthoredDepth);
+
+        private static Vector3 MapFaceCentroid(
+            EarthVolumetricFractureCell cell,
+            EarthVolumetricFractureFace face)
+        {
+            Vector3 centroid = Vector3.zero;
+            for (int index = 0; index < face.VertexIndices.Length; index++)
+                centroid += MapPoint(cell.Vertices[face.VertexIndices[index]]);
+            return centroid / Mathf.Max(1, face.VertexIndices.Length);
+        }
+
+        private static float MappedFaceArea(
+            EarthVolumetricFractureCell cell,
+            EarthVolumetricFractureFace face)
+        {
+            if (face.VertexIndices.Length < 3) return 0f;
+            Vector3 origin = MapPoint(cell.Vertices[face.VertexIndices[0]]);
+            float area = 0f;
+            for (int index = 1; index < face.VertexIndices.Length - 1; index++)
+            {
+                Vector3 a = MapPoint(cell.Vertices[face.VertexIndices[index]]) - origin;
+                Vector3 b = MapPoint(cell.Vertices[face.VertexIndices[index + 1]]) - origin;
+                area += Vector3.Cross(a, b).magnitude * 0.5f;
+            }
+            return Mathf.Max(0.0001f, area);
+        }
+
+        private static EarthVolumetricFractureFace FindFoundationFace(
+            EarthVolumetricFractureCell cell)
+        {
+            EarthVolumetricFractureFace best = default;
+            float lowest = float.PositiveInfinity;
+            for (int faceIndex = 0; faceIndex < cell.Faces.Length; faceIndex++)
+            {
+                EarthVolumetricFractureFace face = cell.Faces[faceIndex];
+                if (!face.IsExterior || face.VertexIndices.Length < 3 || face.Normal.y > -0.8f) continue;
+                float height = 0f;
+                for (int index = 0; index < face.VertexIndices.Length; index++)
+                    height += cell.Vertices[face.VertexIndices[index]].y;
+                height /= face.VertexIndices.Length;
+                if (height >= lowest) continue;
+                lowest = height;
+                best = face;
+            }
+            return best;
         }
 
         private static void RemoveOldPieceMeshes(EarthFractureAsset asset)

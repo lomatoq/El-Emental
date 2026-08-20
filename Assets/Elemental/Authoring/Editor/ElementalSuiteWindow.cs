@@ -191,11 +191,14 @@ namespace Elemental.Authoring.Editor
             AddProfileEditor<EarthWallProfile>(
                 "Wall fracture + cohesion",
                 "Assets/Elemental/Content/Profiles/EarthWallProfile.asset");
+            AddProfileEditor<EarthStructureFractureProfile>(
+                "3D fracture cells + local structural damage",
+                "Assets/Elemental/Content/Profiles/EarthStructureFractureProfile.asset");
             AddProfileEditor<EarthRockProfile>(
                 "Rock growth + shatter",
                 "Assets/Elemental/Content/Profiles/EarthRockProfile.asset");
             AddProfileEditor<EarthPillarWaveProfile>(
-                "Pillar wave sector + power",
+                "Web wave topology + crest",
                 "Assets/Elemental/Content/Profiles/EarthPillarWaveProfile.asset");
             AddProfileEditor<EarthPlatformProfile>(
                 "Gesture platform area + height",
@@ -209,6 +212,25 @@ namespace Elemental.Authoring.Editor
             AddProfileEditor<EarthGravityWellProfile>(
                 "MMB gravity grip + fracture",
                 "Assets/Elemental/Content/Profiles/EarthGravityWellProfile.asset");
+            AddProfileEditor<EarthQuickCastProfile>(
+                "Quick stone double-click + projectile speed",
+                "Assets/Elemental/Content/Profiles/EarthQuickCastProfile.asset");
+            AddProfileEditor<EarthArmorProfile>(
+                "Shift+MMB armor spread + radial release",
+                "Assets/Elemental/Content/Profiles/EarthArmorProfile.asset");
+            AddProfileEditor<EarthArmorShellDefinition>(
+                "Dense anatomical Humanoid stone shell bake",
+                "Assets/Elemental/Content/Profiles/EarthArmorShellDefinition.asset");
+            VisualElement armorTools = Row();
+            armorTools.Add(ActionButton("Rebake armor shell", EarthArmorShellBaker.RebakeDefault));
+            armorTools.Add(ActionButton("Geometry Integrity View (F8)", EarthGeometryIntegrityWindow.Open));
+            _content.Add(armorTools);
+            AddProfileEditor<EarthResonanceProfile>(
+                "Shift+Space+LMB resonance hemisphere",
+                "Assets/Elemental/Content/Profiles/EarthResonanceProfile.asset");
+            AddProfileEditor<EarthSurfProfile>(
+                "Shift+W earth plough movement + impact",
+                "Assets/Elemental/Content/Profiles/EarthSurfProfile.asset");
             AddProfileEditor<EarthTechniquePresentationProfile>(
                 "Six techniques // timing, pose, camera and feedback",
                 "Assets/Elemental/Content/Profiles/EarthTechniquePresentationProfile.asset");
@@ -331,6 +353,8 @@ namespace Elemental.Authoring.Editor
             BeginPage("Diagnostics + builds", "Run the same validation used by batch evidence, create a portable bug bundle, or trigger a profile build.");
             _content.Add(ActionButton("Validate project", ElementalProjectValidator.ValidateFromMenu));
             _content.Add(ActionButton("Create bug bundle", ElementalBugBundle.CreateFromMenu));
+            _content.Add(ActionButton("Open Geometry Integrity View (F8)", EarthGeometryIntegrityWindow.Open));
+            _content.Add(ActionButton("Open Earth Matter Inspector", EarthMatterInspectorWindow.Open));
             VisualElement row = Row();
             row.Add(ActionButton("Build Windows", ElementalBuildPipeline.BuildWindows));
             row.Add(ActionButton("Build macOS", ElementalBuildPipeline.BuildMacOS));

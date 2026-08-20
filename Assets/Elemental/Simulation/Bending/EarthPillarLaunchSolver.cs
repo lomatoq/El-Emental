@@ -13,7 +13,8 @@ namespace Elemental.Simulation.Bending
             float minimumRadius,
             float maximumRadius,
             float minimumRiseSeconds,
-            float maximumRiseSeconds)
+            float maximumRiseSeconds,
+            float chargeExponent = 1.55f)
         {
             FullChargeSeconds = math.max(0.05f, fullChargeSeconds);
             MinimumHeight = math.max(0.1f, minimumHeight);
@@ -24,6 +25,7 @@ namespace Elemental.Simulation.Bending
             MaximumRadius = math.max(MinimumRadius, maximumRadius);
             MinimumRiseSeconds = math.max(0.05f, minimumRiseSeconds);
             MaximumRiseSeconds = math.max(MinimumRiseSeconds, maximumRiseSeconds);
+            ChargeExponent = math.clamp(chargeExponent, 0.25f, 4f);
         }
 
         public float FullChargeSeconds { get; }
@@ -35,9 +37,10 @@ namespace Elemental.Simulation.Bending
         public float MaximumRadius { get; }
         public float MinimumRiseSeconds { get; }
         public float MaximumRiseSeconds { get; }
+        public float ChargeExponent { get; }
 
         public static EarthPillarLaunchProfile Default => new EarthPillarLaunchProfile(
-            1.35f, 1.5f, 7.2f, 7.5f, 19f, 0.72f, 1.2f, 0.24f, 0.52f);
+            1.45f, 2.2f, 8.8f, 12f, 25f, 0.76f, 1.4f, 0.20f, 0.46f, 1.55f);
     }
 
     public readonly struct EarthPillarLaunchResult
@@ -96,7 +99,9 @@ namespace Elemental.Simulation.Bending
         public static float Charge01(float heldSeconds, in EarthPillarLaunchProfile profile)
         {
             float normalized = math.saturate(math.max(0f, heldSeconds) / profile.FullChargeSeconds);
-            return normalized * normalized * (3f - (2f * normalized));
+            // An ease-out power curve gives even a short hold a readable launch while
+            // preserving a long, controllable tail for the strongest pillar.
+            return 1f - math.pow(1f - normalized, profile.ChargeExponent);
         }
 
         public static EarthPillarLaunchResult Solve(

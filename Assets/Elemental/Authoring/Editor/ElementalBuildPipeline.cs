@@ -53,6 +53,19 @@ namespace Elemental.Authoring.Editor
                 development: false);
         }
 
+        [MenuItem("Elemental/Build/Build Windows Release Candidate")]
+        public static void BuildWindowsReleaseCandidate()
+        {
+            M0ProjectSetup.Configure();
+            Build(
+                BuildTarget.StandaloneWindows64,
+                NativePlayableScenes(),
+                Path.Combine(ProjectRoot(), "Builds", "WindowsReleaseCandidate", "ElEmental.exe"),
+                "NativeWindowsReleaseCandidate",
+                cleanBuildCache: true,
+                development: false);
+        }
+
         [MenuItem("Elemental/Build/Build macOS Native Smoke")]
         public static void BuildMacOS()
         {
@@ -90,6 +103,16 @@ namespace Elemental.Authoring.Editor
 
         private static void WriteReport(BuildReport report, string profile, BuildTarget target, string destination)
         {
+            for (int stepIndex = 0; stepIndex < report.steps.Length; stepIndex++)
+            {
+                BuildStep step = report.steps[stepIndex];
+                for (int messageIndex = 0; messageIndex < step.messages.Length; messageIndex++)
+                {
+                    BuildStepMessage message = step.messages[messageIndex];
+                    if (message.type == LogType.Warning)
+                        Debug.LogWarning($"[Elemental Build Warning] {step.name}: {message.content}");
+                }
+            }
             string folder = Path.Combine(ProjectRoot(), "BuildReports");
             Directory.CreateDirectory(folder);
             string json = JsonUtility.ToJson(new BuildEvidence
@@ -115,8 +138,14 @@ namespace Elemental.Authoring.Editor
                 scene => scene.path);
         }
 
-        private static string[] NativePlayableScenes() =>
-            NativeBuildSceneOrder.Create(EnabledScenes(), M3EarthCoreSetup.EarthCoreScenePath);
+        private static string[] NativePlayableScenes()
+        {
+            // M0 intentionally rewrites the shared scene list. Keep the non-shipping
+            // QA lab available to editor PlayMode tests after a player build, then
+            // filter it out of the actual player scene array below.
+            EarthPolishLabSetup.EnsureEditorTestBuildEntry();
+            return NativeBuildSceneOrder.Create(EnabledScenes(), M3EarthCoreSetup.EarthCoreScenePath);
+        }
 
         private static string ProjectRoot() => Directory.GetParent(Application.dataPath)?.FullName
             ?? throw new InvalidOperationException("Could not resolve project root.");

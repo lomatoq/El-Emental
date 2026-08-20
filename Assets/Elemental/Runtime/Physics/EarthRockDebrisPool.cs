@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Elemental.Runtime.Geometry;
 using Elemental.Simulation.Structures;
 using UnityEngine;
 
@@ -13,10 +14,12 @@ namespace Elemental.Runtime.Physics
         [SerializeField] private Mesh[] meshVariants;
         [SerializeField] private GravityWorldBehaviour gravityWorld;
         [SerializeField] private EarthRockProfile profile;
+        [SerializeField] private EarthShapeGrammarProfile shapeGrammarProfile;
 
         private readonly List<EarthRockDebris> _pieces = new List<EarthRockDebris>(72);
         private int _reuseCursor;
         private Mesh _fallbackMesh;
+        private Mesh[] _runtimeShapeVariants;
 
         public void Configure(
             int configuredCapacity,
@@ -42,8 +45,12 @@ namespace Elemental.Runtime.Physics
                 ApplyShape(_pieces[index].gameObject, ShapeForIndex(index));
         }
 
+        public void ConfigureShapeGrammar(EarthShapeGrammarProfile configuredProfile) =>
+            shapeGrammarProfile = configuredProfile;
+
         private void Awake()
         {
+            EnsureRuntimeShapeLibrary();
             for (int index = 0; index < capacity; index++) CreatePiece();
         }
 
@@ -131,6 +138,8 @@ namespace Elemental.Runtime.Physics
 
         private Mesh ShapeForIndex(int index)
         {
+            if (_runtimeShapeVariants != null && _runtimeShapeVariants.Length > 0)
+                return _runtimeShapeVariants[Mathf.Abs(index) % _runtimeShapeVariants.Length];
             if (meshVariants != null && meshVariants.Length > 0)
             {
                 Mesh candidate = meshVariants[index % meshVariants.Length];
@@ -178,15 +187,53 @@ namespace Elemental.Runtime.Physics
             };
             fallback.RecalculateNormals();
             fallback.RecalculateBounds();
+            EarthMeshIntegrityGate.ValidateInPlaceOrUseFallback(
+                fallback,
+                EarthMeshIntegrityPolicy.ConvexCollider,
+                fallback.name,
+                fallback.bounds);
             return fallback;
         }
 
         private void OnDestroy()
         {
-            if (_fallbackMesh == null) return;
-            if (Application.isPlaying) Destroy(_fallbackMesh);
-            else DestroyImmediate(_fallbackMesh);
-            _fallbackMesh = null;
+            if (_fallbackMesh != null)
+            {
+                if (Application.isPlaying) Destroy(_fallbackMesh);
+                else DestroyImmediate(_fallbackMesh);
+                _fallbackMesh = null;
+            }
+            if (_runtimeShapeVariants == null) return;
+            for (int index = 0; index < _runtimeShapeVariants.Length; index++)
+            {
+                Mesh generated = _runtimeShapeVariants[index];
+                if (generated == null) continue;
+                if (Application.isPlaying) Destroy(generated);
+                else DestroyImmediate(generated);
+            }
+            _runtimeShapeVariants = null;
+        }
+
+        private void EnsureRuntimeShapeLibrary()
+        {
+            if (_runtimeShapeVariants != null) return;
+            bool legacyLibrary = shapeGrammarProfile != null || meshVariants == null || meshVariants.Length == 0;
+            if (!legacyLibrary)
+            {
+                Mesh first = meshVariants[0];
+                legacyLibrary = first != null && first.name.StartsWith(
+                    "Beveled Earth Block", System.StringComparison.OrdinalIgnoreCase);
+            }
+            if (!legacyLibrary) return;
+            _runtimeShapeVariants = new Mesh[EarthRockMeshFactory.ArchetypeCount];
+            for (int index = 0; index < _runtimeShapeVariants.Length; index++)
+            {
+                uint seed = EarthShapeSeed.Compose(
+                    shapeGrammarProfile != null ? shapeGrammarProfile.LibrarySeed : 0xE17F0411u,
+                    (uint)(index + 1), 2u, 1u, 0xD3B415u).Value;
+                _runtimeShapeVariants[index] = EarthRockMeshFactory.Create((EarthRockArchetype)index, seed);
+            }
+            if (_runtimeShapeVariants.Length > 0) mesh = _runtimeShapeVariants[0];
         }
 
         private static float Hash01(uint seed, int index)

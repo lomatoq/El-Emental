@@ -47,6 +47,7 @@ namespace Elemental.Tests.PlayMode
             GameObject moonObject = FindByName(scene, "Distant Moon");
             GameObject atmosphereObject = FindByName(scene, "Planet Atmosphere Limb");
             CelestialSystemBehaviour celestialSystem = FindInScene<CelestialSystemBehaviour>(scene);
+            EarthSkyController skyController = FindInScene<EarthSkyController>(scene);
             MeteorShowerBehaviour meteorSystem = FindInScene<MeteorShowerBehaviour>(scene);
             HumanoidCharacterPresentation humanoid = FindInScene<HumanoidCharacterPresentation>(scene);
             EarthCharacterPoseController characterPose = FindInScene<EarthCharacterPoseController>(scene);
@@ -54,6 +55,9 @@ namespace Elemental.Tests.PlayMode
                 FindInScene<Elemental.Presentation.Camera.EarthCameraDirector>(scene);
             Animator humanoidAnimator = humanoid != null ? humanoid.Animator : null;
             bool hasCelestialSystem = celestialSystem != null;
+            bool hasReadableDaySky = skyController != null && skyController.LastStarVisibility <= 0.001f &&
+                                     skyController.LastZenithColor.b > skyController.LastZenithColor.r * 1.8f &&
+                                     skyController.LastHorizonColor.maxColorComponent > 0.5f;
             bool hasMeteorSystem = meteorSystem != null;
             Material configuredSky = celestialSystem != null ? celestialSystem.StarSkybox : null;
             bool hasProceduralSky = configuredSky != null && configuredSky.shader != null &&
@@ -112,6 +116,8 @@ namespace Elemental.Tests.PlayMode
             Assert.That(hasSun, Is.True);
             Assert.That(hasRingedPlanet, Is.True);
             Assert.That(hasCelestialSystem, Is.True);
+            Assert.That(hasReadableDaySky, Is.True,
+                "Daytime must render a blue gradient and suppress stars instead of falling back to black space.");
             Assert.That(hasMeteorSystem, Is.True);
             Assert.That(hasProceduralSky, Is.True);
             Assert.That(moonHasNoCollider, Is.True);
@@ -120,11 +126,11 @@ namespace Elemental.Tests.PlayMode
             Assert.That(hasEmbodiedPose, Is.True);
             Assert.That(hasAuthoredCameraDirector, Is.True);
             Assert.That(hasExploreProfile, Is.True);
-            Assert.That(exploreDistance, Is.InRange(5.5f, 7f));
+            Assert.That(exploreDistance, Is.InRange(7f, 7.8f));
             Assert.That(celestialBackdrop, Is.Not.Null);
             Assert.That(celestialBackdropIsWorldSpace, Is.True,
                 "Celestial bodies must stay in world space instead of following the player camera.");
-            Assert.That(playableFieldOfView, Is.GreaterThanOrEqualTo(62f));
+            Assert.That(playableFieldOfView, Is.InRange(57f, 64f));
             Assert.That(hasPushBoulders, Is.True);
             Assert.That(technicalPropsHidden, Is.True);
             Assert.That(hasVolume, Is.True);
