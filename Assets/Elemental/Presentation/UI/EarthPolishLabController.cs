@@ -7,6 +7,7 @@ using Elemental.Runtime.Geometry;
 using Elemental.Runtime.Matter;
 using Elemental.Runtime.Physics;
 using Elemental.Presentation.Rendering;
+using Elemental.Presentation.Animation;
 using Elemental.Simulation.Bending;
 using Elemental.Simulation.Characters;
 using Unity.Mathematics;
@@ -34,6 +35,7 @@ namespace Elemental.Runtime.World
         private EarthMatterReturnController _matterReturn;
         private EarthTechniqueComboRuntime _comboRuntime;
         private CelestialSystemBehaviour _celestial;
+        private HumanoidCharacterPresentation _animationPresentation;
         private bool _showGeometryIntegrity;
         private int _geometryValidCount;
         private int _geometryBlockedCount;
@@ -66,6 +68,9 @@ namespace Elemental.Runtime.World
             _comboRuntime = _executor != null ? _executor.ComboRuntime : null;
             if (_comboRuntime == null) _comboRuntime = FindAnyObjectByType<EarthTechniqueComboRuntime>();
             _celestial = FindAnyObjectByType<CelestialSystemBehaviour>();
+            _animationPresentation = _motor != null
+                ? _motor.GetComponentInChildren<HumanoidCharacterPresentation>(true)
+                : null;
         }
 
         private void OnGUI()
@@ -125,6 +130,21 @@ namespace Elemental.Runtime.World
             }
             if (_motor != null)
                 GUILayout.Label($"Motor: {_motor.Telemetry.Speed:0.00} m/s / support {_motor.HasStableSupport}");
+            if (_animationPresentation != null)
+            {
+                EarthLandingCandidateSnapshot landing = _animationPresentation.LandingCandidate;
+                GUILayout.Label(
+                    $"Anim: {_animationPresentation.MotionPhase} / {_animationPresentation.LandingStyle}  " +
+                    $"speed {_animationPresentation.FilteredSpeed:0.00}  turn {_animationPresentation.FilteredTurn:+0.00;-0.00;0.00}");
+                GUILayout.Label(landing.IsValid
+                    ? $"Landing: {landing.TimeToContact * 1000f:0} ms  impact {landing.ImpactSpeed:0.0} m/s  support {landing.SurfaceId}:{landing.Generation}"
+                    : "Landing: no candidate");
+                EarthCharacterPoseController pose = _animationPresentation.PoseController;
+                if (pose != null)
+                    GUILayout.Label(
+                        $"Feet Δ: L {pose.LeftAnchorErrorMeters * 100f:0.0} cm / R {pose.RightAnchorErrorMeters * 100f:0.0} cm  " +
+                        $"pelvis {pose.PelvisCorrectionMeters * 100f:+0.0;-0.0;0.0} cm");
+            }
             GUILayout.Label($"Matter records: {_matterKernel?.ActiveRecordCount ?? 0}  returning: {_matterReturn?.ActiveReturnCount ?? 0}");
             if (_comboRuntime != null && _comboRuntime.OpportunityCount > 0)
             {

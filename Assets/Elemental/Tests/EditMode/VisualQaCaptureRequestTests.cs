@@ -114,6 +114,14 @@ namespace Elemental.Tests.EditMode
                     VisualQaCaptureRequest.ScenarioArgument, "quick-stone"
                 }, out VisualQaCaptureRequest quickStoneRequest), Is.True);
             Assert.That(quickStoneRequest.Scenario, Is.EqualTo(VisualQaScenario.QuickStone));
+
+            Assert.That(VisualQaCaptureRequest.TryParse(
+                new[]
+                {
+                    "game.exe", VisualQaCaptureRequest.Argument, "landing.png",
+                    VisualQaCaptureRequest.ScenarioArgument, "animation-landing"
+                }, out VisualQaCaptureRequest landingRequest), Is.True);
+            Assert.That(landingRequest.Scenario, Is.EqualTo(VisualQaScenario.AnimationLanding));
         }
     }
 }

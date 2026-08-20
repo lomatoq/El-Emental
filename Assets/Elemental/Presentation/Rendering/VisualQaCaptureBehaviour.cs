@@ -7,6 +7,7 @@ using Elemental.Runtime.World;
 using Elemental.Runtime.Physics;
 using Elemental.Runtime.Characters;
 using Elemental.Presentation.VFX;
+using Elemental.Presentation.Animation;
 using Elemental.Simulation.Bending;
 using Elemental.Simulation.Characters;
 using Elemental.Simulation.Magic;
@@ -68,6 +69,8 @@ namespace Elemental.Presentation.Rendering
         }
 
         private bool _scenarioSucceeded;
+        private PlanetMotor _animationLandingMotor;
+        private Rigidbody _animationLandingBody;
 
         private IEnumerator Demonstrate(VisualQaScenario scenario)
         {
@@ -75,11 +78,166 @@ namespace Elemental.Presentation.Rendering
             UnityEngine.Camera camera = UnityEngine.Camera.main;
             GameObject proxyObject = GameObject.Find("Planet Collision Proxy");
             Collider proxy = proxyObject != null ? proxyObject.GetComponent<Collider>() : null;
-            if (input == null || camera == null || proxy == null) yield break;
+            if (scenario != VisualQaScenario.AnimationLanding &&
+                (input == null || camera == null || proxy == null)) yield break;
 
             Physics.SyncTransforms();
-            List<float2> surfaceLine = FindSurfaceLine(camera, proxy);
+            List<float2> surfaceLine = scenario == VisualQaScenario.AnimationLanding
+                ? new List<float2>()
+                : FindSurfaceLine(camera, proxy);
             if (surfaceLine == null) yield break;
+
+            if (scenario == VisualQaScenario.AnimationLanding)
+            {
+                PlanetMotor sceneMotor = FindAnyObjectByType<PlanetMotor>();
+                Rigidbody body = sceneMotor != null ? sceneMotor.GetComponent<Rigidbody>() : null;
+                HumanoidCharacterPresentation presentation = sceneMotor != null
+                    ? sceneMotor.GetComponentInChildren<HumanoidCharacterPresentation>(true)
+                    : null;
+                if (sceneMotor == null || body == null || presentation == null || camera == null)
+                {
+                    Debug.LogError($"[Elemental] Landing QA dependencies missing: " +
+                                   $"motor={sceneMotor != null}, body={body != null}, " +
+                                   $"presentation={presentation != null}, camera={camera != null}.");
+                    yield break;
+                }
+                PrepareAnimationLandingCourt(camera, sceneMotor, body);
+                while (!sceneMotor.HasStableSupport) yield return new WaitForFixedUpdate();
+                CapsuleCollider sceneCapsule = sceneMotor.GetComponent<CapsuleCollider>();
+                if (sceneCapsule == null) yield break;
+                Vector3 courtUp = sceneMotor.LocalUp.normalized;
+                Vector3 courtForward = Vector3.ProjectOnPlane(sceneMotor.FacingForward, courtUp).normalized;
+                if (courtForward.sqrMagnitude < 0.1f)
+                    courtForward = Vector3.ProjectOnPlane(sceneMotor.transform.forward, courtUp).normalized;
+                Vector3 capsuleScale = sceneCapsule.transform.lossyScale;
+                float capsuleRadius = sceneCapsule.radius * Mathf.Max(
+                    Mathf.Abs(capsuleScale.x), Mathf.Abs(capsuleScale.z));
+                float capsuleHalfHeight = Mathf.Max(
+                    capsuleRadius,
+                    sceneCapsule.height * 0.5f * Mathf.Abs(capsuleScale.y));
+                Vector3 feet = sceneCapsule.transform.TransformPoint(sceneCapsule.center) -
+                               courtUp * capsuleHalfHeight;
+                var courtSupport = new GameObject("Animation Landing QA Support");
+                int groundMaskValue = sceneMotor.GroundMask.value;
+                int courtLayer = 0;
+                for (int layer = 0; layer < 32; layer++)
+                {
+                    if ((groundMaskValue & (1 << layer)) == 0) continue;
+                    courtLayer = layer;
+                    break;
+                }
+                courtSupport.layer = courtLayer;
+                courtSupport.transform.SetPositionAndRotation(
+                    feet - courtUp * 0.02f,
+                    Quaternion.LookRotation(courtForward, courtUp));
+                BoxCollider courtCollider = courtSupport.AddComponent<BoxCollider>();
+                courtCollider.size = new Vector3(8f, 0.20f, 8f);
+                int courtHash = courtCollider.GetHashCode();
+                uint courtSurfaceId = unchecked((uint)(courtHash == int.MinValue
+                    ? int.MaxValue
+                    : Mathf.Abs(courtHash)));
+                if (courtSurfaceId == 0u) courtSurfaceId = 1u;
+                Debug.Log($"[Elemental] Landing QA support: mask=0x{groundMaskValue:X8}, " +
+                          $"layer={courtLayer}, surface={courtSurfaceId}.");
+                body.position += courtUp * 0.12f;
+                Physics.SyncTransforms();
+                for (int settle = 0; settle < 8; settle++) yield return new WaitForFixedUpdate();
+                _successfulSupplementalCaptures = 0;
+                float[] startHeights = { 0.90f, 0.95f, 4.00f };
+                float[] downwardSpeeds = { -1.5f, -1.3f, 16f };
+                float[] planarSpeeds = { 0.25f, 5.0f, 0.25f };
+                EarthLandingStyle[] expectedStyles =
+                {
+                    EarthLandingStyle.Soft,
+                    EarthLandingStyle.Moving,
+                    EarthLandingStyle.Hard
+                };
+                string[] labels = { "soft", "moving", "hard" };
+                bool allStylesMatched = true;
+                for (int run = 0; run < startHeights.Length; run++)
+                {
+                    while (!sceneMotor.HasStableSupport) yield return new WaitForFixedUpdate();
+                    int runCaptureStart = _successfulSupplementalCaptures;
+                    Vector3 up = sceneMotor.LocalUp.normalized;
+                    Vector3 tangent = Vector3.ProjectOnPlane(sceneMotor.FacingForward, up).normalized;
+                    body.position += up * startHeights[run];
+                    body.linearVelocity = -up * downwardSpeeds[run] + tangent * planarSpeeds[run];
+                    body.angularVelocity = Vector3.zero;
+                    Physics.SyncTransforms();
+                    sceneMotor.BeginExternalLaunch(5);
+                    bool capturedPre = false;
+                    bool capturedContact = false;
+                    bool matchedExpectedStyle = false;
+                    float minimumCandidateTime = float.PositiveInfinity;
+                    float maximumCandidateImpact = 0f;
+                    float minimumVerticalSpeed = float.PositiveInfinity;
+                    bool sawRising = false;
+                    bool sawFalling = false;
+                    int guard = 0;
+                    while (guard++ < 420 &&
+                           (!capturedContact || _successfulSupplementalCaptures < runCaptureStart + 4))
+                    {
+                        yield return new WaitForFixedUpdate();
+                        EarthLandingCandidateSnapshot landing = presentation.LandingCandidate;
+                        float observedVertical = Vector3.Dot(body.linearVelocity, sceneMotor.LocalUp);
+                        minimumVerticalSpeed = Mathf.Min(minimumVerticalSpeed, observedVertical);
+                        if (landing.IsValid)
+                        {
+                            minimumCandidateTime = Mathf.Min(minimumCandidateTime, landing.TimeToContact);
+                            maximumCandidateImpact = Mathf.Max(maximumCandidateImpact, landing.ImpactSpeed);
+                        }
+                        sawRising |= presentation.MotionPhase == EarthAnimationPhase.Rising;
+                        sawFalling |= presentation.MotionPhase == EarthAnimationPhase.Falling;
+                        matchedExpectedStyle |= presentation.LandingStyle == expectedStyles[run];
+                        int runCaptureCount = _successfulSupplementalCaptures - runCaptureStart;
+                        if (!capturedPre && presentation.MotionPhase == EarthAnimationPhase.PreLanding)
+                        {
+                            capturedPre = true;
+                            yield return CaptureSupplementalFrame($"{labels[run]}-pre-a");
+                            if (_successfulSupplementalCaptures - runCaptureStart == 1)
+                                yield return CaptureSupplementalFrame($"{labels[run]}-pre-b");
+                        }
+                        else if (capturedPre && runCaptureCount == 1 && landing.IsValid && landing.TimeToContact <= 0.10f)
+                        {
+                            yield return CaptureSupplementalFrame($"{labels[run]}-pre-b");
+                        }
+                        else if (runCaptureCount == 2 && sceneMotor.HasStableSupport)
+                        {
+                            capturedContact = true;
+                            yield return CaptureSupplementalFrame($"{labels[run]}-contact");
+                        }
+                        else if (capturedContact && runCaptureCount == 3 &&
+                                 ((presentation.MotionPhase == EarthAnimationPhase.LandingRecovery &&
+                                   presentation.MotionPhaseSeconds >= RecoveryCaptureDelay(presentation)) ||
+                                  presentation.MotionPhase == EarthAnimationPhase.LocomotionLoop ||
+                                  presentation.MotionPhase == EarthAnimationPhase.GroundedIdle))
+                        {
+                            yield return CaptureSupplementalFrame($"{labels[run]}-recovery");
+                        }
+                    }
+                    EarthLandingCandidateSnapshot finalCandidate = presentation.LandingCandidate;
+                    Debug.Log($"[Elemental] Landing QA {labels[run]}: frames={guard - 1}, " +
+                              $"captures={_successfulSupplementalCaptures - runCaptureStart}/4, " +
+                              $"phase={presentation.MotionPhase}, style={presentation.LandingStyle}, " +
+                              $"candidate={finalCandidate.IsValid}, ttc={finalCandidate.TimeToContact:0.000}, " +
+                              $"impact={finalCandidate.ImpactSpeed:0.00}, " +
+                              $"minTtc={minimumCandidateTime:0.000}, maxImpact={maximumCandidateImpact:0.00}, " +
+                              $"minVertical={minimumVerticalSpeed:0.00}, rising={sawRising}, falling={sawFalling}, " +
+                              $"vertical={Vector3.Dot(body.linearVelocity, sceneMotor.LocalUp):0.00}, " +
+                              $"support={sceneMotor.HasStableSupport}, styleMatched={matchedExpectedStyle}, " +
+                              $"surface={finalCandidate.SurfaceId}, expectedSurface={courtSurfaceId}, " +
+                              $"movingSupport={finalCandidate.MovingSupport}.");
+                    allStylesMatched &= matchedExpectedStyle;
+                    body.linearVelocity = Vector3.zero;
+                    sceneMotor.SettleTangentialMotion();
+                    for (int settle = 0; settle < 8; settle++) yield return new WaitForFixedUpdate();
+                }
+                _scenarioSucceeded = _successfulSupplementalCaptures == 12 && allStylesMatched;
+                Destroy(courtSupport);
+                _animationLandingMotor = null;
+                _animationLandingBody = null;
+                yield break;
+            }
 
             if (scenario == VisualQaScenario.Dawn || scenario == VisualQaScenario.Night)
             {
@@ -675,6 +833,27 @@ namespace Elemental.Presentation.Rendering
         private IEnumerator CaptureSupplementalFrame(string suffix)
         {
             if (string.IsNullOrWhiteSpace(_requestedOutputPath)) yield break;
+            if (_animationLandingMotor != null && _animationLandingBody != null)
+            {
+                FrameAnimationLandingCamera(
+                    UnityEngine.Camera.main,
+                    _animationLandingMotor,
+                    _animationLandingBody);
+                HumanoidCharacterPresentation presentation =
+                    _animationLandingMotor.GetComponentInChildren<HumanoidCharacterPresentation>(true);
+                Animator qaAnimator = presentation != null ? presentation.Animator : null;
+                Transform hips = qaAnimator != null && qaAnimator.isHuman
+                    ? qaAnimator.GetBoneTransform(HumanBodyBones.Hips)
+                    : null;
+                AnimatorStateInfo state = qaAnimator != null
+                    ? qaAnimator.GetCurrentAnimatorStateInfo(0)
+                    : default;
+                Debug.Log($"[Elemental] Landing frame {suffix}: " +
+                          $"body={_animationLandingBody.worldCenterOfMass}, " +
+                          $"visual={presentation?.transform.position}, hips={hips?.position}, " +
+                          $"state={state.fullPathHash}, time={state.normalizedTime:0.000}, " +
+                          $"transition={qaAnimator != null && qaAnimator.IsInTransition(0)}.");
+            }
             string directory = Path.GetDirectoryName(_requestedOutputPath);
             string name = Path.GetFileNameWithoutExtension(_requestedOutputPath);
             string extension = Path.GetExtension(_requestedOutputPath);
@@ -693,6 +872,68 @@ namespace Elemental.Presentation.Rendering
             }
             _successfulSupplementalCaptures++;
             Debug.Log($"[Elemental] Supplemental gait captured: {path}");
+        }
+
+        private void PrepareAnimationLandingCourt(
+            UnityEngine.Camera camera,
+            PlanetMotor motor,
+            Rigidbody body)
+        {
+            _animationLandingMotor = motor;
+            _animationLandingBody = body;
+
+            // Landing evidence must show the animated player, not the nearby
+            // combat silhouettes used by the impact court. Keep this render-only
+            // isolation local to the dedicated QA process.
+            EarthCombatDummy[] dummies = FindObjectsByType<EarthCombatDummy>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+            for (int index = 0; index < dummies.Length; index++)
+                if (dummies[index] != null) dummies[index].gameObject.SetActive(false);
+            GameObject landmarks = GameObject.Find("Earth Diorama Landmarks");
+            if (landmarks != null) landmarks.SetActive(false);
+
+            Elemental.Presentation.Camera.PlanetCameraRig legacy =
+                FindAnyObjectByType<Elemental.Presentation.Camera.PlanetCameraRig>();
+            if (legacy != null) legacy.enabled = false;
+            Elemental.Presentation.Camera.EarthCinemachineCameraController localRig =
+                FindAnyObjectByType<Elemental.Presentation.Camera.EarthCinemachineCameraController>();
+            if (localRig != null) localRig.enabled = false;
+            Unity.Cinemachine.CinemachineBrain brain = camera.GetComponent<Unity.Cinemachine.CinemachineBrain>();
+            if (brain != null) brain.enabled = false;
+            FrameAnimationLandingCamera(camera, motor, body);
+        }
+
+        private static void FrameAnimationLandingCamera(
+            UnityEngine.Camera camera,
+            PlanetMotor motor,
+            Rigidbody body)
+        {
+            if (camera == null || motor == null || body == null) return;
+            Vector3 up = motor.LocalUp.sqrMagnitude > 0.5f ? motor.LocalUp.normalized : body.transform.up;
+            Vector3 forward = Vector3.ProjectOnPlane(motor.FacingForward, up).normalized;
+            if (forward.sqrMagnitude < 0.5f)
+                forward = Vector3.ProjectOnPlane(body.transform.forward, up).normalized;
+            Vector3 right = Vector3.Cross(up, forward).normalized;
+            Vector3 focus = body.worldCenterOfMass + up * 0.28f;
+            Vector3 position = focus - forward * 4.4f + right * 1.55f + up * 0.82f;
+            camera.transform.SetPositionAndRotation(
+                position,
+                Quaternion.LookRotation(focus - position, up));
+            camera.fieldOfView = 39f;
+        }
+
+        private static float RecoveryCaptureDelay(HumanoidCharacterPresentation presentation)
+        {
+            CharacterPresentationProfile profile = presentation != null ? presentation.Profile : null;
+            if (profile == null) return 0.10f;
+            float recovery = presentation.LandingStyle switch
+            {
+                EarthLandingStyle.Moving => profile.MovingLandingRecovery,
+                EarthLandingStyle.Hard => profile.HardLandingRecovery,
+                _ => profile.SoftLandingRecovery
+            };
+            return recovery * 0.72f;
         }
 
         private static void FrameArmorQaCamera(

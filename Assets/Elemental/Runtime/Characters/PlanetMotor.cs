@@ -53,6 +53,7 @@ namespace Elemental.Runtime.Characters
         private Vector3 _localUp = Vector3.up;
         private Vector3 _groundNormal = Vector3.up;
         private float _groundDistance;
+        private Vector3 _lastGravityAcceleration;
         private Vector3 _aimForward;
         private bool _hasAimForward;
         private ActiveRagdollPuppet _puppet;
@@ -68,7 +69,13 @@ namespace Elemental.Runtime.Characters
 
         public bool IsGrounded { get; private set; }
         public Vector3 LocalUp => _localUp;
+        public Vector3 GravityAcceleration => _lastGravityAcceleration;
         public Vector3 FacingForward => _hasAimForward ? _aimForward : transform.forward;
+        public Rigidbody Body => targetBody;
+        public CapsuleCollider Capsule => capsule;
+        public LayerMask GroundMask => groundMask;
+        public float MaximumSlopeAngle => maxSlopeAngle;
+        public float GroundProbeDistance => groundProbeDistance;
         public PlanetMotorCommand LastCommand { get; private set; }
         public uint MovingSurfaceId => _movingSupportTicks > 0 ? _movingSupport.SurfaceId : 0u;
         public uint MovingSurfaceGeneration => _movingSupportTicks > 0 ? _movingSupport.Generation : 0u;
@@ -313,6 +320,7 @@ namespace Elemental.Runtime.Characters
                 }
 
                 _localUp = ToVector3(math.normalizesafe(gravity.Up, new float3(0f, 1f, 0f)));
+                _lastGravityAcceleration = ToVector3(gravity.Acceleration);
                 if (_hasAimForward)
                 {
                     _aimForward = ToVector3(PlanetFacingSolver.SolveTangentForward(

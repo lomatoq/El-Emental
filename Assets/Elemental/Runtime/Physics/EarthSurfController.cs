@@ -86,6 +86,30 @@ namespace Elemental.Runtime.Physics
             ToFloat3(SurfaceVelocity),
             ToFloat3(_up),
             IsEmerging);
+        /// <summary>
+        /// Render-clock pose used only by animation contacts. Rigidbody
+        /// interpolation is visible through Transform while SupportFrame remains the
+        /// canonical fixed-tick snapshot consumed by gameplay physics.
+        /// </summary>
+        public SupportFrameSnapshot PresentationSupportFrame
+        {
+            get
+            {
+                Vector3 position = _boardBody != null ? _boardBody.transform.position : _previousPosition;
+                Quaternion rotation = _boardBody != null ? _boardBody.transform.rotation : _previousRotation;
+                Vector3 up = rotation * Vector3.up;
+                return new SupportFrameSnapshot(
+                    SurfaceId,
+                    _generation == 0u ? 1u : _generation,
+                    ToFloat3(position),
+                    ToMathQuaternion(rotation),
+                    ToFloat3(SurfaceVelocity),
+                    ToFloat3(_angularVelocity),
+                    ToFloat3(SurfaceVelocity),
+                    ToFloat3(up),
+                    IsEmerging);
+            }
+        }
         public MovingSupportSnapshot Snapshot => new MovingSupportSnapshot(SupportFrame);
 
         public void Configure(

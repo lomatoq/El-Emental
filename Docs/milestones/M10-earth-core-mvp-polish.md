@@ -382,3 +382,39 @@ Status: complete (2026-08-20)
 - Full EditMode: `340/340` in `38.729 s`.
 - Full PlayMode: `99/99` in `168.776 s`.
 - Windows builds were intentionally not produced for this Editor-only iteration.
+
+## Predictive animation rescue V1
+
+Status: implementation complete; Editor verification recorded with the task evidence
+
+- Added a presentation-only stepped capsule forecast with moving-support velocity,
+  walkable-surface filtering, free-debris rejection and a bounded lost-candidate
+  grace period. It never writes to canonical movement or collision state.
+- Added explicit rising, falling, pre-contact, contact and recovery presentation
+  phases. Soft, moving and hard landings use fixed-time transitions and recover in
+  independently tunable windows.
+- Landing clips now phase-align their authored contact moment against predicted TTC.
+  Curated FBX root tracks are extracted and discarded instead of being baked into
+  the Humanoid pose, eliminating the multi-metre visual separation between hips and
+  the authoritative physics capsule.
+- Replaced raw `A/D` and double-damped speed parameters with measured radial yaw,
+  turn hysteresis and separate support-relative acceleration/deceleration filters.
+- Surf feet now keep one board-local anchor per support generation and resolve it
+  from the interpolated render pose. The previous per-frame raycast/recapture loop
+  was removed; pelvis correction is critically damped and rate-limited.
+- Added a Moving Land state, live landing/foot telemetry in `EarthPolishLab`, pure
+  transition/filter tests, runtime predictor tests and the 12-frame
+  `animation-landing` capture scenario.
+- Architecture decision: `Docs/adr/0028-animation-rescue-v1.md`.
+
+### Final Rescue V1 evidence
+
+- Full EditMode: `352/352` passed in `36.563 s`
+  (`BuildReports/AnimationRescue-FinalEdit2.xml`).
+- Full PlayMode: `101/101` passed in `168.795 s`
+  (`BuildReports/AnimationRescue-FinalPlay.xml`).
+- The Editor-only `animation-landing` court captured `12/12` required
+  soft/moving/hard frames plus the terminal frame. The reviewed contact sheet is
+  `BuildReports/VisualQa/AnimationRescue-20260820-v28/contact-sheet.png`; combat
+  dummies are hidden only in this evidence court so they cannot obscure the actor.
+- Windows builds were intentionally not produced for this iteration.

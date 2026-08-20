@@ -21,3 +21,27 @@ MonoBehaviour:
   locomotionBlendSeconds: 0.12
   castingBlendSeconds: 0.1
   handIkWeight: 0.92
+  landingPredictionHorizon: 0.65
+  landingPredictionSteps: 6
+  minimumLandingAnticipation: 0.06
+  maximumLandingAnticipation: 0.18
+  landingCandidateGrace: 0.12
+  softLandingImpactSpeed: 4.5
+  hardLandingImpactSpeed: 7.5
+  movingLandingPlanarSpeed: 1.2
+  movingLandingRecovery: 0.08
+  softLandingRecovery: 0.16
+  hardLandingRecovery: 0.34
+  fixedTransitionSeconds: 0.065
+  softLandingContactSeconds: 0.625
+  movingLandingContactSeconds: 0.533
+  hardLandingContactSeconds: 0.625
+  referenceYawRateDegrees: 145
+  measuredYawFallbackThreshold: 7
+  turnDeadZone: 0.055
+  turnEnterSeconds: 0.065
+  turnReleaseSeconds: 0.16
+  speedAccelerationSeconds: 0.075
+  speedDecelerationSeconds: 0.11
+  surfPelvisResponseSeconds: 0.085
+  surfPelvisMaximumSpeed: 0.8

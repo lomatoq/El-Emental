@@ -48,6 +48,10 @@ namespace Elemental.Presentation.Animation
         private float3 _rightSupportLocal;
         private uint _lockedSupportId;
         private uint _lockedSupportGeneration;
+        private float _pelvisOffset;
+        private float _pelvisVelocity;
+        private float _pelvisResponseSeconds = 0.085f;
+        private float _pelvisMaximumSpeed = 0.8f;
         private uint _presentationTick;
         private uint _castStartTick;
         private uint _authoritativeTick;
@@ -67,6 +71,10 @@ namespace Elemental.Presentation.Animation
         public uint PresentationTick => _presentationTick;
         public bool FeetLocked => _leftPlant.Locked && _rightPlant.Locked;
         public float FootIkWeight => _footIkWeight;
+        public float LeftAnchorErrorMeters { get; private set; }
+        public float RightAnchorErrorMeters { get; private set; }
+        public float PelvisCorrectionMeters => _pelvisOffset;
+        public float PelvisCorrectionVelocity => _pelvisVelocity;
 
         public void Configure(
             Animator configuredAnimator,
@@ -88,6 +96,12 @@ namespace Elemental.Presentation.Animation
             profile = configuredProfile;
             ResolveFeet();
             if (isActiveAndEnabled) Subscribe();
+        }
+
+        public void ConfigureAnimationRescue(float pelvisResponseSeconds, float pelvisMaximumSpeed)
+        {
+            _pelvisResponseSeconds = Mathf.Clamp(pelvisResponseSeconds, 0.02f, 0.25f);
+            _pelvisMaximumSpeed = Mathf.Clamp(pelvisMaximumSpeed, 0.2f, 1.5f);
         }
 
         private void Awake()
@@ -393,13 +407,31 @@ namespace Elemental.Presentation.Animation
                     _lockedSupportId = 0u;
                     _lockedSupportGeneration = 0u;
                 }
+                _pelvisOffset = Mathf.SmoothDamp(
+                    _pelvisOffset, 0f, ref _pelvisVelocity, _pelvisResponseSeconds,
+                    _pelvisMaximumSpeed, Mathf.Max(0.0001f, Time.deltaTime));
+                LeftAnchorErrorMeters = 0f;
+                RightAnchorErrorMeters = 0f;
                 return;
             }
-            if (requestLock) ResolveSupportRelativeLocks();
-            _leftPlant = ProbeFoot(_leftFoot, _leftHits, _leftPlant, requestLock, -1f);
-            _rightPlant = ProbeFoot(_rightFoot, _rightHits, _rightPlant, requestLock, 1f);
-            if (requestLock) CaptureSupportRelativeLocks();
+            SupportFrameSnapshot presentationSupport = ResolvePresentationSupport();
+            bool hasPersistentSupportLock = requestLock &&
+                                            EarthSupportFootLockSolver.SameSupport(
+                                                _lockedSupportId,
+                                                _lockedSupportGeneration,
+                                                in presentationSupport) &&
+                                            _leftPlant.Locked && _rightPlant.Locked;
+            if (hasPersistentSupportLock)
+            {
+                ResolveSupportRelativeLocks(in presentationSupport);
+            }
             else
+            {
+                _leftPlant = ProbeFoot(_leftFoot, _leftHits, _leftPlant, requestLock, -1f);
+                _rightPlant = ProbeFoot(_rightFoot, _rightHits, _rightPlant, requestLock, 1f);
+                if (requestLock) CaptureSupportRelativeLocks(in presentationSupport);
+            }
+            if (!requestLock)
             {
                 _lockedSupportId = 0u;
                 _lockedSupportGeneration = 0u;
@@ -419,7 +451,20 @@ namespace Elemental.Presentation.Animation
                 rightError,
                 requestLock ? CurrentIntent.PelvisCompression01 : 0f,
                 allowedPelvisDrop);
-            animator.bodyPosition += up * pelvisOffset;
+            _pelvisOffset = Mathf.SmoothDamp(
+                _pelvisOffset,
+                pelvisOffset,
+                ref _pelvisVelocity,
+                _pelvisResponseSeconds,
+                _pelvisMaximumSpeed,
+                Mathf.Max(0.0001f, Time.deltaTime));
+            animator.bodyPosition += up * _pelvisOffset;
+            LeftAnchorErrorMeters = _leftPlant.Locked
+                ? Vector3.Distance(ToVector3(_leftPlant.Position), _leftFoot.position)
+                : 0f;
+            RightAnchorErrorMeters = _rightPlant.Locked
+                ? Vector3.Distance(ToVector3(_rightPlant.Position), _rightFoot.position)
+                : 0f;
             // The upper-body AvatarMask and arm rig own aiming. Editing Mecanim's
             // bodyRotation here also rotates the pelvis and twists both legs while
             // the player walks with a sustained MMB/RMB technique.
@@ -518,9 +563,17 @@ namespace Elemental.Presentation.Animation
             animator.SetIKHintPosition(AvatarIKHint.RightKnee, ToVector3(rightHint));
         }
 
-        private void ResolveSupportRelativeLocks()
+        private SupportFrameSnapshot ResolvePresentationSupport()
         {
-            SupportFrameSnapshot support = motor.CurrentSupportFrame;
+            if (surfController != null && surfController.IsActive)
+                return surfController.PresentationSupportFrame;
+            SupportFrameSnapshot fixedSupport = motor.CurrentSupportFrame;
+            float renderLead = Mathf.Clamp(Time.time - Time.fixedTime, 0f, Time.fixedDeltaTime);
+            return EarthPresentationSupportSolver.Extrapolate(in fixedSupport, renderLead);
+        }
+
+        private void ResolveSupportRelativeLocks(in SupportFrameSnapshot support)
+        {
             if (!EarthSupportFootLockSolver.SameSupport(
                     _lockedSupportId,
                     _lockedSupportGeneration,
@@ -539,9 +592,8 @@ namespace Elemental.Presentation.Animation
                     true);
         }
 
-        private void CaptureSupportRelativeLocks()
+        private void CaptureSupportRelativeLocks(in SupportFrameSnapshot support)
         {
-            SupportFrameSnapshot support = motor.CurrentSupportFrame;
             if (!support.IsValid || !_leftPlant.Locked || !_rightPlant.Locked) return;
             _lockedSupportId = support.SurfaceId;
             _lockedSupportGeneration = support.Generation;

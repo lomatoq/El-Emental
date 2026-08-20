@@ -25,7 +25,8 @@ namespace Elemental.Presentation.Rendering
         WallPush = 17,
         MageWalk = 18,
         Armor = 19,
-        QuickStone = 20
+        QuickStone = 20,
+        AnimationLanding = 21
     }
 
     public readonly struct VisualQaCaptureRequest
@@ -95,6 +96,7 @@ namespace Elemental.Presentation.Rendering
             if (string.Equals(value, "mage-walk", StringComparison.OrdinalIgnoreCase)) return VisualQaScenario.MageWalk;
             if (string.Equals(value, "armor", StringComparison.OrdinalIgnoreCase)) return VisualQaScenario.Armor;
             if (string.Equals(value, "quick-stone", StringComparison.OrdinalIgnoreCase)) return VisualQaScenario.QuickStone;
+            if (string.Equals(value, "animation-landing", StringComparison.OrdinalIgnoreCase)) return VisualQaScenario.AnimationLanding;
             return VisualQaScenario.None;
         }
     }

@@ -19,6 +19,7 @@
 | Surf hold | `X Bot@Crouch Idle` | `Surfing=true` | да |
 | Jump / Fall | `X Bot@Falling` (Jump временный до нового FBX) | `Grounded=false` | да |
 | Land | `X Bot@Hard Landing` | `Grounded=true` | нет |
+| Moving land | `X Bot@Falling To Roll` | predictive planar landing | нет |
 | Hard land | `X Bot@Hard Landing` | `HardLanding=true` | нет |
 
 Все base-клипы используют один canonical Humanoid Avatar из `X Bot.fbx`; кожны
@@ -26,8 +27,20 @@ animation-only FBX імпартуецца праз `Copy From Other Avatar`, т�
 таза і каленяў не пералічваецца асобна для кожнага файла. `Injured Idle` больш не
 выкарыстоўваецца як звычайны idle. Locomotion — `Freeform Cartesian 2D` па `Turn × Speed`. Скорость считается
 относительно движущейся опоры, поэтому подъём платформы не включает ложную ходьбу.
-Root motion у всех клипов запечён в позу и выключен в Animator: Rigidbody и
-`PlanetMotor` остаются единственным источником перемещения.
+Root-трэкі ўсіх кліпаў выдзяляюцца з позы (`lockRoot* = false`, Y based on feet),
+а `Animator.applyRootMotion = false` іх адкідае: Rigidbody і `PlanetMotor`
+застаюцца адзінай крыніцай кананічнага перамяшчэння. Гэта не дае падзенню з FBX
+падняць бачныя hips на некалькі метраў над фізічнай capsule.
+
+Landing не ждёт визуально запоздалого transition из bool: presentation-only capsule
+forecast выбирает soft/moving/hard state за 60–180 ms до ожидаемого контакта, а
+фактический `HasStableSupport` только подтверждает recovery. Все значения доступны в
+Inspector у `Assets/Elemental/Content/Profiles/CharacterPresentationProfile.asset`.
+Там же настраиваются turn enter/release, speed acceleration/deceleration и сглаживание
+pelvis на moving support.
+Аўтарскі contact-момант (`soft 0.625 s`, `moving 0.533 s`, `hard 0.625 s`) таксама
+ляжыць у гэтым профілі. Старт кліпа фазава зрушваецца на predicted TTC, таму
+кантактная поза супадае з фізічным кантактам, а не прайгравае паветраны пачатак FBX.
 
 ## Earth Magic Upper Body
 
@@ -61,7 +74,7 @@ locomotion працягвае ісці і ніколі не замарожвае
 | `X Bot@Hit To Side Of Body` | основной upper-body recoil |
 | `X Bot@Receiving An Uppercut` | запасной тяжёлый hit |
 | `X Bot@Injured Idle` | зарезервирован для injured locomotion |
-| `X Bot@Falling To Roll` | зарезервирован для severe landing/recovery |
+| `X Bot@Falling To Roll` | moving landing / forward recovery |
 | `X Bot@Punch Combo` | зарезервирован для melee/combo |
 | `X Bot@Mma Kick` | зарезервирован для melee/kick |
 | `Standing 2H Magic Attack 05` без префикса | импортированный alternate, не production slot |

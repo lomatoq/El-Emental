@@ -84,6 +84,7 @@ namespace Elemental.Authoring.Editor
 
         private static bool IsCurrent(AnimatorController controller)
         {
+            if (!AreCuratedImportersCurrent()) return false;
             bool hasFinalWeight = false;
             bool hasMotionTime = false;
             AnimatorControllerParameter[] parameters = controller.parameters;
@@ -97,6 +98,9 @@ namespace Elemental.Authoring.Editor
                     hasMotionTime = true;
             }
             if (!hasFinalWeight || !hasMotionTime) return false;
+            if (controller.layers.Length == 0 ||
+                FindState(controller.layers[0].stateMachine, "Moving Land") == null)
+                return false;
             UnityEngine.Object[] assets = AssetDatabase.LoadAllAssetsAtPath(ControllerPath);
             for (int index = 0; index < assets.Length; index++)
                 if (assets[index] is BlendTree tree && tree.name == "Earth Curated Casts")
@@ -106,6 +110,37 @@ namespace Elemental.Authoring.Editor
                            cast != null && cast.timeParameterActive && cast.timeParameter == "EarthMotionTime";
                 }
             return false;
+        }
+
+        private static bool AreCuratedImportersCurrent()
+        {
+            Avatar sharedAvatar = LoadAvatar(CharacterPath);
+            if (sharedAvatar == null || !sharedAvatar.isValid || !sharedAvatar.isHuman) return false;
+            for (int pathIndex = 0; pathIndex < CuratedPaths.Length; pathIndex++)
+            {
+                string path = CuratedPaths[pathIndex];
+                ModelImporter importer = AssetImporter.GetAtPath(path) as ModelImporter;
+                if (importer == null || importer.animationType != ModelImporterAnimationType.Human ||
+                    importer.avatarSetup != ModelImporterAvatarSetup.CopyFromOther ||
+                    importer.sourceAvatar != sharedAvatar || !importer.importAnimation)
+                    return false;
+                ModelImporterClipAnimation[] clips = importer.clipAnimations;
+                if (clips == null || clips.Length == 0) clips = importer.defaultClipAnimations;
+                if (clips == null || clips.Length == 0) return false;
+                bool loop = IsLooping(path);
+                for (int clipIndex = 0; clipIndex < clips.Length; clipIndex++)
+                {
+                    ModelImporterClipAnimation clip = clips[clipIndex];
+                    bool clipLoop = string.Equals(clip.name, NeutralIdleClipName, StringComparison.Ordinal) ||
+                                    (!string.Equals(path, StandToCrouchPath, StringComparison.Ordinal) && loop);
+                    if (clip.loopTime != clipLoop || clip.loopPose != clipLoop ||
+                        clip.lockRootRotation || clip.lockRootHeightY || clip.lockRootPositionXZ ||
+                        !clip.keepOriginalOrientation || clip.keepOriginalPositionY ||
+                        !clip.keepOriginalPositionXZ || !clip.heightFromFeet)
+                        return false;
+                }
+            }
+            return true;
         }
 
         private static AnimatorState FindState(AnimatorStateMachine machine, string stateName)
@@ -190,18 +225,23 @@ namespace Elemental.Authoring.Editor
                 ModelImporterClipAnimation clip = clips[clipIndex];
                 bool clipLoop = string.Equals(clip.name, NeutralIdleClipName, StringComparison.Ordinal) ||
                                 (!string.Equals(path, StandToCrouchPath, StringComparison.Ordinal) && loop);
-                if (clip.loopTime != clipLoop || clip.loopPose != clipLoop || !clip.lockRootRotation ||
-                    !clip.lockRootHeightY || !clip.lockRootPositionXZ ||
-                    !clip.keepOriginalOrientation || !clip.keepOriginalPositionY ||
-                    !clip.keepOriginalPositionXZ)
+                if (clip.loopTime != clipLoop || clip.loopPose != clipLoop || clip.lockRootRotation ||
+                    clip.lockRootHeightY || clip.lockRootPositionXZ ||
+                    !clip.keepOriginalOrientation || clip.keepOriginalPositionY ||
+                    !clip.keepOriginalPositionXZ || !clip.heightFromFeet)
                     dirty = true;
                 clip.loopTime = clipLoop;
                 clip.loopPose = clipLoop;
-                clip.lockRootRotation = true;
-                clip.lockRootHeightY = true;
-                clip.lockRootPositionXZ = true;
+                // Canonical translation and rotation belong to PlanetMotor. Extract
+                // every FBX root track instead of baking it back into the Humanoid
+                // bones; applyRootMotion=false then discards the track while preserving
+                // the authored limb motion. Baking a landing's vertical trajectory
+                // moved the visible hips metres away from the physics capsule.
+                clip.lockRootRotation = false;
+                clip.lockRootHeightY = false;
+                clip.lockRootPositionXZ = false;
                 clip.keepOriginalOrientation = true;
-                clip.keepOriginalPositionY = true;
+                clip.keepOriginalPositionY = false;
                 clip.keepOriginalPositionXZ = true;
                 clip.heightFromFeet = true;
             }
@@ -229,11 +269,11 @@ namespace Elemental.Authoring.Editor
                 lastFrame = Mathf.Min(source.lastFrame, source.firstFrame + 1f),
                 loopTime = true,
                 loopPose = true,
-                lockRootRotation = true,
-                lockRootHeightY = true,
-                lockRootPositionXZ = true,
+                lockRootRotation = false,
+                lockRootHeightY = false,
+                lockRootPositionXZ = false,
                 keepOriginalOrientation = true,
-                keepOriginalPositionY = true,
+                keepOriginalPositionY = false,
                 keepOriginalPositionXZ = true,
                 heightFromFeet = true
             };
@@ -245,11 +285,11 @@ namespace Elemental.Authoring.Editor
                 lastFrame = source.lastFrame,
                 loopTime = false,
                 loopPose = false,
-                lockRootRotation = true,
-                lockRootHeightY = true,
-                lockRootPositionXZ = true,
+                lockRootRotation = false,
+                lockRootHeightY = false,
+                lockRootPositionXZ = false,
                 keepOriginalOrientation = true,
-                keepOriginalPositionY = true,
+                keepOriginalPositionY = false,
                 keepOriginalPositionXZ = true,
                 heightFromFeet = true
             };
@@ -271,6 +311,7 @@ namespace Elemental.Authoring.Editor
             AnimatorState jump = FindOrCreateState(machine, "Jump");
             AnimatorState fall = FindOrCreateState(machine, "Fall");
             AnimatorState land = FindOrCreateState(machine, "Land");
+            AnimatorState movingLand = FindOrCreateState(machine, "Moving Land");
             AnimatorState hardLand = FindOrCreateState(machine, "Hard Land");
             AnimatorState surfEnter = FindOrCreateState(machine, "Surf Enter");
             AnimatorState surf = FindOrCreateState(machine, "Surf Crouch");
@@ -303,6 +344,7 @@ namespace Elemental.Authoring.Editor
             jump.motion = LoadClip(FallingPath) ?? idle;
             fall.motion = LoadClip(FallingPath) ?? idle;
             land.motion = LoadClip(HardLandingPath) ?? idle;
+            movingLand.motion = LoadClip(FallingRollPath) ?? LoadClip(HardLandingPath) ?? idle;
             hardLand.motion = LoadClip(HardLandingPath) ?? land.motion;
             surfEnter.motion = LoadClip(StandToCrouchPath, "Standing Idle To Crouch") ??
                                LoadClip(CrouchIdlePath) ?? idle;
@@ -312,6 +354,7 @@ namespace Elemental.Authoring.Editor
             jump.transitions = Array.Empty<AnimatorStateTransition>();
             fall.transitions = Array.Empty<AnimatorStateTransition>();
             land.transitions = Array.Empty<AnimatorStateTransition>();
+            movingLand.transitions = Array.Empty<AnimatorStateTransition>();
             hardLand.transitions = Array.Empty<AnimatorStateTransition>();
             surfEnter.transitions = Array.Empty<AnimatorStateTransition>();
             surf.transitions = Array.Empty<AnimatorStateTransition>();
@@ -324,9 +367,11 @@ namespace Elemental.Authoring.Editor
             AddConditionTransition(fall, land, "Grounded", AnimatorConditionMode.If, 0f, 0.06f,
                 "HardLanding", AnimatorConditionMode.IfNot, 0f);
             AddExitTransition(land, locomotion, 0.70f, 0.10f);
+            AddExitTransition(movingLand, locomotion, 0.58f, 0.08f);
             AddExitTransition(hardLand, locomotion, 0.82f, 0.12f);
             AddConditionTransition(locomotion, surfEnter, "Surfing", AnimatorConditionMode.If, 0f, 0.10f);
             AddConditionTransition(land, surfEnter, "Surfing", AnimatorConditionMode.If, 0f, 0.10f);
+            AddConditionTransition(movingLand, surfEnter, "Surfing", AnimatorConditionMode.If, 0f, 0.10f);
             AddConditionTransition(hardLand, surfEnter, "Surfing", AnimatorConditionMode.If, 0f, 0.10f);
             AddExitTransition(surfEnter, surf, 0.72f, 0.08f, "Surfing");
             AddConditionTransition(surfEnter, locomotion, "Surfing", AnimatorConditionMode.IfNot, 0f, 0.09f);

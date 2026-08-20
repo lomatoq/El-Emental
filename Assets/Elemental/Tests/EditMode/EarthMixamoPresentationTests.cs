@@ -68,6 +68,22 @@ namespace Elemental.Tests.EditMode
             Assert.That(dependencies, Does.Contain(PushPath));
         }
 
+        [TestCase(EarthHumanoidMotionSetup.HardLandingPath)]
+        [TestCase(EarthHumanoidMotionSetup.FallingRollPath)]
+        public void CanonicalPhysicsClipsExtractRootTracksInsteadOfBakingThemIntoBones(string path)
+        {
+            ModelImporter importer = AssetImporter.GetAtPath(path) as ModelImporter;
+            Assert.That(importer, Is.Not.Null, path);
+            ModelImporterClipAnimation[] clips = importer.clipAnimations;
+            if (clips == null || clips.Length == 0) clips = importer.defaultClipAnimations;
+            Assert.That(clips, Is.Not.Empty, path);
+            Assert.That(clips.All(candidate =>
+                !candidate.lockRootRotation &&
+                !candidate.lockRootHeightY &&
+                !candidate.lockRootPositionXZ), Is.True,
+                "PlanetMotor owns canonical motion; baked FBX root tracks visually detach the rig from its capsule.");
+        }
+
         [Test]
         public void NeutralIdleAndSurfTransitionAreDistinctSubclips()
         {

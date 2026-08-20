@@ -22,6 +22,13 @@ namespace Elemental.Presentation.Animation
         private static readonly int EarthPoseHash = Animator.StringToHash("EarthPose");
         private static readonly int ImpactHash = Animator.StringToHash("Impact");
         private static readonly int MotionTimeHash = Animator.StringToHash("EarthMotionTime");
+        private static readonly int LocomotionStateHash = Animator.StringToHash("Base Layer.Locomotion");
+        private static readonly int JumpStateHash = Animator.StringToHash("Base Layer.Jump");
+        private static readonly int FallStateHash = Animator.StringToHash("Base Layer.Fall");
+        private static readonly int LandStateHash = Animator.StringToHash("Base Layer.Land");
+        private static readonly int MovingLandStateHash = Animator.StringToHash("Base Layer.Moving Land");
+        private static readonly int HardLandStateHash = Animator.StringToHash("Base Layer.Hard Land");
+        private static readonly int SurfStateHash = Animator.StringToHash("Base Layer.Surf Crouch");
         private static readonly int[] EarthPoseWeightHashes =
         {
             Animator.StringToHash("EarthPose01"),
@@ -54,6 +61,7 @@ namespace Elemental.Presentation.Animation
         [SerializeField] private EarthChoreographyDirector choreographyDirector;
         [SerializeField] private EarthSurfController surfController;
         [SerializeField] private EarthAnimationRigBridge animationRigBridge;
+        [SerializeField] private EarthAnimationContactPredictor contactPredictor;
 
         private float _castWeight;
         private CharacterPhysicalMode _physicalMode;
@@ -63,14 +71,26 @@ namespace Elemental.Presentation.Animation
         private bool _wasCasting;
         private float _impactUntil;
         private bool _ragdollSubscribed;
-        private float _stableGroundedSeconds;
         private bool _animationGrounded = true;
         private float _unsupportedSeconds;
-        private float _minimumAirVerticalSpeed;
-        private float _hardLandingUntil;
+        private EarthAnimationRescueState _rescueState;
+        private EarthScalarPresentationState _speedFilter;
+        private EarthScalarPresentationState _turnFilter;
+        private Vector3 _previousFacing;
+        private bool _hasPreviousFacing;
+        private int _activeBaseStateHash;
 
         public Animator Animator => animator;
         public CharacterPresentationProfile Profile => profile;
+        public EarthAnimationPhase MotionPhase => _rescueState.Phase;
+        public float MotionPhaseSeconds => _rescueState.PhaseSeconds;
+        public EarthLandingStyle LandingStyle => _rescueState.LandingStyle;
+        public EarthLandingCandidateSnapshot LandingCandidate =>
+            contactPredictor != null ? contactPredictor.Latest : default;
+        public float FilteredSpeed => _speedFilter.Value;
+        public float FilteredTurn => _turnFilter.Value;
+        public float MeasuredYawRateDegrees { get; private set; }
+        public EarthCharacterPoseController PoseController => poseController;
 
         public void Configure(
             CharacterPresentationProfile configuredProfile,
@@ -119,6 +139,7 @@ namespace Elemental.Presentation.Animation
             animator.applyRootMotion = false;
             animator.updateMode = AnimatorUpdateMode.Normal;
             animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            animator.stabilizeFeet = true;
             _magicLayerIndex = animator.GetLayerIndex(MagicLayerName);
             _impactLayerIndex = animator.GetLayerIndex(ImpactLayerName);
             animator.SetLayerWeight(0, 1f);
@@ -126,7 +147,11 @@ namespace Elemental.Presentation.Animation
             if (_impactLayerIndex >= 0) animator.SetLayerWeight(_impactLayerIndex, 0f);
             _animationGrounded = true;
             _unsupportedSeconds = 0f;
+            _activeBaseStateHash = 0;
             animator.SetBool(GroundedHash, true);
+            if (contactPredictor == null) contactPredictor = GetComponent<EarthAnimationContactPredictor>();
+            if (contactPredictor == null) contactPredictor = gameObject.AddComponent<EarthAnimationContactPredictor>();
+            contactPredictor.Configure(motor);
         }
 
         private void ConfigurePoseController()
@@ -136,6 +161,9 @@ namespace Elemental.Presentation.Animation
             if (poseController == null) poseController = gameObject.AddComponent<EarthCharacterPoseController>();
             poseController.Configure(
                 animator, magicInput, executor, motor, rootBody, pillarMobility, techniqueProfile);
+            poseController.ConfigureAnimationRescue(
+                profile != null ? profile.SurfPelvisResponseSeconds : 0.085f,
+                profile != null ? profile.SurfPelvisMaximumSpeed : 0.8f);
             if (choreographyDirector == null)
                 choreographyDirector = GetComponent<EarthChoreographyDirector>();
             if (choreographyDirector == null)
@@ -185,21 +213,73 @@ namespace Elemental.Presentation.Animation
                 rootBody.linearVelocity - supportVelocity,
                 motor.LocalUp);
             float verticalSpeed = Vector3.Dot(rootBody.linearVelocity, motor.LocalUp);
-            float presentationSpeed = 0f;
             bool surfing = surfController != null && surfController.IsActive;
-            if (!surfing)
-            {
-                Vector3 facing = Vector3.ProjectOnPlane(motor.FacingForward, motor.LocalUp);
-                if (facing.sqrMagnitude < 0.001f) facing = transform.forward;
-                presentationSpeed = Vector3.Dot(tangentVelocity, facing.normalized);
-            }
-            animator.SetFloat(SpeedHash, presentationSpeed, ProfileBlendSeconds, Time.deltaTime);
-            animator.SetFloat(TurnHash, motor.LastCommand.Move.x, 0.08f, Time.deltaTime);
-            animator.SetBool(SurfingHash, surfing);
+            Vector3 facing = Vector3.ProjectOnPlane(motor.FacingForward, motor.LocalUp);
+            if (facing.sqrMagnitude < 0.001f) facing = Vector3.ProjectOnPlane(transform.forward, motor.LocalUp);
+            facing.Normalize();
+            float measuredYaw = 0f;
+            if (_hasPreviousFacing && Time.deltaTime > 0.0001f)
+                measuredYaw = Vector3.SignedAngle(_previousFacing, facing, motor.LocalUp) / Time.deltaTime;
+            _previousFacing = facing;
+            _hasPreviousFacing = true;
+            MeasuredYawRateDegrees = measuredYaw;
+
+            float targetSpeed = surfing ? 0f : Vector3.Dot(tangentVelocity, facing);
+            float presentationSpeed = EarthAnimationParameterFilter.StepSpeed(
+                ref _speedFilter,
+                targetSpeed,
+                profile != null ? profile.SpeedAccelerationSeconds : 0.075f,
+                profile != null ? profile.SpeedDecelerationSeconds : 0.11f,
+                Time.deltaTime);
+            EarthTurnPresentationSample turn = EarthAnimationParameterFilter.StepTurn(
+                ref _turnFilter,
+                measuredYaw,
+                motor.LastCommand.Move.x,
+                profile != null ? profile.ReferenceYawRateDegrees : 145f,
+                profile != null ? profile.MeasuredYawFallbackThreshold : 7f,
+                profile != null ? profile.TurnDeadZone : 0.055f,
+                profile != null ? profile.TurnEnterSeconds : 0.065f,
+                profile != null ? profile.TurnReleaseSeconds : 0.16f,
+                Time.deltaTime);
+            animator.feetPivotActive = Mathf.MoveTowards(
+                animator.feetPivotActive,
+                turn.PivotActive ? 0.18f : 1f,
+                Time.deltaTime * 5.5f);
+
             UpdateAnimationGrounded(verticalSpeed);
+            EarthLandingCandidateSnapshot candidate = !_animationGrounded && contactPredictor != null
+                ? contactPredictor.Predict(
+                    profile != null ? profile.LandingPredictionHorizon : 0.65f,
+                    profile != null ? profile.LandingPredictionSteps : 6,
+                    profile != null ? profile.LandingCandidateGrace : 0.12f,
+                    Time.deltaTime)
+                : default;
+            EarthAnimationRescueTuning rescueTuning = ResolveRescueTuning();
+            EarthLandingStyle previousLandingStyle = _rescueState.LandingStyle;
+            EarthAnimationRescueSample rescue = EarthAnimationStateResolver.Step(
+                ref _rescueState,
+                in rescueTuning,
+                in candidate,
+                _animationGrounded,
+                surfing,
+                _physicalMode == CharacterPhysicalMode.FullRagdoll,
+                verticalSpeed,
+                tangentVelocity.magnitude,
+                Time.deltaTime);
+
+            animator.SetFloat(SpeedHash, presentationSpeed);
+            animator.SetFloat(TurnHash, turn.Value);
+            animator.SetBool(SurfingHash, surfing);
             animator.SetBool(GroundedHash, _animationGrounded);
             animator.SetFloat(VerticalSpeedHash, verticalSpeed);
-            RecoverGroundedLocomotionState();
+            animator.SetBool(HardLandingHash, rescue.LandingStyle == EarthLandingStyle.Hard &&
+                                                    (rescue.Phase == EarthAnimationPhase.PreLanding ||
+                                                     rescue.Phase == EarthAnimationPhase.LandingContact ||
+                                                     rescue.Phase == EarthAnimationPhase.LandingRecovery));
+            bool landingStyleChanged = rescue.LandingStyle != previousLandingStyle &&
+                                       (rescue.Phase == EarthAnimationPhase.PreLanding ||
+                                        rescue.Phase == EarthAnimationPhase.LandingContact);
+            if (rescue.PhaseChanged || landingStyleChanged) DriveRescueTransition(in rescue);
             int castKind = ResolveCastKind();
             bool casting = castKind > 0 && _physicalMode != CharacterPhysicalMode.FullRagdoll &&
                            ((poseController != null && poseController.CurrentRequest.IsActive) ||
@@ -247,15 +327,8 @@ namespace Elemental.Presentation.Animation
         {
             if (motor.HasStableSupport)
             {
-                bool justLanded = !_animationGrounded;
                 _unsupportedSeconds = 0f;
                 _animationGrounded = true;
-                if (justLanded)
-                    _hardLandingUntil = _minimumAirVerticalSpeed <= -7.5f
-                        ? Time.time + 0.65f
-                        : 0f;
-                _minimumAirVerticalSpeed = 0f;
-                animator.SetBool(HardLandingHash, Time.time < _hardLandingUntil);
                 return;
             }
 
@@ -266,31 +339,84 @@ namespace Elemental.Presentation.Animation
             // an ordinary fall is accepted after a short unsupported window.
             if (verticalSpeed > 0.75f || _unsupportedSeconds >= 0.11f)
                 _animationGrounded = false;
-            if (!_animationGrounded)
-                _minimumAirVerticalSpeed = Mathf.Min(_minimumAirVerticalSpeed, verticalSpeed);
-            animator.SetBool(HardLandingHash, false);
         }
 
-        private void RecoverGroundedLocomotionState()
-        {
-            if (!motor.HasStableSupport)
-            {
-                _stableGroundedSeconds = 0f;
-                return;
-            }
-            _stableGroundedSeconds += Time.deltaTime;
-            if (_stableGroundedSeconds < 0.22f || animator.IsInTransition(0)) return;
-            if (surfController != null && surfController.IsActive) return;
-            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-            if (state.IsName("Locomotion")) return;
-            if (state.IsName("Land") && state.normalizedTime < 0.68f) return;
-            if (state.IsName("Hard Land") && state.normalizedTime < 0.82f) return;
+        private EarthAnimationRescueTuning ResolveRescueTuning() => profile != null
+            ? new EarthAnimationRescueTuning(
+                profile.MinimumLandingAnticipation,
+                profile.MaximumLandingAnticipation,
+                profile.LandingCandidateGrace,
+                profile.SoftLandingImpactSpeed,
+                profile.HardLandingImpactSpeed,
+                profile.MovingLandingPlanarSpeed,
+                profile.MovingLandingRecovery,
+                profile.SoftLandingRecovery,
+                profile.HardLandingRecovery)
+            : EarthAnimationRescueTuning.Default;
 
-            // A one-frame support miss on a curved surface can enter Jump before
-            // locomotion has settled. If its vertical threshold never crosses,
-            // that one-shot state freezes until the player performs a real jump.
-            // Stable support is the authoritative escape back to locomotion.
-            animator.CrossFade("Locomotion", 0.08f, 0, 0f);
+        private void DriveRescueTransition(in EarthAnimationRescueSample rescue)
+        {
+            if (animator == null || !animator.enabled) return;
+            int stateHash = 0;
+            switch (rescue.Phase)
+            {
+                case EarthAnimationPhase.GroundedIdle:
+                case EarthAnimationPhase.LocomotionLoop:
+                    stateHash = LocomotionStateHash;
+                    break;
+                case EarthAnimationPhase.Rising:
+                    stateHash = JumpStateHash;
+                    break;
+                case EarthAnimationPhase.Apex:
+                case EarthAnimationPhase.Falling:
+                    stateHash = FallStateHash;
+                    break;
+                case EarthAnimationPhase.PreLanding:
+                case EarthAnimationPhase.LandingContact:
+                    stateHash = rescue.LandingStyle switch
+                    {
+                        EarthLandingStyle.Hard => HardLandStateHash,
+                        EarthLandingStyle.Moving => MovingLandStateHash,
+                        _ => LandStateHash
+                    };
+                    break;
+                case EarthAnimationPhase.SurfLoop:
+                    stateHash = SurfStateHash;
+                    break;
+            }
+            if (stateHash == 0) return;
+            // PreLanding and LandingContact intentionally resolve to the same
+            // authored clip. Re-entering it on physical contact restarted the
+            // motion at time zero and caused a visible snap at touchdown.
+            if (_activeBaseStateHash == stateHash) return;
+            _activeBaseStateHash = stateHash;
+            float startSeconds = 0f;
+            if (rescue.Phase == EarthAnimationPhase.PreLanding ||
+                rescue.Phase == EarthAnimationPhase.LandingContact)
+            {
+                float contactSeconds = ResolveLandingContactSeconds(rescue.LandingStyle);
+                EarthLandingCandidateSnapshot candidate = LandingCandidate;
+                startSeconds = EarthLandingClipPhaseAlignment.ResolveStartSeconds(
+                    contactSeconds,
+                    candidate.TimeToContact,
+                    rescue.Phase == EarthAnimationPhase.PreLanding && candidate.IsValid);
+            }
+            animator.CrossFadeInFixedTime(
+                stateHash,
+                profile != null ? profile.FixedTransitionSeconds : 0.065f,
+                0,
+                startSeconds);
+        }
+
+        private float ResolveLandingContactSeconds(EarthLandingStyle style)
+        {
+            if (profile == null) return style == EarthLandingStyle.Moving ? 0.533f : 0.625f;
+            return style switch
+            {
+                EarthLandingStyle.Moving => profile.MovingLandingContactSeconds,
+                EarthLandingStyle.Hard => profile.HardLandingContactSeconds,
+                _ => profile.SoftLandingContactSeconds
+            };
         }
 
         private void OnAnimatorIK(int layerIndex)
@@ -393,7 +519,6 @@ namespace Elemental.Presentation.Animation
             }
         }
 
-        private float ProfileBlendSeconds => profile != null ? profile.LocomotionBlendSeconds : 0.12f;
         private float CastingBlendSeconds => profile != null ? profile.CastingBlendSeconds : 0.1f;
     }
 }
