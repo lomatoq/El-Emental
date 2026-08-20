@@ -37,6 +37,12 @@ though canonical physics was valid.
   recapture occur only after a genuine support change or lock loss.
 - Pelvis correction has one critically damped owner with a configurable maximum
   correction speed. Stable radial knee hints remain the last leg constraint.
+- Entry into the turn blend tree requires explicit player turn intent. Fixed-step
+  radial facing corrections may refine an active turn, but can never create one;
+  this prevents render/fixed aliasing from flashing left/right turn poses at idle.
+- Passive support-relative speed below the authored dead zone is zeroed when there
+  is no forward/back input. Mecanim automatic foot stabilization is disabled:
+  `EarthCharacterPoseController` remains the only post-animation foot owner.
 
 ## Tuning and evidence
 
@@ -49,6 +55,14 @@ Final isolated Editor evidence: `352/352` EditMode in `36.563 s`, `101/101`
 PlayMode in `168.795 s`, and all twelve landing frames plus the terminal capture in
 `BuildReports/VisualQa/AnimationRescue-20260820-v28/`. Windows builds were
 intentionally not produced for this Editor-only rescue.
+
+Leg-jitter follow-up evidence: `354/354` EditMode in `39.013 s`, `101/101`
+PlayMode in `171.885 s`. The Editor `mage-walk` court measured
+`ghostTurn=0.000`, locomotion `footIk=0.000`, `mecanimFeet=False`, preserved
+`4.37` gait cycles and captured three distinct gait phases. Reports are
+`BuildReports/AnimationLegJitter-FinalEdit.xml` and
+`BuildReports/AnimationLegJitter-FinalPlay.xml`; frames are in
+`BuildReports/VisualQa/AnimationLegJitter-20260820/`.
 
 ## Consequences
 

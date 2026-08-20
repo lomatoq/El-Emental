@@ -418,3 +418,15 @@ Status: implementation complete; Editor verification recorded with the task evid
   `BuildReports/VisualQa/AnimationRescue-20260820-v28/contact-sheet.png`; combat
   dummies are hidden only in this evidence court so they cannot obscure the actor.
 - Windows builds were intentionally not produced for this iteration.
+
+### Leg jitter follow-up
+
+- Removed the last dual-owner foot path: custom contact IK remains authoritative
+  and Mecanim automatic stabilization is disabled.
+- Turn presentation now needs A/D intent; fixed/render clock aliasing cannot inject
+  uncommanded turn clips into idle or straight locomotion.
+- Passive support drift below `0.14 m/s` no longer blends walk into idle and is
+  adjustable in `CharacterPresentationProfile`.
+- Full regression: `354/354` EditMode and `101/101` PlayMode. The `mage-walk`
+  visual court reported `ghostTurn=0.000`, `footIk=0.000`, four-plus gait cycles
+  and three distinct captured phases.

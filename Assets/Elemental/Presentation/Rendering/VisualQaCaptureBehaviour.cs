@@ -326,6 +326,7 @@ namespace Elemental.Presentation.Rendering
                 Animator animator = sceneMotor != null ? sceneMotor.GetComponentInChildren<Animator>(true) : null;
                 if (sceneMotor == null || body == null || animator == null || animator.runtimeAnimatorController == null)
                     yield break;
+                HumanoidCharacterPresentation presentation = animator.GetComponent<HumanoidCharacterPresentation>();
                 VisualQaMotorInput scripted = sceneMotor.gameObject.AddComponent<VisualQaMotorInput>();
                 scripted.Move = new float2(0f, 1f);
                 sceneMotor.ConfigureInputSource(scripted);
@@ -337,6 +338,8 @@ namespace Elemental.Presentation.Rendering
                 Vector3 lateFootLocal = firstFootLocal;
                 float maximumFootTravel = 0f;
                 float lateFootTravel = 0f;
+                float maximumUncommandedTurn = 0f;
+                float maximumLocomotionFootIk = 0f;
                 float firstLocomotionTime = -1f;
                 float lastLocomotionTime = -1f;
                 int gaitCaptureIndex = 0;
@@ -351,6 +354,16 @@ namespace Elemental.Presentation.Rendering
                     if (frame > 80)
                         lateFootTravel = Mathf.Max(lateFootTravel,
                             Vector3.Distance(lateFootLocal, currentFootLocal));
+                    if (presentation != null)
+                    {
+                        maximumUncommandedTurn = Mathf.Max(
+                            maximumUncommandedTurn,
+                            Mathf.Abs(presentation.FilteredTurn));
+                        if (presentation.PoseController != null)
+                            maximumLocomotionFootIk = Mathf.Max(
+                                maximumLocomotionFootIk,
+                                presentation.PoseController.FootIkWeight);
+                    }
 
                     AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
                     if (state.IsName("Locomotion"))
@@ -377,11 +390,15 @@ namespace Elemental.Presentation.Rendering
                 _scenarioSucceeded = travel > 3f && maximumFootTravel > 0.05f &&
                                      lateFootTravel > 0.015f && locomotionCycles > 1.1f &&
                                      finalState.IsName("Locomotion") && clips.Length > 0 &&
-                                     activeClipsLoop && gaitCaptureIndex == 3 &&
+                                     activeClipsLoop && !animator.stabilizeFeet &&
+                                     maximumUncommandedTurn <= 0.025f &&
+                                     maximumLocomotionFootIk <= 0.15f && gaitCaptureIndex == 3 &&
                                      _successfulSupplementalCaptures == 3;
                 Debug.Log($"[Elemental] Continuous gait QA: travel={travel:0.000} m, " +
                           $"foot={maximumFootTravel:0.000}, lateFoot={lateFootTravel:0.000}, " +
-                          $"cycles={locomotionCycles:0.00}, state={finalState.fullPathHash}, looping={activeClipsLoop}.");
+                          $"cycles={locomotionCycles:0.00}, state={finalState.fullPathHash}, looping={activeClipsLoop}, " +
+                          $"ghostTurn={maximumUncommandedTurn:0.000}, footIk={maximumLocomotionFootIk:0.000}, " +
+                          $"mecanimFeet={animator.stabilizeFeet}.");
                 yield break;
             }
 

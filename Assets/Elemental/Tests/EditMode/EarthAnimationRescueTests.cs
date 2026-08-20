@@ -133,6 +133,41 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void FixedClockYawNoiseCannotEnterTurnWithoutPlayerIntent()
+        {
+            EarthScalarPresentationState state = default;
+            float[] aliasedYaw = { 0f, 38f, 0f, -31f, 0f, 24f, -19f, 0f };
+            for (int frame = 0; frame < 240; frame++)
+            {
+                EarthTurnPresentationSample sample = EarthAnimationParameterFilter.StepTurn(
+                    ref state,
+                    aliasedYaw[frame % aliasedYaw.Length],
+                    0f,
+                    145f,
+                    7f,
+                    0.055f,
+                    0.065f,
+                    0.16f,
+                    1f / 60f);
+                Assert.That(sample.Value, Is.EqualTo(0f).Within(0.000001f));
+                Assert.That(sample.PivotActive, Is.False);
+            }
+        }
+
+        [Test]
+        public void PassiveSupportDriftDoesNotBlendWalkingIntoIdle()
+        {
+            Assert.That(EarthAnimationParameterFilter.ResolveLocomotionTargetSpeed(
+                0.09f, 0f, 0.14f), Is.Zero);
+            Assert.That(EarthAnimationParameterFilter.ResolveLocomotionTargetSpeed(
+                -0.12f, 0f, 0.14f), Is.Zero);
+            Assert.That(EarthAnimationParameterFilter.ResolveLocomotionTargetSpeed(
+                0.09f, 1f, 0.14f), Is.EqualTo(0.09f).Within(0.000001f));
+            Assert.That(EarthAnimationParameterFilter.ResolveLocomotionTargetSpeed(
+                0.5f, 0f, 0.14f), Is.EqualTo(0.5f).Within(0.000001f));
+        }
+
+        [Test]
         public void SupportPresentationExtrapolationPreservesIdentityAndAdvancesPose()
         {
             var support = new SupportFrameSnapshot(

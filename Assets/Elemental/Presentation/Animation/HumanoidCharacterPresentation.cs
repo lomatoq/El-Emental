@@ -139,7 +139,11 @@ namespace Elemental.Presentation.Animation
             animator.applyRootMotion = false;
             animator.updateMode = AnimatorUpdateMode.Normal;
             animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-            animator.stabilizeFeet = true;
+            // EarthCharacterPoseController is the single foot-contact owner.
+            // Mecanim's automatic stabilizer evaluates a second solution from a
+            // different clock and fights persistent surf/casting anchors.
+            animator.stabilizeFeet = false;
+            animator.feetPivotActive = 1f;
             _magicLayerIndex = animator.GetLayerIndex(MagicLayerName);
             _impactLayerIndex = animator.GetLayerIndex(ImpactLayerName);
             animator.SetLayerWeight(0, 1f);
@@ -224,7 +228,11 @@ namespace Elemental.Presentation.Animation
             _hasPreviousFacing = true;
             MeasuredYawRateDegrees = measuredYaw;
 
-            float targetSpeed = surfing ? 0f : Vector3.Dot(tangentVelocity, facing);
+            float measuredSpeed = surfing ? 0f : Vector3.Dot(tangentVelocity, facing);
+            float targetSpeed = EarthAnimationParameterFilter.ResolveLocomotionTargetSpeed(
+                measuredSpeed,
+                motor.LastCommand.Move.y,
+                profile != null ? profile.PassiveLocomotionDriftDeadZone : 0.14f);
             float presentationSpeed = EarthAnimationParameterFilter.StepSpeed(
                 ref _speedFilter,
                 targetSpeed,

@@ -358,9 +358,23 @@ namespace Elemental.Simulation.Characters
             float deltaTime)
         {
             float reference = math.max(1f, referenceYawRateDegrees);
-            float target = math.abs(measuredYawRateDegrees) >= math.max(0f, measuredFallbackThresholdDegrees)
-                ? math.clamp(measuredYawRateDegrees / reference, -1f, 1f)
-                : math.clamp(rawTurnInput, -1f, 1f);
+            float input = math.clamp(rawTurnInput, -1f, 1f);
+            float inputDeadZone = math.max(0f, deadZone);
+            bool hasTurnIntent = math.abs(input) >= inputDeadZone;
+            float measured = math.clamp(measuredYawRateDegrees / reference, -1f, 1f);
+            bool measuredAgreesWithIntent = math.sign(measuredYawRateDegrees) == math.sign(input);
+            // PlanetMotor rotates on the fixed clock while the Animator samples on
+            // the render clock. Reading facing deltas without an input gate turns a
+            // tiny curved-surface correction into alternating one-frame yaw spikes.
+            // In a 2D locomotion tree those spikes blend the left/right turn clips
+            // into neutral idle and visibly shake both legs. Player intent owns
+            // entry into a turn; measured yaw only refines its magnitude/direction.
+            float target = hasTurnIntent
+                ? math.abs(measuredYawRateDegrees) >= math.max(0f, measuredFallbackThresholdDegrees) &&
+                  measuredAgreesWithIntent
+                    ? measured
+                    : input
+                : 0f;
             if (math.abs(target) < math.max(0f, deadZone)) target = 0f;
             float smoothTime = math.abs(target) > math.abs(state.Value)
                 ? math.max(0.01f, enterSeconds)
@@ -375,6 +389,16 @@ namespace Elemental.Simulation.Characters
                 state.Velocity = 0f;
             }
             return new EarthTurnPresentationSample(state.Value, math.abs(state.Value) >= deadZone);
+        }
+
+        public static float ResolveLocomotionTargetSpeed(
+            float supportRelativeSpeed,
+            float rawForwardInput,
+            float passiveDriftDeadZone)
+        {
+            float speed = math.isfinite(supportRelativeSpeed) ? supportRelativeSpeed : 0f;
+            if (math.abs(rawForwardInput) >= 0.05f) return speed;
+            return math.abs(speed) < math.max(0f, passiveDriftDeadZone) ? 0f : speed;
         }
 
         public static float StepSpeed(

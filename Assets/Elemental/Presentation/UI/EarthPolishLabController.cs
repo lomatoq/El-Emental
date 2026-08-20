@@ -360,6 +360,9 @@ namespace Elemental.Runtime.World
 
             Rigidbody body = _motor.GetComponent<Rigidbody>();
             Animator animator = _motor.GetComponentInChildren<Animator>(true);
+            HumanoidCharacterPresentation presentation = animator != null
+                ? animator.GetComponent<HumanoidCharacterPresentation>()
+                : null;
             Transform leftFoot = animator != null && animator.isHuman
                 ? animator.GetBoneTransform(HumanBodyBones.LeftFoot)
                 : null;
@@ -368,6 +371,8 @@ namespace Elemental.Runtime.World
                 ? animator.transform.InverseTransformPoint(leftFoot.position)
                 : Vector3.zero;
             float maximumFootTravel = 0f;
+            float maximumUncommandedTurn = 0f;
+            float maximumLocomotionFootIk = 0f;
             float firstLocomotionTime = -1f;
             float lastLocomotionTime = -1f;
             int sampledFrames = 0;
@@ -390,6 +395,16 @@ namespace Elemental.Runtime.World
                         if (firstLocomotionTime < 0f) firstLocomotionTime = sampledState.normalizedTime;
                         lastLocomotionTime = sampledState.normalizedTime;
                     }
+                }
+                if (presentation != null)
+                {
+                    maximumUncommandedTurn = Mathf.Max(
+                        maximumUncommandedTurn,
+                        Mathf.Abs(presentation.FilteredTurn));
+                    if (presentation.PoseController != null)
+                        maximumLocomotionFootIk = Mathf.Max(
+                            maximumLocomotionFootIk,
+                            presentation.PoseController.FootIkWeight);
                 }
                 sampledFrames++;
             }
@@ -416,11 +431,14 @@ namespace Elemental.Runtime.World
             if (gameplayInput != null) _motor.ConfigureInputSource(gameplayInput);
             _motor.SettleTangentialMotion();
             bool passed = travel >= 3f && maximumFootTravel >= 0.05f && cycles >= 1f &&
-                          locomotionState && _motor.HasStableSupport && settledSpeed <= 0.35f;
+                          locomotionState && _motor.HasStableSupport && settledSpeed <= 0.35f &&
+                          maximumUncommandedTurn <= 0.025f && maximumLocomotionFootIk <= 0.15f;
             _locomotionProofStatus =
                 $"{(passed ? "PASS" : "FAIL")} / travel {travel:0.00}m / local foot {maximumFootTravel:0.00}m / " +
                 $"cycles {cycles:0.00} / state {(locomotionState ? "locomotion" : "invalid")} / " +
-                $"support {_motor.HasStableSupport} / settle {settledSpeed:0.00}m/s / samples {sampledFrames}";
+                $"support {_motor.HasStableSupport} / settle {settledSpeed:0.00}m/s / " +
+                $"ghost turn {maximumUncommandedTurn:0.000} / foot IK {maximumLocomotionFootIk:0.000} / " +
+                $"samples {sampledFrames}";
             _locomotionProof = null;
         }
 

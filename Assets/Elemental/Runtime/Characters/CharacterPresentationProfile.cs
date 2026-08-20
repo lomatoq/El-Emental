@@ -40,6 +40,7 @@ namespace Elemental.Runtime.Characters
         [SerializeField, Range(0.12f, 0.30f)] private float turnReleaseSeconds = 0.16f;
         [SerializeField, Range(0.02f, 0.18f)] private float speedAccelerationSeconds = 0.075f;
         [SerializeField, Range(0.04f, 0.24f)] private float speedDecelerationSeconds = 0.11f;
+        [SerializeField, Range(0f, 0.4f)] private float passiveLocomotionDriftDeadZone = 0.14f;
 
         [Header("Animation Rescue / Moving Support")]
         [SerializeField, Range(0.02f, 0.25f)] private float surfPelvisResponseSeconds = 0.085f;
@@ -76,6 +77,7 @@ namespace Elemental.Runtime.Characters
         public float TurnReleaseSeconds => turnReleaseSeconds;
         public float SpeedAccelerationSeconds => speedAccelerationSeconds;
         public float SpeedDecelerationSeconds => speedDecelerationSeconds;
+        public float PassiveLocomotionDriftDeadZone => passiveLocomotionDriftDeadZone;
         public float SurfPelvisResponseSeconds => surfPelvisResponseSeconds;
         public float SurfPelvisMaximumSpeed => surfPelvisMaximumSpeed;
 
