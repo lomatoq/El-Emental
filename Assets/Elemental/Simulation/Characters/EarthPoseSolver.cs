@@ -305,11 +305,15 @@ namespace Elemental.Simulation.Characters
     /// Keeps authored casting braces from pinning a locomoting character to the
     /// previous frame's foot contacts. Input intent is used in addition to body
     /// velocity so the lock releases before the root has had time to accelerate.
+    /// Ordinary locomotion still receives contact IK: it follows the current surface
+    /// without locking the foot to an old world-space point.
     /// </summary>
     public static class EarthFootPlantMotionGate
     {
         private const float LocomotionIntentThresholdSq = 0.0025f;
         private const float MinimumCastingBrace = 0.12f;
+        private const float FullContactSpeed = 0.75f;
+        private const float ReducedContactSpeed = 7.5f;
 
         public static bool HasLocomotionIntent(float2 moveInput) =>
             math.lengthsq(moveInput) > LocomotionIntentThresholdSq;
@@ -337,7 +341,18 @@ namespace Elemental.Simulation.Characters
         {
             if (!supported) return 0f;
             if (surfActive || locked) return 1f;
-            return 0f;
+
+            // This is contact following, not a foot lock. The previous implementation
+            // returned zero for all ordinary walking, so imported animation height was
+            // never reconciled with the actual planet/platform surface. Keep enough IK
+            // at speed to prevent visible hovering while letting the authored gait own
+            // most of the swing arc.
+            float speed01 = math.saturate(
+                (math.max(0f, tangentSpeed) - FullContactSpeed) /
+                math.max(0.01f, ReducedContactSpeed - FullContactSpeed));
+            float contact = math.lerp(0.94f, 0.58f, speed01);
+            if (HasLocomotionIntent(moveInput)) contact *= 0.94f;
+            return math.saturate(contact);
         }
     }
 
