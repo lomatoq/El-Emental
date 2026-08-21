@@ -1,0 +1,78 @@
+name: Graphics V5 CSharp syntax
+
+on:
+  push:
+    branches:
+      - codex/graphics-v5-slice1
+  pull_request:
+    branches:
+      - codex/earth-core-polish
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Parse changed CSharp with Roslyn
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/graphics-v5-roslyn
+          cd /tmp/graphics-v5-roslyn
+          dotnet new console --framework net8.0 --force >/dev/null
+          dotnet add package Microsoft.CodeAnalysis.CSharp --version 4.14.0 >/dev/null
+          cat > Program.cs <<'CS'
+          using Microsoft.CodeAnalysis;
+          using Microsoft.CodeAnalysis.CSharp;
+          using System.Text.Json;
+
+          string root = Environment.GetEnvironmentVariable("GITHUB_WORKSPACE")!;
+          string[] relativeFiles =
+          {
+              "Assets/Elemental/Presentation/Rendering/RumbleRockMeshFactory.cs",
+              "Assets/Elemental/Presentation/VFX/RumbleLookdevRuntime.cs",
+              "Assets/Elemental/Presentation/VFX/RumbleLookdevSceneGuard.cs",
+              "Assets/Editor/GraphicsV5Slice1Builder.cs",
+              "Assets/Elemental/Tests/EditMode/RumbleRockMeshFactoryTests.cs"
+          };
+          var report = new Dictionary<string, object>();
+          bool failed = false;
+          foreach (string relative in relativeFiles)
+          {
+              string path = Path.Combine(root, relative);
+              string text = File.ReadAllText(path);
+              SyntaxTree tree = CSharpSyntaxTree.ParseText(
+                  text,
+                  new CSharpParseOptions(LanguageVersion.Latest),
+                  path);
+              var errors = tree.GetDiagnostics()
+                  .Where(d => d.Severity == DiagnosticSeverity.Error)
+                  .Select(d => d.ToString())
+                  .ToArray();
+              report[relative] = new { errors, lines = text.Count(c => c == '\n') + 1 };
+              if (errors.Length > 0) failed = true;
+          }
+          Directory.CreateDirectory(Path.Combine(root, "BuildReports"));
+          string json = JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true });
+          File.WriteAllText(Path.Combine(root, "BuildReports/graphics-v5-roslyn.json"), json);
+          Console.WriteLine(json);
+          if (failed) Environment.Exit(1);
+          CS
+          dotnet run --no-restore
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: graphics-v5-roslyn-report
+          path: BuildReports/graphics-v5-roslyn.json
+          if-no-files-found: error
+          retention-days: 14
