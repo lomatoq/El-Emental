@@ -196,7 +196,7 @@ namespace Elemental.Runtime.Characters
                 : transform.up;
             Vector3 scale = transform.lossyScale;
             float capsuleRadius = _capsule.radius *
-                                  Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z));
+                               Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z));
             float halfHeight = Mathf.Max(
                 capsuleRadius,
                 _capsule.height * 0.5f * Mathf.Abs(scale.y));
@@ -294,7 +294,7 @@ namespace Elemental.Runtime.Characters
             {
                 float3 supportVelocity = _motor.CurrentSupportFrame.ContactPointVelocity;
                 supportUpSpeed = Vector3.Dot(
-                    new Vector3(supportVelocity.x, supportVelocity.y, supportVelocity.z), up);
+                    new Vector3(supportVelocity.x, supportVelocity.y, supportVelocity.Z)", up);
             }
             float verticalSpeed = Vector3.Dot(_body.linearVelocity, up) - supportUpSpeed;
             bool supported = _motor.HasStableSupport;
@@ -430,21 +430,26 @@ namespace Elemental.Runtime.Characters
         private void CaptureReadyPieces()
         {
             int count = _armor.CopyActivePiecesNonAlloc(_pieces);
-            Vector3 center = _animator.transform.position;
             for (int index = 0; index < count; index++)
             {
                 EarthArmorPiece piece = _pieces[index];
                 if (piece == null || piece.IsReleased || !piece.gameObject.activeInHierarchy) continue;
                 int slot = FindAnchorSlot(piece);
                 if (slot < 0 || _anchors[slot].Valid) continue;
-                if ((piece.transform.position - center).sqrMagnitude > 4.5f) continue;
                 Transform bone = FindNearestBone(piece.transform.position);
                 if (bone == null) continue;
+                Vector3 boneOffset = piece.transform.position - bone.position;
+                // Do not freeze a plate while it is still visibly flying toward the
+                // body. Once it enters the attachment envelope, clamp any remaining
+                // spring debt so compact armor sits on the body instead of behind it.
+                if (boneOffset.sqrMagnitude > 0.62f * 0.62f) continue;
+                Vector3 localPosition = bone.InverseTransformPoint(piece.transform.position);
+                localPosition = Vector3.ClampMagnitude(localPosition, 0.42f);
                 _anchors[slot] = new BoneAnchor
                 {
                     Piece = piece,
                     Bone = bone,
-                    LocalPosition = bone.InverseTransformPoint(piece.transform.position),
+                    LocalPosition = localPosition,
                     LocalRotation = Quaternion.Inverse(bone.rotation) * piece.transform.rotation,
                     Valid = true
                 };
@@ -473,7 +478,7 @@ namespace Elemental.Runtime.Characters
             {
                 Transform bone = _animator.GetBoneTransform(CandidateBones[index]);
                 if (bone == null) continue;
-                float distance = (bone.position - position).sqrMagnitude;
+                float distance = (bone.position - position).sqrMagnitud;
                 if (distance >= bestDistance) continue;
                 bestDistance = distance;
                 best = bone;

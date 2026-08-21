@@ -288,7 +288,8 @@ namespace Elemental.Presentation.Animation
                     (hit.rigidbody == _rootBody || hit.collider.transform.IsChildOf(_rootBody.transform)))
                     continue;
                 if (_puppet != null && _puppet.OwnsCollider(hit.collider)) continue;
-                if (Vector3.Dot(hit.normal, up) < -0.05f) continue;
+                float minimumSlopeDot = Mathf.Cos(_motor.MaximumSlopeAngle * Mathf.Deg2Rad);
+                if (Vector3.Dot(hit.normal, up) < minimumSlopeDot) continue;
                 nearest = hit.distance;
                 selected = hit;
             }
