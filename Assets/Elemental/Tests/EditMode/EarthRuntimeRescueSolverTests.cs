@@ -2,6 +2,7 @@ using Elemental.Runtime.Characters;
 using Elemental.Simulation.Characters;
 using NUnit.Framework;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Elemental.Tests.EditMode
 {
@@ -58,6 +59,21 @@ namespace Elemental.Tests.EditMode
                 1f,
                 0.1f,
                 new float2(0f, 1f)), Is.False);
+        }
+
+        [Test]
+        public void CompactArmorAttachment_ClampsPlateCloseToItsBone()
+        {
+            float radius = EarthArmorAttachmentMath.AttachmentRadius(HumanBodyBones.Chest);
+            Vector3 clamped = EarthArmorAttachmentMath.ClampLocalOffset(
+                new Vector3(0f, 0f, 1.4f),
+                Vector3.forward,
+                radius);
+            Assert.That(radius, Is.EqualTo(0.34f).Within(0.0001f));
+            Assert.That(clamped.magnitude, Is.EqualTo(radius).Within(0.0001f));
+            Assert.That(
+                EarthArmorAttachmentMath.CaptureEnvelope(HumanBodyBones.Chest),
+                Is.LessThan(0.6f));
         }
     }
 }
