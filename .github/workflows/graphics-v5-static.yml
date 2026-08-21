@@ -1,0 +1,114 @@
+name: Graphics V5 static validation
+
+on:
+  push:
+    branches:
+      - codex/graphics-v5-slice1
+  pull_request:
+    branches:
+      - codex/earth-core-polish
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - name: Validate Graphics V5 source contract
+        shell: python
+        run: |
+          from pathlib import Path
+          import json
+          import re
+
+          required = [
+              Path('Assets/Elemental/Presentation/Rendering/RumbleRockMeshFactory.cs'),
+              Path('Assets/Elemental/Presentation/VFX/RumbleLookdevRuntime.cs'),
+              Path('Assets/Elemental/Presentation/VFX/RumbleLookdevSceneGuard.cs'),
+              Path('Assets/Elemental/Content/Shaders/RumbleRockLit.shader'),
+              Path('Assets/Editor/GraphicsV5Slice1Builder.cs'),
+              Path('Assets/Elemental/Tests/EditMode/RumbleRockMeshFactoryTests.cs'),
+              Path('Docs/graphics-v5-slice1.md'),
+          ]
+          missing = [str(path) for path in required if not path.is_file()]
+          if missing:
+              raise SystemExit(f'Missing required files: {missing}')
+
+          def balanced_source(text: str, name: str) -> None:
+              stack = []
+              pairs = {'}':'{', ')':'(', ']':'['}
+              opening = set(pairs.values())
+              i = 0
+              state = 'code'
+              quote = ''
+              while i < len(text):
+                  c = text[i]
+                  n = text[i+1] if i + 1 < len(text) else ''
+                  if state == 'line':
+                      if c == '\n': state = 'code'
+                  elif state == 'block':
+                      if c == '*' and n == '/':
+                          state = 'code'; i += 1
+                  elif state == 'string':
+                      if c == '\\': i += 1
+                      elif c == quote: state = 'code'
+                  else:
+                      if c == '/' and n == '/': state = 'line'; i += 1
+                      elif c == '/' and n == '*': state = 'block'; i += 1
+                      elif c in ('"', "'"): state = 'string'; quote = c
+                      elif c in opening: stack.append(c)
+                      elif c in pairs:
+                          if not stack or stack.pop() != pairs[c]:
+                              raise SystemExit(f'{name}: unbalanced {c} at offset {i}')
+                  i += 1
+              if state in ('block', 'string') or stack:
+                  raise SystemExit(f'{name}: unterminated lexical state or delimiter stack {stack[-10:]}')
+
+          report = {'files': {}, 'checks': []}
+          for path in required:
+              text = path.read_text(encoding='utf-8')
+              if '\x00' in text or '<<<<<<<' in text or '>>>>>>>' in text:
+                  raise SystemExit(f'{path}: invalid binary/merge marker content')
+              if path.suffix in ('.cs', '.shader'):
+                  balanced_source(text, str(path))
+              report['files'][str(path)] = {'bytes': len(text.encode('utf-8')), 'lines': text.count('\n') + 1}
+
+          builder = required[4].read_text(encoding='utf-8')
+          shader = required[3].read_text(encoding='utf-8')
+          runtime = required[1].read_text(encoding='utf-8')
+          guard = required[2].read_text(encoding='utf-8')
+          tests = required[5].read_text(encoding='utf-8')
+
+          assertions = {
+              'twenty_rock_corpus': 'for (int index = 0; index < 20; index++)' in builder,
+              'actual_bevel_geometry': 'BuildBeveledMesh' in required[0].read_text(encoding='utf-8'),
+              'one_sun_no_point_light': 'LightType.Point' not in builder,
+              'explicit_volume_asset': 'RumbleLookdevVolume.asset' in builder,
+              'no_hidden_runtime_volume_creation': 'AddComponent<Volume>' not in runtime,
+              'planet_metric_mapping': '_UsePlanetFrame' in shader and '_PlanetCenter' in shader,
+              'seam_debug_modes': '_DebugMode' in shader and 'CycleSeamDebug' in runtime,
+              'dither_retirement': '_Fade' in shader and 'BeginSink' in runtime,
+              'legacy_owner_guard': 'EarthChargeCameraLookdevV2' in guard,
+              'corpus_tests': 'ApprovedTwentyRockCorpus_IsValidAndVisiblyDiverse' in tests,
+          }
+          failed = [name for name, passed in assertions.items() if not passed]
+          report['checks'] = assertions
+          Path('BuildReports').mkdir(exist_ok=True)
+          Path('BuildReports/graphics-v5-static.json').write_text(
+              json.dumps(report, indent=2, sort_keys=True), encoding='utf-8')
+          if failed:
+              raise SystemExit(f'Graphics V5 contract failed: {failed}')
+          print(json.dumps(report, indent=2, sort_keys=True))
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: graphics-v5-static-report
+          path: BuildReports/graphics-v5-static.json
+          if-no-files-found: error
+          retention-days: 14
