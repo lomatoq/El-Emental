@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - codex/graphics-v5-slice1
+  pull_request:
+    branches:
+      - codex/earth-core-polish
+  workflow_dispatch:
 
 permissions:
   contents: read
