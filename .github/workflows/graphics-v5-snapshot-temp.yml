@@ -1,0 +1,31 @@
+name: Graphics V5 source snapshot temp
+
+on:
+  push:
+    branches:
+      - codex/graphics-v5-slice1
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: graphics-v5-source-temp
+          path: |
+            Assets/Elemental
+            Assets/DefaultVolumeProfile.asset
+            Assets/DefaultVolumeProfile.asset.meta
+            Packages
+            ProjectSettings
+            Docs
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 9
