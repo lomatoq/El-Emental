@@ -15,7 +15,6 @@ namespace Elemental.Runtime.Characters
     internal sealed class EarthArmorAttachmentV2Installer : MonoBehaviour
     {
         private static EarthArmorAttachmentV2Installer _instance;
-        private float _nextScanAt;
 
         public static void Ensure()
         {
@@ -40,19 +39,12 @@ namespace Elemental.Runtime.Characters
             if (_instance == this) _instance = null;
         }
 
-        private void Update()
-        {
-            if (Time.unscaledTime < _nextScanAt) return;
-            _nextScanAt = Time.unscaledTime + 1f;
-            Scan();
-        }
-
         private static void HandleSceneLoaded(Scene scene, LoadSceneMode mode) => Scan();
 
         private static void Scan()
         {
             EarthArmorController[] controllers = FindObjectsByType<EarthArmorController>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
+                FindObjectsInactive.Include);
             for (int index = 0; index < controllers.Length; index++)
             {
                 EarthArmorController controller = controllers[index];
@@ -190,6 +182,10 @@ namespace Elemental.Runtime.Characters
             EarthArmorBodyFollowRescue legacy =
                 GetComponent<EarthArmorBodyFollowRescue>();
             if (legacy != null) legacy.enabled = false;
+            // EarthArmorController is now the sole owner of every formation
+            // transform. Keeping this legacy component disabled also preserves old
+            // scene/prefab serialization without a second Fixed/LateUpdate writer.
+            enabled = false;
         }
 
         private void OnEnable()
@@ -365,8 +361,11 @@ namespace Elemental.Runtime.Characters
                 Rigidbody body = piece.Body;
                 body.position = position;
                 body.rotation = rotation;
-                body.linearVelocity = Vector3.zero;
-                body.angularVelocity = Vector3.zero;
+                if (!body.isKinematic)
+                {
+                    body.linearVelocity = Vector3.zero;
+                    body.angularVelocity = Vector3.zero;
+                }
                 piece.transform.SetPositionAndRotation(position, rotation);
             }
         }

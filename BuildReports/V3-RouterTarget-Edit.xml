@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="13" result="Failed(Child)" total="13" passed="12" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-14 16:51:02Z" end-time="2026-08-14 16:51:03Z" duration="0.8661757">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="229" result="Failed" site="Child" start-time="2026-08-14 16:51:02Z" end-time="2026-08-14 16:51:03Z" duration="0.866176" total="13" passed="12" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1278" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="229" result="Failed" site="Child" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.857825" total="13" passed="12" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="27004" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1279" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="229" result="Failed" site="Child" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.856755" total="13" passed="12" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1280" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="229" result="Failed" site="Child" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.855279" total="13" passed="12" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1281" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="229" result="Failed" site="Child" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.853862" total="13" passed="12" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1038" name="EarthActionRouterTests" fullname="Elemental.Tests.EditMode.EarthActionRouterTests" classname="Elemental.Tests.EditMode.EarthActionRouterTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.031961" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1042" name="ActiveSessionCannotBeStolenAndCancelAlwaysWins" fullname="Elemental.Tests.EditMode.EarthActionRouterTests.ActiveSessionCannotBeStolenAndCancelAlwaysWins" methodname="ActiveSessionCannotBeStolenAndCancelAlwaysWins" classname="Elemental.Tests.EditMode.EarthActionRouterTests" runstate="Runnable" seed="9412235" result="Passed" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.016225" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1041" name="ArmorBeatsGravityAndSurfRequiresNoMouseButton" fullname="Elemental.Tests.EditMode.EarthActionRouterTests.ArmorBeatsGravityAndSurfRequiresNoMouseButton" methodname="ArmorBeatsGravityAndSurfRequiresNoMouseButton" classname="Elemental.Tests.EditMode.EarthActionRouterTests" runstate="Runnable" seed="338427101" result="Passed" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.000712" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1040" name="LmbInsideChordWindowSwitchesToResonanceAndNeverStartsWave" fullname="Elemental.Tests.EditMode.EarthActionRouterTests.LmbInsideChordWindowSwitchesToResonanceAndNeverStartsWave" methodname="LmbInsideChordWindowSwitchesToResonanceAndNeverStartsWave" classname="Elemental.Tests.EditMode.EarthActionRouterTests" runstate="Runnable" seed="1774676471" result="Passed" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.000651" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1039" name="ShiftSpaceWaitsForChordThenOwnsOnlyWave" fullname="Elemental.Tests.EditMode.EarthActionRouterTests.ShiftSpaceWaitsForChordThenOwnsOnlyWave" methodname="ShiftSpaceWaitsForChordThenOwnsOnlyWave" classname="Elemental.Tests.EditMode.EarthActionRouterTests" runstate="Runnable" seed="441536276" result="Passed" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.000375" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1142" name="EarthMaterialPresentationTests" fullname="Elemental.Tests.EditMode.EarthMaterialPresentationTests" classname="Elemental.Tests.EditMode.EarthMaterialPresentationTests" runstate="Runnable" testcasecount="5" result="Failed" site="Child" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.047184" total="5" passed="4" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1143" name="EarthMasterShaderExposesStableLocalDetailContract" fullname="Elemental.Tests.EditMode.EarthMaterialPresentationTests.EarthMasterShaderExposesStableLocalDetailContract" methodname="EarthMasterShaderExposesStableLocalDetailContract" classname="Elemental.Tests.EditMode.EarthMaterialPresentationTests" runstate="Runnable" seed="1697453626" result="Passed" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.007579" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1145" name="FeedbackProfileIsDeterministicAndBoundedByImpactStrength" fullname="Elemental.Tests.EditMode.EarthMaterialPresentationTests.FeedbackProfileIsDeterministicAndBoundedByImpactStrength" methodname="FeedbackProfileIsDeterministicAndBoundedByImpactStrength" classname="Elemental.Tests.EditMode.EarthMaterialPresentationTests" runstate="Runnable" seed="1459643953" result="Passed" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.006925" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1146" name="ImpactBatchIsDeterministicFrameCappedAndAllocationFree" fullname="Elemental.Tests.EditMode.EarthMaterialPresentationTests.ImpactBatchIsDeterministicFrameCappedAndAllocationFree" methodname="ImpactBatchIsDeterministicFrameCappedAndAllocationFree" classname="Elemental.Tests.EditMode.EarthMaterialPresentationTests" runstate="Runnable" seed="626089889" result="Passed" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.002318" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1144" name="MaterialProfileAppliesDistinctInteriorAndQualityVariant" fullname="Elemental.Tests.EditMode.EarthMaterialPresentationTests.MaterialProfileAppliesDistinctInteriorAndQualityVariant" methodname="MaterialProfileAppliesDistinctInteriorAndQualityVariant" classname="Elemental.Tests.EditMode.EarthMaterialPresentationTests" runstate="Runnable" seed="1229380805" result="Passed" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.004373" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1147" name="ProductionFractureUsesSeparateMaskedRenderAndConvexMeshes" fullname="Elemental.Tests.EditMode.EarthMaterialPresentationTests.ProductionFractureUsesSeparateMaskedRenderAndConvexMeshes" methodname="ProductionFractureUsesSeparateMaskedRenderAndConvexMeshes" classname="Elemental.Tests.EditMode.EarthMaterialPresentationTests" runstate="Runnable" seed="136883432" result="Failed" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.023995" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Piece 11 became a paper-thin depth slice instead of a chunky wall fragment.
+  Expected: greater than 0.899999976f
+  But was:  0.458311737f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.EditMode.EarthMaterialPresentationTests.ProductionFractureUsesSeparateMaskedRenderAndConvexMeshes () [0x000bb] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\EditMode\EarthMaterialPresentationTests.cs:131
+]]></stack-trace>
+                </failure>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1166" name="EarthVolumetricFractureTests" fullname="Elemental.Tests.EditMode.EarthVolumetricFractureTests" classname="Elemental.Tests.EditMode.EarthVolumetricFractureTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.759940" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1169" name="CellsOccupyThreeDimensionsAndHaveAHeavyTail" fullname="Elemental.Tests.EditMode.EarthVolumetricFractureTests.CellsOccupyThreeDimensionsAndHaveAHeavyTail" methodname="CellsOccupyThreeDimensionsAndHaveAHeavyTail" classname="Elemental.Tests.EditMode.EarthVolumetricFractureTests" runstate="Runnable" seed="1171401783" result="Passed" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.215500" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1167" name="ConvexCellsPartitionTheWholeSourceVolume" fullname="Elemental.Tests.EditMode.EarthVolumetricFractureTests.ConvexCellsPartitionTheWholeSourceVolume" methodname="ConvexCellsPartitionTheWholeSourceVolume" classname="Elemental.Tests.EditMode.EarthVolumetricFractureTests" runstate="Runnable" seed="26868776" result="Passed" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.202849" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1170" name="InteriorFacesArePairedWithTheOppositeSharedPlane" fullname="Elemental.Tests.EditMode.EarthVolumetricFractureTests.InteriorFacesArePairedWithTheOppositeSharedPlane" methodname="InteriorFacesArePairedWithTheOppositeSharedPlane" classname="Elemental.Tests.EditMode.EarthVolumetricFractureTests" runstate="Runnable" seed="2063240731" result="Passed" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.133388" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1168" name="ThinProductionWallCellsRemainClosed" fullname="Elemental.Tests.EditMode.EarthVolumetricFractureTests.ThinProductionWallCellsRemainClosed" methodname="ThinProductionWallCellsRemainClosed" classname="Elemental.Tests.EditMode.EarthVolumetricFractureTests" runstate="Runnable" seed="1028263047" result="Passed" start-time="2026-08-14 16:51:03Z" end-time="2026-08-14 16:51:03Z" duration="0.196365" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

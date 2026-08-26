@@ -1,6 +1,7 @@
 using System;
 using Elemental.Simulation.Magic;
 using Elemental.Simulation.Bending;
+using Elemental.Runtime.Characters;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -136,11 +137,13 @@ namespace Elemental.Runtime.Physics
         [SerializeField, Min(1f)] private float maximumAngularSpeed = 14f;
         [SerializeField] private EarthCombatArchetype archetype;
         [SerializeField] private bool seismicCounterEnabled = true;
+        [SerializeField] private EarthCharacterImpactTarget characterImpactAuthority;
 
         private Rigidbody _body;
         private float _stateUntil;
         private Quaternion _recoveryStart;
         private bool _braceRequested;
+        private float _suppressImpactsUntil;
         private readonly Collider[] _counterHits = new Collider[32];
 
         public EarthCombatDummyState State { get; private set; }
@@ -153,6 +156,11 @@ namespace Elemental.Runtime.Physics
         {
             staggerImpulse = Mathf.Max(1f, configuredStaggerImpulse);
             ragdollImpulse = Mathf.Max(staggerImpulse + 1f, configuredRagdollImpulse);
+        }
+
+        public void SetCharacterImpactAuthority(EarthCharacterImpactTarget authority)
+        {
+            characterImpactAuthority = authority;
         }
 
         public void Configure(
@@ -178,8 +186,29 @@ namespace Elemental.Runtime.Physics
             SetState(braced ? EarthCombatDummyState.Braced : EarthCombatDummyState.Grounded);
         }
 
+        public void ForceFullRagdoll(float holdSeconds)
+        {
+            _stateUntil = Time.time + Mathf.Max(0.1f, holdSeconds);
+            SetState(EarthCombatDummyState.FullRagdoll);
+        }
+
+        public void ResetCombatState(float impactGraceSeconds = 0.65f)
+        {
+            _braceRequested = false;
+            _stateUntil = 0f;
+            _suppressImpactsUntil = Time.time + Mathf.Max(0f, impactGraceSeconds);
+            LastImpact = default;
+            if (_body != null)
+            {
+                _body.linearVelocity = Vector3.zero;
+                _body.angularVelocity = Vector3.zero;
+            }
+            SetState(EarthCombatDummyState.Grounded);
+        }
+
         public void ApplyEarthImpact(in EarthImpactEvent impact)
         {
+            if (Time.time < _suppressImpactsUntil) return;
             LastImpact = impact;
             EarthSeismicCounterResult counter = EarthSeismicCounterSolver.Evaluate(
                 _braceRequested && seismicCounterEnabled,
@@ -236,6 +265,7 @@ namespace Elemental.Runtime.Physics
         private void FixedUpdate()
         {
             if (_body == null) return;
+            if (_body.isKinematic) return;
             float3 stabilized = EarthCombatMotionSafetySolver.Stabilize(
                 ToFloat3(_body.position),
                 ToFloat3(_body.linearVelocity),
@@ -273,7 +303,9 @@ namespace Elemental.Runtime.Physics
 
         private void OnCollisionEnter(Collision collision)
         {
-            if (_body == null || collision == null || collision.contactCount == 0) return;
+            if (characterImpactAuthority != null) return;
+            if (_body == null || collision == null || collision.contactCount == 0 ||
+                Time.time < _suppressImpactsUntil) return;
             float impulse = collision.impulse.magnitude;
             float relativeSpeed = collision.relativeVelocity.magnitude;
             float mass = collision.rigidbody != null ? collision.rigidbody.mass : _body.mass;

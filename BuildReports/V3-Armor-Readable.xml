@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="5" result="Failed(Child)" total="5" passed="4" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-14 22:04:40Z" end-time="2026-08-14 22:04:44Z" duration="3.6208691">
+  <test-suite type="TestSuite" id="1123" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="85" result="Failed" site="Child" start-time="2026-08-14 22:04:40Z" end-time="2026-08-14 22:04:44Z" duration="3.620869" total="5" passed="4" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1116" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="85" result="Failed" site="Child" start-time="2026-08-14 22:04:40Z" end-time="2026-08-14 22:04:44Z" duration="3.607431" total="5" passed="4" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="9144" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1117" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="85" result="Failed" site="Child" start-time="2026-08-14 22:04:40Z" end-time="2026-08-14 22:04:44Z" duration="3.605161" total="5" passed="4" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1118" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="85" result="Failed" site="Child" start-time="2026-08-14 22:04:40Z" end-time="2026-08-14 22:04:44Z" duration="3.603258" total="5" passed="4" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1119" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="85" result="Failed" site="Child" start-time="2026-08-14 22:04:40Z" end-time="2026-08-14 22:04:44Z" duration="3.600817" total="5" passed="4" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1093" name="EarthWebArmorRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests" classname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests" runstate="Runnable" testcasecount="5" result="Failed" site="Child" start-time="2026-08-14 22:04:40Z" end-time="2026-08-14 22:04:44Z" duration="3.595740" total="5" passed="4" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1094" name="ArmorAssemblesAndConfirmedOverscrollReleasesPhysicalPieces" fullname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests.ArmorAssemblesAndConfirmedOverscrollReleasesPhysicalPieces" methodname="ArmorAssemblesAndConfirmedOverscrollReleasesPhysicalPieces" classname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests" runstate="Runnable" seed="176730130" result="Passed" start-time="2026-08-14 22:04:40Z" end-time="2026-08-14 22:04:41Z" duration="0.386105" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1095" name="ArmorConformsToBodyCollidersThenExpandsAsHemisphereWithoutKickingCaster" fullname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests.ArmorConformsToBodyCollidersThenExpandsAsHemisphereWithoutKickingCaster" methodname="ArmorConformsToBodyCollidersThenExpandsAsHemisphereWithoutKickingCaster" classname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests" runstate="Runnable" seed="163649514" result="Passed" start-time="2026-08-14 22:04:41Z" end-time="2026-08-14 22:04:41Z" duration="0.672162" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1096" name="ArmorKeepsAnimatedBodyVisibleAndUsesHeroScalePlates" fullname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests.ArmorKeepsAnimatedBodyVisibleAndUsesHeroScalePlates" methodname="ArmorKeepsAnimatedBodyVisibleAndUsesHeroScalePlates" classname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests" runstate="Runnable" seed="1534746247" result="Failed" start-time="2026-08-14 22:04:41Z" end-time="2026-08-14 22:04:42Z" duration="0.445429" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: greater than 1.50880003f
+  But was:  1.47567368f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests+<ArmorKeepsAnimatedBodyVisibleAndUsesHeroScalePlates>d__2.MoveNext () [0x002e3] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\EarthWebArmorRuntimeTests.cs:172
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1097" name="FastConvexRockCannotTunnelThroughPlatform" fullname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests.FastConvexRockCannotTunnelThroughPlatform" methodname="FastConvexRockCannotTunnelThroughPlatform" classname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests" runstate="Runnable" seed="352996296" result="Passed" start-time="2026-08-14 22:04:42Z" end-time="2026-08-14 22:04:43Z" duration="1.134025" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1098" name="PlatformVoronoiPiecesReassembleIntoSolidCollider" fullname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests.PlatformVoronoiPiecesReassembleIntoSolidCollider" methodname="PlatformVoronoiPiecesReassembleIntoSolidCollider" classname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests" runstate="Runnable" seed="1539944246" result="Passed" start-time="2026-08-14 22:04:43Z" end-time="2026-08-14 22:04:44Z" duration="0.942302" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

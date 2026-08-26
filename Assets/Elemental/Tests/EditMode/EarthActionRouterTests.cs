@@ -109,6 +109,28 @@ namespace Elemental.Tests.EditMode
             Assert.That(router.Owner, Is.EqualTo(EarthActionOwner.None));
         }
 
+        [TestCase(true)]
+        [TestCase(false)]
+        public void BufferedSingleButtonTapCommitsWithoutLeavingAStaleOwner(bool primary)
+        {
+            var router = new EarthActionRouter();
+            EarthActionRoute route = router.Step(new EarthActionRouterFrame(
+                1f,
+                primaryPressed: primary,
+                primaryHeld: false,
+                primaryReleased: primary,
+                forcePressed: !primary,
+                forceHeld: false,
+                forceReleased: !primary));
+
+            Assert.That(route.Owner, Is.EqualTo(primary
+                ? EarthActionOwner.Primary
+                : EarthActionOwner.VectorField));
+            Assert.That(route.Phase, Is.EqualTo(EarthActionRoutePhase.Commit));
+            Assert.That(router.Owner, Is.EqualTo(EarthActionOwner.None),
+                "A tap replayed after the dual-button window must not steal the next wall or push.");
+        }
+
         [Test]
         public void ShiftForwardStartsSurfFromStableMovingOrNearbySupport()
         {

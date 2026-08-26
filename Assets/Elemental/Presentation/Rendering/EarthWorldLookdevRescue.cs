@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
 using Elemental.Runtime.Characters;
+using Elemental.Runtime.Geometry;
 using Elemental.Runtime.Physics;
 using Elemental.Runtime.World;
+using Elemental.Simulation.Bending;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityCamera = global::UnityEngine.Camera;
 using UnityEngine.SceneManagement;
 
 namespace Elemental.Presentation.Rendering
@@ -15,7 +19,7 @@ namespace Elemental.Presentation.Rendering
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
-            if (UnityEngine.Object.FindFirstObjectByType<EarthWorldLookdevRescueInstaller>(
+            if (UnityEngine.Object.FindAnyObjectByType<EarthWorldLookdevRescueInstaller>(
                     FindObjectsInactive.Include) != null)
                 return;
             var host = new GameObject("Earth World Lookdev Rescue Installer")
@@ -29,8 +33,6 @@ namespace Elemental.Presentation.Rendering
 
     internal sealed class EarthWorldLookdevRescueInstaller : MonoBehaviour
     {
-        private float _nextScanAt;
-
         private void OnEnable()
         {
             SceneManager.sceneLoaded += HandleSceneLoaded;
@@ -39,22 +41,15 @@ namespace Elemental.Presentation.Rendering
 
         private void OnDisable() => SceneManager.sceneLoaded -= HandleSceneLoaded;
 
-        private void Update()
-        {
-            if (Time.unscaledTime < _nextScanAt) return;
-            _nextScanAt = Time.unscaledTime + 1.5f;
-            Scan();
-        }
-
         private static void HandleSceneLoaded(Scene scene, LoadSceneMode mode) => Scan();
 
         private static void Scan()
         {
-            Camera[] cameras = UnityEngine.Object.FindObjectsByType<Camera>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
+            UnityCamera[] cameras = UnityEngine.Object.FindObjectsByType<UnityCamera>(
+                FindObjectsInactive.Include);
             for (int index = 0; index < cameras.Length; index++)
             {
-                Camera camera = cameras[index];
+                UnityCamera camera = cameras[index];
                 if (camera == null || camera.cameraType != CameraType.Game) continue;
                 if (camera.GetComponent<EarthRenderPipelineLookdevGuard>() == null)
                     camera.gameObject.AddComponent<EarthRenderPipelineLookdevGuard>();
@@ -66,7 +61,7 @@ namespace Elemental.Presentation.Rendering
                              scene.name.IndexOf("EarthCore", StringComparison.OrdinalIgnoreCase) >= 0);
             if (!earthLab) return;
             VoxelPlanetBehaviour[] planets = UnityEngine.Object.FindObjectsByType<VoxelPlanetBehaviour>(
-                FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+                FindObjectsInactive.Exclude);
             for (int index = 0; index < planets.Length; index++)
             {
                 VoxelPlanetBehaviour planet = planets[index];
@@ -83,15 +78,13 @@ namespace Elemental.Presentation.Rendering
     /// </summary>
     [DefaultExecutionOrder(-500)]
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(Camera))]
+    [RequireComponent(typeof(UnityCamera))]
     public sealed class EarthRenderPipelineLookdevGuard : MonoBehaviour
     {
-        private Camera _camera;
-        private float _nextLightAuditAt;
-
+        private UnityCamera _camera;
         private void Awake()
         {
-            _camera = GetComponent<Camera>();
+            _camera = GetComponent<UnityCamera>();
             ApplyCameraQuality();
             ApplyGlobalQuality();
             AuditDirectionalLights();
@@ -103,13 +96,6 @@ namespace Elemental.Presentation.Rendering
             ApplyGlobalQuality();
         }
 
-        private void Update()
-        {
-            if (Time.unscaledTime < _nextLightAuditAt) return;
-            _nextLightAuditAt = Time.unscaledTime + 2f;
-            AuditDirectionalLights();
-        }
-
         private void ApplyCameraQuality()
         {
             if (_camera == null) return;
@@ -117,6 +103,7 @@ namespace Elemental.Presentation.Rendering
             if (data == null) return;
             data.renderPostProcessing = true;
             data.renderShadows = true;
+            data.requiresDepthTexture = true;
             data.stopNaN = true;
             data.dithering = true;
             data.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing;
@@ -125,18 +112,17 @@ namespace Elemental.Presentation.Rendering
 
         private static void ApplyGlobalQuality()
         {
-            QualitySettings.shadows = ShadowQuality.All;
+            QualitySettings.shadows = UnityEngine.ShadowQuality.All;
             QualitySettings.shadowCascades = 4;
-            QualitySettings.shadowDistance = Mathf.Max(QualitySettings.shadowDistance, 90f);
-            QualitySettings.shadowResolution = ShadowResolution.VeryHigh;
+            QualitySettings.shadowDistance = 48f;
+            QualitySettings.shadowResolution = UnityEngine.ShadowResolution.High;
             QualitySettings.softParticles = true;
             QualitySettings.realtimeReflectionProbes = true;
         }
 
         private static void AuditDirectionalLights()
         {
-            Light[] lights = UnityEngine.Object.FindObjectsByType<Light>(
-                FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            Light[] lights = UnityEngine.Object.FindObjectsByType<Light>(FindObjectsInactive.Exclude);
             Light key = null;
             for (int index = 0; index < lights.Length; index++)
             {
@@ -147,9 +133,9 @@ namespace Elemental.Presentation.Rendering
             if (key == null) return;
 
             key.shadows = LightShadows.Soft;
-            key.shadowStrength = Mathf.Clamp(key.shadowStrength, 0.76f, 0.92f);
-            key.shadowBias = Mathf.Clamp(key.shadowBias, 0.018f, 0.065f);
-            key.shadowNormalBias = Mathf.Clamp(key.shadowNormalBias, 0.16f, 0.34f);
+            key.shadowStrength = Mathf.Clamp(key.shadowStrength, 0.70f, 0.78f);
+            key.shadowBias = Mathf.Clamp(key.shadowBias, 0.065f, 0.085f);
+            key.shadowNormalBias = Mathf.Clamp(key.shadowNormalBias, 0.36f, 0.46f);
             key.shadowNearPlane = Mathf.Clamp(key.shadowNearPlane, 0.1f, 0.5f);
 
             // A second directional light reads as a second sun. Keep secondary
@@ -213,7 +199,7 @@ namespace Elemental.Presentation.Rendering
             _root = rootObject.transform;
             _material = ResolveEarthMaterial();
 
-            PlanetMotor motor = UnityEngine.Object.FindFirstObjectByType<PlanetMotor>(
+            PlanetMotor motor = UnityEngine.Object.FindAnyObjectByType<PlanetMotor>(
                 FindObjectsInactive.Exclude);
             Vector3 center = transform.position;
             Vector3 baseUp = motor != null
@@ -234,16 +220,15 @@ namespace Elemental.Presentation.Rendering
                 float arc = Mathf.Lerp(0.34f, 1.04f, Hash01(seed + (uint)index * 31u));
                 Vector3 radialTangent = tangent * Mathf.Cos(angle) + bitangent * Mathf.Sin(angle);
                 Vector3 direction = (baseUp * Mathf.Cos(arc) + radialTangent * Mathf.Sin(arc)).normalized;
-                Vector3 surfacePoint = FindSurfacePoint(center, direction);
-                if (!float.IsFinite(surfacePoint.x)) continue;
+                if (!TryFindSurface(center, direction, out EarthSurfaceSample surface)) continue;
 
                 var formation = new GameObject($"Geological Formation {index + 1:00}");
                 formation.transform.SetParent(_root, false);
-                formation.transform.position = surfacePoint;
                 Vector3 localForward = Vector3.ProjectOnPlane(radialTangent, direction).normalized;
                 if (localForward.sqrMagnitude < 0.1f) localForward = tangent;
-                formation.transform.rotation = Quaternion.LookRotation(localForward, direction) *
-                                               Quaternion.Euler(0f, Hash01(seed + (uint)index * 43u) * 360f, 0f);
+                Quaternion rotation = Quaternion.LookRotation(localForward, direction) *
+                                      Quaternion.Euler(0f, Hash01(seed + (uint)index * 43u) * 360f, 0f);
+                formation.transform.rotation = rotation;
 
                 Mesh mesh = EarthWebWaveCellMeshFactory.Create(9800 + index * 97);
                 mesh.name = $"Distant Formation {index + 1:00}";
@@ -262,29 +247,69 @@ namespace Elemental.Presentation.Rendering
                         ? Mathf.Lerp(0.8f, 1.8f, Hash01(seed + (uint)index * 89u))
                         : Mathf.Lerp(1.7f, 4.2f, Hash01(seed + (uint)index * 101u));
                 float depth = Mathf.Lerp(0.65f, 1.75f, Hash01(seed + (uint)index * 109u));
-                formation.transform.localScale = new Vector3(width, height, depth);
+                Vector3 scale = new Vector3(width, height, depth);
+                formation.transform.localScale = scale;
+                EarthSurfacePlacementResult placement = EarthSurfacePlacementSolver.Solve(
+                    mesh,
+                    ToVector3(surface.Point),
+                    ToVector3(surface.Normal),
+                    rotation,
+                    scale,
+                    0.035f,
+                    surface.Handle);
+                if (placement.IsValid) formation.transform.position = placement.RootPosition;
             }
         }
 
-        private Vector3 FindSurfacePoint(Vector3 center, Vector3 direction)
+        private bool TryFindSurface(Vector3 center, Vector3 direction, out EarthSurfaceSample sample)
         {
+            sample = default;
             float radius = Mathf.Max(1f, _planet.Radius);
             Vector3 origin = center + direction * (radius + 12f);
-            if (Physics.Raycast(
-                    origin,
-                    -direction,
-                    out RaycastHit hit,
+            EarthSurfaceQueryService surfaces = UnityEngine.Object.FindAnyObjectByType<EarthSurfaceQueryService>(
+                FindObjectsInactive.Exclude);
+            if (surfaces != null)
+            {
+                var query = new EarthSurfaceQuery(
+                    new float3(origin.x, origin.y, origin.z),
+                    new float3(-direction.x, -direction.y, -direction.z),
                     28f,
-                    ~0,
-                    QueryTriggerInteraction.Ignore))
-                return hit.point + hit.normal * 0.025f;
-            return center + direction * radius;
+                    EarthSurfaceCapabilities.Support);
+                if (surfaces.TrySample(in query, out sample)) return true;
+            }
+
+            // The canonical service can be unavailable during its first enable
+            // frame. The fallback is the planet's mathematical surface, never a
+            // broad physics ray that could accidentally land on another rock.
+            Vector3 point = center + direction * radius;
+            sample = new EarthSurfaceSample(
+                new EarthSurfaceHandle(EarthSurfaceKind.Planet, 1u, 1u),
+                new float3(point.x, point.y, point.z),
+                new float3(direction.x, direction.y, direction.z),
+                new float3(transform.right.x, transform.right.y, transform.right.z),
+                default,
+                12f,
+                EarthSurfaceMaterial.PlanetStone,
+                EarthSurfaceProvenance.VoxelPlanet,
+                EarthSurfaceCapabilities.Support);
+            return true;
         }
+
+        private static Vector3 ToVector3(float3 value) => new Vector3(value.x, value.y, value.z);
 
         private static Material ResolveEarthMaterial()
         {
             Renderer[] renderers = UnityEngine.Object.FindObjectsByType<Renderer>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
+                FindObjectsInactive.Include);
+            const string rumbleShader = "Elemental/Graphics V5/Rumble Rock Lit";
+            for (int index = 0; index < renderers.Length; index++)
+            {
+                Material material = renderers[index] != null ? renderers[index].sharedMaterial : null;
+                if (material != null && material.shader != null &&
+                    material.shader.name == rumbleShader)
+                    return material;
+            }
+
             for (int index = 0; index < renderers.Length; index++)
             {
                 Material material = renderers[index] != null ? renderers[index].sharedMaterial : null;
@@ -292,7 +317,9 @@ namespace Elemental.Presentation.Rendering
                     material.shader.name == "Elemental/SG Earth Master")
                     return material;
             }
-            Shader shader = Shader.Find("Elemental/SG Earth Master") ??
+
+            Shader shader = Shader.Find(rumbleShader) ??
+                            Shader.Find("Elemental/SG Earth Master") ??
                             Shader.Find("Universal Render Pipeline/Lit");
             return shader != null ? new Material(shader) { name = "Earth Dressing Runtime" } : null;
         }

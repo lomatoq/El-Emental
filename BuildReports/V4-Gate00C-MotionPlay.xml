@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="14" result="Passed" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-19 14:02:10Z" end-time="2026-08-19 14:02:44Z" duration="34.1182659">
+  <test-suite type="TestSuite" id="1131" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="92" result="Passed" start-time="2026-08-19 14:02:10Z" end-time="2026-08-19 14:02:44Z" duration="34.118266" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1124" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/AppData/Local/Temp/ElEmental-CodexVerify-20260819-1200/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="92" result="Passed" start-time="2026-08-19 14:02:10Z" end-time="2026-08-19 14:02:44Z" duration="34.108635" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="2420" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1125" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="92" result="Passed" start-time="2026-08-19 14:02:10Z" end-time="2026-08-19 14:02:44Z" duration="34.106718" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1126" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="92" result="Passed" start-time="2026-08-19 14:02:10Z" end-time="2026-08-19 14:02:44Z" duration="34.105623" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1127" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="92" result="Passed" start-time="2026-08-19 14:02:10Z" end-time="2026-08-19 14:02:44Z" duration="34.104620" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1001" name="ActiveRagdollRuntimeTests" fullname="Elemental.Tests.PlayMode.ActiveRagdollRuntimeTests" classname="Elemental.Tests.PlayMode.ActiveRagdollRuntimeTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-08-19 14:02:10Z" end-time="2026-08-19 14:02:22Z" duration="12.114340" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1003" name="CharacterFeelLab_RepeatedImpactsRemainFinite" fullname="Elemental.Tests.PlayMode.ActiveRagdollRuntimeTests.CharacterFeelLab_RepeatedImpactsRemainFinite" methodname="CharacterFeelLab_RepeatedImpactsRemainFinite" classname="Elemental.Tests.PlayMode.ActiveRagdollRuntimeTests" runstate="Runnable" seed="759267705" result="Passed" start-time="2026-08-19 14:02:10Z" end-time="2026-08-19 14:02:16Z" duration="6.024158" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1002" name="EarthCorePuppetRemainsGroundedWhenPlayerProvidesNoInput" fullname="Elemental.Tests.PlayMode.ActiveRagdollRuntimeTests.EarthCorePuppetRemainsGroundedWhenPlayerProvidesNoInput" methodname="EarthCorePuppetRemainsGroundedWhenPlayerProvidesNoInput" classname="Elemental.Tests.PlayMode.ActiveRagdollRuntimeTests" runstate="Runnable" seed="421137770" result="Passed" start-time="2026-08-19 14:02:16Z" end-time="2026-08-19 14:02:21Z" duration="4.650328" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[EarthGeometry] Safely reversed fully inverted mesh for Earth Surf Plough Wedge: Earth Surf Plough Wedge: valid; v=8, t=12, components=1, open=0, nonManifold=0, degenerate=0, duplicate=0, signedVolume=5.957249, determinant=1.0000
+]]></output>
+              </test-case>
+              <test-case id="1004" name="PuppetDisablesMotorDrivesOnRagdollAndRecoversWithoutExplosion" fullname="Elemental.Tests.PlayMode.ActiveRagdollRuntimeTests.PuppetDisablesMotorDrivesOnRagdollAndRecoversWithoutExplosion" methodname="PuppetDisablesMotorDrivesOnRagdollAndRecoversWithoutExplosion" classname="Elemental.Tests.PlayMode.ActiveRagdollRuntimeTests" runstate="Runnable" seed="289805991" result="Passed" start-time="2026-08-19 14:02:21Z" end-time="2026-08-19 14:02:22Z" duration="1.425731" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1025" name="EarthCoreV2FoundationTests" fullname="Elemental.Tests.PlayMode.EarthCoreV2FoundationTests" classname="Elemental.Tests.PlayMode.EarthCoreV2FoundationTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-08-19 14:02:22Z" end-time="2026-08-19 14:02:29Z" duration="6.419149" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1027" name="KayKitHumanoidConsumesLocomotionVelocityWithoutRootMotion" fullname="Elemental.Tests.PlayMode.EarthCoreV2FoundationTests.KayKitHumanoidConsumesLocomotionVelocityWithoutRootMotion" methodname="KayKitHumanoidConsumesLocomotionVelocityWithoutRootMotion" classname="Elemental.Tests.PlayMode.EarthCoreV2FoundationTests" runstate="Runnable" seed="372770804" result="Passed" start-time="2026-08-19 14:02:22Z" end-time="2026-08-19 14:02:24Z" duration="1.661955" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[EarthGeometry] Safely reversed fully inverted mesh for Earth Surf Plough Wedge: Earth Surf Plough Wedge: valid; v=8, t=12, components=1, open=0, nonManifold=0, degenerate=0, duplicate=0, signedVolume=5.957249, determinant=1.0000
+]]></output>
+              </test-case>
+              <test-case id="1029" name="ProductionCameraRayLocksAndQuicklyShovesVisibleWall" fullname="Elemental.Tests.PlayMode.EarthCoreV2FoundationTests.ProductionCameraRayLocksAndQuicklyShovesVisibleWall" methodname="ProductionCameraRayLocksAndQuicklyShovesVisibleWall" classname="Elemental.Tests.PlayMode.EarthCoreV2FoundationTests" runstate="Runnable" seed="523372686" result="Passed" start-time="2026-08-19 14:02:24Z" end-time="2026-08-19 14:02:27Z" duration="2.568294" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[EarthGeometry] Safely reversed fully inverted mesh for Earth Surf Plough Wedge: Earth Surf Plough Wedge: valid; v=8, t=12, components=1, open=0, nonManifold=0, degenerate=0, duplicate=0, signedVolume=5.957249, determinant=1.0000
+]]></output>
+              </test-case>
+              <test-case id="1028" name="PushRaySkipsCasterAndMovesTheWallInsteadOfLaunchingTheMage" fullname="Elemental.Tests.PlayMode.EarthCoreV2FoundationTests.PushRaySkipsCasterAndMovesTheWallInsteadOfLaunchingTheMage" methodname="PushRaySkipsCasterAndMovesTheWallInsteadOfLaunchingTheMage" classname="Elemental.Tests.PlayMode.EarthCoreV2FoundationTests" runstate="Runnable" seed="1826776512" result="Passed" start-time="2026-08-19 14:02:27Z" end-time="2026-08-19 14:02:28Z" duration="1.366768" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1026" name="WallEmergenceMovesOnlyVisualChildAndActivatesNonPenetratingCollider" fullname="Elemental.Tests.PlayMode.EarthCoreV2FoundationTests.WallEmergenceMovesOnlyVisualChildAndActivatesNonPenetratingCollider" methodname="WallEmergenceMovesOnlyVisualChildAndActivatesNonPenetratingCollider" classname="Elemental.Tests.PlayMode.EarthCoreV2FoundationTests" runstate="Runnable" seed="1613641707" result="Passed" start-time="2026-08-19 14:02:28Z" end-time="2026-08-19 14:02:29Z" duration="0.819476" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1065" name="EarthPillarMobilityTests" fullname="Elemental.Tests.PlayMode.EarthPillarMobilityTests" classname="Elemental.Tests.PlayMode.EarthPillarMobilityTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-08-19 14:02:29Z" end-time="2026-08-19 14:02:31Z" duration="2.774666" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1067" name="CameraFollowsCharacterHeadingWithoutConsumingThePointer" fullname="Elemental.Tests.PlayMode.EarthPillarMobilityTests.CameraFollowsCharacterHeadingWithoutConsumingThePointer" methodname="CameraFollowsCharacterHeadingWithoutConsumingThePointer" classname="Elemental.Tests.PlayMode.EarthPillarMobilityTests" runstate="Runnable" seed="1706754283" result="Passed" start-time="2026-08-19 14:02:29Z" end-time="2026-08-19 14:02:30Z" duration="1.714355" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[EarthGeometry] Safely reversed fully inverted mesh for Earth Surf Plough Wedge: Earth Surf Plough Wedge: valid; v=8, t=12, components=1, open=0, nonManifold=0, degenerate=0, duplicate=0, signedVolume=5.957249, determinant=1.0000
+]]></output>
+              </test-case>
+              <test-case id="1066" name="HeldSpaceContractRaisesOnePillarAndLaunchesAlongLocalUp" fullname="Elemental.Tests.PlayMode.EarthPillarMobilityTests.HeldSpaceContractRaisesOnePillarAndLaunchesAlongLocalUp" methodname="HeldSpaceContractRaisesOnePillarAndLaunchesAlongLocalUp" classname="Elemental.Tests.PlayMode.EarthPillarMobilityTests" runstate="Runnable" seed="1107438184" result="Passed" start-time="2026-08-19 14:02:30Z" end-time="2026-08-19 14:02:31Z" duration="1.058979" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[EarthGeometry] Safely reversed fully inverted mesh for Earth Surf Plough Wedge: Earth Surf Plough Wedge: valid; v=8, t=12, components=1, open=0, nonManifold=0, degenerate=0, duplicate=0, signedVolume=5.957249, determinant=1.0000
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1068" name="EarthPlayerGoldenPathRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthPlayerGoldenPathRuntimeTests" classname="Elemental.Tests.PlayMode.EarthPlayerGoldenPathRuntimeTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-08-19 14:02:31Z" end-time="2026-08-19 14:02:43Z" duration="11.181721" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1070" name="ProductionArmorStartsOffAndCoversEveryVisibleBodyRegion" fullname="Elemental.Tests.PlayMode.EarthPlayerGoldenPathRuntimeTests.ProductionArmorStartsOffAndCoversEveryVisibleBodyRegion" methodname="ProductionArmorStartsOffAndCoversEveryVisibleBodyRegion" classname="Elemental.Tests.PlayMode.EarthPlayerGoldenPathRuntimeTests" runstate="Runnable" seed="188174218" result="Passed" start-time="2026-08-19 14:02:31Z" end-time="2026-08-19 14:02:33Z" duration="1.380151" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[EarthGeometry] Safely reversed fully inverted mesh for Earth Surf Plough Wedge: Earth Surf Plough Wedge: valid; v=8, t=12, components=1, open=0, nonManifold=0, degenerate=0, duplicate=0, signedVolume=5.957249, determinant=1.0000
+]]></output>
+              </test-case>
+              <test-case id="1069" name="ProductionCameraDoesNotCollapseIntoArmorOrReleasedPlates" fullname="Elemental.Tests.PlayMode.EarthPlayerGoldenPathRuntimeTests.ProductionCameraDoesNotCollapseIntoArmorOrReleasedPlates" methodname="ProductionCameraDoesNotCollapseIntoArmorOrReleasedPlates" classname="Elemental.Tests.PlayMode.EarthPlayerGoldenPathRuntimeTests" runstate="Runnable" seed="767586480" result="Passed" start-time="2026-08-19 14:02:33Z" end-time="2026-08-19 14:02:34Z" duration="0.796655" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[EarthGeometry] Safely reversed fully inverted mesh for Earth Surf Plough Wedge: Earth Surf Plough Wedge: valid; v=8, t=12, components=1, open=0, nonManifold=0, degenerate=0, duplicate=0, signedVolume=5.957249, determinant=1.0000
+]]></output>
+              </test-case>
+              <test-case id="1071" name="ProductionMageStandsWalksAndAnimatesWithoutCameraChaos" fullname="Elemental.Tests.PlayMode.EarthPlayerGoldenPathRuntimeTests.ProductionMageStandsWalksAndAnimatesWithoutCameraChaos" methodname="ProductionMageStandsWalksAndAnimatesWithoutCameraChaos" classname="Elemental.Tests.PlayMode.EarthPlayerGoldenPathRuntimeTests" runstate="Runnable" seed="773632625" result="Passed" start-time="2026-08-19 14:02:34Z" end-time="2026-08-19 14:02:43Z" duration="9.002981" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[EarthGeometry] Safely reversed fully inverted mesh for Earth Surf Plough Wedge: Earth Surf Plough Wedge: valid; v=8, t=12, components=1, open=0, nonManifold=0, degenerate=0, duplicate=0, signedVolume=5.957249, determinant=1.0000
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1088" name="EarthSurfRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthSurfRuntimeTests" classname="Elemental.Tests.PlayMode.EarthSurfRuntimeTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-08-19 14:02:43Z" end-time="2026-08-19 14:02:44Z" duration="1.602214" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1090" name="ProductionPloughCarriesTheVisibleHeroInsteadOfLeavingHimBehind" fullname="Elemental.Tests.PlayMode.EarthSurfRuntimeTests.ProductionPloughCarriesTheVisibleHeroInsteadOfLeavingHimBehind" methodname="ProductionPloughCarriesTheVisibleHeroInsteadOfLeavingHimBehind" classname="Elemental.Tests.PlayMode.EarthSurfRuntimeTests" runstate="Runnable" seed="309219347" result="Passed" start-time="2026-08-19 14:02:43Z" end-time="2026-08-19 14:02:43Z" duration="0.778558" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[EarthGeometry] Safely reversed fully inverted mesh for Earth Surf Plough Wedge: Earth Surf Plough Wedge: valid; v=8, t=12, components=1, open=0, nonManifold=0, degenerate=0, duplicate=0, signedVolume=5.957249, determinant=1.0000
+]]></output>
+              </test-case>
+              <test-case id="1089" name="ShiftMovementSurfFindsSupportEmergesAndMovesTangentially" fullname="Elemental.Tests.PlayMode.EarthSurfRuntimeTests.ShiftMovementSurfFindsSupportEmergesAndMovesTangentially" methodname="ShiftMovementSurfFindsSupportEmergesAndMovesTangentially" classname="Elemental.Tests.PlayMode.EarthSurfRuntimeTests" runstate="Runnable" seed="936070964" result="Passed" start-time="2026-08-19 14:02:43Z" end-time="2026-08-19 14:02:44Z" duration="0.822032" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[EarthGeometry] Safely reversed fully inverted mesh for Earth Surf Plough Wedge: Earth Surf Plough Wedge: valid; v=8, t=12, components=1, open=0, nonManifold=0, degenerate=0, duplicate=0, signedVolume=5.957249, determinant=1.0000
+[EarthGeometry] Safely reversed fully inverted mesh for Earth Surf Plough Wedge: Earth Surf Plough Wedge: valid; v=8, t=12, components=1, open=0, nonManifold=0, degenerate=0, duplicate=0, signedVolume=5.957249, determinant=1.0000
+Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -2,6 +2,7 @@ using Elemental.Input.Gestures;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityCamera = global::UnityEngine.Camera;
 
 namespace Elemental.Presentation.VFX
 {
@@ -10,7 +11,7 @@ namespace Elemental.Presentation.VFX
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
-            if (Object.FindFirstObjectByType<EarthChargeCameraLookdevV2Installer>(
+            if (Object.FindAnyObjectByType<EarthChargeCameraLookdevV2Installer>(
                     FindObjectsInactive.Include) != null)
                 return;
             var host = new GameObject("Earth Charge Camera Lookdev V2 Installer")
@@ -24,17 +25,12 @@ namespace Elemental.Presentation.VFX
 
     internal sealed class EarthChargeCameraLookdevV2Installer : MonoBehaviour
     {
-        private float _nextScanAt;
-
-        private void Update()
+        private void Start()
         {
-            if (Time.unscaledTime < _nextScanAt) return;
-            _nextScanAt = Time.unscaledTime + 1f;
-            Camera[] cameras = Object.FindObjectsByType<Camera>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
+            UnityCamera[] cameras = Object.FindObjectsByType<UnityCamera>(FindObjectsInactive.Include);
             for (int index = 0; index < cameras.Length; index++)
             {
-                Camera camera = cameras[index];
+                UnityCamera camera = cameras[index];
                 if (camera == null || camera.cameraType != CameraType.Game) continue;
                 EarthChargeCameraLookdev legacy =
                     camera.GetComponent<EarthChargeCameraLookdev>();
@@ -53,13 +49,12 @@ namespace Elemental.Presentation.VFX
     /// </summary>
     [DefaultExecutionOrder(10100)]
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(Camera))]
+    [RequireComponent(typeof(UnityCamera))]
     public sealed class EarthChargeCameraLookdevV2 : MonoBehaviour
     {
-        private Camera _camera;
+        private UnityCamera _camera;
         private MagicInputController _input;
         private Volume _volume;
-        private DepthOfField _depthOfField;
         private Bloom _bloom;
         private Vignette _vignette;
         private bool _ownsProfile;
@@ -78,7 +73,7 @@ namespace Elemental.Presentation.VFX
 
         private void Awake()
         {
-            _camera = GetComponent<Camera>();
+            _camera = GetComponent<UnityCamera>();
             _baseFov = _camera != null ? _camera.fieldOfView : 60f;
             _lastAppliedFov = _baseFov;
             ResolveInput();
@@ -144,16 +139,15 @@ namespace Elemental.Presentation.VFX
             _camera.fieldOfView = _lastAppliedFov;
             _hasAppliedFov = true;
 
-            UpdateDepthOfField();
             if (_bloom != null)
-                _bloom.intensity.value = Mathf.Lerp(0.18f, 0.44f, _charge);
+                _bloom.intensity.value = Mathf.Lerp(0.07f, 0.24f, _charge);
             if (_vignette != null)
-                _vignette.intensity.value = Mathf.Lerp(0.13f, 0.205f, _charge);
+                _vignette.intensity.value = Mathf.Lerp(0.075f, 0.145f, _charge);
         }
 
         private void HandleBeginCameraRendering(
             ScriptableRenderContext context,
-            Camera renderingCamera)
+            UnityCamera renderingCamera)
         {
             if (renderingCamera != _camera || _charge <= 0.001f || _renderPoseSaved)
                 return;
@@ -178,7 +172,7 @@ namespace Elemental.Presentation.VFX
 
         private void HandleEndCameraRendering(
             ScriptableRenderContext context,
-            Camera renderingCamera)
+            UnityCamera renderingCamera)
         {
             if (renderingCamera == _camera) RestoreRenderPose();
         }
@@ -202,7 +196,7 @@ namespace Elemental.Presentation.VFX
         private void ResolveInput()
         {
             MagicInputController[] inputs = Object.FindObjectsByType<MagicInputController>(
-                FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+                FindObjectsInactive.Exclude);
             _input = inputs.Length > 0 ? inputs[0] : null;
         }
 
@@ -232,46 +226,37 @@ namespace Elemental.Presentation.VFX
                 _ownsProfile = true;
             }
 
-            if (!profile.TryGet(out _depthOfField))
-                _depthOfField = profile.Add<DepthOfField>(true);
-            _depthOfField.mode.Override(DepthOfFieldMode.Bokeh);
-            _depthOfField.focusDistance.Override(8f);
-            _depthOfField.focalLength.Override(45f);
-            _depthOfField.aperture.Override(8f);
-            _depthOfField.bladeCount.Override(7);
+            if (!profile.TryGet(out Tonemapping tonemapping))
+                tonemapping = profile.Add<Tonemapping>(true);
+            tonemapping.mode.Override(TonemappingMode.ACES);
+
+            if (!profile.TryGet(out ColorAdjustments color))
+                color = profile.Add<ColorAdjustments>(true);
+            color.postExposure.Override(0f);
+            color.contrast.Override(7f);
+            color.saturation.Override(-8f);
+            color.colorFilter.Override(Color.white);
+
+            if (!profile.TryGet(out WhiteBalance balance))
+                balance = profile.Add<WhiteBalance>(true);
+            balance.temperature.Override(2f);
+            balance.tint.Override(-1f);
+
+            if (!profile.TryGet(out DepthOfField depthOfField))
+                depthOfField = profile.Add<DepthOfField>(true);
+            depthOfField.active = true;
+            depthOfField.mode.Override(DepthOfFieldMode.Off);
 
             if (!profile.TryGet(out _bloom))
                 _bloom = profile.Add<Bloom>(true);
-            _bloom.threshold.Override(1.08f);
-            _bloom.intensity.Override(0.18f);
-            _bloom.scatter.Override(0.56f);
+            _bloom.threshold.Override(1.12f);
+            _bloom.intensity.Override(0.07f);
+            _bloom.scatter.Override(0.54f);
 
             if (!profile.TryGet(out _vignette))
                 _vignette = profile.Add<Vignette>(true);
-            _vignette.intensity.Override(0.13f);
-            _vignette.smoothness.Override(0.52f);
-        }
-
-        private void UpdateDepthOfField()
-        {
-            if (_depthOfField == null || _camera == null) return;
-            float targetDistance = 8f;
-            if (_input != null && _charge > 0.02f)
-            {
-                Vector3 target = _input.BendTargetPosition;
-                if (float.IsFinite(target.x) &&
-                    float.IsFinite(target.y) &&
-                    float.IsFinite(target.z))
-                    targetDistance = Vector3.Distance(
-                        _camera.transform.position,
-                        target);
-            }
-            _depthOfField.focusDistance.value = Mathf.Clamp(
-                targetDistance,
-                1.4f,
-                42f);
-            _depthOfField.aperture.value = Mathf.Lerp(10f, 5.6f, _charge);
-            _depthOfField.focalLength.value = Mathf.Lerp(38f, 52f, _charge);
+            _vignette.intensity.Override(0.075f);
+            _vignette.smoothness.Override(0.48f);
         }
 
         private static float EaseOut(float value)

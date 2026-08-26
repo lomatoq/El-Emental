@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="6" result="Passed" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-14 10:53:47Z" end-time="2026-08-14 10:53:47Z" duration="0.0978642">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="215" result="Passed" start-time="2026-08-14 10:53:47Z" end-time="2026-08-14 10:53:47Z" duration="0.097864" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1261" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/AppData/Local/Temp/ElEmental-Codex-Regression-20260814-1045/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="215" result="Passed" start-time="2026-08-14 10:53:47Z" end-time="2026-08-14 10:53:47Z" duration="0.087207" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="32916" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1262" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="215" result="Passed" start-time="2026-08-14 10:53:47Z" end-time="2026-08-14 10:53:47Z" duration="0.084415" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1263" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="215" result="Passed" start-time="2026-08-14 10:53:47Z" end-time="2026-08-14 10:53:47Z" duration="0.082149" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1264" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="215" result="Passed" start-time="2026-08-14 10:53:47Z" end-time="2026-08-14 10:53:47Z" duration="0.079726" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1136" name="EarthMaterialPresentationTests" fullname="Elemental.Tests.EditMode.EarthMaterialPresentationTests" classname="Elemental.Tests.EditMode.EarthMaterialPresentationTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-08-14 10:53:47Z" end-time="2026-08-14 10:53:47Z" duration="0.055998" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1141" name="ProductionFractureUsesSeparateMaskedRenderAndConvexMeshes" fullname="Elemental.Tests.EditMode.EarthMaterialPresentationTests.ProductionFractureUsesSeparateMaskedRenderAndConvexMeshes" methodname="ProductionFractureUsesSeparateMaskedRenderAndConvexMeshes" classname="Elemental.Tests.EditMode.EarthMaterialPresentationTests" runstate="Runnable" seed="1920434435" result="Passed" start-time="2026-08-14 10:53:47Z" end-time="2026-08-14 10:53:47Z" duration="0.041492" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1242" name="VoronoiFractureTests" fullname="Elemental.Tests.EditMode.VoronoiFractureTests" classname="Elemental.Tests.EditMode.VoronoiFractureTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-08-14 10:53:47Z" end-time="2026-08-14 10:53:47Z" duration="0.013473" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1245" name="AspectCompensatedPatternKeepsWideWallChunksChunkyInWorldSpace" fullname="Elemental.Tests.EditMode.VoronoiFractureTests.AspectCompensatedPatternKeepsWideWallChunksChunkyInWorldSpace" methodname="AspectCompensatedPatternKeepsWideWallChunksChunkyInWorldSpace" classname="Elemental.Tests.EditMode.VoronoiFractureTests" runstate="Runnable" seed="300287394" result="Passed" start-time="2026-08-14 10:53:47Z" end-time="2026-08-14 10:53:47Z" duration="0.004677" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1244" name="DifferentSeedsProduceDifferentFractureCenters" fullname="Elemental.Tests.EditMode.VoronoiFractureTests.DifferentSeedsProduceDifferentFractureCenters" methodname="DifferentSeedsProduceDifferentFractureCenters" classname="Elemental.Tests.EditMode.VoronoiFractureTests" runstate="Runnable" seed="1568339307" result="Passed" start-time="2026-08-14 10:53:47Z" end-time="2026-08-14 10:53:47Z" duration="0.001206" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1246" name="HierarchicalPatternContainsLargeAndSmallRockFamilies" fullname="Elemental.Tests.EditMode.VoronoiFractureTests.HierarchicalPatternContainsLargeAndSmallRockFamilies" methodname="HierarchicalPatternContainsLargeAndSmallRockFamilies" classname="Elemental.Tests.EditMode.VoronoiFractureTests" runstate="Runnable" seed="802698040" result="Passed" start-time="2026-08-14 10:53:47Z" end-time="2026-08-14 10:53:47Z" duration="0.001677" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1247" name="ProductionPatternUsesMultiplePolygonFamiliesAndChippedSharedOutlines" fullname="Elemental.Tests.EditMode.VoronoiFractureTests.ProductionPatternUsesMultiplePolygonFamiliesAndChippedSharedOutlines" methodname="ProductionPatternUsesMultiplePolygonFamiliesAndChippedSharedOutlines" classname="Elemental.Tests.EditMode.VoronoiFractureTests" runstate="Runnable" seed="1878618783" result="Passed" start-time="2026-08-14 10:53:47Z" end-time="2026-08-14 10:53:47Z" duration="0.002845" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1243" name="SolverProducesDeterministicGapFreeIrregularPartition" fullname="Elemental.Tests.EditMode.VoronoiFractureTests.SolverProducesDeterministicGapFreeIrregularPartition" methodname="SolverProducesDeterministicGapFreeIrregularPartition" classname="Elemental.Tests.EditMode.VoronoiFractureTests" runstate="Runnable" seed="43775240" result="Passed" start-time="2026-08-14 10:53:47Z" end-time="2026-08-14 10:53:47Z" duration="0.001556" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

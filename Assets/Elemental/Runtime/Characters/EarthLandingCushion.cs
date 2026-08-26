@@ -23,11 +23,13 @@ namespace Elemental.Runtime.Characters
         private bool _holding;
         private bool _cushioning;
         private float _retreatElapsed;
+        private float _safeLandingUntil;
         private Vector3 _landingPoint;
         private Vector3 _landingUp;
 
         public bool IsHolding => _holding;
         public bool IsCushioning => _cushioning;
+        public bool SuppressesHardLanding => _cushioning || Time.time <= _safeLandingUntil;
         public Vector3 PredictedLandingPoint => _landingPoint;
         public EarthLandingPrediction LastPrediction { get; private set; }
         public float LastLandingSpeed { get; private set; }
@@ -145,6 +147,7 @@ namespace Elemental.Runtime.Characters
                     ApplyVelocityChange(_landingUp * velocityChange);
                     LastLandingSpeed = Mathf.Max(0f, -(currentUpSpeed + velocityChange));
                     _cushioning = true;
+                    _safeLandingUntil = Time.time + 0.75f;
                     motor.BeginExternalLaunch(3);
                 }
 
@@ -154,6 +157,7 @@ namespace Elemental.Runtime.Characters
                     targetBody.linearVelocity - ToVector3(LastLandingSurface.Velocity), _landingUp));
                 _holding = false;
                 _cushioning = true;
+                _safeLandingUntil = Time.time + 0.75f;
                 _retreatElapsed = 0f;
             }
         }

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Passed" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-19 14:58:18Z" end-time="2026-08-19 14:58:18Z" duration="0.1023973">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="277" result="Passed" start-time="2026-08-19 14:58:18Z" end-time="2026-08-19 14:58:18Z" duration="0.102397" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1336" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/AppData/Local/Temp/ElEmental-CodexVerify-20260819-1200/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="277" result="Passed" start-time="2026-08-19 14:58:18Z" end-time="2026-08-19 14:58:18Z" duration="0.080088" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="7632" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1337" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="277" result="Passed" start-time="2026-08-19 14:58:18Z" end-time="2026-08-19 14:58:18Z" duration="0.061793" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1338" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="277" result="Passed" start-time="2026-08-19 14:58:18Z" end-time="2026-08-19 14:58:18Z" duration="0.059026" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1339" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="277" result="Passed" start-time="2026-08-19 14:58:18Z" end-time="2026-08-19 14:58:18Z" duration="0.056127" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1165" name="EarthMatterKernelTests" fullname="Elemental.Tests.EditMode.EarthMatterKernelTests" classname="Elemental.Tests.EditMode.EarthMatterKernelTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-08-19 14:58:18Z" end-time="2026-08-19 14:58:18Z" duration="0.048602" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1167" name="IllegalPhaseJump_IsRejectedWithoutMutation" fullname="Elemental.Tests.EditMode.EarthMatterKernelTests.IllegalPhaseJump_IsRejectedWithoutMutation" methodname="IllegalPhaseJump_IsRejectedWithoutMutation" classname="Elemental.Tests.EditMode.EarthMatterKernelTests" runstate="Runnable" seed="161545197" result="Passed" start-time="2026-08-19 14:58:18Z" end-time="2026-08-19 14:58:18Z" duration="0.018271" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1170" name="LedgerDetectsThreePercentReturnGate" fullname="Elemental.Tests.EditMode.EarthMatterKernelTests.LedgerDetectsThreePercentReturnGate" methodname="LedgerDetectsThreePercentReturnGate" classname="Elemental.Tests.EditMode.EarthMatterKernelTests" runstate="Runnable" seed="117008983" result="Passed" start-time="2026-08-19 14:58:18Z" end-time="2026-08-19 14:58:18Z" duration="0.005313" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1173" name="Merge_ConsumesChildrenAndRestoresParentWithNewGeneration" fullname="Elemental.Tests.EditMode.EarthMatterKernelTests.Merge_ConsumesChildrenAndRestoresParentWithNewGeneration" methodname="Merge_ConsumesChildrenAndRestoresParentWithNewGeneration" classname="Elemental.Tests.EditMode.EarthMatterKernelTests" runstate="Runnable" seed="1503594700" result="Passed" start-time="2026-08-19 14:58:18Z" end-time="2026-08-19 14:58:18Z" duration="0.002647" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1168" name="RecycledPoolHandle_InvalidatesPreviousGeneration" fullname="Elemental.Tests.EditMode.EarthMatterKernelTests.RecycledPoolHandle_InvalidatesPreviousGeneration" methodname="RecycledPoolHandle_InvalidatesPreviousGeneration" classname="Elemental.Tests.EditMode.EarthMatterKernelTests" runstate="Runnable" seed="836030718" result="Passed" start-time="2026-08-19 14:58:18Z" end-time="2026-08-19 14:58:18Z" duration="0.000834" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1169" name="Register_ReusesDormantSlotsWithoutExhaustingTheBoundedRegistry" fullname="Elemental.Tests.EditMode.EarthMatterKernelTests.Register_ReusesDormantSlotsWithoutExhaustingTheBoundedRegistry" methodname="Register_ReusesDormantSlotsWithoutExhaustingTheBoundedRegistry" classname="Elemental.Tests.EditMode.EarthMatterKernelTests" runstate="Runnable" seed="1989903276" result="Passed" start-time="2026-08-19 14:58:18Z" end-time="2026-08-19 14:58:18Z" duration="0.001924" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1166" name="RegisterAndLegalLifecycle_PreserveIdentityVolumeAndMass" fullname="Elemental.Tests.EditMode.EarthMatterKernelTests.RegisterAndLegalLifecycle_PreserveIdentityVolumeAndMass" methodname="RegisterAndLegalLifecycle_PreserveIdentityVolumeAndMass" classname="Elemental.Tests.EditMode.EarthMatterKernelTests" runstate="Runnable" seed="748163847" result="Passed" start-time="2026-08-19 14:58:18Z" end-time="2026-08-19 14:58:18Z" duration="0.000825" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1172" name="Split_IsAtomicAndConservesParentVolumeAndMass" fullname="Elemental.Tests.EditMode.EarthMatterKernelTests.Split_IsAtomicAndConservesParentVolumeAndMass" methodname="Split_IsAtomicAndConservesParentVolumeAndMass" classname="Elemental.Tests.EditMode.EarthMatterKernelTests" runstate="Runnable" seed="198606294" result="Passed" start-time="2026-08-19 14:58:18Z" end-time="2026-08-19 14:58:18Z" duration="0.000815" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1171" name="SteadyStateLookupAndKinematics_AreAllocationFree" fullname="Elemental.Tests.EditMode.EarthMatterKernelTests.SteadyStateLookupAndKinematics_AreAllocationFree" methodname="SteadyStateLookupAndKinematics_AreAllocationFree" classname="Elemental.Tests.EditMode.EarthMatterKernelTests" runstate="Runnable" seed="810710765" result="Passed" start-time="2026-08-19 14:58:18Z" end-time="2026-08-19 14:58:18Z" duration="0.001668" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

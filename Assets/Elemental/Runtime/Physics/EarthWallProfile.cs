@@ -7,8 +7,8 @@ namespace Elemental.Runtime.Physics
     public sealed class EarthWallProfile : ScriptableObject
     {
         [Header("Lifecycle")]
-        [SerializeField, Min(0.05f)] private float minimumEmergenceSeconds = 0.36f;
-        [SerializeField, Min(0.05f)] private float maximumEmergenceSeconds = 0.92f;
+        [SerializeField, Min(0.05f)] private float minimumEmergenceSeconds = 0.55f;
+        [SerializeField, Min(0.05f)] private float maximumEmergenceSeconds = 1.25f;
         [FormerlySerializedAs("automaticCollapseDelaySeconds")]
         [Tooltip("Seconds before an undamaged wall begins cracking. Zero disables spontaneous cracking (MVP default).")]
         [SerializeField, Min(0f)] private float automaticCrackDelaySeconds;

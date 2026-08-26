@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="5" result="Passed" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-14 11:00:18Z" end-time="2026-08-14 11:00:39Z" duration="21.8135099">
+  <test-suite type="TestSuite" id="1111" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="76" result="Passed" start-time="2026-08-14 11:00:18Z" end-time="2026-08-14 11:00:39Z" duration="21.813510" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1104" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/AppData/Local/Temp/ElEmental-Codex-Regression-20260814-1045/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="76" result="Passed" start-time="2026-08-14 11:00:18Z" end-time="2026-08-14 11:00:39Z" duration="21.803900" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="23556" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1105" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="76" result="Passed" start-time="2026-08-14 11:00:18Z" end-time="2026-08-14 11:00:39Z" duration="21.802634" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1106" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="76" result="Passed" start-time="2026-08-14 11:00:18Z" end-time="2026-08-14 11:00:39Z" duration="21.801881" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1107" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="76" result="Passed" start-time="2026-08-14 11:00:18Z" end-time="2026-08-14 11:00:39Z" duration="21.801051" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1014" name="EarthBakedFractureRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthBakedFractureRuntimeTests" classname="Elemental.Tests.PlayMode.EarthBakedFractureRuntimeTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-08-14 11:00:18Z" end-time="2026-08-14 11:00:23Z" duration="5.214717" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1015" name="ProductionWallUsesBakedGraphAndDoesNotDecayBondsOnTimer" fullname="Elemental.Tests.PlayMode.EarthBakedFractureRuntimeTests.ProductionWallUsesBakedGraphAndDoesNotDecayBondsOnTimer" methodname="ProductionWallUsesBakedGraphAndDoesNotDecayBondsOnTimer" classname="Elemental.Tests.PlayMode.EarthBakedFractureRuntimeTests" runstate="Runnable" seed="1668080780" result="Passed" start-time="2026-08-14 11:00:18Z" end-time="2026-08-14 11:00:23Z" duration="5.201325" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1037" name="EarthMagicExpansionRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-08-14 11:00:23Z" end-time="2026-08-14 11:00:32Z" duration="8.770557" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1041" name="ChargedFieldSlidesWallSeveralMetersAndKeepsItUpright" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.ChargedFieldSlidesWallSeveralMetersAndKeepsItUpright" methodname="ChargedFieldSlidesWallSeveralMetersAndKeepsItUpright" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="1891309791" result="Passed" start-time="2026-08-14 11:00:23Z" end-time="2026-08-14 11:00:25Z" duration="2.261636" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1038" name="MmbSessionKeepsFracturedWallClusterLatchedUntilRelease" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.MmbSessionKeepsFracturedWallClusterLatchedUntilRelease" methodname="MmbSessionKeepsFracturedWallClusterLatchedUntilRelease" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="800665200" result="Passed" start-time="2026-08-14 11:00:25Z" end-time="2026-08-14 11:00:30Z" duration="4.919896" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1045" name="PlatformDrawnUnderPlayerCarriesWithoutFractureOrRagdoll" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.PlatformDrawnUnderPlayerCarriesWithoutFractureOrRagdoll" methodname="PlatformDrawnUnderPlayerCarriesWithoutFractureOrRagdoll" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="229650674" result="Passed" start-time="2026-08-14 11:00:30Z" end-time="2026-08-14 11:00:32Z" duration="1.566546" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1066" name="EarthPlayerGoldenPathRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthPlayerGoldenPathRuntimeTests" classname="Elemental.Tests.PlayMode.EarthPlayerGoldenPathRuntimeTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-08-14 11:00:32Z" end-time="2026-08-14 11:00:39Z" duration="7.801975" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1067" name="ProductionMageStandsWalksAndAnimatesWithoutCameraChaos" fullname="Elemental.Tests.PlayMode.EarthPlayerGoldenPathRuntimeTests.ProductionMageStandsWalksAndAnimatesWithoutCameraChaos" methodname="ProductionMageStandsWalksAndAnimatesWithoutCameraChaos" classname="Elemental.Tests.PlayMode.EarthPlayerGoldenPathRuntimeTests" runstate="Runnable" seed="692819619" result="Passed" start-time="2026-08-14 11:00:32Z" end-time="2026-08-14 11:00:39Z" duration="7.800238" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

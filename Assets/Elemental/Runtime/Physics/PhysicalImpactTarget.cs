@@ -1,4 +1,6 @@
 using System;
+using Elemental.Runtime.Characters;
+using Elemental.Simulation.Combat;
 using UnityEngine;
 
 namespace Elemental.Runtime.Physics
@@ -29,6 +31,7 @@ namespace Elemental.Runtime.Physics
     {
         [SerializeField] private Rigidbody targetBody;
         [SerializeField, Min(0f)] private float impulseScale = 1f;
+        [SerializeField] private EarthCharacterImpactTarget characterImpactTarget;
         private float _suppressUntil;
 
         public Rigidbody Body => targetBody;
@@ -48,6 +51,11 @@ namespace Elemental.Runtime.Physics
             impulseScale = Mathf.Max(0f, configuredImpulseScale);
         }
 
+        public void ConfigureCharacterImpactTarget(EarthCharacterImpactTarget configuredTarget)
+        {
+            characterImpactTarget = configuredTarget;
+        }
+
         public void ApplyImpact(Vector3 point, Vector3 direction, float impulse)
         {
             if (Time.time < _suppressUntil) return;
@@ -60,6 +68,18 @@ namespace Elemental.Runtime.Physics
                 ? direction.normalized
                 : transform.up;
             float scaledImpulse = impulse * impulseScale;
+            if (characterImpactTarget != null)
+            {
+                characterImpactTarget.ApplyImpact(
+                    point,
+                    safeDirection,
+                    scaledImpulse,
+                    EarthCharacterImpactSourceKind.Physics,
+                    0u);
+                ImpactCount++;
+                AccumulatedImpulse += scaledImpulse;
+                return;
+            }
             targetBody.AddForceAtPosition(safeDirection * scaledImpulse, point, ForceMode.Impulse);
             RecordImpact(point, scaledImpulse);
         }
@@ -70,11 +90,14 @@ namespace Elemental.Runtime.Physics
             {
                 targetBody = GetComponent<Rigidbody>();
             }
+            if (characterImpactTarget == null)
+                characterImpactTarget = GetComponent<EarthCharacterImpactTarget>();
         }
 
         private void OnCollisionEnter(Collision collision)
         {
             if (Time.time < _suppressUntil) return;
+            if (characterImpactTarget != null) return;
             float impulse = collision.impulse.magnitude;
             if (impulse <= 0.01f || collision.contactCount == 0)
             {

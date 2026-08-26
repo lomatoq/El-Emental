@@ -91,6 +91,10 @@ namespace Elemental.Tests.EditMode
                     EarthMeshIntegrityReport report = EarthMeshIntegrityValidator.Validate(
                         mesh, EarthMeshIntegrityPolicy.ClosedHero);
                     Assert.That(report.IsValid, Is.True, $"wall family={family} sample={sample}: {report}");
+                    Assert.That(report.ComponentCount, Is.EqualTo(1),
+                        $"wall family={family} sample={sample} must remain one connected body.");
+                    Assert.That(HasFaceAndBevelVertexClasses(mesh), Is.True,
+                        $"wall family={family} sample={sample} must have real chamfer lighting classes.");
                     Vector3[] vertices = mesh.vertices;
                     uint hash = 2166136261u;
                     for (int index = 0; index < vertices.Length; index += 6)
@@ -121,6 +125,19 @@ namespace Elemental.Tests.EditMode
                 Assert.That(a, Is.Not.EqualTo(previous), $"Adjacent wall duplicate at {index}");
                 previous = a;
             }
+        }
+
+        private static bool HasFaceAndBevelVertexClasses(Mesh mesh)
+        {
+            Color[] colors = mesh.colors;
+            bool hasFace = false;
+            bool hasBevel = false;
+            for (int index = 0; index < colors.Length; index++)
+            {
+                hasFace |= colors[index].a < 0.55f;
+                hasBevel |= colors[index].a > 0.62f;
+            }
+            return colors.Length == mesh.vertexCount && hasFace && hasBevel;
         }
     }
 }

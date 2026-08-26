@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="4" result="Passed" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-19 14:44:05Z" end-time="2026-08-19 14:44:05Z" duration="0.0833421">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="276" result="Passed" start-time="2026-08-19 14:44:05Z" end-time="2026-08-19 14:44:05Z" duration="0.083342" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1335" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/AppData/Local/Temp/ElEmental-CodexVerify-20260819-1200/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="276" result="Passed" start-time="2026-08-19 14:44:05Z" end-time="2026-08-19 14:44:05Z" duration="0.074452" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="29388" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1336" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="276" result="Passed" start-time="2026-08-19 14:44:05Z" end-time="2026-08-19 14:44:05Z" duration="0.072209" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1337" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="276" result="Passed" start-time="2026-08-19 14:44:05Z" end-time="2026-08-19 14:44:05Z" duration="0.070116" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1338" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="276" result="Passed" start-time="2026-08-19 14:44:05Z" end-time="2026-08-19 14:44:05Z" duration="0.068098" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1133" name="EarthInputGrammarV4Tests" fullname="Elemental.Tests.EditMode.EarthInputGrammarV4Tests" classname="Elemental.Tests.EditMode.EarthInputGrammarV4Tests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-08-19 14:44:05Z" end-time="2026-08-19 14:44:05Z" duration="0.059780" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1134" name="DetentAndTrackpadNormalizeToSamePhysicalDirection" fullname="Elemental.Tests.EditMode.EarthInputGrammarV4Tests.DetentAndTrackpadNormalizeToSamePhysicalDirection" methodname="DetentAndTrackpadNormalizeToSamePhysicalDirection" classname="Elemental.Tests.EditMode.EarthInputGrammarV4Tests" runstate="Runnable" seed="114622011" result="Passed" start-time="2026-08-19 14:44:05Z" end-time="2026-08-19 14:44:05Z" duration="0.023110" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1137" name="RankedIntentPrefersContinuityTarget" fullname="Elemental.Tests.EditMode.EarthInputGrammarV4Tests.RankedIntentPrefersContinuityTarget" methodname="RankedIntentPrefersContinuityTarget" classname="Elemental.Tests.EditMode.EarthInputGrammarV4Tests" runstate="Runnable" seed="1556919575" result="Passed" start-time="2026-08-19 14:44:05Z" end-time="2026-08-19 14:44:05Z" duration="0.008241" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1136" name="TokenizerSeparatesTapDoubleTapFlickAndCircleDirection" fullname="Elemental.Tests.EditMode.EarthInputGrammarV4Tests.TokenizerSeparatesTapDoubleTapFlickAndCircleDirection" methodname="TokenizerSeparatesTapDoubleTapFlickAndCircleDirection" classname="Elemental.Tests.EditMode.EarthInputGrammarV4Tests" runstate="Runnable" seed="1582450528" result="Passed" start-time="2026-08-19 14:44:05Z" end-time="2026-08-19 14:44:05Z" duration="0.010570" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1135" name="WheelReversalAndConfirmedOverscrollAreDistinctTokens" fullname="Elemental.Tests.EditMode.EarthInputGrammarV4Tests.WheelReversalAndConfirmedOverscrollAreDistinctTokens" methodname="WheelReversalAndConfirmedOverscrollAreDistinctTokens" classname="Elemental.Tests.EditMode.EarthInputGrammarV4Tests" runstate="Runnable" seed="52295971" result="Passed" start-time="2026-08-19 14:44:05Z" end-time="2026-08-19 14:44:05Z" duration="0.000840" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

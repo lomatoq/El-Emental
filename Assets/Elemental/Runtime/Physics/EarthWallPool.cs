@@ -128,7 +128,9 @@ namespace Elemental.Runtime.Physics
             if (matterKernel == null) matterKernel = EarthMatterKernelBehaviour.FindOrCreate(this);
             _wallShapeDiversity ??= new EarthWallShapeDiversityTracker(
                 shapeGrammarProfile != null ? shapeGrammarProfile.LocalHistoryLength : 16);
-            for (int index = 0; index < capacity; index++) CreateWall();
+            // A baked wall owns forty convex fracture pieces. Prewarming the
+            // entire pool cooked hundreds of colliders before the first frame.
+            if (capacity > 0) CreateWall();
         }
 
         private void OnDestroy()

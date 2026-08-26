@@ -53,6 +53,7 @@ namespace Elemental.Presentation.Rendering
     public static class RumbleRockMeshFactory
     {
         private const float GeometryEpsilon = 0.00008f;
+        private const float MinimumTriangleAreaSq = 0.00000001f;
         private const float QuantizeScale = 10000f;
 
         private sealed class PolyFace
@@ -240,10 +241,23 @@ namespace Elemental.Presentation.Rendering
                 faces[faceIndex].Vertices[vertexIndex] += lift;
 
             Mesh mesh = BuildBeveledMesh(faces, recipe.BevelWidth, recipe.Seed);
+            GroundAtZero(mesh);
             mesh.name = string.IsNullOrWhiteSpace(meshName)
                 ? $"RumbleRock_{recipe.Family}_{recipe.Seed}"
                 : meshName;
             return mesh;
+        }
+
+        private static void GroundAtZero(Mesh mesh)
+        {
+            mesh.RecalculateBounds();
+            float minimumY = mesh.bounds.min.y;
+            if (!float.IsFinite(minimumY) || Mathf.Abs(minimumY) <= 0.000001f) return;
+            Vector3[] vertices = mesh.vertices;
+            for (int index = 0; index < vertices.Length; index++)
+                vertices[index].y -= minimumY;
+            mesh.vertices = vertices;
+            mesh.RecalculateBounds();
         }
 
         public static bool Validate(Mesh mesh, out string reason)
@@ -285,7 +299,7 @@ namespace Elemental.Presentation.Rendering
                 Vector3 b = vertices[ib];
                 Vector3 c = vertices[ic];
                 float areaSq = Vector3.Cross(b - a, c - a).sqrMagnitude;
-                if (areaSq <= 0.00000001f)
+                if (areaSq <= MinimumTriangleAreaSq)
                 {
                     reason = $"Triangle {index / 3} is degenerate.";
                     return false;
@@ -553,6 +567,8 @@ namespace Elemental.Presentation.Rendering
             if (points == null || points.Count < 3) return;
             var ordered = new List<Vector3>(points.Count);
             for (int index = 0; index < points.Count; index++) ordered.Add(points[index]);
+            CleanPolygon(ordered);
+            if (ordered.Count < 3) return;
             Vector3 geometricNormal = PolygonNormal(ordered);
             Vector3 centroid = Average(ordered);
             Vector3 outward = desiredNormal.sqrMagnitude > GeometryEpsilon
@@ -569,6 +585,11 @@ namespace Elemental.Presentation.Rendering
             }
             for (int index = 1; index < ordered.Count - 1; index++)
             {
+                Vector3 a = ordered[0];
+                Vector3 b = ordered[index];
+                Vector3 c = ordered[index + 1];
+                if (Vector3.Cross(b - a, c - a).sqrMagnitude <= MinimumTriangleAreaSq)
+                    continue;
                 triangles.Add(start);
                 triangles.Add(start + index);
                 triangles.Add(start + index + 1);
@@ -646,7 +667,7 @@ namespace Elemental.Presentation.Rendering
                     Vector3 a = points[(index - 1 + points.Count) % points.Count];
                     Vector3 b = points[index];
                     Vector3 c = points[(index + 1) % points.Count];
-                    if (Vector3.Cross(b - a, c - b).sqrMagnitude <= GeometryEpsilon * GeometryEpsilon)
+                    if (Vector3.Cross(b - a, c - b).sqrMagnitude <= MinimumTriangleAreaSq)
                     {
                         points.RemoveAt(index);
                         removed = true;

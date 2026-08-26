@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="3" result="Passed" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-19 14:52:02Z" end-time="2026-08-19 14:52:04Z" duration="2.6777699">
+  <test-suite type="TestSuite" id="1132" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="93" result="Passed" start-time="2026-08-19 14:52:02Z" end-time="2026-08-19 14:52:04Z" duration="2.677770" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1125" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/AppData/Local/Temp/ElEmental-CodexVerify-20260819-1200/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="93" result="Passed" start-time="2026-08-19 14:52:02Z" end-time="2026-08-19 14:52:04Z" duration="2.666853" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="34800" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1126" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="93" result="Passed" start-time="2026-08-19 14:52:02Z" end-time="2026-08-19 14:52:04Z" duration="2.665014" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1127" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="93" result="Passed" start-time="2026-08-19 14:52:02Z" end-time="2026-08-19 14:52:04Z" duration="2.663300" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1128" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="93" result="Passed" start-time="2026-08-19 14:52:02Z" end-time="2026-08-19 14:52:04Z" duration="2.661162" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1096" name="EarthUnifiedBendingRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthUnifiedBendingRuntimeTests" classname="Elemental.Tests.PlayMode.EarthUnifiedBendingRuntimeTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-08-19 14:52:02Z" end-time="2026-08-19 14:52:04Z" duration="2.656677" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1097" name="LmbContractExtractsFromTerrainControlsDynamicMassAndPreservesReleaseMotion" fullname="Elemental.Tests.PlayMode.EarthUnifiedBendingRuntimeTests.LmbContractExtractsFromTerrainControlsDynamicMassAndPreservesReleaseMotion" methodname="LmbContractExtractsFromTerrainControlsDynamicMassAndPreservesReleaseMotion" classname="Elemental.Tests.PlayMode.EarthUnifiedBendingRuntimeTests" runstate="Runnable" seed="828241778" result="Passed" start-time="2026-08-19 14:52:02Z" end-time="2026-08-19 14:52:03Z" duration="1.569137" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1098" name="LmbOnExistingStoneAcquiresItWithoutEditingPlanetVoxels" fullname="Elemental.Tests.PlayMode.EarthUnifiedBendingRuntimeTests.LmbOnExistingStoneAcquiresItWithoutEditingPlanetVoxels" methodname="LmbOnExistingStoneAcquiresItWithoutEditingPlanetVoxels" classname="Elemental.Tests.PlayMode.EarthUnifiedBendingRuntimeTests" runstate="Runnable" seed="388059202" result="Passed" start-time="2026-08-19 14:52:03Z" end-time="2026-08-19 14:52:04Z" duration="0.628819" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1099" name="TwoQuickTapsExtractAndLaunchARealStoneOnTheNextPhysicsSteps" fullname="Elemental.Tests.PlayMode.EarthUnifiedBendingRuntimeTests.TwoQuickTapsExtractAndLaunchARealStoneOnTheNextPhysicsSteps" methodname="TwoQuickTapsExtractAndLaunchARealStoneOnTheNextPhysicsSteps" classname="Elemental.Tests.PlayMode.EarthUnifiedBendingRuntimeTests" runstate="Runnable" seed="215024524" result="Passed" start-time="2026-08-19 14:52:04Z" end-time="2026-08-19 14:52:04Z" duration="0.444716" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -1,9 +1,181 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Elemental.Runtime.Geometry
 {
     public static class EarthSafeMeshFactory
     {
+        private static readonly Color MainStoneVertex = new Color(0.60f, 0.60f, 0.60f, 0.38f);
+        private static readonly Color BevelStoneVertex = new Color(0.62f, 0.62f, 0.62f, 0.72f);
+        private static readonly Color CornerStoneVertex = new Color(0.64f, 0.64f, 0.64f, 0.82f);
+
+        /// <summary>
+        /// Creates a closed visual stone block with real face, edge and corner
+        /// chamfers. Gameplay can keep a simple BoxCollider; this mesh is intended
+        /// for the renderer only.
+        /// </summary>
+        public static Mesh CreateBeveledBox(
+            string name,
+            Bounds requestedBounds,
+            float bevel,
+            uint seed = 1u)
+        {
+            var vertices = new List<Vector3>(96);
+            var normals = new List<Vector3>(96);
+            var colors = new List<Color>(96);
+            var triangles = new List<int>(132);
+            AppendBeveledBox(vertices, normals, colors, triangles, requestedBounds, bevel, seed);
+            var mesh = new Mesh
+            {
+                name = string.IsNullOrWhiteSpace(name) ? "EarthBeveledStone" : name,
+                hideFlags = HideFlags.DontSaveInBuild | HideFlags.DontSaveInEditor
+            };
+            mesh.SetVertices(vertices);
+            mesh.SetNormals(normals);
+            mesh.SetColors(colors);
+            mesh.SetTriangles(triangles, 0, true);
+            mesh.RecalculateBounds();
+            return mesh;
+        }
+
+        public static void AppendBeveledBox(
+            List<Vector3> vertices,
+            List<Vector3> normals,
+            List<Color> colors,
+            List<int> triangles,
+            Bounds requestedBounds,
+            float bevel,
+            uint seed = 1u)
+        {
+            Vector3 size = requestedBounds.size;
+            size.x = Mathf.Max(0.05f, Mathf.Abs(size.x));
+            size.y = Mathf.Max(0.05f, Mathf.Abs(size.y));
+            size.z = Mathf.Max(0.05f, Mathf.Abs(size.z));
+            Vector3 center = requestedBounds.center;
+            Vector3 half = size * 0.5f;
+            float maximumBevel = Mathf.Min(half.x, Mathf.Min(half.y, half.z)) * 0.42f;
+            float width = Mathf.Clamp(bevel, 0.004f, Mathf.Max(0.004f, maximumBevel));
+            Vector3 inner = new Vector3(
+                Mathf.Max(0.004f, half.x - width),
+                Mathf.Max(0.004f, half.y - width),
+                Mathf.Max(0.004f, half.z - width));
+            float tone = Mathf.Lerp(0.965f, 1.035f, Hash01(seed ^ 0x51A71E5Du));
+            Color main = MainStoneVertex * tone;
+            Color edge = BevelStoneVertex * tone;
+            Color corner = CornerStoneVertex * tone;
+            main.a = MainStoneVertex.a;
+            edge.a = BevelStoneVertex.a;
+            corner.a = CornerStoneVertex.a;
+
+            AppendSurface(vertices, normals, colors, triangles, new[]
+            {
+                center + new Vector3(half.x, -inner.y, -inner.z), center + new Vector3(half.x, -inner.y, inner.z),
+                center + new Vector3(half.x, inner.y, inner.z), center + new Vector3(half.x, inner.y, -inner.z)
+            }, Vector3.right, main);
+            AppendSurface(vertices, normals, colors, triangles, new[]
+            {
+                center + new Vector3(-half.x, -inner.y, inner.z), center + new Vector3(-half.x, -inner.y, -inner.z),
+                center + new Vector3(-half.x, inner.y, -inner.z), center + new Vector3(-half.x, inner.y, inner.z)
+            }, Vector3.left, main);
+            AppendSurface(vertices, normals, colors, triangles, new[]
+            {
+                center + new Vector3(-inner.x, half.y, -inner.z), center + new Vector3(inner.x, half.y, -inner.z),
+                center + new Vector3(inner.x, half.y, inner.z), center + new Vector3(-inner.x, half.y, inner.z)
+            }, Vector3.up, main);
+            AppendSurface(vertices, normals, colors, triangles, new[]
+            {
+                center + new Vector3(-inner.x, -half.y, inner.z), center + new Vector3(inner.x, -half.y, inner.z),
+                center + new Vector3(inner.x, -half.y, -inner.z), center + new Vector3(-inner.x, -half.y, -inner.z)
+            }, Vector3.down, main);
+            AppendSurface(vertices, normals, colors, triangles, new[]
+            {
+                center + new Vector3(-inner.x, -inner.y, half.z), center + new Vector3(-inner.x, inner.y, half.z),
+                center + new Vector3(inner.x, inner.y, half.z), center + new Vector3(inner.x, -inner.y, half.z)
+            }, Vector3.forward, main);
+            AppendSurface(vertices, normals, colors, triangles, new[]
+            {
+                center + new Vector3(inner.x, -inner.y, -half.z), center + new Vector3(inner.x, inner.y, -half.z),
+                center + new Vector3(-inner.x, inner.y, -half.z), center + new Vector3(-inner.x, -inner.y, -half.z)
+            }, Vector3.back, main);
+
+            for (int sx = -1; sx <= 1; sx += 2)
+            for (int sy = -1; sy <= 1; sy += 2)
+                AppendSurface(vertices, normals, colors, triangles, new[]
+                {
+                    center + new Vector3(sx * half.x, sy * inner.y, -inner.z),
+                    center + new Vector3(sx * inner.x, sy * half.y, -inner.z),
+                    center + new Vector3(sx * inner.x, sy * half.y, inner.z),
+                    center + new Vector3(sx * half.x, sy * inner.y, inner.z)
+                }, new Vector3(sx, sy, 0f).normalized, edge);
+            for (int sx = -1; sx <= 1; sx += 2)
+            for (int sz = -1; sz <= 1; sz += 2)
+                AppendSurface(vertices, normals, colors, triangles, new[]
+                {
+                    center + new Vector3(sx * half.x, -inner.y, sz * inner.z),
+                    center + new Vector3(sx * inner.x, -inner.y, sz * half.z),
+                    center + new Vector3(sx * inner.x, inner.y, sz * half.z),
+                    center + new Vector3(sx * half.x, inner.y, sz * inner.z)
+                }, new Vector3(sx, 0f, sz).normalized, edge);
+            for (int sy = -1; sy <= 1; sy += 2)
+            for (int sz = -1; sz <= 1; sz += 2)
+                AppendSurface(vertices, normals, colors, triangles, new[]
+                {
+                    center + new Vector3(-inner.x, sy * half.y, sz * inner.z),
+                    center + new Vector3(-inner.x, sy * inner.y, sz * half.z),
+                    center + new Vector3(inner.x, sy * inner.y, sz * half.z),
+                    center + new Vector3(inner.x, sy * half.y, sz * inner.z)
+                }, new Vector3(0f, sy, sz).normalized, edge);
+            for (int sx = -1; sx <= 1; sx += 2)
+            for (int sy = -1; sy <= 1; sy += 2)
+            for (int sz = -1; sz <= 1; sz += 2)
+                AppendSurface(vertices, normals, colors, triangles, new[]
+                {
+                    center + new Vector3(sx * half.x, sy * inner.y, sz * inner.z),
+                    center + new Vector3(sx * inner.x, sy * half.y, sz * inner.z),
+                    center + new Vector3(sx * inner.x, sy * inner.y, sz * half.z)
+                }, new Vector3(sx, sy, sz).normalized, corner);
+        }
+
+        private static void AppendSurface(
+            List<Vector3> vertices,
+            List<Vector3> normals,
+            List<Color> colors,
+            List<int> triangles,
+            Vector3[] polygon,
+            Vector3 outward,
+            Color color)
+        {
+            int start = vertices.Count;
+            bool reverse = polygon.Length >= 3 &&
+                           Vector3.Dot(
+                               Vector3.Cross(polygon[1] - polygon[0], polygon[2] - polygon[0]),
+                               outward) < 0f;
+            if (reverse)
+            {
+                for (int index = polygon.Length - 1; index >= 0; index--)
+                {
+                    vertices.Add(polygon[index]);
+                    normals.Add(outward);
+                    colors.Add(color);
+                }
+            }
+            else
+            {
+                for (int index = 0; index < polygon.Length; index++)
+                {
+                    vertices.Add(polygon[index]);
+                    normals.Add(outward);
+                    colors.Add(color);
+                }
+            }
+            for (int index = 1; index < polygon.Length - 1; index++)
+            {
+                triangles.Add(start);
+                triangles.Add(start + index);
+                triangles.Add(start + index + 1);
+            }
+        }
+
         /// <summary>
         /// Creates a low-poly convex block with a deterministic top/bottom skew.
         /// Unlike the plain box fallback this still reads as an irregular stone,

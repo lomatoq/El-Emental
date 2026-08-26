@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Elemental.Runtime.Geometry;
+using Elemental.Runtime.Characters;
 using Elemental.Runtime.World;
 using UnityEngine;
 
@@ -86,7 +87,10 @@ namespace Elemental.Runtime.Physics
             _shapeDiversity ??= new EarthShapeDiversityTracker(
                 shapeGrammarProfile != null ? shapeGrammarProfile.LocalHistoryLength : 16);
             EnsureRuntimeShapeLibrary();
-            for (int index = 0; index < capacity; index++)
+            // The complete hero pool is authored up front. A cast may claim an existing
+            // shell, but must never create a GameObject, collider or mesh at runtime.
+            int warmCount = capacity;
+            for (int index = 0; index < warmCount; index++)
             {
                 CreateFragment();
             }
@@ -141,6 +145,17 @@ namespace Elemental.Runtime.Physics
             // assigning while an inactive pooled object is waking can leave sharedMesh null.
             fragment.SetShape(shape);
             LastAcquired = fragment;
+            return fragment;
+        }
+
+        public EarthFragment ReserveExtraction(
+            MagicExecutor executor,
+            Vector3 position,
+            float radius,
+            float mass)
+        {
+            EarthFragment fragment = Acquire(executor, position, radius, mass, null);
+            if (fragment != null) fragment.BeginExtractionReservation();
             return fragment;
         }
 
@@ -207,6 +222,7 @@ namespace Elemental.Runtime.Physics
             body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             physicsFeelProfile?.Apply(body, collider, EarthPhysicsBodyClass.HeavyBlock);
             EarthFragment fragment = fragmentObject.AddComponent<EarthFragment>();
+            fragmentObject.AddComponent<EarthTypedCombatProjectile>();
             fragment.ConfigureHover(hoverProfile);
             EarthProjectileSweepGuard sweepGuard = fragmentObject.AddComponent<EarthProjectileSweepGuard>();
             sweepGuard.Configure(fragment, physicsFeelProfile);
@@ -225,6 +241,11 @@ namespace Elemental.Runtime.Physics
         private void EnsureRuntimeShapeLibrary()
         {
             if (_runtimeShapeVariants != null) return;
+            if (HasAuthoredV5PhysicsLibrary(fragmentMeshVariants))
+            {
+                fragmentMesh = fragmentMeshVariants[0];
+                return;
+            }
             bool legacyLibrary = shapeGrammarProfile != null ||
                                  fragmentMeshVariants == null || fragmentMeshVariants.Length == 0;
             if (!legacyLibrary)
@@ -244,6 +265,19 @@ namespace Elemental.Runtime.Physics
                 _runtimeShapeVariants[index] = EarthRockMeshFactory.Create((EarthRockArchetype)index, seed);
             }
             if (_runtimeShapeVariants.Length > 0) fragmentMesh = _runtimeShapeVariants[0];
+        }
+
+        private static bool HasAuthoredV5PhysicsLibrary(Mesh[] variants)
+        {
+            if (variants == null || variants.Length == 0) return false;
+            for (int index = 0; index < variants.Length; index++)
+            {
+                Mesh variant = variants[index];
+                if (variant == null || !variant.name.StartsWith(
+                        "V5_Physics_", System.StringComparison.Ordinal))
+                    return false;
+            }
+            return true;
         }
 
         private void OnDestroy()

@@ -61,6 +61,11 @@ namespace Elemental.Input.Gestures
             if (armorPiece != null)
                 return new EarthResolvedTarget(
                     EarthSourceKind.Rock, collider, armorPiece.Body, armorPiece, null);
+            EarthDestructibleDecorRock decorRock =
+                collider.GetComponentInParent<EarthDestructibleDecorRock>();
+            if (decorRock != null)
+                return new EarthResolvedTarget(
+                    EarthSourceKind.Rock, collider, decorRock.Body, decorRock, null);
             EarthWall wall = collider.GetComponentInParent<EarthWall>();
             if (wall != null)
                 return new EarthResolvedTarget(

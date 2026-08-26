@@ -26,7 +26,8 @@ namespace Elemental.Presentation.Rendering
         MageWalk = 18,
         Armor = 19,
         QuickStone = 20,
-        AnimationLanding = 21
+        AnimationLanding = 21,
+        MvpRescue = 22
     }
 
     public readonly struct VisualQaCaptureRequest
@@ -34,6 +35,7 @@ namespace Elemental.Presentation.Rendering
         public const string Argument = "-elementalVisualQa";
         public const string MagicArgument = "-elementalVisualQaMagic";
         public const string ScenarioArgument = "-elementalVisualQaScenario";
+        public const string ShippingSceneArgument = "-elementalVisualQaShipping";
 
         public VisualQaCaptureRequest(string outputPath, VisualQaScenario scenario)
         {
@@ -97,6 +99,7 @@ namespace Elemental.Presentation.Rendering
             if (string.Equals(value, "armor", StringComparison.OrdinalIgnoreCase)) return VisualQaScenario.Armor;
             if (string.Equals(value, "quick-stone", StringComparison.OrdinalIgnoreCase)) return VisualQaScenario.QuickStone;
             if (string.Equals(value, "animation-landing", StringComparison.OrdinalIgnoreCase)) return VisualQaScenario.AnimationLanding;
+            if (string.Equals(value, "mvp-rescue", StringComparison.OrdinalIgnoreCase)) return VisualQaScenario.MvpRescue;
             return VisualQaScenario.None;
         }
     }

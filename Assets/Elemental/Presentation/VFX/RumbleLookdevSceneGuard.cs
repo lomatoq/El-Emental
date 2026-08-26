@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityCamera = global::UnityEngine.Camera;
 
 namespace Elemental.Presentation.VFX
 {
@@ -15,14 +16,10 @@ namespace Elemental.Presentation.VFX
     [DisallowMultipleComponent]
     public sealed class RumbleLookdevSceneGuard : MonoBehaviour
     {
-        [SerializeField] private Camera targetCamera;
+        [SerializeField] private UnityCamera targetCamera;
         [SerializeField] private Light keyLight;
         [SerializeField] private Volume authoredVolume;
-        [SerializeField] private float scanInterval = 0.35f;
-
-        private float _nextScanAt;
-
-        public void Configure(Camera camera, Light light, Volume volume)
+        public void Configure(UnityCamera camera, Light light, Volume volume)
         {
             targetCamera = camera;
             keyLight = light;
@@ -32,18 +29,9 @@ namespace Elemental.Presentation.VFX
 
         private void OnEnable() => EnforceOwnership();
 
-        private void Update()
-        {
-            if (Time.unscaledTime < _nextScanAt) return;
-            _nextScanAt = Time.unscaledTime + Mathf.Max(0.1f, scanInterval);
-            EnforceOwnership();
-        }
-
         private void EnforceOwnership()
         {
-            Light[] lights = FindObjectsByType<Light>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None);
+            Light[] lights = FindObjectsByType<Light>(FindObjectsInactive.Include);
             for (int index = 0; index < lights.Length; index++)
             {
                 Light light = lights[index];
@@ -66,9 +54,7 @@ namespace Elemental.Presentation.VFX
                 }
             }
 
-            Volume[] volumes = FindObjectsByType<Volume>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None);
+            Volume[] volumes = FindObjectsByType<Volume>(FindObjectsInactive.Include);
             for (int index = 0; index < volumes.Length; index++)
             {
                 Volume candidate = volumes[index];

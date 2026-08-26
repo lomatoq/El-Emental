@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using Elemental.Runtime.Characters;
+using Elemental.Runtime.Geometry;
 using Elemental.Runtime.Matter;
 using Elemental.Simulation.Bending;
+using Elemental.Simulation.Combat;
 using Elemental.Simulation.Matter;
 using Unity.Mathematics;
 using UnityEngine;
@@ -50,6 +52,7 @@ namespace Elemental.Runtime.Physics
         private readonly List<EarthPillarWaveColumn> _columns = new List<EarthPillarWaveColumn>(96);
         private int _reuseCursor;
         private uint _nextPulseId = 1u;
+        private uint _nextImpactCastId = 0x57000001u;
         private int _nextTopologySeed;
         private EarthWaveSemanticFamily _lastSemanticFamily = EarthWaveSemanticFamily.RollingTerraces;
         private EarthMatterKernelBehaviour _matterKernel;
@@ -170,6 +173,8 @@ namespace Elemental.Runtime.Physics
             float powerCharge01,
             Rigidbody caster)
         {
+            uint impactCastId = _nextImpactCastId++;
+            if (_nextImpactCastId == 0u) _nextImpactCastId = 0x57000001u;
             EarthWaveSemanticFamily family = EarthWaveFamilySelector.Select(
                 sectorCharge01,
                 powerCharge01,
@@ -238,15 +243,106 @@ namespace Elemental.Runtime.Physics
                     sample.ShapeAreaScale,
                     sample.SpiralPhase01,
                     cell.Footprint,
-                    cell.Area);
+                    cell.VisualArea,
+                    impactCastId);
             }
             return topology.Cells.Length;
         }
+
+        public int LaunchCrest(
+            Vector3 surfaceOrigin,
+            Vector3 localUp,
+            Vector3 forward,
+            int requestedCount,
+            Rigidbody caster)
+        {
+            int count = requestedCount <= 1 ? 1 : requestedCount <= 3 ? 3 : requestedCount <= 5 ? 5 : 7;
+            uint impactCastId = _nextImpactCastId++;
+            if (_nextImpactCastId == 0u) _nextImpactCastId = 0x57000001u;
+            Vector3 center = planetCenter != null ? planetCenter.position : Vector3.zero;
+            float radius = Mathf.Max(1f, Vector3.Distance(surfaceOrigin, center));
+            Vector3 up = localUp.sqrMagnitude > 0.5f ? localUp.normalized : (surfaceOrigin - center).normalized;
+            Vector3 tangentForward = Vector3.ProjectOnPlane(forward, up).normalized;
+            if (tangentForward.sqrMagnitude < 0.5f) tangentForward = Vector3.Cross(up, Vector3.right).normalized;
+            for (int index = 0; index < count; index++)
+            {
+                // A crest is read from the caster outwards: the nearest tooth rises
+                // first, then each overlapping tooth continues the line away from
+                // the player. The small overlap removes the old fence-like gaps.
+                EarthPillarCrestLayoutSample layout =
+                    EarthPillarCrestLayoutSolver.Sample(index, count);
+                Vector3 candidate = surfaceOrigin + tangentForward * layout.ForwardOffset;
+                Vector3 columnUp = (candidate - center).normalized;
+                Vector3 surface = center + columnUp * radius;
+                Vector3 columnForward = Vector3.ProjectOnPlane(tangentForward, columnUp).normalized;
+                float height = 3.15f * layout.HeightScale;
+                EarthPillarWaveColumn column = Acquire();
+                column.Schedule(
+                    this,
+                    surface,
+                    columnUp,
+                    columnForward,
+                    height,
+                    layout.Width,
+                    layout.Depth,
+                    layout.StartDelay,
+                    0.42f,
+                    layout.HeightScale,
+                    _nextPulseId++,
+                    360f,
+                    caster,
+                    profile,
+                    ImpactHits,
+                    6,
+                    1f,
+                    0f,
+                    null,
+                    0f,
+                    impactCastId,
+                    45f,
+                    EarthCharacterImpactSourceKind.PillarCrest);
+            }
+            return count;
+        }
+
+        public int LaunchCrest(
+            Vector3 surfaceStart,
+            Vector3 surfaceEnd,
+            int requestedCount,
+            Rigidbody caster)
+        {
+            Vector3 center = planetCenter != null ? planetCenter.position : Vector3.zero;
+            Vector3 up = (surfaceStart - center).normalized;
+            if (up.sqrMagnitude < 0.5f) up = transform.up;
+            Vector3 direction = Vector3.ProjectOnPlane(surfaceEnd - surfaceStart, up).normalized;
+            if (direction.sqrMagnitude < 0.5f && caster != null)
+                direction = Vector3.ProjectOnPlane(caster.transform.forward, up).normalized;
+            if (direction.sqrMagnitude < 0.5f) direction = Vector3.Cross(up, Vector3.right).normalized;
+            if (caster != null &&
+                (surfaceEnd - caster.worldCenterOfMass).sqrMagnitude <
+                (surfaceStart - caster.worldCenterOfMass).sqrMagnitude)
+            {
+                Vector3 swap = surfaceStart;
+                surfaceStart = surfaceEnd;
+                surfaceEnd = swap;
+                up = (surfaceStart - center).normalized;
+                direction = Vector3.ProjectOnPlane(surfaceEnd - surfaceStart, up).normalized;
+            }
+            return LaunchCrest(surfaceStart, up, direction, requestedCount, caster);
+        }
+
+        public int LaunchCrest(in EarthCrestPath path, int requestedCount, Rigidbody caster) =>
+            LaunchCrest(
+                new Vector3(path.Start.x, path.Start.y, path.Start.z),
+                new Vector3(path.End.x, path.End.y, path.End.z),
+                requestedCount,
+                caster);
 
         private EarthPillarWaveColumn Acquire()
         {
             for (int index = 0; index < _columns.Count; index++)
                 if (!_columns[index].gameObject.activeSelf) return _columns[index];
+            if (_columns.Count < capacity) return CreateColumn();
             EarthPillarWaveColumn column = _columns[_reuseCursor];
             _reuseCursor = (_reuseCursor + 1) % _columns.Count;
             column.ResetColumn();
@@ -315,6 +411,8 @@ namespace Elemental.Runtime.Physics
         private Quaternion _baseRotation;
         private float _crest01;
         private uint _stableId;
+        private uint _impactSourceId;
+        private EarthCharacterImpactSourceKind _impactKind;
         private uint _generation;
         private bool _magicDetached;
         private bool _instancedRendering;
@@ -340,6 +438,8 @@ namespace Elemental.Runtime.Physics
             }
         }
         public uint StableEarthId => _stableId;
+        public uint ImpactSourceId => _impactSourceId != 0u ? _impactSourceId : _stableId;
+        public EarthCharacterImpactSourceKind ImpactKind => _impactKind;
         public EarthPhysicalTargetHandle TargetHandle =>
             new EarthPhysicalTargetHandle(_stableId, _generation);
         public float EarthMass => _body != null
@@ -387,7 +487,10 @@ namespace Elemental.Runtime.Physics
             float shapeAreaScale = 1f,
             float spiralPhase01 = 0f,
             float2[] sharedFootprint = null,
-            float footprintArea = 0f)
+            float footprintArea = 0f,
+            uint impactSourceId = 0u,
+            float tiltDegrees = 0f,
+            EarthCharacterImpactSourceKind impactKind = EarthCharacterImpactSourceKind.PillarWave)
         {
             Resolve();
             RestoreCasterCollisions();
@@ -440,6 +543,8 @@ namespace Elemental.Runtime.Physics
             _impulse = impulse;
             _crest01 = Mathf.Clamp01(crest01);
             _stableId = stableId;
+            _impactSourceId = impactSourceId != 0u ? impactSourceId : stableId;
+            _impactKind = impactKind;
             _generation++;
             if (_generation == 0u) _generation = 1u;
             _elapsed = 0f;
@@ -460,8 +565,14 @@ namespace Elemental.Runtime.Physics
             {
                 float geologicalYaw = (Mathf.Repeat(delay * 173f, 14f) - 7f) +
                                       Mathf.Lerp(-7f, 7f, spiralPhase01);
+                Vector3 tiltAxis = Vector3.Cross(_up, forward).normalized;
+                if (tiltAxis.sqrMagnitude < 0.5f) tiltAxis = transform.right;
+                Vector3 visualUp = Quaternion.AngleAxis(
+                    Mathf.Clamp(tiltDegrees, -55f, 55f),
+                    tiltAxis) * _up;
+                Vector3 visualForward = Vector3.ProjectOnPlane(forward, visualUp).normalized;
                 _baseRotation = Quaternion.AngleAxis(geologicalYaw, _up) *
-                                Quaternion.LookRotation(forward, _up);
+                                Quaternion.LookRotation(visualForward, visualUp);
                 float areaScale = Mathf.Clamp(shapeAreaScale, 0.45f, 1.70f);
                 float anisotropy = Mathf.Lerp(0.88f, 1.12f, (shapeSides - 3f) / 5f);
                 _fullScale.x *= Mathf.Sqrt(areaScale) * anisotropy;
@@ -633,7 +744,8 @@ namespace Elemental.Runtime.Physics
                 return;
             }
             _elapsed += Time.fixedDeltaTime;
-            if (_elapsed < _delay) return;
+            const float tremorLeadSeconds = 0.09f;
+            if (_elapsed < _delay - tremorLeadSeconds) return;
             float localTime = _elapsed - _delay;
             float rise = _profile != null ? _profile.ColumnRiseSeconds : 0.36f;
             float hold = _holdDuration;
@@ -663,14 +775,22 @@ namespace Elemental.Runtime.Physics
                 SetVisualVisible(true);
             }
             float rise01 = Mathf.Clamp01(localTime / Mathf.Max(0.05f, rise));
-            float tremorEnvelope = Mathf.Sin(rise01 * Mathf.PI) * (1f - motion.Sink01);
-            float phase = (_stableId * 0.6180339f) + (localTime * 34f);
-            // Shared-boundary Voronoi cells must translate coherently. Per-cell
-            // lateral shake reopened their exact seams and made the web read as a
-            // pile of independent boxes; the vertical overshoot already carries mass.
-            Vector3 lateral = _polygonCell
-                ? Vector3.zero
-                : transform.right * (Mathf.Sin(phase) * 0.028f * tremorEnvelope);
+            float preEnvelope = Mathf.Clamp01((localTime + tremorLeadSeconds) / tremorLeadSeconds);
+            float riseEnvelope = Mathf.SmoothStep(0.72f, 1f, Mathf.Clamp01(rise01 / 0.16f)) *
+                                 (1f - Mathf.SmoothStep(0.42f, 0.70f, motion.Height01));
+            float tremorEnvelope = (localTime < 0f ? preEnvelope * 0.72f : riseEnvelope) *
+                                   (1f - motion.Sink01);
+            Vector3 coherentAxis = Vector3.ProjectOnPlane(
+                new Vector3(0.73f, 0.19f, 0.65f),
+                _up).normalized;
+            if (coherentAxis.sqrMagnitude < 0.5f) coherentAxis = transform.right;
+            float spatialPhase = Vector3.Dot(_surface, coherentAxis) * (Mathf.PI * 2f / 12f);
+            float phase = localTime * (Mathf.PI * 2f * 22f) + spatialPhase;
+            Vector3 lateral = coherentAxis * (Mathf.Sin(phase) * 0.042f * tremorEnvelope);
+            Vector3 tremorAxis = Vector3.Cross(_up, coherentAxis).normalized;
+            Quaternion tremorRotation = Quaternion.AngleAxis(
+                Mathf.Cos(phase) * 1.1f * tremorEnvelope,
+                tremorAxis) * _baseRotation;
             if (_polygonCell)
             {
                 // The complete underground rock volume translates upward. No axis
@@ -679,28 +799,28 @@ namespace Elemental.Runtime.Physics
                 float lift = EarthPillarWaveSolver.ResolveCellBaseOffset(
                     _sampleHeight, _slabThickness, in motion);
                 _body.MovePosition(_surface + (_up * lift) + lateral);
+                _body.MoveRotation(tremorRotation);
+                transform.localScale = Vector3.one;
             }
             else
             {
                 float visibleHeight = Mathf.Max(0.012f, _fullScale.y * motion.Height01);
                 float sink = Mathf.Max(_fullScale.y * 0.72f, 0.42f) * motion.Sink01;
-                _body.MovePosition(_surface - (_up * sink) + (_up * visibleHeight * 0.5f) + lateral);
-            }
-            // Geological cells rise along local gravity. A tiny yaw vibration sells
-            // mass without making every tooth lean back toward the caster.
-            float yawTremor = _polygonCell
-                ? 0f
-                : Mathf.Sin(phase * 0.73f) * 0.8f * tremorEnvelope;
-            _body.MoveRotation(Quaternion.AngleAxis(yawTremor, _up) * _baseRotation);
-            if (_polygonCell)
-                transform.localScale = Vector3.one;
-            else
-            {
-                float visibleHeight = Mathf.Max(0.012f, _fullScale.y * motion.Height01);
-                transform.localScale = new Vector3(
+                Vector3 visibleScale = new Vector3(
                     _fullScale.x * motion.Width01,
                     visibleHeight,
                     _fullScale.z * motion.Width01);
+                MeshFilter filter = GetComponent<MeshFilter>();
+                EarthSurfacePlacementResult placement = EarthSurfacePlacementSolver.Solve(
+                    filter != null ? filter.sharedMesh : null,
+                    _surface - (_up * sink),
+                    _up,
+                    tremorRotation,
+                    visibleScale,
+                    0.035f);
+                _body.MovePosition((placement.IsValid ? placement.RootPosition : _surface) + lateral);
+                _body.MoveRotation(tremorRotation);
+                transform.localScale = visibleScale;
             }
             _collider.enabled = motion.Height01 >= 0.16f && motion.Sink01 < 0.72f;
             if (!_impacted && localTime <= rise && motion.Height01 >= 0.56f)
@@ -736,6 +856,30 @@ namespace Elemental.Runtime.Physics
                 EarthWall wall = hit.GetComponentInParent<EarthWall>();
                 if (wall == null) wall = hit.GetComponent<EarthWallPiece>()?.Owner;
                 wall?.ApplyStructureImpact(transform.position, _outward + _up, _impulse);
+                EarthCharacterImpactTarget characterTarget =
+                    hit.GetComponentInParent<EarthCharacterImpactTarget>();
+                if (characterTarget != null)
+                {
+                    characterTarget.ApplyImpact(
+                        transform.position,
+                        _outward + _up,
+                        _impulse,
+                        _impactKind,
+                        ImpactSourceId,
+                        0f,
+                        _crest01);
+                    continue;
+                }
+                EarthDestructibleDecorRock decorRock =
+                    hit.GetComponentInParent<EarthDestructibleDecorRock>();
+                if (decorRock != null)
+                {
+                    decorRock.ApplyImpact(
+                        transform.position,
+                        (_outward * 0.55f + _up).normalized,
+                        _impulse);
+                    continue;
+                }
                 Rigidbody target = hit.attachedRigidbody;
                 if (target == null || target.isKinematic) continue;
                 target.AddForce((_outward * 0.55f + _up).normalized * _impulse, ForceMode.Impulse);

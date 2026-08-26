@@ -21,6 +21,8 @@ namespace Elemental.Runtime.Physics
         private Mesh _fallbackMesh;
         private Mesh[] _runtimeShapeVariants;
 
+        public Mesh ResolveShapeVariant(int stableIndex) => ShapeForIndex(stableIndex);
+
         public void Configure(
             int configuredCapacity,
             Material configuredMaterial,
@@ -51,7 +53,11 @@ namespace Elemental.Runtime.Physics
         private void Awake()
         {
             EnsureRuntimeShapeLibrary();
-            for (int index = 0; index < capacity; index++) CreatePiece();
+            // Convex MeshCollider cooking dominates the old scene boot. Keep the
+            // hard representation cap, but only warm the burst needed by one
+            // ordinary shatter and grow the remainder on demand.
+            int warmCount = Mathf.Min(capacity, 12);
+            for (int index = 0; index < warmCount; index++) CreatePiece();
         }
 
         public void EmitShatter(
@@ -105,6 +111,7 @@ namespace Elemental.Runtime.Physics
         {
             for (int index = 0; index < _pieces.Count; index++)
                 if (!_pieces[index].gameObject.activeSelf) return _pieces[index];
+            if (_pieces.Count < capacity) return CreatePiece();
             EarthRockDebris piece = _pieces[_reuseCursor];
             _reuseCursor = (_reuseCursor + 1) % _pieces.Count;
             piece.ResetPiece();
@@ -218,6 +225,11 @@ namespace Elemental.Runtime.Physics
         private void EnsureRuntimeShapeLibrary()
         {
             if (_runtimeShapeVariants != null) return;
+            if (HasAuthoredV5PhysicsLibrary(meshVariants))
+            {
+                mesh = meshVariants[0];
+                return;
+            }
             bool legacyLibrary = shapeGrammarProfile != null || meshVariants == null || meshVariants.Length == 0;
             if (!legacyLibrary)
             {
@@ -235,6 +247,19 @@ namespace Elemental.Runtime.Physics
                 _runtimeShapeVariants[index] = EarthRockMeshFactory.Create((EarthRockArchetype)index, seed);
             }
             if (_runtimeShapeVariants.Length > 0) mesh = _runtimeShapeVariants[0];
+        }
+
+        private static bool HasAuthoredV5PhysicsLibrary(Mesh[] variants)
+        {
+            if (variants == null || variants.Length == 0) return false;
+            for (int index = 0; index < variants.Length; index++)
+            {
+                Mesh variant = variants[index];
+                if (variant == null || !variant.name.StartsWith(
+                        "V5_Physics_", System.StringComparison.Ordinal))
+                    return false;
+            }
+            return true;
         }
 
         private static float Hash01(uint seed, int index)

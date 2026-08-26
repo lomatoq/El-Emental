@@ -1,10 +1,9 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using Elemental.Presentation.Rendering;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityCamera = global::UnityEngine.Camera;
 
 namespace Elemental.Presentation.VFX
 {
@@ -30,7 +29,7 @@ namespace Elemental.Presentation.VFX
     /// </summary>
     [DefaultExecutionOrder(10050)]
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(Camera))]
+    [RequireComponent(typeof(UnityCamera))]
     public sealed class RumbleLensDirector : MonoBehaviour
     {
         [SerializeField] private Volume volume;
@@ -43,7 +42,7 @@ namespace Elemental.Presentation.VFX
         [SerializeField] private RumbleLookdevLightState lightState = RumbleLookdevLightState.Day;
         [SerializeField] private bool showOverlay = true;
 
-        private Camera _camera;
+        private UnityCamera _camera;
         private DepthOfField _depthOfField;
         private Bloom _bloom;
         private Vignette _vignette;
@@ -87,7 +86,7 @@ namespace Elemental.Presentation.VFX
 
         private void Awake()
         {
-            _camera = GetComponent<Camera>();
+            _camera = GetComponent<UnityCamera>();
             _baseFieldOfView = _camera.fieldOfView;
             UniversalAdditionalCameraData cameraData = _camera.GetUniversalAdditionalCameraData();
             cameraData.renderPostProcessing = true;
@@ -122,15 +121,19 @@ namespace Elemental.Presentation.VFX
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Alpha1)) SetFocusState(RumbleLookdevFocusState.Explore);
-            if (Input.GetKeyDown(KeyCode.Alpha2)) SetFocusState(RumbleLookdevFocusState.Near);
-            if (Input.GetKeyDown(KeyCode.Alpha3)) SetFocusState(RumbleLookdevFocusState.Mid);
-            if (Input.GetKeyDown(KeyCode.Alpha4)) SetFocusState(RumbleLookdevFocusState.Far);
-            if (Input.GetKeyDown(KeyCode.F1)) SetLightState(RumbleLookdevLightState.Day);
-            if (Input.GetKeyDown(KeyCode.F2)) SetLightState(RumbleLookdevLightState.Sunset);
-            if (Input.GetKeyDown(KeyCode.F3)) SetLightState(RumbleLookdevLightState.Night);
-            if (Input.GetKeyDown(KeyCode.Tab)) CycleSeamDebug();
-            ChargeActive = Input.GetKey(KeyCode.C);
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard != null)
+            {
+                if (keyboard.digit1Key.wasPressedThisFrame) SetFocusState(RumbleLookdevFocusState.Explore);
+                if (keyboard.digit2Key.wasPressedThisFrame) SetFocusState(RumbleLookdevFocusState.Near);
+                if (keyboard.digit3Key.wasPressedThisFrame) SetFocusState(RumbleLookdevFocusState.Mid);
+                if (keyboard.digit4Key.wasPressedThisFrame) SetFocusState(RumbleLookdevFocusState.Far);
+                if (keyboard.f1Key.wasPressedThisFrame) SetLightState(RumbleLookdevLightState.Day);
+                if (keyboard.f2Key.wasPressedThisFrame) SetLightState(RumbleLookdevLightState.Sunset);
+                if (keyboard.f3Key.wasPressedThisFrame) SetLightState(RumbleLookdevLightState.Night);
+                if (keyboard.tabKey.wasPressedThisFrame) CycleSeamDebug();
+            }
+            ChargeActive = keyboard != null && keyboard.cKey.isPressed;
 
             float targetLens = ChargeActive ? 1f : 0f;
             _lensBlend = Mathf.SmoothDamp(
@@ -304,7 +307,7 @@ namespace Elemental.Presentation.VFX
             }
         }
 
-        private void HandleBeginCameraRendering(ScriptableRenderContext context, Camera renderingCamera)
+        private void HandleBeginCameraRendering(ScriptableRenderContext context, UnityCamera renderingCamera)
         {
             if (renderingCamera != _camera || _renderPoseSaved) return;
             float strength = Mathf.Clamp01(_lensBlend * 0.38f + _impulse);
@@ -326,7 +329,7 @@ namespace Elemental.Presentation.VFX
                                      z * rotationAmplitude * 0.4f) * transform.rotation;
         }
 
-        private void HandleEndCameraRendering(ScriptableRenderContext context, Camera renderingCamera)
+        private void HandleEndCameraRendering(ScriptableRenderContext context, UnityCamera renderingCamera)
         {
             if (renderingCamera == _camera) RestoreRenderPose();
         }
@@ -355,328 +358,4 @@ namespace Elemental.Presentation.VFX
         }
     }
 
-    [DisallowMultipleComponent]
-    public sealed class RumbleRockVariation : MonoBehaviour
-    {
-        [SerializeField] private Color baseColor = new Color(0.50f, 0.34f, 0.23f, 1f);
-        [SerializeField] private Color shadowColor = new Color(0.20f, 0.15f, 0.13f, 1f);
-        [SerializeField] private Color edgeColor = new Color(0.64f, 0.47f, 0.34f, 1f);
-        [SerializeField] private float macroScale = 3.2f;
-        [SerializeField] private float macroStrength = 0.10f;
-        [SerializeField] private float textureScale = 0.24f;
-        [SerializeField] private bool usePlanetFrame;
-        [SerializeField] private Vector3 planetCenter;
-
-        private Renderer[] _renderers;
-        private MaterialPropertyBlock _properties;
-
-        public void Configure(
-            Color configuredBase,
-            Color configuredShadow,
-            Color configuredEdge,
-            float configuredMacroScale,
-            float configuredMacroStrength,
-            float configuredTextureScale,
-            bool configuredPlanetFrame,
-            Vector3 configuredPlanetCenter)
-        {
-            baseColor = configuredBase;
-            shadowColor = configuredShadow;
-            edgeColor = configuredEdge;
-            macroScale = configuredMacroScale;
-            macroStrength = configuredMacroStrength;
-            textureScale = configuredTextureScale;
-            usePlanetFrame = configuredPlanetFrame;
-            planetCenter = configuredPlanetCenter;
-            Apply();
-        }
-
-        private void OnEnable() => Apply();
-
-        private void Apply()
-        {
-            _renderers ??= GetComponentsInChildren<Renderer>(true);
-            _properties ??= new MaterialPropertyBlock();
-            for (int index = 0; index < _renderers.Length; index++)
-            {
-                Renderer renderer = _renderers[index];
-                if (renderer == null) continue;
-                renderer.GetPropertyBlock(_properties);
-                _properties.SetColor("_BaseColor", baseColor);
-                _properties.SetColor("_ShadowColor", shadowColor);
-                _properties.SetColor("_EdgeColor", edgeColor);
-                _properties.SetFloat("_MacroScale", macroScale);
-                _properties.SetFloat("_MacroStrength", macroStrength);
-                _properties.SetFloat("_TextureScale", textureScale);
-                _properties.SetFloat("_UsePlanetFrame", usePlanetFrame ? 1f : 0f);
-                _properties.SetVector("_PlanetCenter", planetCenter);
-                renderer.SetPropertyBlock(_properties);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Visible-debris lifecycle: physical settle, dust pause, gradual sink and
-    /// dither fade. Pool/destruction happens only after the renderer is effectively
-    /// invisible, never as an abrupt mid-air SetActive(false).
-    /// </summary>
-    [DisallowMultipleComponent]
-    public sealed class RumbleDebrisLifecycle : MonoBehaviour
-    {
-        [SerializeField] private float minimumPhysicalSeconds = 1.4f;
-        [SerializeField] private float sleepConfirmSeconds = 0.75f;
-        [SerializeField] private float sinkSeconds = 0.9f;
-        [SerializeField] private float sinkDistance = 0.22f;
-        [SerializeField] private float maximumLifetime = 8f;
-
-        private Rigidbody _body;
-        private Renderer[] _renderers;
-        private readonly List<MaterialPropertyBlock> _blocks = new List<MaterialPropertyBlock>(4);
-        private float _age;
-        private float _sleepTime;
-        private float _sinkTime;
-        private bool _sinking;
-        private Vector3 _sinkStart;
-
-        private void Awake()
-        {
-            _body = GetComponent<Rigidbody>();
-            _renderers = GetComponentsInChildren<Renderer>(true);
-            for (int index = 0; index < _renderers.Length; index++)
-                _blocks.Add(new MaterialPropertyBlock());
-        }
-
-        private void Update()
-        {
-            _age += Time.deltaTime;
-            if (!_sinking)
-            {
-                bool sleeping = _body == null || _body.IsSleeping() ||
-                                (_body.linearVelocity.sqrMagnitude < 0.012f &&
-                                 _body.angularVelocity.sqrMagnitude < 0.04f);
-                _sleepTime = sleeping ? _sleepTime + Time.deltaTime : 0f;
-                if ((_age >= minimumPhysicalSeconds && _sleepTime >= sleepConfirmSeconds) ||
-                    _age >= maximumLifetime)
-                    BeginSink();
-                return;
-            }
-
-            _sinkTime += Time.deltaTime;
-            float amount = Mathf.Clamp01(_sinkTime / Mathf.Max(0.05f, sinkSeconds));
-            float eased = amount * amount * (3f - 2f * amount);
-            transform.position = _sinkStart - Vector3.up * sinkDistance * eased;
-            float visible = 1f - amount;
-            for (int index = 0; index < _renderers.Length; index++)
-            {
-                Renderer renderer = _renderers[index];
-                if (renderer == null) continue;
-                MaterialPropertyBlock block = _blocks[index];
-                renderer.GetPropertyBlock(block);
-                block.SetFloat("_Fade", visible);
-                renderer.SetPropertyBlock(block);
-            }
-            if (amount >= 1f) Destroy(gameObject);
-        }
-
-        private void BeginSink()
-        {
-            if (_sinking) return;
-            _sinking = true;
-            _sinkStart = transform.position;
-            if (_body != null)
-            {
-                _body.linearVelocity = Vector3.zero;
-                _body.angularVelocity = Vector3.zero;
-                _body.isKinematic = true;
-                _body.detectCollisions = false;
-            }
-        }
-    }
-
-    [DisallowMultipleComponent]
-    public sealed class RumbleEarthVfxDemo : MonoBehaviour
-    {
-        [SerializeField] private Transform[] wallStones = Array.Empty<Transform>();
-        [SerializeField] private ParticleSystem pressureDust;
-        [SerializeField] private ParticleSystem groundDust;
-        [SerializeField] private ParticleSystem gravel;
-        [SerializeField] private Transform impactPoint;
-        [SerializeField] private Mesh[] debrisMeshes = Array.Empty<Mesh>();
-        [SerializeField] private Material debrisMaterial;
-        [SerializeField] private RumbleLensDirector lensDirector;
-        [SerializeField] private float wallTravel = 3.2f;
-
-        private Vector3[] _wallTargets = Array.Empty<Vector3>();
-        private Coroutine _wallRoutine;
-        private bool _wallRaised;
-
-        public void Configure(
-            Transform[] configuredWall,
-            ParticleSystem configuredPressureDust,
-            ParticleSystem configuredGroundDust,
-            ParticleSystem configuredGravel,
-            Transform configuredImpactPoint,
-            Mesh[] configuredDebrisMeshes,
-            Material configuredDebrisMaterial,
-            RumbleLensDirector configuredLens)
-        {
-            wallStones = configuredWall ?? Array.Empty<Transform>();
-            pressureDust = configuredPressureDust;
-            groundDust = configuredGroundDust;
-            gravel = configuredGravel;
-            impactPoint = configuredImpactPoint;
-            debrisMeshes = configuredDebrisMeshes ?? Array.Empty<Mesh>();
-            debrisMaterial = configuredDebrisMaterial;
-            lensDirector = configuredLens;
-            CacheWallTargets(true);
-        }
-
-        private void Awake() => CacheWallTargets(true);
-
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.Space)) RaiseWall();
-            if (Input.GetKeyDown(KeyCode.H)) HeavyImpact();
-            if (Input.GetKeyDown(KeyCode.R)) ResetWall();
-        }
-
-        public void RaiseWall()
-        {
-            if (_wallRaised || wallStones.Length == 0) return;
-            if (_wallRoutine != null) StopCoroutine(_wallRoutine);
-            _wallRoutine = StartCoroutine(RaiseWallRoutine());
-        }
-
-        public void ResetWall()
-        {
-            if (_wallRoutine != null) StopCoroutine(_wallRoutine);
-            _wallRoutine = null;
-            _wallRaised = false;
-            for (int index = 0; index < wallStones.Length; index++)
-            {
-                Transform stone = wallStones[index];
-                if (stone != null) stone.localPosition = _wallTargets[index] - Vector3.up * wallTravel;
-            }
-        }
-
-        public void HeavyImpact()
-        {
-            Vector3 point = impactPoint != null ? impactPoint.position : transform.position;
-            Quaternion rotation = Quaternion.identity;
-            EmitAt(pressureDust, point + Vector3.up * 0.08f, rotation, 68);
-            EmitAt(groundDust, point + Vector3.up * 0.03f, rotation, 42);
-            EmitAt(gravel, point + Vector3.up * 0.10f, rotation, 28);
-            SpawnPhysicalDebris(point);
-            lensDirector?.AddImpulse(0.82f);
-        }
-
-        private IEnumerator RaiseWallRoutine()
-        {
-            const float duration = 1.15f;
-            float elapsed = 0f;
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                for (int index = 0; index < wallStones.Length; index++)
-                {
-                    Transform stone = wallStones[index];
-                    if (stone == null) continue;
-                    float delay = index * 0.055f;
-                    float local = Mathf.Clamp01((elapsed - delay) / Mathf.Max(0.1f, duration - delay));
-                    float eased = 1f - Mathf.Pow(1f - local, 3f);
-                    stone.localPosition = Vector3.LerpUnclamped(
-                        _wallTargets[index] - Vector3.up * wallTravel,
-                        _wallTargets[index],
-                        eased);
-                }
-                if (groundDust != null && UnityEngine.Random.value < Time.deltaTime * 18f)
-                {
-                    int index = UnityEngine.Random.Range(0, wallStones.Length);
-                    Transform stone = wallStones[index];
-                    if (stone != null) EmitAt(groundDust, stone.position, Quaternion.identity, 3);
-                }
-                yield return null;
-            }
-            for (int index = 0; index < wallStones.Length; index++)
-            {
-                if (wallStones[index] != null) wallStones[index].localPosition = _wallTargets[index];
-            }
-            Vector3 center = AverageWallPosition();
-            EmitAt(pressureDust, center + Vector3.up * 0.08f, Quaternion.identity, 45);
-            EmitAt(groundDust, center, Quaternion.identity, 34);
-            EmitAt(gravel, center + Vector3.up * 0.08f, Quaternion.identity, 18);
-            lensDirector?.AddImpulse(0.46f);
-            _wallRaised = true;
-            _wallRoutine = null;
-        }
-
-        private void CacheWallTargets(bool lowerWall)
-        {
-            if (wallStones == null) wallStones = Array.Empty<Transform>();
-            _wallTargets = new Vector3[wallStones.Length];
-            for (int index = 0; index < wallStones.Length; index++)
-            {
-                Transform stone = wallStones[index];
-                if (stone == null) continue;
-                _wallTargets[index] = stone.localPosition;
-                if (lowerWall) stone.localPosition -= Vector3.up * wallTravel;
-            }
-            _wallRaised = !lowerWall;
-        }
-
-        private void SpawnPhysicalDebris(Vector3 origin)
-        {
-            if (debrisMeshes == null || debrisMeshes.Length == 0 || debrisMaterial == null) return;
-            const int count = 12;
-            for (int index = 0; index < count; index++)
-            {
-                Mesh mesh = debrisMeshes[index % debrisMeshes.Length];
-                if (mesh == null) continue;
-                var debris = new GameObject($"V5 Impact Debris {index:00}");
-                debris.transform.position = origin + Vector3.up * 0.16f;
-                debris.transform.rotation = UnityEngine.Random.rotation;
-                float scale = UnityEngine.Random.Range(0.10f, 0.28f);
-                debris.transform.localScale = Vector3.one * scale;
-                MeshFilter filter = debris.AddComponent<MeshFilter>();
-                filter.sharedMesh = mesh;
-                MeshRenderer renderer = debris.AddComponent<MeshRenderer>();
-                renderer.sharedMaterial = debrisMaterial;
-                MeshCollider collider = debris.AddComponent<MeshCollider>();
-                collider.sharedMesh = mesh;
-                collider.convex = true;
-                Rigidbody body = debris.AddComponent<Rigidbody>();
-                body.mass = Mathf.Lerp(0.35f, 2.1f, scale / 0.28f);
-                body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-                Vector3 radial = UnityEngine.Random.onUnitSphere;
-                radial.y = Mathf.Abs(radial.y) * 0.8f + 0.25f;
-                body.linearVelocity = radial.normalized * UnityEngine.Random.Range(2.2f, 6.5f);
-                body.angularVelocity = UnityEngine.Random.onUnitSphere * UnityEngine.Random.Range(4f, 11f);
-                debris.AddComponent<RumbleDebrisLifecycle>();
-            }
-        }
-
-        private static void EmitAt(
-            ParticleSystem system,
-            Vector3 position,
-            Quaternion rotation,
-            int count)
-        {
-            if (system == null || count <= 0) return;
-            system.transform.SetPositionAndRotation(position, rotation);
-            system.Emit(count);
-        }
-
-        private Vector3 AverageWallPosition()
-        {
-            Vector3 sum = Vector3.zero;
-            int count = 0;
-            for (int index = 0; index < wallStones.Length; index++)
-            {
-                if (wallStones[index] == null) continue;
-                sum += wallStones[index].position;
-                count++;
-            }
-            return count > 0 ? sum / count : transform.position;
-        }
-    }
 }

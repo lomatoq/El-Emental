@@ -8,6 +8,32 @@ namespace Elemental.Simulation.Bending
         RadialRelease = 3
     }
 
+    public enum EarthArmorEndReason : byte
+    {
+        InputReleased = 0,
+        Cancelled = 1,
+        Knockout = 2,
+        Disabled = 3,
+        VolleyCommitted = 4,
+        RadialRelease = 5
+    }
+
+    public enum EarthArmorFormationMode : byte
+    {
+        Compact = 0,
+        Dome = 1,
+        Orbit = 2
+    }
+
+    public static class EarthArmorFormationModeResolver
+    {
+        public static EarthArmorFormationMode Resolve(float phase01) => phase01 <= 0.30f
+            ? EarthArmorFormationMode.Compact
+            : phase01 <= 0.78f
+                ? EarthArmorFormationMode.Dome
+                : EarthArmorFormationMode.Orbit;
+    }
+
     public readonly struct EarthArmorProfileData
     {
         public EarthArmorProfileData(float phasePerWheelStep, float confirmationSeconds)

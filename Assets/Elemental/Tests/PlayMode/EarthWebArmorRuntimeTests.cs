@@ -34,10 +34,10 @@ namespace Elemental.Tests.PlayMode
                 Is.EqualTo(EarthArmorProfile.MaximumPieceCount));
             for (int index = 0; index < registered.Length; index++)
             {
-                Assert.That(registered[index].MatterIdentity, Is.Not.Null);
-                Assert.That(registered[index].MatterIdentity.TryRead(out EarthMatterRecord record), Is.True);
-                Assert.That(record.Shape, Is.EqualTo(EarthShapeSemantic.ArmorPlate));
-                Assert.That(record.Source.Kind, Is.EqualTo(EarthSourceKind.TerrainEdit));
+                Assert.That(registered[index].IsPhysical, Is.False,
+                    "Formation is a visual shell; colliders and canonical matter are deferred until launch.");
+                EarthMatterIdentity identity = registered[index].MatterIdentity;
+                Assert.That(identity == null || !identity.TryRead(out _), Is.True);
             }
             for (int step = 0; step < 8; step++) armor.ApplyWheel(120f, Time.unscaledTime);
             Assert.That(armor.Phase01, Is.EqualTo(1f).Within(0.001f));
@@ -46,8 +46,15 @@ namespace Elemental.Tests.PlayMode
             Assert.That(armor.ApplyWheel(120f, Time.unscaledTime + 0.1f),
                 Is.EqualTo(EarthArmorInputResult.RadialRelease));
             armor.ReleaseRadially();
-            yield return new WaitForFixedUpdate();
+            for (int tick = 0; tick < 8; tick++) yield return new WaitForFixedUpdate();
             Assert.That(armor.IsActive, Is.False);
+            for (int index = 0; index < registered.Length; index++)
+            {
+                Assert.That(registered[index].IsPhysical, Is.True);
+                Assert.That(registered[index].MatterIdentity.TryRead(out EarthMatterRecord record), Is.True);
+                Assert.That(record.Shape, Is.EqualTo(EarthShapeSemantic.ArmorPlate));
+                Assert.That(record.Source.Kind, Is.EqualTo(EarthSourceKind.TerrainEdit));
+            }
 
             Object.Destroy(casterObject);
             yield return null;
@@ -270,9 +277,13 @@ namespace Elemental.Tests.PlayMode
             Assert.That(armor.FireAll(Vector3.forward),
                 Is.EqualTo(EarthArmorProfile.MaximumPieceCount - 1),
                 "RMB must launch the remaining shell as a compact aimed fan.");
-            yield return new WaitForFixedUpdate();
+            for (int tick = 0; tick < 8; tick++) yield return new WaitForFixedUpdate();
             Assert.That(armor.IsActive, Is.False);
             Assert.That(Vector3.Distance(caster.linearVelocity, casterVelocity), Is.LessThan(0.01f));
+            int totalReleased = 0;
+            for (int index = 0; index < pieces.Length; index++)
+                if (pieces[index] != null && pieces[index].IsReleased) totalReleased++;
+            Assert.That(totalReleased, Is.EqualTo(EarthArmorProfile.MaximumPieceCount));
 
             Object.Destroy(casterObject);
             yield return null;
@@ -376,7 +387,13 @@ namespace Elemental.Tests.PlayMode
             EarthPlatform platform = pool.Acquire(in geometry, 1.2f, 0.25f);
             for (int tick = 0; tick < 45; tick++) yield return new WaitForFixedUpdate();
             Assert.That(platform.ApplyStructureImpact(platform.SurfaceTopPoint, Vector3.forward, 2400f), Is.True);
-            yield return new WaitForFixedUpdate();
+            Assert.That(platform.HasPendingImpact || platform.IsFractured, Is.True,
+                "An impact arriving before fracture preparation completes must be retained.");
+            float fractureDeadline = Time.realtimeSinceStartup + 2f;
+            while (!platform.IsFractured && Time.realtimeSinceStartup < fractureDeadline)
+                yield return null;
+            Assert.That(platform.IsFractured, Is.True,
+                "The retained impact must execute as soon as budgeted fracture preparation is ready.");
             Assert.That(platform.ActivePieceCount, Is.InRange(28, 48));
             var activeTargets = new IEarthPhysicalTarget[48];
             int activeCount = platform.CopyActiveTargetsNonAlloc(activeTargets);
@@ -389,7 +406,7 @@ namespace Elemental.Tests.PlayMode
                 yield return new WaitForFixedUpdate();
 
             Assert.That(platform.IsFractured, Is.False);
-            Assert.That(platform.GetComponent<MeshCollider>().enabled, Is.True);
+            Assert.That(platform.GetComponent<BoxCollider>().enabled, Is.True);
             Assert.That(platform.ActivePieceCount, Is.Zero);
 
             Object.Destroy(root);

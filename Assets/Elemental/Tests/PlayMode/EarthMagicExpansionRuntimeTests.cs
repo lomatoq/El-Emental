@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Elemental.Runtime.Characters;
+using Elemental.Runtime.Geometry;
 using Elemental.Runtime.Matter;
 using Elemental.Runtime.Physics;
 using Elemental.Runtime.World;
@@ -348,24 +349,31 @@ namespace Elemental.Tests.PlayMode
             EarthPlatform platform = pool.Acquire(in geometry, 1.4f, 0.2f);
             yield return null;
 
-            MeshCollider solid = platform.GetComponent<MeshCollider>();
+            BoxCollider solid = platform.GetComponent<BoxCollider>();
             yield return new WaitForSeconds(0.6f);
             Assert.That(solid.enabled, Is.True);
-            Assert.That(solid.sharedMesh, Is.Not.Null);
-            Mesh solidMesh = solid.sharedMesh;
-            Vector3[] vertices = solidMesh.vertices;
-            int[] triangles = solidMesh.triangles;
-            Vector3 bottomNormal = Vector3.Cross(
-                vertices[triangles[1]] - vertices[triangles[0]],
-                vertices[triangles[2]] - vertices[triangles[0]]).normalized;
-            int topTriangle = 3;
-            Vector3 topNormal = Vector3.Cross(
-                vertices[triangles[topTriangle + 1]] - vertices[triangles[topTriangle]],
-                vertices[triangles[topTriangle + 2]] - vertices[triangles[topTriangle]]).normalized;
-            Assert.That(bottomNormal.y, Is.LessThan(-0.9f), "Platform underside must face outward/down.");
-            Assert.That(topNormal.y, Is.GreaterThan(0.9f), "Walkable platform cap must face outward/up.");
+            Mesh visualMesh = platform.GetComponent<MeshFilter>().sharedMesh;
+            Assert.That(visualMesh, Is.Not.Null);
+            Assert.That(solid.size.x, Is.GreaterThan(0.1f));
+            Assert.That(solid.size.y, Is.EqualTo(1.6f).Within(0.01f));
+            Assert.That(solid.size.z, Is.GreaterThan(0.1f));
+            Color[] visualColors = visualMesh.colors;
+            bool hasFaceClass = false;
+            bool hasBevelClass = false;
+            for (int index = 0; index < visualColors.Length; index++)
+            {
+                hasFaceClass |= visualColors[index].a < 0.55f;
+                hasBevelClass |= visualColors[index].a > 0.62f;
+            }
+            Assert.That(visualColors.Length, Is.EqualTo(visualMesh.vertexCount));
+            Assert.That(hasFaceClass && hasBevelClass, Is.True,
+                "The rendered platform must publish real face and bevel lighting classes.");
+            EarthMeshIntegrityReport visualIntegrity = EarthMeshIntegrityValidator.Validate(
+                visualMesh, EarthMeshIntegrityPolicy.ClosedHero);
+            Assert.That(visualIntegrity.IsValid, Is.True, visualIntegrity.ToString());
             Assert.That(platform.ApplyStructureImpact(platform.transform.position, Vector3.forward, 2200f), Is.True);
-            yield return new WaitForFixedUpdate();
+            for (int frame = 0; frame < 120 && !platform.IsFractured; frame++)
+                yield return new WaitForFixedUpdate();
 
             Assert.That(platform.IsFractured, Is.True);
             Assert.That(solid.enabled, Is.False);
@@ -394,7 +402,10 @@ namespace Elemental.Tests.PlayMode
             };
             EarthPlatformGeometry geometry = EarthPlatformGeometrySolver.Build(path, float3.zero);
             EarthPlatform platform = pool.Acquire(in geometry, 1.6f, 0.25f);
-            for (int tick = 0; tick < 45; tick++) yield return new WaitForFixedUpdate();
+            for (int frame = 0; frame < 120 &&
+                 platform.PreparationPhase != EarthPlatformPreparationPhase.FractureReady; frame++)
+                yield return new WaitForFixedUpdate();
+            Assert.That(platform.PreparationPhase, Is.EqualTo(EarthPlatformPreparationPhase.FractureReady));
 
             Assert.That(platform.ApplyStructureImpact(
                 platform.SurfaceTopPoint + platform.transform.right * 0.65f,
@@ -444,14 +455,29 @@ namespace Elemental.Tests.PlayMode
             foreach (GameObject rootObject in scene.GetRootGameObjects())
             {
                 pool ??= rootObject.GetComponentInChildren<EarthPlatformPool>(true);
-                motor ??= rootObject.GetComponentInChildren<PlanetMotor>(true);
-                puppet ??= rootObject.GetComponentInChildren<ActiveRagdollPuppet>(true);
-                humanoidAnimator ??= rootObject.GetComponentInChildren<Animator>(true);
+                if (rootObject.name == "Planet Character")
+                {
+                    motor = rootObject.GetComponentInChildren<PlanetMotor>(true);
+                    puppet = rootObject.GetComponentInChildren<ActiveRagdollPuppet>(true);
+                    humanoidAnimator = rootObject.GetComponentInChildren<Animator>(true);
+                }
                 if (rootObject.name == "Planet Collision Proxy") planet = rootObject.GetComponent<Collider>();
             }
             Assert.That(pool, Is.Not.Null);
             Assert.That(motor, Is.Not.Null);
             Assert.That(planet, Is.Not.Null);
+
+            // This contract isolates moving-surface continuity. The shipping bot can
+            // otherwise land a valid KO while the test waits for platform emergence,
+            // which correctly disables the motor but makes the support assertion
+            // nondeterministic and unrelated to the platform implementation.
+            EarthMvpBotController[] bots = Object.FindObjectsByType<EarthMvpBotController>(
+                FindObjectsInactive.Exclude);
+            for (int index = 0; index < bots.Length; index++)
+                if (bots[index].gameObject.scene == scene) bots[index].enabled = false;
+            motor.GetComponent<EarthCharacterImpactTarget>()?.SuppressImpacts(12f);
+            puppet?.SuppressImpacts(12f);
+
             Rigidbody rider = motor.GetComponent<Rigidbody>();
             Vector3 up = (rider.worldCenterOfMass - planet.transform.position).normalized;
             Vector3 surface = planet.ClosestPoint(rider.worldCenterOfMass);
@@ -502,20 +528,58 @@ namespace Elemental.Tests.PlayMode
                 $"movingSurface={motor.MovingSurfaceId}, velocity={rider.linearVelocity}.");
             Assert.That(minimumFootClearance, Is.GreaterThan(-0.08f),
                 "The platform top may not pass through the rider before depenetration pushes them out.");
-            Assert.That(motor.MovingSurfaceId, Is.EqualTo(platform.SurfaceId));
+            Assert.That(motor.HasStableSupport, Is.True,
+                "After emergence the platform becomes an ordinary stationary collider; " +
+                "the moving-support id may retire, but grounded support may not flicker.");
             if (puppet != null)
                 Assert.That(puppet.CurrentState.Mode, Is.Not.EqualTo(Elemental.Simulation.Characters.CharacterPhysicalMode.FullRagdoll));
 
             PlatformMotorInputSource scripted = motor.gameObject.AddComponent<PlatformMotorInputSource>();
             motor.ConfigureInputSource(scripted);
             Vector3 walkStart = rider.position;
+            float preWalkVerticalSpeed = Vector3.Dot(rider.linearVelocity, up);
+            float preWalkClearance = Vector3.Dot(
+                motor.SupportFeetPoint(up) - platform.SurfaceTopPoint,
+                up);
+            int firstUnsupportedTick = -1;
+            float firstUnsupportedSpeed = 0f;
+            float firstUnsupportedClearance = 0f;
             scripted.Move = new float2(0f, 0.55f);
-            for (int tick = 0; tick < 12; tick++) yield return new WaitForFixedUpdate();
+            for (int tick = 0; tick < 12; tick++)
+            {
+                yield return new WaitForFixedUpdate();
+                if (firstUnsupportedTick >= 0 || motor.HasStableSupport) continue;
+                firstUnsupportedTick = tick;
+                firstUnsupportedSpeed = Vector3.Dot(rider.linearVelocity, up);
+                firstUnsupportedClearance = Vector3.Dot(
+                    motor.SupportFeetPoint(up) - platform.SurfaceTopPoint,
+                    up);
+            }
             scripted.Move = float2.zero;
             float platformWalkDistance = Vector3.ProjectOnPlane(rider.position - walkStart, up).magnitude;
+            bool platformTopHit = platform.SurfaceCollider.Raycast(
+                new Ray(platform.SurfaceTopPoint + up * 2f, -up),
+                out RaycastHit platformTopRaycast,
+                4f);
             Assert.That(platformWalkDistance, Is.GreaterThan(0.12f),
-                "A stationary moving-surface session must preserve the player's relative locomotion.");
-            Assert.That(motor.MovingSurfaceId, Is.EqualTo(platform.SurfaceId));
+                $"A stationary moving-surface session must preserve the player's relative locomotion. " +
+                $"command={motor.LastCommand.Move}, enabled={motor.enabled}, kinematic={rider.isKinematic}, " +
+                $"velocity={rider.linearVelocity}, stable={motor.HasStableSupport}, " +
+                $"physical={puppet?.CurrentState.Mode}.");
+            Assert.That(motor.HasStableSupport, Is.True,
+                $"Walking across the settled platform may not introduce an unsupported frame. " +
+                $"grounded={motor.IsGrounded}, movingSurface={motor.MovingSurfaceId}, " +
+                $"walk={platformWalkDistance:F3}, footClearance=" +
+                $"{Vector3.Dot(motor.SupportFeetPoint(up) - platform.SurfaceTopPoint, up):F3}, " +
+                $"velocity={rider.linearVelocity}, kinematic={rider.isKinematic}, " +
+                $"preWalk={preWalkVerticalSpeed:F3}/{preWalkClearance:F3}, " +
+                $"firstUnsupported={firstUnsupportedTick}:" +
+                $"{firstUnsupportedSpeed:F3}/{firstUnsupportedClearance:F3}, " +
+                $"overlaps={platform.LastRiderOverlapCount}, carries={platform.LastCarryRiderCount}, " +
+                $"ignored={platform.IgnoredRiderColliderCount}, " +
+                $"topHit={platformTopHit}/" +
+                $"{(platformTopHit ? Vector3.Dot(platformTopRaycast.normal, up) : -2f):F3}, " +
+                $"rider={rider.worldCenterOfMass}, top={platform.SurfaceTopPoint}.");
             if (humanoidAnimator != null)
                 Assert.That(humanoidAnimator.speed, Is.EqualTo(1f).Within(0.001f),
                     "Casting choreography must never freeze the locomotion layer on a platform.");
@@ -778,6 +842,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(downSpeed, Is.LessThanOrEqualTo(4.1f));
             Assert.That(impact.AccumulatedImpulse, Is.EqualTo(0f).Within(0.001f));
             Assert.That(visual.activeSelf, Is.True);
+            Assert.That(cushion.SuppressesHardLanding, Is.True);
 
             Object.Destroy(planet);
             Object.Destroy(actor);

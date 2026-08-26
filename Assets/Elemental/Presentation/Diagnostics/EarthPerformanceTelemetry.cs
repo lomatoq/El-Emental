@@ -1,7 +1,9 @@
 using System;
 using System.IO;
 using Elemental.Presentation.VFX;
+using Elemental.Runtime.Characters;
 using Elemental.Runtime.Matter;
+using Elemental.Runtime.World;
 using Elemental.Simulation.Diagnostics;
 using Elemental.Simulation.Matter;
 using Unity.Profiling;
@@ -34,6 +36,15 @@ namespace Elemental.Presentation.Diagnostics
         public int secondaryMatterCount;
         public int visualMatterCount;
         public int visualDebrisCount;
+        public int voxelRuntimeChunkCount;
+        public int voxelPendingRenderCount;
+        public int voxelPendingColliderCount;
+        public double voxelPeakRenderQueueMilliseconds;
+        public double voxelPeakColliderQueueMilliseconds;
+        public int botSpellCount;
+        public int botLandedSpellCount;
+        public int playerKnockoutCount;
+        public int botKnockoutCount;
     }
 
     [Serializable]
@@ -92,6 +103,14 @@ namespace Elemental.Presentation.Diagnostics
 
         private void OnDisable()
         {
+            if (Application.isEditor && _sampleCount > 0)
+            {
+                WriteSnapshot(Path.Combine(
+                    Application.dataPath,
+                    "..",
+                    "BuildReports",
+                    "Mvp01PerformanceLatest.json"));
+            }
             if (_gcRecorder.Valid) _gcRecorder.Dispose();
         }
 
@@ -133,6 +152,9 @@ namespace Elemental.Presentation.Diagnostics
             EarthPercentiles render = EarthPerformanceStatistics.Compute(
                 _render, _sampleCount, _writeIndex, _scratch);
             EarthMatterRegistry registry = matterKernel != null ? matterKernel.Registry : null;
+            VoxelPlanetBehaviour voxelPlanet = FindAnyObjectByType<VoxelPlanetBehaviour>(FindObjectsInactive.Exclude);
+            EarthMvpBotController bot = FindAnyObjectByType<EarthMvpBotController>(FindObjectsInactive.Exclude);
+            EarthMvpDuelController duel = FindAnyObjectByType<EarthMvpDuelController>(FindObjectsInactive.Exclude);
             return new EarthPerformanceReport
             {
                 unityVersion = Application.unityVersion,
@@ -156,7 +178,16 @@ namespace Elemental.Presentation.Diagnostics
                 heroMatterCount = registry?.CountByRepresentation(EarthRepresentationTier.HeroPhysical) ?? 0,
                 secondaryMatterCount = registry?.CountByRepresentation(EarthRepresentationTier.SecondaryPhysical) ?? 0,
                 visualMatterCount = registry?.CountByRepresentation(EarthRepresentationTier.VisualOnlyGpu) ?? 0,
-                visualDebrisCount = indirectDebris != null ? indirectDebris.ActiveVisualCount : 0
+                visualDebrisCount = indirectDebris != null ? indirectDebris.ActiveVisualCount : 0,
+                voxelRuntimeChunkCount = voxelPlanet != null ? voxelPlanet.RuntimeChunkCount : 0,
+                voxelPendingRenderCount = voxelPlanet != null ? voxelPlanet.PendingRenderCount : 0,
+                voxelPendingColliderCount = voxelPlanet != null ? voxelPlanet.PendingColliderCount : 0,
+                voxelPeakRenderQueueMilliseconds = voxelPlanet != null ? voxelPlanet.PeakRenderQueueMilliseconds : 0.0,
+                voxelPeakColliderQueueMilliseconds = voxelPlanet != null ? voxelPlanet.PeakColliderQueueMilliseconds : 0.0,
+                botSpellCount = bot != null ? bot.StrikeCount : 0,
+                botLandedSpellCount = bot != null ? bot.LandedStrikeCount : 0,
+                playerKnockoutCount = duel != null ? duel.PlayerKnockoutCount : 0,
+                botKnockoutCount = duel != null ? duel.BotKnockoutCount : 0
             };
         }
 

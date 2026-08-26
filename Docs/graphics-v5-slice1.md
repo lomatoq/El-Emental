@@ -7,6 +7,27 @@ It does **not** claim that the existing Earth gameplay scene has been visually a
 The slice is accepted only after fresh Unity Game View captures from the generated
 `RumbleLookdevLab` scene.
 
+## M11 shipping integration (2026-08-24)
+
+M11 promotes the approved visual vocabulary, not the lookdev harness, into the
+generated Earth golden path. `EarthCoreSlice`/`EarthPolishLab` now select the V5
+ground and stone materials, build a baked-rock duel amphitheatre, use the one-sun
+baseline, and share the restrained ACES post look. The test-scene guard, lens
+director, raw-key demo, flat ground tiles and destroy-on-time debris stay isolated.
+
+The shipping integration also publishes twelve centered, unit-normalized physics
+copies under `Content/GraphicsV5/Physics`: eight boulders for hero/thrown/push rocks
+and four approved pebble/wedge variants for debris. Their source meshes remain
+base-grounded for lookdev. Closed-mesh orientation is repaired at authoring time;
+the final assets preserve authored channels, align normals with triangle winding,
+pass the convex-collider integrity gate and are pre-baked for PhysX. Runtime color
+variation reads the Rumble palette and stays within a restrained range.
+
+The source factory now grounds the mesh after the final bevel operation, so every
+lookdev rock keeps `bounds.min.y == 0` rather than allowing bevel expansion to lift
+the base. The final M11 focused EditMode run passed `49/49`; see
+`Docs/milestones/M11-earth-mvp-0.1-rumble-duel.md` for scene and performance evidence.
+
 ## Open the proof
 
 The Editor bootstrap creates and opens the scene once the new shader has imported:

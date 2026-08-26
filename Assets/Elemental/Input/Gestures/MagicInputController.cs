@@ -10,6 +10,7 @@ using Elemental.Simulation.Magic;
 using Elemental.Simulation.Materials;
 using Elemental.Simulation.Matter;
 using Unity.Mathematics;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -19,6 +20,8 @@ namespace Elemental.Input.Gestures
     [RequireComponent(typeof(PlayerInput))]
     public sealed class MagicInputController : MonoBehaviour
     {
+        private static readonly ProfilerMarker PreviewMarker =
+            new ProfilerMarker("Elemental.Platform.Preview");
         private const int ProjectionHitCapacity = 16;
 
         [SerializeField] private PlayerInput playerInput;
@@ -41,6 +44,7 @@ namespace Elemental.Input.Gestures
         [SerializeField, Min(1f)] private float projectionDistance = 200f;
         [Header("Unified bending")]
         [SerializeField, Min(0.05f)] private float acquisitionDecisionSeconds = 0.15f;
+        [SerializeField, Min(0.2f)] private float holdExtractionDecisionSeconds = 0.34f;
         [SerializeField, Min(0.2f)] private float maximumFormSeconds = 1.15f;
         [SerializeField, Min(0.001f)] private float extractionMotionThreshold = 0.018f;
         [SerializeField, Min(1f)] private float initialHoldDistance = 7.5f;
@@ -64,6 +68,12 @@ namespace Elemental.Input.Gestures
         private EarthScrollAccumulator _scrollAccumulator =
             new EarthScrollAccumulator(EarthScrollDeviceProfile.DetentWheel);
         private readonly EarthIntentCandidate[] _rankedIntentCandidates = new EarthIntentCandidate[8];
+        private int _lastPreviewPathCount = -1;
+        private float2 _lastPreviewEndpoint;
+        private float _nextPreviewRefreshAt;
+        private bool _previewCacheValid;
+        private ElementId _lastPreviewElement;
+        private AbilityId _lastPreviewAbility;
 
         private AbilityId _selectedAbility = EarthAbilityIds.LineWall;
         private uint _tick;
@@ -86,6 +96,9 @@ namespace Elemental.Input.Gestures
         private float2 _bendStartPointer;
         private float _bendStartedAt;
         private float _holdDistance;
+        private float _heldTargetSurfaceLift;
+        private Ray _earthAcquireRay;
+        private bool _earthAcquireRayValid;
         private Vector3 _previousBendTarget;
         private Vector3 _smoothedBendTargetVelocity;
         private float2 _lastBendPointer;
@@ -148,6 +161,8 @@ namespace Elemental.Input.Gestures
         public Vector3 BendTargetPosition => _previousBendTarget;
         public Vector3 BendTargetVelocity => _smoothedBendTargetVelocity;
         public bool IsFormingEarth => _earthAcquirePending && _formingSourceValid;
+        public UnityEngine.Camera CastCamera => castCamera;
+        public Collider PlanetCollider => planetCollider;
         public Vector3 FormingSourceWorld => _formingSourceWorld;
         public Vector3 PlanetCenterWorld => planetCollider != null ? planetCollider.bounds.center : Vector3.zero;
         public Vector2 AimScreenPosition => _aimScreenPosition;
@@ -228,6 +243,7 @@ namespace Elemental.Input.Gestures
             _bendStartPointer = sourcePointer;
             _bendStartedAt = Time.unscaledTime;
             _holdDistance = Mathf.Clamp(initialHoldDistance, minimumHoldDistance, maximumHoldDistance);
+            CaptureEarthAcquireSource(sourcePointer);
             _formingAmount01 = Mathf.Clamp01(amount01);
             _smoothedBendTargetVelocity = Vector3.zero;
             _lastBendPointer = sourcePointer;
@@ -261,6 +277,7 @@ namespace Elemental.Input.Gestures
                 _tick++,
                 out releaseVelocity);
             if (!released) return false;
+            _heldTargetSurfaceLift = 0f;
             _bendSession.BeginRecovery();
             _bendSession.CompleteRecovery();
             _earthAcquirePending = false;
@@ -296,6 +313,79 @@ namespace Elemental.Input.Gestures
                 _bendSession.Cancel();
             }
             return primed;
+        }
+
+        public void ReplayBufferedPrimaryPress(Vector2 pointer)
+        {
+            if (_sampler.IsActive || inputAdapter == null) return;
+            float2 point = new float2(pointer.x, pointer.y);
+            _aimScreenPosition = pointer;
+            EnsureEarthFeatureSessions();
+            _gesturePointerDownTarget = CaptureGestureTarget(point);
+            _sampler.Begin(point, Time.unscaledTime);
+            Vector2 viewport = EarthInputAdapter.ScreenToViewport(pointer);
+            _strokeSampler.Begin(new float2(viewport.x, viewport.y), Time.unscaledTime);
+            if (selectedElement == ElementId.Earth) BeginEarthAcquireDecision(point);
+        }
+
+        public void ReplayBufferedPrimaryPath(Vector2[] points, int count)
+        {
+            if (points == null || count <= 0) return;
+            int safeCount = Mathf.Min(count, points.Length);
+            ReplayBufferedPrimaryPress(points[0]);
+            if (!_sampler.IsActive) return;
+            for (int index = 1; index < safeCount; index++)
+            {
+                Vector2 point = points[index];
+                _sampler.Sample(new float2(point.x, point.y));
+                Vector2 viewport = EarthInputAdapter.ScreenToViewport(point);
+                _strokeSampler.Sample(new float2(viewport.x, viewport.y), Time.unscaledTime);
+                // The primary path is held briefly while the dual-button chord is
+                // being disambiguated. A fast wall can begin and end entirely in
+                // that window, so replay must advance the same state machine as a
+                // live pointer sample instead of only restoring its geometry.
+                if (_groundWaveGesturePending)
+                    UpdateGroundWavePreview();
+                else if (selectedElement == ElementId.Earth && _bendSession != null && _bendSession.IsActive)
+                    UpdateUnifiedEarthBend(new float2(point.x, point.y));
+                else
+                    UpdatePreview(new float2(point.x, point.y));
+            }
+        }
+
+        public void ReplayBufferedPrimaryRelease(Vector2 pointer)
+        {
+            if (!_sampler.IsActive) return;
+            float2 point = new float2(pointer.x, pointer.y);
+            _aimScreenPosition = pointer;
+            if (_groundWaveGesturePending)
+                CommitGroundWave(point);
+            else if (selectedElement == ElementId.Earth && _bendSession != null && _bendSession.IsActive)
+                CommitUnifiedEarthBend(point);
+            else
+                Commit(point);
+            UpdateCastStance();
+        }
+
+        public void ReplayBufferedForcePress(Vector2 pointer)
+        {
+            if (_pushCharging || executor == null || castCamera == null) return;
+            float2 point = new float2(pointer.x, pointer.y);
+            _pushCharging = true;
+            _pushStartedAt = Time.unscaledTime;
+            _pushPreviousPointer = point;
+            _pushTravelViewport = 0f;
+            _pushVelocityViewportPerSecond = float2.zero;
+            _pushTargetLocked = TryBeginPushAtScreenPoint(point);
+            if (!_pushTargetLocked)
+                StatusChanged?.Invoke("No pushable rock, fragment or wall near the cursor.");
+        }
+
+        public void ReplayBufferedForceRelease(Vector2 pointer)
+        {
+            if (!_pushCharging) return;
+            FinishStandalonePush(new float2(pointer.x, pointer.y));
+            UpdateCastStance();
         }
 
         public void Configure(
@@ -487,6 +577,11 @@ namespace Elemental.Input.Gestures
         {
             if (_quickStoneSession == null) return;
             float now = Time.unscaledTime;
+            if (_quickStoneSession.IsPrimed && executor != null && executor.HasPendingExtraction)
+            {
+                _quickStoneSession.SuspendUntilVisible(now);
+                return;
+            }
             if (_quickStoneSession.IsPrimed && executor != null && executor.HeldFragment != null)
             {
                 _quickStoneSession.Refresh(now);
@@ -511,19 +606,20 @@ namespace Elemental.Input.Gestures
         private bool TryPrimeQuickStone()
         {
             float amount = quickCastProfile != null ? quickCastProfile.PrimeAmount01 : 0.18f;
-            if (!TryAcquireEarthVolume(_bendStartPointer, 0f, amount) || executor == null ||
-                executor.HeldFragment == null) return false;
-            if (!_quickStoneSession.TryPrime(Time.unscaledTime, executor.HeldFragment.FragmentId))
+            if (!TryAcquireEarthVolume(_bendStartPointer, 0f, amount) || executor == null) return false;
+            EarthFragment fragment = executor.ReservedOrHeldFragment;
+            if (fragment == null) return false;
+            if (!_quickStoneSession.TryPrime(Time.unscaledTime, fragment.FragmentId))
             {
                 executor.CancelHeldEarthControl();
                 _bendSession.Cancel();
                 return false;
             }
             Vector3 center = planetCollider != null ? planetCollider.bounds.center : Vector3.zero;
-            Vector3 up = executor.HeldFragment.transform.position - center;
+            Vector3 up = fragment.transform.position - center;
             up = up.sqrMagnitude > 0.01f ? up.normalized : transform.up;
-            _quickStoneExtractionStart = executor.HeldFragment.Body.worldCenterOfMass;
-            float lift = Mathf.Max(0.42f, executor.HeldFragment.GetComponent<Collider>()?.bounds.extents.magnitude ?? 0.42f);
+            _quickStoneExtractionStart = fragment.Body.worldCenterOfMass;
+            float lift = Mathf.Max(0.42f, fragment.GetComponent<Collider>()?.bounds.extents.magnitude ?? 0.42f);
             _quickStoneExtractionEnd = _quickStoneExtractionStart + up * Mathf.Min(0.85f, lift);
             executor.UpdateHeldEarthTarget(_quickStoneExtractionStart, Vector3.zero, 0.18f);
             StatusChanged?.Invoke("QUICK STONE EXTRACTING - click LMB again to buffer the shot.");
@@ -534,20 +630,22 @@ namespace Elemental.Input.Gestures
         {
             if (selectedElement != ElementId.Earth || _quickStoneSession == null ||
                 !_quickStoneSession.IsPrimed || executor == null || castCamera == null) return false;
-            EarthFragment fragment = executor.HeldFragment;
+            EarthFragment fragment = executor.ReservedOrHeldFragment;
             if (fragment == null || fragment.FragmentId != _quickStoneSession.TargetId)
             {
                 _quickStoneSession.Reset();
                 return false;
             }
             Ray ray = castCamera.ScreenPointToRay(new Vector2(pointer.x, pointer.y));
+            if (executor.HasPendingExtraction)
+                _quickStoneSession.SuspendUntilVisible(Time.unscaledTime);
             if (!_quickStoneSession.TryFire(Time.unscaledTime, out float speed))
             {
                 _quickStoneSession.Reset();
                 return false;
             }
             _quickStoneBufferedDirection = ray.direction;
-            if (speed <= 0f)
+            if (speed <= 0f || executor.HasPendingExtraction)
             {
                 _suppressPrimaryUntilReleased = true;
                 StatusChanged?.Invoke("QUICK FIRE BUFFERED - launches as the stone clears the ground.");
@@ -701,7 +799,7 @@ namespace Elemental.Input.Gestures
                 }
             }
             if (!inputAdapter.BendFieldReleased) return true;
-            _armorController.ReleaseAsDebris();
+            _armorController.EndArmor(EarthArmorEndReason.InputReleased);
             _armorOwnsField = false;
             StatusChanged?.Invoke("Earth armor released as physical debris.");
             return true;
@@ -737,13 +835,15 @@ namespace Elemental.Input.Gestures
             executor?.CancelHeldEarthControl();
             executor?.CancelVectorField();
             executor?.CancelGravityWell();
-            if (_armorController != null && _armorController.IsActive) _armorController.ReleaseAsDebris();
+            if (_armorController != null) _armorController.EndArmor(EarthArmorEndReason.Disabled);
             _quickStoneSession?.Reset();
             _armorOwnsField = false;
             _gravityWellHeld = false;
             _sampler.Cancel();
             _strokeSampler.Cancel();
             _earthAcquirePending = false;
+            _heldTargetSurfaceLift = 0f;
+            _earthAcquireRayValid = false;
             _pluckPending = false;
             _pluckSource = null;
             _wallGesturePending = false;
@@ -758,7 +858,7 @@ namespace Elemental.Input.Gestures
             executor?.CancelHeldEarthControl();
             executor?.CancelVectorField();
             executor?.CancelGravityWell();
-            if (_armorController != null && _armorController.IsActive) _armorController.ReleaseAsDebris();
+            if (_armorController != null) _armorController.EndArmor(EarthArmorEndReason.Cancelled);
             _quickStoneSession?.Reset();
             _armorOwnsField = false;
             _gravityWellHeld = false;
@@ -822,8 +922,9 @@ namespace Elemental.Input.Gestures
             }
             UpdateQuickStoneTimeout();
             UpdateSemanticActionIntent(pointerFloat);
+            bool armorLifecycleActive = _armorOwnsField || (_armorController != null && _armorController.IsActive);
             _armorOwnsField = selectedElement == ElementId.Earth &&
-                              (actionRouter == null || actionRouter.AllowsArmor) &&
+                              (armorLifecycleActive || actionRouter == null || actionRouter.AllowsArmor) &&
                               UpdateArmorInput();
             if (selectedElement == ElementId.Earth && !_armorOwnsField &&
                 (actionRouter == null || actionRouter.AllowsGravity))
@@ -1001,6 +1102,11 @@ namespace Elemental.Input.Gestures
                 }
             }
             if (!_pushCharging || !inputAdapter.BendForceReleased) return;
+            FinishStandalonePush(pointer);
+        }
+
+        private void FinishStandalonePush(float2 pointer)
+        {
             if (_pushTargetLocked && castCamera != null)
             {
                 float heldSeconds = Mathf.Max(0f, Time.unscaledTime - _pushStartedAt);
@@ -1318,6 +1424,8 @@ namespace Elemental.Input.Gestures
             _bendStartPointer = pointer;
             _bendStartedAt = Time.unscaledTime;
             _holdDistance = Mathf.Clamp(initialHoldDistance, minimumHoldDistance, maximumHoldDistance);
+            _heldTargetSurfaceLift = 0f;
+            CaptureEarthAcquireSource(pointer);
             _smoothedBendTargetVelocity = Vector3.zero;
             _lastBendPointer = pointer;
             _formingAmount01 = 0.18f;
@@ -1325,9 +1433,11 @@ namespace Elemental.Input.Gestures
             _platformTilt01 = 0.5f;
             _wallHeight01 = 0.35f;
             _wallThickness01 = 0.5f;
-            if (TryAcquireExistingEarthBody(pointer)) return;
-            if (TryBeginStructurePluck(pointer)) return;
-            _formingSourceValid = TryCaptureDrawSurface(pointer, out _formingSourceWorld);
+            // Do not let a loose rock or constructed cell steal LMB before we know
+            // whether the player is drawing. Motion owns wall/platform grammar;
+            // a body/pluck is only acquired after a short stationary decision.
+            if (!_formingSourceValid)
+                _formingSourceValid = TryCaptureDrawSurface(pointer, out _formingSourceWorld);
             StatusChanged?.Invoke(origin == BendOriginMode.Self
                 ? "SELF ORIGIN — hold still for mass, or sweep sideways for a wall."
                 : "FORMING ROCK — hold still for mass, or drag sideways on ground for a wall.");
@@ -1375,9 +1485,16 @@ namespace Elemental.Input.Gestures
                 }
 
                 _formingAmount01 = FormAmountFromSeconds(elapsed, maximumFormSeconds);
-                bool startedManipulating = elapsed >= acquisitionDecisionSeconds &&
-                                           math.length(normalizedDrag) >= extractionMotionThreshold;
-                if (!startedManipulating && elapsed < maximumFormSeconds) return;
+                bool wallIntent = elapsed >= acquisitionDecisionSeconds &&
+                                  math.length(normalizedDrag) >= extractionMotionThreshold;
+                if (!wallIntent && elapsed >= acquisitionDecisionSeconds)
+                {
+                    if (TryAcquireExistingEarthBody(_bendStartPointer)) return;
+                    if (TryBeginStructurePluck(_bendStartPointer)) return;
+                }
+                if (!wallIntent && elapsed < Mathf.Max(
+                        acquisitionDecisionSeconds,
+                        holdExtractionDecisionSeconds)) return;
                 TryAcquireEarthVolume(_bendStartPointer, elapsed, _formingAmount01);
             }
 
@@ -1426,6 +1543,13 @@ namespace Elemental.Input.Gestures
                 maximumHoldDistance);
             Ray ray = castCamera.ScreenPointToRay(new Vector2(pointer.x, pointer.y));
             Vector3 target = ray.GetPoint(_holdDistance);
+            if (_heldTargetSurfaceLift > 0f)
+            {
+                Vector3 center = planetCollider != null ? planetCollider.bounds.center : Vector3.zero;
+                Vector3 localUp = held.worldCenterOfMass - center;
+                if (localUp.sqrMagnitude < 0.0001f) localUp = transform.up;
+                target += localUp.normalized * _heldTargetSurfaceLift;
+            }
             Vector3 rawVelocity = (target - _previousBendTarget) / delta;
             float blend = 1f - Mathf.Exp(-18f * delta);
             _smoothedBendTargetVelocity = Vector3.Lerp(
@@ -1445,7 +1569,17 @@ namespace Elemental.Input.Gestures
         private bool TryAcquireExistingEarthBody(float2 pointer)
         {
             if (executor == null || castCamera == null) return false;
-            Ray ray = castCamera.ScreenPointToRay(new Vector2(pointer.x, pointer.y));
+            Ray ray = _earthAcquireRayValid
+                ? _earthAcquireRay
+                : castCamera.ScreenPointToRay(new Vector2(pointer.x, pointer.y));
+            // A broad physics ray can see dynamic rocks on the far side of the
+            // planet. Without an occlusion limit a stationary LMB on apparently
+            // clear terrain could grab one of those hidden bodies instead of
+            // starting the canonical terrain extraction transaction.
+            float visibleSurfaceDistance = float.PositiveInfinity;
+            if (planetCollider != null && planetCollider.enabled &&
+                planetCollider.Raycast(ray, out RaycastHit terrainHit, projectionDistance))
+                visibleSurfaceDistance = Mathf.Max(0f, terrainHit.distance - 0.01f);
             int hitCount = UnityEngine.Physics.RaycastNonAlloc(
                 ray,
                 _projectionHits,
@@ -1454,6 +1588,7 @@ namespace Elemental.Input.Gestures
                 QueryTriggerInteraction.Ignore);
             float nearest = float.PositiveInfinity;
             Rigidbody selected = null;
+            Collider selectedCollider = null;
             IEarthPhysicalTarget selectedEarthTarget = null;
             for (int index = 0; index < hitCount; index++)
             {
@@ -1463,6 +1598,7 @@ namespace Elemental.Input.Gestures
                 bool releasablePiece = earthTarget is EarthWallPiece || earthTarget is EarthPlatformPiece;
                 if (_casterBody != null && hit.collider != null &&
                     hit.collider.transform.IsChildOf(_casterBody.transform)) continue;
+                if (hit.distance > visibleSurfaceDistance) continue;
                 if (body == null || body == _casterBody || (body.isKinematic && !releasablePiece) ||
                     hit.distance >= nearest) continue;
                 if (earthTarget == null && body.GetComponent<GravityBody>() == null &&
@@ -1470,6 +1606,7 @@ namespace Elemental.Input.Gestures
                     body.GetComponent<PhysicalImpactTarget>() == null) continue;
                 nearest = hit.distance;
                 selected = body;
+                selectedCollider = hit.collider;
                 selectedEarthTarget = earthTarget;
             }
 
@@ -1478,7 +1615,20 @@ namespace Elemental.Input.Gestures
                 castCamera.transform.position,
                 selected.worldCenterOfMass);
             _holdDistance = Mathf.Clamp(cameraDistance, minimumHoldDistance, maximumHoldDistance);
-            _previousBendTarget = selected.worldCenterOfMass;
+            Vector3 planetCenter = planetCollider != null ? planetCollider.bounds.center : Vector3.zero;
+            Vector3 localUp = selected.worldCenterOfMass - planetCenter;
+            if (localUp.sqrMagnitude < 0.0001f) localUp = transform.up;
+            localUp.Normalize();
+            Bounds selectedBounds = selectedCollider != null
+                ? selectedCollider.bounds
+                : new Bounds(selected.worldCenterOfMass, Vector3.one * 0.5f);
+            Vector3 extents = selectedBounds.extents;
+            float radialExtent = Mathf.Abs(localUp.x) * extents.x +
+                                 Mathf.Abs(localUp.y) * extents.y +
+                                 Mathf.Abs(localUp.z) * extents.z;
+            _heldTargetSurfaceLift = Mathf.Clamp(radialExtent * 0.9f, 0.28f, 0.75f);
+            _previousBendTarget = ray.GetPoint(_holdDistance) +
+                                  localUp * _heldTargetSurfaceLift;
             _smoothedBendTargetVelocity = Vector3.zero;
             _lastBendPointer = pointer;
             if (!executor.TryAcquireExistingEarthBody(
@@ -1489,6 +1639,7 @@ namespace Elemental.Input.Gestures
                 Mathf.InverseLerp(10f, 500f, selected.mass), 0.18f, 1f));
             _selectedAbility = EarthAbilityIds.PullRock;
             _earthAcquirePending = false;
+            _earthAcquireRayValid = false;
             _wallGesturePending = false;
             _formingAmount01 = 0f;
             _formingSourceValid = false;
@@ -1566,12 +1717,18 @@ namespace Elemental.Input.Gestures
             float elapsed,
             float amountOverride = -1f)
         {
+            bool hasCapturedSource = _formingSourceValid;
+            Vector3 capturedSource = _formingSourceWorld;
             _earthAcquirePending = false;
+            _heldTargetSurfaceLift = 0f;
             _formingAmount01 = 0f;
             _formingSourceValid = false;
-            if (executor == null || castCamera == null || !TryProject(sourcePointer, out Vector3 source))
+            Vector3 source = capturedSource;
+            if (executor == null || castCamera == null ||
+                !hasCapturedSource && !TryProject(sourcePointer, out source))
             {
                 _bendSession.Cancel();
+                _earthAcquireRayValid = false;
                 StatusChanged?.Invoke("No earth source under the pointer.");
                 return false;
             }
@@ -1590,9 +1747,11 @@ namespace Elemental.Input.Gestures
                 source,
                 localUp,
                 amount);
-            if (!executor.Execute(in command) || executor.HeldFragment == null)
+            bool executed = executor.Execute(in command);
+            if (!executed || executor.HeldFragment == null && !executor.HasPendingExtraction)
             {
                 _bendSession.Cancel();
+                _earthAcquireRayValid = false;
                 return false;
             }
 
@@ -1605,6 +1764,7 @@ namespace Elemental.Input.Gestures
                 Vector3.zero,
                 _bendSession.Charge01,
                 in _bendTuning);
+            _earthAcquireRayValid = false;
             ClearPreview();
             StatusChanged?.Invoke("Earth torn from the selected ground volume — keep LMB held.");
             return true;
@@ -1692,32 +1852,16 @@ namespace Elemental.Input.Gestures
 
         private AbilityId ResolveStructureAbilityFromCurrentStroke()
         {
-            EarthGestureSettings settings = gestureProfile != null
-                ? gestureProfile.Settings
-                : EarthGestureSettings.Default;
-            EarthInputContext context = new EarthInputContext(
-                EarthSourceKind.Terrain,
-                false,
-                true,
-                inputAdapter != null && inputAdapter.BendForceHeld,
-                false,
-                inputAdapter != null && inputAdapter.BendModifierHeld);
-            _lastGestureResult = _templateRecognizer.Recognize(
-                _strokeSampler.Samples,
-                EarthIntentResolver.RelevantTemplates(in context),
-                in settings);
-            EarthResolvedIntent intent = EarthIntentResolver.Resolve(in context, in _lastGestureResult);
-            _reticleState = intent.Reticle;
-            if (intent.Accepted && intent.Kind == EarthIntentKind.RaisePlatform)
-                return EarthAbilityIds.RaisePlatform;
-            if (intent.Accepted && intent.Kind == EarthIntentKind.RaiseWall)
-                return EarthAbilityIds.LineWall;
-
-            // During the first few samples confidence is intentionally low. Preserve a
-            // responsive preview using the deterministic topology fallback; release still
-            // goes through confidence and ambiguity rejection.
-            EarthStructureGestureResult fallback = EarthStructureGestureSolver.Classify(_sampler.Points);
-            return fallback.Kind == EarthStructureGestureKind.Platform
+            Rect viewport = castCamera != null
+                ? castCamera.pixelRect
+                : new Rect(0f, 0f, Screen.width, Screen.height);
+            EarthStructureGestureResult shape = EarthStructureGestureSolver.Classify(
+                _sampler.Points,
+                new float2(Mathf.Max(1f, viewport.width), Mathf.Max(1f, viewport.height)));
+            _reticleState = shape.Kind == EarthStructureGestureKind.Invalid
+                ? EarthReticleState.Terrain
+                : EarthReticleState.Valid;
+            return shape.Kind == EarthStructureGestureKind.Platform
                 ? EarthAbilityIds.RaisePlatform
                 : EarthAbilityIds.LineWall;
         }
@@ -1797,29 +1941,47 @@ namespace Elemental.Input.Gestures
         {
             if (screenPath == null || screenPath.Count < 2) return false;
             float2 currentPointer = screenPath[screenPath.Count - 1];
-            if (!TryBuildCommand(screenPath, currentPointer, durationSeconds, out MagicCommand command)) return false;
+            bool sameGeometry = _previewCacheValid &&
+                                _lastPreviewPathCount == screenPath.Count &&
+                                math.distancesq(_lastPreviewEndpoint, currentPointer) < 0.25f &&
+                                _lastPreviewElement == selectedElement &&
+                                _lastPreviewAbility.Equals(_selectedAbility);
+            if (sameGeometry && Time.unscaledTime < _nextPreviewRefreshAt)
+                return _previewPoints.Count > 0;
 
-            if (selectedElement == ElementId.Air)
+            using (PreviewMarker.Auto())
             {
-                airExecutor.BuildPreview(in command, _previewPoints);
+                if (!TryBuildCommand(screenPath, currentPointer, durationSeconds, out MagicCommand command))
+                    return false;
+
+                if (selectedElement == ElementId.Air)
+                {
+                    airExecutor.BuildPreview(in command, _previewPoints);
+                }
+                else if (selectedElement == ElementId.Fire || selectedElement == ElementId.Water)
+                {
+                    thermalWaterExecutor.BuildPreview(in command, _previewPoints);
+                }
+                else
+                {
+                    executor.BuildPreview(in command, _previewPoints);
+                }
+                if (previewPresenter != null) previewPresenter.Present(_previewPoints);
+                else if (previewLine != null)
+                {
+                    previewLine.positionCount = _previewPoints.Count;
+                    for (int index = 0; index < _previewPoints.Count; index++)
+                        previewLine.SetPosition(index, _previewPoints[index]);
+                }
+                PreviewChanged?.Invoke(_previewPoints);
+                _lastPreviewPathCount = screenPath.Count;
+                _lastPreviewEndpoint = currentPointer;
+                _lastPreviewElement = selectedElement;
+                _lastPreviewAbility = _selectedAbility;
+                _nextPreviewRefreshAt = Time.unscaledTime + (1f / 30f);
+                _previewCacheValid = true;
+                return _previewPoints.Count > 0;
             }
-            else if (selectedElement == ElementId.Fire || selectedElement == ElementId.Water)
-            {
-                thermalWaterExecutor.BuildPreview(in command, _previewPoints);
-            }
-            else
-            {
-                executor.BuildPreview(in command, _previewPoints);
-            }
-            if (previewPresenter != null) previewPresenter.Present(_previewPoints);
-            else if (previewLine != null)
-            {
-                previewLine.positionCount = _previewPoints.Count;
-                for (int index = 0; index < _previewPoints.Count; index++)
-                    previewLine.SetPosition(index, _previewPoints[index]);
-            }
-            PreviewChanged?.Invoke(_previewPoints);
-            return _previewPoints.Count > 0;
         }
 
         private void Commit(float2 pointer)
@@ -1839,6 +2001,7 @@ namespace Elemental.Input.Gestures
 
         private void ClearPreview()
         {
+            _previewCacheValid = false;
             if (previewPresenter != null) previewPresenter.Clear();
             else if (previewLine != null) previewLine.positionCount = 0;
             PreviewCleared?.Invoke();
@@ -2018,8 +2181,32 @@ namespace Elemental.Input.Gestures
                     in settings)
                 : EarthGestureResult.Invalid();
             EarthResolvedIntent resolved = EarthIntentResolver.Resolve(in context, in _lastGestureResult);
-            _reticleState = resolved.Reticle;
-            return resolved;
+            Rect classificationViewport = castCamera != null
+                ? castCamera.pixelRect
+                : new Rect(0f, 0f, Screen.width, Screen.height);
+            EarthStructureGestureResult shape = EarthStructureGestureSolver.Classify(
+                screenPath,
+                new float2(
+                    Mathf.Max(1f, classificationViewport.width),
+                    Mathf.Max(1f, classificationViewport.height)));
+            if (shape.Kind == EarthStructureGestureKind.Invalid)
+            {
+                _reticleState = EarthReticleState.Invalid;
+                return new EarthResolvedIntent(
+                    EarthIntentKind.None,
+                    EarthReticleState.Invalid,
+                    false,
+                    _lastGestureResult);
+            }
+            EarthIntentKind deterministicKind = shape.Kind == EarthStructureGestureKind.Platform
+                ? EarthIntentKind.RaisePlatform
+                : EarthIntentKind.RaiseWall;
+            _reticleState = EarthReticleState.Valid;
+            return new EarthResolvedIntent(
+                deterministicKind,
+                EarthReticleState.Valid,
+                true,
+                _lastGestureResult);
         }
 
         private bool TryBuildCommand(
@@ -2145,30 +2332,19 @@ namespace Elemental.Input.Gestures
                 point = ray.GetPoint(travel);
                 return true;
             }
-            int hitCount = UnityEngine.Physics.RaycastNonAlloc(
-                ray,
-                _projectionHits,
-                projectionDistance,
-                ~0,
-                QueryTriggerInteraction.Ignore);
-            float nearest = float.PositiveInfinity;
-            point = default;
-            bool found = false;
-
-            for (int index = 0; index < hitCount; index++)
+            // Terrain drawing must not depend on the order or capacity of a broad
+            // Physics.RaycastNonAlloc result. Dense arena rocks could fill that
+            // buffer before the planet proxy appeared, making near/far wall strokes
+            // fail at random. Query the canonical terrain collider directly.
+            if (planetCollider != null && planetCollider.enabled &&
+                planetCollider.Raycast(ray, out RaycastHit terrainHit, projectionDistance))
             {
-                RaycastHit hit = _projectionHits[index];
-                if (hit.collider != planetCollider || hit.distance >= nearest)
-                {
-                    continue;
-                }
-
-                nearest = hit.distance;
-                point = hit.point;
-                found = true;
+                point = terrainHit.point;
+                return true;
             }
 
-            return found;
+            point = default;
+            return false;
         }
 
         private bool TryCaptureDrawSurface(float2 screenPoint, out Vector3 point)
@@ -2185,12 +2361,24 @@ namespace Elemental.Input.Gestures
                 if (surfaceQueries.TrySample(in query, out EarthSurfaceSample sample))
                 {
                     _drawSurface = sample;
-                    _drawSurfaceLocked = true;
+                    // A constructed face is a plane and should stay locked. Planet
+                    // terrain is curved, so every subsequent sample must be projected
+                    // back to the planet instead of drifting along the first tangent.
+                    _drawSurfaceLocked = IsConstructedDrawSurface(sample.Handle.Kind);
                     point = ToVector3(sample.Point);
                     return true;
                 }
             }
             return TryProject(screenPoint, out point);
+        }
+
+        private void CaptureEarthAcquireSource(float2 screenPoint)
+        {
+            _earthAcquireRayValid = castCamera != null;
+            if (_earthAcquireRayValid)
+                _earthAcquireRay = castCamera.ScreenPointToRay(
+                    new Vector2(screenPoint.x, screenPoint.y));
+            _formingSourceValid = TryCaptureDrawSurface(screenPoint, out _formingSourceWorld);
         }
 
         private static Vector3 ToVector3(float3 value) => new Vector3(value.x, value.y, value.z);

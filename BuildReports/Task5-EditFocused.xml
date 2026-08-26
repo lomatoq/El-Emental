@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="10" result="Passed" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.1165174">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="168" result="Passed" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.116517" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1204" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="168" result="Passed" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.105387" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="42780" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1205" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="168" result="Passed" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.103709" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1206" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="168" result="Passed" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.101923" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1207" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="168" result="Passed" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.100740" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1049" name="EarthContextualInputTests" fullname="Elemental.Tests.EditMode.EarthContextualInputTests" classname="Elemental.Tests.EditMode.EarthContextualInputTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.094487" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1056" name="AmbiguousNBestResultRejectsWithoutIntent" fullname="Elemental.Tests.EditMode.EarthContextualInputTests.AmbiguousNBestResultRejectsWithoutIntent" methodname="AmbiguousNBestResultRejectsWithoutIntent" classname="Elemental.Tests.EditMode.EarthContextualInputTests" runstate="Runnable" seed="1789157885" result="Passed" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.038506" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1055" name="ArcAndClosedContourResolveToPlatform" fullname="Elemental.Tests.EditMode.EarthContextualInputTests.ArcAndClosedContourResolveToPlatform" methodname="ArcAndClosedContourResolveToPlatform" classname="Elemental.Tests.EditMode.EarthContextualInputTests" runstate="Runnable" seed="1339655132" result="Passed" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.001881" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1057" name="ContextGateResolvesSessionsAndFieldBeforeTemplates" fullname="Elemental.Tests.EditMode.EarthContextualInputTests.ContextGateResolvesSessionsAndFieldBeforeTemplates" methodname="ContextGateResolvesSessionsAndFieldBeforeTemplates" classname="Elemental.Tests.EditMode.EarthContextualInputTests" runstate="Runnable" seed="2004898699" result="Passed" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.000886" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1058" name="InvalidOrObstructedSourceRejectsSafely" fullname="Elemental.Tests.EditMode.EarthContextualInputTests.InvalidOrObstructedSourceRejectsSafely" methodname="InvalidOrObstructedSourceRejectsSafely" classname="Elemental.Tests.EditMode.EarthContextualInputTests" runstate="Runnable" seed="1264131467" result="Passed" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.000630" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1060" name="RecognitionLoopAllocatesNothingAfterWarmup" fullname="Elemental.Tests.EditMode.EarthContextualInputTests.RecognitionLoopAllocatesNothingAfterWarmup" methodname="RecognitionLoopAllocatesNothingAfterWarmup" classname="Elemental.Tests.EditMode.EarthContextualInputTests" runstate="Runnable" seed="1810100196" result="Passed" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.021502" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1054" name="SameWallGestureIsResolutionIndependentAndFixedCount" fullname="Elemental.Tests.EditMode.EarthContextualInputTests.SameWallGestureIsResolutionIndependentAndFixedCount" classname="Elemental.Tests.EditMode.EarthContextualInputTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.005460" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1050" name="SameWallGestureIsResolutionIndependentAndFixedCount(1280,720)" fullname="Elemental.Tests.EditMode.EarthContextualInputTests.SameWallGestureIsResolutionIndependentAndFixedCount(1280,720)" methodname="SameWallGestureIsResolutionIndependentAndFixedCount" classname="Elemental.Tests.EditMode.EarthContextualInputTests" runstate="Runnable" seed="1453358455" result="Passed" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.001630" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1051" name="SameWallGestureIsResolutionIndependentAndFixedCount(1920,1080)" fullname="Elemental.Tests.EditMode.EarthContextualInputTests.SameWallGestureIsResolutionIndependentAndFixedCount(1920,1080)" methodname="SameWallGestureIsResolutionIndependentAndFixedCount" classname="Elemental.Tests.EditMode.EarthContextualInputTests" runstate="Runnable" seed="1543473306" result="Passed" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.000293" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1052" name="SameWallGestureIsResolutionIndependentAndFixedCount(2560,1440)" fullname="Elemental.Tests.EditMode.EarthContextualInputTests.SameWallGestureIsResolutionIndependentAndFixedCount(2560,1440)" methodname="SameWallGestureIsResolutionIndependentAndFixedCount" classname="Elemental.Tests.EditMode.EarthContextualInputTests" runstate="Runnable" seed="144081863" result="Passed" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.000243" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1053" name="SameWallGestureIsResolutionIndependentAndFixedCount(3440,1440)" fullname="Elemental.Tests.EditMode.EarthContextualInputTests.SameWallGestureIsResolutionIndependentAndFixedCount(3440,1440)" methodname="SameWallGestureIsResolutionIndependentAndFixedCount" classname="Elemental.Tests.EditMode.EarthContextualInputTests" runstate="Runnable" seed="684691995" result="Passed" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.000250" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1059" name="StrokeSamplerIgnoresHoverAndStoresOnlyNormalizedSamples" fullname="Elemental.Tests.EditMode.EarthContextualInputTests.StrokeSamplerIgnoresHoverAndStoresOnlyNormalizedSamples" methodname="StrokeSamplerIgnoresHoverAndStoresOnlyNormalizedSamples" classname="Elemental.Tests.EditMode.EarthContextualInputTests" runstate="Runnable" seed="774041846" result="Passed" start-time="2026-08-13 16:24:25Z" end-time="2026-08-13 16:24:25Z" duration="0.003303" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

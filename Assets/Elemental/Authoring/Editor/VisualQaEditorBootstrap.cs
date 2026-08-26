@@ -24,12 +24,23 @@ namespace Elemental.Authoring.Editor
         private static VisualQaCaptureRequest _request;
         private static double _deadline;
         private static bool _active;
+        private static bool _useShippingScene;
 
         static VisualQaEditorBootstrap()
         {
             if (!Application.isBatchMode ||
                 !VisualQaCaptureRequest.TryParse(Environment.GetCommandLineArgs(), out _request))
                 return;
+            string[] arguments = Environment.GetCommandLineArgs();
+            for (int index = 0; index < arguments.Length; index++)
+            {
+                if (!string.Equals(
+                        arguments[index],
+                        VisualQaCaptureRequest.ShippingSceneArgument,
+                        StringComparison.OrdinalIgnoreCase)) continue;
+                _useShippingScene = true;
+                break;
+            }
             EditorApplication.delayCall += Begin;
         }
 
@@ -68,7 +79,10 @@ namespace Elemental.Authoring.Editor
 
         private static void LaunchScene()
         {
-            EditorSceneManager.OpenScene(EarthPolishLabSetup.ScenePath);
+            EditorSceneManager.OpenScene(
+                _useShippingScene
+                    ? M3EarthCoreSetup.EarthCoreScenePath
+                    : EarthPolishLabSetup.ScenePath);
             SessionState.SetInt(StageKey, StageRunningLab);
             EditorApplication.EnterPlaymode();
         }

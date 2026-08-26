@@ -6,6 +6,8 @@ using Elemental.Simulation.Magic;
 using Elemental.Simulation.Bending;
 using Elemental.Simulation.Matter;
 using Elemental.Simulation.Structures;
+using Elemental.Simulation.Combat;
+using Elemental.Simulation.Voxel;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Profiling;
@@ -20,6 +22,8 @@ namespace Elemental.Runtime.World
         private static readonly ProfilerMarker ExecuteMarker = new ProfilerMarker("Elemental.Magic.Execute");
         private static readonly ProfilerMarker VectorFieldMarker = new ProfilerMarker("Elemental.Magic.VectorField");
         private static readonly ProfilerMarker GravityWellMarker = new ProfilerMarker("Elemental.Magic.GravityWell");
+        private static readonly ProfilerMarker TerrainCommitMarker =
+            new ProfilerMarker("Elemental.Terrain.Commit");
 
         [SerializeField] private VoxelPlanetBehaviour voxelPlanet;
         [SerializeField] private EarthFragmentPool fragmentPool;
@@ -34,10 +38,10 @@ namespace Elemental.Runtime.World
         [SerializeField] private EarthMatterReturnController matterReturnController;
         [SerializeField] private EarthTechniqueComboRuntime comboRuntime;
         [SerializeField, Min(1f)] private float earthMaterialDensity = 120f;
-        [SerializeField, Min(0.1f)] private float wallMaximumHeight = 6.25f;
-        [SerializeField, Min(0.1f)] private float wallMinimumHeight = 1.25f;
+        [SerializeField, Min(0.1f)] private float wallMaximumHeight = 4.0f;
+        [SerializeField, Min(0.1f)] private float wallMinimumHeight = 1.5f;
         [SerializeField, Min(1f)] private float wallMaxLength = 22f;
-        [SerializeField, Min(0.05f)] private float wallThickness = 0.55f;
+        [SerializeField, Min(0.05f)] private float wallThickness = 0.95f;
         [SerializeField, Min(1f)] private float wallPushLeverage = 12f;
         [SerializeField, Min(0.1f)] private float minimumThrowVelocityChange = 6f;
         [SerializeField, Min(0.1f)] private float maximumThrowVelocityChange = 18f;
@@ -45,7 +49,19 @@ namespace Elemental.Runtime.World
         private readonly Dictionary<AbilityId, CompiledAbilityRecipe> _recipes =
             new Dictionary<AbilityId, CompiledAbilityRecipe>();
         private readonly List<float3> _platformPathScratch = new List<float3>(32);
+        private readonly List<TerrainExtractionTransaction> _pendingExtractions =
+            new List<TerrainExtractionTransaction>(4);
         private EarthFragment _heldFragment;
+        private Vector3 _pendingExtractionTarget;
+        private Vector3 _pendingExtractionVelocity;
+        private float _pendingExtractionCharge;
+        private BendTuning _pendingExtractionTuning = BendTuning.Default;
+        private bool _pendingExtractionRelease;
+        private bool _pendingExtractionCancel;
+        private Vector3 _pendingReleaseAim;
+        private Vector3 _pendingReleaseGestureVelocity;
+        private float _pendingReleaseCharge;
+        private uint _pendingReleaseTick;
         private IEarthPhysicalTarget _vectorFieldTarget;
         private Vector3 _vectorFieldPoint;
         private Vector3 _vectorFieldDirection;
@@ -78,6 +94,8 @@ namespace Elemental.Runtime.World
         public MagicReplayRecorder Recorder { get; } = new MagicReplayRecorder();
         public int SuccessfulCommandCount { get; private set; }
         public EarthFragmentPool FragmentPool => fragmentPool;
+        public EarthWallPool WallPool => wallPool;
+        public EarthPlatformPool PlatformPool => platformPool;
         public VoxelPlanetBehaviour VoxelPlanet => voxelPlanet;
         public EarthMatterKernelBehaviour MatterKernel => matterKernel;
         public EarthMatterReturnController MatterReturnController => matterReturnController;
@@ -85,6 +103,8 @@ namespace Elemental.Runtime.World
         public float EarthMaterialDensity => Mathf.Max(1f, earthMaterialDensity);
         public Transform PlanetCenterTransform => planetCenter;
         public EarthFragment HeldFragment => _heldFragment != null && _heldFragment.IsHeld ? _heldFragment : null;
+        public EarthFragment ReservedOrHeldFragment => _heldFragment;
+        public bool HasPendingExtraction => _pendingExtractions.Count > 0;
         public Rigidbody HeldBody => HeldFragment != null
             ? HeldFragment.Body
             : (telekinesis != null ? telekinesis.Body : null);
@@ -128,6 +148,7 @@ namespace Elemental.Runtime.World
 
         private void Awake()
         {
+            AttachExtractionCommitListener();
             if (matterKernel == null) matterKernel = EarthMatterKernelBehaviour.FindOrCreate(this);
             if (matterReturnController == null)
                 matterReturnController = GetComponent<EarthMatterReturnController>() ??
@@ -426,6 +447,13 @@ namespace Elemental.Runtime.World
         {
             if (HeldFragment != null)
                 HeldFragment.BeginBendControl(target, velocity, charge01, in tuning);
+            else if (HasPendingExtraction)
+            {
+                _pendingExtractionTarget = target;
+                _pendingExtractionVelocity = velocity;
+                _pendingExtractionCharge = Mathf.Clamp01(charge01);
+                _pendingExtractionTuning = tuning;
+            }
             else
                 telekinesis?.UpdateTarget(target, velocity, charge01);
         }
@@ -434,6 +462,12 @@ namespace Elemental.Runtime.World
         {
             if (HeldFragment != null)
                 HeldFragment.UpdateBendTarget(target, velocity, charge01);
+            else if (HasPendingExtraction)
+            {
+                _pendingExtractionTarget = target;
+                _pendingExtractionVelocity = velocity;
+                _pendingExtractionCharge = Mathf.Clamp01(charge01);
+            }
             else
                 telekinesis?.UpdateTarget(target, velocity, charge01);
         }
@@ -445,10 +479,19 @@ namespace Elemental.Runtime.World
             uint tick,
             out Vector3 releaseVelocity)
         {
+            releaseVelocity = Vector3.zero;
             if (HeldFragment != null)
                 return ReleaseHeldFragment(
                     aimDirection, gestureVelocity, charge01, tick, out releaseVelocity);
-            releaseVelocity = Vector3.zero;
+            if (HasPendingExtraction)
+            {
+                _pendingExtractionRelease = true;
+                _pendingReleaseAim = aimDirection;
+                _pendingReleaseGestureVelocity = gestureVelocity;
+                _pendingReleaseCharge = Mathf.Clamp01(charge01);
+                _pendingReleaseTick = tick;
+                return true;
+            }
             if (telekinesis == null || telekinesis.Body == null) return false;
             uint bodyId = telekinesis.BodyId;
             float mass = telekinesis.Body.mass;
@@ -492,8 +535,19 @@ namespace Elemental.Runtime.World
         {
             if (_heldFragment != null)
             {
-                _heldFragment.StopBendControl();
-                _heldFragment = null;
+                if (HasPendingExtraction)
+                {
+                    // The SDF transaction already owns this reserved fragment. Do not
+                    // orphan it while neighbouring chunks are still staging; commit it
+                    // as a normal dynamic rock and then release executor ownership.
+                    _pendingExtractionCancel = true;
+                    _pendingExtractionRelease = false;
+                }
+                else
+                {
+                    _heldFragment.StopBendControl();
+                    _heldFragment = null;
+                }
             }
             telekinesis?.Clear();
         }
@@ -685,13 +739,24 @@ namespace Elemental.Runtime.World
             Transform configuredHeldFragmentAnchor = null)
         {
             if (wallPool != null) wallPool.WallCollapsed -= HandleWallCollapsed;
+            if (voxelPlanet != null) voxelPlanet.EditCommitted -= HandleExtractionEditCommitted;
             voxelPlanet = configuredVoxelPlanet;
             fragmentPool = configuredPool;
             planetCenter = configuredPlanetCenter;
             wallPool = configuredWallPool;
             heldFragmentAnchor = configuredHeldFragmentAnchor;
             if (wallPool != null) wallPool.WallCollapsed += HandleWallCollapsed;
+            AttachExtractionCommitListener();
             matterReturnController?.Configure(voxelPlanet, matterKernel, EarthMaterialDensity);
+        }
+
+        private void AttachExtractionCommitListener()
+        {
+            if (voxelPlanet == null) return;
+            // Unity serializes the VoxelPlanet reference, not C# event subscriptions.
+            // Rebind idempotently whenever the runtime wakes or authoring replaces it.
+            voxelPlanet.EditCommitted -= HandleExtractionEditCommitted;
+            voxelPlanet.EditCommitted += HandleExtractionEditCommitted;
         }
 
         public void ConfigureTelekinesis(EarthTelekinesisController configuredTelekinesis)
@@ -717,6 +782,7 @@ namespace Elemental.Runtime.World
             if (platformPool != null) platformPool.PlatformFractured -= HandlePlatformFractured;
             if (matterReturnController != null)
                 matterReturnController.ReturnStageChanged -= HandleReturnStageForCombo;
+            if (voxelPlanet != null) voxelPlanet.EditCommitted -= HandleExtractionEditCommitted;
         }
 
         private void ApplyGravityWell()
@@ -920,11 +986,16 @@ namespace Elemental.Runtime.World
             return physical;
         }
 
-        public void ConfigureWallProfile(float minimumHeight, float maximumHeight, float maximumLength = 22f)
+        public void ConfigureWallProfile(
+            float minimumHeight,
+            float maximumHeight,
+            float maximumLength = 22f,
+            float baseThickness = 0.95f)
         {
             wallMinimumHeight = Mathf.Max(0.1f, minimumHeight);
             wallMaximumHeight = Mathf.Max(wallMinimumHeight, maximumHeight);
             wallMaxLength = Mathf.Max(1f, maximumLength);
+            wallThickness = Mathf.Max(0.05f, baseThickness);
         }
 
         public void ConfigureRecipes(CompiledAbilityRecipe[] recipes)
@@ -959,6 +1030,20 @@ namespace Elemental.Runtime.World
                 if (!_recipes.TryGetValue(command.Ability, out CompiledAbilityRecipe recipe))
                 {
                     return Reject(command, "Ability recipe is not registered.");
+                }
+
+                if (IsTerrainExtractionRecipe(recipe))
+                {
+                    if (!ExecuteTerrainExtraction(recipe, command)) return false;
+                    Recorder.Record(in command);
+                    SuccessfulCommandCount++;
+                    comboRuntime?.RecordAbility(
+                        command.Ability,
+                        ResolveCommandMatter(command.Ability),
+                        command.Tick,
+                        command.Intensity,
+                        command.Aim);
+                    return true;
                 }
 
                 for (int index = 0; index < recipe.Operators.Length; index++)
@@ -1082,6 +1167,9 @@ namespace Elemental.Runtime.World
             PhysicalImpactTarget target = collision.collider != null
                 ? collision.collider.GetComponentInParent<PhysicalImpactTarget>()
                 : null;
+            EarthCharacterImpactTarget characterTarget = collision.collider != null
+                ? collision.collider.GetComponentInParent<EarthCharacterImpactTarget>()
+                : null;
             Vector3 direction = fragment.Body.linearVelocity.sqrMagnitude > 0.0001f
                 ? fragment.Body.linearVelocity.normalized
                 : -contact.normal;
@@ -1101,11 +1189,30 @@ namespace Elemental.Runtime.World
                                collision.collider.transform.IsChildOf(terrainCollider.transform));
             wall?.ApplyRockImpact(contact.point, direction, impulse);
             platform?.ApplyStructureImpact(contact.point, direction, impulse);
+            EarthDestructibleDecorRock decorRock = collision.collider != null
+                ? collision.collider.GetComponentInParent<EarthDestructibleDecorRock>()
+                : null;
+            if (decorRock != null)
+            {
+                decorRock.ApplyImpact(contact.point, direction, impulse);
+                target = null;
+            }
             // A controlled rock touching the ground is the accretion gesture. It must not
             // self-destruct from the PD controller's contact impulse; only released rocks
             // shatter and carve craters on impact.
             if (terrainHit && !fragment.IsHeld)
                 fragment.TryShatter(contact.point, contact.normal, impulse);
+            if (characterTarget != null)
+            {
+                characterTarget.ApplyImpact(
+                    contact.point,
+                    direction,
+                    impulse,
+                    EarthCharacterImpactSourceKind.LooseStone,
+                    fragment.FragmentId,
+                    fragment.Body != null ? fragment.Body.linearVelocity.magnitude : 0f);
+                target = null;
+            }
             ApplyFragmentImpact(
                 fragment, contact.point, contact.normal, impulse, target, direction,
                 terrainHit && wall == null);
@@ -1127,8 +1234,27 @@ namespace Elemental.Runtime.World
             EarthPlatform platform = hitCollider.GetComponentInParent<EarthPlatform>();
             if (platform == null) platform = hitCollider.GetComponent<EarthPlatformPiece>()?.Owner;
             PhysicalImpactTarget physical = hitCollider.GetComponentInParent<PhysicalImpactTarget>();
+            EarthCharacterImpactTarget character = hitCollider.GetComponentInParent<EarthCharacterImpactTarget>();
+            EarthDestructibleDecorRock decorRock =
+                hitCollider.GetComponentInParent<EarthDestructibleDecorRock>();
             wall?.ApplyRockImpact(point, direction, impulse);
             platform?.ApplyStructureImpact(point, direction, impulse);
+            if (decorRock != null)
+            {
+                decorRock.ApplyImpact(point, direction, impulse);
+                physical = null;
+            }
+            if (character != null)
+            {
+                character.ApplyImpact(
+                    point,
+                    direction,
+                    impulse,
+                    EarthCharacterImpactSourceKind.LooseStone,
+                    fragment.FragmentId,
+                    fragment.Body != null ? fragment.Body.linearVelocity.magnitude : 0f);
+                physical = null;
+            }
             ApplyFragmentImpact(fragment, point, normal, impulse, physical, direction, false);
         }
 
@@ -1558,6 +1684,140 @@ namespace Elemental.Runtime.World
             return true;
         }
 
+        private static bool IsTerrainExtractionRecipe(CompiledAbilityRecipe recipe)
+        {
+            return recipe.Operators.Length == 2 &&
+                   recipe.Operators[0] == MagicOperatorKind.SubtractSolid &&
+                   recipe.Operators[1] == MagicOperatorKind.SpawnFragment;
+        }
+
+        private bool ExecuteTerrainExtraction(
+            CompiledAbilityRecipe recipe,
+            in MagicCommand command)
+        {
+            if (_heldFragment != null || HasPendingExtraction)
+                return Reject(command, "Finish controlling the current earth mass first.");
+
+            float extractionRadius = EarthGeometryBuilder.ExtractionRadius(recipe.Radius, command.Intensity);
+            EarthExtractionGeometry extraction = EarthGeometryBuilder.BuildExtraction(
+                in command, ToFloat3(planetCenter.position), extractionRadius);
+            float volume = (4f / 3f) * math.PI * extractionRadius * extractionRadius * extractionRadius;
+            float mass = volume * earthMaterialDensity;
+            Vector3 emergence = ToVector3(extraction.EmergencePosition);
+
+            // Reserve physical matter before touching the canonical SDF. A full pool
+            // therefore rejects the cast without leaving a cavity behind.
+            EarthFragment fragment = fragmentPool.ReserveExtraction(
+                this, emergence, extractionRadius, mass);
+            if (fragment == null)
+                return Reject(command, "Earth matter physical budget is full; release or return a stone first.");
+
+            Vector3 localAnchor = voxelPlanet.transform.InverseTransformPoint(
+                ToVector3(extraction.Center));
+            VoxelEditReceipt receipt = voxelPlanet.ApplySphereEditTransactional(
+                localAnchor, extractionRadius, false);
+            if (!receipt.IsValid)
+            {
+                fragment.MarkConsumedForPool();
+                fragment.CompleteReintegration();
+                return Reject(command, "Terrain extraction could not be staged.");
+            }
+
+            Vector3 surface = ToVector3(extraction.SurfaceAnchor);
+            Vector3 up = (surface - planetCenter.position).normalized;
+            var transaction = new TerrainExtractionTransaction(
+                receipt,
+                fragment,
+                command.Tick,
+                command.Ability,
+                ToVector3(extraction.Center),
+                surface,
+                up,
+                emergence,
+                extractionRadius,
+                mass);
+            _pendingExtractions.Add(transaction);
+            _heldFragment = fragment;
+            _pendingExtractionTarget = heldFragmentAnchor != null
+                ? heldFragmentAnchor.position
+                : emergence;
+            _pendingExtractionVelocity = Vector3.zero;
+            _pendingExtractionCharge = 0f;
+            _pendingExtractionTuning = BendTuning.Default;
+            _pendingExtractionRelease = false;
+            _pendingExtractionCancel = false;
+            return true;
+        }
+
+        private void HandleExtractionEditCommitted(VoxelEditReceipt receipt)
+        {
+            using (TerrainCommitMarker.Auto())
+            {
+                for (int index = _pendingExtractions.Count - 1; index >= 0; index--)
+                {
+                    TerrainExtractionTransaction transaction = _pendingExtractions[index];
+                    if (!transaction.MarkVisualReady(receipt)) continue;
+                    EarthFragment fragment = transaction.Fragment;
+                    if (fragment == null)
+                    {
+                        transaction.MarkFailed();
+                        _pendingExtractions.RemoveAt(index);
+                        if (_heldFragment == fragment) _heldFragment = null;
+                        return;
+                    }
+
+                    fragment.CommitExtraction(
+                        heldFragmentAnchor,
+                        planetCenter != null ? planetCenter.GetComponent<Collider>() : null,
+                        transaction.SurfacePoint,
+                        transaction.LocalUp,
+                        transaction.Radius);
+                    fragment.BeginBendControl(
+                        _pendingExtractionTarget,
+                        _pendingExtractionVelocity,
+                        _pendingExtractionCharge,
+                        in _pendingExtractionTuning);
+                    transaction.MarkCommitted();
+                    _pendingExtractions.RemoveAt(index);
+
+                    TerrainEditedEvent edited = new TerrainEditedEvent(
+                        transaction.Tick,
+                        transaction.Ability,
+                        ToFloat3(transaction.EditCenter),
+                        transaction.Radius);
+                    Events.Emit(in edited);
+                    FragmentSpawnedEvent spawned = new FragmentSpawnedEvent(
+                        transaction.Tick,
+                        fragment.FragmentId,
+                        transaction.Mass,
+                        ToFloat3(transaction.EmergencePosition),
+                        ToFloat3(transaction.SurfacePoint),
+                        ToFloat3(transaction.EditCenter),
+                        transaction.Radius);
+                    Events.Emit(in spawned);
+
+                    if (_pendingExtractionCancel)
+                    {
+                        _pendingExtractionCancel = false;
+                        _pendingExtractionRelease = false;
+                        fragment.StopBendControl();
+                        if (_heldFragment == fragment) _heldFragment = null;
+                    }
+                    else if (_pendingExtractionRelease)
+                    {
+                        _pendingExtractionRelease = false;
+                        ReleaseHeldFragment(
+                            _pendingReleaseAim,
+                            _pendingReleaseGestureVelocity,
+                            _pendingReleaseCharge,
+                            _pendingReleaseTick,
+                            out _);
+                    }
+                    return;
+                }
+            }
+        }
+
         private bool ExecuteSpawnFragment(CompiledAbilityRecipe recipe, in MagicCommand command)
         {
             float extractionRadius = EarthGeometryBuilder.ExtractionRadius(recipe.Radius, command.Intensity);
@@ -1647,6 +1907,9 @@ namespace Elemental.Runtime.World
                 if (pillar != null) return pillar;
                 EarthArmorPiece armorPiece = hitCollider.GetComponentInParent<EarthArmorPiece>();
                 if (armorPiece != null) return armorPiece;
+                EarthDestructibleDecorRock decorRock =
+                    hitCollider.GetComponentInParent<EarthDestructibleDecorRock>();
+                if (decorRock != null) return decorRock;
                 EarthWall wall = hitCollider.GetComponentInParent<EarthWall>();
                 if (wall != null) return wall;
                 PhysicalImpactTarget physical = hitCollider.GetComponentInParent<PhysicalImpactTarget>();

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Failed(Child)" total="2" passed="0" failed="2" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-25 22:31:41Z" end-time="2026-08-25 22:31:41Z" duration="0.1750279">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="423" result="Failed" site="Child" start-time="2026-08-25 22:31:41Z" end-time="2026-08-25 22:31:41Z" duration="0.175028" total="2" passed="0" failed="2" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1512" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="423" result="Failed" site="Child" start-time="2026-08-25 22:31:41Z" end-time="2026-08-25 22:31:41Z" duration="0.156834" total="2" passed="0" failed="2" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="20924" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1513" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="423" result="Failed" site="Child" start-time="2026-08-25 22:31:41Z" end-time="2026-08-25 22:31:41Z" duration="0.110048" total="2" passed="0" failed="2" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1514" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="423" result="Failed" site="Child" start-time="2026-08-25 22:31:41Z" end-time="2026-08-25 22:31:41Z" duration="0.103487" total="2" passed="0" failed="2" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1515" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="423" result="Failed" site="Child" start-time="2026-08-25 22:31:41Z" end-time="2026-08-25 22:31:41Z" duration="0.096677" total="2" passed="0" failed="2" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1364" name="EarthWebWaveAndArmorTests" fullname="Elemental.Tests.EditMode.EarthWebWaveAndArmorTests" classname="Elemental.Tests.EditMode.EarthWebWaveAndArmorTests" runstate="Runnable" testcasecount="10" result="Failed" site="Child" start-time="2026-08-25 22:31:41Z" end-time="2026-08-25 22:31:41Z" duration="0.076468" total="2" passed="0" failed="2" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1366" name="TerminalWaveCellsStayBoundedAndTaperAcrossFamiliesAndCharges" fullname="Elemental.Tests.EditMode.EarthWebWaveAndArmorTests.TerminalWaveCellsStayBoundedAndTaperAcrossFamiliesAndCharges" methodname="TerminalWaveCellsStayBoundedAndTaperAcrossFamiliesAndCharges" classname="Elemental.Tests.EditMode.EarthWebWaveAndArmorTests" runstate="Runnable" seed="1610439981" result="Failed" start-time="2026-08-25 22:31:41Z" end-time="2026-08-25 22:31:41Z" duration="0.047057" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  SerpentRidge charge 0.55 produced an oversized terminal cell.
+  Expected: less than or equal to 1.88375378f
+  But was:  2.84517145f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.EditMode.EarthWebWaveAndArmorTests.TerminalWaveCellsStayBoundedAndTaperAcrossFamiliesAndCharges () [0x00145] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\EditMode\EarthWebWaveAndArmorTests.cs:69
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1368" name="WebWaveBuildsSixDistinctMultiScalePolygonTopologies" fullname="Elemental.Tests.EditMode.EarthWebWaveAndArmorTests.WebWaveBuildsSixDistinctMultiScalePolygonTopologies" methodname="WebWaveBuildsSixDistinctMultiScalePolygonTopologies" classname="Elemental.Tests.EditMode.EarthWebWaveAndArmorTests" runstate="Runnable" seed="477195373" result="Failed" start-time="2026-08-25 22:31:41Z" end-time="2026-08-25 22:31:41Z" duration="0.013367" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: greater than or equal to 3.0f
+  But was:  2.40550566f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.EditMode.EarthWebWaveAndArmorTests.WebWaveBuildsSixDistinctMultiScalePolygonTopologies () [0x001fa] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\EditMode\EarthWebWaveAndArmorTests.cs:135
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

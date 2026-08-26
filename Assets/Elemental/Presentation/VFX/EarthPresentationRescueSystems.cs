@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
+using UnityCamera = global::UnityEngine.Camera;
 
 namespace Elemental.Presentation.VFX
 {
@@ -22,7 +23,6 @@ namespace Elemental.Presentation.VFX
     internal sealed class EarthPresentationRescueInstaller : MonoBehaviour
     {
         private static EarthPresentationRescueInstaller _instance;
-        private float _nextScanAt;
 
         public static void Ensure()
         {
@@ -51,19 +51,12 @@ namespace Elemental.Presentation.VFX
             if (_instance == this) _instance = null;
         }
 
-        private void Update()
-        {
-            if (Time.unscaledTime < _nextScanAt) return;
-            _nextScanAt = Time.unscaledTime + 1f;
-            Scan();
-        }
-
         private static void HandleSceneLoaded(Scene scene, LoadSceneMode mode) => Scan();
 
         private static void Scan()
         {
             EarthCharacterPoseController[] poses = FindObjectsByType<EarthCharacterPoseController>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
+                FindObjectsInactive.Include);
             for (int index = 0; index < poses.Length; index++)
             {
                 EarthCharacterPoseController pose = poses[index];
@@ -75,11 +68,10 @@ namespace Elemental.Presentation.VFX
                     motor.gameObject.AddComponent<EarthSeismicVision>();
             }
 
-            Camera[] cameras = FindObjectsByType<Camera>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
+            UnityCamera[] cameras = FindObjectsByType<UnityCamera>(FindObjectsInactive.Include);
             for (int index = 0; index < cameras.Length; index++)
             {
-                Camera camera = cameras[index];
+                UnityCamera camera = cameras[index];
                 if (camera == null || camera.cameraType != CameraType.Game) continue;
                 if (camera.GetComponent<EarthChargeCameraLookdev>() == null)
                     camera.gameObject.AddComponent<EarthChargeCameraLookdev>();
@@ -341,18 +333,17 @@ namespace Elemental.Presentation.VFX
 
     /// <summary>
     /// Adds restrained cinematic feedback without taking camera authority away from
-    /// Cinemachine: charge widens the lens, focus tracks the bend target, and a tiny
-    /// render-only high-frequency shake communicates stored energy.
+    /// Cinemachine: charge widens the lens, adds a restrained bloom/vignette lift,
+    /// and a tiny render-only high-frequency shake communicates stored energy.
     /// </summary>
     [DefaultExecutionOrder(10000)]
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(Camera))]
+    [RequireComponent(typeof(UnityCamera))]
     public sealed class EarthChargeCameraLookdev : MonoBehaviour
     {
-        private Camera _camera;
+        private UnityCamera _camera;
         private MagicInputController _input;
         private Volume _volume;
-        private DepthOfField _depthOfField;
         private Bloom _bloom;
         private Vignette _vignette;
         private float _charge;
@@ -365,7 +356,7 @@ namespace Elemental.Presentation.VFX
 
         private void Awake()
         {
-            _camera = GetComponent<Camera>();
+            _camera = GetComponent<UnityCamera>();
             BuildVolume();
             ResolveInput();
         }
@@ -396,11 +387,10 @@ namespace Elemental.Presentation.VFX
             float baseFov = Mathf.Clamp(_camera.fieldOfView - _lastFovOffset, 25f, 110f);
             _lastFovOffset = Mathf.Lerp(0f, 6.5f, EaseOut(_charge));
             _camera.fieldOfView = Mathf.Clamp(baseFov + _lastFovOffset, 25f, 115f);
-            UpdateDepthOfField();
             if (_bloom != null)
-                _bloom.intensity.value = Mathf.Lerp(0.18f, 0.42f, _charge);
+                _bloom.intensity.value = Mathf.Lerp(0.07f, 0.24f, _charge);
             if (_vignette != null)
-                _vignette.intensity.value = Mathf.Lerp(0.13f, 0.21f, _charge);
+                _vignette.intensity.value = Mathf.Lerp(0.075f, 0.145f, _charge);
         }
 
         private void OnPreCull()
@@ -431,7 +421,7 @@ namespace Elemental.Presentation.VFX
         private void ResolveInput()
         {
             MagicInputController[] inputs = FindObjectsByType<MagicInputController>(
-                FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+                FindObjectsInactive.Exclude);
             _input = inputs.Length > 0 ? inputs[0] : null;
         }
 
@@ -450,41 +440,23 @@ namespace Elemental.Presentation.VFX
             Tonemapping tonemapping = profile.Add<Tonemapping>(true);
             tonemapping.mode.Override(TonemappingMode.ACES);
             ColorAdjustments color = profile.Add<ColorAdjustments>(true);
-            color.postExposure.Override(0.06f);
-            color.contrast.Override(11f);
-            color.saturation.Override(5f);
-            color.colorFilter.Override(new Color(1.02f, 0.995f, 0.96f, 1f));
+            color.postExposure.Override(0f);
+            color.contrast.Override(7f);
+            color.saturation.Override(-8f);
+            color.colorFilter.Override(Color.white);
             WhiteBalance balance = profile.Add<WhiteBalance>(true);
-            balance.temperature.Override(-3f);
-            balance.tint.Override(2f);
+            balance.temperature.Override(2f);
+            balance.tint.Override(-1f);
             _bloom = profile.Add<Bloom>(true);
-            _bloom.threshold.Override(1.08f);
-            _bloom.intensity.Override(0.18f);
-            _bloom.scatter.Override(0.56f);
+            _bloom.threshold.Override(1.12f);
+            _bloom.intensity.Override(0.07f);
+            _bloom.scatter.Override(0.54f);
             _vignette = profile.Add<Vignette>(true);
-            _vignette.intensity.Override(0.13f);
-            _vignette.smoothness.Override(0.52f);
-            _depthOfField = profile.Add<DepthOfField>(true);
-            _depthOfField.mode.Override(DepthOfFieldMode.Bokeh);
-            _depthOfField.focusDistance.Override(8f);
-            _depthOfField.focalLength.Override(45f);
-            _depthOfField.aperture.Override(8f);
-            _depthOfField.bladeCount.Override(7);
-        }
-
-        private void UpdateDepthOfField()
-        {
-            if (_depthOfField == null || _camera == null) return;
-            float targetDistance = 8f;
-            if (_input != null)
-            {
-                Vector3 target = _input.BendTargetPosition;
-                if (float.IsFinite(target.x) && float.IsFinite(target.y) && float.IsFinite(target.z))
-                    targetDistance = Vector3.Distance(_camera.transform.position, target);
-            }
-            _depthOfField.focusDistance.value = Mathf.Clamp(targetDistance, 1.4f, 42f);
-            _depthOfField.aperture.value = Mathf.Lerp(10f, 5.6f, _charge);
-            _depthOfField.focalLength.value = Mathf.Lerp(38f, 52f, _charge);
+            _vignette.intensity.Override(0.075f);
+            _vignette.smoothness.Override(0.48f);
+            DepthOfField depthOfField = profile.Add<DepthOfField>(true);
+            depthOfField.active = true;
+            depthOfField.mode.Override(DepthOfFieldMode.Off);
         }
 
         private static float EaseOut(float value)
@@ -593,7 +565,7 @@ namespace Elemental.Presentation.VFX
             if (_inputUnavailable) return;
             try
             {
-                if (Input.GetKeyDown(KeyCode.V)) SetActive(!IsActive);
+                if (global::UnityEngine.Input.GetKeyDown(KeyCode.V)) SetActive(!IsActive);
             }
             catch (InvalidOperationException)
             {
@@ -709,25 +681,26 @@ namespace Elemental.Presentation.VFX
     [DefaultExecutionOrder(1800)]
     internal sealed class EarthDustLookdevTuner : MonoBehaviour
     {
-        private readonly HashSet<int> _configured = new HashSet<int>();
-        private float _nextScanAt;
+        private readonly HashSet<global::UnityEngine.EntityId> _configured =
+            new HashSet<global::UnityEngine.EntityId>();
+        private bool _configuredOnce;
 
         private void Update()
         {
-            if (Time.unscaledTime < _nextScanAt) return;
-            _nextScanAt = Time.unscaledTime + 1.5f;
+            if (_configuredOnce) return;
+            _configuredOnce = true;
             ParticleSystem[] systems = FindObjectsByType<ParticleSystem>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
+                FindObjectsInactive.Include);
             for (int index = 0; index < systems.Length; index++)
             {
                 ParticleSystem system = systems[index];
-                if (system == null || _configured.Contains(system.GetInstanceID())) continue;
+                if (system == null || _configured.Contains(system.GetEntityId())) continue;
                 string name = system.name.ToLowerInvariant();
                 if (!name.Contains("dust") && !name.Contains("rubble") &&
                     !name.Contains("chip") && !name.Contains("debris"))
                     continue;
                 Configure(system, name.Contains("dust"));
-                _configured.Add(system.GetInstanceID());
+                _configured.Add(system.GetEntityId());
             }
         }
 
@@ -805,23 +778,24 @@ namespace Elemental.Presentation.VFX
     [DefaultExecutionOrder(1810)]
     internal sealed class EarthMaterialLookdevTuner : MonoBehaviour
     {
-        private readonly HashSet<int> _configured = new HashSet<int>();
-        private float _nextScanAt;
+        private readonly HashSet<global::UnityEngine.EntityId> _configured =
+            new HashSet<global::UnityEngine.EntityId>();
+        private bool _configuredOnce;
 
         private void Update()
         {
-            if (Time.unscaledTime < _nextScanAt) return;
-            _nextScanAt = Time.unscaledTime + 2f;
+            if (_configuredOnce) return;
+            _configuredOnce = true;
             Material[] materials = Resources.FindObjectsOfTypeAll<Material>();
             for (int index = 0; index < materials.Length; index++)
             {
                 Material material = materials[index];
                 if (material == null || material.shader == null ||
                     material.shader.name != "Elemental/SG Earth Master" ||
-                    _configured.Contains(material.GetInstanceID()))
+                    _configured.Contains(material.GetEntityId()))
                     continue;
                 Tune(material);
-                _configured.Add(material.GetInstanceID());
+                _configured.Add(material.GetEntityId());
             }
         }
 

@@ -98,6 +98,18 @@ namespace Elemental.Simulation.Bending
                 State = EarthQuickStoneState.Primed;
         }
 
+        /// <summary>
+        /// Terrain remeshing is budgeted and can legitimately take longer than the
+        /// double-click window. Keep the session in its extraction phase while the
+        /// reserved rock is not visible yet; an early second click remains buffered.
+        /// </summary>
+        public void SuspendUntilVisible(float now)
+        {
+            if (!IsPrimed) return;
+            _primedAt = now;
+            State = EarthQuickStoneState.Extracting;
+        }
+
         private float LaunchSpeed(float now)
         {
             float urgency01 = 1f - Clamp01((now - _primedAt) / _profile.DoubleClickSeconds);

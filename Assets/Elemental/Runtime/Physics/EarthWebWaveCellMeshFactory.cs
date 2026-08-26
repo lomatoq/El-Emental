@@ -120,28 +120,35 @@ namespace Elemental.Runtime.Physics
             var vertices = new List<Vector3>(sides * (ringCount - 1) * 6 + sides + 2);
             var triangles = new List<int>(sides * (ringCount - 1) * 6 + sides * 6);
             var uv = new List<Vector2>(vertices.Capacity);
+            var colors = new List<Color>(vertices.Capacity);
+            Color faceColor = new Color(0.62f, 0.60f, 0.57f, 0.38f);
+            Color bevelColor = new Color(0.67f, 0.64f, 0.59f, 0.72f);
 
             int bottomCenter = vertices.Count;
             vertices.Add(new Vector3(0f, -safeThickness, 0f));
             uv.Add(new Vector2(0.5f, 0.5f));
+            colors.Add(faceColor);
             int bottomRing = vertices.Count;
             for (int index = 0; index < sides; index++)
             {
                 Vector3 p = ringVertices[0, index];
                 vertices.Add(p);
                 uv.Add(new Vector2(p.x, p.z));
+                colors.Add(bevelColor);
             }
 
             int topCenter = vertices.Count;
             float centerChip = Mathf.Lerp(-0.075f, 0.045f, Hash01(seed ^ 0x51A7u));
             vertices.Add(new Vector3(0f, centerChip, 0f));
             uv.Add(new Vector2(0.5f, 0.5f));
+            colors.Add(faceColor);
             int topRing = vertices.Count;
             for (int index = 0; index < sides; index++)
             {
                 Vector3 p = ringVertices[ringCount - 1, index];
                 vertices.Add(p);
                 uv.Add(new Vector2(p.x, p.z));
+                colors.Add(bevelColor);
             }
 
             for (int index = 0; index < sides; index++)
@@ -159,7 +166,7 @@ namespace Elemental.Runtime.Physics
             }
 
             for (int ring = 0; ring < ringCount - 1; ring++)
-                AddFacetedBand(vertices, triangles, uv, ringVertices, ring, sides, seed);
+                AddFacetedBand(vertices, triangles, uv, colors, ringVertices, ring, sides, seed);
 
             // The geological rings are assembled in the convenient footprint order,
             // which is inward-facing under Unity's mesh winding convention. Publish
@@ -173,6 +180,7 @@ namespace Elemental.Runtime.Physics
             mesh.SetVertices(vertices);
             mesh.SetTriangles(triangles, 0, true);
             mesh.SetUVs(0, uv);
+            mesh.SetColors(colors);
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
             EarthMeshIntegrityGate.ValidateInPlaceOrUseFallback(
@@ -187,6 +195,7 @@ namespace Elemental.Runtime.Physics
             List<Vector3> vertices,
             List<int> triangles,
             List<Vector2> uv,
+            List<Color> colors,
             Vector3[,] rings,
             int ring,
             int sides,
@@ -208,6 +217,13 @@ namespace Elemental.Runtime.Physics
                 uv.Add(new Vector2(1f, 0f));
                 uv.Add(new Vector2(1f, 1f));
                 uv.Add(new Vector2(0f, 1f));
+                Color bandColor = ring == 1 || ring == 2
+                    ? new Color(0.62f, 0.60f, 0.57f, 0.38f)
+                    : new Color(0.67f, 0.64f, 0.59f, 0.72f);
+                colors.Add(bandColor);
+                colors.Add(bandColor);
+                colors.Add(bandColor);
+                colors.Add(bandColor);
                 bool alternateDiagonal = Hash01(seed + (uint)(ring * 193 + index * 29)) > 0.5f;
                 if (alternateDiagonal)
                 {

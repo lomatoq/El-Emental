@@ -890,7 +890,7 @@ namespace Elemental.Runtime.Physics
         {
             using var marker = EmergenceMarker.Auto();
             _emergence = Mathf.Min(1f, _emergence + (Time.deltaTime / _emergenceDuration));
-            float eased = 1f - Mathf.Pow(1f - _emergence, 3f);
+            float eased = _emergence * _emergence * (3f - 2f * _emergence);
             float time = Time.time;
             float envelope = Mathf.Lerp(1f, 0.26f, _emergence);
             float sideJolt = ((Mathf.Sin((time * 31f) + WallId) * 0.72f) +

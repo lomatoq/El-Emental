@@ -62,6 +62,11 @@ namespace Elemental.Tests.PlayMode
             for (int frame = 0; frame < 80 &&
                  (planet.PendingRenderCount > 0 || planet.PendingColliderCount > 0); frame++) yield return null;
 
+            var originalMeshes = new System.Collections.Generic.Dictionary<string, Mesh>();
+            MeshFilter[] initialFilters = planet.GetComponentsInChildren<MeshFilter>();
+            for (int index = 0; index < initialFilters.Length; index++)
+                originalMeshes[initialFilters[index].gameObject.name] = initialFilters[index].sharedMesh;
+
             bool callback = false;
             VoxelEditReceipt committed = default;
             planet.EditCommitted += receipt =>
@@ -76,7 +81,19 @@ namespace Elemental.Tests.PlayMode
             Assert.That(planet.IsEditCommitted(submitted), Is.False);
             Assert.That(callback, Is.False);
             Assert.That(planet.PendingEditTransactionCount, Is.EqualTo(1));
-            for (int frame = 0; frame < 80 && !callback; frame++) yield return null;
+            for (int frame = 0; frame < 80 && !callback; frame++)
+            {
+                yield return null;
+                if (callback) break;
+                MeshFilter[] stagedFilters = planet.GetComponentsInChildren<MeshFilter>();
+                for (int index = 0; index < stagedFilters.Length; index++)
+                {
+                    MeshFilter filter = stagedFilters[index];
+                    if (originalMeshes.TryGetValue(filter.gameObject.name, out Mesh original))
+                        Assert.That(filter.sharedMesh, Is.SameAs(original),
+                            "A transaction exposed one rebuilt chunk before its neighbours were ready.");
+                }
+            }
 
             Assert.That(callback, Is.True);
             Assert.That(committed, Is.EqualTo(submitted));
@@ -84,6 +101,20 @@ namespace Elemental.Tests.PlayMode
             Assert.That(planet.PendingEditTransactionCount, Is.Zero);
             Assert.That(planet.PendingRenderCount, Is.Zero);
             Assert.That(planet.PendingColliderCount, Is.Zero);
+            bool swappedMesh = false;
+            MeshFilter[] committedFilters = planet.GetComponentsInChildren<MeshFilter>();
+            for (int index = 0; index < committedFilters.Length; index++)
+            {
+                MeshFilter filter = committedFilters[index];
+                if (originalMeshes.TryGetValue(filter.gameObject.name, out Mesh original) &&
+                    filter.sharedMesh != original)
+                {
+                    swappedMesh = true;
+                    break;
+                }
+            }
+            Assert.That(swappedMesh, Is.True,
+                "The completed transaction should atomically swap at least one staged mesh.");
 
             Object.Destroy(planetObject);
             yield return null;

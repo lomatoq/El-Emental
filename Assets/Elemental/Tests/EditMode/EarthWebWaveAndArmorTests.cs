@@ -37,6 +37,50 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void TerminalWaveCellsStayBoundedAndTaperAcrossFamiliesAndCharges()
+        {
+            EarthPillarWaveTuning tuning = EarthPillarWaveTuning.Default;
+            float[] charges = { 0.15f, 0.55f, 1f };
+            for (int familyIndex = 0; familyIndex < 6; familyIndex++)
+            {
+                EarthWaveSemanticFamily family = (EarthWaveSemanticFamily)familyIndex;
+                for (int chargeIndex = 0; chargeIndex < charges.Length; chargeIndex++)
+                {
+                    float charge = charges[chargeIndex];
+                    EarthWebWaveTopology topology = EarthPillarWaveSolver.BuildTopology(
+                        charge,
+                        charge,
+                        in tuning,
+                        familyIndex,
+                        family);
+                    int lastRow = topology.Cells.Max(cell => cell.Sample.Row);
+                    float[] previousAreas = topology.Cells
+                        .Where(cell => cell.Sample.Row == lastRow - 1)
+                        .Select(cell => cell.VisualArea)
+                        .OrderBy(area => area)
+                        .ToArray();
+                    EarthWebWaveCell[] terminal = topology.Cells
+                        .Where(cell => cell.Sample.Row == lastRow)
+                        .ToArray();
+                    Assert.That(previousAreas, Is.Not.Empty);
+                    Assert.That(terminal, Is.Not.Empty);
+                    float previousMedian = previousAreas[previousAreas.Length / 2];
+                    float chargedCrest = tuning.CrestHeight * math.lerp(0.72f, 1f, charge);
+                    Assert.That(terminal.Max(cell => cell.VisualArea),
+                        Is.LessThanOrEqualTo(previousMedian * 0.85f),
+                        $"{family} charge {charge:0.00} produced an oversized terminal cell.");
+                    Assert.That(terminal.All(cell =>
+                            cell.VisualArea <= cell.Sample.Width * cell.Sample.Depth * 1.08f),
+                        Is.True,
+                        $"{family} charge {charge:0.00} exceeded its authored terminal footprint.");
+                    Assert.That(terminal.Max(cell => cell.Sample.Height),
+                        Is.LessThanOrEqualTo(chargedCrest * 0.60f + 0.0001f),
+                        $"{family} charge {charge:0.00} did not taper its terminal row.");
+                }
+            }
+        }
+
+        [Test]
         public void DefaultArmorShellCoversEveryAnatomicalRegionIncludingHead()
         {
             EarthArmorShellSegment[] segments = EarthArmorShellDefinition.CreateDefaultSegments();
@@ -127,6 +171,10 @@ namespace Elemental.Tests.EditMode
                     Is.True);
                 Assert.That(EarthMeshIntegrityValidator.Validate(second, EarthMeshIntegrityPolicy.ConvexCollider).IsValid,
                     Is.True);
+                Assert.That(HasFaceAndBevelVertexClasses(first), Is.True,
+                    "Wave stones must publish both main-face and real bevel lighting classes.");
+                Assert.That(HasFaceAndBevelVertexClasses(second), Is.True,
+                    "Clockwise wave stones must keep the same bevel contract.");
                 LogAssert.NoUnexpectedReceived();
             }
             finally
@@ -134,6 +182,19 @@ namespace Elemental.Tests.EditMode
                 Object.DestroyImmediate(first);
                 Object.DestroyImmediate(second);
             }
+        }
+
+        private static bool HasFaceAndBevelVertexClasses(Mesh mesh)
+        {
+            Color[] colors = mesh.colors;
+            bool hasFace = false;
+            bool hasBevel = false;
+            for (int index = 0; index < colors.Length; index++)
+            {
+                hasFace |= colors[index].a < 0.55f;
+                hasBevel |= colors[index].a > 0.62f;
+            }
+            return colors.Length == mesh.vertexCount && hasFace && hasBevel;
         }
 
         [Test]
@@ -186,6 +247,24 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void QuickStoneWaitsForBudgetedTerrainCommitWithoutExpiring()
+        {
+            EarthQuickCastProfileData data = EarthQuickCastProfileData.Default;
+            var session = new EarthQuickStoneSession(in data);
+            Assert.That(session.TryPrime(3f, 91u), Is.True);
+            Assert.That(session.TryFire(3.04f, out _), Is.True);
+
+            for (int step = 1; step <= 8; step++)
+                session.SuspendUntilVisible(3f + step * 0.10f);
+
+            Assert.That(session.ExpireIfNeeded(3.81f), Is.False,
+                "A staged SDF transaction must not consume the double-click window.");
+            Assert.That(session.HasBufferedFire, Is.True);
+            Assert.That(session.TryConsumeBufferedFire(3.96f, out float speed), Is.True);
+            Assert.That(speed, Is.InRange(30f, 38f));
+        }
+
+        [Test]
         public void ArmorWheelCompressesAndRequiresTwoConfirmedOverscrollSteps()
         {
             EarthArmorProfileData data = EarthArmorProfileData.Default;
@@ -198,6 +277,35 @@ namespace Elemental.Tests.EditMode
             session.Begin(0.7f);
             session.ApplyWheelSteps(-1f, 2f);
             Assert.That(session.Phase01, Is.LessThan(0.7f));
+        }
+
+        [Test]
+        public void ArmorCollisionStateIsIdempotentAndFormationModeIsDeterministic()
+        {
+            GameObject go = new GameObject("Armor Piece Contract Test");
+            try
+            {
+                Rigidbody body = go.AddComponent<Rigidbody>();
+                BoxCollider collider = go.AddComponent<BoxCollider>();
+                EarthArmorPiece piece = go.AddComponent<EarthArmorPiece>();
+                piece.Configure(null, 0, body, collider, null);
+                piece.Activate(1u, Vector3.zero, Quaternion.identity);
+                piece.SetDefensiveCollision(false);
+                Assert.That(piece.DefensiveCollisionStateChangeCount, Is.Zero);
+                piece.SetDefensiveCollision(true);
+                piece.SetDefensiveCollision(true);
+                Assert.That(piece.DefensiveCollisionStateChangeCount, Is.EqualTo(1));
+                Assert.That(EarthArmorFormationModeResolver.Resolve(0.3f),
+                    Is.EqualTo(EarthArmorFormationMode.Compact));
+                Assert.That(EarthArmorFormationModeResolver.Resolve(0.5f),
+                    Is.EqualTo(EarthArmorFormationMode.Dome));
+                Assert.That(EarthArmorFormationModeResolver.Resolve(0.9f),
+                    Is.EqualTo(EarthArmorFormationMode.Orbit));
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
         }
 
         [Test]

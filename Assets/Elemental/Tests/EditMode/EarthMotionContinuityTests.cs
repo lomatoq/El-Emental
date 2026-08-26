@@ -17,6 +17,17 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void MovementInterruptsOnlyCastRecovery()
+        {
+            Assert.That(EarthHumanoidMotionResolver.ShouldInterruptRecovery(EarthCastPhase.Recover, 0.16f),
+                Is.True);
+            Assert.That(EarthHumanoidMotionResolver.ShouldInterruptRecovery(EarthCastPhase.Recover, 0.15f),
+                Is.False);
+            Assert.That(EarthHumanoidMotionResolver.ShouldInterruptRecovery(EarthCastPhase.Strike, 1f),
+                Is.False);
+        }
+
+        [Test]
         public void ArmorFormationFlightDoesNotSnapAndConvergesWithoutOvershoot()
         {
             float3 target = new float3(8f, 2f, -1f);

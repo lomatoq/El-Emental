@@ -4,6 +4,7 @@ using Elemental.Runtime.Geometry;
 using Elemental.Runtime.Matter;
 using Elemental.Simulation.Bending;
 using Elemental.Simulation.Characters;
+using Elemental.Simulation.Combat;
 using Elemental.Simulation.Matter;
 using Unity.Mathematics;
 using UnityEngine;
@@ -21,6 +22,7 @@ namespace Elemental.Runtime.Physics
         [SerializeField] private Transform planetCenter;
         [SerializeField] private EarthSurfProfile profile;
         [SerializeField] private Material material;
+        [SerializeField] private Material dustMaterial;
 
         private EarthSurfSession _session;
         private Rigidbody _boardBody;
@@ -74,6 +76,7 @@ namespace Elemental.Runtime.Physics
         public EarthSurfSilhouetteFamily SilhouetteFamily => _family;
         public float Ramp01 => _ramp01;
         public float Brake01 => _brake01;
+        public float BankDegrees => _bankDegrees;
         public float RiderDriftMeters { get; private set; }
         public EarthMatterId MatterId => _boardMatter != null ? _boardMatter.MatterId : default;
         public SupportFrameSnapshot SupportFrame => new SupportFrameSnapshot(
@@ -117,13 +120,15 @@ namespace Elemental.Runtime.Physics
             PlanetMotor configuredMotor,
             Transform configuredPlanetCenter,
             EarthSurfProfile configuredProfile,
-            Material configuredMaterial)
+            Material configuredMaterial,
+            Material configuredDustMaterial = null)
         {
             casterBody = configuredCaster;
             motor = configuredMotor;
             planetCenter = configuredPlanetCenter;
             profile = configuredProfile;
             material = configuredMaterial;
+            dustMaterial = configuredDustMaterial;
             EnsureBoard();
             RebuildBoardMesh();
             RecreateSession();
@@ -383,7 +388,34 @@ namespace Elemental.Runtime.Physics
                 EarthPlatform platform = wall == null ? collider.GetComponentInParent<EarthPlatform>() : null;
                 bool applied = wall != null
                     ? wall.ApplyEarthImpact(in impact)
-                    : platform != null && platform.ApplyEarthImpact(in impact);
+                    : platform != null && Speed >= 5f &&
+                      platform.ApplySurfBreach(in impact, _boardCollider);
+                EarthCharacterImpactTarget characterTarget =
+                    collider.GetComponentInParent<EarthCharacterImpactTarget>();
+                if (!applied && characterTarget != null)
+                {
+                    float targetMass = characterTarget.Body != null ? characterTarget.Body.mass : 42f;
+                    float characterImpulse = Mathf.Max(0.01f, targetMass) * Speed;
+                    characterTarget.ApplyImpact(
+                        _impactHits[index].point,
+                        _forward + _up * 0.08f,
+                        characterImpulse,
+                        EarthCharacterImpactSourceKind.SurfNose,
+                        SurfaceId,
+                        Speed,
+                        _ramp01);
+                    applied = true;
+                }
+                EarthDestructibleDecorRock decorRock =
+                    collider.GetComponentInParent<EarthDestructibleDecorRock>();
+                if (!applied && decorRock != null)
+                {
+                    decorRock.ApplyImpact(
+                        _impactHits[index].point,
+                        _forward + _up * 0.08f,
+                        Mathf.Max(850f, impulse));
+                    applied = true;
+                }
                 Rigidbody body = collider.attachedRigidbody;
                 if (!applied && body != null && !body.isKinematic && body != casterBody)
                     body.AddForceAtPosition(_forward * Mathf.Min(28f, Speed * 2f), _impactHits[index].point, ForceMode.VelocityChange);
@@ -452,7 +484,9 @@ namespace Elemental.Runtime.Physics
             shape.shapeType = ParticleSystemShapeType.Box;
             shape.scale = new Vector3(BoardWidth * 0.92f, 0.16f, 0.42f);
             ParticleSystemRenderer dustRenderer = _dust.GetComponent<ParticleSystemRenderer>();
-            dustRenderer.sharedMaterial = material;
+            dustRenderer.sharedMaterial = dustMaterial != null ? dustMaterial : material;
+            dustRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            dustRenderer.receiveShadows = false;
             dustRenderer.renderMode = ParticleSystemRenderMode.Billboard;
 
             _chipMesh = EarthWebWaveCellMeshFactory.Create(997);
@@ -592,11 +626,12 @@ namespace Elemental.Runtime.Physics
             var vertices = new List<Vector3>(128);
             var triangles = new List<int>(256);
             var uv = new List<Vector2>(128);
+            var colors = new List<Color>(128);
             float jitter = Mathf.Lerp(-0.08f, 0.08f, Hash01(seed ^ 0xA341316Cu));
             switch (family)
             {
                 case EarthSurfSilhouetteFamily.MantaSlab:
-                    AppendBeveledPrism(vertices, triangles, uv, new[]
+                    AppendBeveledPrism(vertices, triangles, uv, colors, new[]
                     {
                         new Vector2(-halfWidth * 0.38f, -halfLength), new Vector2(halfWidth * 0.38f, -halfLength),
                         new Vector2(halfWidth * 0.62f, -halfLength * 0.30f), new Vector2(halfWidth, halfLength * 0.28f),
@@ -605,7 +640,7 @@ namespace Elemental.Runtime.Physics
                     }, noseHeight, 0.09f, jitter);
                     break;
                 case EarthSurfSilhouetteFamily.CrescentPlough:
-                    AppendBeveledPrism(vertices, triangles, uv, new[]
+                    AppendBeveledPrism(vertices, triangles, uv, colors, new[]
                     {
                         new Vector2(-halfWidth * 0.58f, -halfLength), new Vector2(halfWidth * 0.58f, -halfLength),
                         new Vector2(halfWidth, halfLength * 0.42f), new Vector2(halfWidth * 0.62f, halfLength),
@@ -613,15 +648,15 @@ namespace Elemental.Runtime.Physics
                     }, noseHeight * 1.04f, 0.11f, jitter);
                     break;
                 case EarthSurfSilhouetteFamily.SplitRail:
-                    AppendBeveledPrism(vertices, triangles, uv, Rectangle(
+                    AppendBeveledPrism(vertices, triangles, uv, colors, Rectangle(
                         -halfWidth * 0.55f, halfWidth * 0.42f, halfLength), noseHeight, 0.08f, jitter);
-                    AppendBeveledPrism(vertices, triangles, uv, Rectangle(
+                    AppendBeveledPrism(vertices, triangles, uv, colors, Rectangle(
                         halfWidth * 0.55f, halfWidth * 0.42f, halfLength), noseHeight * 0.94f, 0.08f, -jitter);
-                    AppendBeveledPrism(vertices, triangles, uv, Rectangle(
+                    AppendBeveledPrism(vertices, triangles, uv, colors, Rectangle(
                         0f, halfWidth * 0.12f, halfLength * 0.76f), noseHeight * 1.12f, 0.12f, 0f);
                     break;
                 default:
-                    AppendBeveledPrism(vertices, triangles, uv, new[]
+                    AppendBeveledPrism(vertices, triangles, uv, colors, new[]
                     {
                         new Vector2(-halfWidth * 0.72f, -halfLength), new Vector2(halfWidth * 0.42f, -halfLength * 0.92f),
                         new Vector2(halfWidth, -halfLength * 0.18f), new Vector2(halfWidth * 0.76f, halfLength * 0.82f),
@@ -632,6 +667,7 @@ namespace Elemental.Runtime.Physics
             mesh.SetVertices(vertices);
             mesh.SetTriangles(triangles, 0, true);
             mesh.SetUVs(0, uv);
+            mesh.SetColors(colors);
             mesh.RecalculateNormals();
             mesh.RecalculateTangents();
             mesh.RecalculateBounds();
@@ -655,6 +691,7 @@ namespace Elemental.Runtime.Physics
             List<Vector3> vertices,
             List<int> triangles,
             List<Vector2> uv,
+            List<Color> colors,
             Vector2[] footprint,
             float noseHeight,
             float bevel01,
@@ -673,22 +710,25 @@ namespace Elemental.Runtime.Physics
             center /= count;
             float bottom = -0.24f;
             float bevelHeight = 0.11f;
+            Color faceColor = new Color(0.62f, 0.60f, 0.57f, 0.38f);
+            Color bevelColor = new Color(0.67f, 0.64f, 0.59f, 0.72f);
             int bottomCenter = vertices.Count;
-            AddVertex(vertices, uv, new Vector3(center.x, bottom, center.y));
+            AddVertex(vertices, uv, colors, new Vector3(center.x, bottom, center.y), faceColor);
             int bottomRing = vertices.Count;
             for (int index = 0; index < count; index++)
-                AddVertex(vertices, uv, new Vector3(footprint[index].x, bottom, footprint[index].y));
+                AddVertex(vertices, uv, colors, new Vector3(footprint[index].x, bottom, footprint[index].y), faceColor);
             int shoulderRing = vertices.Count;
             for (int index = 0; index < count; index++)
             {
                 float z01 = Mathf.InverseLerp(minimumZ, maximumZ, footprint[index].y);
                 float top = Mathf.Lerp(0.04f, noseHeight, Mathf.Pow(z01, 1.25f)) +
                             heightJitter * Mathf.Sin(index * 2.17f);
-                AddVertex(vertices, uv, new Vector3(footprint[index].x, top - bevelHeight, footprint[index].y));
+                AddVertex(vertices, uv, colors, new Vector3(footprint[index].x, top - bevelHeight, footprint[index].y), faceColor);
             }
             int topCenter = vertices.Count;
             float centerZ01 = Mathf.InverseLerp(minimumZ, maximumZ, center.y);
-            AddVertex(vertices, uv, new Vector3(center.x, Mathf.Lerp(0.04f, noseHeight, centerZ01), center.y));
+            AddVertex(vertices, uv, colors,
+                new Vector3(center.x, Mathf.Lerp(0.04f, noseHeight, centerZ01), center.y), faceColor);
             int topRing = vertices.Count;
             for (int index = 0; index < count; index++)
             {
@@ -696,7 +736,7 @@ namespace Elemental.Runtime.Physics
                 float z01 = Mathf.InverseLerp(minimumZ, maximumZ, footprint[index].y);
                 float top = Mathf.Lerp(0.04f, noseHeight, Mathf.Pow(z01, 1.25f)) +
                             heightJitter * Mathf.Sin(index * 2.17f);
-                AddVertex(vertices, uv, new Vector3(inset.x, top, inset.y));
+                AddVertex(vertices, uv, colors, new Vector3(inset.x, top, inset.y), bevelColor);
             }
             for (int index = 0; index < count; index++)
             {
@@ -708,10 +748,16 @@ namespace Elemental.Runtime.Physics
             }
         }
 
-        private static void AddVertex(List<Vector3> vertices, List<Vector2> uv, Vector3 value)
+        private static void AddVertex(
+            List<Vector3> vertices,
+            List<Vector2> uv,
+            List<Color> colors,
+            Vector3 value,
+            Color color)
         {
             vertices.Add(value);
             uv.Add(new Vector2(value.x * 0.3f + 0.5f, value.z * 0.2f + 0.5f));
+            colors.Add(color);
         }
 
         private static void AddQuad(List<int> triangles, int a, int b, int c, int d)

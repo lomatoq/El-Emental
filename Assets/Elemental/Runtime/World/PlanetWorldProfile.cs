@@ -14,8 +14,8 @@ namespace Elemental.Runtime.World
         [Header("Voxel caches")]
         [SerializeField, Range(4, 32)] private int chunkResolution = 16;
         [SerializeField, Min(0.1f)] private float cellSize = 1f;
-        [SerializeField, Min(1)] private int renderChunksPerFrame = 8;
-        [SerializeField, Min(1)] private int colliderChunksPerFrame = 4;
+        [SerializeField, Min(1)] private int renderChunksPerFrame = 1;
+        [SerializeField, Min(1)] private int colliderChunksPerFrame = 1;
 
         public float Radius => radius;
         public float SurfaceGravity => surfaceGravity;

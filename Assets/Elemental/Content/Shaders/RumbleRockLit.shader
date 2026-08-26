@@ -15,7 +15,9 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
         _FacetContrast("Facet Contrast", Range(0.0, 1.0)) = 0.34
         _Roughness("Visual Roughness", Range(0.0, 1.0)) = 0.82
         _BevelLight("Bevel Light", Range(0.0, 1.0)) = 0.42
+        _SideShadingSmoothness("Vertical Side Shading Smoothness", Range(0.0, 1.0)) = 1.0
         _AmbientStrength("Ambient Strength", Range(0.0, 2.0)) = 0.82
+        [Enum(Rock,0,Character,1)] _SurfaceMode("Surface Mode", Float) = 0
         [Toggle] _UsePlanetFrame("Use Shared Planet Frame", Float) = 0
         _PlanetCenter("Planet Center", Vector) = (0,0,0,0)
         _Fade("Visible Fraction", Range(0.0, 1.0)) = 1
@@ -70,7 +72,9 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                 half _FacetContrast;
                 half _Roughness;
                 half _BevelLight;
+                half _SideShadingSmoothness;
                 half _AmbientStrength;
+                half _SurfaceMode;
                 half _UsePlanetFrame;
                 float4 _PlanetCenter;
                 half _Fade;
@@ -177,8 +181,18 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                 if (_Fade < 0.999h)
                     clip(_Fade - ScreenDither(input.positionCS.xy));
 
-                half3 normalWS = normalize(input.normalWS);
-                half3 mappingNormal = normalize(lerp(input.normalOS, normalWS, saturate(_UsePlanetFrame)));
+                half3 geometryNormalWS = normalize(input.normalWS);
+                half3 geometryNormalOS = normalize(input.normalOS);
+                half characterMode = step(0.5h, _SurfaceMode);
+                half verticalSide = 1.0h - smoothstep(0.42h, 0.78h, abs(geometryNormalOS.y));
+                float3 radialNormalOS = float3(input.positionOS.x, 0.0, input.positionOS.z);
+                radialNormalOS *= rsqrt(max(dot(radialNormalOS, radialNormalOS), 0.000001));
+                half3 radialNormalWS = normalize(TransformObjectToWorldNormal(radialNormalOS));
+                radialNormalWS *= dot(radialNormalWS, geometryNormalWS) < 0.0h ? -1.0h : 1.0h;
+                half sideSmoothing = saturate(verticalSide * _SideShadingSmoothness) *
+                                     (1.0h - characterMode);
+                half3 normalWS = normalize(lerp(geometryNormalWS, radialNormalWS, sideSmoothing));
+                half3 mappingNormal = normalize(lerp(input.normalOS, geometryNormalWS, saturate(_UsePlanetFrame)));
                 float3 mappingPosition = lerp(
                     input.positionOS,
                     input.positionWS - _PlanetCenter.xyz,
@@ -199,11 +213,18 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
 
                 half3 textureSample = SampleMetricTriplanar(mappingPosition, weights);
                 half textureLuma = dot(textureSample, half3(0.299h, 0.587h, 0.114h));
-                half textureModulation = lerp(1.0h, lerp(0.82h, 1.16h, textureLuma), _TextureStrength);
+                half effectiveTextureStrength = lerp(_TextureStrength, _TextureStrength * 0.24h, characterMode);
+                half textureModulation = lerp(1.0h, lerp(0.82h, 1.16h, textureLuma), effectiveTextureStrength);
                 half macro = lerp(1.0h - _MacroStrength, 1.0h + _MacroStrength,
                                   SoftMacro(mappingPosition));
-                half faceTone = lerp(0.88h, 1.08h, saturate(input.color.r));
+                half authoredFaceTone = lerp(0.88h, 1.08h, saturate(input.color.r));
+                half faceTone = lerp(lerp(authoredFaceTone, 1.0h, sideSmoothing), 1.0h, characterMode);
                 half bevelMask = saturate((input.color.a - 0.34h) * 2.65h);
+                // Keep the authored chamfer geometry but do not light every seam
+                // between adjacent side facets as a separate vertical bevel. Those
+                // repeated highlights read as dense striping on slabs and pillars.
+                half perimeterBevel = smoothstep(0.22h, 0.62h, abs(geometryNormalOS.y));
+                bevelMask *= perimeterBevel * (1.0h - characterMode);
                 half3 palette = lerp(_BaseColor.rgb, _EdgeColor.rgb, bevelMask * _BevelLight);
                 half3 albedo = palette * macro * faceTone * textureModulation;
 
@@ -212,8 +233,14 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                 half ndotl = dot(normalWS, mainLight.direction);
                 half wrapped = saturate((ndotl + 0.28h) / 1.28h);
                 half softDiffuse = smoothstep(0.04h, 0.96h, wrapped);
-                half shadow = lerp(0.34h, 1.0h, mainLight.shadowAttenuation);
-                half facet = lerp(1.0h, smoothstep(0.18h, 0.88h, softDiffuse), _FacetContrast);
+                // Near-vertical rock faces are especially prone to shadow-map
+                // self-acne because their authored silhouette is made from many
+                // short facets. They still cast onto the world; only self-shadow
+                // reception is faded out on that belt.
+                half receivedShadow = lerp(mainLight.shadowAttenuation, 1.0h, sideSmoothing);
+                half shadow = lerp(0.34h, 1.0h, receivedShadow);
+                half effectiveFacetContrast = lerp(_FacetContrast, _FacetContrast * 0.52h, characterMode);
+                half facet = lerp(1.0h, smoothstep(0.18h, 0.88h, softDiffuse), effectiveFacetContrast);
                 half3 directTint = lerp(_ShadowColor.rgb, half3(1,1,1), facet);
                 half3 direct = albedo * directTint * mainLight.color * shadow *
                                mainLight.distanceAttenuation;

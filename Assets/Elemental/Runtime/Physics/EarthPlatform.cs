@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Elemental.Simulation.Bending;
 using Elemental.Simulation.Characters;
 using Elemental.Simulation.Structures;
@@ -5,16 +8,41 @@ using Elemental.Runtime.Geometry;
 using Elemental.Runtime.Matter;
 using Elemental.Simulation.Matter;
 using Unity.Mathematics;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace Elemental.Runtime.Physics
 {
+    public enum EarthPlatformPreparationPhase : byte
+    {
+        Emerging = 0,
+        Stable = 1,
+        PreparingFracture = 2,
+        FractureReady = 3,
+        Fractured = 4,
+        Failed = 5
+    }
+
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
+    [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(BoxCollider))]
     public sealed class EarthPlatform : MonoBehaviour, IEarthPhysicalTarget, IEarthReassemblableStructure, IMovingSurface, IEarthRepairController, IEarthDamageableStructure, IEarthPluckableStructure
     {
+        private static readonly ProfilerMarker AcquireSolidMarker =
+            new ProfilerMarker("Elemental.Platform.AcquireSolid");
+        private static readonly ProfilerMarker PrepareCellMarker =
+            new ProfilerMarker("Elemental.Platform.PrepareFractureCell");
+        private static readonly ProfilerMarker CarryRidersMarker =
+            new ProfilerMarker("Elemental.Platform.CarryRiders");
         private const int MaximumPieces = 48;
         private const int MaximumStructuralBonds = 768;
+        private const int MaximumPolygonVertices = 32;
+        private static readonly float2[] SolidMeshWarmupPolygon =
+        {
+            new float2(-0.5f, -0.5f),
+            new float2(0.5f, -0.5f),
+            new float2(0.5f, 0.5f),
+            new float2(-0.5f, 0.5f)
+        };
 
         private struct PlatformStructuralBond
         {
@@ -26,11 +54,23 @@ namespace Elemental.Runtime.Physics
 
         private MeshFilter _filter;
         private MeshRenderer _renderer;
-        private MeshCollider _collider;
+        private BoxCollider _collider;
         private Rigidbody _body;
         private EarthCohesiveStructure _cohesion;
         private EarthPlatformProfile _profile;
         private Mesh _solidMesh;
+        private readonly List<Vector3> _solidVertices =
+            new List<Vector3>(MaximumPolygonVertices * 16);
+        private readonly List<Vector3> _solidNormals =
+            new List<Vector3>(MaximumPolygonVertices * 16);
+        private readonly List<int> _solidTriangles =
+            new List<int>(MaximumPolygonVertices * 24);
+        private readonly List<Color> _solidColors =
+            new List<Color>(MaximumPolygonVertices * 16);
+        private readonly Vector3[] _bottomInner = new Vector3[MaximumPolygonVertices];
+        private readonly Vector3[] _lowerOuter = new Vector3[MaximumPolygonVertices];
+        private readonly Vector3[] _upperOuter = new Vector3[MaximumPolygonVertices];
+        private readonly Vector3[] _topInner = new Vector3[MaximumPolygonVertices];
         private EarthPlatformPiece[] _pieces;
         private float[] _pieceReleasedAt;
         private Vector3[] _pieceFullScale;
@@ -60,6 +100,19 @@ namespace Elemental.Runtime.Physics
         private Vector3[] _pieceRestLocalPosition;
         private float[] _pieceVolume;
         private EarthVolumetricFracturePlan _fracturePlan;
+        private Task<EarthVolumetricFracturePlan> _fracturePlanTask;
+        private uint _fractureTaskGeneration;
+        private int _preparedCellCount;
+        private double _lastPreparationSliceMilliseconds;
+        private double _peakPreparationSliceMilliseconds;
+        private bool _fracturePlanAccepted;
+        private bool _hasPendingImpact;
+        private bool _pendingSurfBreach;
+        private Collider _pendingSurfBoardCollider;
+        private Vector3 _pendingImpactPoint;
+        private Vector3 _pendingImpactDirection;
+        private float _pendingImpactImpulse;
+        private EarthPlatformPreparationPhase _preparationPhase;
         private EarthStructureFractureProfile _fractureProfile;
         private bool _repairing;
         private float _repairTarget01;
@@ -85,13 +138,14 @@ namespace Elemental.Runtime.Physics
         public float Stability01 { get; private set; }
         public float CostMultiplier { get; private set; }
         public bool IsFractured => _fractured;
+        public bool IsInUse { get; private set; }
         public uint StructureId => PlatformId;
         public Rigidbody Body => _body;
         public uint StableEarthId => PlatformId;
         public EarthPhysicalTargetHandle TargetHandle => new EarthPhysicalTargetHandle(PlatformId, _generation);
         public float EarthMass => _body != null ? Mathf.Max(1f, _body.mass) : Mathf.Max(1f, Area * Height * 170f);
         public EarthPhysicalTargetKind TargetKind => EarthPhysicalTargetKind.Platform;
-        public bool IsEarthTargetValid => gameObject.activeInHierarchy && !_fractured && _body != null;
+        public bool IsEarthTargetValid => IsInUse && !_fractured && _body != null;
         public uint Generation => _generation;
         public uint SurfaceId => PlatformId;
         public Vector3 SurfaceVelocity => _surfaceVelocity;
@@ -99,7 +153,7 @@ namespace Elemental.Runtime.Physics
         public bool IsEmerging => !_fractured && _emergence < 1f;
         public bool IsEmergenceComplete => !_fractured && _emergence >= 1f;
         public float Emergence01 => _emergence;
-        public bool IsSurfaceAvailable => gameObject.activeInHierarchy && !_fractured;
+        public bool IsSurfaceAvailable => IsInUse && !_fractured;
         public Collider SurfaceCollider => _collider;
         public Vector3 SurfaceTopPoint => transform.position + (_surfaceUp * Height);
         public SupportFrameSnapshot SupportFrame => new SupportFrameSnapshot(
@@ -114,6 +168,16 @@ namespace Elemental.Runtime.Physics
             IsEmerging);
         public MovingSupportSnapshot Snapshot => new MovingSupportSnapshot(SupportFrame);
         public int ActivePieceCount { get; private set; }
+        public EarthPlatformPreparationPhase PreparationPhase => _preparationPhase;
+        public int PreparedFractureCellCount => _preparedCellCount;
+        public double LastPreparationSliceMilliseconds => _lastPreparationSliceMilliseconds;
+        public double PeakPreparationSliceMilliseconds => _peakPreparationSliceMilliseconds;
+        public bool HasPendingImpact => _hasPendingImpact;
+        public bool PendingSurfBreach => _pendingSurfBreach;
+        public float FractureThreshold => FractureImpulse;
+        public int LastRiderOverlapCount { get; private set; }
+        public int LastCarryRiderCount { get; private set; }
+        public int IgnoredRiderColliderCount => _temporarilyIgnoredRiderCount;
         public IEarthRepairController RepairController => this;
         public bool IsRepairing => _repairing;
         public EarthPlatformPiece FirstActivePiece
@@ -167,6 +231,7 @@ namespace Elemental.Runtime.Physics
             _profile = profile;
             _renderer.sharedMaterial = material;
             _pieceMeshVariants = pieceMeshVariants;
+            if (_pieces == null) RestorePreparedPieces();
             if (_pieces != null)
             {
                 ConfigurePieceMeshes(pieceMeshVariants);
@@ -180,6 +245,7 @@ namespace Elemental.Runtime.Physics
             _pieceVolume = new float[MaximumPieces];
             _repairAcquired = new bool[MaximumPieces];
             _pieceReleased = new bool[MaximumPieces];
+            EnsureReusablePieceMeshes();
             for (int index = 0; index < MaximumPieces; index++)
             {
                 GameObject pieceObject = new GameObject();
@@ -189,9 +255,9 @@ namespace Elemental.Runtime.Physics
                 filter.sharedMesh = ResolvePieceMesh(index);
                 MeshRenderer renderer = pieceObject.AddComponent<MeshRenderer>();
                 renderer.sharedMaterial = material;
-                MeshCollider collider = pieceObject.AddComponent<MeshCollider>();
-                collider.sharedMesh = filter.sharedMesh;
-                collider.convex = true;
+                BoxCollider collider = pieceObject.AddComponent<BoxCollider>();
+                collider.center = Vector3.zero;
+                collider.size = Vector3.one * 0.1f;
                 Rigidbody pieceBody = pieceObject.AddComponent<Rigidbody>();
                 pieceBody.useGravity = false;
                 pieceBody.isKinematic = true;
@@ -215,16 +281,59 @@ namespace Elemental.Runtime.Physics
             if (configuredVariants != null && configuredVariants.Length > 0)
                 _pieceMeshVariants = configuredVariants;
             if (_pieces == null) return;
+            EnsureReusablePieceMeshes();
             for (int index = 0; index < _pieces.Length; index++)
             {
                 EarthPlatformPiece piece = _pieces[index];
                 if (piece == null) continue;
                 Mesh mesh = ResolvePieceMesh(index);
                 piece.GetComponent<MeshFilter>().sharedMesh = mesh;
-                MeshCollider collider = piece.GetComponent<MeshCollider>();
-                collider.sharedMesh = null;
-                collider.sharedMesh = mesh;
-                collider.convex = true;
+                BoxCollider collider = piece.GetComponent<BoxCollider>();
+                if (collider != null)
+                {
+                    collider.center = mesh.bounds.center;
+                    collider.size = mesh.bounds.size * 0.90f;
+                }
+            }
+        }
+
+        private void RestorePreparedPieces()
+        {
+            EarthPlatformPiece[] prepared = GetComponentsInChildren<EarthPlatformPiece>(true);
+            if (prepared.Length != MaximumPieces) return;
+            var restored = new EarthPlatformPiece[MaximumPieces];
+            for (int index = 0; index < prepared.Length; index++)
+            {
+                EarthPlatformPiece piece = prepared[index];
+                if (piece == null || piece.PieceIndex < 0 || piece.PieceIndex >= MaximumPieces ||
+                    restored[piece.PieceIndex] != null) return;
+                restored[piece.PieceIndex] = piece;
+                piece.Configure(this, piece.PieceIndex);
+            }
+            _pieces = restored;
+            _pieceReleasedAt = new float[MaximumPieces];
+            _pieceFullScale = new Vector3[MaximumPieces];
+            _generatedPieceMeshes = new Mesh[MaximumPieces];
+            _pieceRestLocalPosition = new Vector3[MaximumPieces];
+            _pieceVolume = new float[MaximumPieces];
+            _repairAcquired = new bool[MaximumPieces];
+            _pieceReleased = new bool[MaximumPieces];
+            _cohesion.Configure(MaximumPieces);
+            EnsureReusablePieceMeshes();
+        }
+
+        private void EnsureReusablePieceMeshes()
+        {
+            if (_generatedPieceMeshes == null || _generatedPieceMeshes.Length != MaximumPieces)
+                _generatedPieceMeshes = new Mesh[MaximumPieces];
+            for (int index = 0; index < _generatedPieceMeshes.Length; index++)
+            {
+                if (_generatedPieceMeshes[index] != null) continue;
+                _generatedPieceMeshes[index] = new Mesh
+                {
+                    name = $"Earth Platform Volume {index:00}",
+                    hideFlags = HideFlags.DontSave
+                };
             }
         }
 
@@ -237,7 +346,19 @@ namespace Elemental.Runtime.Physics
             float height,
             float embedDepth)
         {
+            using (AcquireSolidMarker.Auto())
+                InitializeSolid(id, in geometry, height, embedDepth);
+        }
+
+        private void InitializeSolid(
+            uint id,
+            in EarthPlatformGeometry geometry,
+            float height,
+            float embedDepth)
+        {
             Resolve();
+            IsInUse = true;
+            enabled = true;
             PlatformId = id;
             _generation = _generation == uint.MaxValue ? 1u : _generation + 1u;
             Area = geometry.Area;
@@ -269,23 +390,48 @@ namespace Elemental.Runtime.Physics
             _emergence = 0f;
             _emergenceSpeed = 0f;
             _settledAt = float.PositiveInfinity;
+            _preparationPhase = EarthPlatformPreparationPhase.Emerging;
+            _preparedCellCount = 0;
+            _lastPreparationSliceMilliseconds = 0.0;
+            _peakPreparationSliceMilliseconds = 0.0;
+            _fracturePlanAccepted = false;
+            _hasPendingImpact = false;
+            RestorePendingSurfCollision();
+            _pendingSurfBreach = false;
+            _pendingImpactImpulse = 0f;
+            _fracturePlan = default;
             transform.SetPositionAndRotation(_buriedPosition, _surfaceRotation);
             _previousFixedPosition = _buriedPosition;
             _surfaceVelocity = Vector3.zero;
             transform.localScale = Vector3.one;
             BuildPrismMesh(_polygon, Height, _embedDepth);
-            PrepareFracturePlan();
             _filter.sharedMesh = _solidMesh;
-            _collider.sharedMesh = null;
-            _collider.sharedMesh = _solidMesh;
-            _collider.convex = false;
             // Starts below the ground, yet is already a valid support/projectile
             // surface when its first visible physics step begins.
             _collider.enabled = true;
             _renderer.enabled = true;
             _body.isKinematic = true;
             HidePieces();
-            gameObject.SetActive(true);
+            if (!gameObject.activeSelf) gameObject.SetActive(true);
+        }
+
+        public void PrepareForPool()
+        {
+            Resolve();
+            if (_solidMesh.vertexCount == 0)
+            {
+                // Pay the native Mesh buffer allocation while warming the pool, not
+                // on the first cast. Later SetVertices calls reuse this capacity.
+                BuildPrismMesh(SolidMeshWarmupPolygon, 1f, 0.12f);
+                _filter.sharedMesh = _solidMesh;
+            }
+            RestorePendingSurfCollision();
+            _pendingSurfBreach = false;
+            IsInUse = false;
+            _renderer.enabled = false;
+            _collider.enabled = false;
+            enabled = false;
+            if (gameObject.activeSelf) gameObject.SetActive(false);
         }
 
         public bool ApplyStructureImpact(Vector3 point, Vector3 direction, float impulse)
@@ -293,6 +439,17 @@ namespace Elemental.Runtime.Physics
             if (impulse < FractureImpulse) return false;
             if (_fractured)
                 return ReleaseLocalPieces(point, direction, impulse);
+            if (_preparationPhase != EarthPlatformPreparationPhase.FractureReady)
+            {
+                if (!_hasPendingImpact || impulse >= _pendingImpactImpulse)
+                {
+                    _pendingImpactPoint = point;
+                    _pendingImpactDirection = direction;
+                    _pendingImpactImpulse = impulse;
+                }
+                _hasPendingImpact = true;
+                return true;
+            }
             BeginFracture(point, direction, impulse);
             return true;
         }
@@ -300,10 +457,31 @@ namespace Elemental.Runtime.Physics
         public bool ApplyEarthImpact(in EarthStructureImpact impact) =>
             ApplyStructureImpact(impact.Point, impact.Direction, impact.Impulse);
 
+        public bool ApplySurfBreach(in EarthStructureImpact impact, Collider surfBoardCollider)
+        {
+            if (impact.Kind != EarthStructureImpactKind.Surf) return false;
+            var routed = new EarthStructureImpact(
+                impact.Point,
+                impact.Direction,
+                Mathf.Max(impact.Impulse, FractureImpulse * 1.2f),
+                impact.Kind,
+                impact.SourceId);
+            if (!_fractured && _preparationPhase != EarthPlatformPreparationPhase.FractureReady)
+            {
+                _pendingSurfBreach = true;
+                _pendingSurfBoardCollider = surfBoardCollider;
+                if (_collider != null && surfBoardCollider != null)
+                    UnityEngine.Physics.IgnoreCollision(_collider, surfBoardCollider, true);
+            }
+            return ApplyStructureImpact(routed.Point, routed.Direction, routed.Impulse);
+        }
+
         public bool TryPluckCell(Vector3 point, out IEarthPhysicalTarget target)
         {
             target = null;
             if (!EarthEmergingStructureInteractionPolicy.AllowsPluck(_emergence, _fractured))
+                return false;
+            if (!_fractured && _preparationPhase != EarthPlatformPreparationPhase.FractureReady)
                 return false;
             if (!_fractured) BeginFracture(point, _surfaceUp, FractureImpulse * 1.05f);
             if (_pieces == null) return false;
@@ -384,7 +562,12 @@ namespace Elemental.Runtime.Physics
 
         private void Update()
         {
-            if (!_fractured) return;
+            if (!IsInUse) return;
+            if (!_fractured)
+            {
+                AdvanceFracturePreparation();
+                return;
+            }
             _fractureElapsed += Time.deltaTime;
             int active = 0;
             for (int index = 0; index < _pieces.Length; index++)
@@ -414,13 +597,14 @@ namespace Elemental.Runtime.Physics
             ActivePieceCount = active;
             if (active > 0) return;
             HidePieces();
-            gameObject.SetActive(false);
+            PrepareForPool();
         }
 
         private void BeginFracture(Vector3 point, Vector3 direction, float impulse)
         {
             transform.SetPositionAndRotation(_surfacePosition, _surfaceRotation);
             _fractured = true;
+            _preparationPhase = EarthPlatformPreparationPhase.Fractured;
             _fractureElapsed = 0f;
             _cohesion.BeginFracture();
             _repairing = false;
@@ -454,10 +638,12 @@ namespace Elemental.Runtime.Physics
             Fractured?.Invoke(this);
             _renderer.enabled = false;
             _collider.enabled = false;
+            RestorePendingSurfCollision();
+            _pendingSurfBreach = false;
             ActivePieceCount = requested;
             TargetsActivated?.Invoke(this);
             ReleaseLocalPieces(point, worldDirection, impulse);
-            if (requested == 0) gameObject.SetActive(false);
+            if (requested == 0) PrepareForPool();
         }
 
         private bool ReleaseLocalPieces(Vector3 point, Vector3 direction, float impulse)
@@ -514,11 +700,15 @@ namespace Elemental.Runtime.Physics
 
         private void FixedUpdate()
         {
+            if (!IsInUse) return;
             if (!_fractured)
             {
                 UpdateEmergence();
-                CarryRiders();
+                // Evaluate handoff against velocity already integrated by PhysX.
+                // Carry adds forces for the upcoming step, so restoring collisions
+                // after it could release a rider with an unseen outward impulse.
                 RestoreRiderCollisionsWhenSafe();
+                CarryRiders();
                 return;
             }
             if (_pieces == null) return;
@@ -555,7 +745,7 @@ namespace Elemental.Runtime.Physics
         {
             if (_filter == null) _filter = GetComponent<MeshFilter>();
             if (_renderer == null) _renderer = GetComponent<MeshRenderer>();
-            if (_collider == null) _collider = GetComponent<MeshCollider>();
+            if (_collider == null) _collider = GetComponent<BoxCollider>();
             if (_body == null) _body = GetComponent<Rigidbody>();
             if (_body == null)
             {
@@ -565,7 +755,11 @@ namespace Elemental.Runtime.Physics
             }
             if (_cohesion == null) _cohesion = GetComponent<EarthCohesiveStructure>();
             if (_cohesion == null) _cohesion = gameObject.AddComponent<EarthCohesiveStructure>();
-            if (_solidMesh == null) _solidMesh = new Mesh { name = "Runtime Earth Platform" };
+            if (_solidMesh == null)
+            {
+                _solidMesh = new Mesh { name = "Runtime Earth Platform" };
+                _solidMesh.MarkDynamic();
+            }
         }
 
         private Mesh ResolvePieceMesh(int index)
@@ -620,7 +814,7 @@ namespace Elemental.Runtime.Physics
             DestroyGeneratedPieceMeshes();
         }
 
-        private void PrepareFracturePlan()
+        private void StartFracturePreparation()
         {
             int requested = Mathf.Clamp(
                 _fractureProfile != null
@@ -628,36 +822,120 @@ namespace Elemental.Runtime.Physics
                     : _profile != null ? _profile.FracturePieceCount : 36,
                 28,
                 MaximumPieces);
-            _fracturePlan = EarthVolumetricFractureSolver.BuildClosedConvexPrism(
-                PlatformId ^ 0xC011AB1Eu,
-                _polygon,
-                -_embedDepth,
-                Height,
-                requested);
-            BuildStructuralBonds();
-            DestroyGeneratedPieceMeshes();
+            uint seed = PlatformId ^ 0xC011AB1Eu;
+            float2[] boundary = (float2[])_polygon.Clone();
+            float bottom = -_embedDepth;
+            float top = Height;
+            _fractureTaskGeneration = _generation;
+            _fracturePlanTask = Task.Run(() =>
+                EarthVolumetricFractureSolver.BuildClosedConvexPrism(
+                    seed,
+                    boundary,
+                    bottom,
+                    top,
+                    requested));
             if (_generatedPieceMeshes == null || _generatedPieceMeshes.Length != MaximumPieces)
                 _generatedPieceMeshes = new Mesh[MaximumPieces];
             if (_pieceRestLocalPosition == null || _pieceRestLocalPosition.Length != MaximumPieces)
                 _pieceRestLocalPosition = new Vector3[MaximumPieces];
             if (_pieceVolume == null || _pieceVolume.Length != MaximumPieces)
                 _pieceVolume = new float[MaximumPieces];
+        }
 
-            for (int index = 0; index < _fracturePlan.Cells.Length && index < MaximumPieces; index++)
+        private void AdvanceFracturePreparation()
+        {
+            if (_fractured || _emergence < 1f ||
+                _preparationPhase is EarthPlatformPreparationPhase.FractureReady or
+                    EarthPlatformPreparationPhase.Fractured or EarthPlatformPreparationPhase.Failed)
+                return;
+            if (_preparationPhase == EarthPlatformPreparationPhase.Stable)
             {
-                EarthVolumetricFractureCell cell = _fracturePlan.Cells[index];
-                Mesh mesh = BuildPlatformPieceMesh(cell, index);
-                _generatedPieceMeshes[index] = mesh;
-                _pieceRestLocalPosition[index] = ToVector3(cell.Centroid);
-                _pieceVolume[index] = cell.Volume;
-                EarthPlatformPiece piece = _pieces[index];
-                if (piece == null) continue;
-                piece.GetComponent<MeshFilter>().sharedMesh = mesh;
-                MeshCollider collider = piece.GetComponent<MeshCollider>();
-                collider.sharedMesh = null;
-                collider.sharedMesh = mesh;
-                collider.convex = true;
-                UnityEngine.Physics.BakeMesh(mesh.GetEntityId(), true);
+                if (_fracturePlanTask == null && !_fracturePlanAccepted)
+                    StartFracturePreparation();
+                _preparationPhase = EarthPlatformPreparationPhase.PreparingFracture;
+            }
+            if (_preparationPhase != EarthPlatformPreparationPhase.PreparingFracture) return;
+
+            if (!_fracturePlanAccepted)
+            {
+                if (_fracturePlanTask == null || !_fracturePlanTask.IsCompleted) return;
+                if (_fractureTaskGeneration != _generation) return;
+                if (_fracturePlanTask.IsCanceled || _fracturePlanTask.IsFaulted)
+                {
+                    _preparationPhase = EarthPlatformPreparationPhase.Failed;
+                    Debug.LogError(
+                        $"[Elemental] Platform {PlatformId} fracture preparation failed: " +
+                        (_fracturePlanTask.Exception?.GetBaseException().Message ?? "cancelled"),
+                        this);
+                    return;
+                }
+                _fracturePlan = _fracturePlanTask.Result;
+                _fracturePlanTask = null;
+                if (!_fracturePlan.IsValid || _fracturePlan.Cells == null || _fracturePlan.Cells.Length == 0)
+                {
+                    _preparationPhase = EarthPlatformPreparationPhase.Failed;
+                    Debug.LogError(
+                        $"[Elemental] Platform {PlatformId} produced no valid closed fracture plan.",
+                        this);
+                    return;
+                }
+                _fracturePlanAccepted = true;
+                BuildStructuralBonds();
+            }
+
+            int total = Mathf.Min(_fracturePlan.Cells.Length, MaximumPieces);
+            int cellBudget = _pendingSurfBreach
+                ? Mathf.Max(1, Mathf.CeilToInt((total - _preparedCellCount) / 3f))
+                : 1;
+            EarthPlatformPreparationSlice slice = EarthPlatformPreparationBudget.Next(
+                _preparedCellCount,
+                total,
+                cellBudget);
+            if (slice.Count > 0)
+            {
+                double sliceStarted = Time.realtimeSinceStartupAsDouble;
+                using (PrepareCellMarker.Auto())
+                {
+                    for (int offset = 0; offset < slice.Count; offset++)
+                    {
+                        int index = slice.StartIndex + offset;
+                        EarthVolumetricFractureCell cell = _fracturePlan.Cells[index];
+                        Mesh mesh = BuildPlatformPieceMesh(
+                            cell,
+                            index,
+                            _generatedPieceMeshes[index]);
+                        _generatedPieceMeshes[index] = mesh;
+                        _pieceRestLocalPosition[index] = ToVector3(cell.Centroid);
+                        _pieceVolume[index] = cell.Volume;
+                        EarthPlatformPiece piece = _pieces[index];
+                        if (piece == null) continue;
+                        piece.GetComponent<MeshFilter>().sharedMesh = mesh;
+                        BoxCollider collider = piece.GetComponent<BoxCollider>();
+                        if (collider != null)
+                        {
+                            collider.center = mesh.bounds.center;
+                            collider.size = mesh.bounds.size * 0.90f;
+                        }
+                    }
+                    _preparedCellCount += slice.Count;
+                }
+                _lastPreparationSliceMilliseconds =
+                    (Time.realtimeSinceStartupAsDouble - sliceStarted) * 1000.0;
+                _peakPreparationSliceMilliseconds = Math.Max(
+                    _peakPreparationSliceMilliseconds,
+                    _lastPreparationSliceMilliseconds);
+                return;
+            }
+
+            _preparationPhase = EarthPlatformPreparationPhase.FractureReady;
+            if (_hasPendingImpact)
+            {
+                Vector3 point = _pendingImpactPoint;
+                Vector3 direction = _pendingImpactDirection;
+                float impulse = _pendingImpactImpulse;
+                _hasPendingImpact = false;
+                _pendingImpactImpulse = 0f;
+                BeginFracture(point, direction, impulse);
             }
         }
 
@@ -726,6 +1004,7 @@ namespace Elemental.Runtime.Physics
                 piece.transform.SetParent(transform, false);
             }
             _fractured = false;
+            _preparationPhase = EarthPlatformPreparationPhase.FractureReady;
             _repairing = false;
             _repairTarget01 = 0f;
             _cohesion.ResetCohesion();
@@ -884,6 +1163,13 @@ namespace Elemental.Runtime.Physics
             }
         }
 
+        private void RestorePendingSurfCollision()
+        {
+            if (_collider != null && _pendingSurfBoardCollider != null)
+                UnityEngine.Physics.IgnoreCollision(_collider, _pendingSurfBoardCollider, false);
+            _pendingSurfBoardCollider = null;
+        }
+
         private void BuildStructuralBonds()
         {
             _structuralBondCount = 0;
@@ -996,12 +1282,16 @@ namespace Elemental.Runtime.Physics
 
         private static Mesh BuildPlatformPieceMesh(
             EarthVolumetricFractureCell cell,
-            int pieceIndex)
+            int pieceIndex,
+            Mesh reusable)
         {
             var vertices = new Vector3[cell.Vertices.Length];
             for (int index = 0; index < vertices.Length; index++)
                 vertices[index] = ToVector3(cell.Vertices[index] - cell.Centroid);
-            var mesh = new Mesh { name = $"Earth Platform Volume {pieceIndex:00}" };
+            Mesh mesh = reusable != null
+                ? reusable
+                : new Mesh { name = $"Earth Platform Volume {pieceIndex:00}" };
+            mesh.Clear();
             mesh.vertices = vertices;
             mesh.triangles = cell.Triangles;
             mesh.RecalculateNormals();
@@ -1016,51 +1306,162 @@ namespace Elemental.Runtime.Physics
 
         private void BuildPrismMesh(float2[] polygon, float height, float embed)
         {
-            int count = polygon.Length;
-            var vertices = new Vector3[count * 2];
+            int count = Mathf.Min(polygon.Length, MaximumPolygonVertices);
+            Bounds localBounds = ConfigureWalkableCollider(polygon, count, height, embed);
+            List<Vector3> vertices = _solidVertices;
+            List<Vector3> normals = _solidNormals;
+            List<int> triangles = _solidTriangles;
+            List<Color> colors = _solidColors;
+            vertices.Clear();
+            normals.Clear();
+            triangles.Clear();
+            colors.Clear();
+            Vector2 center = Vector2.zero;
+            float averageRadius = 0f;
             for (int index = 0; index < count; index++)
             {
-                vertices[index] = new Vector3(polygon[index].x, -embed, polygon[index].y);
-                vertices[count + index] = new Vector3(polygon[index].x, height, polygon[index].y);
+                center += new Vector2(polygon[index].x, polygon[index].y);
             }
-            var triangles = new int[((count - 2) * 6) + (count * 6)];
-            int output = 0;
-            for (int index = 1; index < count - 1; index++)
+            center /= Mathf.Max(1, count);
+            for (int index = 0; index < count; index++)
+                averageRadius += Vector2.Distance(center, new Vector2(polygon[index].x, polygon[index].y));
+            averageRadius /= Mathf.Max(1, count);
+
+            float bevelWidth = Mathf.Clamp(averageRadius * 0.045f, 0.075f, 0.14f);
+            float inset01 = Mathf.Clamp(bevelWidth / Mathf.Max(0.001f, averageRadius), 0.02f, 0.15f);
+            float availableHeight = Mathf.Max(0.12f, height + embed);
+            float bevelHeight = Mathf.Min(bevelWidth * 0.72f, availableHeight * 0.22f);
+            float bottom = -embed;
+            float lowerShoulder = bottom + bevelHeight;
+            float upperShoulder = height - bevelHeight;
+            Color faceColor = new Color(0.62f, 0.60f, 0.57f, 0.38f);
+            Color bevelColor = new Color(0.67f, 0.64f, 0.59f, 0.72f);
+
+            for (int index = 0; index < count; index++)
             {
-                // Positive X/Z shoelace winding faces local -Y in Unity's axis
-                // convention. Keep the lower cap in that order and reverse the top.
-                triangles[output++] = 0;
-                triangles[output++] = index;
-                triangles[output++] = index + 1;
-                triangles[output++] = count;
-                triangles[output++] = count + index + 1;
-                triangles[output++] = count + index;
+                Vector2 outer = new Vector2(polygon[index].x, polygon[index].y);
+                Vector2 inner = Vector2.Lerp(outer, center, inset01);
+                _bottomInner[index] = new Vector3(inner.x, bottom, inner.y);
+                _lowerOuter[index] = new Vector3(outer.x, lowerShoulder, outer.y);
+                _upperOuter[index] = new Vector3(outer.x, upperShoulder, outer.y);
+                _topInner[index] = new Vector3(inner.x, height, inner.y);
             }
+
+            AppendPlatformCap(vertices, normals, triangles, colors,
+                _bottomInner, count, Vector3.down, faceColor);
+            AppendPlatformCap(vertices, normals, triangles, colors,
+                _topInner, count, Vector3.up, faceColor);
             for (int index = 0; index < count; index++)
             {
                 int next = (index + 1) % count;
-                triangles[output++] = index;
-                triangles[output++] = count + index;
-                triangles[output++] = count + next;
-                triangles[output++] = index;
-                triangles[output++] = count + next;
-                triangles[output++] = next;
+                Vector3 edge = _lowerOuter[next] - _lowerOuter[index];
+                Vector3 sideNormal = Vector3.Cross(Vector3.up, edge).normalized;
+                AppendPlatformQuad(vertices, normals, triangles, colors,
+                    _bottomInner[index], _lowerOuter[index], _lowerOuter[next], _bottomInner[next],
+                    (sideNormal - Vector3.up * 0.72f).normalized, bevelColor);
+                AppendPlatformQuad(vertices, normals, triangles, colors,
+                    _lowerOuter[index], _upperOuter[index], _upperOuter[next], _lowerOuter[next],
+                    sideNormal, faceColor);
+                AppendPlatformQuad(vertices, normals, triangles, colors,
+                    _upperOuter[index], _topInner[index], _topInner[next], _upperOuter[next],
+                    (sideNormal + Vector3.up * 0.72f).normalized, bevelColor);
             }
             _solidMesh.Clear();
-            _solidMesh.vertices = vertices;
-            _solidMesh.triangles = triangles;
-            _solidMesh.RecalculateNormals();
-            _solidMesh.RecalculateBounds();
-            EarthMeshIntegrityGate.ValidateInPlaceOrUseFallback(
-                _solidMesh,
-                EarthMeshIntegrityPolicy.ClosedHero,
-                _solidMesh.name,
-                _solidMesh.bounds);
+            _solidMesh.SetVertices(vertices);
+            _solidMesh.SetNormals(normals);
+            _solidMesh.SetTriangles(triangles, 0, false);
+            _solidMesh.SetColors(colors);
+            _solidMesh.bounds = localBounds;
+        }
+
+        private Bounds ConfigureWalkableCollider(float2[] polygon, int count, float height, float embed)
+        {
+            Vector2 minimum = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+            Vector2 maximum = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+            for (int index = 0; index < count; index++)
+            {
+                Vector2 point = new Vector2(polygon[index].x, polygon[index].y);
+                minimum = Vector2.Min(minimum, point);
+                maximum = Vector2.Max(maximum, point);
+            }
+            Vector2 size = Vector2.Max(maximum - minimum, Vector2.one * 0.1f);
+            Vector2 center = (minimum + maximum) * 0.5f;
+            _collider.center = new Vector3(center.x, (height - embed) * 0.5f, center.y);
+            _collider.size = new Vector3(size.x, Mathf.Max(0.1f, height + embed), size.y);
+            return new Bounds(_collider.center, _collider.size);
+        }
+
+        private static void AppendPlatformCap(
+            List<Vector3> vertices,
+            List<Vector3> normals,
+            List<int> triangles,
+            List<Color> colors,
+            Vector3[] ring,
+            int ringCount,
+            Vector3 normal,
+            Color color)
+        {
+            Vector3 center = Vector3.zero;
+            for (int index = 0; index < ringCount; index++) center += ring[index];
+            center /= Mathf.Max(1, ringCount);
+            int centerIndex = vertices.Count;
+            vertices.Add(center);
+            normals.Add(normal);
+            colors.Add(color);
+            int start = vertices.Count;
+            for (int index = 0; index < ringCount; index++)
+            {
+                vertices.Add(ring[index]);
+                normals.Add(normal);
+                colors.Add(color);
+            }
+            for (int index = 0; index < ringCount; index++)
+            {
+                int next = (index + 1) % ringCount;
+                triangles.Add(centerIndex);
+                if (normal.y < 0f)
+                {
+                    triangles.Add(start + index);
+                    triangles.Add(start + next);
+                }
+                else
+                {
+                    triangles.Add(start + next);
+                    triangles.Add(start + index);
+                }
+            }
+        }
+
+        private static void AppendPlatformQuad(
+            List<Vector3> vertices,
+            List<Vector3> normals,
+            List<int> triangles,
+            List<Color> colors,
+            Vector3 a,
+            Vector3 b,
+            Vector3 c,
+            Vector3 d,
+            Vector3 normal,
+            Color color)
+        {
+            int start = vertices.Count;
+            vertices.Add(a); vertices.Add(b); vertices.Add(c); vertices.Add(d);
+            normals.Add(normal); normals.Add(normal); normals.Add(normal); normals.Add(normal);
+            colors.Add(color); colors.Add(color); colors.Add(color); colors.Add(color);
+            triangles.Add(start); triangles.Add(start + 1); triangles.Add(start + 2);
+            triangles.Add(start); triangles.Add(start + 2); triangles.Add(start + 3);
         }
 
         private void UpdateEmergence()
         {
-            if (_emergence >= 1f) return;
+            if (_emergence >= 1f)
+            {
+                _surfaceVelocity = Vector3.zero;
+                _previousFixedPosition = _surfacePosition;
+                if (_preparationPhase == EarthPlatformPreparationPhase.Emerging)
+                    _preparationPhase = EarthPlatformPreparationPhase.Stable;
+                return;
+            }
             float authoredDuration = _profile != null ? _profile.EmergenceSeconds : 0.52f;
             // Acceleration-limited motion responds in the first physics step but
             // remains inside the rider solver's speed and acceleration envelope.
@@ -1103,11 +1504,21 @@ namespace Elemental.Runtime.Physics
             _emergenceSpeed = 0f;
             _collider.enabled = true;
             if (float.IsPositiveInfinity(_settledAt)) _settledAt = Time.time;
+            _preparationPhase = EarthPlatformPreparationPhase.Stable;
         }
 
         private void CarryRiders()
         {
+            using (CarryRidersMarker.Auto()) CarryRidersInternal();
+        }
+
+        private void CarryRidersInternal()
+        {
+            LastRiderOverlapCount = 0;
+            LastCarryRiderCount = 0;
             if (_polygon == null || _polygon.Length < 3 || _emergence <= 0f) return;
+            if (!IsEmerging && _temporarilyIgnoredRiderCount == 0 &&
+                Time.time >= _settledAt + SupportGraceSeconds) return;
             Bounds bounds = _solidMesh.bounds;
             float tolerance = RiderTolerance;
             Vector3 halfExtents = new Vector3(
@@ -1122,20 +1533,25 @@ namespace Elemental.Runtime.Physics
                 _surfaceRotation,
                 ~0,
                 QueryTriggerInteraction.Ignore);
+            LastRiderOverlapCount = hitCount;
             int riderCount = 0;
             for (int index = 0; index < hitCount && riderCount < _riderBodies.Length; index++)
             {
                 Collider candidate = _riderHits[index];
                 Rigidbody body = candidate != null ? candidate.attachedRigidbody : null;
                 if (body == null || body == _body) continue;
+                Elemental.Runtime.Characters.PlanetMotor motor =
+                    body.GetComponent<Elemental.Runtime.Characters.PlanetMotor>();
+                if (motor == null)
+                    motor = body.GetComponentInParent<Elemental.Runtime.Characters.PlanetMotor>();
+                if (motor == null || !motor.AcceptsMovingSupport) continue;
+                Rigidbody riderBody = motor.Body != null ? motor.Body : body;
                 bool duplicate = false;
                 for (int existing = 0; existing < riderCount; existing++)
-                    if (_riderBodies[existing] == body) duplicate = true;
+                    if (_riderBodies[existing] == riderBody) duplicate = true;
                 if (duplicate) continue;
-                Elemental.Runtime.Characters.PlanetMotor motor = body.GetComponent<Elemental.Runtime.Characters.PlanetMotor>();
-                if (motor == null) motor = body.GetComponentInParent<Elemental.Runtime.Characters.PlanetMotor>();
-                if (motor == null || !motor.AcceptsMovingSupport) continue;
-                Vector3 local = Quaternion.Inverse(_surfaceRotation) * (body.worldCenterOfMass - _surfacePosition);
+                Vector3 local = Quaternion.Inverse(_surfaceRotation) *
+                                (riderBody.worldCenterOfMass - _surfacePosition);
                 if (!ContainsExpanded(_polygon, new Vector2(local.x, local.z), tolerance)) continue;
                 Vector3 top = SurfaceTopPoint;
                 float footClearance = Vector3.Dot(motor.SupportFeetPoint(_surfaceUp) - top, _surfaceUp);
@@ -1146,13 +1562,13 @@ namespace Elemental.Runtime.Physics
                 // surface. Dropping support at emergence==1 leaves the character
                 // embedded and turns collision restoration into a depenetration pop.
                 bool continuingRider = motor.MovingSurfaceId == PlatformId ||
-                                       HasTemporarilyIgnoredRiderBody(body);
+                                       HasTemporarilyIgnoredRiderBody(riderBody);
                 if (!IsEmerging && !continuingRider &&
                     (footClearance < -0.14f || footClearance > contactBand)) continue;
-                if (!IsEmerging && continuingRider && footClearance > contactBand) continue;
-                _riderBodies[riderCount++] = body;
+                _riderBodies[riderCount++] = riderBody;
                 motor.ApplyMovingSupport(SupportFrame, top, CarryMaximumSpeed, CarryMaximumAcceleration);
-                Elemental.Runtime.Characters.ActiveRagdollPuppet puppet = body.GetComponent<Elemental.Runtime.Characters.ActiveRagdollPuppet>();
+                Elemental.Runtime.Characters.ActiveRagdollPuppet puppet =
+                    riderBody.GetComponent<Elemental.Runtime.Characters.ActiveRagdollPuppet>();
                 if (puppet != null)
                 {
                     puppet.SuppressImpacts(Time.fixedDeltaTime * 3f);
@@ -1161,10 +1577,11 @@ namespace Elemental.Runtime.Physics
                         IgnoreRiderCollision(_puppetColliderScratch[selfIndex]);
                 }
                 Elemental.Runtime.Physics.PhysicalImpactTarget impact =
-                    body.GetComponent<Elemental.Runtime.Physics.PhysicalImpactTarget>();
+                    riderBody.GetComponent<Elemental.Runtime.Physics.PhysicalImpactTarget>();
                 impact?.SuppressImpacts(Time.fixedDeltaTime * 3f);
                 IgnoreRiderCollision(candidate);
             }
+            LastCarryRiderCount = riderCount;
             for (int index = 0; index < riderCount; index++) _riderBodies[index] = null;
         }
 
@@ -1175,10 +1592,6 @@ namespace Elemental.Runtime.Physics
             for (int index = 0; index < _temporarilyIgnoredRiderCount; index++)
             {
                 if (_temporarilyIgnoredRiders[index] != rider) continue;
-                // Unity can discard an ignore pair when a collider transitions
-                // disabled -> enabled. Reassert it every carry tick before the
-                // physics step that could otherwise depenetrate the rider.
-                UnityEngine.Physics.IgnoreCollision(_collider, rider, true);
                 return;
             }
             if (_temporarilyIgnoredRiderCount >= _temporarilyIgnoredRiders.Length) return;
@@ -1211,6 +1624,22 @@ namespace Elemental.Runtime.Physics
                 float footClearance = Vector3.Dot(
                     motor.SupportFeetPoint(_surfaceUp) - SurfaceTopPoint,
                     _surfaceUp);
+                // Keep the cached emergence rider on the zero-velocity support until
+                // its feet are inside the ordinary ground probe. Restoring collision
+                // while the rider is still ~0.5 m above the cap produced a short
+                // unsupported fall and restarted landing/presentation states.
+                float maximumHandoffClearance = Mathf.Max(
+                    0.08f,
+                    motor.GroundProbeDistance * 0.75f);
+                if (footClearance > maximumHandoffClearance) return;
+                Rigidbody motorBody = motor.Body;
+                if (motorBody != null)
+                {
+                    float separatingSpeed = Vector3.Dot(
+                        motorBody.linearVelocity - _surfaceVelocity,
+                        _surfaceUp);
+                    if (Mathf.Abs(separatingSpeed) > 0.3f) return;
+                }
                 // Ragdoll feet are authored to overlap their support plane by a few
                 // centimetres. Waiting for every child collider to clear the plane
                 // left the ignore pair alive forever and made the settled platform
@@ -1220,7 +1649,27 @@ namespace Elemental.Runtime.Physics
             for (int index = 0; index < _temporarilyIgnoredRiderCount; index++)
             {
                 Collider rider = _temporarilyIgnoredRiders[index];
-                if (_collider != null && rider != null) UnityEngine.Physics.IgnoreCollision(_collider, rider, false);
+                if (_collider != null && rider != null)
+                {
+                    Elemental.Runtime.Characters.PlanetMotor motor =
+                        rider.attachedRigidbody != null
+                            ? rider.attachedRigidbody.GetComponent<Elemental.Runtime.Characters.PlanetMotor>()
+                            : null;
+                    if (motor == null)
+                        motor = rider.GetComponentInParent<Elemental.Runtime.Characters.PlanetMotor>();
+                    bool authoritativeMotorCollider = motor != null &&
+                                                        rider.attachedRigidbody == motor.Body;
+                    if (authoritativeMotorCollider)
+                    {
+                        // Retain tangent locomotion, but clear the emergence solver's
+                        // residual outward component before the solid contact returns.
+                        motor?.ClearOutwardSupportVelocity();
+                        UnityEngine.Physics.IgnoreCollision(_collider, rider, false);
+                    }
+                    // Hidden physical-assist limbs remain ignored by this solid
+                    // shell. Re-enabling those deeply intersecting joint colliders
+                    // injects a depenetration launch into the authoritative root.
+                }
                 _temporarilyIgnoredRiders[index] = null;
             }
             _temporarilyIgnoredRiderCount = 0;
@@ -1260,11 +1709,11 @@ namespace Elemental.Runtime.Physics
                 EarthPlatformPiece piece = _pieces[index];
                 if (piece == null) continue;
                 Rigidbody body = piece.Body;
-                body.detectCollisions = false;
-                body.isKinematic = true;
-                piece.gameObject.SetActive(false);
-                piece.transform.SetParent(transform, false);
-                piece.transform.localScale = Vector3.one;
+                if (body.detectCollisions) body.detectCollisions = false;
+                if (!body.isKinematic) body.isKinematic = true;
+                if (piece.gameObject.activeSelf) piece.gameObject.SetActive(false);
+                if (piece.transform.parent != transform) piece.transform.SetParent(transform, false);
+                if (piece.transform.localScale != Vector3.one) piece.transform.localScale = Vector3.one;
             }
             ActivePieceCount = 0;
         }
@@ -1307,45 +1756,4 @@ namespace Elemental.Runtime.Physics
         private static Vector3 ToVector3(Unity.Mathematics.float3 value) => new Vector3(value.x, value.y, value.z);
     }
 
-    [DisallowMultipleComponent]
-    [RequireComponent(typeof(Rigidbody))]
-    public sealed class EarthPlatformPiece : MonoBehaviour, IEarthPhysicalTarget
-    {
-        public EarthPlatform Owner { get; private set; }
-        public int PieceIndex { get; private set; }
-        public Rigidbody Body { get; private set; }
-        public uint StableEarthId => Owner != null
-            ? (Owner.PlatformId * 100u) + (uint)Mathf.Max(0, PieceIndex) + 1u
-            : 0u;
-        public EarthPhysicalTargetHandle TargetHandle => Owner != null
-            ? new EarthPhysicalTargetHandle(StableEarthId, Owner.Generation)
-            : default;
-        public float EarthMass => Body != null ? Body.mass : 0f;
-        public EarthPhysicalTargetKind TargetKind => EarthPhysicalTargetKind.PlatformPiece;
-        public bool IsEarthTargetValid => Owner != null && Owner.IsFractured &&
-                                          gameObject.activeSelf && Body != null;
-
-        public void Configure(EarthPlatform owner, int pieceIndex)
-        {
-            Owner = owner;
-            PieceIndex = pieceIndex;
-            Body = GetComponent<Rigidbody>();
-        }
-
-        public void OnEarthMagicGrabbed(EarthMagicGripKind grip)
-        {
-            Owner?.AcquirePiece(PieceIndex);
-            GetComponent<EarthMatterIdentity>()?.TryTransition(EarthMatterPhase.Controlled);
-        }
-        public void OnEarthMagicReleased(EarthMagicGripKind grip)
-        {
-            Owner?.ReleasePiece(PieceIndex);
-            EarthMatterIdentity identity = GetComponent<EarthMatterIdentity>();
-            if (identity != null && identity.TryRead(out EarthMatterRecord record) &&
-                record.Phase == EarthMatterPhase.Controlled)
-                identity.TryTransition(EarthMatterPhase.FreeDynamic);
-        }
-
-        private void OnCollisionEnter(Collision collision) => Owner?.ReportPieceImpact(PieceIndex, collision);
-    }
 }

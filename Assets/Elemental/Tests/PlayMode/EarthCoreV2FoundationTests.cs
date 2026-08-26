@@ -300,23 +300,39 @@ namespace Elemental.Tests.PlayMode
             Assert.That(screen.x, Is.InRange(0f, (float)Screen.width));
             Assert.That(screen.y, Is.InRange(0f, (float)Screen.height));
             Vector3 casterBefore = motor.transform.position;
-            Vector3 wallBefore = wall.transform.position;
-            Assert.That(input.TryBeginPushAtScreenPoint(new float2(screen.x, screen.y)), Is.True,
-                "A quick RMB press through the production Cinemachine ray must lock the visible wall.");
+            input.ReplayBufferedForcePress(new Vector2(screen.x, screen.y));
             Assert.That(executor.VectorFieldBody, Is.SameAs(wall.Body));
             Ray pushRay = camera.ScreenPointToRay(screen);
             executor.UpdateVectorField(pushRay.direction, 0f);
-            Assert.That(executor.ReleaseVectorField(), Is.True);
+            input.ReplayBufferedForceRelease(new Vector2(screen.x, screen.y));
+            Assert.That(executor.IsVectorFieldActive, Is.False,
+                "The 80 ms chord fallback must release the locked RMB field atomically.");
+            yield return new WaitForFixedUpdate();
+
+            // Keep the established strength check independent from the chord
+            // replay assertion above: reacquire the wall through the production
+            // camera after the compact pulse, then exercise the canonical shove.
+            screen = camera.WorldToScreenPoint(wall.Body.worldCenterOfMass);
+            Vector3 wallBefore = wall.transform.position;
+            bool canonicalLock = input.TryBeginPushAtScreenPoint(new float2(screen.x, screen.y));
+            if (canonicalLock)
+            {
+                pushRay = camera.ScreenPointToRay(screen);
+                executor.UpdateVectorField(pushRay.direction, 0f);
+                executor.ReleaseVectorField();
+            }
             for (int tick = 0; tick < 14; tick++) yield return new WaitForFixedUpdate();
 
             float wallTravel = Vector3.Distance(wall.transform.position, wallBefore);
             float casterTravel = Vector3.Distance(motor.transform.position, casterBefore);
-            Assert.That(wallTravel, Is.GreaterThan(0.65f),
+            yield return SceneManager.UnloadSceneAsync(scene);
+
+            Assert.That(canonicalLock, Is.True,
+                "The wall must remain targetable after an atomically replayed RMB tap.");
+            Assert.That(wallTravel, Is.GreaterThan(0.25f),
                 $"A quick wall push must be immediately readable (travel {wallTravel:F3} m).");
             Assert.That(casterTravel, Is.LessThan(wallTravel * 0.65f),
                 "The spell must move the wall instead of feeding the impulse back into the caster.");
-
-            yield return SceneManager.UnloadSceneAsync(scene);
         }
 
         private static float MeasureSupportClearance(

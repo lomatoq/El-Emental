@@ -15,7 +15,7 @@ using Object = UnityEngine.Object;
 [InitializeOnLoad]
 public static class GraphicsV5Slice1Builder
 {
-    private const int SliceVersion = 1;
+    private const int SliceVersion = 4;
     private const string ShaderPath = "Assets/Elemental/Content/Shaders/RumbleRockLit.shader";
     private const string RootFolder = "Assets/Elemental/Content/GraphicsV5";
     private const string RockFolder = RootFolder + "/Rocks";
@@ -29,7 +29,7 @@ public static class GraphicsV5Slice1Builder
     private const string SkyboxMaterialPath = MaterialFolder + "/RumbleDaySky.mat";
     private const string DustTexturePath = MaterialFolder + "/RumbleDustSoft.asset";
     private const string DustMaterialPath = MaterialFolder + "/RumbleDustLit.mat";
-    private const string SessionKey = "Elemental.GraphicsV5.Slice1.AutoBuild";
+    private const string SessionKey = "Elemental.GraphicsV5.Slice1.AutoBuild.v4";
 
     private static readonly string[] RockMaterialPaths =
     {
@@ -53,6 +53,13 @@ public static class GraphicsV5Slice1Builder
     static GraphicsV5Slice1Builder()
     {
         EditorApplication.delayCall += TryAutoBuild;
+        EditorApplication.playModeStateChanged += HandlePlayModeStateChanged;
+    }
+
+    private static void HandlePlayModeStateChanged(PlayModeStateChange state)
+    {
+        if (state == PlayModeStateChange.EnteredEditMode)
+            EditorApplication.delayCall += TryAutoBuild;
     }
 
     [MenuItem("Elemental/Graphics V5/Build and Open Slice 1", priority = 1)]
@@ -93,9 +100,7 @@ public static class GraphicsV5Slice1Builder
     [MenuItem("Elemental/Graphics V5/Apply One-Sun Policy To Open Scene", priority = 30)]
     public static void ApplyOneSunPolicyToOpenScene()
     {
-        Light[] lights = Object.FindObjectsByType<Light>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None);
+        Light[] lights = Object.FindObjectsByType<Light>(FindObjectsInactive.Include);
         Light key = RenderSettings.sun;
         if (key == null)
             key = lights.FirstOrDefault(light => light != null && light.type == LightType.Directional);
@@ -175,6 +180,7 @@ public static class GraphicsV5Slice1Builder
         }
         catch (Exception exception)
         {
+            SessionState.SetBool(SessionKey, false);
             Debug.LogException(exception);
         }
     }
@@ -315,6 +321,7 @@ public static class GraphicsV5Slice1Builder
         material.SetFloat("_FacetContrast", 0.34f);
         material.SetFloat("_Roughness", roughness);
         material.SetFloat("_BevelLight", 0.42f);
+        material.SetFloat("_SideShadingSmoothness", 1f);
         material.SetFloat("_AmbientStrength", 0.86f);
         material.SetFloat("_Fade", 1f);
         material.SetFloat("_DebugMode", 0f);
@@ -389,22 +396,23 @@ public static class GraphicsV5Slice1Builder
         AssetDatabase.DeleteAsset(VolumeProfilePath);
         VolumeProfile profile = ScriptableObject.CreateInstance<VolumeProfile>();
         profile.name = "RumbleLookdevVolume";
+        AssetDatabase.CreateAsset(profile, VolumeProfilePath);
 
-        Tonemapping tonemapping = profile.Add<Tonemapping>(true);
+        Tonemapping tonemapping = AddVolumeComponent<Tonemapping>(profile);
         tonemapping.mode.Override(TonemappingMode.ACES);
-        ColorAdjustments color = profile.Add<ColorAdjustments>(true);
+        ColorAdjustments color = AddVolumeComponent<ColorAdjustments>(profile);
         color.postExposure.Override(0f);
         color.contrast.Override(7f);
         color.saturation.Override(-8f);
-        WhiteBalance balance = profile.Add<WhiteBalance>(true);
+        WhiteBalance balance = AddVolumeComponent<WhiteBalance>(profile);
         balance.temperature.Override(2f);
         balance.tint.Override(-1f);
-        Bloom bloom = profile.Add<Bloom>(true);
+        Bloom bloom = AddVolumeComponent<Bloom>(profile);
         bloom.threshold.Override(1.12f);
         bloom.intensity.Override(0.07f);
         bloom.scatter.Override(0.54f);
         bloom.clamp.Override(20f);
-        DepthOfField depth = profile.Add<DepthOfField>(true);
+        DepthOfField depth = AddVolumeComponent<DepthOfField>(profile);
         depth.mode.Override(DepthOfFieldMode.Bokeh);
         depth.focusDistance.Override(16f);
         depth.focalLength.Override(35f);
@@ -412,12 +420,20 @@ public static class GraphicsV5Slice1Builder
         depth.bladeCount.Override(7);
         depth.bladeCurvature.Override(0.82f);
         depth.bladeRotation.Override(18f);
-        Vignette vignette = profile.Add<Vignette>(true);
+        Vignette vignette = AddVolumeComponent<Vignette>(profile);
         vignette.intensity.Override(0.075f);
         vignette.smoothness.Override(0.48f);
         vignette.rounded.Override(true);
-        AssetDatabase.CreateAsset(profile, VolumeProfilePath);
+        EditorUtility.SetDirty(profile);
+        AssetDatabase.SaveAssetIfDirty(profile);
         return profile;
+    }
+
+    private static T AddVolumeComponent<T>(VolumeProfile profile) where T : VolumeComponent
+    {
+        T component = profile.Add<T>(true);
+        AssetDatabase.AddObjectToAsset(component, profile);
+        return component;
     }
 
     private static Material CreateSkyboxMaterial()
@@ -461,8 +477,8 @@ public static class GraphicsV5Slice1Builder
         RenderSettings.fogMode = FogMode.ExponentialSquared;
         RenderSettings.fogColor = new Color(0.37f, 0.42f, 0.47f);
         RenderSettings.fogDensity = 0.0035f;
-        QualitySettings.shadowDistance = Mathf.Max(QualitySettings.shadowDistance, 85f);
-        QualitySettings.shadowCascades = 4;
+        QualitySettings.shadowDistance = 48f;
+        QualitySettings.shadowCascades = 2;
 
         Volume volume = CreateGlobalVolume(root.transform, assets.VolumeProfile);
         Camera camera = CreateMainCamera(root.transform);
@@ -537,9 +553,9 @@ public static class GraphicsV5Slice1Builder
         sun.color = new Color(1f, 0.91f, 0.78f);
         sun.intensity = 1.28f;
         sun.shadows = LightShadows.Soft;
-        sun.shadowStrength = 0.82f;
-        sun.shadowBias = 0.045f;
-        sun.shadowNormalBias = 0.32f;
+        sun.shadowStrength = 0.74f;
+        sun.shadowBias = 0.11f;
+        sun.shadowNormalBias = 0.20f;
         sun.transform.rotation = Quaternion.Euler(42f, -34f, 0f);
         sun.enabled = true;
     }

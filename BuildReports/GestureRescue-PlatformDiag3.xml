@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-14 10:56:31Z" end-time="2026-08-14 10:56:33Z" duration="2.065048">
+  <test-suite type="TestSuite" id="1111" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="76" result="Failed" site="Child" start-time="2026-08-14 10:56:31Z" end-time="2026-08-14 10:56:33Z" duration="2.065048" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1104" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/AppData/Local/Temp/ElEmental-Codex-Regression-20260814-1045/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="76" result="Failed" site="Child" start-time="2026-08-14 10:56:31Z" end-time="2026-08-14 10:56:33Z" duration="2.054238" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="17064" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1105" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="76" result="Failed" site="Child" start-time="2026-08-14 10:56:31Z" end-time="2026-08-14 10:56:33Z" duration="2.053020" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1106" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="76" result="Failed" site="Child" start-time="2026-08-14 10:56:31Z" end-time="2026-08-14 10:56:33Z" duration="2.052255" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1107" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="76" result="Failed" site="Child" start-time="2026-08-14 10:56:31Z" end-time="2026-08-14 10:56:33Z" duration="2.051505" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1037" name="EarthMagicExpansionRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" testcasecount="14" result="Failed" site="Child" start-time="2026-08-14 10:56:31Z" end-time="2026-08-14 10:56:33Z" duration="2.047830" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1045" name="PlatformDrawnUnderPlayerCarriesWithoutFractureOrRagdoll" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.PlatformDrawnUnderPlayerCarriesWithoutFractureOrRagdoll" methodname="PlatformDrawnUnderPlayerCarriesWithoutFractureOrRagdoll" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="1998354149" result="Failed" start-time="2026-08-14 10:56:31Z" end-time="2026-08-14 10:56:33Z" duration="2.034926" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  initial=25.300, lifted=25.410, topRadius=25.506, emergence=1.000, clearance=-1.300, movingSurface=1, velocity=(0.00, 0.00, 0.00).
+  Expected: greater than 25.6499996f
+  But was:  25.4097424f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests+<PlatformDrawnUnderPlayerCarriesWithoutFractureOrRagdoll>d__7.MoveNext () [0x004c4] in C:\Users\nirrt\AppData\Local\Temp\ElEmental-Codex-Regression-20260814-1045\Assets\Elemental\Tests\PlayMode\EarthMagicExpansionRuntimeTests.cs:333
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

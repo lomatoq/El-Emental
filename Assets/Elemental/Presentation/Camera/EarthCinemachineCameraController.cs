@@ -234,7 +234,7 @@ namespace Elemental.Presentation.Camera
                 thirdPersonFollow.Damping = new Vector3(0.12f, 0.16f, 0.1f);
                 thirdPersonFollow.ShoulderOffset = new Vector3(0.72f, shoulderHeight, 0f);
                 thirdPersonFollow.VerticalArmLength = 0.9f;
-                thirdPersonFollow.CameraDistance = 7.5f;
+                thirdPersonFollow.CameraDistance = 6.95f;
                 thirdPersonFollow.CameraSide = 1f;
                 thirdPersonFollow.AvoidObstacles.Enabled = true;
                 // Layer 2 is reserved for player-controlled magic formations. Those

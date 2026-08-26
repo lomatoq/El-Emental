@@ -20,10 +20,15 @@ namespace Elemental.Runtime.World
         private sealed class RuntimeChunk
         {
             public GameObject GameObject;
-            public Mesh Mesh;
-            public MeshCollider Collider;
+            public MeshFilter Filter;
+            public Mesh ActiveMesh;
+            public Mesh StagingMesh;
+            public MeshCollider ActiveCollider;
+            public MeshCollider StagingCollider;
             public uint VisualVersion;
             public uint ColliderVersion;
+            public uint StagingVisualVersion;
+            public uint StagingColliderVersion;
             public float ColliderDebtAge;
         }
 
@@ -80,6 +85,8 @@ namespace Elemental.Runtime.World
         public int OutstandingColliderDebtCount { get; private set; }
         public double LastRenderQueueMilliseconds { get; private set; }
         public double PeakRenderQueueMilliseconds { get; private set; }
+        public double LastColliderQueueMilliseconds { get; private set; }
+        public double PeakColliderQueueMilliseconds { get; private set; }
         public int PendingEditTransactionCount => _pendingTransactions.Count;
         public event Action<VoxelEditReceipt> EditCommitted;
 
@@ -87,6 +94,8 @@ namespace Elemental.Runtime.World
         {
             LastRenderQueueMilliseconds = 0.0;
             PeakRenderQueueMilliseconds = 0.0;
+            LastColliderQueueMilliseconds = 0.0;
+            PeakColliderQueueMilliseconds = 0.0;
         }
 
         public void Configure(
@@ -178,12 +187,17 @@ namespace Elemental.Runtime.World
             uint firstSequence = batch[0].Sequence;
             uint lastSequence = batch[batch.Count - 1].Sequence;
             _state.Apply(batch);
-            QueueDirtyChunks();
 
             _transactionCoordScratch.Clear();
             for (int editIndex = 0; editIndex < batch.Count; editIndex++)
             {
-                VoxelBounds bounds = batch[editIndex].GetBounds();
+                VoxelBounds rawBounds = batch[editIndex].GetBounds();
+                float3 halo = new float3(_state.CellSize);
+                var bounds = new VoxelBounds(rawBounds.Min - halo, rawBounds.Max + halo);
+                // Marching-cubes faces sample across chunk boundaries. Marking the
+                // one-voxel halo is what keeps both sides of every shared face in
+                // the same transaction instead of leaving a temporary seam.
+                _state.Chunks.MarkDirty(bounds, _state.ChunkWorldSize);
                 ChunkCoord minimum = ChunkCoord.FromPlanetLocal(bounds.Min, _state.ChunkWorldSize);
                 ChunkCoord maximum = ChunkCoord.FromPlanetLocal(bounds.Max, _state.ChunkWorldSize);
                 for (int z = minimum.Z; z <= maximum.Z; z++)
@@ -194,6 +208,7 @@ namespace Elemental.Runtime.World
                     if (!_transactionCoordScratch.Contains(coord)) _transactionCoordScratch.Add(coord);
                 }
             }
+            QueueDirtyChunks();
 
             var receipt = new VoxelEditReceipt(AllocateTransactionId(), firstSequence, lastSequence);
             var pending = new PendingEditTransaction
@@ -348,7 +363,9 @@ namespace Elemental.Runtime.World
                         continue;
                     }
 
-                    UploadMesh(coord, request.ExpectedVersion);
+                    bool stageForTransaction = RequiresTransactionalStaging(
+                        coord, request.ExpectedVersion);
+                    UploadMesh(coord, request.ExpectedVersion, stageForTransaction);
                     ulong hash = _state.ComputeChunkHash(coord);
                     if (!chunkState.TryMarkBuilt(request.ExpectedVersion, hash))
                     {
@@ -364,20 +381,20 @@ namespace Elemental.Runtime.World
             PeakRenderQueueMilliseconds = Math.Max(PeakRenderQueueMilliseconds, LastRenderQueueMilliseconds);
         }
 
-        private void UploadMesh(ChunkCoord coord, uint visualVersion)
+        private void UploadMesh(ChunkCoord coord, uint visualVersion, bool stageForTransaction)
         {
+            RuntimeChunk runtimeChunk = GetOrCreateRuntimeChunk(coord);
+            Mesh mesh = stageForTransaction ? runtimeChunk.StagingMesh : runtimeChunk.ActiveMesh;
             if (_meshBuffers.Vertices.Length == 0)
             {
-                RuntimeChunk emptyChunk = GetOrCreateRuntimeChunk(coord);
-                emptyChunk.Mesh.Clear();
-                MarkVisualVersion(emptyChunk, visualVersion);
+                mesh.Clear();
+                MarkVisualVersion(runtimeChunk, visualVersion, stageForTransaction);
                 EnqueueCollider(coord);
 
                 return;
             }
 
-            RuntimeChunk runtimeChunk = GetOrCreateRuntimeChunk(coord);
-            MarkVisualVersion(runtimeChunk, visualVersion);
+            MarkVisualVersion(runtimeChunk, visualVersion, stageForTransaction);
             _uploadVertices.Clear();
             _uploadNormals.Clear();
             _uploadIndices.Clear();
@@ -395,7 +412,6 @@ namespace Elemental.Runtime.World
                 _uploadIndices.Add(_meshBuffers.Indices[index]);
             }
 
-            Mesh mesh = runtimeChunk.Mesh;
             mesh.Clear();
             mesh.indexFormat = _uploadVertices.Count > ushort.MaxValue
                 ? IndexFormat.UInt32
@@ -417,17 +433,23 @@ namespace Elemental.Runtime.World
             GameObject chunkObject = new GameObject($"Voxel Chunk {coord}");
             chunkObject.transform.SetParent(transform, false);
             Mesh mesh = new Mesh { name = $"Voxel Chunk {coord}" };
+            Mesh stagingMesh = new Mesh { name = $"Voxel Chunk {coord} (Staging)" };
             MeshFilter filter = chunkObject.AddComponent<MeshFilter>();
             filter.sharedMesh = mesh;
             MeshRenderer renderer = chunkObject.AddComponent<MeshRenderer>();
             renderer.sharedMaterial = _runtimeSurfaceMaterial != null ? _runtimeSurfaceMaterial : surfaceMaterial;
             MeshCollider collider = chunkObject.AddComponent<MeshCollider>();
+            MeshCollider stagingCollider = chunkObject.AddComponent<MeshCollider>();
+            stagingCollider.enabled = false;
 
             runtimeChunk = new RuntimeChunk
             {
                 GameObject = chunkObject,
-                Mesh = mesh,
-                Collider = collider
+                Filter = filter,
+                ActiveMesh = mesh,
+                StagingMesh = stagingMesh,
+                ActiveCollider = collider,
+                StagingCollider = stagingCollider
             };
             _runtimeChunks.Add(coord, runtimeChunk);
             return runtimeChunk;
@@ -435,6 +457,7 @@ namespace Elemental.Runtime.World
 
         private void ProcessColliderQueue(int budget)
         {
+            double startedAt = Time.realtimeSinceStartupAsDouble;
             using (ColliderQueueMarker.Auto())
             {
                 for (int processed = 0; processed < budget && _colliderQueue.Count > 0; processed++)
@@ -446,20 +469,40 @@ namespace Elemental.Runtime.World
                         continue;
                     }
 
-                    runtimeChunk.Collider.sharedMesh = null;
-                    if (runtimeChunk.Mesh.vertexCount > 0)
+                    if (runtimeChunk.StagingVisualVersion > runtimeChunk.VisualVersion)
                     {
-                        runtimeChunk.Collider.sharedMesh = runtimeChunk.Mesh;
+                        runtimeChunk.StagingCollider.sharedMesh = null;
+                        if (runtimeChunk.StagingMesh.vertexCount > 0)
+                            runtimeChunk.StagingCollider.sharedMesh = runtimeChunk.StagingMesh;
+                        runtimeChunk.StagingColliderVersion = runtimeChunk.StagingVisualVersion;
                     }
-
-                    runtimeChunk.ColliderVersion = runtimeChunk.VisualVersion;
+                    else
+                    {
+                        runtimeChunk.ActiveCollider.sharedMesh = null;
+                        if (runtimeChunk.ActiveMesh.vertexCount > 0)
+                            runtimeChunk.ActiveCollider.sharedMesh = runtimeChunk.ActiveMesh;
+                        runtimeChunk.ColliderVersion = runtimeChunk.VisualVersion;
+                    }
                     runtimeChunk.ColliderDebtAge = 0f;
                 }
             }
+            LastColliderQueueMilliseconds = (Time.realtimeSinceStartupAsDouble - startedAt) * 1000.0;
+            PeakColliderQueueMilliseconds = Math.Max(
+                PeakColliderQueueMilliseconds,
+                LastColliderQueueMilliseconds);
         }
 
-        private static void MarkVisualVersion(RuntimeChunk runtimeChunk, uint visualVersion)
+        private static void MarkVisualVersion(
+            RuntimeChunk runtimeChunk,
+            uint visualVersion,
+            bool staged)
         {
+            if (staged)
+            {
+                runtimeChunk.StagingVisualVersion = visualVersion;
+                runtimeChunk.StagingColliderVersion = 0u;
+                return;
+            }
             if (runtimeChunk.VisualVersion != visualVersion)
             {
                 runtimeChunk.VisualVersion = visualVersion;
@@ -496,16 +539,74 @@ namespace Elemental.Runtime.World
                     uint required = pending.RequiredVersions[index];
                     if (!_state.Chunks.TryGet(coord, out VoxelChunkState state) || state.IsDirty ||
                         !_runtimeChunks.TryGetValue(coord, out RuntimeChunk runtime) ||
-                        runtime.VisualVersion < required || runtime.ColliderVersion < required)
+                        !HasCommittedOrStagedVersion(runtime, required))
                     {
                         ready = false;
                         break;
                     }
                 }
                 if (!ready) continue;
+                CommitStagedTransaction(pending);
                 VoxelEditReceipt receipt = pending.Receipt;
                 _pendingTransactions.RemoveAt(transactionIndex);
                 EditCommitted?.Invoke(receipt);
+            }
+        }
+
+        private bool RequiresTransactionalStaging(ChunkCoord coord, uint version)
+        {
+            for (int transactionIndex = 0; transactionIndex < _pendingTransactions.Count; transactionIndex++)
+            {
+                PendingEditTransaction pending = _pendingTransactions[transactionIndex];
+                for (int index = 0; index < pending.Coords.Length; index++)
+                {
+                    if (!pending.Coords[index].Equals(coord) || pending.RequiredVersions[index] > version)
+                        continue;
+                    if (_runtimeChunks.TryGetValue(coord, out RuntimeChunk runtime) &&
+                        runtime.VisualVersion >= pending.RequiredVersions[index] &&
+                        runtime.ColliderVersion >= pending.RequiredVersions[index]) continue;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static bool HasCommittedOrStagedVersion(RuntimeChunk runtime, uint required)
+        {
+            bool committed = runtime.VisualVersion >= required && runtime.ColliderVersion >= required;
+            bool staged = runtime.StagingVisualVersion >= required &&
+                          runtime.StagingColliderVersion >= required;
+            return committed || staged;
+        }
+
+        private void CommitStagedTransaction(PendingEditTransaction pending)
+        {
+            // Every staged Mesh and disabled collider is already prepared. The loop only
+            // swaps references/enabled flags, so adjacent chunks become visible and
+            // physical in the same frame without rebuilding or cooking here.
+            for (int index = 0; index < pending.Coords.Length; index++)
+            {
+                uint required = pending.RequiredVersions[index];
+                if (!_runtimeChunks.TryGetValue(pending.Coords[index], out RuntimeChunk runtime) ||
+                    runtime.VisualVersion >= required && runtime.ColliderVersion >= required)
+                    continue;
+                if (runtime.StagingVisualVersion < required || runtime.StagingColliderVersion < required)
+                    continue;
+
+                runtime.ActiveCollider.enabled = false;
+                runtime.StagingCollider.enabled = true;
+                runtime.Filter.sharedMesh = runtime.StagingMesh;
+
+                (runtime.ActiveMesh, runtime.StagingMesh) =
+                    (runtime.StagingMesh, runtime.ActiveMesh);
+                (runtime.ActiveCollider, runtime.StagingCollider) =
+                    (runtime.StagingCollider, runtime.ActiveCollider);
+                runtime.VisualVersion = runtime.StagingVisualVersion;
+                runtime.ColliderVersion = runtime.StagingColliderVersion;
+                runtime.StagingVisualVersion = 0u;
+                runtime.StagingColliderVersion = 0u;
+                runtime.StagingCollider.enabled = false;
+                runtime.ColliderDebtAge = 0f;
             }
         }
 
@@ -522,18 +623,15 @@ namespace Elemental.Runtime.World
             _meshBuffers?.Dispose();
             foreach (KeyValuePair<ChunkCoord, RuntimeChunk> pair in _runtimeChunks)
             {
-                if (pair.Value.Mesh == null)
-                {
-                    continue;
-                }
-
                 if (Application.isPlaying)
                 {
-                    Destroy(pair.Value.Mesh);
+                    if (pair.Value.ActiveMesh != null) Destroy(pair.Value.ActiveMesh);
+                    if (pair.Value.StagingMesh != null) Destroy(pair.Value.StagingMesh);
                 }
                 else
                 {
-                    DestroyImmediate(pair.Value.Mesh);
+                    if (pair.Value.ActiveMesh != null) DestroyImmediate(pair.Value.ActiveMesh);
+                    if (pair.Value.StagingMesh != null) DestroyImmediate(pair.Value.StagingMesh);
                 }
             }
             if (_runtimeSurfaceMaterial != null)

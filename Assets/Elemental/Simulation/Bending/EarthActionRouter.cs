@@ -12,7 +12,8 @@ namespace Elemental.Simulation.Bending
         Primary = 7,
         VectorField = 8,
         Pillar = 9,
-        LandingCushion = 10
+        LandingCushion = 10,
+        DualMouseEarth = 11
     }
 
     public enum EarthActionRoutePhase : byte
@@ -236,18 +237,36 @@ namespace Elemental.Simulation.Bending
                     frame.Time);
 
             if (frame.PrimaryPressed)
+            {
+                if (frame.PrimaryReleased || !frame.PrimaryHeld)
+                    return Route(
+                        EarthActionOwner.Primary,
+                        EarthActionRoutePhase.Commit,
+                        frame.HasPrimedQuickStone
+                            ? EarthActionIntentKind.QuickFire
+                            : EarthActionIntentKind.FullBend,
+                        EarthInputConsumption.Primary);
                 return Begin(
                     EarthActionOwner.Primary,
                     frame.HasPrimedQuickStone ? EarthActionIntentKind.QuickFire : EarthActionIntentKind.FullBend,
                     EarthInputConsumption.Primary,
                     frame.Time);
+            }
 
             if (frame.ForcePressed)
+            {
+                if (frame.ForceReleased || !frame.ForceHeld)
+                    return Route(
+                        EarthActionOwner.VectorField,
+                        EarthActionRoutePhase.Commit,
+                        EarthActionIntentKind.VectorFieldPush,
+                        EarthInputConsumption.Force);
                 return Begin(
                     EarthActionOwner.VectorField,
                     EarthActionIntentKind.VectorFieldPush,
                     EarthInputConsumption.Force,
                     frame.Time);
+            }
 
             if (frame.JumpPressed)
                 return Begin(
@@ -377,14 +396,14 @@ namespace Elemental.Simulation.Bending
                         EarthInputConsumption.Field);
 
                 case EarthActionOwner.Primary:
-                    if (frame.PrimaryReleased)
+                    if (frame.PrimaryReleased || !frame.PrimaryHeld)
                         return CommitAndReset(_owner, EarthActionIntentKind.FullBend, EarthInputConsumption.Primary);
                     return Route(_owner, EarthActionRoutePhase.Continue,
                         frame.HasPrimedQuickStone ? EarthActionIntentKind.QuickFire : EarthActionIntentKind.FullBend,
                         EarthInputConsumption.Primary);
 
                 case EarthActionOwner.VectorField:
-                    if (frame.ForceReleased)
+                    if (frame.ForceReleased || !frame.ForceHeld)
                         return CommitAndReset(_owner, EarthActionIntentKind.VectorFieldPush, EarthInputConsumption.Force);
                     return Route(_owner, EarthActionRoutePhase.Continue,
                         EarthActionIntentKind.VectorFieldPush, EarthInputConsumption.Force);

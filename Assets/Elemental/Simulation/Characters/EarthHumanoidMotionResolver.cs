@@ -21,6 +21,9 @@ namespace Elemental.Simulation.Characters
 
     public static class EarthHumanoidMotionResolver
     {
+        public static bool ShouldInterruptRecovery(EarthCastPhase phase, float moveMagnitude) =>
+            phase == EarthCastPhase.Recover && moveMagnitude >= 0.16f;
+
         public static float ResolveMotionTime(EarthCastPhase phase) => phase switch
         {
             EarthCastPhase.Acquire => 0.06f,

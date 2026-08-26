@@ -104,6 +104,25 @@ namespace Elemental.Runtime.Characters
             targetBody.angularVelocity = Vector3.zero;
             targetBody.WakeUp();
         }
+
+        /// <summary>
+        /// Clears only residual velocity separating the character from a support.
+        /// Tangential player locomotion is preserved across a moving-to-static
+        /// surface handoff.
+        /// </summary>
+        public void ClearOutwardSupportVelocity()
+        {
+            if (targetBody == null) return;
+            Vector3 up = _localUp.sqrMagnitude > 0.5f ? _localUp.normalized : transform.up;
+            Vector3 supportVelocity = _movingSupportTicks > 0
+                ? ToVector3(_movingSupport.ContactPointVelocity)
+                : Vector3.zero;
+            Vector3 relativeVelocity = targetBody.linearVelocity - supportVelocity;
+            float outwardSpeed = Vector3.Dot(relativeVelocity, up);
+            if (outwardSpeed <= 0f) return;
+            targetBody.linearVelocity -= up * outwardSpeed;
+            targetBody.WakeUp();
+        }
         public PlanetLocomotionTelemetry Telemetry { get; private set; }
         public PlanetMotionState MotionState { get; private set; } = PlanetMotionState.AirborneFalling;
         public EarthMotionReproRecorder MotionRecorder => _motionRecorder;
@@ -306,7 +325,8 @@ namespace Elemental.Runtime.Characters
 
         private void FixedUpdate()
         {
-            if (gravityWorld == null || !gravityWorld.IsReady || targetBody == null)
+            if (gravityWorld == null || !gravityWorld.IsReady || targetBody == null ||
+                targetBody.isKinematic)
             {
                 return;
             }
@@ -424,6 +444,34 @@ namespace Elemental.Runtime.Characters
 
             if (!float.IsFinite(bestDistance))
             {
+                // SphereCast does not report a collider that starts in exact contact
+                // with the cast sphere. This happens at the platform's moving-to-
+                // static handoff: the capsule is physically settled, yet support
+                // would flicker for several frames. A bounded ray fallback uses the
+                // same fixed buffer and the same slope/self filters.
+                int rayCount = UnityEngine.Physics.RaycastNonAlloc(
+                    origin,
+                    -_localUp,
+                    _groundHits,
+                    halfHeight + groundProbeDistance,
+                    groundMask,
+                    QueryTriggerInteraction.Ignore);
+                float bestRayDistance = float.PositiveInfinity;
+                for (int index = 0; index < rayCount; index++)
+                {
+                    RaycastHit hit = _groundHits[index];
+                    if (hit.collider == null || hit.collider == capsule || hit.rigidbody == targetBody ||
+                        (_puppet != null && _puppet.OwnsCollider(hit.collider)))
+                        continue;
+                    float slopeDot = Vector3.Dot(hit.normal, _localUp);
+                    if (slopeDot < minimumSlopeDot || hit.distance >= bestRayDistance) continue;
+                    bestRayDistance = hit.distance;
+                    _groundNormal = hit.normal;
+                }
+                if (!float.IsFinite(bestRayDistance)) return;
+                _groundContactCount++;
+                _groundDistance = Mathf.Max(0f, bestRayDistance - halfHeight);
+                IsGrounded = _groundDistance <= groundProbeDistance;
                 return;
             }
 

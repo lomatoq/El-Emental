@@ -11,8 +11,9 @@ namespace Elemental.Runtime.Characters
         [SerializeField] private Vector3 localPosition = new Vector3(0f, -1.05f, 0f);
         [SerializeField] private Vector3 localEulerAngles;
         [SerializeField] private Vector3 localScale = Vector3.one * 1.08f;
-        [SerializeField, Range(0.01f, 0.5f)] private float locomotionBlendSeconds = 0.12f;
+        [SerializeField, Range(0.01f, 0.5f)] private float locomotionBlendSeconds = 0.08f;
         [SerializeField, Range(0.01f, 0.5f)] private float castingBlendSeconds = 0.1f;
+        [SerializeField, Range(0.05f, 0.4f)] private float castingRecoverySeconds = 0.22f;
         [SerializeField, Range(0f, 1f)] private float handIkWeight = 0.92f;
 
         [Header("Animation Rescue / Landing")]
@@ -41,6 +42,8 @@ namespace Elemental.Runtime.Characters
         [SerializeField, Range(0.02f, 0.18f)] private float speedAccelerationSeconds = 0.075f;
         [SerializeField, Range(0.04f, 0.24f)] private float speedDecelerationSeconds = 0.11f;
         [SerializeField, Range(0f, 0.4f)] private float passiveLocomotionDriftDeadZone = 0.14f;
+        [SerializeField, Range(0.2f, 3f)] private float organicIdleBlendInSeconds = 0.65f;
+        [SerializeField, Range(0.05f, 0.5f)] private float organicIdleBlendOutSeconds = 0.14f;
 
         [Header("Animation Rescue / Moving Support")]
         [SerializeField, Range(0.02f, 0.25f)] private float surfPelvisResponseSeconds = 0.085f;
@@ -54,6 +57,7 @@ namespace Elemental.Runtime.Characters
         public Vector3 LocalScale => localScale;
         public float LocomotionBlendSeconds => locomotionBlendSeconds;
         public float CastingBlendSeconds => castingBlendSeconds;
+        public float CastingRecoverySeconds => castingRecoverySeconds;
         public float HandIkWeight => handIkWeight;
         public float LandingPredictionHorizon => landingPredictionHorizon;
         public int LandingPredictionSteps => landingPredictionSteps;
@@ -78,6 +82,8 @@ namespace Elemental.Runtime.Characters
         public float SpeedAccelerationSeconds => speedAccelerationSeconds;
         public float SpeedDecelerationSeconds => speedDecelerationSeconds;
         public float PassiveLocomotionDriftDeadZone => passiveLocomotionDriftDeadZone;
+        public float OrganicIdleBlendInSeconds => organicIdleBlendInSeconds;
+        public float OrganicIdleBlendOutSeconds => organicIdleBlendOutSeconds;
         public float SurfPelvisResponseSeconds => surfPelvisResponseSeconds;
         public float SurfPelvisMaximumSpeed => surfPelvisMaximumSpeed;
 
@@ -95,6 +101,12 @@ namespace Elemental.Runtime.Characters
             localPosition = configuredLocalPosition;
             localEulerAngles = configuredLocalEulerAngles;
             localScale = configuredLocalScale;
+            // MVP 0.1 presentation timing is intentionally independent from
+            // gameplay/cast authority. Movement cuts through recovery quickly,
+            // while the upper body settles over a short organic release window.
+            locomotionBlendSeconds = 0.08f;
+            castingBlendSeconds = 0.1f;
+            castingRecoverySeconds = 0.22f;
         }
     }
 }

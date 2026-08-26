@@ -18,8 +18,9 @@ MonoBehaviour:
   localPosition: {x: 0, y: -1.02, z: 0}
   localEulerAngles: {x: 0, y: 0, z: 0}
   localScale: {x: 1.08, y: 1.08, z: 1.08}
-  locomotionBlendSeconds: 0.12
+  locomotionBlendSeconds: 0.08
   castingBlendSeconds: 0.1
+  castingRecoverySeconds: 0.22
   handIkWeight: 0.92
   landingPredictionHorizon: 0.65
   landingPredictionSteps: 6
@@ -44,5 +45,7 @@ MonoBehaviour:
   speedAccelerationSeconds: 0.075
   speedDecelerationSeconds: 0.11
   passiveLocomotionDriftDeadZone: 0.14
+  organicIdleBlendInSeconds: 0.65
+  organicIdleBlendOutSeconds: 0.14
   surfPelvisResponseSeconds: 0.085
   surfPelvisMaximumSpeed: 0.8

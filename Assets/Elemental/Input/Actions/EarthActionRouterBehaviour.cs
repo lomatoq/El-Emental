@@ -3,6 +3,7 @@ using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
 using Elemental.Simulation.Matter;
 using Elemental.Simulation.Bending;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Elemental.Input.Actions
@@ -20,13 +21,22 @@ namespace Elemental.Input.Actions
         [SerializeField] private UnityEngine.Camera castCamera;
         [SerializeField] private EarthResonanceController resonanceController;
         [SerializeField] private EarthSurfController surfController;
+        [SerializeField] private EarthDualMouseAbilityController dualMouseAbilities;
 
         private readonly EarthActionRouter _router = new EarthActionRouter();
+        private readonly DualMouseEarthGestureSolver _dualMouse = new DualMouseEarthGestureSolver();
         private EarthActionRoute _current;
         private float _waveChargeStartedAt;
+        private Vector2 _bufferedPrimaryPointer;
+        private Vector2 _bufferedForcePointer;
+        private readonly Vector2[] _bufferedPrimaryPath = new Vector2[16];
+        private int _bufferedPrimaryPathCount;
 
         public EarthActionRoute Current => _current;
-        public EarthActionOwner Owner => _router.Owner;
+        public EarthActionOwner Owner => _dualMouse.OwnsInput ||
+                                         _current.Owner == EarthActionOwner.DualMouseEarth
+            ? EarthActionOwner.DualMouseEarth
+            : _router.Owner;
         public EarthInputChordState ChordState => _router.ChordState;
         public float ResonanceCharge01 => resonanceController != null ? resonanceController.Charge01 : 0f;
         public int ResonanceStoneCount => resonanceController != null ? resonanceController.ActiveStoneCount : 0;
@@ -58,6 +68,15 @@ namespace Elemental.Input.Actions
             if (castCamera == null) castCamera = UnityEngine.Camera.main;
             if (resonanceController == null) resonanceController = GetComponent<EarthResonanceController>();
             if (surfController == null) surfController = GetComponent<EarthSurfController>();
+            if (dualMouseAbilities == null)
+                dualMouseAbilities = GetComponent<EarthDualMouseAbilityController>() ??
+                                     gameObject.AddComponent<EarthDualMouseAbilityController>();
+            dualMouseAbilities.Configure(
+                magicInput != null ? magicInput.EarthExecutor : null,
+                FindAnyObjectByType<EarthPillarWavePool>(FindObjectsInactive.Include),
+                motor,
+                castCamera,
+                casterBody);
         }
 
         private void Awake()
@@ -68,6 +87,8 @@ namespace Elemental.Input.Actions
             if (waveAbility == null) waveAbility = GetComponent<EarthPillarWaveAbility>();
             if (motor == null) motor = GetComponent<PlanetMotor>();
             if (casterBody == null) casterBody = GetComponent<Rigidbody>();
+            if (dualMouseAbilities == null)
+                dualMouseAbilities = GetComponent<EarthDualMouseAbilityController>();
         }
 
         private void OnDisable()
@@ -75,6 +96,11 @@ namespace Elemental.Input.Actions
             waveAbility?.CancelCharge();
             motorInput?.RouteCancel();
             _router.Reset();
+            _dualMouse.Reset();
+            _bufferedPrimaryPointer = default;
+            _bufferedForcePointer = default;
+            _bufferedPrimaryPathCount = 0;
+            dualMouseAbilities?.CancelStompStone();
             _current = default;
         }
 
@@ -91,6 +117,112 @@ namespace Elemental.Input.Actions
                 move.y >= EarthActionRouter.DefaultSurfForwardThreshold &&
                 !inputAdapter.BendPrimaryHeld && !inputAdapter.BendForceHeld && !inputAdapter.BendFieldHeld)
                 stableSupport = surfController.HasNearbyStartSurface();
+            Vector2 pointerViewport = inputAdapter.PointerViewport01;
+            if (dualMouseAbilities != null && dualMouseAbilities.IsStompStoneActive)
+                dualMouseAbilities.UpdateStompAim(inputAdapter.PointerPixels);
+            bool handsAvailable = !_router.HasActiveSession &&
+                                  magicInput != null &&
+                                  magicInput.SelectedElement == Elemental.Simulation.Magic.ElementId.Earth &&
+                                  (magicInput.CurrentBendPhase == BendPhase.Idle ||
+                                   magicInput.CurrentBendPhase == BendPhase.Cancelled) &&
+                                  !magicInput.IsArmorActive &&
+                                  !magicInput.IsQuickStonePrimed;
+            DualMouseEarthGestureResult dual = default;
+            if (_dualMouse.OwnsInput || handsAvailable)
+            {
+                if (!_dualMouse.OwnsInput)
+                {
+                    if (inputAdapter.BendPrimaryPressed)
+                    {
+                        _bufferedPrimaryPointer = inputAdapter.PointerPixels;
+                        BeginBufferedPrimaryPath(_bufferedPrimaryPointer);
+                    }
+                    if (inputAdapter.BendForcePressed)
+                        _bufferedForcePointer = inputAdapter.PointerPixels;
+                }
+                var dualFrame = new DualMouseEarthGestureFrame(
+                    Time.unscaledTime,
+                    inputAdapter.BendPrimaryPressed,
+                    inputAdapter.BendPrimaryHeld,
+                    inputAdapter.BendPrimaryReleased,
+                    inputAdapter.BendForcePressed,
+                    inputAdapter.BendForceHeld,
+                    inputAdapter.BendForceReleased,
+                    new float2(pointerViewport.x, pointerViewport.y),
+                    inputAdapter.CancelPressed);
+                // Capture the current pointer before Step can resolve and reset a
+                // pending single-button session. In a fast press-drag-release the
+                // release frame may contain the only meaningful motion sample; if
+                // it is appended after Step, the wall path collapses to a tap.
+                if (_dualMouse.OwnsInput && _bufferedPrimaryPathCount > 0)
+                    AppendBufferedPrimaryPath(inputAdapter.PointerPixels);
+                dual = _dualMouse.Step(in dualFrame);
+            }
+
+            if (dual.Kind is DualMouseEarthResultKind.Pending or DualMouseEarthResultKind.Tracking or
+                DualMouseEarthResultKind.StompStone or DualMouseEarthResultKind.PillarCrest or
+                DualMouseEarthResultKind.Cancel)
+            {
+                EarthActionIntentKind intent = dual.Kind switch
+                {
+                    DualMouseEarthResultKind.StompStone => EarthActionIntentKind.StompStone,
+                    DualMouseEarthResultKind.PillarCrest => EarthActionIntentKind.PillarCrest,
+                    DualMouseEarthResultKind.Cancel => EarthActionIntentKind.Cancel,
+                    _ => EarthActionIntentKind.None
+                };
+                EarthActionRoutePhase phase = dual.Kind is DualMouseEarthResultKind.StompStone or
+                    DualMouseEarthResultKind.PillarCrest
+                    ? EarthActionRoutePhase.Commit
+                    : dual.Kind == DualMouseEarthResultKind.Cancel
+                        ? EarthActionRoutePhase.Cancel
+                        : EarthActionRoutePhase.Continue;
+                _current = new EarthActionRoute(
+                    EarthActionOwner.DualMouseEarth,
+                    phase,
+                    intent,
+                    EarthInputConsumption.Primary | EarthInputConsumption.Force,
+                    dual.CrestCount / 7f);
+                if (dual.Kind == DualMouseEarthResultKind.StompStone)
+                    dualMouseAbilities?.CastStompStone(inputAdapter.PointerPixels);
+                else if (dual.Kind == DualMouseEarthResultKind.PillarCrest)
+                    dualMouseAbilities?.CastPillarCrest(
+                        new Vector2(dual.StartPointer.x, dual.StartPointer.y),
+                        new Vector2(dual.EndPointer.x, dual.EndPointer.y),
+                        dual.CrestCount);
+                // Pending/Tracking are non-terminal ownership states. Clearing the
+                // path here erased the very first LMB sample every frame, so the
+                // eventual single-button fallback replayed an empty gesture and
+                // walls, platforms, extraction and LMB grabbing never began.
+                if (dual.Kind is DualMouseEarthResultKind.StompStone or
+                    DualMouseEarthResultKind.PillarCrest or
+                    DualMouseEarthResultKind.Cancel)
+                    _bufferedPrimaryPathCount = 0;
+                magicInput?.ProcessRoutedInput();
+                return;
+            }
+
+            bool replayPrimary = dual.Kind == DualMouseEarthResultKind.FallbackPrimary;
+            bool replayForce = dual.Kind == DualMouseEarthResultKind.FallbackForce;
+            bool replayPrimaryReleased = replayPrimary &&
+                                         (inputAdapter.BendPrimaryReleased ||
+                                          !inputAdapter.BendPrimaryHeld);
+            bool replayForceReleased = replayForce &&
+                                       (inputAdapter.BendForceReleased ||
+                                        !inputAdapter.BendForceHeld);
+            if (replayPrimary)
+            {
+                magicInput?.ReplayBufferedPrimaryPath(_bufferedPrimaryPath, _bufferedPrimaryPathCount);
+                _bufferedPrimaryPathCount = 0;
+                if (replayPrimaryReleased)
+                    magicInput?.ReplayBufferedPrimaryRelease(inputAdapter.PointerPixels);
+            }
+            if (replayForce)
+            {
+                magicInput?.ReplayBufferedForcePress(_bufferedForcePointer);
+                if (replayForceReleased)
+                    magicInput?.ReplayBufferedForceRelease(inputAdapter.PointerPixels);
+            }
+
             var frame = new EarthActionRouterFrame(
                 Time.unscaledTime,
                 cancelPressed: inputAdapter.CancelPressed,
@@ -102,10 +234,10 @@ namespace Elemental.Input.Actions
                 jumpPressed: inputAdapter.JumpPressed,
                 jumpHeld: inputAdapter.JumpHeld,
                 jumpReleased: inputAdapter.JumpReleased,
-                primaryPressed: inputAdapter.BendPrimaryPressed,
+                primaryPressed: replayPrimary || inputAdapter.BendPrimaryPressed,
                 primaryHeld: inputAdapter.BendPrimaryHeld,
                 primaryReleased: inputAdapter.BendPrimaryReleased,
-                forcePressed: inputAdapter.BendForcePressed,
+                forcePressed: replayForce || inputAdapter.BendForcePressed,
                 forceHeld: inputAdapter.BendForceHeld,
                 forceReleased: inputAdapter.BendForceReleased,
                 fieldPressed: inputAdapter.BendFieldPressed,
@@ -125,7 +257,34 @@ namespace Elemental.Input.Actions
             _current = _router.Step(in frame);
             ExecuteRoute(in _current);
             ExecuteResonanceVolleyInput();
-            magicInput?.ProcessRoutedInput();
+            // A complete single-button tap can begin and end inside the 80 ms
+            // dual-button window. Its buffered release was already replayed through
+            // the canonical magic path above, so processing the physical release a
+            // second time would commit an empty gesture.
+            if (!replayPrimaryReleased && !replayForceReleased)
+                magicInput?.ProcessRoutedInput();
+        }
+
+        private void BeginBufferedPrimaryPath(Vector2 pointer)
+        {
+            _bufferedPrimaryPathCount = 1;
+            _bufferedPrimaryPath[0] = pointer;
+        }
+
+        private void AppendBufferedPrimaryPath(Vector2 pointer)
+        {
+            if (_bufferedPrimaryPathCount <= 0) return;
+            Vector2 previous = _bufferedPrimaryPath[_bufferedPrimaryPathCount - 1];
+            if ((pointer - previous).sqrMagnitude < 0.25f) return;
+            if (_bufferedPrimaryPathCount < _bufferedPrimaryPath.Length)
+            {
+                _bufferedPrimaryPath[_bufferedPrimaryPathCount++] = pointer;
+                return;
+            }
+            for (int index = 2; index < _bufferedPrimaryPath.Length; index += 2)
+                _bufferedPrimaryPath[index / 2] = _bufferedPrimaryPath[index];
+            _bufferedPrimaryPathCount = (_bufferedPrimaryPath.Length / 2);
+            _bufferedPrimaryPath[_bufferedPrimaryPathCount++] = pointer;
         }
 
         private void ExecuteRoute(in EarthActionRoute route)

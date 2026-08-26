@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="5" result="Passed" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-19 16:25:42Z" end-time="2026-08-19 16:25:42Z" duration="0.1323148">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="297" result="Passed" start-time="2026-08-19 16:25:42Z" end-time="2026-08-19 16:25:42Z" duration="0.132315" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1362" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/AppData/Local/Temp/ElEmental-CodexVerify-20260819-1200/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="297" result="Passed" start-time="2026-08-19 16:25:42Z" end-time="2026-08-19 16:25:42Z" duration="0.123392" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="14280" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1363" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="297" result="Passed" start-time="2026-08-19 16:25:42Z" end-time="2026-08-19 16:25:42Z" duration="0.121156" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1364" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="297" result="Passed" start-time="2026-08-19 16:25:42Z" end-time="2026-08-19 16:25:42Z" duration="0.119162" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1365" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="297" result="Passed" start-time="2026-08-19 16:25:42Z" end-time="2026-08-19 16:25:42Z" duration="0.117295" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1219" name="EarthShapeGrammarTests" fullname="Elemental.Tests.EditMode.EarthShapeGrammarTests" classname="Elemental.Tests.EditMode.EarthShapeGrammarTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-08-19 16:25:42Z" end-time="2026-08-19 16:25:42Z" duration="0.111295" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1220" name="RockLibraryBuildsTwelveDistinctColliderSafeSilhouettes" fullname="Elemental.Tests.EditMode.EarthShapeGrammarTests.RockLibraryBuildsTwelveDistinctColliderSafeSilhouettes" methodname="RockLibraryBuildsTwelveDistinctColliderSafeSilhouettes" classname="Elemental.Tests.EditMode.EarthShapeGrammarTests" runstate="Runnable" seed="1590470555" result="Passed" start-time="2026-08-19 16:25:42Z" end-time="2026-08-19 16:25:42Z" duration="0.037477" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1221" name="ShapeSeedAndAntiRepeatAreDeterministic" fullname="Elemental.Tests.EditMode.EarthShapeGrammarTests.ShapeSeedAndAntiRepeatAreDeterministic" methodname="ShapeSeedAndAntiRepeatAreDeterministic" classname="Elemental.Tests.EditMode.EarthShapeGrammarTests" runstate="Runnable" seed="1938709286" result="Passed" start-time="2026-08-19 16:25:42Z" end-time="2026-08-19 16:25:42Z" duration="0.006571" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1222" name="TwentySamplesPerFamily_AreValidAndDeterministic" fullname="Elemental.Tests.EditMode.EarthShapeGrammarTests.TwentySamplesPerFamily_AreValidAndDeterministic" methodname="TwentySamplesPerFamily_AreValidAndDeterministic" classname="Elemental.Tests.EditMode.EarthShapeGrammarTests" runstate="Runnable" seed="889239583" result="Passed" start-time="2026-08-19 16:25:42Z" end-time="2026-08-19 16:25:42Z" duration="0.023188" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1224" name="WallAntiRepeatIsDeterministicAndAvoidsAdjacentFamilies" fullname="Elemental.Tests.EditMode.EarthShapeGrammarTests.WallAntiRepeatIsDeterministicAndAvoidsAdjacentFamilies" methodname="WallAntiRepeatIsDeterministicAndAvoidsAdjacentFamilies" classname="Elemental.Tests.EditMode.EarthShapeGrammarTests" runstate="Runnable" seed="462292949" result="Passed" start-time="2026-08-19 16:25:42Z" end-time="2026-08-19 16:25:42Z" duration="0.001554" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1223" name="WallFamiliesProduceTwentyValidVisibleVariations" fullname="Elemental.Tests.EditMode.EarthShapeGrammarTests.WallFamiliesProduceTwentyValidVisibleVariations" methodname="WallFamiliesProduceTwentyValidVisibleVariations" classname="Elemental.Tests.EditMode.EarthShapeGrammarTests" runstate="Runnable" seed="1639467323" result="Passed" start-time="2026-08-19 16:25:42Z" end-time="2026-08-19 16:25:42Z" duration="0.029206" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

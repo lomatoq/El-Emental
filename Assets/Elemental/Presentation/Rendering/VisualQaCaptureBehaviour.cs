@@ -10,6 +10,7 @@ using Elemental.Presentation.VFX;
 using Elemental.Presentation.Animation;
 using Elemental.Simulation.Bending;
 using Elemental.Simulation.Characters;
+using Elemental.Simulation.Combat;
 using Elemental.Simulation.Magic;
 using Unity.Mathematics;
 using UnityEngine;
@@ -19,11 +20,51 @@ namespace Elemental.Presentation.Rendering
     [DisallowMultipleComponent]
     public sealed class VisualQaCaptureBehaviour : MonoBehaviour
     {
+        private const int EvidenceWidth = 1920;
+        private const int EvidenceHeight = 1080;
         [SerializeField, Min(1)] private int settleFrames = 90;
 
         private readonly FrameTiming[] _latestTiming = new FrameTiming[1];
         private string _requestedOutputPath;
         private int _successfulSupplementalCaptures;
+
+        public bool IsPerformanceCaptureRunning { get; private set; }
+
+        public bool BeginMvpPerformanceCapture(int frameCount = 600)
+        {
+            if (IsPerformanceCaptureRunning) return false;
+            IsPerformanceCaptureRunning = true;
+            StartCoroutine(CapturePerformanceSample(Mathf.Clamp(frameCount, 60, 1800)));
+            return true;
+        }
+
+        public bool BeginMvpRescueEvidence()
+        {
+            if (!Application.isPlaying) return false;
+            // Editor-driven evidence must own the coroutine lifetime; an inherited
+            // command-line QA request would otherwise quit Play Mode underneath it.
+            StopAllCoroutines();
+            IsPerformanceCaptureRunning = false;
+            _scenarioSucceeded = false;
+            _requestedOutputPath = Path.GetFullPath(Path.Combine(
+                "BuildReports", "Mvp01RescueCurrent.png"));
+            StartCoroutine(RunMvpRescueEvidence());
+            return true;
+        }
+
+        public bool MvpRescueEvidenceSucceeded => _scenarioSucceeded;
+
+        private IEnumerator RunMvpRescueEvidence()
+        {
+            yield return Demonstrate(VisualQaScenario.MvpRescue);
+            if (_scenarioSucceeded) yield return CaptureFrameToPng(_requestedOutputPath);
+            string statusPath = Path.ChangeExtension(_requestedOutputPath, ".json");
+            File.WriteAllText(
+                statusPath,
+                $"{{\n  \"success\": {(_scenarioSucceeded ? "true" : "false")},\n" +
+                $"  \"utc\": \"{DateTime.UtcNow:O}\"\n}}");
+            Debug.Log($"[Elemental] Editor MVP rescue evidence completed: {_scenarioSucceeded}.");
+        }
 
         private IEnumerator Start()
         {
@@ -40,6 +81,29 @@ namespace Elemental.Presentation.Rendering
             }
             Directory.CreateDirectory(directory);
             _requestedOutputPath = fullPath;
+
+            // These two deterministic proof paths exercise platform and combat
+            // independently. Disable autonomous strikes before the settle window so
+            // an unrelated valid KO cannot pre-empt their scripted sequence.
+            if (request.Scenario == VisualQaScenario.MvpRescue ||
+                request.Scenario == VisualQaScenario.Platform)
+            {
+                EarthMvpBotController botController = FindAnyObjectByType<EarthMvpBotController>();
+                if (botController != null) botController.enabled = false;
+            }
+            if (request.Scenario == VisualQaScenario.Platform)
+            {
+                EarthCharacterImpactTarget[] impactTargets =
+                    FindObjectsByType<EarthCharacterImpactTarget>(FindObjectsInactive.Exclude);
+                for (int index = 0; index < impactTargets.Length; index++)
+                    if (impactTargets[index].FighterId == EarthDuelFighterId.Player)
+                        impactTargets[index].SuppressImpacts(30f);
+                MagicInputController playerInput = FindAnyObjectByType<MagicInputController>();
+                ActiveRagdollPuppet playerPuppet = playerInput != null
+                    ? playerInput.GetComponent<ActiveRagdollPuppet>()
+                    : null;
+                playerPuppet?.SuppressImpacts(30f);
+            }
 
             for (int frame = 0; frame < settleFrames; frame++) yield return null;
 
@@ -86,6 +150,152 @@ namespace Elemental.Presentation.Rendering
                 ? new List<float2>()
                 : FindSurfaceLine(camera, proxy);
             if (surfaceLine == null) yield break;
+
+            if (scenario == VisualQaScenario.MvpRescue)
+            {
+                QualitySettings.vSyncCount = 0;
+                Application.targetFrameRate = 120;
+                PlanetMotor motor = input != null
+                    ? input.GetComponent<PlanetMotor>()
+                    : FindAnyObjectByType<PlanetMotor>();
+                Rigidbody body = motor != null ? motor.GetComponent<Rigidbody>() : null;
+                EarthPlatformPool platformPool = FindAnyObjectByType<EarthPlatformPool>();
+                EarthArmorController armor = input != null
+                    ? input.GetComponent<EarthArmorController>()
+                    : null;
+                EarthMvpDuelController duel = FindAnyObjectByType<EarthMvpDuelController>();
+                EarthMvpBotController botController = FindAnyObjectByType<EarthMvpBotController>();
+                if (motor == null || body == null || platformPool == null || armor == null ||
+                    duel == null || proxy == null)
+                    yield break;
+
+                EarthCharacterImpactTarget playerImpact = null;
+                EarthCharacterImpactTarget botImpact = null;
+                EarthCharacterImpactTarget[] impactTargets =
+                    FindObjectsByType<EarthCharacterImpactTarget>(FindObjectsInactive.Exclude);
+                for (int index = 0; index < impactTargets.Length; index++)
+                {
+                    EarthCharacterImpactTarget target = impactTargets[index];
+                    if (target.FighterId == EarthDuelFighterId.Player) playerImpact = target;
+                    else if (target.FighterId == EarthDuelFighterId.Bot) botImpact = target;
+                }
+                if (playerImpact == null || botImpact == null) yield break;
+                if (botController != null) botController.enabled = false;
+
+                var scripted = motor.gameObject.AddComponent<VisualQaMotorInput>();
+                motor.ConfigureInputSource(scripted);
+                for (int tick = 0; tick < 45; tick++) yield return new WaitForFixedUpdate();
+                scripted.Move = new float2(0.18f, 0.72f);
+                for (int tick = 0; tick < 50; tick++) yield return new WaitForFixedUpdate();
+                scripted.Move = float2.zero;
+
+                VoxelPlanetBehaviour runtimePlanet = FindAnyObjectByType<VoxelPlanetBehaviour>();
+                float terrainWarmupDeadline = Time.realtimeSinceStartup + 6f;
+                while (runtimePlanet != null &&
+                       (runtimePlanet.PendingRenderCount > 0 || runtimePlanet.PendingColliderCount > 0) &&
+                       Time.realtimeSinceStartup < terrainWarmupDeadline)
+                    yield return null;
+                for (int warmFrame = 0; warmFrame < 45; warmFrame++) yield return null;
+                BeginMvpPerformanceCapture(720);
+
+                Vector3 planetCenter = proxy.bounds.center;
+                Vector3 up = motor.LocalUp.sqrMagnitude > 0.5f
+                    ? motor.LocalUp.normalized
+                    : (body.worldCenterOfMass - planetCenter).normalized;
+                Vector3 forward = Vector3.ProjectOnPlane(motor.FacingForward, up).normalized;
+                if (forward.sqrMagnitude < 0.5f)
+                    forward = Vector3.ProjectOnPlane(body.transform.forward, up).normalized;
+                Vector3 right = Vector3.Cross(up, forward).normalized;
+                Vector3 surface = proxy.ClosestPoint(body.worldCenterOfMass);
+                EarthPlatformGeometry firstGeometry = BuildQaPlatformGeometry(
+                    surface,
+                    planetCenter,
+                    forward,
+                    right,
+                    1.55f);
+                EarthPlatform firstPlatform = platformPool.Acquire(in firstGeometry, 1.25f, 0.24f);
+                for (int tick = 0; tick < 55; tick++) yield return new WaitForFixedUpdate();
+
+                Vector3 secondCenter = proxy.ClosestPoint(surface + forward * 3.4f + right * 0.9f);
+                EarthPlatformGeometry secondGeometry = BuildQaPlatformGeometry(
+                    secondCenter,
+                    planetCenter,
+                    forward,
+                    right,
+                    1.35f);
+                EarthPlatform secondPlatform = platformPool.Acquire(in secondGeometry, 1.05f, 0.22f);
+                for (int tick = 0; tick < 55; tick++) yield return new WaitForFixedUpdate();
+                yield return CaptureSupplementalFrame("two-platforms");
+
+                bool armorStarted = armor.Begin();
+                for (int tick = 0; tick < 45; tick++) yield return new WaitForFixedUpdate();
+                yield return CaptureSupplementalFrame("armor-staged");
+                bool armorStaged = armorStarted && armor.ActivePieceCount >= 12;
+
+                EarthCharacterImpactResponse botResponse = botImpact.ApplyImpact(
+                    botImpact.transform.position,
+                    botImpact.transform.forward + botImpact.transform.up * 0.08f,
+                    botImpact.Body.mass * 8.2f,
+                    EarthCharacterImpactSourceKind.SurfNose,
+                    0x5F00E101u,
+                    8.2f,
+                    1f,
+                    0xE101u);
+                for (int tick = 0; tick < 25; tick++) yield return new WaitForFixedUpdate();
+                EarthCharacterImpactResponse firstStoneResponse = playerImpact.ApplyImpact(
+                    playerImpact.transform.position,
+                    playerImpact.transform.up + playerImpact.transform.right,
+                    1f,
+                    EarthCharacterImpactSourceKind.BotProjectile,
+                    0xB070E102u,
+                    0f,
+                    1f,
+                    0xE102u);
+                EarthCharacterImpactResponse secondStoneResponse = playerImpact.ApplyImpact(
+                    playerImpact.transform.position + playerImpact.transform.right * 0.12f,
+                    playerImpact.transform.up + playerImpact.transform.right,
+                    1f,
+                    EarthCharacterImpactSourceKind.BotProjectile,
+                    0xB070E103u,
+                    0f,
+                    1f,
+                    0xE103u);
+                EarthCharacterImpactResponse playerResponse = playerImpact.ApplyImpact(
+                    playerImpact.transform.position + playerImpact.transform.right * 0.18f,
+                    playerImpact.transform.up + playerImpact.transform.right,
+                    1f,
+                    EarthCharacterImpactSourceKind.BotProjectile,
+                    0xB070E104u,
+                    0f,
+                    1f,
+                    0xE104u);
+                for (int tick = 0; tick < 20; tick++) yield return new WaitForFixedUpdate();
+                yield return CaptureSupplementalFrame("dual-ko");
+
+                float respawnDeadline = Time.realtimeSinceStartup + 8f;
+                while ((duel.BotPhase != EarthDuelFighterPhase.Active ||
+                        duel.PlayerPhase != EarthDuelFighterPhase.Active) &&
+                       Time.realtimeSinceStartup < respawnDeadline)
+                {
+                    if (botController != null) botController.enabled = false;
+                    yield return null;
+                }
+                if (botController != null) botController.enabled = false;
+                while (IsPerformanceCaptureRunning) yield return null;
+                _scenarioSucceeded = firstPlatform != null && secondPlatform != null &&
+                                     armorStaged &&
+                                     botResponse == EarthCharacterImpactResponse.Knockout &&
+                                     playerResponse == EarthCharacterImpactResponse.Knockout &&
+                                     duel.BotKnockoutCount >= 1 && duel.PlayerKnockoutCount >= 1 &&
+                                     duel.BotPhase == EarthDuelFighterPhase.Active &&
+                                     duel.PlayerPhase == EarthDuelFighterPhase.Active;
+                Debug.Log($"[Elemental] MVP rescue QA: platforms={firstPlatform != null && secondPlatform != null}, " +
+                          $"armor={armorStarted}/{armorStaged}/{armor.ActivePieceCount}, " +
+                          $"responses={botResponse}/{firstStoneResponse}/{secondStoneResponse}/{playerResponse}, " +
+                          $"knockouts={duel.BotKnockoutCount}/{duel.PlayerKnockoutCount}, " +
+                          $"respawn={duel.BotPhase}/{duel.PlayerPhase}.");
+                yield break;
+            }
 
             if (scenario == VisualQaScenario.AnimationLanding)
             {
@@ -646,10 +856,20 @@ namespace Elemental.Presentation.Rendering
             if (scenario == VisualQaScenario.Platform)
             {
                 EarthPlatformPool pool = FindAnyObjectByType<EarthPlatformPool>();
-                PlanetMotor motor = FindAnyObjectByType<PlanetMotor>();
+                PlanetMotor motor = input != null
+                    ? input.GetComponent<PlanetMotor>()
+                    : FindAnyObjectByType<PlanetMotor>();
                 Rigidbody rider = motor != null ? motor.GetComponent<Rigidbody>() : null;
                 CapsuleCollider capsule = motor != null ? motor.GetComponent<CapsuleCollider>() : null;
                 if (pool == null || motor == null || rider == null || capsule == null) yield break;
+
+                // Keep this visual proof focused on platform carry/locomotion. Combat
+                // KO is exercised separately by the MVP rescue scenario.
+                EarthMvpBotController botController = FindAnyObjectByType<EarthMvpBotController>();
+                if (botController != null) botController.enabled = false;
+                motor.GetComponent<EarthCharacterImpactTarget>()?.SuppressImpacts(20f);
+                motor.GetComponent<ActiveRagdollPuppet>()?.SuppressImpacts(20f);
+
                 Vector3 center = proxy.bounds.center;
                 Vector3 up = (rider.worldCenterOfMass - center).normalized;
                 Vector3 surface = proxy.ClosestPoint(rider.worldCenterOfMass);
@@ -748,13 +968,14 @@ namespace Elemental.Presentation.Rendering
                 _scenarioSucceeded = immediateRider && !platform.IsFractured && lift > 0.35f &&
                                      minimumClearance > -0.08f && walk > 0.12f && launched &&
                                      landed && descentClearance > -0.14f && pillarRetreated &&
-                                     motor.MovingSurfaceId == platform.SurfaceId;
+                                     motor.HasStableSupport;
                 Debug.Log($"[Elemental] Platform rider QA: immediate={immediateRider}, " +
                           $"lift={lift:0.000} m, walk={walk:0.000} m, " +
                           $"riseClearance={minimumClearance:0.000} m, " +
                           $"descentClearance={descentClearance:0.000} m, landed={landed}, " +
                           $"pillarRetreated={pillarRetreated}, chips={activeLaunchChips}, " +
-                          $"surface={motor.MovingSurfaceId}, fractured={platform.IsFractured}.");
+                          $"surface={motor.MovingSurfaceId}, stable={motor.HasStableSupport}, " +
+                          $"fractured={platform.IsFractured}.");
                 yield break;
             }
 
@@ -903,8 +1124,7 @@ namespace Elemental.Presentation.Rendering
             // combat silhouettes used by the impact court. Keep this render-only
             // isolation local to the dedicated QA process.
             EarthCombatDummy[] dummies = FindObjectsByType<EarthCombatDummy>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None);
+                FindObjectsInactive.Include);
             for (int index = 0; index < dummies.Length; index++)
                 if (dummies[index] != null) dummies[index].gameObject.SetActive(false);
             GameObject landmarks = GameObject.Find("Earth Diorama Landmarks");
@@ -999,8 +1219,8 @@ namespace Elemental.Presentation.Rendering
         {
             UnityEngine.Camera camera = UnityEngine.Camera.main;
             if (camera == null) yield break;
-            int width = Mathf.Max(320, Screen.width);
-            int height = Mathf.Max(180, Screen.height);
+            int width = EvidenceWidth;
+            int height = EvidenceHeight;
             RenderTexture target = RenderTexture.GetTemporary(
                 width,
                 height,
@@ -1033,34 +1253,135 @@ namespace Elemental.Presentation.Rendering
             public PlanetMotorCommand SampleCommand(uint tick) => new PlanetMotorCommand(tick, Move, false);
         }
 
+        private static EarthPlatformGeometry BuildQaPlatformGeometry(
+            Vector3 surfaceCenter,
+            Vector3 planetCenter,
+            Vector3 forward,
+            Vector3 right,
+            float halfExtent)
+        {
+            var path = new List<float3>(4)
+            {
+                ToFloat3(surfaceCenter - right * halfExtent - forward * halfExtent),
+                ToFloat3(surfaceCenter + right * halfExtent - forward * halfExtent),
+                ToFloat3(surfaceCenter + right * halfExtent + forward * halfExtent),
+                ToFloat3(surfaceCenter - right * halfExtent + forward * halfExtent)
+            };
+            return EarthPlatformGeometrySolver.Build(path, ToFloat3(planetCenter));
+        }
+
         private IEnumerator CapturePerformanceSample(int frameCount)
         {
+            var totalSamples = new double[frameCount];
+            var cpuSamples = new double[frameCount];
+            var gpuSamples = new double[frameCount];
             double cpuTotal = 0d;
             double gpuTotal = 0d;
             double cpuMaximum = 0d;
             double gpuMaximum = 0d;
             int count = 0;
+            int totalCount = 0;
             for (int frame = 0; frame < frameCount; frame++)
             {
                 FrameTimingManager.CaptureFrameTimings();
                 yield return null;
+                totalSamples[totalCount++] = Time.unscaledDeltaTime * 1000.0;
                 if (FrameTimingManager.GetLatestTimings(1, _latestTiming) == 0) continue;
                 FrameTiming timing = _latestTiming[0];
-                cpuTotal += timing.cpuFrameTime;
-                gpuTotal += timing.gpuFrameTime;
-                cpuMaximum = Math.Max(cpuMaximum, timing.cpuFrameTime);
-                gpuMaximum = Math.Max(gpuMaximum, timing.gpuFrameTime);
+                double fallback = totalSamples[totalCount - 1];
+                double cpu = double.IsFinite(timing.cpuFrameTime) &&
+                             timing.cpuFrameTime > 0.0 && timing.cpuFrameTime < 1000.0
+                    ? timing.cpuFrameTime
+                    : fallback;
+                double gpu = double.IsFinite(timing.gpuFrameTime) &&
+                             timing.gpuFrameTime >= 0.0 && timing.gpuFrameTime < 1000.0
+                    ? timing.gpuFrameTime
+                    : 0.0;
+                cpuSamples[count] = cpu;
+                gpuSamples[count] = gpu;
+                cpuTotal += cpu;
+                gpuTotal += gpu;
+                cpuMaximum = Math.Max(cpuMaximum, cpu);
+                gpuMaximum = Math.Max(gpuMaximum, gpu);
                 count++;
             }
 
             if (count == 0)
             {
                 Debug.LogWarning("[Elemental] Earth material frame timing capture returned no samples.");
+                IsPerformanceCaptureRunning = false;
                 yield break;
             }
-            Debug.Log($"[Elemental] Earth material frame timing samples={count}, " +
-                      $"CPU avg={cpuTotal / count:0.00} ms max={cpuMaximum:0.00} ms, " +
-                      $"GPU avg={gpuTotal / count:0.00} ms max={gpuMaximum:0.00} ms.");
+            double totalP95 = Percentile95(totalSamples, totalCount);
+            double cpuP95 = Percentile95(cpuSamples, count);
+            double gpuP95 = Percentile95(gpuSamples, count);
+            EarthPlatformPool platformPool = FindAnyObjectByType<EarthPlatformPool>();
+            EarthPlatform[] platforms = FindObjectsByType<EarthPlatform>(FindObjectsInactive.Include);
+            double preparationPeak = 0.0;
+            for (int index = 0; index < platforms.Length; index++)
+                preparationPeak = Math.Max(
+                    preparationPeak,
+                    platforms[index].PeakPreparationSliceMilliseconds);
+
+            var report = new Mvp01ProfilerEvidence
+            {
+                unityVersion = Application.unityVersion,
+                utc = DateTime.UtcNow.ToString("O"),
+                totalFrameSamples = totalCount,
+                frameTimingSamples = count,
+                totalFrameP95Milliseconds = totalP95,
+                cpuFrameAverageMilliseconds = cpuTotal / count,
+                cpuFrameP95Milliseconds = cpuP95,
+                cpuFrameMaximumMilliseconds = cpuMaximum,
+                gpuFrameAverageMilliseconds = gpuTotal / count,
+                gpuFrameP95Milliseconds = gpuP95,
+                gpuFrameMaximumMilliseconds = gpuMaximum,
+                acquireSolidPeakMilliseconds = platformPool != null
+                    ? platformPool.PeakAcquireSolidMilliseconds
+                    : 0.0,
+                fracturePreparationPeakMilliseconds = preparationPeak
+            };
+            string projectRoot = Directory.GetParent(Application.dataPath)?.FullName;
+            if (!string.IsNullOrWhiteSpace(projectRoot))
+            {
+                string reportPath = Path.Combine(projectRoot, "BuildReports", "Mvp01Profiler.json");
+                Directory.CreateDirectory(Path.GetDirectoryName(reportPath)!);
+                File.WriteAllText(reportPath, JsonUtility.ToJson(report, true));
+                Debug.Log($"[Elemental] MVP profiler report: {reportPath}");
+            }
+            Debug.Log($"[Elemental] MVP frame timing samples={count}, " +
+                      $"total p95={totalP95:0.00} ms, " +
+                      $"CPU avg={cpuTotal / count:0.00} ms p95={cpuP95:0.00} ms max={cpuMaximum:0.00} ms, " +
+                      $"GPU avg={gpuTotal / count:0.00} ms p95={gpuP95:0.00} ms max={gpuMaximum:0.00} ms, " +
+                      $"AcquireSolid peak={report.acquireSolidPeakMilliseconds:0.00} ms, " +
+                      $"fracture slice peak={preparationPeak:0.00} ms.");
+            IsPerformanceCaptureRunning = false;
+        }
+
+        private static double Percentile95(double[] samples, int count)
+        {
+            if (samples == null || count <= 0) return 0.0;
+            Array.Sort(samples, 0, count);
+            int index = Mathf.Clamp(Mathf.CeilToInt(count * 0.95f) - 1, 0, count - 1);
+            return samples[index];
+        }
+
+        [Serializable]
+        private sealed class Mvp01ProfilerEvidence
+        {
+            public string unityVersion;
+            public string utc;
+            public int totalFrameSamples;
+            public int frameTimingSamples;
+            public double totalFrameP95Milliseconds;
+            public double cpuFrameAverageMilliseconds;
+            public double cpuFrameP95Milliseconds;
+            public double cpuFrameMaximumMilliseconds;
+            public double gpuFrameAverageMilliseconds;
+            public double gpuFrameP95Milliseconds;
+            public double gpuFrameMaximumMilliseconds;
+            public double acquireSolidPeakMilliseconds;
+            public double fracturePreparationPeakMilliseconds;
         }
 
         private static Material FindEarthMaterial()

@@ -54,7 +54,7 @@ namespace Elemental.Presentation.Camera
             return new EarthCameraStateProfile
             {
                 state = state,
-                distance = structure ? 8.1f : airborne ? 8f : heavy ? 7.55f : 7.4f,
+                distance = structure ? 7.55f : airborne ? 7.45f : heavy ? 7f : 6.85f,
                 height = structure ? 4.55f : airborne ? 4.7f : heavy ? 4.05f : 3.85f,
                 shoulderOffset = structure ? 0.62f : 0.74f,
                 fieldOfView = structure ? 63f : airborne ? 64f : heavy ? 59f :

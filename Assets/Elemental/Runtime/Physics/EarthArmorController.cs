@@ -3,6 +3,8 @@ using Elemental.Runtime.Characters;
 using Elemental.Runtime.Matter;
 using Elemental.Simulation.Matter;
 using Elemental.Simulation.Characters;
+using Elemental.Simulation.Combat;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace Elemental.Runtime.Physics
@@ -13,7 +15,16 @@ namespace Elemental.Runtime.Physics
         private const int MaximumPieces = EarthArmorProfile.MaximumPieceCount;
         private const int MaximumCasterColliders = 32;
         private const int MaximumBodyRenderers = 24;
+        private const int PiecesPerPreparationSlice = 12;
+        private const int PiecesPerReleaseSlice = 12;
         private const float GoldenAngle = 2.39996323f;
+        private static readonly ProfilerMarker BeginMarker = new("Elemental.Armor.Begin");
+        private static readonly ProfilerMarker PreparePieceMarker = new("Elemental.Armor.PreparePiece");
+        private static readonly ProfilerMarker FormationMarker = new("Elemental.Armor.FixedFormation");
+        private static readonly ProfilerMarker DefenseMarker = new("Elemental.Armor.DefenseDamage");
+        private static readonly ProfilerMarker ReleaseSliceMarker = new("Elemental.Armor.ReleaseSlice");
+        private static readonly ProfilerMarker InputReleaseMarker = new("Elemental.Armor.InputRelease");
+        private static readonly ProfilerMarker CompactFollowMarker = new("Elemental.Armor.CompactFollow");
         private readonly EarthArmorPiece[] _pieces = new EarthArmorPiece[MaximumPieces];
         private readonly Collider[] _casterColliders = new Collider[MaximumCasterColliders];
         private readonly Collider[] _bodyColliders = new Collider[MaximumCasterColliders];
@@ -27,6 +38,7 @@ namespace Elemental.Runtime.Physics
         private readonly Vector3[] _formationPositions = new Vector3[MaximumPieces];
         private readonly Vector3[] _formationVelocities = new Vector3[MaximumPieces];
         private readonly Quaternion[] _formationRotations = new Quaternion[MaximumPieces];
+        private readonly bool[] _damageSelected = new bool[MaximumPieces];
         private EarthArmorProfile _profile;
         private Rigidbody _caster;
         private ActiveRagdollPuppet _casterPuppet;
@@ -36,6 +48,8 @@ namespace Elemental.Runtime.Physics
         private float _elapsed;
         private uint _generation;
         private int _pieceCount;
+        private int _preparedPieceCount;
+        private int _anchorPieceCount;
         private int _casterColliderCount;
         private int _bodyColliderCount;
         private int _bodyRendererCount;
@@ -46,6 +60,22 @@ namespace Elemental.Runtime.Physics
         private float _casterMomentumGuardUntil;
         private Vector3 _guardedCasterLinearVelocity;
         private Vector3 _guardedCasterAngularVelocity;
+        private ReleaseMode _releaseMode;
+        private int _releaseCursor;
+        private int _queuedReleaseCount;
+        private Vector3 _queuedAim;
+        private Vector3 _queuedUp;
+        private Vector3 _queuedRight;
+        private Vector3 _queuedCenter;
+        private float _queuedBaseSpeed;
+
+        private enum ReleaseMode : byte
+        {
+            None,
+            Directed,
+            Radial,
+            Debris
+        }
 
         private struct BodySurfaceAnchor
         {
@@ -62,8 +92,11 @@ namespace Elemental.Runtime.Physics
 
         public bool IsActive => _session != null && _session.Active;
         public float Phase01 => _session != null ? _session.Phase01 : 0f;
+        public EarthArmorFormationMode FormationMode =>
+            EarthArmorFormationModeResolver.Resolve(Phase01);
         public int OverscrollSteps => _session != null ? _session.OverscrollSteps : 0;
-        public int ActivePieceCount => _pieceCount;
+        public int ActivePieceCount => _preparedPieceCount;
+        internal Rigidbody CasterBody => _caster;
         public EarthMatterId PrimaryMatterId
         {
             get
@@ -114,68 +147,48 @@ namespace Elemental.Runtime.Physics
             _session = new EarthArmorSession(in data);
             CacheCasterColliders();
             EnsurePool(fragmentPool != null ? fragmentPool.SharedMaterial : null);
+            _pieceCount = Mathf.Clamp(
+                _profile != null ? _profile.PieceCount : EarthArmorShellDefinition.RequiredSegmentCount,
+                40,
+                MaximumPieces);
+            BuildBodySurfaceAnchors();
+            _anchorPieceCount = _pieceCount;
         }
 
         public bool Begin()
         {
-            if (_caster == null || IsActive) return false;
-            EnsurePool(null);
-            _generation = _generation == uint.MaxValue ? 1u : _generation + 1u;
-            // The production profile uses a denser 96-tile skin. Profile-less tests
-            // and generic fallback actors retain the original 64-piece budget.
-            int requestedPieces = _profile != null
-                ? _profile.PieceCount
-                : EarthArmorShellDefinition.RequiredSegmentCount;
-            _pieceCount = Mathf.Clamp(requestedPieces, 40, MaximumPieces);
-            CacheCasterColliders();
-            BuildBodySurfaceAnchors();
-            // Armor is an external shell around the hero, not a replacement avatar.
-            // Keep both the animated character and its authored materials alive under
-            // the stones. Recolouring the body made compact armor read as a material
-            // swap instead of a physical shell and destroyed the character silhouette.
-            SetBodyRendererVisibility(true);
-            SetStoneSkin(false);
-            Vector3 up = LocalUp;
-            Vector3 forward = Vector3.ProjectOnPlane(_caster.transform.forward, up).normalized;
-            if (forward.sqrMagnitude < 0.5f) forward = Vector3.Cross(up, Vector3.right).normalized;
-            _aimDirection = forward;
-            Vector3 right = Vector3.Cross(up, forward).normalized;
-            Vector3 ground = _caster.position - up * 0.9f;
-            for (int index = 0; index < _pieceCount; index++)
+            using (BeginMarker.Auto())
             {
-                float angle = index * Mathf.PI * 2f / _pieceCount;
-                Vector3 radial = right * Mathf.Cos(angle) + forward * Mathf.Sin(angle);
-                Vector3 source = ground + radial * Mathf.Lerp(0.55f, 1.1f, Hash01(index)) - up * 0.22f;
-                _pieces[index].Activate(_generation, source, Quaternion.LookRotation(radial, up));
-                _formationPositions[index] = source;
-                _formationVelocities[index] = Vector3.zero;
-                _formationRotations[index] = Quaternion.LookRotation(radial, up);
-                BodySurfaceAnchor bodyAnchor = _bodyAnchors[index];
-                Vector3 bodyScale = bodyAnchor.PlateScale;
-                if (bodyScale.sqrMagnitude > 0.001f)
+                if (_caster == null || IsActive || _releaseMode != ReleaseMode.None) return false;
+                EnsurePool(null);
+                _generation = _generation == uint.MaxValue ? 1u : _generation + 1u;
+                // The production profile uses a denser 96-tile skin. Profile-less tests
+                // and generic fallback actors retain the original 64-piece budget.
+                int requestedPieces = _profile != null
+                    ? _profile.PieceCount
+                    : EarthArmorShellDefinition.RequiredSegmentCount;
+                _pieceCount = Mathf.Clamp(requestedPieces, 40, MaximumPieces);
+                if (_anchorPieceCount != _pieceCount)
                 {
-                    float silhouetteScale = (_profile != null ? _profile.BodyPlateScaleMultiplier : 0.91f) *
-                                            AnchorCoverageMultiplier(bodyAnchor, index);
-                    float thicknessScale = Mathf.Lerp(1f, silhouetteScale, 0.42f);
-                    _pieces[index].SetBaseScale(new Vector3(
-                        bodyScale.x * silhouetteScale,
-                        bodyScale.y * thicknessScale,
-                        bodyScale.z * silhouetteScale));
+                    BuildBodySurfaceAnchors();
+                    _anchorPieceCount = _pieceCount;
                 }
-                Vector3 sourceLocal = _planetCenter != null
-                    ? _planetCenter.InverseTransformPoint(source)
-                    : source;
-                _pieces[index].RegisterMatter(
-                    _matterKernel,
-                    sourceLocal,
-                    _generation,
-                    new EarthOwnerId(1u, 1));
+                // Armor is an external shell around the hero, not a replacement avatar.
+                SetBodyRendererVisibility(true);
+                SetStoneSkin(false);
+                Vector3 up = LocalUp;
+                Vector3 forward = Vector3.ProjectOnPlane(_caster.transform.forward, up).normalized;
+                if (forward.sqrMagnitude < 0.5f) forward = Vector3.Cross(up, Vector3.right).normalized;
+                _aimDirection = forward;
+                for (int index = 0; index < _pieces.Length; index++)
+                    _pieces[index]?.ResetToPool();
+                _preparedPieceCount = 0;
+                _releaseCursor = 0;
+                _queuedReleaseCount = 0;
+                _elapsed = 0f;
+                _session.Begin();
+                return true;
             }
-            for (int index = _pieceCount; index < _pieces.Length; index++)
-                _pieces[index]?.ResetToPool();
-            _elapsed = 0f;
-            _session.Begin();
-            return true;
         }
 
         public EarthArmorInputResult ApplyWheel(float rawWheelDelta, float now)
@@ -203,39 +216,40 @@ namespace Elemental.Runtime.Physics
 
         public void ReleaseAsDebris()
         {
-            if (_session == null) return;
-            _session.End();
-            SetStoneSkin(false);
-            SetBodyRendererVisibility(true);
-            Vector3 up = LocalUp;
-            for (int index = 0; index < _pieceCount; index++)
+            EndArmor(EarthArmorEndReason.InputReleased);
+        }
+
+        public bool EndArmor(EarthArmorEndReason reason)
+        {
+            using (InputReleaseMarker.Auto())
             {
-                EarthArmorPiece piece = _pieces[index];
-                if (piece == null || !piece.gameObject.activeSelf || piece.IsReleased) continue;
-                Vector3 radial = Vector3.ProjectOnPlane(piece.transform.position - _caster.worldCenterOfMass, up).normalized;
-                piece.Release(radial * 0.8f - up * 0.6f, DebrisRestSeconds, DebrisShrinkSeconds);
+                if (_releaseMode != ReleaseMode.None) return true;
+                bool hadSession = IsActive || _preparedPieceCount > 0;
+                _session?.End();
+                SetStoneSkin(false);
+                SetBodyRendererVisibility(true);
+                if (!hadSession) return false;
+                if (reason is EarthArmorEndReason.Disabled or EarthArmorEndReason.Knockout)
+                {
+                    ResetAllPiecesImmediately();
+                    return true;
+                }
+                if (_preparedPieceCount <= 0)
+                {
+                    _releaseMode = ReleaseMode.None;
+                    return true;
+                }
+                QueueRelease(ReleaseMode.Debris, Vector3.zero, 0f);
+                return true;
             }
         }
 
         public void ReleaseRadially()
         {
-            if (_session != null) _session.End();
-            SetStoneSkin(false);
-            SetBodyRendererVisibility(true);
+            if (_caster == null) return;
             _casterPuppet?.SuppressImpacts(0.45f);
-            ArmCasterMomentumGuard(0.16f);
-            Vector3 center = _caster != null ? _caster.worldCenterOfMass : transform.position;
-            float minimum = _profile != null ? _profile.MinimumBurstSpeed : 16f;
-            float maximum = _profile != null ? _profile.MaximumBurstSpeed : 24f;
-            for (int index = 0; index < _pieceCount; index++)
-            {
-                EarthArmorPiece piece = _pieces[index];
-                if (piece == null || !piece.gameObject.activeSelf || piece.IsReleased) continue;
-                Vector3 direction = (piece.transform.position - center).normalized;
-                if (direction.sqrMagnitude < 0.5f) direction = Quaternion.AngleAxis(index * 137.5f, LocalUp) * _caster.transform.forward;
-                float speed = Mathf.Lerp(minimum, maximum, Hash01(index + 91));
-                piece.Release(direction * speed, DebrisRestSeconds, DebrisShrinkSeconds);
-            }
+            ArmCasterMomentumGuard(0.22f);
+            QueueRelease(ReleaseMode.Radial, Vector3.zero, 0f);
         }
 
         public bool FireNearest(Vector3 aimDirection)
@@ -268,30 +282,35 @@ namespace Elemental.Runtime.Physics
         {
             if (!IsActive || Phase01 <= 0.30f || _caster == null) return 0;
             Vector3 aim = SafeDirection(aimDirection, _caster.transform.forward);
-            Vector3 up = LocalUp;
-            Vector3 right = Vector3.Cross(up, aim).normalized;
-            if (right.sqrMagnitude < 0.1f) right = Vector3.Cross(up, _caster.transform.forward).normalized;
-            float baseSpeed = _profile != null ? _profile.AimedProjectileSpeed : 31f;
-            int launched = 0;
+            int launched = ControllablePieceCount;
+            if (launched <= 0) return 0;
             _casterPuppet?.SuppressImpacts(0.55f);
-            ArmCasterMomentumGuard(0.14f);
-            for (int index = 0; index < _pieceCount; index++)
-            {
-                EarthArmorPiece piece = _pieces[index];
-                if (piece == null || !piece.gameObject.activeSelf || piece.IsReleased) continue;
-                float signed = Mathf.Repeat((index + 0.5f) * 0.6180339f, 1f) * 2f - 1f;
-                Vector3 direction = (aim + right * signed * 0.18f + up * (0.03f + Mathf.Abs(signed) * 0.05f)).normalized;
-                piece.Release(direction * Mathf.Max(20f, baseSpeed - launched * 0.22f),
-                    DebrisRestSeconds, DebrisShrinkSeconds);
-                launched++;
-            }
-            if (launched > 0)
-            {
-                _session.End();
-                SetStoneSkin(false);
-                SetBodyRendererVisibility(true);
-            }
+            ArmCasterMomentumGuard(0.22f);
+            QueueRelease(
+                ReleaseMode.Directed,
+                aim,
+                _profile != null ? _profile.AimedProjectileSpeed : 31f);
             return launched;
+        }
+
+        private void QueueRelease(ReleaseMode mode, Vector3 aim, float baseSpeed)
+        {
+            if (_releaseMode != ReleaseMode.None || _preparedPieceCount <= 0) return;
+            _session?.End();
+            SetStoneSkin(false);
+            SetBodyRendererVisibility(true);
+            _releaseMode = mode;
+            _releaseCursor = 0;
+            _queuedReleaseCount = 0;
+            _queuedUp = LocalUp;
+            _queuedCenter = _caster != null ? _caster.worldCenterOfMass : transform.position;
+            _queuedAim = mode == ReleaseMode.Directed
+                ? SafeDirection(aim, _caster != null ? _caster.transform.forward : transform.forward)
+                : Vector3.zero;
+            _queuedRight = Vector3.Cross(_queuedUp, _queuedAim).normalized;
+            if (_queuedRight.sqrMagnitude < 0.1f && _caster != null)
+                _queuedRight = Vector3.Cross(_queuedUp, _caster.transform.forward).normalized;
+            _queuedBaseSpeed = baseSpeed;
         }
 
         private void ArmCasterMomentumGuard(float duration)
@@ -315,8 +334,10 @@ namespace Elemental.Runtime.Physics
                 _caster.linearVelocity = _guardedCasterLinearVelocity;
                 _caster.angularVelocity = _guardedCasterAngularVelocity;
             }
+            ProcessReleaseSlice();
             if (!IsActive || _caster == null) return;
             _elapsed += Time.fixedDeltaTime;
+            PreparePiecesSlice();
             Vector3 up = LocalUp;
             Vector3 forward = Vector3.ProjectOnPlane(_caster.transform.forward, up).normalized;
             if (forward.sqrMagnitude < 0.5f) forward = Vector3.Cross(up, Vector3.right).normalized;
@@ -331,7 +352,8 @@ namespace Elemental.Runtime.Physics
             SetStoneSkin(false);
             float assembly = _profile != null ? _profile.AssemblySeconds : 0.30f;
             float expandedScale = _profile != null ? _profile.ExpandedPlateScaleMultiplier : 1.22f;
-            for (int index = 0; index < _pieceCount; index++)
+            using (FormationMarker.Auto())
+            for (int index = 0; index < _preparedPieceCount; index++)
             {
                 EarthArmorPiece piece = _pieces[index];
                 if (piece == null || !piece.gameObject.activeSelf || piece.IsReleased) continue;
@@ -393,6 +415,7 @@ namespace Elemental.Runtime.Physics
                 // Ninety-six production plates still need to read as one decisive
                 // spell, not a half-second queue with late stones hovering off-body.
                 float gather01 = Mathf.Clamp01((_elapsed - index * 0.0015f) / Mathf.Max(0.05f, assembly));
+                piece.SetDefensiveCollision(gather01 >= 0.55f);
                 Vector3 tangent = EvaluateBodySurfaceTangent(index, surfaceNormal, up, forward, right);
                 Quaternion targetRotation = Quaternion.LookRotation(tangent, surfaceNormal) *
                                             Quaternion.AngleAxis(
@@ -436,6 +459,117 @@ namespace Elemental.Runtime.Physics
             }
         }
 
+        private void LateUpdate()
+        {
+            if (!IsActive || _caster == null || FormationMode != EarthArmorFormationMode.Compact ||
+                _preparedPieceCount <= 0) return;
+            float assembly = _profile != null ? _profile.AssemblySeconds : 0.30f;
+            if (_elapsed < assembly) return;
+            Vector3 up = LocalUp;
+            Vector3 forward = Vector3.ProjectOnPlane(_caster.transform.forward, up).normalized;
+            if (forward.sqrMagnitude < 0.5f) forward = Vector3.Cross(up, Vector3.right).normalized;
+            Vector3 right = Vector3.Cross(up, forward).normalized;
+            Vector3 center = _caster.worldCenterOfMass + up * 0.05f;
+            using (CompactFollowMarker.Auto())
+            for (int index = 0; index < _preparedPieceCount; index++)
+            {
+                EarthArmorPiece piece = _pieces[index];
+                if (piece == null || !piece.gameObject.activeSelf || piece.IsReleased) continue;
+                Vector3 target = EvaluateBodySurfaceTarget(index, center, up, forward, out Vector3 normal);
+                Vector3 tangent = EvaluateBodySurfaceTangent(index, normal, up, forward, right);
+                Quaternion rotation = Quaternion.LookRotation(tangent, normal);
+                _formationPositions[index] = target;
+                _formationVelocities[index] = Vector3.zero;
+                _formationRotations[index] = rotation;
+                piece.SnapCompactPose(target, rotation);
+            }
+        }
+
+        private void PreparePiecesSlice()
+        {
+            if (_preparedPieceCount >= _pieceCount || _caster == null) return;
+            EarthArmorWorkSlice slice = EarthArmorWorkBudget.Next(
+                _preparedPieceCount,
+                _pieceCount,
+                PiecesPerPreparationSlice);
+            Vector3 up = LocalUp;
+            Vector3 forward = Vector3.ProjectOnPlane(_caster.transform.forward, up).normalized;
+            if (forward.sqrMagnitude < 0.5f) forward = Vector3.Cross(up, Vector3.right).normalized;
+            Vector3 right = Vector3.Cross(up, forward).normalized;
+            Vector3 ground = _caster.position - up * 0.9f;
+            using (PreparePieceMarker.Auto())
+            for (int offset = 0; offset < slice.Count; offset++)
+            {
+                int index = slice.Start + offset;
+                float angle = index * Mathf.PI * 2f / _pieceCount;
+                Vector3 radial = right * Mathf.Cos(angle) + forward * Mathf.Sin(angle);
+                Vector3 source = ground + radial * Mathf.Lerp(0.55f, 1.1f, Hash01(index)) - up * 0.22f;
+                Quaternion sourceRotation = Quaternion.LookRotation(radial, up);
+                EarthArmorPiece piece = _pieces[index];
+                piece.Activate(_generation, source, sourceRotation);
+                _formationPositions[index] = source;
+                _formationVelocities[index] = Vector3.zero;
+                _formationRotations[index] = sourceRotation;
+                BodySurfaceAnchor bodyAnchor = _bodyAnchors[index];
+                Vector3 bodyScale = bodyAnchor.PlateScale;
+                if (bodyScale.sqrMagnitude <= 0.001f) continue;
+                float silhouetteScale = (_profile != null ? _profile.BodyPlateScaleMultiplier : 0.91f) *
+                                        AnchorCoverageMultiplier(bodyAnchor, index);
+                float thicknessScale = Mathf.Lerp(1f, silhouetteScale, 0.42f);
+                piece.SetBaseScale(new Vector3(
+                    bodyScale.x * silhouetteScale,
+                    bodyScale.y * thicknessScale,
+                    bodyScale.z * silhouetteScale));
+            }
+            _preparedPieceCount += slice.Count;
+        }
+
+        private void ProcessReleaseSlice()
+        {
+            if (_releaseMode == ReleaseMode.None) return;
+            using (ReleaseSliceMarker.Auto())
+            {
+                int releasedThisSlice = 0;
+                while (_releaseCursor < _preparedPieceCount && releasedThisSlice < PiecesPerReleaseSlice)
+                {
+                    int index = _releaseCursor++;
+                    EarthArmorPiece piece = _pieces[index];
+                    if (piece == null || !piece.gameObject.activeSelf || piece.IsReleased) continue;
+                    Vector3 velocity;
+                    if (_releaseMode == ReleaseMode.Directed)
+                    {
+                        float signed = Mathf.Repeat((index + 0.5f) * 0.6180339f, 1f) * 2f - 1f;
+                        Vector3 direction = (_queuedAim + _queuedRight * signed * 0.18f +
+                                             _queuedUp * (0.03f + Mathf.Abs(signed) * 0.05f)).normalized;
+                        velocity = direction * Mathf.Max(20f, _queuedBaseSpeed - _queuedReleaseCount * 0.22f);
+                    }
+                    else
+                    {
+                        Vector3 radial = Vector3.ProjectOnPlane(piece.transform.position - _queuedCenter, _queuedUp).normalized;
+                        if (radial.sqrMagnitude < 0.5f)
+                        {
+                            Vector3 fallback = _caster != null ? _caster.transform.forward : transform.forward;
+                            radial = Quaternion.AngleAxis(index * 137.5f, _queuedUp) * fallback;
+                        }
+                        if (_releaseMode == ReleaseMode.Debris)
+                            velocity = radial * 0.8f - _queuedUp * 0.6f;
+                        else
+                        {
+                            float minimum = _profile != null ? _profile.MinimumBurstSpeed : 16f;
+                            float maximum = _profile != null ? _profile.MaximumBurstSpeed : 24f;
+                            velocity = radial.normalized * Mathf.Lerp(minimum, maximum, Hash01(index + 91));
+                        }
+                    }
+                    piece.Release(velocity, DebrisRestSeconds, DebrisShrinkSeconds);
+                    _queuedReleaseCount++;
+                    releasedThisSlice++;
+                }
+                if (_releaseCursor < _preparedPieceCount) return;
+                _releaseMode = ReleaseMode.None;
+                _releaseCursor = 0;
+            }
+        }
+
         public int CopyActivePiecesNonAlloc(EarthArmorPiece[] destination)
         {
             if (destination == null) return 0;
@@ -456,6 +590,85 @@ namespace Elemental.Runtime.Physics
                 Collider casterCollider = _casterColliders[index];
                 if (casterCollider != null)
                     UnityEngine.Physics.IgnoreCollision(pieceCollider, casterCollider, true);
+            }
+        }
+
+        internal void Physicalize(EarthArmorPiece piece)
+        {
+            if (piece == null || piece.Body == null || piece.PieceCollider == null || piece.IsPhysical) return;
+            piece.EnablePhysicalRepresentation();
+            ReapplyCasterCollisionIgnores(piece.PieceCollider);
+            Vector3 source = piece.SourcePosition;
+            Vector3 sourceLocal = _planetCenter != null
+                ? _planetCenter.InverseTransformPoint(source)
+                : source;
+            piece.RegisterMatter(
+                _matterKernel,
+                sourceLocal,
+                _generation,
+                new EarthOwnerId(1u, 1));
+        }
+
+        internal void ResolveDefensiveImpact(EarthArmorPiece primary, Collision collision)
+        {
+            if (primary == null || primary.IsReleased || collision == null ||
+                collision.contactCount == 0) return;
+            Collider otherCollider = collision.collider;
+            EarthFragment projectile = otherCollider != null
+                ? otherCollider.GetComponentInParent<EarthFragment>()
+                : null;
+            Rigidbody projectileBody = projectile != null ? projectile.Body : collision.rigidbody;
+            if (projectile == null || projectileBody == null || projectileBody == _caster) return;
+
+            using (DefenseMarker.Auto())
+            {
+                float relativeSpeed = collision.relativeVelocity.magnitude;
+                var impact = new EarthArmorImpact(
+                    Mathf.Max(0.01f, projectileBody.mass),
+                    relativeSpeed,
+                    primary.PieceIndex);
+                EarthArmorDamageResult damage = EarthArmorDamageResolver.Resolve(in impact);
+                System.Array.Clear(_damageSelected, 0, _damageSelected.Length);
+                ContactPoint contact = collision.GetContact(0);
+                Vector3 incoming = projectileBody.linearVelocity;
+                Vector3 releaseDirection = incoming.sqrMagnitude > 0.001f
+                    ? incoming.normalized
+                    : -contact.normal;
+                for (int removed = 0; removed < damage.DamageBudget; removed++)
+                {
+                    int best = -1;
+                    float bestDistance = float.PositiveInfinity;
+                    for (int index = 0; index < _preparedPieceCount; index++)
+                    {
+                        EarthArmorPiece candidate = _pieces[index];
+                        if (candidate == null || candidate.IsReleased ||
+                            !candidate.gameObject.activeSelf || _damageSelected[index]) continue;
+                        float distance = (candidate.transform.position - contact.point).sqrMagnitude;
+                        if (index == primary.PieceIndex) distance = -1f;
+                        if (distance >= bestDistance) continue;
+                        bestDistance = distance;
+                        best = index;
+                    }
+                    if (best < 0) break;
+                    _damageSelected[best] = true;
+                    EarthArmorPiece plate = _pieces[best];
+                    Vector3 scatter = (plate.transform.position - _caster.worldCenterOfMass).normalized;
+                    plate.Release(
+                        releaseDirection * Mathf.Lerp(2.4f, 5.8f, relativeSpeed / 30f) + scatter * 1.6f,
+                        DebrisRestSeconds,
+                        DebrisShrinkSeconds);
+                }
+
+                if (damage.FullyBlocked)
+                {
+                    projectileBody.linearVelocity = Vector3.Reflect(incoming, contact.normal) * 0.24f;
+                    projectileBody.angularVelocity *= 0.65f;
+                }
+                else
+                {
+                    projectileBody.linearVelocity = incoming * damage.ResidualVelocityFraction;
+                }
+                EndIfEmpty();
             }
         }
 
@@ -1162,9 +1375,9 @@ namespace Elemental.Runtime.Physics
                 Mesh mesh = EarthArmorPlateMeshFactory.Create(index);
                 go.AddComponent<MeshFilter>().sharedMesh = mesh;
                 go.AddComponent<MeshRenderer>().sharedMaterial = material;
-                MeshCollider collider = go.AddComponent<MeshCollider>();
-                collider.sharedMesh = mesh;
-                collider.convex = true;
+                BoxCollider collider = go.AddComponent<BoxCollider>();
+                collider.center = mesh.bounds.center;
+                collider.size = mesh.bounds.size * 0.84f;
                 Rigidbody body = go.AddComponent<Rigidbody>();
                 body.useGravity = false;
                 body.isKinematic = true;
@@ -1175,6 +1388,13 @@ namespace Elemental.Runtime.Physics
                 EarthArmorPiece piece = go.AddComponent<EarthArmorPiece>();
                 piece.Configure(this, index, body, collider, mesh);
                 ReapplyCasterCollisionIgnores(collider);
+                for (int previous = 0; previous < index; previous++)
+                {
+                    Collider sibling = _pieces[previous] != null
+                        ? _pieces[previous].PieceCollider
+                        : null;
+                    if (sibling != null) UnityEngine.Physics.IgnoreCollision(collider, sibling, true);
+                }
                 go.SetActive(false);
                 _pieces[index] = piece;
             }
@@ -1196,8 +1416,24 @@ namespace Elemental.Runtime.Physics
 
         private void OnDisable()
         {
-            SetStoneSkin(false);
-            SetBodyRendererVisibility(true);
+            EndArmor(EarthArmorEndReason.Disabled);
+        }
+
+        private void ResetAllPiecesImmediately()
+        {
+            _releaseMode = ReleaseMode.None;
+            _releaseCursor = 0;
+            _queuedReleaseCount = 0;
+            for (int index = 0; index < _pieces.Length; index++)
+            {
+                // Unity's destroyed-object sentinel is not a CLR null, so the
+                // null-conditional operator can still invoke a component that
+                // was already torn down while an additive test scene unloads.
+                EarthArmorPiece piece = _pieces[index];
+                if (piece == null) continue;
+                piece.ResetToPool();
+            }
+            _preparedPieceCount = 0;
         }
 
         private Vector3 LocalUp

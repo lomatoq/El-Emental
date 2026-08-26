@@ -90,7 +90,9 @@ namespace Elemental.Authoring.Editor
             GameObject character = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             character.name = "Planet Character";
             character.SetActive(false);
-            character.transform.position = new Vector3(0f, radius + 1.3f, 0f);
+            // The scaled primitive capsule is 2.4 m tall, so 1.2 m puts its feet
+            // directly on the planet instead of starting with a visible air gap.
+            character.transform.position = new Vector3(0f, radius + 1.2f, 0f);
             character.transform.localScale = Vector3.one * 1.2f;
             Rigidbody characterBody = character.AddComponent<Rigidbody>();
             characterBody.mass = 30f;

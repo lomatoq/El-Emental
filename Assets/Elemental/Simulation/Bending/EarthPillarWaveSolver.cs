@@ -155,6 +155,7 @@ namespace Elemental.Simulation.Bending
             Sample = sample;
             Footprint = footprint ?? System.Array.Empty<float2>();
             Area = math.max(0f, area);
+            VisualArea = PolygonArea(Footprint);
         }
 
         public int StableIndex { get; }
@@ -162,6 +163,20 @@ namespace Elemental.Simulation.Bending
         /// <summary>Cell-local polygon in metres. Neighbours originate from shared Voronoi bisectors.</summary>
         public float2[] Footprint { get; }
         public float Area { get; }
+        public float VisualArea { get; }
+
+        private static float PolygonArea(float2[] polygon)
+        {
+            if (polygon == null || polygon.Length < 3) return 0f;
+            float twiceArea = 0f;
+            for (int index = 0; index < polygon.Length; index++)
+            {
+                float2 current = polygon[index];
+                float2 next = polygon[(index + 1) % polygon.Length];
+                twiceArea += current.x * next.y - next.x * current.y;
+            }
+            return math.abs(twiceArea) * 0.5f;
+        }
     }
 
     public readonly struct EarthWebWaveTopology
@@ -353,13 +368,19 @@ namespace Elemental.Simulation.Bending
                         : areaHash > 0.78f
                             ? math.lerp(1.55f, 1.70f, (areaHash - 0.78f) / 0.22f)
                             : math.lerp(0.78f, 1.18f, (areaHash - 0.25f) / 0.53f);
+                    float finalHeight = baseHeight * heightVariation * familyHeight;
+                    if (row == rows - 1)
+                    {
+                        float chargedCrestHeight = tuning.CrestHeight * math.lerp(0.72f, 1f, power);
+                        finalHeight = math.min(finalHeight, chargedCrestHeight * 0.60f);
+                    }
                     result.Add(new EarthPillarWaveSample(
                         row,
                         angle,
                         sampleDistance,
                         width * widthVariation,
                         depth * depthVariation,
-                        baseHeight * heightVariation * familyHeight,
+                        finalHeight,
                         math.max(0f, rowDelay + timeVariation),
                         hold,
                         crest01,
@@ -452,8 +473,39 @@ namespace Elemental.Simulation.Bending
                     family);
                 cells.Add(new EarthWebWaveCell(index, in sample, footprint, cell.Area));
             }
+            CapTerminalVisualFootprints(cells);
             int radialThreads = 12 + ((seed * 5 + 3) % 7);
             return new EarthWebWaveTopology(seed, radialThreads, cells.ToArray(), family);
+        }
+
+        private static void CapTerminalVisualFootprints(List<EarthWebWaveCell> cells)
+        {
+            if (cells == null || cells.Count == 0) return;
+            int terminalRow = 0;
+            for (int index = 0; index < cells.Count; index++)
+                terminalRow = math.max(terminalRow, cells[index].Sample.Row);
+            var previousAreas = new List<float>();
+            for (int index = 0; index < cells.Count; index++)
+                if (cells[index].Sample.Row == terminalRow - 1 && cells[index].VisualArea > 0f)
+                    previousAreas.Add(cells[index].VisualArea);
+            if (previousAreas.Count == 0) return;
+            previousAreas.Sort();
+            float previousMedianArea = previousAreas[previousAreas.Count / 2];
+            for (int index = 0; index < cells.Count; index++)
+            {
+                EarthWebWaveCell cell = cells[index];
+                float authoredCellArea = math.max(
+                    0.01f,
+                    cell.Sample.Width * cell.Sample.Depth * 1.05f);
+                float maximumTerminalArea = math.min(previousMedianArea * 0.82f, authoredCellArea);
+                if (cell.Sample.Row != terminalRow || cell.VisualArea <= maximumTerminalArea) continue;
+                float scale = math.sqrt(maximumTerminalArea / math.max(0.000001f, cell.VisualArea));
+                var footprint = new float2[cell.Footprint.Length];
+                for (int vertex = 0; vertex < footprint.Length; vertex++)
+                    footprint[vertex] = cell.Footprint[vertex] * scale;
+                EarthPillarWaveSample sample = cell.Sample;
+                cells[index] = new EarthWebWaveCell(cell.StableIndex, in sample, footprint, cell.Area);
+            }
         }
 
         private static float2[] SimplifyFootprint(float2[] vertices, float2 centroid, int maximumVertices)

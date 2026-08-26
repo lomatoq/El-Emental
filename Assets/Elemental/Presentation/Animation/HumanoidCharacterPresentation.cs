@@ -4,6 +4,7 @@ using Elemental.Runtime.World;
 using Elemental.Runtime.Physics;
 using Elemental.Simulation.Characters;
 using Elemental.Simulation.Bending;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace Elemental.Presentation.Animation
@@ -11,6 +12,8 @@ namespace Elemental.Presentation.Animation
     [DisallowMultipleComponent]
     public sealed class HumanoidCharacterPresentation : MonoBehaviour
     {
+        private static readonly ProfilerMarker PresentationMarker =
+            new ProfilerMarker("Elemental.Character.Presentation");
         private static readonly int SpeedHash = Animator.StringToHash("Speed");
         private static readonly int TurnHash = Animator.StringToHash("Turn");
         private static readonly int SurfingHash = Animator.StringToHash("Surfing");
@@ -62,6 +65,8 @@ namespace Elemental.Presentation.Animation
         [SerializeField] private EarthSurfController surfController;
         [SerializeField] private EarthAnimationRigBridge animationRigBridge;
         [SerializeField] private EarthAnimationContactPredictor contactPredictor;
+        [SerializeField] private HumanoidRagdollRig visibleRagdoll;
+        [SerializeField] private bool driveMagicPresentation = true;
 
         private float _castWeight;
         private CharacterPhysicalMode _physicalMode;
@@ -79,6 +84,7 @@ namespace Elemental.Presentation.Animation
         private Vector3 _previousFacing;
         private bool _hasPreviousFacing;
         private int _activeBaseStateHash;
+        private HandIkState _handIkState;
 
         public Animator Animator => animator;
         public CharacterPresentationProfile Profile => profile;
@@ -103,7 +109,9 @@ namespace Elemental.Presentation.Animation
             MagicInputController configuredInput,
             MagicExecutor configuredExecutor,
             EarthTechniquePresentationProfile configuredTechniqueProfile = null,
-            EarthPillarMobility configuredPillarMobility = null)
+            EarthPillarMobility configuredPillarMobility = null,
+            HumanoidRagdollRig configuredVisibleRagdoll = null,
+            bool configuredDriveMagicPresentation = true)
         {
             UnsubscribeRagdoll();
             profile = configuredProfile;
@@ -117,6 +125,8 @@ namespace Elemental.Presentation.Animation
             executor = configuredExecutor;
             techniqueProfile = configuredTechniqueProfile;
             pillarMobility = configuredPillarMobility;
+            visibleRagdoll = configuredVisibleRagdoll;
+            driveMagicPresentation = configuredDriveMagicPresentation;
             PrepareAnimator();
             ConfigurePoseController();
             if (isActiveAndEnabled) SubscribeRagdoll();
@@ -129,6 +139,7 @@ namespace Elemental.Presentation.Animation
             if (rootBody == null) rootBody = GetComponentInParent<Rigidbody>();
             if (pillarMobility == null) pillarMobility = GetComponentInParent<EarthPillarMobility>();
             if (surfController == null) surfController = GetComponentInParent<EarthSurfController>();
+            if (visibleRagdoll == null) visibleRagdoll = GetComponent<HumanoidRagdollRig>();
             PrepareAnimator();
             ConfigurePoseController();
         }
@@ -144,15 +155,20 @@ namespace Elemental.Presentation.Animation
             // different clock and fights persistent surf/casting anchors.
             animator.stabilizeFeet = false;
             animator.feetPivotActive = 1f;
-            _magicLayerIndex = animator.GetLayerIndex(MagicLayerName);
-            _impactLayerIndex = animator.GetLayerIndex(ImpactLayerName);
-            animator.SetLayerWeight(0, 1f);
-            if (_magicLayerIndex >= 0) animator.SetLayerWeight(_magicLayerIndex, 0f);
-            if (_impactLayerIndex >= 0) animator.SetLayerWeight(_impactLayerIndex, 0f);
+            _magicLayerIndex = -1;
+            _impactLayerIndex = -1;
             _animationGrounded = true;
             _unsupportedSeconds = 0f;
             _activeBaseStateHash = 0;
-            animator.SetBool(GroundedHash, true);
+            if (Application.isPlaying && animator.isActiveAndEnabled)
+            {
+                _magicLayerIndex = animator.GetLayerIndex(MagicLayerName);
+                _impactLayerIndex = animator.GetLayerIndex(ImpactLayerName);
+                animator.SetLayerWeight(0, 1f);
+                if (_magicLayerIndex >= 0) animator.SetLayerWeight(_magicLayerIndex, 0f);
+                if (_impactLayerIndex >= 0) animator.SetLayerWeight(_impactLayerIndex, 0f);
+                animator.SetBool(GroundedHash, true);
+            }
             if (contactPredictor == null) contactPredictor = GetComponent<EarthAnimationContactPredictor>();
             if (contactPredictor == null) contactPredictor = gameObject.AddComponent<EarthAnimationContactPredictor>();
             contactPredictor.Configure(motor);
@@ -160,7 +176,7 @@ namespace Elemental.Presentation.Animation
 
         private void ConfigurePoseController()
         {
-            if (animator == null || motor == null || rootBody == null) return;
+            if (!driveMagicPresentation || animator == null || motor == null || rootBody == null) return;
             if (poseController == null) poseController = GetComponent<EarthCharacterPoseController>();
             if (poseController == null) poseController = gameObject.AddComponent<EarthCharacterPoseController>();
             poseController.Configure(
@@ -187,6 +203,7 @@ namespace Elemental.Presentation.Animation
 
         private void OnDisable()
         {
+            ResetMagicIK();
             UnsubscribeRagdoll();
         }
 
@@ -205,6 +222,11 @@ namespace Elemental.Presentation.Animation
         }
 
         private void Update()
+        {
+            using (PresentationMarker.Auto()) UpdatePresentation();
+        }
+
+        private void UpdatePresentation()
         {
             if (animator == null || rootBody == null || motor == null) return;
             Vector3 supportVelocity = Vector3.zero;
@@ -288,16 +310,42 @@ namespace Elemental.Presentation.Animation
                                        (rescue.Phase == EarthAnimationPhase.PreLanding ||
                                         rescue.Phase == EarthAnimationPhase.LandingContact);
             if (rescue.PhaseChanged || landingStyleChanged) DriveRescueTransition(in rescue);
+            if (!driveMagicPresentation)
+            {
+                ResetMagicIK();
+                _wasCasting = false;
+                return;
+            }
             int castKind = ResolveCastKind();
             bool casting = castKind > 0 && _physicalMode != CharacterPhysicalMode.FullRagdoll &&
                            ((poseController != null && poseController.CurrentRequest.IsActive) ||
                             (executor != null &&
                              (executor.HeldBody != null || executor.IsGravityWellActive ||
                               executor.IsVectorFieldActive)));
+            bool movementInterruptsRecovery = poseController != null &&
+                                              EarthHumanoidMotionResolver.ShouldInterruptRecovery(
+                                                  poseController.CurrentRequest.Phase,
+                                                  Mathf.Sqrt(
+                                                      motor.LastCommand.Move.x * motor.LastCommand.Move.x +
+                                                      motor.LastCommand.Move.y * motor.LastCommand.Move.y));
+            if (movementInterruptsRecovery) casting = false;
             float targetWeight = casting && _physicalMode != CharacterPhysicalMode.FullRagdoll
                 ? (profile != null ? profile.HandIkWeight : 0.92f)
                 : 0f;
-            _castWeight = Mathf.MoveTowards(_castWeight, targetWeight, Time.deltaTime / Mathf.Max(0.01f, CastingBlendSeconds));
+            float castingResponse = targetWeight > _castWeight
+                ? CastingBlendSeconds
+                : movementInterruptsRecovery
+                    ? (profile != null ? profile.LocomotionBlendSeconds : 0.08f)
+                    : CastingRecoverySeconds;
+            HandIkSample ikSample = HandIkSolver.Step(
+                _handIkState,
+                _castWeight,
+                targetWeight,
+                Time.deltaTime,
+                castingResponse,
+                castingResponse);
+            _handIkState = ikSample.State;
+            _castWeight = ikSample.Weight;
             animator.SetBool(CastHash, casting);
             animator.SetInteger(CastKindHash, castKind);
             animator.SetFloat(EarthPoseHash, castKind, 0.055f, Time.deltaTime);
@@ -454,7 +502,7 @@ namespace Elemental.Presentation.Animation
 
         private void UpdateHandTargets()
         {
-            if (_castWeight <= 0f || leftHandTarget == null || rightHandTarget == null) return;
+            if (_handIkState == HandIkState.Inactive || leftHandTarget == null || rightHandTarget == null) return;
             Vector3 focus;
             if (executor != null && executor.IsGravityWellActive) focus = executor.GravityWellFocus;
             else if (executor != null && executor.IsVectorFieldActive) focus = executor.VectorFieldPoint;
@@ -503,9 +551,10 @@ namespace Elemental.Presentation.Animation
         private void HandlePhysicalState(CharacterPhysicalState state)
         {
             _physicalMode = state.Mode;
+            if (state.Mode == CharacterPhysicalMode.FullRagdoll) ResetMagicIK();
             if (animator == null) return;
             bool animatorEnabled = state.Mode != CharacterPhysicalMode.FullRagdoll;
-            if (animator.enabled != animatorEnabled)
+            if (visibleRagdoll == null && animator.enabled != animatorEnabled)
             {
                 animator.enabled = animatorEnabled;
                 if (animatorEnabled)
@@ -528,5 +577,26 @@ namespace Elemental.Presentation.Animation
         }
 
         private float CastingBlendSeconds => profile != null ? profile.CastingBlendSeconds : 0.1f;
+        private float CastingRecoverySeconds => profile != null ? profile.CastingRecoverySeconds : 0.22f;
+
+        public void ResetMagicIK()
+        {
+            _castWeight = 0f;
+            _handIkState = HandIkState.Inactive;
+            animationRigBridge?.ResetMagicIk();
+            if (animator == null) return;
+            animator.SetBool(CastHash, false);
+            animator.SetInteger(CastKindHash, 0);
+            animator.SetFloat(EarthPoseHash, 0f);
+            if (_magicLayerIndex >= 0) animator.SetLayerWeight(_magicLayerIndex, 0f);
+            for (int index = 0; index < EarthPoseWeightHashes.Length; index++)
+                animator.SetFloat(EarthPoseWeightHashes[index], 0f);
+            Transform left = animator.isHuman ? animator.GetBoneTransform(HumanBodyBones.LeftHand) : null;
+            Transform right = animator.isHuman ? animator.GetBoneTransform(HumanBodyBones.RightHand) : null;
+            if (left != null && leftHandTarget != null)
+                leftHandTarget.SetPositionAndRotation(left.position, left.rotation);
+            if (right != null && rightHandTarget != null)
+                rightHandTarget.SetPositionAndRotation(right.position, right.rotation);
+        }
     }
 }

@@ -16,6 +16,7 @@ using Elemental.Runtime.Matter;
 using Elemental.Runtime.World;
 using Elemental.Runtime.Geometry;
 using Elemental.Simulation.Magic;
+using Elemental.Simulation.Combat;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEditor.SceneManagement;
@@ -40,6 +41,7 @@ namespace Elemental.Authoring.Editor
         private const string HudPanelPath = "Assets/Elemental/Content/UI/EarthCorePanelSettings.asset";
         private const string VolumeProfilePath = "Assets/Elemental/Content/VisualStyles/EarthCoreVolumeProfile.asset";
         private const string WallMeshPath = "Assets/Elemental/Content/Meshes/ChippedEarthWall.asset";
+        private const string PillarMeshPath = "Assets/Elemental/Content/Meshes/BeveledEarthPillar.asset";
         private const string FragmentMeshPath = "Assets/Elemental/Content/Meshes/ChunkyEarthFragment.asset";
         private const string WallProfilePath = "Assets/Elemental/Content/Profiles/EarthWallProfile.asset";
         private const string RockProfilePath = "Assets/Elemental/Content/Profiles/EarthRockProfile.asset";
@@ -55,6 +57,8 @@ namespace Elemental.Authoring.Editor
         private const string SkyProfilePath = "Assets/Elemental/Content/Profiles/EarthSkyProfile.asset";
         private const string MeteorProfilePath = "Assets/Elemental/Content/Profiles/MeteorShowerProfile.asset";
         private const string CharacterProfilePath = "Assets/Elemental/Content/Profiles/CharacterPresentationProfile.asset";
+        private const string PlayerMaterialFolder = "Assets/Elemental/Content/Materials/MvpPlayer";
+        private const string RivalMaterialFolder = "Assets/Elemental/Content/Materials/MvpRival";
         private const string PhysicsFeelProfilePath = "Assets/Elemental/Content/Profiles/EarthPhysicsFeelProfile.asset";
         private const string QuickCastProfilePath = "Assets/Elemental/Content/Profiles/EarthQuickCastProfile.asset";
         private const string ArmorProfilePath = "Assets/Elemental/Content/Profiles/EarthArmorProfile.asset";
@@ -71,6 +75,9 @@ namespace Elemental.Authoring.Editor
         private const string EarthCameraProfilePath = "Assets/Elemental/Content/Profiles/EarthCameraProfile.asset";
         private const string ShapeGrammarProfilePath = "Assets/Elemental/Content/Profiles/EarthShapeGrammarProfile.asset";
         private const string EarthStoneAlbedoPath = "Assets/Elemental/Content/Textures/EarthStoneAlbedo.png";
+        private const string RumbleMaterialFolder = "Assets/Elemental/Content/GraphicsV5/Materials/";
+        private const string RumbleRockFolder = "Assets/Elemental/Content/GraphicsV5/Rocks/";
+        private const string RumbleShaderName = "Elemental/Graphics V5/Rumble Rock Lit";
         private const string CharacterModelPath = "Assets/ThirdParty/Mixamo/X Bot.fbx";
         private const string MixamoWalkPath = "Assets/ThirdParty/Mixamo/X Bot@Walking.fbx";
         private const string MixamoWalkBackPath = "Assets/ThirdParty/Mixamo/X Bot@Walking Backwards.fbx";
@@ -81,6 +88,7 @@ namespace Elemental.Authoring.Editor
         [MenuItem("Elemental/Setup/Create M3 Earth Core Slice")]
         public static void Configure()
         {
+            EarthRenderQualitySetup.ConfigureProfiles();
             M2VoxelPlanetSetup.Configure();
             Scene scene = SceneManager.GetActiveScene();
             PlanetWorldProfile worldProfile = M2VoxelPlanetSetup.CreateOrLoadWorldProfile();
@@ -95,17 +103,23 @@ namespace Elemental.Authoring.Editor
                 throw new UnityEditor.Build.BuildFailedException("M2 scene dependencies are missing.");
             }
 
-            Material earthMaterial = AssetDatabase.LoadAssetAtPath<Material>(
-                "Assets/Elemental/Content/Materials/VoxelPlanetSurface.mat");
+            Material earthMaterial = LoadRumbleMaterial("RumbleGround.mat") ??
+                                     AssetDatabase.LoadAssetAtPath<Material>(
+                                         "Assets/Elemental/Content/Materials/VoxelPlanetSurface.mat");
             EarthCoreVisualStyle style = CreateOrLoadVisualStyle();
             EarthMaterialProfile earthMaterialProfile = CreateOrLoadProfile<EarthMaterialProfile>(
                 EarthMaterialProfilePath,
                 "Earth Material Profile");
-            ApplyEarthMaterial(earthMaterial, style, earthMaterialProfile, false);
+            if (!IsRumbleMaterial(earthMaterial))
+                ApplyEarthMaterial(earthMaterial, style, earthMaterialProfile, false);
             earthMaterial.SetFloat("_UsePlanetFrame", 1f);
-            Material looseEarthMaterial = CreateOrLoadEarthMaterial(
-                "EarthLooseStone.mat", style.StoneColor, style.StoneSmoothness, style.StoneEmission * 0.35f);
-            earthMaterialProfile.Apply(looseEarthMaterial, false);
+            voxelPlanet.Configure(worldProfile, earthMaterial);
+            Material looseEarthMaterial = LoadRumbleMaterial("RumbleSandstone.mat") ??
+                                          CreateOrLoadEarthMaterial(
+                                              "EarthLooseStone.mat", style.StoneColor,
+                                              style.StoneSmoothness, style.StoneEmission * 0.35f);
+            if (!IsRumbleMaterial(looseEarthMaterial))
+                earthMaterialProfile.Apply(looseEarthMaterial, false);
             looseEarthMaterial.SetFloat("_UsePlanetFrame", 0f);
             Transform heldFragmentAnchor = CreateHeldFragmentAnchor(character);
             GameObject magicRoot = new GameObject("Earth Magic Runtime");
@@ -118,14 +132,15 @@ namespace Elemental.Authoring.Editor
                 planetSurface = collisionProxy.AddComponent<VoxelPlanetEarthSurfaceProvider>();
             planetSurface.Configure(collisionProxy.GetComponent<Collider>(), voxelPlanet, surfaceQueries);
             Mesh[] fragmentMeshes = CreateOrLoadFragmentMeshes();
+            Mesh[] debrisMeshes = CreateOrLoadDebrisMeshes();
             Mesh fragmentMesh = fragmentMeshes[0];
             EarthRockProfile rockProfile = CreateOrLoadRockProfile();
             EarthPhysicsFeelProfile physicsFeel = CreateOrLoadProfile<EarthPhysicsFeelProfile>(
                 PhysicsFeelProfilePath,
                 "Earth Physics Feel Profile");
             EarthRockDebrisPool debrisPool = magicRoot.AddComponent<EarthRockDebrisPool>();
-            debrisPool.Configure(72, looseEarthMaterial, fragmentMesh, gravityWorld, rockProfile);
-            debrisPool.ConfigureMeshVariants(fragmentMeshes);
+            debrisPool.Configure(72, looseEarthMaterial, debrisMeshes[0], gravityWorld, rockProfile);
+            debrisPool.ConfigureMeshVariants(debrisMeshes);
             EarthShapeGrammarProfile shapeGrammar = CreateOrLoadProfile<EarthShapeGrammarProfile>(
                 ShapeGrammarProfilePath, "Earth Shape Grammar Profile");
             debrisPool.ConfigureShapeGrammar(shapeGrammar);
@@ -137,12 +152,18 @@ namespace Elemental.Authoring.Editor
             EarthHoverProfile hoverProfile = CreateOrLoadHoverProfile();
             pool.ConfigureHover(hoverProfile);
             Mesh wallMesh = CreateOrLoadChippedWallMesh();
-            Material wallMaterial = CreateOrLoadEarthMaterial(
-                "EarthWall.mat", style.StoneColor * 0.95f, 0.05f, style.StoneEmission * 0.5f);
-            earthMaterialProfile.Apply(wallMaterial, false);
-            Material fractureInteriorMaterial = CreateOrLoadEarthMaterial(
-                "EarthFractureInterior.mat", earthMaterialProfile.FreshInteriorTint, 0.025f, Color.black);
-            earthMaterialProfile.Apply(fractureInteriorMaterial, true);
+            Material wallMaterial = LoadRumbleMaterial("RumbleSandstone.mat") ??
+                                    CreateOrLoadEarthMaterial(
+                                        "EarthWall.mat", style.StoneColor * 0.95f, 0.05f,
+                                        style.StoneEmission * 0.5f);
+            if (!IsRumbleMaterial(wallMaterial)) earthMaterialProfile.Apply(wallMaterial, false);
+            Material fractureInteriorMaterial = LoadRumbleMaterial("RumbleClay.mat") ??
+                                                CreateOrLoadEarthMaterial(
+                                                    "EarthFractureInterior.mat",
+                                                    earthMaterialProfile.FreshInteriorTint, 0.025f,
+                                                    Color.black);
+            if (!IsRumbleMaterial(fractureInteriorMaterial))
+                earthMaterialProfile.Apply(fractureInteriorMaterial, true);
             EarthWallPool wallPool = magicRoot.AddComponent<EarthWallPool>();
             wallPool.Configure(8, wallMesh, wallMaterial, CreateOrLoadWallProfile());
             wallPool.ConfigureShapeGrammar(shapeGrammar);
@@ -167,6 +188,7 @@ namespace Elemental.Authoring.Editor
             platformPool.ConfigureSurfaceQueries(surfaceQueries);
             platformPool.ConfigurePhysicsFeel(physicsFeel);
             platformPool.ConfigurePieceMeshes(fragmentMeshes);
+            platformPool.PrewarmAll();
             EarthPillarWaveProfile waveProfile = CreateOrLoadWaveProfile();
             EarthPillarWavePool wavePool = magicRoot.AddComponent<EarthPillarWavePool>();
             wavePool.Configure(96, wallMesh, wallMaterial, collisionProxy.transform, waveProfile);
@@ -178,14 +200,14 @@ namespace Elemental.Authoring.Editor
             executor.ConfigureTelekinesis(telekinesis);
             executor.ConfigureEarthExtensions(
                 CreateOrLoadVectorFieldProfile(), platformPool, CreateOrLoadGravityWellProfile());
-            executor.ConfigureWallProfile(1.25f, 10.5f, 22f);
+            executor.ConfigureWallProfile(1.5f, 4.0f, 14f, 0.95f);
             EarthAudioDirector audioDirector = magicRoot.AddComponent<EarthAudioDirector>();
             audioDirector.Configure(executor);
             Material indirectDebrisMaterial = CreateOrLoadShaderMaterial(
                 "EarthIndirectDebris.mat", "Elemental/Earth Indirect Debris");
             indirectDebrisMaterial.SetColor("_BaseColor", style.StoneColor * 0.82f);
             EarthIndirectDebrisRenderer indirectDebris = magicRoot.AddComponent<EarthIndirectDebrisRenderer>();
-            indirectDebris.Configure(executor, fragmentMesh, indirectDebrisMaterial);
+            indirectDebris.Configure(executor, debrisMeshes[0], indirectDebrisMaterial);
             EarthPerformanceTelemetry performanceTelemetry = magicRoot.AddComponent<EarthPerformanceTelemetry>();
             performanceTelemetry.Configure(matterKernel, indirectDebris);
             EarthVfxGraphBridge vfxGraphBridge = magicRoot.AddComponent<EarthVfxGraphBridge>();
@@ -288,7 +310,8 @@ namespace Elemental.Authoring.Editor
                 characterMotor,
                 collisionProxy.transform,
                 CreateOrLoadProfile<EarthSurfProfile>(SurfProfilePath, "Earth Surf Profile"),
-                looseEarthMaterial);
+                looseEarthMaterial,
+                LoadRumbleMaterial("RumbleDustLit.mat"));
             CreateOrLoadProfile<EarthTechniquePresentationProfile>(
                 TechniquePresentationProfilePath,
                 "Earth Technique Presentation Profile");
@@ -303,9 +326,26 @@ namespace Elemental.Authoring.Editor
             feedback.Configure(executor);
             ConfigurePresentation(
                 scene, character, camera, executor, input, pillarMobility, cushion, preview, style, looseEarthMaterial,
-                gravityWorld, wavePool, collisionProxy.transform, worldProfile);
-            CreateImpactDummy(gravityWorld, looseEarthMaterial, style);
-            CreatePushBoulders(gravityWorld, looseEarthMaterial, worldProfile.Radius, physicsFeel);
+                gravityWorld, debrisPool, wavePool, collisionProxy.transform, worldProfile);
+            CreateRumbleAmphitheatre(
+                collisionProxy.transform.position,
+                worldProfile.Radius,
+                gravityWorld,
+                debrisPool);
+            CreateMvpLinebreaker(
+                gravityWorld,
+                worldProfile.Radius,
+                character,
+                collisionProxy.transform,
+                pool);
+            CreatePushBoulders(
+                gravityWorld,
+                looseEarthMaterial,
+                worldProfile.Radius,
+                physicsFeel,
+                fragmentMeshes);
+            if (!EarthParticleMaterialValidator.ValidateScene(scene, out string particleError))
+                throw new UnityEditor.Build.BuildFailedException(particleError);
             EditorSceneManager.SaveScene(scene, EarthCoreScenePath);
             List<EditorBuildSettingsScene> scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
             if (!scenes.Exists(item => item.path == EarthCoreScenePath))
@@ -505,16 +545,23 @@ namespace Elemental.Authoring.Editor
             EarthCoreVisualStyle style,
             Material earthMaterial,
             GravityWorldBehaviour gravityWorld,
+            EarthRockDebrisPool debrisPool,
             EarthPillarWavePool wavePool,
             Transform planetCenter,
             PlanetWorldProfile worldProfile)
         {
-            RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = style.AmbientColor;
+            RenderSettings.ambientMode = AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = new Color(0.32f, 0.39f, 0.48f);
+            RenderSettings.ambientEquatorColor = new Color(0.20f, 0.18f, 0.17f);
+            RenderSettings.ambientGroundColor = new Color(0.075f, 0.065f, 0.06f);
+            RenderSettings.ambientIntensity = 1f;
+            RenderSettings.reflectionIntensity = 0.72f;
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = style.SkyColor;
+            RenderSettings.fogColor = new Color(0.37f, 0.42f, 0.47f);
             RenderSettings.fogDensity = 0.0035f;
+            QualitySettings.shadowDistance = 48f;
+            QualitySettings.shadowCascades = 4;
 
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = style.SkyColor;
@@ -522,6 +569,7 @@ namespace Elemental.Authoring.Editor
             camera.allowHDR = true;
             UniversalAdditionalCameraData cameraData = camera.GetUniversalAdditionalCameraData();
             cameraData.renderPostProcessing = true;
+            cameraData.requiresDepthTexture = true;
             PlanetCameraRig cameraRig = camera.GetComponent<PlanetCameraRig>();
             cameraRig?.ConfigureFraming(
                 style.CameraDistance,
@@ -568,7 +616,12 @@ namespace Elemental.Authoring.Editor
                     camera.GetComponent<EarthCameraDirector>(),
                     motor);
             HideTechnicalGravityToyProps();
-            CreatePlanetLandmarks(earthMaterial, style, worldProfile.Radius);
+            CreatePlanetLandmarks(
+                earthMaterial,
+                style,
+                worldProfile.Radius,
+                gravityWorld,
+                debrisPool);
             CreateWorldAndSpace(camera, executor, planetCenter, worldProfile, style);
             CreateEarthFeedback(executor, input, cameraRig, style, wavePool, planetCenter);
             CreateGravityWellFeedback(executor, cameraRig, style, planetCenter);
@@ -654,31 +707,20 @@ namespace Elemental.Authoring.Editor
             Light sun = GameObject.Find("Sun")?.GetComponent<Light>();
             if (sun != null)
             {
-                sun.color = style.SunColor;
-                sun.intensity = style.SunIntensity;
+                sun.color = new Color(1f, 0.91f, 0.78f);
+                sun.intensity = 1.28f;
                 sun.shadows = LightShadows.Soft;
-                sun.shadowStrength = 0.78f;
-                sun.transform.rotation = Quaternion.Euler(44f, -38f, -12f);
+                sun.shadowStrength = 0.74f;
+                sun.shadowBias = 0.11f;
+                sun.shadowNormalBias = 0.20f;
+                sun.transform.rotation = Quaternion.Euler(42f, -34f, 0f);
+                RenderSettings.sun = sun;
             }
 
-            GameObject rimObject = GameObject.Find("Earth Rim Light") ?? new GameObject("Earth Rim Light");
-            Light rim = rimObject.GetComponent<Light>();
-            if (rim == null) rim = rimObject.AddComponent<Light>();
-            rim.type = LightType.Directional;
-            rim.color = new Color(0.30f, 0.45f, 1f);
-            rim.intensity = style.RimIntensity;
-            rim.shadows = LightShadows.None;
-            rim.transform.rotation = Quaternion.Euler(220f, 130f, 0f);
-
-            GameObject fillObject = GameObject.Find("Earth Warm Fill") ?? new GameObject("Earth Warm Fill");
-            Light fill = fillObject.GetComponent<Light>();
-            if (fill == null) fill = fillObject.AddComponent<Light>();
-            fill.type = LightType.Point;
-            fill.color = new Color(1f, 0.42f, 0.10f);
-            fill.intensity = 22f;
-            fill.range = 18f;
-            fill.shadows = LightShadows.None;
-            fillObject.transform.position = new Vector3(-4f, 31f, -2f);
+            GameObject rimObject = GameObject.Find("Earth Rim Light");
+            if (rimObject != null) Object.DestroyImmediate(rimObject);
+            GameObject fillObject = GameObject.Find("Earth Warm Fill");
+            if (fillObject != null) Object.DestroyImmediate(fillObject);
         }
 
         private static void ConfigurePreview(LineRenderer preview, EarthCoreVisualStyle style)
@@ -812,26 +854,11 @@ namespace Elemental.Authoring.Editor
 
         private static Mesh[] CreateOrLoadFragmentMeshes()
         {
-            System.IO.Directory.CreateDirectory("Assets/Elemental/Content/Meshes");
-            string[] paths =
-            {
-                FragmentMeshPath,
-                "Assets/Elemental/Content/Meshes/BeveledEarthBlockB.asset",
-                "Assets/Elemental/Content/Meshes/BeveledEarthBlockC.asset",
-                "Assets/Elemental/Content/Meshes/BeveledEarthBlockD.asset"
-            };
-            var meshes = new Mesh[paths.Length];
-            for (int index = 0; index < paths.Length; index++)
-            {
-                Mesh mesh = AssetDatabase.LoadAssetAtPath<Mesh>(paths[index]);
-                if (mesh == null) mesh = new Mesh { name = $"Beveled Earth Block {index + 1}" };
-                BuildBeveledBlock(mesh, 0.10f + (index * 0.018f), index);
-                if (!AssetDatabase.Contains(mesh)) AssetDatabase.CreateAsset(mesh, paths[index]);
-                else EditorUtility.SetDirty(mesh);
-                meshes[index] = mesh;
-            }
-            return meshes;
+            return RumblePhysicsRockAssetBuilder.CreateOrUpdateHeroLibrary();
         }
+
+        private static Mesh[] CreateOrLoadDebrisMeshes() =>
+            RumblePhysicsRockAssetBuilder.CreateOrUpdateDebrisLibrary();
 
         private static void BuildBeveledBlock(Mesh mesh, float bevel, int variant)
         {
@@ -941,73 +968,47 @@ namespace Elemental.Authoring.Editor
         private static Mesh CreateOrLoadChippedWallMesh()
         {
             Mesh existing = AssetDatabase.LoadAssetAtPath<Mesh>(WallMeshPath);
-            if (existing != null) return existing;
-
             System.IO.Directory.CreateDirectory("Assets/Elemental/Content/Meshes");
-            Vector2[] outline =
+            Mesh generated = EarthSafeMeshFactory.CreateBeveledBox(
+                "ChippedEarthWall",
+                new Bounds(Vector3.zero, Vector3.one),
+                0.065f,
+                0xEA4711u);
+            generated.hideFlags = HideFlags.None;
+            if (existing == null)
             {
-                new Vector2(-0.50f, -0.50f),
-                new Vector2(0.50f, -0.50f),
-                new Vector2(0.50f, 0.34f),
-                new Vector2(0.43f, 0.48f),
-                new Vector2(0.18f, 0.45f),
-                new Vector2(-0.04f, 0.50f),
-                new Vector2(-0.27f, 0.46f),
-                new Vector2(-0.45f, 0.50f),
-                new Vector2(-0.50f, 0.38f)
-            };
-            var vertices = new List<Vector3>(outline.Length * 6);
-            var triangles = new List<int>(outline.Length * 12);
-
-            int frontCenter = vertices.Count;
-            vertices.Add(new Vector3(0f, 0f, -0.5f));
-            int frontStart = vertices.Count;
-            for (int index = 0; index < outline.Length; index++)
-                vertices.Add(new Vector3(outline[index].x, outline[index].y, -0.5f));
-            for (int index = 0; index < outline.Length; index++)
-            {
-                int next = (index + 1) % outline.Length;
-                triangles.Add(frontCenter);
-                triangles.Add(frontStart + next);
-                triangles.Add(frontStart + index);
+                AssetDatabase.CreateAsset(generated, WallMeshPath);
+                return generated;
             }
+            EditorUtility.CopySerialized(generated, existing);
+            existing.name = "ChippedEarthWall";
+            existing.hideFlags = HideFlags.None;
+            EditorUtility.SetDirty(existing);
+            Object.DestroyImmediate(generated);
+            return existing;
+        }
 
-            int backCenter = vertices.Count;
-            vertices.Add(new Vector3(0f, 0f, 0.5f));
-            int backStart = vertices.Count;
-            for (int index = 0; index < outline.Length; index++)
-                vertices.Add(new Vector3(outline[index].x, outline[index].y, 0.5f));
-            for (int index = 0; index < outline.Length; index++)
+        private static Mesh CreateOrLoadBeveledPillarMesh()
+        {
+            Mesh existing = AssetDatabase.LoadAssetAtPath<Mesh>(PillarMeshPath);
+            System.IO.Directory.CreateDirectory("Assets/Elemental/Content/Meshes");
+            Mesh generated = EarthSafeMeshFactory.CreateBeveledBox(
+                "BeveledEarthPillar",
+                new Bounds(Vector3.zero, new Vector3(1f, 2f, 1f)),
+                0.095f,
+                0xF11A7u);
+            generated.hideFlags = HideFlags.None;
+            if (existing == null)
             {
-                int next = (index + 1) % outline.Length;
-                triangles.Add(backCenter);
-                triangles.Add(backStart + index);
-                triangles.Add(backStart + next);
+                AssetDatabase.CreateAsset(generated, PillarMeshPath);
+                return generated;
             }
-
-            for (int index = 0; index < outline.Length; index++)
-            {
-                int next = (index + 1) % outline.Length;
-                int side = vertices.Count;
-                vertices.Add(new Vector3(outline[index].x, outline[index].y, -0.5f));
-                vertices.Add(new Vector3(outline[next].x, outline[next].y, -0.5f));
-                vertices.Add(new Vector3(outline[next].x, outline[next].y, 0.5f));
-                vertices.Add(new Vector3(outline[index].x, outline[index].y, 0.5f));
-                triangles.Add(side);
-                triangles.Add(side + 1);
-                triangles.Add(side + 2);
-                triangles.Add(side);
-                triangles.Add(side + 2);
-                triangles.Add(side + 3);
-            }
-
-            Mesh mesh = new Mesh { name = "Chipped Earth Wall" };
-            mesh.SetVertices(vertices);
-            mesh.SetTriangles(triangles, 0, true);
-            mesh.RecalculateNormals();
-            mesh.RecalculateBounds();
-            AssetDatabase.CreateAsset(mesh, WallMeshPath);
-            return mesh;
+            EditorUtility.CopySerialized(generated, existing);
+            existing.name = "BeveledEarthPillar";
+            existing.hideFlags = HideFlags.None;
+            EditorUtility.SetDirty(existing);
+            Object.DestroyImmediate(generated);
+            return existing;
         }
 
         private static void CreateCharacterVisual(
@@ -1034,7 +1035,7 @@ namespace Elemental.Authoring.Editor
             {
                 CreateActivePuppetVisual(
                     character, input, executor, gravityWorld, body, scarf, eye, boot);
-                CreateHumanoidPresentation(character, input, executor, pillarMobility);
+                CreateHumanoidPresentation(character, input, executor, pillarMobility, gravityWorld);
                 return;
             }
 
@@ -1060,7 +1061,8 @@ namespace Elemental.Authoring.Editor
             GameObject character,
             MagicInputController input,
             MagicExecutor executor,
-            EarthPillarMobility pillarMobility)
+            EarthPillarMobility pillarMobility,
+            GravityWorldBehaviour gravityWorld)
         {
             ConfigureCharacterImporters();
             GameObject characterPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CharacterModelPath);
@@ -1111,6 +1113,7 @@ namespace Elemental.Authoring.Editor
                 renderer.shadowCastingMode = ShadowCastingMode.On;
                 renderer.receiveShadows = true;
             }
+            ApplyPersistentRumbleCharacterMaterials(presentationObject, false);
 
             Animator animator = presentationObject.GetComponentInChildren<Animator>(true);
             if (animator == null) animator = presentationObject.AddComponent<Animator>();
@@ -1138,6 +1141,20 @@ namespace Elemental.Authoring.Editor
             Transform rightTarget = CreatePoseTarget("Right Hand IK", targetRoot.transform, new Vector3(0.34f, 0.55f, 0.58f));
 
             ActiveRagdollPuppet puppet = character.GetComponent<ActiveRagdollPuppet>();
+            ParticleSystem stoneFadeDust = CreateStoneFadeDust(presentationObject.transform);
+            HumanoidRagdollRig visibleRagdoll = presentationObject.GetComponent<HumanoidRagdollRig>();
+            if (visibleRagdoll == null) visibleRagdoll = presentationObject.AddComponent<HumanoidRagdollRig>();
+            visibleRagdoll.ConfigureAndBuild(
+                animator,
+                character.GetComponent<Rigidbody>(),
+                character.GetComponent<Collider>(),
+                gravityWorld,
+                puppet,
+                stoneFadeDust,
+                puppet,
+                character.GetComponent<PlanetMotor>(),
+                input,
+                character.GetComponent<PlanetInputReader>());
             HumanoidCharacterPresentation presentation = presentationObject.GetComponent<HumanoidCharacterPresentation>();
             if (presentation == null) presentation = presentationObject.AddComponent<HumanoidCharacterPresentation>();
             presentation.Configure(
@@ -1153,13 +1170,23 @@ namespace Elemental.Authoring.Editor
                 CreateOrLoadProfile<EarthTechniquePresentationProfile>(
                     TechniquePresentationProfilePath,
                     "Earth Technique Presentation Profile"),
-                pillarMobility);
+                pillarMobility,
+                visibleRagdoll,
+                true);
+            HumanoidOrganicIdle organicIdle = presentationObject.GetComponent<HumanoidOrganicIdle>();
+            if (organicIdle == null) organicIdle = presentationObject.AddComponent<HumanoidOrganicIdle>();
+            organicIdle.Configure(
+                animator,
+                presentation,
+                character.GetComponent<PlanetMotor>(),
+                visibleRagdoll,
+                profile.OrganicIdleBlendInSeconds,
+                profile.OrganicIdleBlendOutSeconds);
             EarthStompContactPresenter stomp = presentationObject.GetComponent<EarthStompContactPresenter>();
             if (stomp == null) stomp = presentationObject.AddComponent<EarthStompContactPresenter>();
             stomp.Configure(pillarMobility);
             HumanoidRagdollBridge bridge = presentationObject.GetComponent<HumanoidRagdollBridge>();
-            if (bridge == null) bridge = presentationObject.AddComponent<HumanoidRagdollBridge>();
-            bridge.Configure(animator, puppet, presentationObject.transform);
+            if (bridge != null) Object.DestroyImmediate(bridge);
         }
 
         private static void BindRigidCharacterPart(
@@ -1808,32 +1835,126 @@ namespace Elemental.Authoring.Editor
             return new EarthPuppetPart(go.transform, body, go.GetComponent<Collider>(), driver);
         }
 
-        private static void CreatePlanetLandmarks(Material earthMaterial, EarthCoreVisualStyle style, float planetRadius)
+        private static void CreatePlanetLandmarks(
+            Material earthMaterial,
+            EarthCoreVisualStyle style,
+            float planetRadius,
+            GravityWorldBehaviour gravityWorld,
+            EarthRockDebrisPool debrisPool)
         {
             Transform old = GameObject.Find("Earth Diorama Landmarks")?.transform;
             if (old != null) Object.DestroyImmediate(old.gameObject);
             GameObject root = new GameObject("Earth Diorama Landmarks");
-            Material darkStone = CreateOrLoadLitMaterial("DarkStrata.mat", style.StoneColor * 0.48f, 0.06f, Color.black);
-            Material crystal = CreateOrLoadLitMaterial("AmberCrystal.mat", style.SparkColor, 0.42f, style.SparkColor * 2.4f);
+            Material sandstone = LoadRumbleMaterial("RumbleSandstone.mat") ?? earthMaterial;
+            Material limestone = LoadRumbleMaterial("RumbleLimestone.mat") ?? earthMaterial;
+            Material basalt = LoadRumbleMaterial("RumbleBasalt.mat") ?? earthMaterial;
+            Material[] materials = { sandstone, limestone, basalt };
 
             Vector3[] dirs =
             {
-                new Vector3(-0.22f, 0.96f, 0.16f).normalized,
-                new Vector3(0.30f, 0.93f, 0.20f).normalized,
-                new Vector3(-0.42f, 0.88f, -0.18f).normalized,
-                new Vector3(0.50f, 0.84f, -0.12f).normalized
+                new Vector3(-0.48f, 0.86f, 0.18f).normalized,
+                new Vector3(0.52f, 0.83f, 0.20f).normalized,
+                new Vector3(-0.46f, 0.84f, -0.29f).normalized,
+                new Vector3(0.55f, 0.80f, -0.24f).normalized,
+                new Vector3(-0.16f, 0.78f, 0.61f).normalized,
+                new Vector3(0.22f, 0.75f, 0.63f).normalized
             };
             for (int i = 0; i < dirs.Length; i++)
             {
-                Vector3 p = dirs[i] * (planetRadius + 0.8f);
-                Quaternion rot = Quaternion.FromToRotation(Vector3.up, dirs[i]);
-                CreatePart($"Rock Formation {i + 1}", PrimitiveType.Cube, root.transform, p,
-                    new Vector3(1.4f + i * 0.18f, 1.8f + (i % 2) * 0.8f, 1.2f), i % 2 == 0 ? darkStone : earthMaterial,
-                    rot.eulerAngles + new Vector3(0f, i * 31f, 12f));
-                Vector3 cp = dirs[i] * (planetRadius + 2.2f);
-                CreatePart($"Amber Crystal {i + 1}", PrimitiveType.Cube, root.transform, cp,
-                    new Vector3(0.22f, 0.72f, 0.22f), crystal, rot.eulerAngles + new Vector3(0f, 45f, 45f));
+                Mesh mesh = LoadRumbleMesh($"V5_Boulder_{i % 8:00}.asset");
+                Vector3 up = dirs[i];
+                Vector3 forward = Vector3.ProjectOnPlane(Vector3.forward, up).normalized;
+                if (forward.sqrMagnitude < 0.1f) forward = Vector3.ProjectOnPlane(Vector3.right, up).normalized;
+                Quaternion rotation = Quaternion.LookRotation(forward, up) * Quaternion.Euler(0f, i * 47f, 0f);
+                float scale = 1.15f + (i % 3) * 0.28f;
+                CreateRumbleRock(
+                    $"Rumble Formation {i + 1:00}",
+                    mesh,
+                    materials[i % materials.Length],
+                    root.transform,
+                    up * planetRadius,
+                    rotation,
+                    new Vector3(scale * 1.18f, scale, scale),
+                    true,
+                    400 + i,
+                    Vector3.zero,
+                    gravityWorld,
+                    debrisPool);
             }
+        }
+
+        private static void CreateRumbleAmphitheatre(
+            Vector3 planetCenter,
+            float planetRadius,
+            GravityWorldBehaviour gravityWorld,
+            EarthRockDebrisPool debrisPool)
+        {
+            GameObject old = GameObject.Find("Rumble Stone Amphitheatre");
+            if (old != null) Object.DestroyImmediate(old);
+            GameObject root = new GameObject("Rumble Stone Amphitheatre");
+            Material sandstone = LoadRumbleMaterial("RumbleSandstone.mat");
+            Material[] materials = { sandstone };
+
+            // Two low, regular sandstone tiers read as a deliberate fighting court.
+            // The open front keeps the player entrance and camera sightline clear.
+            CreateAmphitheatreRing(root.transform, planetCenter, planetRadius, 7.15f, 12, -136f, 136f,
+                "V5_Slab_", 8, 4, materials, 0, gravityWorld, debrisPool);
+            CreateAmphitheatreRing(root.transform, planetCenter, planetRadius, 8.55f, 14, -138f, 138f,
+                "V5_Slab_", 8, 4, materials, 100, gravityWorld, debrisPool);
+        }
+
+        private static void CreateAmphitheatreRing(
+            Transform parent,
+            Vector3 planetCenter,
+            float planetRadius,
+            float ringRadius,
+            int count,
+            float minimumAngle,
+            float maximumAngle,
+            string meshPrefix,
+            int meshStart,
+            int meshCount,
+            Material[] materials,
+            int seedOffset,
+            GravityWorldBehaviour gravityWorld,
+            EarthRockDebrisPool debrisPool)
+        {
+            for (int index = 0; index < count; index++)
+            {
+                float angleDegrees = Mathf.Lerp(minimumAngle, maximumAngle, index / (float)(count - 1));
+                float angle = angleDegrees * Mathf.Deg2Rad;
+                Vector3 offset = new Vector3(Mathf.Sin(angle) * ringRadius, 0f, Mathf.Cos(angle) * ringRadius);
+                Vector3 surface = ProjectTangentPointToPlanet(planetCenter, planetRadius, offset);
+                Vector3 up = (surface - planetCenter).normalized;
+                Vector3 forward = Vector3.ProjectOnPlane(offset, up).normalized;
+                if (forward.sqrMagnitude < 0.1f) forward = Vector3.forward;
+                Quaternion rotation = Quaternion.LookRotation(forward, up) *
+                                      Quaternion.Euler(0f, (index % 2 == 0 ? -1.5f : 1.5f), 0f);
+                bool outer = ringRadius > 8f;
+                Vector3 scale = outer
+                    ? new Vector3(0.72f, 0.48f, 0.62f)
+                    : new Vector3(0.68f, 0.32f, 0.60f);
+                CreateRumbleRock(
+                    outer ? $"Outer Stand {index + 1:00}" : $"Inner Stand {index + 1:00}",
+                    LoadRumbleMesh($"{meshPrefix}{meshStart + index % meshCount:00}.asset"),
+                    materials[index % materials.Length],
+                    parent,
+                    surface,
+                    rotation,
+                    scale,
+                    true,
+                    seedOffset + index,
+                    planetCenter,
+                    gravityWorld,
+                    debrisPool);
+            }
+        }
+
+        private static Vector3 ProjectTangentPointToPlanet(Vector3 center, float radius, Vector3 tangentOffset)
+        {
+            float planarRadiusSq = tangentOffset.x * tangentOffset.x + tangentOffset.z * tangentOffset.z;
+            float y = Mathf.Sqrt(Mathf.Max(0.01f, radius * radius - planarRadiusSq));
+            return center + new Vector3(tangentOffset.x, y, tangentOffset.z);
         }
 
         private static void CreateStarField(EarthCoreVisualStyle style)
@@ -2249,32 +2370,60 @@ namespace Elemental.Authoring.Editor
                 Mesh[] variants = LoadEarthParticleMeshVariants();
                 renderer.SetMeshes(variants, variants.Length);
             }
-            renderer.sharedMaterial = CreateOrLoadLitMaterial(
-                materialName ?? (glow ? "AmberShardVfx.mat" : "EarthDustVfx.mat"),
-                color,
-                0.04f,
-                glow ? color * 2f : Color.black);
+            renderer.sharedMaterial = softDust
+                ? LoadRumbleMaterial("RumbleDustLit.mat")
+                : CreateOrLoadLitMaterial(
+                    materialName ?? (glow ? "AmberShardVfx.mat" : "EarthDustVfx.mat"),
+                    color,
+                    0.04f,
+                    glow ? color * 2f : Color.black);
+            if (softDust && renderer.sharedMaterial == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "RumbleDustLit is required for billboard dust particles.");
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
             return ps;
+        }
+
+        private static ParticleSystem CreateStoneFadeDust(Transform parent)
+        {
+            Transform existing = parent != null ? parent.Find("Stone Fade Dust") : null;
+            if (existing != null) Object.DestroyImmediate(existing.gameObject);
+            GameObject go = new GameObject("Stone Fade Dust");
+            go.transform.SetParent(parent, false);
+            ParticleSystem dust = go.AddComponent<ParticleSystem>();
+            ParticleSystem.MainModule main = dust.main;
+            main.playOnAwake = false;
+            main.loop = false;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.45f, 0.82f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.45f, 1.65f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.10f, 0.28f);
+            main.startColor = new ParticleSystem.MinMaxGradient(
+                new Color(0.46f, 0.33f, 0.22f, 0.72f),
+                new Color(0.24f, 0.17f, 0.12f, 0.48f));
+            main.maxParticles = 32;
+            ParticleSystem.EmissionModule emission = dust.emission;
+            emission.enabled = false;
+            ParticleSystem.ShapeModule shape = dust.shape;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = 0.46f;
+            ParticleSystem.ColorOverLifetimeModule color = dust.colorOverLifetime;
+            color.enabled = true;
+            color.color = new ParticleSystem.MinMaxGradient(
+                Color.white,
+                new Color(1f, 1f, 1f, 0f));
+            ParticleSystemRenderer renderer = go.GetComponent<ParticleSystemRenderer>();
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.sharedMaterial = LoadRumbleMaterial("RumbleDustLit.mat");
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            return dust;
         }
 
         private static Mesh[] LoadEarthParticleMeshVariants()
         {
-            string[] paths =
-            {
-                FragmentMeshPath,
-                "Assets/Elemental/Content/Meshes/BeveledEarthBlockB.asset",
-                "Assets/Elemental/Content/Meshes/BeveledEarthBlockC.asset",
-                "Assets/Elemental/Content/Meshes/BeveledEarthBlockD.asset"
-            };
-            var variants = new Mesh[paths.Length];
-            for (int index = 0; index < paths.Length; index++)
-            {
-                variants[index] = AssetDatabase.LoadAssetAtPath<Mesh>(paths[index]);
-                if (variants[index] == null)
-                    throw new UnityEditor.Build.BuildFailedException(
-                        $"Earth particle mesh variant is missing: {paths[index]}");
-            }
-            return variants;
+            return CreateOrLoadDebrisMeshes();
         }
 
         private static void CreateGravityWellFeedback(
@@ -2337,17 +2486,22 @@ namespace Elemental.Authoring.Editor
             GameObject old = GameObject.Find("Earth Pillar Feedback");
             if (old != null) Object.DestroyImmediate(old);
             GameObject root = new GameObject("Earth Pillar Feedback");
-            Material pillarMaterial = CreateOrLoadEarthMaterial(
-                "EarthPillar.mat", style.StoneColor * 0.92f, 0.045f, style.StoneEmission * 0.35f);
+            Material pillarMaterial = LoadRumbleMaterial("RumbleSandstone.mat");
+            Mesh pillarMesh = CreateOrLoadBeveledPillarMesh();
+            Mesh chipMesh = CreateOrLoadChippedWallMesh();
+            if (!IsRumbleMaterial(pillarMaterial))
+                throw new UnityEditor.Build.BuildFailedException(
+                    "Earth pillar requires GraphicsV5/Materials/RumbleSandstone.mat and Rumble Rock Lit.");
             GameObject pillar = CreatePart(
                 "Rising Earth Pillar", PrimitiveType.Cylinder, root.transform,
                 Vector3.zero, Vector3.one, pillarMaterial);
+            pillar.GetComponent<MeshFilter>().sharedMesh = pillarMesh;
 
             // Fixed authored chips break the cylinder silhouette without adding physics bodies.
             for (int index = 0; index < 9; index++)
             {
                 float angle = index * (360f / 9f) * Mathf.Deg2Rad;
-                CreatePart(
+                GameObject edgeChip = CreatePart(
                     $"Pillar Edge Chip {index + 1:00}",
                     PrimitiveType.Cube,
                     pillar.transform,
@@ -2355,6 +2509,7 @@ namespace Elemental.Authoring.Editor
                     new Vector3(0.25f, 0.19f + ((index % 3) * 0.07f), 0.2f),
                     pillarMaterial,
                     new Vector3(index * 13f, index * 29f, index * 7f));
+                edgeChip.GetComponent<MeshFilter>().sharedMesh = chipMesh;
             }
 
             var chips = new Transform[20];
@@ -2363,6 +2518,7 @@ namespace Elemental.Authoring.Editor
                 GameObject chip = CreatePart(
                     $"Lift Ground Chip {index + 1:00}", PrimitiveType.Cube, root.transform,
                     Vector3.zero, Vector3.one * 0.15f, pillarMaterial);
+                chip.GetComponent<MeshFilter>().sharedMesh = chipMesh;
                 chips[index] = chip.transform;
             }
             EarthPillarFeedback feedback = root.AddComponent<EarthPillarFeedback>();
@@ -2433,18 +2589,24 @@ namespace Elemental.Authoring.Editor
             }
             Bloom bloom = GetOrAdd<Bloom>(profile);
             bloom.active = true;
-            bloom.intensity.Override(0.35f);
-            bloom.threshold.Override(0.8f);
-            bloom.scatter.Override(0.65f);
+            bloom.intensity.Override(0.07f);
+            bloom.threshold.Override(1.12f);
+            bloom.scatter.Override(0.54f);
             Vignette vignette = GetOrAdd<Vignette>(profile);
             vignette.active = true;
-            vignette.intensity.Override(0.25f);
-            vignette.smoothness.Override(0.55f);
+            vignette.intensity.Override(0.075f);
+            vignette.smoothness.Override(0.48f);
             ColorAdjustments color = GetOrAdd<ColorAdjustments>(profile);
             color.active = true;
-            color.postExposure.Override(-0.2f);
-            color.contrast.Override(18f);
-            color.saturation.Override(-6f);
+            color.postExposure.Override(0f);
+            color.contrast.Override(7f);
+            color.saturation.Override(-8f);
+            WhiteBalance whiteBalance = GetOrAdd<WhiteBalance>(profile);
+            whiteBalance.active = true;
+            whiteBalance.temperature.Override(2f);
+            whiteBalance.tint.Override(-1f);
+            DepthOfField depthOfField = GetOrAdd<DepthOfField>(profile);
+            depthOfField.active = false;
             Tonemapping tonemapping = GetOrAdd<Tonemapping>(profile);
             tonemapping.active = true;
             tonemapping.mode.Override(TonemappingMode.ACES);
@@ -2512,6 +2674,107 @@ namespace Elemental.Authoring.Editor
             MeshRenderer renderer = go.GetComponent<MeshRenderer>();
             if (renderer != null) renderer.sharedMaterial = material;
             return go;
+        }
+
+        private static Material LoadRumbleMaterial(string fileName) =>
+            AssetDatabase.LoadAssetAtPath<Material>(RumbleMaterialFolder + fileName);
+
+        private static Mesh LoadRumbleMesh(string fileName) =>
+            AssetDatabase.LoadAssetAtPath<Mesh>(RumbleRockFolder + fileName);
+
+        private static bool IsRumbleMaterial(Material material) =>
+            material != null && material.shader != null && material.shader.name == RumbleShaderName;
+
+        private static GameObject CreateRumbleRock(
+            string name,
+            Mesh mesh,
+            Material material,
+            Transform parent,
+            Vector3 position,
+            Quaternion rotation,
+            Vector3 scale,
+            bool createCollider,
+            int variationSeed,
+            Vector3 planetCenter,
+            GravityWorldBehaviour gravityWorld,
+            EarthRockDebrisPool debrisPool)
+        {
+            if (mesh == null || material == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"Graphics V5 asset missing while creating '{name}'.");
+
+            GameObject rock = new GameObject(name);
+            rock.transform.SetParent(parent, false);
+            rock.transform.rotation = rotation;
+            rock.transform.localScale = scale;
+            rock.AddComponent<MeshFilter>().sharedMesh = mesh;
+            MeshRenderer renderer = rock.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = ShadowCastingMode.On;
+            renderer.receiveShadows = true;
+            if (createCollider)
+            {
+                BoxCollider collider = rock.AddComponent<BoxCollider>();
+                collider.center = mesh.bounds.center;
+                collider.size = Vector3.Max(mesh.bounds.size * 0.90f, Vector3.one * 0.08f);
+                Rigidbody body = rock.AddComponent<Rigidbody>();
+                Vector3 scaledSize = Vector3.Scale(mesh.bounds.size, new Vector3(
+                    Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z)));
+                float volume = Mathf.Max(0.05f, scaledSize.x * scaledSize.y * scaledSize.z * 0.62f);
+                body.mass = Mathf.Clamp(volume * 120f, 45f, 1500f);
+                body.useGravity = false;
+                body.interpolation = RigidbodyInterpolation.Interpolate;
+                body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+                body.constraints = RigidbodyConstraints.FreezeAll;
+                GravityBody gravityBody = rock.AddComponent<GravityBody>();
+                gravityBody.Configure(gravityWorld, body);
+                gravityBody.enabled = false;
+                EarthDestructibleDecorRock destructible =
+                    rock.AddComponent<EarthDestructibleDecorRock>();
+                destructible.Configure(
+                    0xD3000000u + unchecked((uint)Mathf.Max(1, variationSeed + 1)),
+                    body,
+                    collider,
+                    gravityBody,
+                    debrisPool,
+                    scaledSize.magnitude * 0.28f,
+                    Mathf.Clamp(body.mass * 5.5f, 420f, 2400f));
+            }
+
+            Vector3 surfaceNormal = (position - planetCenter).normalized;
+            if (surfaceNormal.sqrMagnitude < 0.5f) surfaceNormal = rotation * Vector3.up;
+            EarthSurfacePlacementResult placement = EarthSurfacePlacementSolver.Solve(
+                mesh,
+                position,
+                surfaceNormal,
+                rotation,
+                scale,
+                0.035f);
+            rock.transform.position = placement.IsValid ? placement.RootPosition : position;
+
+            float variant = Mathf.Repeat(variationSeed * 0.071f, 1f);
+            Color baseColor = material.HasProperty("_BaseColor")
+                ? material.GetColor("_BaseColor")
+                : new Color(0.50f, 0.34f, 0.23f, 1f);
+            baseColor = Color.Lerp(baseColor * 0.93f, baseColor * 1.05f, variant);
+            baseColor.a = 1f;
+            Color shadow = material.HasProperty("_ShadowColor")
+                ? material.GetColor("_ShadowColor")
+                : baseColor * 0.38f;
+            Color edge = material.HasProperty("_EdgeColor")
+                ? material.GetColor("_EdgeColor")
+                : Color.Lerp(baseColor, Color.white, 0.18f);
+            RumbleRockVariation variation = rock.AddComponent<RumbleRockVariation>();
+            variation.Configure(
+                baseColor,
+                shadow,
+                edge,
+                Mathf.Lerp(2.8f, 5.2f, variant),
+                Mathf.Lerp(0.05f, 0.10f, Mathf.Repeat(variationSeed * 0.173f, 1f)),
+                Mathf.Lerp(0.18f, 0.30f, Mathf.Repeat(variationSeed * 0.217f, 1f)),
+                true,
+                planetCenter);
+            return rock;
         }
 
         private static AbilityRecipeAsset[] CreateOrLoadRecipes()
@@ -2598,109 +2861,320 @@ namespace Elemental.Authoring.Editor
             return material;
         }
 
-        private static void CreateImpactDummy(GravityWorldBehaviour gravityWorld, Material material, EarthCoreVisualStyle style)
+        private static void CreateMvpLinebreaker(
+            GravityWorldBehaviour gravityWorld,
+            float planetRadius,
+            GameObject player,
+            Transform planetCenter,
+            EarthFragmentPool projectilePool)
         {
-            GameObject existing = GameObject.Find("Earth Impact Dummy");
-            if (existing != null)
+            string[] obsoleteNames =
             {
-                return;
+                "Earth Impact Dummy",
+                "Earth Combat Scout",
+                "Earth Combat Sentinel",
+                "Earth Combat Trap",
+                "Rumble Linebreaker Bot"
+            };
+            for (int index = 0; index < obsoleteNames.Length; index++)
+            {
+                GameObject obsolete = GameObject.Find(obsoleteNames[index]);
+                if (obsolete != null) Object.DestroyImmediate(obsolete);
             }
 
-            GameObject dummy = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            dummy.name = "Earth Impact Dummy";
-            dummy.transform.position = new Vector3(0f, 27f, 6f);
-            dummy.transform.localScale = new Vector3(1.2f, 1.5f, 1.2f);
-            dummy.GetComponent<MeshRenderer>().sharedMaterial = material;
-            CreateCharacterVisual(dummy, null, null, style);
-            Rigidbody body = dummy.AddComponent<Rigidbody>();
-            body.mass = 18f;
+            Vector3 center = planetCenter != null ? planetCenter.position : Vector3.zero;
+            Vector3 arenaCenter = center + Vector3.up * planetRadius;
+            Vector3 surface = ProjectTangentPointToPlanet(center, planetRadius, new Vector3(0f, 0f, 5.25f));
+            Vector3 up = (surface - center).normalized;
+            Vector3 facing = Vector3.ProjectOnPlane(player.transform.position - surface, up).normalized;
+            if (facing.sqrMagnitude < 0.1f) facing = Vector3.back;
+
+            GameObject bot = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            bot.name = "Rumble Linebreaker Bot";
+            bot.SetActive(false);
+            // Half of the 2.15 m capsule: exact first-frame surface contact.
+            bot.transform.position = surface + up * 1.075f;
+            bot.transform.rotation = Quaternion.LookRotation(facing, up);
+            MeshRenderer capsuleRenderer = bot.GetComponent<MeshRenderer>();
+            if (capsuleRenderer != null) Object.DestroyImmediate(capsuleRenderer);
+            MeshFilter capsuleFilter = bot.GetComponent<MeshFilter>();
+            if (capsuleFilter != null) Object.DestroyImmediate(capsuleFilter);
+            CapsuleCollider capsule = bot.GetComponent<CapsuleCollider>();
+            capsule.height = 2.15f;
+            capsule.radius = 0.56f;
+
+            Rigidbody body = bot.AddComponent<Rigidbody>();
+            body.mass = 42f;
             body.useGravity = false;
+            body.linearDamping = 0.22f;
+            body.angularDamping = 0.72f;
+            body.interpolation = RigidbodyInterpolation.Interpolate;
             body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-            GravityBody gravityBody = dummy.AddComponent<GravityBody>();
+            GravityBody gravityBody = bot.AddComponent<GravityBody>();
             gravityBody.Configure(gravityWorld, body);
-            PhysicalImpactTarget target = dummy.AddComponent<PhysicalImpactTarget>();
-            target.Configure(body, 0.35f);
-            EarthCombatDummy combat = dummy.AddComponent<EarthCombatDummy>();
-            combat.Configure(EarthCombatArchetype.Shaper, 150f, 620f);
+            EarthCombatDummy combat = bot.AddComponent<EarthCombatDummy>();
+            combat.Configure(EarthCombatArchetype.Scout, 135f, 620f);
+            PlanetMotor motor = bot.AddComponent<PlanetMotor>();
+            EarthMvpBotController controller = bot.AddComponent<EarthMvpBotController>();
+            motor.Configure(gravityWorld, body, capsule, controller, bot.transform);
+            motor.ConfigureFeel(3.1f, 18f, 0.18f);
+            motor.ConfigureTankSteering(true, 245f);
+            motor.ConfigureOrientationFeel(62f, 13f, 150f);
+            controller.Configure(
+                player.transform,
+                player.GetComponent<Rigidbody>(),
+                player.GetComponent<PhysicalImpactTarget>(),
+                player.GetComponent<ActiveRagdollPuppet>(),
+                planetCenter,
+                body,
+                motor,
+                combat,
+                arenaCenter,
+                6.5f);
+            controller.ConfigureTuning(5.8f, 0.82f, 15f, 0.24f, 0.72f, 1.0f);
 
-            CreateCombatArchetype(
-                "Earth Combat Scout",
-                new Vector3(-4.4f, 26.4f, 8.2f),
-                new Vector3(0.82f, 1.05f, 0.82f),
-                12f,
-                105f,
-                430f,
-                EarthCombatArchetype.Scout,
+            Animator humanoidAnimator = CreateLinebreakerHumanoidVisual(bot.transform);
+            Transform botVisualRoot = bot.transform.Find("Linebreaker X Bot Presentation");
+            if (botVisualRoot == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "Linebreaker visible Humanoid root was not created.");
+            ParticleSystem botFadeDust = CreateStoneFadeDust(botVisualRoot);
+            HumanoidRagdollRig botVisibleRagdoll = botVisualRoot.gameObject.AddComponent<HumanoidRagdollRig>();
+            botVisibleRagdoll.ConfigureAndBuild(
+                humanoidAnimator,
+                body,
+                capsule,
                 gravityWorld,
-                material);
-            CreateCombatArchetype(
-                "Earth Combat Sentinel",
-                new Vector3(4.8f, 27.3f, 8.8f),
-                new Vector3(1.35f, 1.65f, 1.35f),
-                42f,
-                260f,
-                1050f,
-                EarthCombatArchetype.Sentinel,
-                gravityWorld,
-                material);
-            CreateCombatTrap(material);
+                null,
+                botFadeDust);
+            CharacterPresentationProfile characterProfile = CreateOrLoadProfile<CharacterPresentationProfile>(
+                CharacterProfilePath,
+                "Character Presentation Profile");
+            HumanoidCharacterPresentation botSharedPresentation =
+                botVisualRoot.gameObject.AddComponent<HumanoidCharacterPresentation>();
+            botSharedPresentation.Configure(
+                characterProfile,
+                humanoidAnimator,
+                null,
+                null,
+                motor,
+                body,
+                null,
+                null,
+                null,
+                null,
+                null,
+                botVisibleRagdoll,
+                false);
+            HumanoidOrganicIdle botOrganicIdle = botVisualRoot.gameObject.AddComponent<HumanoidOrganicIdle>();
+            botOrganicIdle.Configure(
+                humanoidAnimator,
+                botSharedPresentation,
+                motor,
+                botVisibleRagdoll,
+                characterProfile.OrganicIdleBlendInSeconds,
+                characterProfile.OrganicIdleBlendOutSeconds);
+            HumanoidRagdollRig playerVisibleRagdoll =
+                player.GetComponentInChildren<HumanoidRagdollRig>(true);
+            Rigidbody playerBody = player.GetComponent<Rigidbody>();
+            PhysicalImpactTarget playerPhysicalImpact = player.GetComponent<PhysicalImpactTarget>();
+            EarthCharacterImpactTarget playerCharacterImpact =
+                player.GetComponent<EarthCharacterImpactTarget>();
+            if (playerCharacterImpact == null)
+                playerCharacterImpact = player.AddComponent<EarthCharacterImpactTarget>();
+            playerCharacterImpact.Configure(EarthDuelFighterId.Player, 0xC0010001u, playerBody);
+            playerPhysicalImpact?.ConfigureCharacterImpactTarget(playerCharacterImpact);
+
+            EarthCharacterImpactTarget botCharacterImpact =
+                bot.AddComponent<EarthCharacterImpactTarget>();
+            botCharacterImpact.Configure(EarthDuelFighterId.Bot, 0xC0010002u, body);
+            combat.SetCharacterImpactAuthority(botCharacterImpact);
+            EarthMvpDuelController duel = bot.AddComponent<EarthMvpDuelController>();
+            duel.Configure(
+                player.GetComponent<ActiveRagdollPuppet>(),
+                playerBody,
+                playerPhysicalImpact,
+                controller,
+                combat,
+                motor,
+                body,
+                capsule,
+                humanoidAnimator,
+                playerVisibleRagdoll,
+                botVisibleRagdoll,
+                playerCharacterImpact,
+                botCharacterImpact,
+                3.5f);
+            controller.ConfigureMagic(projectilePool, capsule, duel);
+
+            LineRenderer strikeLine = bot.AddComponent<LineRenderer>();
+            strikeLine.useWorldSpace = true;
+            strikeLine.positionCount = 0;
+            strikeLine.numCapVertices = 3;
+            strikeLine.numCornerVertices = 2;
+            strikeLine.alignment = LineAlignment.View;
+            strikeLine.sharedMaterial = CreateOrLoadPreviewMaterial();
+            strikeLine.shadowCastingMode = ShadowCastingMode.Off;
+            strikeLine.receiveShadows = false;
+            Renderer[] combatRenderers = humanoidAnimator.GetComponentsInChildren<Renderer>(true);
+            EarthMvpBotPresenter presenter = bot.AddComponent<EarthMvpBotPresenter>();
+            presenter.Configure(
+                controller,
+                strikeLine,
+                combatRenderers,
+                humanoidAnimator,
+                motor,
+                body,
+                botSharedPresentation);
+            bot.SetActive(true);
         }
 
-        private static void CreateCombatTrap(Material material)
+        private static Animator CreateLinebreakerHumanoidVisual(Transform bot)
         {
-            if (GameObject.Find("Earth Combat Trap") != null) return;
-            GameObject trap = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            trap.name = "Earth Combat Trap";
-            trap.transform.position = new Vector3(0f, 24.5f, 10.2f);
-            trap.transform.rotation = Quaternion.FromToRotation(Vector3.up, trap.transform.position.normalized);
-            trap.transform.localScale = new Vector3(1.55f, 0.08f, 1.55f);
-            trap.GetComponent<MeshRenderer>().sharedMaterial = material;
-            EarthTrapController controller = trap.AddComponent<EarthTrapController>();
-            controller.Configure(2.4f, 380f, true);
+            ConfigureCharacterImporters();
+            CharacterPresentationProfile profile = CreateOrLoadProfile<CharacterPresentationProfile>(
+                CharacterProfilePath,
+                "Character Presentation Profile");
+            GameObject prefab = profile.HumanoidPrefab;
+            Avatar avatar = profile.Avatar;
+            RuntimeAnimatorController controller = profile.AnimatorController;
+            if (prefab == null || avatar == null || !avatar.isValid || !avatar.isHuman || controller == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "Linebreaker requires the same valid Mixamo Humanoid prefab, Avatar and controller as the player.");
+
+            GameObject visual = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+            if (visual == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "Linebreaker Mixamo Humanoid presentation could not be instantiated.");
+            visual.name = "Linebreaker X Bot Presentation";
+            visual.tag = "Untagged";
+            visual.transform.SetParent(bot, false);
+            visual.transform.localPosition = profile.LocalPosition;
+            visual.transform.localRotation = profile.LocalRotation;
+            visual.transform.localScale = profile.LocalScale;
+
+            Animator animator = visual.GetComponentInChildren<Animator>(true);
+            if (animator == null) animator = visual.AddComponent<Animator>();
+            animator.avatar = avatar;
+            animator.runtimeAnimatorController = controller;
+            animator.applyRootMotion = false;
+            animator.updateMode = AnimatorUpdateMode.Normal;
+            animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+
+            foreach (Renderer renderer in visual.GetComponentsInChildren<Renderer>(true))
+            {
+                renderer.shadowCastingMode = ShadowCastingMode.On;
+                renderer.receiveShadows = true;
+            }
+            ApplyPersistentRumbleCharacterMaterials(visual, true);
+            return animator;
         }
 
-        private static void CreateCombatArchetype(
-            string name,
-            Vector3 position,
-            Vector3 scale,
-            float mass,
-            float staggerImpulse,
-            float ragdollImpulse,
-            EarthCombatArchetype archetype,
-            GravityWorldBehaviour gravityWorld,
-            Material material)
+        private static void ApplyPersistentRumbleCharacterMaterials(GameObject visual, bool rivalCharacter)
         {
-            GameObject actor = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            actor.name = name;
-            actor.transform.position = position;
-            actor.transform.localScale = scale;
-            actor.GetComponent<MeshRenderer>().sharedMaterial = material;
-            Rigidbody body = actor.AddComponent<Rigidbody>();
-            body.mass = mass;
-            body.useGravity = false;
-            body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-            GravityBody gravity = actor.AddComponent<GravityBody>();
-            gravity.Configure(gravityWorld, body);
-            PhysicalImpactTarget target = actor.AddComponent<PhysicalImpactTarget>();
-            target.Configure(body, 0.35f);
-            EarthCombatDummy combat = actor.AddComponent<EarthCombatDummy>();
-            combat.Configure(archetype, staggerImpulse, ragdollImpulse);
-            combat.SetBraced(archetype == EarthCombatArchetype.Sentinel);
+            if (visual == null) return;
+            string folder = rivalCharacter ? RivalMaterialFolder : PlayerMaterialFolder;
+            EnsureFolder(folder);
+            Shader rumbleShader = Shader.Find(RumbleShaderName);
+            if (rumbleShader == null)
+                throw new UnityEditor.Build.BuildFailedException($"Missing required character shader '{RumbleShaderName}'.");
+            Color characterTint = rivalCharacter
+                ? new Color(0.055f, 0.30f, 0.88f, 1f)
+                : new Color(0.52f, 0.285f, 0.16f, 1f);
+            Renderer[] renderers = visual.GetComponentsInChildren<Renderer>(true);
+            for (int rendererIndex = 0; rendererIndex < renderers.Length; rendererIndex++)
+            {
+                Renderer renderer = renderers[rendererIndex];
+                Material[] materials = renderer.sharedMaterials;
+                bool changed = false;
+                for (int materialIndex = 0; materialIndex < materials.Length; materialIndex++)
+                {
+                    Material source = materials[materialIndex];
+                    if (source == null || source.shader == null) continue;
+                    string sourcePath = AssetDatabase.GetAssetPath(source);
+                    string guid = AssetDatabase.AssetPathToGUID(sourcePath);
+                    string token = !string.IsNullOrEmpty(guid) && guid.Length >= 8
+                        ? guid.Substring(0, 8)
+                        : materialIndex.ToString("00");
+                    string safeName = SanitizeAssetFileName(source.name);
+                    string path = $"{folder}/{safeName}_{token}.mat";
+                    Material characterMaterial = AssetDatabase.LoadAssetAtPath<Material>(path);
+                    if (characterMaterial == null)
+                    {
+                        characterMaterial = new Material(rumbleShader) { name = $"{safeName}_{token}" };
+                        AssetDatabase.CreateAsset(characterMaterial, path);
+                    }
+                    else
+                    {
+                        characterMaterial.shader = rumbleShader;
+                    }
+                    Color resting = source.HasProperty("_BaseColor")
+                        ? source.GetColor("_BaseColor")
+                        : source.HasProperty("_Color")
+                            ? source.GetColor("_Color")
+                            : Color.white;
+                    float authoredValue = Mathf.Clamp(resting.grayscale, 0.42f, 0.92f);
+                    Color baseColor = characterTint * Mathf.Lerp(0.82f, 1.13f, authoredValue);
+                    baseColor.a = 1f;
+                    characterMaterial.SetFloat("_SurfaceMode", 1f);
+                    characterMaterial.SetColor("_BaseColor", baseColor);
+                    characterMaterial.SetColor("_ShadowColor", Color.Lerp(baseColor, Color.black, 0.62f));
+                    characterMaterial.SetColor("_EdgeColor", Color.Lerp(baseColor, Color.white, 0.18f));
+                    characterMaterial.SetColor("_FractureColor", Color.Lerp(baseColor, new Color(0.78f, 0.64f, 0.52f), 0.24f));
+                    characterMaterial.SetFloat("_TextureScale", 0.22f);
+                    characterMaterial.SetFloat("_TextureStrength", 0.025f);
+                    characterMaterial.SetFloat("_MacroScale", 3.8f);
+                    characterMaterial.SetFloat("_MacroStrength", 0.04f);
+                    characterMaterial.SetFloat("_FacetContrast", 0.20f);
+                    characterMaterial.SetFloat("_Roughness", 0.86f);
+                    characterMaterial.SetFloat("_BevelLight", 0f);
+                    characterMaterial.SetFloat("_SideShadingSmoothness", 0f);
+                    characterMaterial.SetFloat("_AmbientStrength", 0.86f);
+                    characterMaterial.SetFloat("_UsePlanetFrame", 0f);
+                    characterMaterial.SetFloat("_Fade", 1f);
+                    Texture sourceTexture = source.HasProperty("_BaseMap")
+                        ? source.GetTexture("_BaseMap")
+                        : source.HasProperty("_MainTex")
+                            ? source.GetTexture("_MainTex")
+                            : null;
+                    if (sourceTexture != null) characterMaterial.SetTexture("_BaseMap", sourceTexture);
+                    characterMaterial.enableInstancing = true;
+                    EditorUtility.SetDirty(characterMaterial);
+                    materials[materialIndex] = characterMaterial;
+                    changed = true;
+                }
+                if (changed) renderer.sharedMaterials = materials;
+            }
+        }
+
+        private static string SanitizeAssetFileName(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return "RivalStone";
+            char[] chars = value.ToCharArray();
+            for (int index = 0; index < chars.Length; index++)
+                if (!char.IsLetterOrDigit(chars[index]) && chars[index] != '-' && chars[index] != '_')
+                    chars[index] = '_';
+            return new string(chars);
         }
 
         private static void CreatePushBoulders(
             GravityWorldBehaviour gravityWorld,
             Material material,
             float planetRadius,
-            EarthPhysicsFeelProfile physicsFeel)
+            EarthPhysicsFeelProfile physicsFeel,
+            Mesh[] physicsRockMeshes)
         {
+            if (physicsRockMeshes == null || physicsRockMeshes.Length == 0)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "Push boulders require the centered Graphics V5 physics library.");
             GameObject existing = GameObject.Find("Magic Push Boulders");
             if (existing != null) Object.DestroyImmediate(existing);
             GameObject root = new GameObject("Magic Push Boulders");
             CreatePushBoulder(root.transform, "Light Push Boulder", new Vector3(-3.8f, planetRadius + 0.15f, 3.7f),
-                0.72f, 55f, gravityWorld, material);
+                0.72f, 55f, gravityWorld, material, physicsRockMeshes[0]);
             CreatePushBoulder(root.transform, "Heavy Push Boulder", new Vector3(4.2f, planetRadius + 0.35f, 4.1f),
-                1.05f, 320f, gravityWorld, material);
+                1.05f, 320f, gravityWorld, material,
+                physicsRockMeshes[Mathf.Min(3, physicsRockMeshes.Length - 1)]);
             foreach (Rigidbody body in root.GetComponentsInChildren<Rigidbody>())
                 physicsFeel?.Apply(
                     body,
@@ -2715,14 +3189,14 @@ namespace Elemental.Authoring.Editor
             float radius,
             float mass,
             GravityWorldBehaviour gravityWorld,
-            Material material)
+            Material material,
+            Mesh mesh)
         {
             GameObject boulder = new GameObject(name);
             boulder.transform.SetParent(parent, false);
             boulder.transform.position = position;
             boulder.transform.localScale = Vector3.one * (radius * 2f);
             boulder.transform.rotation = Quaternion.Euler(17f, mass * 0.19f, -11f);
-            Mesh mesh = CreateOrLoadFragmentMesh();
             MeshFilter filter = boulder.AddComponent<MeshFilter>();
             filter.sharedMesh = mesh;
             MeshRenderer renderer = boulder.AddComponent<MeshRenderer>();

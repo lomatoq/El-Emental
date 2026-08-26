@@ -177,3 +177,31 @@ Raw evidence is kept under `BuildReports` and `TestResults`. Interactive P50/P95
 - This iteration validates in Unity Editor/Test Runner. No Development or Release player build is an acceptance gate.
 - Latest Editor evidence: EditMode `236/236` passed in `2.150 s`; PlayMode `90/90` passed in `154.804 s`. These suite durations are regression evidence, not frame-time measurements. `EarthPolishLab` entered Play Mode with zero runtime exceptions; the local white DX11 Game View capture is tracked as an editor-visualization issue and is not counted as visual acceptance evidence.
 - Armor packing/camera follow-up: EditMode `237/237` passed in `2.320 s`; PlayMode `91/91` passed in `157.995 s`. This validates fixed-size 64-piece loops and camera masking, but does not substitute for a profiler P95/P99 capture.
+
+## Earth MVP 0.1 radius-36 rescue — 2026-08-26
+
+- The enlarged planet keeps 128 runtime chunks at resolution 16 and cell size 1.
+  Startup budgets are `2` render chunks and `1` collider chunk per frame; planet
+  scale and voxel fidelity were not reduced.
+- Native High uses a 4096 shadow atlas, four cascades at `0.08/0.22/0.48`, soft
+  shadows and 48 m distance. Low/Web use a separate 2048/two-cascade/no-soft URP
+  asset, so the Native rescue does not silently raise Web cost.
+- Focused Editor cold run: both queues drained in 127 sampled frames; total-frame
+  P95 `17.84 ms`, render queue peak `11.70 ms`, collider queue peak `1.30 ms`.
+  The scene-load maximum includes Test Runner/Editor activation and is not presented
+  as a gameplay frame-time maximum.
+- Platform cast reuses six scene-authored solid roots and 288 inactive fracture
+  shells. `AcquireSolid` builds/cooks only the walkable solid; pure topology runs on
+  a worker and exactly one fracture cell is built/cooked per rendered frame.
+- Final 720-frame gameplay sampling: total/CPU P95 were `14.00/14.00 ms`;
+  `AcquireSolid` peak was `3.62 ms` and fracture preparation peak was `0.68 ms`.
+  All measured rescue budgets pass. GPU timing returned no batch Editor samples,
+  so the report makes no GPU P95 claim. Raw report:
+  `BuildReports/Mvp01Profiler.json`.
+- Platform carry deduplicates the rendered/hidden ragdoll colliders to one motor
+  solve. Its collision handoff clears only outward residual velocity, preserves
+  tangent input and uses a fixed-buffer exact-contact fallback; the final
+  lift/walk/jump/landing PlayMode gate passed without a support-state flicker.
+- Armor formation/release is sliced through its fixed pool and performs no
+  velocity writes on kinematic bodies. The final 720-frame run emitted zero
+  warnings/errors.

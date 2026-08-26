@@ -1,6 +1,9 @@
 using Elemental.Runtime.Matter;
+using Elemental.Runtime.Characters;
+using Elemental.Simulation.Combat;
 using Elemental.Simulation.Matter;
 using Unity.Mathematics;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace Elemental.Runtime.Physics
@@ -10,6 +13,8 @@ namespace Elemental.Runtime.Physics
     public sealed class EarthArmorPiece : MonoBehaviour, IEarthPhysicalTarget
     {
         private const int ControlledMagicLayer = 2;
+        private static readonly ProfilerMarker CollisionStateMarker =
+            new ProfilerMarker("Elemental.Armor.CollisionStateChange");
         private EarthArmorController _owner;
         private int _pieceIndex;
         private uint _generation;
@@ -19,6 +24,9 @@ namespace Elemental.Runtime.Physics
         private bool _released;
         private int _gripCount;
         private Vector3 _fullScale;
+        private Vector3 _controlledVelocity;
+        private bool _defensiveCollisionEnabled;
+        private int _defensiveCollisionStateChangeCount;
         private MaterialPropertyBlock _visualProperties;
         private EarthMatterIdentity _matterIdentity;
 
@@ -26,12 +34,17 @@ namespace Elemental.Runtime.Physics
         public Mesh OwnedMesh { get; private set; }
         public Vector3 SourcePosition { get; private set; }
         public uint StableEarthId => 0xA0000000u + (uint)(_pieceIndex + 1);
+        public int PieceIndex => _pieceIndex;
+        public uint ImpactSourceId => StableEarthId ^ (_generation * 0x9E3779B9u);
         public EarthPhysicalTargetHandle TargetHandle => new EarthPhysicalTargetHandle(StableEarthId, _generation);
         public float EarthMass => Body != null ? Body.mass : 0f;
         public EarthPhysicalTargetKind TargetKind => EarthPhysicalTargetKind.ArmorPiece;
         public bool IsEarthTargetValid => gameObject.activeInHierarchy && Body != null;
         public Collider PieceCollider { get; private set; }
         public bool IsReleased => _released;
+        public bool IsPhysical => PieceCollider != null && PieceCollider.enabled && Body != null && Body.detectCollisions;
+        public bool DefensiveCollisionEnabled => _defensiveCollisionEnabled;
+        public int DefensiveCollisionStateChangeCount => _defensiveCollisionStateChangeCount;
         public Renderer VisualRenderer { get; private set; }
         public bool CameraSuppressed => VisualRenderer != null && VisualRenderer.forceRenderingOff;
         public EarthMatterIdentity MatterIdentity =>
@@ -66,6 +79,8 @@ namespace Elemental.Runtime.Physics
             _released = false;
             _releasedElapsed = 0f;
             _gripCount = 0;
+            _controlledVelocity = Vector3.zero;
+            _defensiveCollisionEnabled = false;
             SetCameraSuppressed(false);
             gameObject.layer = ControlledMagicLayer;
             if (!Body.isKinematic)
@@ -74,8 +89,8 @@ namespace Elemental.Runtime.Physics
                 Body.angularVelocity = Vector3.zero;
             }
             Body.isKinematic = true;
-            Body.detectCollisions = true;
-            _owner?.ReapplyCasterCollisionIgnores(PieceCollider);
+            Body.detectCollisions = false;
+            if (PieceCollider != null) PieceCollider.enabled = false;
             transform.SetPositionAndRotation(source, rotation);
             float width = Mathf.Lerp(0.12f, 0.22f, (_pieceIndex % 5) / 4f);
             float height = Mathf.Lerp(0.14f, 0.27f, ((_pieceIndex * 3) % 7) / 6f);
@@ -137,14 +152,54 @@ namespace Elemental.Runtime.Physics
         public void Move(Vector3 position, Quaternion rotation)
         {
             if (!gameObject.activeSelf || _released) return;
-            Body.MovePosition(position);
-            Body.MoveRotation(rotation);
+            _controlledVelocity = (position - transform.position) / Mathf.Max(0.001f, Time.fixedDeltaTime);
+            if (IsPhysical)
+            {
+                Body.MovePosition(position);
+                Body.MoveRotation(rotation);
+            }
+            else
+                transform.SetPositionAndRotation(position, rotation);
+        }
+
+        public void SnapCompactPose(Vector3 position, Quaternion rotation)
+        {
+            if (!gameObject.activeSelf || _released || Body == null) return;
+            _controlledVelocity = Vector3.zero;
+            Body.position = position;
+            Body.rotation = rotation;
+            transform.SetPositionAndRotation(position, rotation);
+        }
+
+        internal void EnablePhysicalRepresentation()
+        {
+            if (Body == null || PieceCollider == null) return;
+            PieceCollider.enabled = true;
+            Body.detectCollisions = true;
+            _defensiveCollisionEnabled = true;
+        }
+
+        public void SetDefensiveCollision(bool enabled)
+        {
+            if (_released || Body == null || PieceCollider == null) return;
+            if (_defensiveCollisionEnabled == enabled &&
+                PieceCollider.enabled == enabled && Body.detectCollisions == enabled) return;
+            using (CollisionStateMarker.Auto())
+            {
+                _defensiveCollisionEnabled = enabled;
+                _defensiveCollisionStateChangeCount++;
+                PieceCollider.enabled = enabled;
+                Body.detectCollisions = enabled;
+                if (enabled) _owner?.ReapplyCasterCollisionIgnores(PieceCollider);
+            }
         }
 
         public void Release(Vector3 velocity, float restSeconds, float shrinkSeconds)
         {
             if (!gameObject.activeSelf) return;
+            _owner?.Physicalize(this);
             _released = true;
+            _defensiveCollisionEnabled = true;
             _releasedElapsed = 0f;
             _restSeconds = Mathf.Max(0f, restSeconds);
             _shrinkSeconds = Mathf.Max(0.05f, shrinkSeconds);
@@ -174,12 +229,11 @@ namespace Elemental.Runtime.Physics
             Body.linearVelocity = Vector3.zero;
             Body.angularVelocity = Vector3.zero;
             Body.isKinematic = true;
-            Body.detectCollisions = true;
+            Body.detectCollisions = false;
+            if (PieceCollider != null) PieceCollider.enabled = false;
+            _defensiveCollisionEnabled = false;
             transform.localScale = _fullScale;
-            _owner?.ReapplyCasterCollisionIgnores(PieceCollider);
-            if (MatterIdentity != null && MatterIdentity.TryRead(out EarthMatterRecord record) &&
-                record.Phase == EarthMatterPhase.FreeDynamic)
-                MatterIdentity.TryTransition(EarthMatterPhase.Controlled);
+            MatterIdentity?.RetireTransientRepresentation();
             return true;
         }
 
@@ -197,6 +251,8 @@ namespace Elemental.Runtime.Physics
                 }
                 Body.isKinematic = true;
             }
+            if (PieceCollider != null) PieceCollider.enabled = false;
+            _defensiveCollisionEnabled = false;
             gameObject.layer = 0;
             gameObject.SetActive(false);
         }
@@ -258,6 +314,65 @@ namespace Elemental.Runtime.Physics
             transform.localScale = Vector3.Lerp(_fullScale, Vector3.zero, shrink01);
             Body.WakeUp();
             if (shrink01 >= 1f) ResetToPool();
+        }
+
+        private void OnCollisionEnter(Collision collision)
+        {
+            if (collision == null || collision.contactCount == 0 || Body == null) return;
+            if (!_released)
+            {
+                Collider controlledHit = collision.collider;
+                EarthCharacterImpactTarget controlledTarget = controlledHit != null
+                    ? controlledHit.GetComponentInParent<EarthCharacterImpactTarget>()
+                    : null;
+                Rigidbody targetBody = controlledTarget != null ? controlledTarget.Body : null;
+                float controlledSpeed = Mathf.Max(
+                    collision.relativeVelocity.magnitude,
+                    _controlledVelocity.magnitude);
+                if (controlledTarget != null &&
+                    targetBody != null &&
+                    (_owner == null || targetBody != _owner.CasterBody) &&
+                    controlledSpeed >= 1.25f)
+                {
+                    ContactPoint controlledContact = collision.GetContact(0);
+                    Vector3 controlledDirection = _controlledVelocity.sqrMagnitude > 0.0001f
+                        ? _controlledVelocity.normalized
+                        : -controlledContact.normal;
+                    float controlledImpulse = Mathf.Max(
+                        collision.impulse.magnitude,
+                        Mathf.Max(2f, Body.mass) * controlledSpeed);
+                    controlledTarget.ApplyImpact(
+                        controlledContact.point,
+                        controlledDirection,
+                        controlledImpulse,
+                        EarthCharacterImpactSourceKind.ArmorProjectile,
+                        ImpactSourceId,
+                        controlledSpeed,
+                        1f);
+                    return;
+                }
+                _owner?.ResolveDefensiveImpact(this, collision);
+                return;
+            }
+            Collider hit = collision.collider;
+            EarthCharacterImpactTarget characterTarget = hit != null
+                ? hit.GetComponentInParent<EarthCharacterImpactTarget>()
+                : null;
+            if (characterTarget == null) return;
+            ContactPoint contact = collision.GetContact(0);
+            float relativeSpeed = collision.relativeVelocity.magnitude;
+            float impulse = Mathf.Max(collision.impulse.magnitude, Body.mass * relativeSpeed);
+            Vector3 direction = Body.linearVelocity.sqrMagnitude > 0.0001f
+                ? Body.linearVelocity.normalized
+                : -contact.normal;
+            characterTarget.ApplyImpact(
+                contact.point,
+                direction,
+                impulse,
+                EarthCharacterImpactSourceKind.ArmorProjectile,
+                ImpactSourceId,
+                relativeSpeed,
+                1f);
         }
 
         public void OnEarthMagicGrabbed(EarthMagicGripKind grip)

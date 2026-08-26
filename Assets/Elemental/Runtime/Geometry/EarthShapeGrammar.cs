@@ -463,52 +463,90 @@ namespace Elemental.Runtime.Geometry
                 depth[index] = ResolveDepth(archetype, t, index, wave, sharpNoise, depthJitter);
             }
 
-            var logical = new Vector3[knotCount * 4];
-            for (int index = 0; index < knotCount; index++)
+            // One watertight wall body. Each X ring shares the same octagonal
+            // cross-section contract, while the two end rings are inset to create
+            // real end chamfers. There are no separate column objects or internal
+            // faces, so neither collision nor lighting can expose vertical seams.
+            float minimumDimension = Mathf.Min(1f, Mathf.Min(0.72f, depth[0]));
+            float bevel = Mathf.Clamp(minimumDimension * 0.08f, 0.05f, 0.12f);
+            var rings = new List<Vector3[]>(knotCount + 2)
+            {
+                BuildWallRing(-0.5f, top[0], depth[0], bevel, bevel),
+                BuildWallRing(
+                    -0.5f + bevel,
+                    Mathf.Lerp(top[0], top[1], bevel * segments),
+                    Mathf.Lerp(depth[0], depth[1], bevel * segments),
+                    bevel,
+                    0f)
+            };
+            for (int index = 1; index < segments; index++)
             {
                 float x = Mathf.Lerp(-0.5f, 0.5f, index / (float)segments);
-                float halfDepth = Mathf.Clamp(depth[index], 0.36f, 0.72f) * 0.5f;
-                int vertex = index * 4;
-                logical[vertex] = new Vector3(x, -0.5f, -halfDepth);
-                logical[vertex + 1] = new Vector3(x, top[index], -halfDepth);
-                logical[vertex + 2] = new Vector3(x, -0.5f, halfDepth);
-                logical[vertex + 3] = new Vector3(x, top[index], halfDepth);
+                rings.Add(BuildWallRing(x, top[index], depth[index], bevel, 0f));
             }
+            rings.Add(BuildWallRing(
+                0.5f - bevel,
+                Mathf.Lerp(top[segments - 1], top[segments], 1f - bevel * segments),
+                Mathf.Lerp(depth[segments - 1], depth[segments], 1f - bevel * segments),
+                bevel,
+                0f));
+            rings.Add(BuildWallRing(0.5f, top[segments], depth[segments], bevel, bevel));
 
-            var topology = new List<int>(segments * 24 + 12);
-            for (int index = 0; index < segments; index++)
+            var vertices = new List<Vector3>(rings.Count * 40);
+            var normals = new List<Vector3>(rings.Count * 40);
+            var colors = new List<Color>(rings.Count * 40);
+            var triangles = new List<int>(rings.Count * 60);
+            int faceIndex = 0;
+            for (int ringIndex = 0; ringIndex < rings.Count - 1; ringIndex++)
             {
-                int a = index * 4;
-                int b = (index + 1) * 4;
-                AddQuad(topology, a, a + 1, b + 1, b);       // front -Z
-                AddQuad(topology, a + 2, b + 2, b + 3, a + 3); // back +Z
-                AddQuad(topology, a + 1, a + 3, b + 3, b + 1); // crest +Y
-                AddQuad(topology, a, b, b + 2, a + 2);       // foundation -Y
+                bool endChamfer = ringIndex == 0 || ringIndex == rings.Count - 2;
+                for (int side = 0; side < 8; side++)
+                {
+                    int next = (side + 1) & 7;
+                    bool cornerChamfer = (side & 1) == 1;
+                    Vector3 stableNormal = side switch
+                    {
+                        0 => Vector3.forward,
+                        2 => Vector3.up,
+                        4 => Vector3.back,
+                        6 => Vector3.down,
+                        _ => Vector3.zero
+                    };
+                    AppendWallQuad(
+                        vertices,
+                        normals,
+                        colors,
+                        triangles,
+                        rings[ringIndex][side],
+                        rings[ringIndex + 1][side],
+                        rings[ringIndex + 1][next],
+                        rings[ringIndex][next],
+                        endChamfer ? Vector3.zero : stableNormal,
+                        endChamfer || cornerChamfer,
+                        seed,
+                        faceIndex++);
+                }
             }
-            AddQuad(topology, 0, 2, 3, 1); // left cap -X
-            int last = segments * 4;
-            AddQuad(topology, last, last + 1, last + 3, last + 2); // right cap +X
-
-            var vertices = new Vector3[topology.Count];
-            var triangles = new int[topology.Count];
-            var uv = new Vector2[topology.Count];
-            for (int index = 0; index < topology.Count; index++)
-            {
-                Vector3 point = logical[topology[index]];
-                vertices[index] = point;
-                triangles[index] = index;
-                uv[index] = new Vector2(point.x + 0.5f, point.y + 0.5f);
-            }
+            AppendWallCap(vertices, normals, colors, triangles, rings[0], false, seed, ref faceIndex);
+            AppendWallCap(
+                vertices,
+                normals,
+                colors,
+                triangles,
+                rings[rings.Count - 1],
+                true,
+                seed,
+                ref faceIndex);
 
             var mesh = new Mesh
             {
                 name = $"EarthWall_{archetype}_{seed:X8}",
-                hideFlags = HideFlags.DontSaveInBuild | HideFlags.DontSaveInEditor,
-                vertices = vertices,
-                triangles = triangles,
-                uv = uv
+                hideFlags = HideFlags.DontSaveInBuild | HideFlags.DontSaveInEditor
             };
-            mesh.RecalculateNormals();
+            mesh.SetVertices(vertices);
+            mesh.SetNormals(normals);
+            mesh.SetColors(colors);
+            mesh.SetTriangles(triangles, 0, true);
             mesh.RecalculateBounds();
             EarthMeshIntegrityGate.ValidateInPlaceOrUseFallback(
                 mesh,
@@ -583,6 +621,105 @@ namespace Elemental.Runtime.Geometry
         }
 
         private static float Hash01(uint value) => (Hash(value) & 0x00FFFFFFu) / 16777215f;
+
+        private static Vector3[] BuildWallRing(
+            float x,
+            float top,
+            float depth,
+            float bevel,
+            float boundaryInset)
+        {
+            float bottom = -0.5f + boundaryInset;
+            float crest = Mathf.Max(bottom + 0.16f, top - boundaryInset);
+            float halfDepth = Mathf.Max(0.12f, depth * 0.5f - boundaryInset);
+            float corner = Mathf.Min(
+                bevel,
+                Mathf.Min((crest - bottom) * 0.22f, halfDepth * 0.32f));
+            return new[]
+            {
+                new Vector3(x, bottom + corner, halfDepth),
+                new Vector3(x, crest - corner, halfDepth),
+                new Vector3(x, crest, halfDepth - corner),
+                new Vector3(x, crest, -halfDepth + corner),
+                new Vector3(x, crest - corner, -halfDepth),
+                new Vector3(x, bottom + corner, -halfDepth),
+                new Vector3(x, bottom, -halfDepth + corner),
+                new Vector3(x, bottom, halfDepth - corner)
+            };
+        }
+
+        private static void AppendWallQuad(
+            List<Vector3> vertices,
+            List<Vector3> normals,
+            List<Color> colors,
+            List<int> triangles,
+            Vector3 a,
+            Vector3 b,
+            Vector3 c,
+            Vector3 d,
+            Vector3 stableNormal,
+            bool isBevel,
+            uint seed,
+            int faceIndex)
+        {
+            Vector3 normal = stableNormal.sqrMagnitude > 0.5f
+                ? stableNormal
+                : Vector3.Cross(b - a, c - a).normalized;
+            int first = vertices.Count;
+            vertices.Add(a);
+            vertices.Add(b);
+            vertices.Add(c);
+            vertices.Add(d);
+            for (int index = 0; index < 4; index++) normals.Add(normal);
+            Color color = WallFaceColor(seed, faceIndex, isBevel);
+            for (int index = 0; index < 4; index++) colors.Add(color);
+            triangles.Add(first);
+            triangles.Add(first + 1);
+            triangles.Add(first + 2);
+            triangles.Add(first);
+            triangles.Add(first + 2);
+            triangles.Add(first + 3);
+        }
+
+        private static void AppendWallCap(
+            List<Vector3> vertices,
+            List<Vector3> normals,
+            List<Color> colors,
+            List<int> triangles,
+            Vector3[] ring,
+            bool right,
+            uint seed,
+            ref int faceIndex)
+        {
+            Vector3 center = Vector3.zero;
+            for (int index = 0; index < ring.Length; index++) center += ring[index];
+            center /= ring.Length;
+            Vector3 normal = right ? Vector3.right : Vector3.left;
+            Color color = WallFaceColor(seed, faceIndex++, false);
+            for (int side = 0; side < ring.Length; side++)
+            {
+                int next = (side + 1) & 7;
+                int first = vertices.Count;
+                vertices.Add(center);
+                vertices.Add(right ? ring[next] : ring[side]);
+                vertices.Add(right ? ring[side] : ring[next]);
+                normals.Add(normal);
+                normals.Add(normal);
+                normals.Add(normal);
+                colors.Add(color);
+                colors.Add(color);
+                colors.Add(color);
+                triangles.Add(first);
+                triangles.Add(first + 1);
+                triangles.Add(first + 2);
+            }
+        }
+
+        private static Color WallFaceColor(uint seed, int faceIndex, bool isBevel)
+        {
+            float tone = Mathf.Lerp(0.24f, 0.78f, Hash01(seed ^ ((uint)(faceIndex + 1) * 0x9E3779B9u)));
+            return new Color(tone, 0.5f, 0.5f, isBevel ? 1f : 0.18f);
+        }
 
         private static void AddQuad(List<int> indices, int a, int b, int c, int d)
         {

@@ -15,6 +15,12 @@ namespace Elemental.Runtime.Geometry
             Material shared = renderer.sharedMaterial;
             renderer.GetPropertyBlock(properties);
 
+            if (IsRumbleMaterial(shared))
+            {
+                ApplyRestrainedRumbleVariation(renderer, shared, stableId, properties);
+                return;
+            }
+
             float familyRoll = Hash01(stableId ^ 0x2C9277B5u);
             float family = familyRoll < 0.16f ? 0f : familyRoll < 0.70f ? 1f : familyRoll < 0.91f ? 2f : 3f;
             Color source = shared.HasProperty("_ExteriorColor")
@@ -43,6 +49,47 @@ namespace Elemental.Runtime.Geometry
             properties.SetFloat("_ProceduralNormalStrength", Mathf.Lerp(0.32f, 0.82f, Hash01(stableId ^ 0x89E18285u)));
             renderer.SetPropertyBlock(properties);
         }
+
+        private static void ApplyRestrainedRumbleVariation(
+            Renderer renderer,
+            Material shared,
+            uint stableId,
+            MaterialPropertyBlock properties)
+        {
+            float exposure = Mathf.Lerp(0.94f, 1.06f, Hash01(stableId ^ 0xD1B54A35u));
+            Color baseColor = shared.GetColor("_BaseColor") * exposure;
+            baseColor.a = 1f;
+            properties.SetColor("_BaseColor", baseColor);
+
+            if (shared.HasProperty("_ShadowColor"))
+            {
+                Color shadow = shared.GetColor("_ShadowColor") * Mathf.Lerp(0.97f, exposure, 0.55f);
+                shadow.a = 1f;
+                properties.SetColor("_ShadowColor", shadow);
+            }
+            if (shared.HasProperty("_EdgeColor"))
+            {
+                Color edge = shared.GetColor("_EdgeColor") * Mathf.Lerp(0.98f, exposure, 0.45f);
+                edge.a = 1f;
+                properties.SetColor("_EdgeColor", edge);
+            }
+            if (shared.HasProperty("_MacroScale"))
+                properties.SetFloat(
+                    "_MacroScale",
+                    shared.GetFloat("_MacroScale") *
+                    Mathf.Lerp(0.92f, 1.08f, Hash01(stableId ^ 0x94D049BBu)));
+            if (shared.HasProperty("_MacroStrength"))
+                properties.SetFloat(
+                    "_MacroStrength",
+                    shared.GetFloat("_MacroStrength") *
+                    Mathf.Lerp(0.88f, 1.12f, Hash01(stableId ^ 0x369DEA0Fu)));
+            renderer.SetPropertyBlock(properties);
+        }
+
+        private static bool IsRumbleMaterial(Material material) =>
+            material.shader != null &&
+            material.shader.name == "Elemental/Graphics V5/Rumble Rock Lit" &&
+            material.HasProperty("_BaseColor");
 
         private static float Hash01(uint value)
         {

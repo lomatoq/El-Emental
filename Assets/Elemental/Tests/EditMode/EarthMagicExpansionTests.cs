@@ -92,26 +92,32 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
-        public void StraightStrokeBuildsWallWhileArcAndPiStrokeBuildPlatforms()
+        public void EveryOpenStrokeBuildsWallWhileOnlyClosedAreaBuildsPlatform()
         {
             var line = new List<float2>
             {
-                new float2(10f, 10f), new float2(80f, 11f), new float2(160f, 12f)
+                new float2(0.10f, 0.10f), new float2(0.40f, 0.11f), new float2(0.80f, 0.12f)
             };
             var arc = new List<float2>
             {
-                new float2(0f, 0f), new float2(45f, 42f), new float2(95f, 58f),
-                new float2(145f, 39f), new float2(180f, 0f)
+                new float2(0.05f, 0.05f), new float2(0.25f, 0.42f), new float2(0.50f, 0.58f),
+                new float2(0.75f, 0.39f), new float2(0.95f, 0.05f)
             };
             var pi = new List<float2>
             {
-                new float2(0f, 0f), new float2(0f, 100f), new float2(100f, 100f),
-                new float2(100f, 0f)
+                new float2(0.20f, 0.20f), new float2(0.20f, 0.65f), new float2(0.70f, 0.65f),
+                new float2(0.70f, 0.20f)
+            };
+            var closed = new List<float2>
+            {
+                new float2(0.20f, 0.20f), new float2(0.20f, 0.65f), new float2(0.70f, 0.65f),
+                new float2(0.70f, 0.20f), new float2(0.205f, 0.205f)
             };
 
             Assert.That(EarthStructureGestureSolver.Classify(line).Kind, Is.EqualTo(EarthStructureGestureKind.Wall));
-            Assert.That(EarthStructureGestureSolver.Classify(arc).Kind, Is.EqualTo(EarthStructureGestureKind.Platform));
-            Assert.That(EarthStructureGestureSolver.Classify(pi).Kind, Is.EqualTo(EarthStructureGestureKind.Platform));
+            Assert.That(EarthStructureGestureSolver.Classify(arc).Kind, Is.EqualTo(EarthStructureGestureKind.Wall));
+            Assert.That(EarthStructureGestureSolver.Classify(pi).Kind, Is.EqualTo(EarthStructureGestureKind.Wall));
+            Assert.That(EarthStructureGestureSolver.Classify(closed).Kind, Is.EqualTo(EarthStructureGestureKind.Platform));
         }
 
         [Test]

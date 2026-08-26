@@ -48,6 +48,10 @@ namespace Elemental.Runtime.Characters
         private bool _rootConstraintsCaptured;
         private RigidbodyConstraints _motorRootConstraints;
         private RigidbodyConstraints _ragdollRootConstraints;
+        private float _forcedRagdollUntil;
+        private bool[] _externalBodyWasKinematic = Array.Empty<bool>();
+        private bool[] _externalBodyDetectedCollisions = Array.Empty<bool>();
+        private bool[] _externalColliderWasEnabled = Array.Empty<bool>();
 
         public CharacterPhysicalState CurrentState { get; private set; }
         public Vector3 LastBalanceTorque { get; private set; }
@@ -56,6 +60,7 @@ namespace Elemental.Runtime.Characters
         public bool LastCollisionWasSupport { get; private set; }
         public event Action<CharacterPhysicalState> StateChanged;
         public event Action<Vector3, float> ImpactObserved;
+        public bool IsExternalRagdollAuthority { get; private set; }
 
         public bool OwnsCollider(Collider candidate) => IsSelfCollider(candidate);
 
@@ -83,6 +88,128 @@ namespace Elemental.Runtime.Characters
                 if (body != null && !body.isKinematic)
                     body.AddForce(velocityChange, ForceMode.VelocityChange);
             }
+        }
+
+        public void ForceKnockout(Vector3 launchVelocityChange, float holdSeconds)
+        {
+            EnsureController();
+            _forcedRagdollUntil = Mathf.Max(
+                _forcedRagdollUntil,
+                Time.time + Mathf.Max(0.1f, holdSeconds));
+            _controller.ForceFullRagdoll();
+            ApplyUniformVelocityChange(launchVelocityChange);
+        }
+
+        public void SetExternalRagdollAuthority(bool active)
+        {
+            if (IsExternalRagdollAuthority == active) return;
+            if (active)
+            {
+                if (_externalBodyWasKinematic.Length != joints.Length)
+                {
+                    _externalBodyWasKinematic = new bool[joints.Length];
+                    _externalBodyDetectedCollisions = new bool[joints.Length];
+                }
+                if (_externalColliderWasEnabled.Length != selfColliders.Length)
+                    _externalColliderWasEnabled = new bool[selfColliders.Length];
+                for (int index = 0; index < joints.Length; index++)
+                {
+                    Rigidbody body = joints[index] != null ? joints[index].Body : null;
+                    if (body == null) continue;
+                    _externalBodyWasKinematic[index] = body.isKinematic;
+                    _externalBodyDetectedCollisions[index] = body.detectCollisions;
+                    if (!body.isKinematic)
+                    {
+                        body.linearVelocity = Vector3.zero;
+                        body.angularVelocity = Vector3.zero;
+                    }
+                    body.detectCollisions = false;
+                    body.isKinematic = true;
+                }
+                for (int index = 0; index < selfColliders.Length; index++)
+                {
+                    Collider collider = selfColliders[index];
+                    if (collider == null) continue;
+                    _externalColliderWasEnabled[index] = collider.enabled;
+                    collider.enabled = false;
+                }
+            }
+            else
+            {
+                for (int index = 0; index < joints.Length; index++)
+                {
+                    Rigidbody body = joints[index] != null ? joints[index].Body : null;
+                    if (body == null) continue;
+                    body.isKinematic = index < _externalBodyWasKinematic.Length &&
+                                       _externalBodyWasKinematic[index];
+                    body.detectCollisions = index < _externalBodyDetectedCollisions.Length &&
+                                            _externalBodyDetectedCollisions[index];
+                    if (!body.isKinematic)
+                    {
+                        body.linearVelocity = Vector3.zero;
+                        body.angularVelocity = Vector3.zero;
+                    }
+                }
+                for (int index = 0; index < selfColliders.Length; index++)
+                {
+                    Collider collider = selfColliders[index];
+                    if (collider != null)
+                        collider.enabled = index < _externalColliderWasEnabled.Length &&
+                                           _externalColliderWasEnabled[index];
+                }
+            }
+            IsExternalRagdollAuthority = active;
+        }
+
+        public void ResetPhysicalState(Vector3 worldPosition, Quaternion worldRotation)
+        {
+            if (rootBody == null || !IsFinite(worldPosition)) return;
+            EnsureController();
+
+            Vector3 previousPosition = rootBody.position;
+            Quaternion previousRotation = rootBody.rotation;
+            Quaternion deltaRotation = worldRotation * Quaternion.Inverse(previousRotation);
+            for (int index = 0; index < joints.Length; index++)
+            {
+                Rigidbody body = joints[index] != null ? joints[index].Body : null;
+                if (body == null) continue;
+                Vector3 offset = body.position - previousPosition;
+                body.position = worldPosition + deltaRotation * offset;
+                body.rotation = deltaRotation * body.rotation;
+                if (!body.isKinematic)
+                {
+                    body.linearVelocity = Vector3.zero;
+                    body.angularVelocity = Vector3.zero;
+                }
+            }
+
+            rootBody.position = worldPosition;
+            rootBody.rotation = worldRotation;
+            if (!rootBody.isKinematic)
+            {
+                rootBody.linearVelocity = Vector3.zero;
+                rootBody.angularVelocity = Vector3.zero;
+            }
+            _forcedRagdollUntil = 0f;
+            _controller.Reset();
+            _supportCenter = worldPosition - worldRotation * Vector3.up * 0.9f;
+            _contactCount = 0;
+            _hasPublishedMode = false;
+            CurrentState = new CharacterPhysicalState(
+                new ActorId(Math.Max(1u, actorId)),
+                CharacterPhysicalMode.AnimatedMotor,
+                float3.zero,
+                float3.zero,
+                ToFloat3(worldRotation * Vector3.up),
+                0f,
+                0f,
+                1f,
+                RecoveryCandidate.None);
+            ApplyControl(CurrentState);
+            SuppressImpacts(0.75f);
+            impactTarget?.SuppressImpacts(0.75f);
+            UnityEngine.Physics.SyncTransforms();
+            PublishStateIfChanged();
         }
 
         public void Configure(
@@ -153,7 +280,7 @@ namespace Elemental.Runtime.Characters
 
         private void FixedUpdate()
         {
-            if (rootBody == null)
+            if (rootBody == null || IsExternalRagdollAuthority)
             {
                 return;
             }
@@ -161,6 +288,7 @@ namespace Elemental.Runtime.Characters
             using (FixedTickMarker.Auto())
             {
                 EnsureController();
+                if (Time.time < _forcedRagdollUntil) _controller.ForceFullRagdoll();
                 SampleGravity();
                 UpdateSupport();
                 Transform chestTransform = chest != null ? chest : transform;

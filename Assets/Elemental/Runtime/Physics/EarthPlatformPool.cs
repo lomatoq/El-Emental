@@ -24,6 +24,8 @@ namespace Elemental.Runtime.Physics
         private uint _nextId = 1u;
 
         public EarthPlatform LastAcquired { get; private set; }
+        public double LastAcquireSolidMilliseconds { get; private set; }
+        public double PeakAcquireSolidMilliseconds { get; private set; }
         public EarthPlatformProfile Profile => profile;
         public event Action<EarthPlatform> PlatformFractured;
         public EarthPlatform FindActive(uint structureId)
@@ -31,7 +33,7 @@ namespace Elemental.Runtime.Physics
             for (int index = 0; index < _platforms.Count; index++)
             {
                 EarthPlatform platform = _platforms[index];
-                if (platform.gameObject.activeSelf && platform.PlatformId == structureId) return platform;
+                if (platform.IsInUse && platform.PlatformId == structureId) return platform;
             }
             return null;
         }
@@ -41,7 +43,7 @@ namespace Elemental.Runtime.Physics
             {
                 int active = 0;
                 for (int index = 0; index < _platforms.Count; index++)
-                    if (_platforms[index].gameObject.activeSelf) active++;
+                    if (_platforms[index].IsInUse) active++;
                 return active;
             }
         }
@@ -87,24 +89,44 @@ namespace Elemental.Runtime.Physics
         private void Awake()
         {
             if (matterKernel == null) matterKernel = EarthMatterKernelBehaviour.FindOrCreate(this);
-            for (int index = 0; index < capacity; index++) CreatePlatform();
+            RebuildPreparedCache();
+            if (_platforms.Count == 0 && capacity > 0) CreatePlatform();
+        }
+
+        public void PrewarmAll()
+        {
+            RebuildPreparedCache();
+            while (_platforms.Count < capacity) CreatePlatform();
         }
 
         public EarthPlatform Acquire(in EarthPlatformGeometry geometry, float height, float embedDepth)
         {
+            EarthPlatform selected = null;
             for (int index = 0; index < _platforms.Count; index++)
             {
                 EarthPlatform platform = _platforms[index];
-                if (platform.gameObject.activeSelf) continue;
-                platform.Initialize(_nextId++, in geometry, height, embedDepth);
-                float volume = Mathf.Max(0.000001f, platform.Area * (platform.Height + Mathf.Max(0.08f, embedDepth)));
+                if (platform.IsInUse) continue;
+                selected = platform;
+                break;
+            }
+            if (selected == null && _platforms.Count < capacity) selected = CreatePlatform();
+            if (selected != null)
+            {
+                double acquireStarted = Time.realtimeSinceStartupAsDouble;
+                selected.Initialize(_nextId++, in geometry, height, embedDepth);
+                LastAcquireSolidMilliseconds =
+                    (Time.realtimeSinceStartupAsDouble - acquireStarted) * 1000.0;
+                PeakAcquireSolidMilliseconds = Math.Max(
+                    PeakAcquireSolidMilliseconds,
+                    LastAcquireSolidMilliseconds);
+                float volume = Mathf.Max(0.000001f, selected.Area * (selected.Height + Mathf.Max(0.08f, embedDepth)));
                 float mass = Mathf.Max(1f, volume * 170f);
                 var source = new EarthSourceProvenance(
                     EarthSourceKind.TerrainEdit,
-                    platform.PlatformId,
-                    platform.Generation >= ushort.MaxValue
+                    selected.PlatformId,
+                    selected.Generation >= ushort.MaxValue
                         ? ushort.MaxValue
-                        : (ushort)Mathf.Max(1, (int)platform.Generation),
+                        : (ushort)Mathf.Max(1, (int)selected.Generation),
                     -1,
                     unchecked((uint)Time.frameCount),
                     geometry.Center,
@@ -113,9 +135,9 @@ namespace Elemental.Runtime.Physics
                     EarthProvenanceFlags.SourceCavityValid |
                     EarthProvenanceFlags.VolumeReserved);
                 EarthMatterRuntimeBridge.EnsureIdentity(
-                    platform,
+                    selected,
                     matterKernel,
-                    platform.GetComponent<Rigidbody>(),
+                    selected.GetComponent<Rigidbody>(),
                     EarthMatterPhase.Forming,
                     EarthRepresentationTier.HeroPhysical,
                     EarthMaterialKind.Stone,
@@ -123,8 +145,8 @@ namespace Elemental.Runtime.Physics
                     volume,
                     mass,
                     source);
-                LastAcquired = platform;
-                return platform;
+                LastAcquired = selected;
+                return selected;
             }
             return null;
         }
@@ -136,7 +158,7 @@ namespace Elemental.Runtime.Physics
             go.AddComponent<MeshFilter>();
             MeshRenderer renderer = go.AddComponent<MeshRenderer>();
             renderer.sharedMaterial = platformMaterial;
-            MeshCollider collider = go.AddComponent<MeshCollider>();
+            BoxCollider collider = go.AddComponent<BoxCollider>();
             Rigidbody body = go.AddComponent<Rigidbody>();
             body.useGravity = false;
             body.isKinematic = true;
@@ -147,9 +169,28 @@ namespace Elemental.Runtime.Physics
             platform.ConfigureFractureProfile(fractureProfile);
             EarthPlatformSurfaceProvider provider = go.AddComponent<EarthPlatformSurfaceProvider>();
             provider.Configure(platform, surfaceQueries);
-            go.SetActive(false);
+            platform.PrepareForPool();
             _platforms.Add(platform);
             return platform;
+        }
+
+        private void RebuildPreparedCache()
+        {
+            _platforms.Clear();
+            for (int childIndex = 0; childIndex < transform.childCount; childIndex++)
+            {
+                EarthPlatform platform = transform.GetChild(childIndex).GetComponent<EarthPlatform>();
+                if (platform == null) continue;
+                platform.Fractured -= HandlePlatformFractured;
+                platform.Fractured += HandlePlatformFractured;
+                platform.Configure(platformMaterial, profile, physicsFeelProfile, pieceMeshVariants);
+                platform.ConfigureFractureProfile(fractureProfile);
+                EarthPlatformSurfaceProvider provider =
+                    platform.GetComponent<EarthPlatformSurfaceProvider>();
+                provider?.Configure(platform, surfaceQueries);
+                if (!platform.IsInUse) platform.PrepareForPool();
+                _platforms.Add(platform);
+            }
         }
 
         private void HandlePlatformFractured(EarthPlatform platform) =>

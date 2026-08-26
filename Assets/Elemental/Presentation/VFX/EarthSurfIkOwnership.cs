@@ -10,7 +10,7 @@ namespace Elemental.Presentation.VFX
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
-            if (Object.FindFirstObjectByType<EarthSurfIkOwnershipInstaller>(
+            if (Object.FindAnyObjectByType<EarthSurfIkOwnershipInstaller>(
                     FindObjectsInactive.Include) != null)
                 return;
             var host = new GameObject("Earth Surf IK Ownership Installer")
@@ -24,15 +24,10 @@ namespace Elemental.Presentation.VFX
 
     internal sealed class EarthSurfIkOwnershipInstaller : MonoBehaviour
     {
-        private float _nextScanAt;
-
-        private void Update()
+        private void Start()
         {
-            if (Time.unscaledTime < _nextScanAt) return;
-            _nextScanAt = Time.unscaledTime + 1f;
             EarthSurfFootContactRescue[] rescuers =
-                Object.FindObjectsByType<EarthSurfFootContactRescue>(
-                    FindObjectsInactive.Include, FindObjectsSortMode.None);
+                Object.FindObjectsByType<EarthSurfFootContactRescue>(FindObjectsInactive.Include);
             for (int index = 0; index < rescuers.Length; index++)
             {
                 EarthSurfFootContactRescue rescue = rescuers[index];

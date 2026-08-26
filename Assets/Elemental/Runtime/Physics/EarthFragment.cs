@@ -132,6 +132,7 @@ namespace Elemental.Runtime.Physics
             targetBody.mass = Mathf.Max(0.01f, mass);
             targetBody.useGravity = false;
             targetBody.isKinematic = false;
+            targetBody.detectCollisions = true;
             targetBody.linearVelocity = Vector3.zero;
             targetBody.angularVelocity = Vector3.zero;
             gameObject.SetActive(true);
@@ -254,6 +255,47 @@ namespace Elemental.Runtime.Physics
             _emergenceCollisionRestoreAt = Time.fixedTime + 0.65f;
             if (_bodyCollider != null && _ignoredSourceCollider != null)
                 UnityEngine.Physics.IgnoreCollision(_bodyCollider, _ignoredSourceCollider, true);
+        }
+
+        public void BeginExtractionReservation()
+        {
+            _holdTarget = null;
+            _isControlled = false;
+            if (targetBody != null)
+            {
+                targetBody.linearVelocity = Vector3.zero;
+                targetBody.angularVelocity = Vector3.zero;
+                targetBody.detectCollisions = false;
+                targetBody.isKinematic = true;
+            }
+            if (_bodyCollider == null) _bodyCollider = GetComponent<Collider>();
+            if (_bodyCollider != null) _bodyCollider.enabled = false;
+            _visualRenderer ??= GetComponent<Renderer>();
+            if (_visualRenderer != null) _visualRenderer.enabled = false;
+        }
+
+        public void CommitExtraction(
+            Transform holdTarget,
+            Collider sourceCollider,
+            Vector3 surfacePoint,
+            Vector3 localUp,
+            float radius)
+        {
+            transform.position = surfacePoint - (localUp.normalized * Mathf.Max(0.05f, radius * 0.92f));
+            if (_visualRenderer == null) _visualRenderer = GetComponent<Renderer>();
+            if (_visualRenderer != null) _visualRenderer.enabled = true;
+            if (_bodyCollider == null) _bodyCollider = GetComponent<Collider>();
+            if (_bodyCollider != null) _bodyCollider.enabled = true;
+            if (targetBody != null)
+            {
+                targetBody.detectCollisions = true;
+                targetBody.isKinematic = false;
+            }
+            BeginSurfaceEmergence(sourceCollider, surfacePoint, localUp, radius);
+            Vector3 target = holdTarget != null
+                ? holdTarget.position
+                : surfacePoint + (localUp.normalized * radius * 2f);
+            BeginBendControl(target, Vector3.zero, 0f, BendTuning.Default);
         }
 
         public void UpdateBendTarget(Vector3 position, Vector3 velocity, float charge01)

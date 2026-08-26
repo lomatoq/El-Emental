@@ -34,7 +34,20 @@ namespace Elemental.Presentation.Animation
 
         public void SetMagicWeight(float weight)
         {
-            if (rig != null) rig.weight = Mathf.Clamp01(weight);
+            float clamped = Mathf.Clamp01(weight);
+            if (rig != null) rig.weight = clamped;
+            if (clamped > 0.0001f)
+            {
+                if (leftArm != null) leftArm.weight = 1f;
+                if (rightArm != null) rightArm.weight = 1f;
+            }
+        }
+
+        public void ResetMagicIk()
+        {
+            if (rig != null) rig.weight = 0f;
+            if (leftArm != null) leftArm.weight = 0f;
+            if (rightArm != null) rightArm.weight = 0f;
         }
 
         private void Awake()
@@ -135,7 +148,7 @@ namespace Elemental.Presentation.Animation
             data.target = target;
             data.hint = hint;
             data.targetPositionWeight = 1f;
-            data.targetRotationWeight = 0.72f;
+            data.targetRotationWeight = 0.45f;
             data.hintWeight = 0.68f;
             data.maintainTargetPositionOffset = false;
             data.maintainTargetRotationOffset = true;

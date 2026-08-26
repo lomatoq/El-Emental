@@ -97,7 +97,7 @@ namespace Elemental.Presentation.VFX
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
-            if (Object.FindFirstObjectByType<EarthDebrisGatherGestureInstaller>(FindObjectsInactive.Include) != null) return;
+            if (Object.FindAnyObjectByType<EarthDebrisGatherGestureInstaller>(FindObjectsInactive.Include) != null) return;
             var host = new GameObject("Earth Debris Gesture Installer")
             {
                 hideFlags = HideFlags.HideAndDontSave
@@ -109,14 +109,10 @@ namespace Elemental.Presentation.VFX
 
     internal sealed class EarthDebrisGatherGestureInstaller : MonoBehaviour
     {
-        private float _nextScanAt;
-
-        private void Update()
+        private void Start()
         {
-            if (Time.unscaledTime < _nextScanAt) return;
-            _nextScanAt = Time.unscaledTime + 1f;
             HumanoidCharacterPresentation[] presentations = Object.FindObjectsByType<HumanoidCharacterPresentation>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
+                FindObjectsInactive.Include);
             for (int index = 0; index < presentations.Length; index++)
             {
                 HumanoidCharacterPresentation presentation = presentations[index];

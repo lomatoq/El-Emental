@@ -74,6 +74,26 @@ namespace Elemental.Simulation.Characters
 
         public CharacterPhysicalMode Mode => _mode;
 
+        public void ForceFullRagdoll()
+        {
+            _mode = CharacterPhysicalMode.FullRagdoll;
+            _modeSeconds = 0f;
+            _stableSeconds = 0f;
+            _staggerDebt = math.max(_staggerDebt, _tuning.RagdollDebtThreshold);
+            _recovery = RecoveryCandidate.None;
+            _muscleStrength = 0f;
+        }
+
+        public void Reset()
+        {
+            _mode = CharacterPhysicalMode.AnimatedMotor;
+            _modeSeconds = 0f;
+            _stableSeconds = 0f;
+            _staggerDebt = 0f;
+            _recovery = RecoveryCandidate.None;
+            _muscleStrength = 1f;
+        }
+
         public void ApplyImpact(float impulse, float effectiveMass)
         {
             if (!float.IsFinite(impulse) || !float.IsFinite(effectiveMass) || impulse < 0f || effectiveMass <= 0f)

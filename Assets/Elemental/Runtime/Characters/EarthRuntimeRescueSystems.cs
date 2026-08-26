@@ -1,6 +1,7 @@
 using System;
 using Elemental.Runtime.Physics;
 using Elemental.Simulation.Characters;
+using Elemental.Simulation.Combat;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -25,7 +26,6 @@ namespace Elemental.Runtime.Characters
     internal sealed class EarthRuntimeRescueInstaller : MonoBehaviour
     {
         private static EarthRuntimeRescueInstaller _instance;
-        private float _nextScanAt;
 
         public static void Ensure()
         {
@@ -50,19 +50,11 @@ namespace Elemental.Runtime.Characters
             if (_instance == this) _instance = null;
         }
 
-        private void Update()
-        {
-            if (Time.unscaledTime < _nextScanAt) return;
-            _nextScanAt = Time.unscaledTime + 1f;
-            Scan();
-        }
-
         private static void HandleSceneLoaded(Scene scene, LoadSceneMode mode) => Scan();
 
         private static void Scan()
         {
-            PlanetMotor[] motors = FindObjectsByType<PlanetMotor>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
+            PlanetMotor[] motors = FindObjectsByType<PlanetMotor>(FindObjectsInactive.Include);
             for (int index = 0; index < motors.Length; index++)
             {
                 PlanetMotor motor = motors[index];
@@ -71,7 +63,7 @@ namespace Elemental.Runtime.Characters
             }
 
             ActiveRagdollPuppet[] puppets = FindObjectsByType<ActiveRagdollPuppet>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
+                FindObjectsInactive.Include);
             for (int index = 0; index < puppets.Length; index++)
             {
                 ActiveRagdollPuppet puppet = puppets[index];
@@ -80,11 +72,13 @@ namespace Elemental.Runtime.Characters
             }
 
             EarthArmorController[] armors = FindObjectsByType<EarthArmorController>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
+                FindObjectsInactive.Include);
             for (int index = 0; index < armors.Length; index++)
             {
                 EarthArmorController armor = armors[index];
-                if (armor != null && armor.GetComponent<EarthArmorBodyFollowRescue>() == null)
+                if (armor != null &&
+                    armor.GetComponent<EarthArmorAttachmentV2>() == null &&
+                    armor.GetComponent<EarthArmorBodyFollowRescue>() == null)
                     armor.gameObject.AddComponent<EarthArmorBodyFollowRescue>();
             }
         }
@@ -262,8 +256,10 @@ namespace Elemental.Runtime.Characters
         private ActiveRagdollPuppet _puppet;
         private PlanetMotor _motor;
         private Rigidbody _body;
+        private EarthLandingCushion _landingCushion;
         private bool _wasSupported;
         private float _minimumVerticalSpeed;
+        private Vector3 _airborneStartPosition;
         private float _graceUntil;
 
         public float LastLandingSpeed { get; private set; }
@@ -274,12 +270,14 @@ namespace Elemental.Runtime.Characters
             _puppet = GetComponent<ActiveRagdollPuppet>();
             _motor = GetComponent<PlanetMotor>();
             _body = GetComponent<Rigidbody>();
+            _landingCushion = GetComponent<EarthLandingCushion>();
         }
 
         private void OnEnable()
         {
             _wasSupported = _motor != null && _motor.HasStableSupport;
             _minimumVerticalSpeed = 0f;
+            _airborneStartPosition = transform.position;
             _graceUntil = Time.time + 0.9f;
         }
 
@@ -301,6 +299,7 @@ namespace Elemental.Runtime.Characters
 
             if (!supported)
             {
+                if (_wasSupported) _airborneStartPosition = _body.position;
                 _minimumVerticalSpeed = Mathf.Min(_minimumVerticalSpeed, verticalSpeed);
                 _wasSupported = false;
                 return;
@@ -310,11 +309,28 @@ namespace Elemental.Runtime.Characters
             {
                 LastLandingSpeed = Mathf.Max(0f, -_minimumVerticalSpeed);
                 LastInjectedSeverity = EarthHardLandingMath.ImpactSeverity(LastLandingSpeed);
+                bool cushionedLanding = _landingCushion != null &&
+                                         _landingCushion.SuppressesHardLanding;
                 bool emergingSupport = _motor.CurrentSupportFrame.IsValid &&
                                        _motor.CurrentSupportFrame.Emerging;
-                if (Time.time >= _graceUntil && !emergingSupport && LastInjectedSeverity > 0f)
+                if (cushionedLanding)
                 {
-                    _puppet.InjectImpact(Mathf.Max(0.01f, _body.mass) * LastInjectedSeverity);
+                    // The cushion has already converted the fall energy into its
+                    // compression motion. Do not feed the pre-cushion fall speed to
+                    // the character outcome resolver a second time.
+                    LastInjectedSeverity = 0f;
+                }
+                else if (Time.time >= _graceUntil && !emergingSupport && LastInjectedSeverity > 0f)
+                {
+                    float fallDistance = Mathf.Max(
+                        0f,
+                        Vector3.Dot(_airborneStartPosition - _body.position, up));
+                    EarthCharacterImpactTarget target = GetComponent<EarthCharacterImpactTarget>();
+                    CharacterOutcome outcome = target != null
+                        ? target.ResolveFallLanding(_body.worldCenterOfMass, fallDistance, LastLandingSpeed)
+                        : CharacterOutcome.RecoverableRagdoll;
+                    if (outcome == CharacterOutcome.RecoverableRagdoll)
+                        _puppet.InjectImpact(Mathf.Max(0.01f, _body.mass) * LastInjectedSeverity);
                 }
             }
 
@@ -496,8 +512,11 @@ namespace Elemental.Runtime.Characters
                 Quaternion targetRotation = anchor.Bone.rotation * anchor.LocalRotation;
                 body.position = targetPosition;
                 body.rotation = targetRotation;
-                body.linearVelocity = Vector3.zero;
-                body.angularVelocity = Vector3.zero;
+                if (!body.isKinematic)
+                {
+                    body.linearVelocity = Vector3.zero;
+                    body.angularVelocity = Vector3.zero;
+                }
             }
         }
 

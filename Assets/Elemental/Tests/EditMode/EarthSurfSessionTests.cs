@@ -71,12 +71,27 @@ namespace Elemental.Tests.EditMode
                 Assert.That(report.IsValid, Is.True, $"family {(EarthSurfSilhouetteFamily)index}: {report.Issues}");
                 Assert.That(mesh.bounds.size.x, Is.GreaterThan(2.1f));
                 Assert.That(mesh.bounds.size.z, Is.GreaterThan(3.5f));
+                Assert.That(HasFaceAndBevelVertexClasses(mesh), Is.True,
+                    $"family {(EarthSurfSilhouetteFamily)index} must publish both stone faces and bevels.");
                 if (previousVertexCount >= 0)
                     Assert.That(mesh.vertexCount, Is.Not.EqualTo(previousVertexCount),
                         "Adjacent surf families must not be the same wedge with another label.");
                 previousVertexCount = mesh.vertexCount;
                 Object.DestroyImmediate(mesh);
             }
+        }
+
+        private static bool HasFaceAndBevelVertexClasses(Mesh mesh)
+        {
+            Color[] colors = mesh.colors;
+            bool hasFace = false;
+            bool hasBevel = false;
+            for (int index = 0; index < colors.Length; index++)
+            {
+                hasFace |= colors[index].a < 0.55f;
+                hasBevel |= colors[index].a > 0.62f;
+            }
+            return colors.Length == mesh.vertexCount && hasFace && hasBevel;
         }
     }
 }
