@@ -79,6 +79,10 @@ namespace Elemental.Tests.PlayMode
             bool hasRumbleArenaMaterial = HasShader(arena, "Elemental/Graphics V5/Rumble Rock Lit");
             Animator botAnimator = bot != null ? bot.GetComponentInChildren<Animator>(true) : null;
             GameObject player = FindByName(scene, "Planet Character");
+            EarthCharacterImpactTarget playerImpact =
+                player != null ? player.GetComponent<EarthCharacterImpactTarget>() : null;
+            EarthCharacterImpactTarget botImpact =
+                bot != null ? bot.GetComponent<EarthCharacterImpactTarget>() : null;
             Animator playerAnimator = player != null ? player.GetComponentInChildren<Animator>(true) : null;
             HumanoidSecondaryMotion playerSecondary = player != null
                 ? player.GetComponentInChildren<HumanoidSecondaryMotion>(true)
@@ -210,6 +214,10 @@ namespace Elemental.Tests.PlayMode
             Assert.That(botSecondary.TailBoneCount, Is.EqualTo(3));
             Assert.That(playerSecondary.BeltBoneCount, Is.EqualTo(4));
             Assert.That(botSecondary.BeltBoneCount, Is.EqualTo(4));
+            Assert.That(playerImpact, Is.Not.Null);
+            Assert.That(botImpact, Is.Not.Null);
+            Assert.That(playerImpact.ResponseMode, Is.EqualTo(ImpactResponseMode.Calibrated));
+            Assert.That(botImpact.ResponseMode, Is.EqualTo(ImpactResponseMode.Calibrated));
             Assert.That(botHasNoPlayerOwnership, Is.True,
                 "The rival visual must not clone player input, magic or presentation ownership.");
             Assert.That(botSharedPresentation, Is.Not.Null,

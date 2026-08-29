@@ -57,6 +57,8 @@ namespace Elemental.Authoring.Editor
         private const string SkyProfilePath = "Assets/Elemental/Content/Profiles/EarthSkyProfile.asset";
         private const string MeteorProfilePath = "Assets/Elemental/Content/Profiles/MeteorShowerProfile.asset";
         private const string CharacterProfilePath = "Assets/Elemental/Content/Profiles/CharacterPresentationProfile.asset";
+        internal const string CharacterImpactProfilePath =
+            "Assets/Elemental/Content/Profiles/CharacterImpactResponseProfile.asset";
         private const string PlayerMaterialFolder = "Assets/Elemental/Content/Materials/MvpPlayer";
         private const string RivalMaterialFolder = "Assets/Elemental/Content/Materials/MvpRival";
         private const string PhysicsFeelProfilePath = "Assets/Elemental/Content/Profiles/EarthPhysicsFeelProfile.asset";
@@ -2994,12 +2996,28 @@ namespace Elemental.Authoring.Editor
                 player.GetComponent<EarthCharacterImpactTarget>();
             if (playerCharacterImpact == null)
                 playerCharacterImpact = player.AddComponent<EarthCharacterImpactTarget>();
-            playerCharacterImpact.Configure(EarthDuelFighterId.Player, 0xC0010001u, playerBody);
+            CharacterImpactResponseProfile impactResponseProfile =
+                CreateOrLoadProfile<CharacterImpactResponseProfile>(
+                    CharacterImpactProfilePath,
+                    "Character Impact Response Profile");
+            impactResponseProfile.ConfigureMode(ImpactResponseMode.Calibrated);
+            EditorUtility.SetDirty(impactResponseProfile);
+            playerCharacterImpact.Configure(
+                EarthDuelFighterId.Player,
+                0xC0010001u,
+                playerBody,
+                null,
+                impactResponseProfile);
             playerPhysicalImpact?.ConfigureCharacterImpactTarget(playerCharacterImpact);
 
             EarthCharacterImpactTarget botCharacterImpact =
                 bot.AddComponent<EarthCharacterImpactTarget>();
-            botCharacterImpact.Configure(EarthDuelFighterId.Bot, 0xC0010002u, body);
+            botCharacterImpact.Configure(
+                EarthDuelFighterId.Bot,
+                0xC0010002u,
+                body,
+                null,
+                impactResponseProfile);
             combat.SetCharacterImpactAuthority(botCharacterImpact);
             EarthMvpDuelController duel = bot.AddComponent<EarthMvpDuelController>();
             duel.Configure(

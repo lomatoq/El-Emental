@@ -162,6 +162,79 @@ namespace Elemental.Tests.EditMode
                 Is.EqualTo(compatibility.EffectiveVelocityChange).Within(0.000001f));
         }
 
+        [Test]
+        public void CalibratedLightStoneFlinchesWithoutMovingTheWholeFighterTooFar()
+        {
+            EarthCharacterImpact impact = Impact(
+                EarthCharacterImpactSourceKind.LooseStone,
+                42f,
+                42f);
+
+            EarthCharacterImpactResolution result = EarthCharacterImpactSolver.Resolve(
+                in impact,
+                in Tuning,
+                ImpactResponseMode.Calibrated);
+
+            Assert.That(result.Response, Is.EqualTo(EarthCharacterImpactResponse.Flinch));
+            Assert.That(result.ReactionVelocityChange, Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(result.AppliedVelocityChange, Is.EqualTo(0.8f).Within(0.0001f));
+            Assert.That(result.EffectiveVelocityChange, Is.EqualTo(result.AppliedVelocityChange));
+        }
+
+        [Test]
+        public void CalibratedHeavyBoulderCanKnockOutWithoutLaunchingTheRoot()
+        {
+            EarthCharacterImpact impact = Impact(
+                EarthCharacterImpactSourceKind.LooseStone,
+                252f,
+                42f);
+
+            EarthCharacterImpactResolution result = EarthCharacterImpactSolver.Resolve(
+                in impact,
+                in Tuning,
+                ImpactResponseMode.Calibrated);
+
+            Assert.That(result.Response, Is.EqualTo(EarthCharacterImpactResponse.Knockout));
+            Assert.That(result.ReactionVelocityChange, Is.EqualTo(6f).Within(0.0001f));
+            Assert.That(result.AppliedVelocityChange, Is.EqualTo(0.9f).Within(0.0001f));
+        }
+
+        [Test]
+        public void CalibratedPillarWaveUsesReactionAndMovementAsSeparateChannels()
+        {
+            EarthCharacterImpact impact = Impact(
+                EarthCharacterImpactSourceKind.PillarWave,
+                105f,
+                42f);
+
+            EarthCharacterImpactResolution result = EarthCharacterImpactSolver.Resolve(
+                in impact,
+                in Tuning,
+                ImpactResponseMode.Calibrated);
+
+            Assert.That(result.Response, Is.EqualTo(EarthCharacterImpactResponse.Stagger));
+            Assert.That(result.ReactionVelocityChange, Is.EqualTo(3.2f).Within(0.0001f));
+            Assert.That(result.AppliedVelocityChange, Is.EqualTo(1.2f).Within(0.0001f));
+        }
+
+        [Test]
+        public void CalibratedGenericPhysicsStillCannotChooseCombatKnockout()
+        {
+            EarthCharacterImpact impact = Impact(
+                EarthCharacterImpactSourceKind.Physics,
+                50000f,
+                10f);
+
+            EarthCharacterImpactResolution result = EarthCharacterImpactSolver.Resolve(
+                in impact,
+                in Tuning,
+                ImpactResponseMode.Calibrated);
+
+            Assert.That(result.Response, Is.EqualTo(EarthCharacterImpactResponse.Stagger));
+            Assert.That(result.ReactionVelocityChange, Is.LessThan(Tuning.KnockoutVelocityChange));
+            Assert.That(result.AppliedVelocityChange, Is.EqualTo(1.5f).Within(0.0001f));
+        }
+
         private static EarthCharacterImpact Impact(
             EarthCharacterImpactSourceKind kind,
             float impulse,

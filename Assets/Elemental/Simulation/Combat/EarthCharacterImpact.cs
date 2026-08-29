@@ -122,14 +122,57 @@ namespace Elemental.Simulation.Combat
     {
         public EarthCharacterImpactResolution(
             EarthCharacterImpactResponse response,
-            float effectiveVelocityChange)
+            float reactionVelocityChange,
+            float appliedVelocityChange)
         {
             Response = response;
-            EffectiveVelocityChange = math.max(0f, effectiveVelocityChange);
+            ReactionVelocityChange = math.max(0f, reactionVelocityChange);
+            AppliedVelocityChange = math.max(0f, appliedVelocityChange);
         }
 
         public EarthCharacterImpactResponse Response { get; }
-        public float EffectiveVelocityChange { get; }
+        public float ReactionVelocityChange { get; }
+        public float AppliedVelocityChange { get; }
+        public float EffectiveVelocityChange => AppliedVelocityChange;
+    }
+
+    public readonly struct EarthCharacterImpactCalibration
+    {
+        public EarthCharacterImpactCalibration(
+            float reactionMultiplier,
+            float movementMultiplier,
+            float maximumRootVelocityChange)
+        {
+            ReactionMultiplier = math.max(0f, reactionMultiplier);
+            MovementMultiplier = math.max(0f, movementMultiplier);
+            MaximumRootVelocityChange = math.max(0.1f, maximumRootVelocityChange);
+        }
+
+        public float ReactionMultiplier { get; }
+        public float MovementMultiplier { get; }
+        public float MaximumRootVelocityChange { get; }
+
+        public static EarthCharacterImpactCalibration DefaultFor(
+            EarthCharacterImpactSourceKind source) => source switch
+        {
+            EarthCharacterImpactSourceKind.LooseStone =>
+                new EarthCharacterImpactCalibration(1f, 0.8f, 0.9f),
+            EarthCharacterImpactSourceKind.ArmorProjectile =>
+                new EarthCharacterImpactCalibration(1.1f, 0.85f, 1.35f),
+            EarthCharacterImpactSourceKind.PillarWave =>
+                new EarthCharacterImpactCalibration(1.28f, 0.48f, 2.3f),
+            EarthCharacterImpactSourceKind.PillarCrest =>
+                new EarthCharacterImpactCalibration(1.32f, 0.58f, 2.4f),
+            EarthCharacterImpactSourceKind.StonePunch =>
+                new EarthCharacterImpactCalibration(1.28f, 0.62f, 2f),
+            EarthCharacterImpactSourceKind.SurfNose =>
+                new EarthCharacterImpactCalibration(1.15f, 0.65f, 2.4f),
+            EarthCharacterImpactSourceKind.BotProjectile =>
+                new EarthCharacterImpactCalibration(1.1f, 0.85f, 1.35f),
+            EarthCharacterImpactSourceKind.Physics =>
+                new EarthCharacterImpactCalibration(1f, 0.8f, 1.5f),
+            _ => new EarthCharacterImpactCalibration(1f, 1f, 4f)
+        };
     }
 
     public static class EarthCharacterImpactSolver
@@ -148,8 +191,26 @@ namespace Elemental.Simulation.Combat
             in EarthCharacterImpactTuning tuning,
             ImpactResponseMode mode)
         {
-            // Stage-zero safety switch: calibrated deliberately aliases the exact
-            // legacy path until its independently tested response policy lands.
+            EarthCharacterImpactCalibration calibration =
+                EarthCharacterImpactCalibration.DefaultFor(impact.SourceKind);
+            return Resolve(in impact, in tuning, mode, in calibration);
+        }
+
+        public static EarthCharacterImpactResolution Resolve(
+            in EarthCharacterImpact impact,
+            in EarthCharacterImpactTuning tuning,
+            ImpactResponseMode mode,
+            in EarthCharacterImpactCalibration calibration)
+        {
+            return mode == ImpactResponseMode.Calibrated
+                ? ResolveCalibrated(in impact, in tuning, in calibration)
+                : ResolveLegacy(in impact, in tuning);
+        }
+
+        private static EarthCharacterImpactResolution ResolveLegacy(
+            in EarthCharacterImpact impact,
+            in EarthCharacterImpactTuning tuning)
+        {
             float velocityChange = impact.Impulse / math.max(0.01f, impact.TargetMass);
             if (impact.SourceKind == EarthCharacterImpactSourceKind.SurfNose)
             {
@@ -195,7 +256,49 @@ namespace Elemental.Simulation.Combat
                     : velocityChange >= tuning.FlinchVelocityChange
                         ? EarthCharacterImpactResponse.Flinch
                         : EarthCharacterImpactResponse.Ignore;
-            return new EarthCharacterImpactResolution(response, velocityChange);
+            return new EarthCharacterImpactResolution(response, velocityChange, velocityChange);
+        }
+
+        private static EarthCharacterImpactResolution ResolveCalibrated(
+            in EarthCharacterImpact impact,
+            in EarthCharacterImpactTuning tuning,
+            in EarthCharacterImpactCalibration calibration)
+        {
+            float physicalVelocityChange = impact.Impulse / math.max(0.01f, impact.TargetMass);
+            float reactionSignal = impact.SourceKind == EarthCharacterImpactSourceKind.SurfNose
+                ? math.max(physicalVelocityChange, impact.ClosingSpeed)
+                : physicalVelocityChange;
+            float reactionVelocityChange = math.min(
+                reactionSignal * calibration.ReactionMultiplier,
+                tuning.MaximumVelocityChange);
+            if (impact.SourceKind == EarthCharacterImpactSourceKind.Physics)
+            {
+                reactionVelocityChange = math.min(
+                    reactionVelocityChange,
+                    math.max(tuning.StaggerVelocityChange, tuning.KnockoutVelocityChange - 0.001f));
+            }
+
+            float appliedVelocityChange = math.min(
+                physicalVelocityChange * calibration.MovementMultiplier,
+                math.min(tuning.MaximumVelocityChange, calibration.MaximumRootVelocityChange));
+            EarthCharacterImpactResponse response = Classify(reactionVelocityChange, in tuning);
+            return new EarthCharacterImpactResolution(
+                response,
+                reactionVelocityChange,
+                appliedVelocityChange);
+        }
+
+        private static EarthCharacterImpactResponse Classify(
+            float velocityChange,
+            in EarthCharacterImpactTuning tuning)
+        {
+            return velocityChange >= tuning.KnockoutVelocityChange
+                ? EarthCharacterImpactResponse.Knockout
+                : velocityChange >= tuning.StaggerVelocityChange
+                    ? EarthCharacterImpactResponse.Stagger
+                    : velocityChange >= tuning.FlinchVelocityChange
+                        ? EarthCharacterImpactResponse.Flinch
+                        : EarthCharacterImpactResponse.Ignore;
         }
 
         public static bool IsDuplicate(

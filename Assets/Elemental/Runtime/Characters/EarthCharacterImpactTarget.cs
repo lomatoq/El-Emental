@@ -34,7 +34,11 @@ namespace Elemental.Runtime.Characters
         public EarthDuelFighterId FighterId => fighterId;
         public uint StableFighterId => stableFighterId;
         public Rigidbody Body => targetBody;
+        public ImpactResponseMode ResponseMode => responseProfile != null
+            ? responseProfile.ResponseMode
+            : ImpactResponseMode.Legacy;
         public EarthCharacterImpactResponse LastResponse { get; private set; }
+        public float LastReactionVelocityChange { get; private set; }
         public float LastEffectiveVelocityChange { get; private set; }
         public int AcceptedImpactCount { get; private set; }
 
@@ -120,35 +124,52 @@ namespace Elemental.Runtime.Characters
                     Mathf.Max(0.01f, targetBody.mass),
                     closingSpeed,
                     strength01);
-                EarthCharacterImpactResolution resolution = EarthCharacterImpactSolver.Resolve(
-                    in impact,
-                    in _tuning,
-                    responseProfile != null
-                        ? responseProfile.ResponseMode
-                        : ImpactResponseMode.Legacy);
+                ImpactResponseMode responseMode = responseProfile != null
+                    ? responseProfile.ResponseMode
+                    : ImpactResponseMode.Legacy;
+                EarthCharacterImpactResolution resolution;
+                if (responseProfile != null && responseMode == ImpactResponseMode.Calibrated)
+                {
+                    EarthCharacterImpactCalibration calibration =
+                        responseProfile.CalibrationFor(sourceKind);
+                    resolution = EarthCharacterImpactSolver.Resolve(
+                        in impact,
+                        in _tuning,
+                        responseMode,
+                        in calibration);
+                }
+                else
+                {
+                    resolution = EarthCharacterImpactSolver.Resolve(
+                        in impact,
+                        in _tuning,
+                        ImpactResponseMode.Legacy);
+                }
                 bool stoneImpact = IsStoneImpact(sourceKind);
                 bool clusteredStoneRagdoll = stoneImpact && RegisterStoneCluster(
                     point,
                     sourceStableId,
-                    resolution.EffectiveVelocityChange);
+                    resolution.ReactionVelocityChange);
                 EarthCharacterImpactResponse response = resolution.Response;
                 if (stoneImpact)
                 {
                     _visibleRagdoll?.ApplyLocalizedRagdollImpulse(
                         point,
                         safeDirection,
-                        resolution.EffectiveVelocityChange);
+                        resolution.ReactionVelocityChange);
                     if (clusteredStoneRagdoll)
                         response = EarthCharacterImpactResponse.Knockout;
-                    else if (response == EarthCharacterImpactResponse.Knockout)
+                    else if (responseMode == ImpactResponseMode.Legacy &&
+                             response == EarthCharacterImpactResponse.Knockout)
                         response = EarthCharacterImpactResponse.Stagger;
                 }
                 Remember(sourceStableId, tick, impactTime);
                 AcceptedImpactCount++;
                 LastResponse = response;
+                LastReactionVelocityChange = resolution.ReactionVelocityChange;
                 LastEffectiveVelocityChange = resolution.EffectiveVelocityChange;
 
-                Vector3 requestedVelocityChange = safeDirection * resolution.EffectiveVelocityChange;
+                Vector3 requestedVelocityChange = safeDirection * resolution.AppliedVelocityChange;
                 Vector3 up = transform.position.sqrMagnitude > 0.1f
                     ? transform.position.normalized
                     : transform.up;
@@ -168,7 +189,8 @@ namespace Elemental.Runtime.Characters
                     launchBudget.MaximumRiseMeters,
                     launchBudget.MaximumTangentSpeed);
                 Vector3 velocityChange = new Vector3(limited.x, limited.y, limited.z);
-                if (stoneImpact && !clusteredStoneRagdoll)
+                if (responseMode == ImpactResponseMode.Legacy &&
+                    stoneImpact && !clusteredStoneRagdoll)
                     velocityChange = Vector3.ClampMagnitude(
                         velocityChange,
                         responseProfile != null ? responseProfile.SingleStoneRootVelocity : 0.8f);
