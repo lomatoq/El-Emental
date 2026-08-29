@@ -17,7 +17,8 @@ namespace Elemental.Authoring.Editor
 
     public static class EarthAnimationAssetValidator
     {
-        public const string CharacterModelPath = "Assets/ThirdParty/Mixamo/X Bot.fbx";
+        public const string CharacterModelPath =
+            "Assets/Elemental/Content/Characters/Linebreaker/Linebreaker.fbx";
         public const string ControllerPath = "Assets/Elemental/Content/Animation/KayKitMage.controller";
         public const string PresentationProfilePath = "Assets/Elemental/Content/Profiles/CharacterPresentationProfile.asset";
 
@@ -120,7 +121,7 @@ namespace Elemental.Authoring.Editor
                 if (assets[index] is Avatar candidate) { avatar = candidate; break; }
             if (avatar == null || !avatar.isValid || !avatar.isHuman)
             {
-                errors.Add("Mixamo X Bot Avatar is missing or not a valid Humanoid. Set Rig/Animation Type to Humanoid and reimport.");
+                errors.Add("Linebreaker Avatar is missing or not a valid Humanoid. Set Rig/Animation Type to Humanoid and reimport.");
                 return;
             }
             HumanDescription description = avatar.humanDescription;
@@ -130,7 +131,7 @@ namespace Elemental.Authoring.Editor
                 bool found = false;
                 for (int humanIndex = 0; humanIndex < description.human.Length; humanIndex++)
                     if (description.human[humanIndex].humanName == required[requiredIndex]) { found = true; break; }
-                if (!found) errors.Add($"Mixamo X Bot Humanoid mapping is missing required bone '{required[requiredIndex]}'.");
+                if (!found) errors.Add($"Linebreaker Humanoid mapping is missing required bone '{required[requiredIndex]}'.");
             }
         }
 

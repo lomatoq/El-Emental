@@ -80,12 +80,27 @@ namespace Elemental.Tests.PlayMode
             Animator botAnimator = bot != null ? bot.GetComponentInChildren<Animator>(true) : null;
             GameObject player = FindByName(scene, "Planet Character");
             Animator playerAnimator = player != null ? player.GetComponentInChildren<Animator>(true) : null;
+            HumanoidSecondaryMotion playerSecondary = player != null
+                ? player.GetComponentInChildren<HumanoidSecondaryMotion>(true)
+                : null;
+            HumanoidSecondaryMotion botSecondary = bot != null
+                ? bot.GetComponentInChildren<HumanoidSecondaryMotion>(true)
+                : null;
+            bool playerUsesMappedRumbleLook = UsesMappedLinebreakerLook(player);
+            bool botUsesMappedRumbleLook = bot != null && UsesMappedLinebreakerLook(bot.gameObject);
             bool hasHumanoidBot = botAnimator != null && botAnimator.avatar != null &&
                                   botAnimator.avatar.isValid && botAnimator.avatar.isHuman &&
                                   !botAnimator.applyRootMotion;
             bool sharesPlayerRig = hasHumanoidBot && playerAnimator != null &&
                                    botAnimator.avatar == playerAnimator.avatar &&
                                    botAnimator.runtimeAnimatorController == playerAnimator.runtimeAnimatorController;
+            Debug.Log(
+                $"[Elemental.Tests] Linebreaker refs: playerAvatar={playerAnimator?.avatar?.name ?? "null"}, " +
+                $"botAvatar={botAnimator?.avatar?.name ?? "null"}, " +
+                $"sameAvatar={botAnimator != null && playerAnimator != null && botAnimator.avatar == playerAnimator.avatar}, " +
+                $"playerController={playerAnimator?.runtimeAnimatorController?.name ?? "null"}, " +
+                $"botController={botAnimator?.runtimeAnimatorController?.name ?? "null"}, " +
+                $"sameController={botAnimator != null && playerAnimator != null && botAnimator.runtimeAnimatorController == playerAnimator.runtimeAnimatorController}.");
             HumanoidCharacterPresentation botSharedPresentation = bot != null
                 ? bot.GetComponentInChildren<HumanoidCharacterPresentation>(true)
                 : null;
@@ -184,6 +199,17 @@ namespace Elemental.Tests.PlayMode
             Assert.That(hasHumanoidBot, Is.True);
             Assert.That(sharesPlayerRig, Is.True,
                 "The rival must use the same Humanoid Avatar and controller as the player.");
+            Assert.That(playerUsesMappedRumbleLook, Is.True,
+                "The player must keep the mapped Linebreaker texture under the shared Rumble character shader.");
+            Assert.That(botUsesMappedRumbleLook, Is.True,
+                "The rival must keep the mapped Linebreaker texture under the shared Rumble character shader.");
+            Assert.That(playerSecondary, Is.Not.Null);
+            Assert.That(botSecondary, Is.Not.Null);
+            Assert.That(playerSecondary.IsConfigured && botSecondary.IsConfigured, Is.True);
+            Assert.That(playerSecondary.TailBoneCount, Is.EqualTo(3));
+            Assert.That(botSecondary.TailBoneCount, Is.EqualTo(3));
+            Assert.That(playerSecondary.BeltBoneCount, Is.EqualTo(4));
+            Assert.That(botSecondary.BeltBoneCount, Is.EqualTo(4));
             Assert.That(botHasNoPlayerOwnership, Is.True,
                 "The rival visual must not clone player input, magic or presentation ownership.");
             Assert.That(botSharedPresentation, Is.Not.Null,
@@ -602,6 +628,26 @@ namespace Elemental.Tests.PlayMode
                     return false;
             }
             return sampled;
+        }
+
+        private static bool UsesMappedLinebreakerLook(GameObject root)
+        {
+            if (root == null) return false;
+            SkinnedMeshRenderer[] renderers = root.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+            for (int index = 0; index < renderers.Length; index++)
+            {
+                Material material = renderers[index] != null ? renderers[index].sharedMaterial : null;
+                if (material == null || material.shader == null ||
+                    material.shader.name != "Elemental/Graphics V5/Rumble Rock Lit" ||
+                    !material.HasProperty("_BaseMap") ||
+                    !material.HasProperty("_TextureStrength"))
+                    continue;
+                Texture texture = material.GetTexture("_BaseMap");
+                if (texture != null && texture.name == "LinebreakerTexture" &&
+                    material.GetFloat("_TextureStrength") >= 0.55f)
+                    return true;
+            }
+            return false;
         }
 
         private static int CountLiveDirectionalLights(Scene scene)

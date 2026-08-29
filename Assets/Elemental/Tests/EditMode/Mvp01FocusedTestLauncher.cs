@@ -47,6 +47,8 @@ namespace Elemental.Tests.EditMode
                 "Elemental.Tests.EditMode.DualMouseEarthGestureSolverTests",
                 "Elemental.Tests.EditMode.EarthLocalizedImpactAndDecorTests",
                 "Elemental.Tests.EditMode.EarthCharacterImpactSolverTests",
+                "Elemental.Tests.EditMode.EarthMixamoPresentationTests",
+                "Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests",
                 "Elemental.Tests.EditMode.EarthMagicExpansionTests",
                 "Elemental.Tests.EditMode.EarthWebWaveAndArmorTests",
                 "Elemental.Tests.EditMode.TerrainExtractionTransactionTests");
@@ -80,6 +82,15 @@ namespace Elemental.Tests.EditMode
                 "Elemental.Tests.PlayMode.EarthCoreVisualRuntimeTests.PhysicalMouseClosedStrokeCommitsPlatformThroughShippingRouter",
                 "Elemental.Tests.PlayMode.EarthCoreVisualRuntimeTests.PhysicalMouseStationaryHoldStartsTerrainExtractionThroughShippingRouter",
                 "Elemental.Tests.PlayMode.EarthCoreVisualRuntimeTests.PhysicalMouseHoldMovesVisibleDecorRockThroughShippingRouter");
+        }
+
+        [MenuItem("Elemental/QA/Run Linebreaker PlayMode Test")]
+        private static void RunLinebreakerPlayMode()
+        {
+            Run(
+                TestMode.PlayMode,
+                "LinebreakerPlay",
+                "Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests.ShippingSceneContainsLargeRumbleDuelCourtAndOneActiveLinebreaker");
         }
 
         private static void Run(TestMode mode, string reportStem, params string[] testNames)

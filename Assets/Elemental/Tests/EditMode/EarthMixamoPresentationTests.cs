@@ -8,14 +8,15 @@ namespace Elemental.Tests.EditMode
 {
     public sealed class EarthMixamoPresentationTests
     {
-        private const string CharacterPath = "Assets/ThirdParty/Mixamo/X Bot.fbx";
+        private const string CharacterPath =
+            "Assets/Elemental/Content/Characters/Linebreaker/Linebreaker.fbx";
         private const string WalkPath = "Assets/ThirdParty/Mixamo/X Bot@Walking.fbx";
         private const string WalkBackPath = "Assets/ThirdParty/Mixamo/X Bot@Walking Backwards.fbx";
         private const string PushPath = "Assets/ThirdParty/Mixamo/X Bot@Lead Jab.fbx";
         private const string ControllerPath = "Assets/Elemental/Content/Animation/KayKitMage.controller";
 
         [Test]
-        public void XBotImportsAsAValidSkinnedHumanoid()
+        public void LinebreakerImportsAsAValidSkinnedHumanoid()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CharacterPath);
             Assert.That(prefab, Is.Not.Null);
@@ -33,17 +34,16 @@ namespace Elemental.Tests.EditMode
         [TestCase(WalkPath, true)]
         [TestCase(WalkBackPath, true)]
         [TestCase(PushPath, false)]
-        public void CuratedMixamoMotionsShareCanonicalHumanoidAvatar(string path, bool shouldLoop)
+        public void CuratedMixamoMotionsRemainValidHumanoidSources(string path, bool shouldLoop)
         {
             ModelImporter importer = AssetImporter.GetAtPath(path) as ModelImporter;
             Assert.That(importer, Is.Not.Null, path);
             Assert.That(importer.animationType, Is.EqualTo(ModelImporterAnimationType.Human));
             Assert.That(importer.avatarSetup, Is.EqualTo(ModelImporterAvatarSetup.CopyFromOther));
-            Avatar canonical = AssetDatabase.LoadAllAssetsAtPath(CharacterPath)
-                .OfType<Avatar>()
-                .FirstOrDefault();
-            Assert.That(importer.sourceAvatar, Is.SameAs(canonical),
-                "Every X Bot motion must retarget through the same reference pose.");
+            Assert.That(importer.sourceAvatar, Is.Not.Null);
+            Assert.That(importer.sourceAvatar.isValid, Is.True);
+            Assert.That(importer.sourceAvatar.isHuman, Is.True,
+                "Motion FBXs may keep their canonical Mixamo avatar; Mecanim retargets them onto Linebreaker at runtime.");
 
             AnimationClip clip = AssetDatabase.LoadAllAssetsAtPath(path)
                 .OfType<AnimationClip>()

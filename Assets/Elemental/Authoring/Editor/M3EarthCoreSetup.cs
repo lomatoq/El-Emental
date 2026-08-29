@@ -78,7 +78,8 @@ namespace Elemental.Authoring.Editor
         private const string RumbleMaterialFolder = "Assets/Elemental/Content/GraphicsV5/Materials/";
         private const string RumbleRockFolder = "Assets/Elemental/Content/GraphicsV5/Rocks/";
         private const string RumbleShaderName = "Elemental/Graphics V5/Rumble Rock Lit";
-        private const string CharacterModelPath = "Assets/ThirdParty/Mixamo/X Bot.fbx";
+        private const string CharacterModelPath =
+            "Assets/Elemental/Content/Characters/Linebreaker/Linebreaker.fbx";
         private const string MixamoWalkPath = "Assets/ThirdParty/Mixamo/X Bot@Walking.fbx";
         private const string MixamoWalkBackPath = "Assets/ThirdParty/Mixamo/X Bot@Walking Backwards.fbx";
         private const string MixamoPunchPath = "Assets/ThirdParty/Mixamo/X Bot@Punching.fbx";
@@ -1068,14 +1069,14 @@ namespace Elemental.Authoring.Editor
             GameObject characterPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CharacterModelPath);
             if (characterPrefab == null)
             {
-                Debug.LogWarning("[Elemental] Mixamo X Bot is unavailable; keeping the primitive presentation fallback.");
+                Debug.LogWarning("[Elemental] Linebreaker character is unavailable; keeping the primitive presentation fallback.");
                 return;
             }
 
             Avatar avatar = FindAvatar(CharacterModelPath);
             if (avatar == null || !avatar.isValid || !avatar.isHuman)
             {
-                Debug.LogWarning("[Elemental] Mixamo X Bot did not produce a valid Humanoid avatar; keeping the primitive presentation fallback.");
+                Debug.LogWarning("[Elemental] Linebreaker character did not produce a valid Humanoid avatar; keeping the primitive presentation fallback.");
                 return;
             }
 
@@ -1089,7 +1090,7 @@ namespace Elemental.Authoring.Editor
                 avatar,
                 new Vector3(0f, -1.02f, 0f),
                 Vector3.zero,
-                Vector3.one * 1.08f);
+                Vector3.one * 2.02f);
             EditorUtility.SetDirty(profile);
 
             Transform old = character.transform.Find("KayKit Mage Presentation");
@@ -1100,9 +1101,19 @@ namespace Elemental.Authoring.Editor
             if (old != null) Object.DestroyImmediate(old.gameObject);
             old = character.transform.Find("Mixamo X Bot Presentation");
             if (old != null) Object.DestroyImmediate(old.gameObject);
+            old = character.transform.Find("Linebreaker Presentation");
+            if (old != null) Object.DestroyImmediate(old.gameObject);
             GameObject presentationObject = PrefabUtility.InstantiatePrefab(characterPrefab) as GameObject;
             if (presentationObject == null) return;
-            presentationObject.name = "Mixamo X Bot Presentation";
+            // The generated scene owns this rig. Keeping a live Model Prefab link
+            // lets later AssetDatabase refreshes silently restore imported Animator
+            // and material values, which previously removed the controller and the
+            // Rumble shader from the player while leaving the rival intact.
+            PrefabUtility.UnpackPrefabInstance(
+                presentationObject,
+                PrefabUnpackMode.Completely,
+                InteractionMode.AutomatedAction);
+            presentationObject.name = "Linebreaker Presentation";
             presentationObject.transform.SetParent(character.transform, false);
             presentationObject.transform.localPosition = profile.LocalPosition;
             presentationObject.transform.localRotation = profile.LocalRotation;
@@ -1122,6 +1133,7 @@ namespace Elemental.Authoring.Editor
             animator.applyRootMotion = false;
             animator.updateMode = AnimatorUpdateMode.Normal;
             animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+            ConfigureSecondaryCharacterMotion(presentationObject, animator);
 
             foreach (Renderer renderer in character.GetComponentsInChildren<Renderer>(true))
             {
@@ -1231,9 +1243,9 @@ namespace Elemental.Authoring.Editor
             for (int index = 0; index < mixamoAnimationPaths.Length; index++)
                 // Mixamo's FBX-for-Unity exporter is not consistent about retaining
                 // the `mixamorig:` namespace between character and motion downloads.
-                // CopyFromOther therefore reports a false hierarchy mismatch. Each
-                // motion owns a valid Humanoid Avatar and Mecanim retargets it onto
-                // X Bot at runtime without requiring identical transform paths.
+                // Each motion therefore keeps its valid Humanoid Avatar; Mecanim
+                // retargets it onto Linebreaker at runtime without requiring an
+                // identical transform hierarchy.
                 ConfigureHumanoidImporter(
                     mixamoAnimationPaths[index],
                     null,
@@ -3040,12 +3052,19 @@ namespace Elemental.Authoring.Editor
             RuntimeAnimatorController controller = profile.AnimatorController;
             if (prefab == null || avatar == null || !avatar.isValid || !avatar.isHuman || controller == null)
                 throw new UnityEditor.Build.BuildFailedException(
-                    "Linebreaker requires the same valid Mixamo Humanoid prefab, Avatar and controller as the player.");
+                    "Linebreaker requires the same valid Humanoid prefab, Avatar and controller as the player.");
 
             GameObject visual = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
             if (visual == null)
                 throw new UnityEditor.Build.BuildFailedException(
-                    "Linebreaker Mixamo Humanoid presentation could not be instantiated.");
+                    "Linebreaker Humanoid presentation could not be instantiated.");
+            // See the player path above: both generated characters must retain
+            // their scene-authored controller, secondary rig and Rumble materials
+            // across imports and editor domain reloads.
+            PrefabUtility.UnpackPrefabInstance(
+                visual,
+                PrefabUnpackMode.Completely,
+                InteractionMode.AutomatedAction);
             visual.name = "Linebreaker X Bot Presentation";
             visual.tag = "Untagged";
             visual.transform.SetParent(bot, false);
@@ -3060,6 +3079,7 @@ namespace Elemental.Authoring.Editor
             animator.applyRootMotion = false;
             animator.updateMode = AnimatorUpdateMode.Normal;
             animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+            ConfigureSecondaryCharacterMotion(visual, animator);
 
             foreach (Renderer renderer in visual.GetComponentsInChildren<Renderer>(true))
             {
@@ -3068,6 +3088,16 @@ namespace Elemental.Authoring.Editor
             }
             ApplyPersistentRumbleCharacterMaterials(visual, true);
             return animator;
+        }
+
+        private static void ConfigureSecondaryCharacterMotion(GameObject visual, Animator animator)
+        {
+            HumanoidSecondaryMotion secondaryMotion = visual.GetComponent<HumanoidSecondaryMotion>();
+            if (secondaryMotion == null) secondaryMotion = visual.AddComponent<HumanoidSecondaryMotion>();
+            secondaryMotion.ConfigureFromHierarchy(animator);
+            if (!secondaryMotion.IsConfigured)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "Linebreaker secondary tail and belt bone chains are incomplete.");
         }
 
         private static void ApplyPersistentRumbleCharacterMaterials(GameObject visual, bool rivalCharacter)
@@ -3122,7 +3152,10 @@ namespace Elemental.Authoring.Editor
                     characterMaterial.SetColor("_EdgeColor", Color.Lerp(baseColor, Color.white, 0.18f));
                     characterMaterial.SetColor("_FractureColor", Color.Lerp(baseColor, new Color(0.78f, 0.64f, 0.52f), 0.24f));
                     characterMaterial.SetFloat("_TextureScale", 0.22f);
-                    characterMaterial.SetFloat("_TextureStrength", 0.025f);
+                    // In Character mode this is an authored-UV colour reveal:
+                    // enough of the mapped texture survives to read clearly while
+                    // the shared Rumble palette still ties it to the environment.
+                    characterMaterial.SetFloat("_TextureStrength", 0.62f);
                     characterMaterial.SetFloat("_MacroScale", 3.8f);
                     characterMaterial.SetFloat("_MacroStrength", 0.04f);
                     characterMaterial.SetFloat("_FacetContrast", 0.20f);

@@ -85,6 +85,7 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
             {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
+                float2 uv : TEXCOORD0;
                 half4 color : COLOR;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
@@ -98,6 +99,7 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                 half3 normalOS : TEXCOORD3;
                 half4 color : COLOR;
                 half fogFactor : TEXCOORD4;
+                float2 uv : TEXCOORD5;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -165,6 +167,7 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                 output.positionOS = input.positionOS.xyz;
                 output.normalWS = NormalizeNormalPerVertex(normalInputs.normalWS);
                 output.normalOS = normalize(input.normalOS);
+                output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
                 output.color = input.color;
                 output.fogFactor = ComputeFogFactor(positionInputs.positionCS.z);
                 return output;
@@ -211,9 +214,9 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                 if (_DebugMode >= 3.5h)
                     return half4(input.color.rgb, 1);
 
-                half3 textureSample = SampleMetricTriplanar(mappingPosition, weights);
-                half textureLuma = dot(textureSample, half3(0.299h, 0.587h, 0.114h));
-                half effectiveTextureStrength = lerp(_TextureStrength, _TextureStrength * 0.24h, characterMode);
+                half3 triplanarSample = SampleMetricTriplanar(mappingPosition, weights);
+                half textureLuma = dot(triplanarSample, half3(0.299h, 0.587h, 0.114h));
+                half effectiveTextureStrength = _TextureStrength;
                 half textureModulation = lerp(1.0h, lerp(0.82h, 1.16h, textureLuma), effectiveTextureStrength);
                 half macro = lerp(1.0h - _MacroStrength, 1.0h + _MacroStrength,
                                   SoftMacro(mappingPosition));
@@ -226,7 +229,20 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                 half perimeterBevel = smoothstep(0.22h, 0.62h, abs(geometryNormalOS.y));
                 bevelMask *= perimeterBevel * (1.0h - characterMode);
                 half3 palette = lerp(_BaseColor.rgb, _EdgeColor.rgb, bevelMask * _BevelLight);
-                half3 albedo = palette * macro * faceTone * textureModulation;
+                half3 rockAlbedo = palette * macro * faceTone * textureModulation;
+                // Rock surfaces keep metric triplanar mapping. Character surfaces
+                // instead honor their authored UV layout and treat Texture Strength
+                // as the amount of original texture colour allowed through the
+                // shared world tint.
+                half3 authoredCharacterColor = SAMPLE_TEXTURE2D(
+                    _BaseMap,
+                    sampler_BaseMap,
+                    input.uv).rgb;
+                half3 characterAlbedo = lerp(
+                    palette,
+                    authoredCharacterColor,
+                    saturate(_TextureStrength)) * macro;
+                half3 albedo = lerp(rockAlbedo, characterAlbedo, characterMode);
 
                 float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
                 Light mainLight = GetMainLight(shadowCoord);
