@@ -143,6 +143,88 @@ namespace Elemental.Simulation.Bending
         public bool Complete { get; }
     }
 
+    public enum WaveMotionMode : byte
+    {
+        Legacy = 0,
+        PremiumVisual = 1
+    }
+
+    public readonly struct EarthPillarWaveVisualSample
+    {
+        public EarthPillarWaveVisualSample(
+            float height01,
+            float width01,
+            float tiltDegrees,
+            float tremor01)
+        {
+            Height01 = height01;
+            Width01 = width01;
+            TiltDegrees = tiltDegrees;
+            Tremor01 = tremor01;
+        }
+
+        public float Height01 { get; }
+        public float Width01 { get; }
+        public float TiltDegrees { get; }
+        public float Tremor01 { get; }
+    }
+
+    public readonly struct EarthPillarWaveVisualTuning
+    {
+        public EarthPillarWaveVisualTuning(
+            float precompressionSeconds,
+            float precompressionDepth01,
+            float riseSeconds,
+            float overshoot01,
+            float settleSeconds,
+            float holdSeconds,
+            float retreatSeconds,
+            float tiltDegrees,
+            float settleFrequencyHz,
+            float settleDamping,
+            float seededVariation01)
+        {
+            PrecompressionSeconds = math.clamp(precompressionSeconds, 0.04f, 0.08f);
+            PrecompressionDepth01 = math.clamp(precompressionDepth01, 0.02f, 0.03f);
+            RiseSeconds = math.clamp(riseSeconds, 0.20f, 0.24f);
+            Overshoot01 = math.clamp(overshoot01, 0.035f, 0.05f);
+            SettleSeconds = math.clamp(settleSeconds, 0.12f, 0.17f);
+            HoldSeconds = math.clamp(holdSeconds, 0.04f, 0.07f);
+            RetreatSeconds = math.clamp(retreatSeconds, 0.26f, 0.34f);
+            TiltDegrees = math.clamp(tiltDegrees, 5f, 7f);
+            SettleFrequencyHz = math.clamp(settleFrequencyHz, 4.5f, 5.5f);
+            SettleDamping = math.clamp(settleDamping, 0.68f, 0.78f);
+            SeededVariation01 = math.clamp(seededVariation01, 0f, 0.07f);
+        }
+
+        public float PrecompressionSeconds { get; }
+        public float PrecompressionDepth01 { get; }
+        public float RiseSeconds { get; }
+        public float Overshoot01 { get; }
+        public float SettleSeconds { get; }
+        public float HoldSeconds { get; }
+        public float RetreatSeconds { get; }
+        public float TiltDegrees { get; }
+        public float SettleFrequencyHz { get; }
+        public float SettleDamping { get; }
+        public float SeededVariation01 { get; }
+        public float Duration => RiseSeconds + SettleSeconds + HoldSeconds + RetreatSeconds;
+
+        public static EarthPillarWaveVisualTuning PremiumDefault =>
+            new EarthPillarWaveVisualTuning(
+                0.055f,
+                0.025f,
+                0.22f,
+                0.045f,
+                0.145f,
+                0.055f,
+                0.30f,
+                6f,
+                5f,
+                0.73f,
+                0.07f);
+    }
+
     public readonly struct EarthWebWaveCell
     {
         public EarthWebWaveCell(
@@ -560,6 +642,94 @@ namespace Elemental.Simulation.Bending
                 easedRetreat,
                 retreat01 >= 1f);
         }
+
+        public static EarthPillarWaveVisualSample EvaluateVisualMotion(
+            float localTime,
+            float legacyRiseSeconds,
+            float legacyHoldSeconds,
+            float legacyRetreatSeconds,
+            WaveMotionMode mode,
+            in EarthPillarWaveVisualTuning tuning,
+            uint stableSeed)
+        {
+            EarthPillarWaveMotionSample legacy = EvaluateMotion(
+                localTime,
+                legacyRiseSeconds,
+                legacyHoldSeconds,
+                legacyRetreatSeconds);
+            if (mode == WaveMotionMode.Legacy)
+            {
+                return new EarthPillarWaveVisualSample(
+                    legacy.Height01,
+                    legacy.Width01,
+                    0f,
+                    0f);
+            }
+
+            float variation = math.lerp(
+                1f - tuning.SeededVariation01,
+                1f + tuning.SeededVariation01,
+                Hash01(stableSeed ^ 0xA341316Cu, 0));
+            float direction = Hash01(stableSeed ^ 0xC8013EA4u, 1) < 0.5f ? -1f : 1f;
+            float tilt = tuning.TiltDegrees * variation * direction;
+            if (localTime < 0f)
+            {
+                float pre01 = math.saturate(
+                    (localTime + tuning.PrecompressionSeconds) /
+                    tuning.PrecompressionSeconds);
+                float compressed = SmootherStep(pre01);
+                return new EarthPillarWaveVisualSample(
+                    tuning.PrecompressionDepth01 * compressed,
+                    math.lerp(1f, 1f - tuning.PrecompressionDepth01, compressed),
+                    tilt * 0.18f * compressed,
+                    compressed);
+            }
+
+            if (localTime <= tuning.RiseSeconds)
+            {
+                float rise01 = math.saturate(localTime / tuning.RiseSeconds);
+                float quintic = SmootherStep(rise01);
+                return new EarthPillarWaveVisualSample(
+                    math.lerp(tuning.PrecompressionDepth01, 1f + tuning.Overshoot01, quintic),
+                    math.lerp(1f - tuning.PrecompressionDepth01, 1.018f, quintic),
+                    tilt * math.sin(rise01 * math.PI),
+                    1f - quintic);
+            }
+
+            float settleTime = localTime - tuning.RiseSeconds;
+            if (settleTime <= tuning.SettleSeconds)
+            {
+                float settle01 = math.saturate(settleTime / tuning.SettleSeconds);
+                float settleEnvelope = 1f - SmootherStep(settle01);
+                float oscillation = math.cos(
+                    settleTime * math.PI * 2f * tuning.SettleFrequencyHz);
+                float decay = math.exp(
+                    -tuning.SettleDamping * tuning.SettleFrequencyHz * settleTime);
+                return new EarthPillarWaveVisualSample(
+                    1f + tuning.Overshoot01 * oscillation * decay * settleEnvelope,
+                    math.lerp(1.018f, 1f, SmootherStep(settle01)),
+                    tilt * 0.34f * settleEnvelope,
+                    0.28f * settleEnvelope);
+            }
+
+            float retreatStart = tuning.RiseSeconds + tuning.SettleSeconds + tuning.HoldSeconds;
+            if (localTime <= retreatStart)
+                return new EarthPillarWaveVisualSample(1f, 1f, 0f, 0f);
+            float retreat01 = math.saturate(
+                (localTime - retreatStart) / tuning.RetreatSeconds);
+            float retreatCurve = SmootherStep(retreat01);
+            return new EarthPillarWaveVisualSample(
+                math.max(0f, 1f - retreatCurve),
+                math.lerp(1f, 0.82f, retreatCurve),
+                -tilt * 0.20f * math.sin(retreat01 * math.PI),
+                0f);
+        }
+
+        public static bool IsVisualMotionComplete(
+            float localTime,
+            WaveMotionMode mode,
+            in EarthPillarWaveVisualTuning tuning) =>
+            mode == WaveMotionMode.PremiumVisual && localTime >= tuning.Duration;
 
         public static float ResolveCellBaseOffset(
             float sampleHeight,

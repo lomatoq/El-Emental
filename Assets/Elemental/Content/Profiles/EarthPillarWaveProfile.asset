@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f274877bc21f4f22a09f0c6a0c59004e, type: 3}
   m_Name: EarthWebWaveProfile
   m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Physics.EarthWebWaveProfile
+  motionMode: 1
   fullSectorChargeSeconds: 1.4
   fullPowerChargeSeconds: 1.1
   columnRiseSeconds: 0.3
@@ -32,3 +33,14 @@ MonoBehaviour:
   waveSpeed: 5.4
   crestHoldSeconds: 0.04
   cellOverlapRatio: 0.07
+  precompressionSeconds: 0.055
+  precompressionDepth01: 0.025
+  premiumRiseSeconds: 0.22
+  premiumOvershoot01: 0.045
+  premiumSettleSeconds: 0.145
+  premiumHoldSeconds: 0.055
+  premiumRetreatSeconds: 0.3
+  premiumTiltDegrees: 6
+  premiumSettleFrequencyHz: 5
+  premiumSettleDamping: 0.73
+  seededVariation01: 0.07

@@ -17,6 +17,7 @@ using Elemental.Runtime.World;
 using Elemental.Runtime.Geometry;
 using Elemental.Simulation.Magic;
 using Elemental.Simulation.Combat;
+using Elemental.Simulation.Bending;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEditor.SceneManagement;
@@ -193,6 +194,8 @@ namespace Elemental.Authoring.Editor
             platformPool.ConfigurePieceMeshes(fragmentMeshes);
             platformPool.PrewarmAll();
             EarthPillarWaveProfile waveProfile = CreateOrLoadWaveProfile();
+            waveProfile.ConfigureMotionMode(WaveMotionMode.PremiumVisual);
+            EditorUtility.SetDirty(waveProfile);
             EarthPillarWavePool wavePool = magicRoot.AddComponent<EarthPillarWavePool>();
             wavePool.Configure(96, wallMesh, wallMaterial, collisionProxy.transform, waveProfile);
             wavePool.ConfigureMeshVariants(fragmentMeshes);

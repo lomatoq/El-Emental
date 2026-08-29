@@ -9,6 +9,7 @@ using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
 using Elemental.Runtime.World;
 using Elemental.Simulation.Combat;
+using Elemental.Simulation.Bending;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -75,6 +76,7 @@ namespace Elemental.Tests.PlayMode
             EarthMvpBotPresenter presenter = FindInScene<EarthMvpBotPresenter>(scene);
             EarthFragmentPool fragmentPool = FindInScene<EarthFragmentPool>(scene);
             EarthRockDebrisPool debrisPool = FindInScene<EarthRockDebrisPool>(scene);
+            EarthPillarWavePool wavePool = FindInScene<EarthPillarWavePool>(scene);
             GameObject arena = FindByName(scene, "Rumble Stone Amphitheatre");
             bool hasRumbleArenaMaterial = HasShader(arena, "Elemental/Graphics V5/Rumble Rock Lit");
             Animator botAnimator = bot != null ? bot.GetComponentInChildren<Animator>(true) : null;
@@ -214,6 +216,8 @@ namespace Elemental.Tests.PlayMode
             Assert.That(botSecondary.TailBoneCount, Is.EqualTo(3));
             Assert.That(playerSecondary.BeltBoneCount, Is.EqualTo(4));
             Assert.That(botSecondary.BeltBoneCount, Is.EqualTo(4));
+            Assert.That(wavePool, Is.Not.Null);
+            Assert.That(wavePool.MotionMode, Is.EqualTo(WaveMotionMode.PremiumVisual));
             Assert.That(playerImpact, Is.Not.Null);
             Assert.That(botImpact, Is.Not.Null);
             Assert.That(playerImpact.ResponseMode, Is.EqualTo(ImpactResponseMode.Calibrated));
@@ -349,7 +353,7 @@ namespace Elemental.Tests.PlayMode
             EarthCharacterImpactResponse waveResponse = botImpact.ApplyImpact(
                 botImpact.transform.position,
                 botImpact.transform.up + botImpact.transform.right,
-                1f,
+                botImpact.Body.mass * 4.2f,
                 EarthCharacterImpactSourceKind.PillarWave,
                 0xA7000102u,
                 0f,
@@ -372,7 +376,7 @@ namespace Elemental.Tests.PlayMode
             EarthCharacterImpactResponse firstProjectileResponse = playerImpact.ApplyImpact(
                 playerImpact.transform.position,
                 playerImpact.transform.up + playerImpact.transform.right,
-                1f,
+                playerImpact.Body.mass * 2f,
                 EarthCharacterImpactSourceKind.BotProjectile,
                 0xB0700103u,
                 0f,
@@ -381,7 +385,7 @@ namespace Elemental.Tests.PlayMode
             EarthCharacterImpactResponse secondProjectileResponse = playerImpact.ApplyImpact(
                 playerImpact.transform.position + playerImpact.transform.right * 0.12f,
                 playerImpact.transform.up + playerImpact.transform.right,
-                1f,
+                playerImpact.Body.mass * 2f,
                 EarthCharacterImpactSourceKind.BotProjectile,
                 0xB0700104u,
                 0f,
@@ -390,7 +394,7 @@ namespace Elemental.Tests.PlayMode
             EarthCharacterImpactResponse thirdProjectileResponse = playerImpact.ApplyImpact(
                 playerImpact.transform.position + playerImpact.transform.right * 0.18f,
                 playerImpact.transform.up + playerImpact.transform.right,
-                1f,
+                playerImpact.Body.mass * 2f,
                 EarthCharacterImpactSourceKind.BotProjectile,
                 0xB0700105u,
                 0f,

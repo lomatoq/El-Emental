@@ -61,6 +61,9 @@ namespace Elemental.Runtime.Physics
         private readonly int[] _webMatrixCounts = new int[6];
 
         public event System.Action<EarthPillarWavePulse> ColumnBurst;
+        public WaveMotionMode MotionMode => profile != null
+            ? profile.MotionMode
+            : WaveMotionMode.Legacy;
         public EarthMatterId PrimaryMatterId
         {
             get
@@ -394,6 +397,11 @@ namespace Elemental.Runtime.Physics
         private Rigidbody _body;
         private Collider _collider;
         private MeshRenderer _renderer;
+        private Transform _visualProxy;
+        private MeshFilter _visualProxyFilter;
+        private MeshRenderer _visualProxyRenderer;
+        private Matrix4x4 _instancedVisualMatrix;
+        private bool _hasInstancedVisualMatrix;
         private EarthPillarWaveProfile _profile;
         private Collider[] _impactHits;
         private Rigidbody _caster;
@@ -455,7 +463,7 @@ namespace Elemental.Runtime.Physics
         {
             _instancedRendering = value;
             Resolve();
-            _renderer.enabled = _visualVisible && (!_instancedRendering || _magicDetached);
+            SetVisualVisible(_visualVisible);
         }
 
         public bool TryGetInstancedRenderMatrix(out Matrix4x4 matrix)
@@ -463,7 +471,9 @@ namespace Elemental.Runtime.Physics
             matrix = default;
             if (!_instancedRendering || !_visualVisible || _magicDetached || !gameObject.activeInHierarchy)
                 return false;
-            matrix = transform.localToWorldMatrix;
+            matrix = _hasInstancedVisualMatrix
+                ? _instancedVisualMatrix
+                : transform.localToWorldMatrix;
             return true;
         }
 
@@ -537,6 +547,9 @@ namespace Elemental.Runtime.Physics
             {
                 _fullScale = new Vector3(width, height, depth);
             }
+            if (_profile != null && _profile.MotionMode == WaveMotionMode.PremiumVisual)
+                EnsureVisualProxy();
+            SyncVisualProxyMeshAndMaterial();
             _surface = surface;
             _delay = Mathf.Max(0f, delay);
             _holdDuration = Mathf.Max(0.05f, holdDuration);
@@ -553,6 +566,7 @@ namespace Elemental.Runtime.Physics
             _magicGripCount = 0;
             _detachedElapsed = 0f;
             _burialFramesRemaining = 0;
+            _hasInstancedVisualMatrix = false;
             if (_polygonCell)
             {
                 // Every cell keeps the common topology frame. Independent yaw was
@@ -752,8 +766,39 @@ namespace Elemental.Runtime.Physics
             float retreat = _profile != null ? _profile.ColumnRetreatSeconds : 0.46f;
             EarthPillarWaveMotionSample motion = EarthPillarWaveSolver.EvaluateMotion(
                 localTime, rise, hold, retreat);
+            WaveMotionMode motionMode = _profile != null
+                ? _profile.MotionMode
+                : WaveMotionMode.Legacy;
+            EarthPillarWaveVisualTuning visualTuning = _profile != null
+                ? _profile.VisualTuning
+                : EarthPillarWaveVisualTuning.PremiumDefault;
+            EarthPillarWaveVisualSample visualMotion = EarthPillarWaveSolver.EvaluateVisualMotion(
+                localTime,
+                rise,
+                hold,
+                retreat,
+                motionMode,
+                in visualTuning,
+                _stableId);
+            bool premiumVisualTail = motionMode == WaveMotionMode.PremiumVisual &&
+                                     !EarthPillarWaveSolver.IsVisualMotionComplete(
+                                         localTime,
+                                         motionMode,
+                                         in visualTuning);
             if (motion.Complete)
             {
+                if (premiumVisualTail)
+                {
+                    float burialDepth = Mathf.Max(
+                        _polygonCell ? _slabThickness * 1.12f : _fullScale.y * 0.72f,
+                        0.42f);
+                    _body.MovePosition(_surface - _up * burialDepth);
+                    _body.MoveRotation(_baseRotation);
+                    _collider.enabled = false;
+                    SetVisualVisible(true);
+                    ApplyPremiumVisualPose(localTime, in visualMotion, in visualTuning);
+                    return;
+                }
                 if (_burialFramesRemaining <= 0)
                 {
                     float burialDepth = Mathf.Max(
@@ -822,6 +867,8 @@ namespace Elemental.Runtime.Physics
                 _body.MoveRotation(tremorRotation);
                 transform.localScale = visibleScale;
             }
+            if (motionMode == WaveMotionMode.PremiumVisual)
+                ApplyPremiumVisualPose(localTime, in visualMotion, in visualTuning);
             _collider.enabled = motion.Height01 >= 0.16f && motion.Sink01 < 0.72f;
             if (!_impacted && localTime <= rise && motion.Height01 >= 0.56f)
             {
@@ -894,15 +941,113 @@ namespace Elemental.Runtime.Physics
             if (_renderer == null) _renderer = GetComponent<MeshRenderer>();
         }
 
+        private void EnsureVisualProxy()
+        {
+            if (_visualProxy != null) return;
+            Resolve();
+            GameObject proxy = new GameObject("Premium Visual Only");
+            proxy.layer = gameObject.layer;
+            _visualProxy = proxy.transform;
+            _visualProxy.SetParent(_owner != null ? _owner.transform : transform.parent, false);
+            _visualProxyFilter = proxy.AddComponent<MeshFilter>();
+            _visualProxyRenderer = proxy.AddComponent<MeshRenderer>();
+            _visualProxyRenderer.shadowCastingMode = _renderer.shadowCastingMode;
+            _visualProxyRenderer.receiveShadows = _renderer.receiveShadows;
+            SyncVisualProxyMeshAndMaterial();
+            _renderer.enabled = false;
+        }
+
+        private void SyncVisualProxyMeshAndMaterial()
+        {
+            if (_visualProxy == null) return;
+            MeshFilter sourceFilter = GetComponent<MeshFilter>();
+            _visualProxyFilter.sharedMesh = sourceFilter != null ? sourceFilter.sharedMesh : null;
+            _visualProxyRenderer.sharedMaterials = _renderer.sharedMaterials;
+        }
+
+        private void ApplyPremiumVisualPose(
+            float localTime,
+            in EarthPillarWaveVisualSample visual,
+            in EarthPillarWaveVisualTuning tuning)
+        {
+            float retreatStart = tuning.RiseSeconds + tuning.SettleSeconds + tuning.HoldSeconds;
+            float visualSink01 = localTime > retreatStart
+                ? 1f - Mathf.Clamp01(visual.Height01)
+                : 0f;
+            Vector3 coherentAxis = Vector3.ProjectOnPlane(
+                new Vector3(0.73f, 0.19f, 0.65f),
+                _up).normalized;
+            if (coherentAxis.sqrMagnitude < 0.5f) coherentAxis = transform.right;
+            Vector3 tiltAxis = Vector3.Cross(_up, _outward).normalized;
+            if (tiltAxis.sqrMagnitude < 0.5f) tiltAxis = coherentAxis;
+            float spatialPhase = Vector3.Dot(_surface, coherentAxis) * (Mathf.PI * 2f / 12f);
+            float phase = localTime * (Mathf.PI * 2f * 22f) + spatialPhase;
+            Vector3 lateral = coherentAxis *
+                              (Mathf.Sin(phase) * 0.042f * visual.Tremor01);
+            Quaternion rotation = Quaternion.AngleAxis(visual.TiltDegrees, tiltAxis) *
+                                  Quaternion.AngleAxis(
+                                      Mathf.Cos(phase) * 1.1f * visual.Tremor01,
+                                      Vector3.Cross(_up, coherentAxis).normalized) *
+                                  _baseRotation;
+
+            Vector3 worldPosition;
+            Vector3 worldScale;
+            if (_polygonCell)
+            {
+                float burialDepth = Mathf.Max(_slabThickness * 1.12f, 0.42f);
+                float lift = _sampleHeight * Mathf.Max(0f, visual.Height01) -
+                             burialDepth * visualSink01;
+                worldPosition = _surface + _up * lift + lateral;
+                worldScale = new Vector3(visual.Width01, 1f, visual.Width01);
+            }
+            else
+            {
+                float burialDepth = Mathf.Max(_fullScale.y * 0.72f, 0.42f);
+                float visibleHeight = Mathf.Max(0.012f, _fullScale.y * visual.Height01);
+                worldPosition = _surface - _up * (burialDepth * visualSink01) + lateral;
+                worldScale = new Vector3(
+                    _fullScale.x * visual.Width01,
+                    visibleHeight,
+                    _fullScale.z * visual.Width01);
+            }
+
+            _instancedVisualMatrix = Matrix4x4.TRS(worldPosition, rotation, worldScale);
+            _hasInstancedVisualMatrix = true;
+            if (_visualProxy == null || _instancedRendering) return;
+            _visualProxy.SetPositionAndRotation(worldPosition, rotation);
+            Vector3 parentScale = _visualProxy.parent != null
+                ? _visualProxy.parent.lossyScale
+                : Vector3.one;
+            _visualProxy.localScale = new Vector3(
+                worldScale.x / Mathf.Max(0.0001f, Mathf.Abs(parentScale.x)),
+                worldScale.y / Mathf.Max(0.0001f, Mathf.Abs(parentScale.y)),
+                worldScale.z / Mathf.Max(0.0001f, Mathf.Abs(parentScale.z)));
+        }
+
         private void SetVisualVisible(bool visible)
         {
             _visualVisible = visible;
-            if (_renderer != null)
-                _renderer.enabled = visible && (!_instancedRendering || _magicDetached);
+            bool directRendering = visible && (!_instancedRendering || _magicDetached);
+            if (_visualProxyRenderer != null)
+            {
+                bool useVisualProxy = !_magicDetached;
+                _visualProxyRenderer.enabled = directRendering && useVisualProxy;
+                if (_renderer != null) _renderer.enabled = directRendering && !useVisualProxy;
+            }
+            else if (_renderer != null)
+            {
+                _renderer.enabled = directRendering;
+            }
         }
 
         private void OnDestroy()
         {
+            if (_visualProxy != null)
+            {
+                if (Application.isPlaying) Destroy(_visualProxy.gameObject);
+                else DestroyImmediate(_visualProxy.gameObject);
+                _visualProxy = null;
+            }
             if (_ownedCellMesh == null) return;
             if (Application.isPlaying) Destroy(_ownedCellMesh);
             else DestroyImmediate(_ownedCellMesh);

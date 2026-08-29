@@ -93,6 +93,15 @@ namespace Elemental.Tests.EditMode
                 "Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests.ShippingSceneContainsLargeRumbleDuelCourtAndOneActiveLinebreaker");
         }
 
+        [MenuItem("Elemental/QA/Run Impact Pipeline PlayMode Test")]
+        private static void RunImpactPipelinePlayMode()
+        {
+            Run(
+                TestMode.PlayMode,
+                "ImpactPipelinePlay",
+                "Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests.SurfWaveAndBotProjectileUseTheSharedVisibleKnockoutPipeline");
+        }
+
         private static void Run(TestMode mode, string reportStem, params string[] testNames)
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)

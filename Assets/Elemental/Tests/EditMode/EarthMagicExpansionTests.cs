@@ -3,6 +3,7 @@ using Elemental.Simulation.Bending;
 using Elemental.Simulation.Structures;
 using NUnit.Framework;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Elemental.Tests.EditMode
 {
@@ -228,6 +229,78 @@ namespace Elemental.Tests.EditMode
             Assert.That(retreat.Height01, Is.InRange(0.25f, 0.75f));
             Assert.That(retreat.Sink01, Is.GreaterThan(0f));
             Assert.That(complete.Complete, Is.True);
+        }
+
+        [Test]
+        public void LegacyVisualWaveSampleMatchesThePhysicsMotionExactly()
+        {
+            EarthPillarWaveVisualTuning tuning = EarthPillarWaveVisualTuning.PremiumDefault;
+            float[] times = { -0.04f, 0f, 0.12f, 0.30f, 0.37f, 0.58f, 0.90f };
+            for (int index = 0; index < times.Length; index++)
+            {
+                EarthPillarWaveMotionSample physics = EarthPillarWaveSolver.EvaluateMotion(
+                    times[index], 0.30f, 0.05f, 0.32f);
+                EarthPillarWaveVisualSample visual = EarthPillarWaveSolver.EvaluateVisualMotion(
+                    times[index],
+                    0.30f,
+                    0.05f,
+                    0.32f,
+                    WaveMotionMode.Legacy,
+                    in tuning,
+                    19u);
+
+                Assert.That(visual.Height01, Is.EqualTo(physics.Height01).Within(0.000001f));
+                Assert.That(visual.Width01, Is.EqualTo(physics.Width01).Within(0.000001f));
+                Assert.That(visual.TiltDegrees, Is.Zero);
+                Assert.That(visual.Tremor01, Is.Zero);
+            }
+        }
+
+        [Test]
+        public void PremiumVisualWaveHasPrecompressionOvershootSettleAndBuriedRetreat()
+        {
+            EarthPillarWaveVisualTuning tuning = EarthPillarWaveVisualTuning.PremiumDefault;
+            EarthPillarWaveVisualSample pre = EarthPillarWaveSolver.EvaluateVisualMotion(
+                -0.015f, 0.30f, 0.05f, 0.32f,
+                WaveMotionMode.PremiumVisual, in tuning, 91u);
+            EarthPillarWaveVisualSample peak = EarthPillarWaveSolver.EvaluateVisualMotion(
+                tuning.RiseSeconds, 0.30f, 0.05f, 0.32f,
+                WaveMotionMode.PremiumVisual, in tuning, 91u);
+            EarthPillarWaveVisualSample settled = EarthPillarWaveSolver.EvaluateVisualMotion(
+                tuning.RiseSeconds + tuning.SettleSeconds, 0.30f, 0.05f, 0.32f,
+                WaveMotionMode.PremiumVisual, in tuning, 91u);
+            EarthPillarWaveVisualSample retreat = EarthPillarWaveSolver.EvaluateVisualMotion(
+                tuning.Duration - 0.01f, 0.30f, 0.05f, 0.32f,
+                WaveMotionMode.PremiumVisual, in tuning, 91u);
+
+            Assert.That(pre.Height01, Is.InRange(0.02f, 0.03f));
+            Assert.That(pre.Width01, Is.LessThan(1f));
+            Assert.That(pre.Tremor01, Is.GreaterThan(0f));
+            Assert.That(peak.Height01, Is.InRange(1.035f, 1.05f));
+            Assert.That(settled.Height01, Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(retreat.Height01, Is.LessThan(0.01f));
+            Assert.That(EarthPillarWaveSolver.IsVisualMotionComplete(
+                tuning.Duration,
+                WaveMotionMode.PremiumVisual,
+                in tuning), Is.True);
+        }
+
+        [Test]
+        public void PremiumVisualWaveSeedVariationStaysInsideSevenPercent()
+        {
+            EarthPillarWaveVisualTuning tuning = EarthPillarWaveVisualTuning.PremiumDefault;
+            for (uint seed = 1u; seed <= 64u; seed++)
+            {
+                EarthPillarWaveVisualSample sample = EarthPillarWaveSolver.EvaluateVisualMotion(
+                    tuning.RiseSeconds * 0.5f,
+                    0.30f,
+                    0.05f,
+                    0.32f,
+                    WaveMotionMode.PremiumVisual,
+                    in tuning,
+                    seed);
+                Assert.That(Mathf.Abs(sample.TiltDegrees), Is.InRange(5.58f, 6.42f));
+            }
         }
     }
 }
