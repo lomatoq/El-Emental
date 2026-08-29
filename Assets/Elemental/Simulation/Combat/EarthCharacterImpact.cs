@@ -30,6 +30,12 @@ namespace Elemental.Simulation.Combat
         Knockout = 3
     }
 
+    public enum ImpactResponseMode : byte
+    {
+        Legacy = 0,
+        Calibrated = 1
+    }
+
     public readonly struct EarthCharacterImpact
     {
         public EarthCharacterImpact(
@@ -134,6 +140,16 @@ namespace Elemental.Simulation.Combat
             in EarthCharacterImpact impact,
             in EarthCharacterImpactTuning tuning)
         {
+            return Resolve(in impact, in tuning, ImpactResponseMode.Legacy);
+        }
+
+        public static EarthCharacterImpactResolution Resolve(
+            in EarthCharacterImpact impact,
+            in EarthCharacterImpactTuning tuning,
+            ImpactResponseMode mode)
+        {
+            // Stage-zero safety switch: calibrated deliberately aliases the exact
+            // legacy path until its independently tested response policy lands.
             float velocityChange = impact.Impulse / math.max(0.01f, impact.TargetMass);
             if (impact.SourceKind == EarthCharacterImpactSourceKind.SurfNose)
             {

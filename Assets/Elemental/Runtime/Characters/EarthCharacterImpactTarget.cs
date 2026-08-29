@@ -122,7 +122,10 @@ namespace Elemental.Runtime.Characters
                     strength01);
                 EarthCharacterImpactResolution resolution = EarthCharacterImpactSolver.Resolve(
                     in impact,
-                    in _tuning);
+                    in _tuning,
+                    responseProfile != null
+                        ? responseProfile.ResponseMode
+                        : ImpactResponseMode.Legacy);
                 bool stoneImpact = IsStoneImpact(sourceKind);
                 bool clusteredStoneRagdoll = stoneImpact && RegisterStoneCluster(
                     point,

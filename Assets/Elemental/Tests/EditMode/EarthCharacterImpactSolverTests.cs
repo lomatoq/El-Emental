@@ -133,6 +133,35 @@ namespace Elemental.Tests.EditMode
             Assert.That(result.EffectiveVelocityChange, Is.EqualTo(12f));
         }
 
+        [TestCase(EarthCharacterImpactSourceKind.LooseStone, 42f, 42f, 0f)]
+        [TestCase(EarthCharacterImpactSourceKind.LooseStone, 252f, 42f, 0f)]
+        [TestCase(EarthCharacterImpactSourceKind.ArmorProjectile, 168f, 42f, 0f)]
+        [TestCase(EarthCharacterImpactSourceKind.PillarWave, 1f, 42f, 0f)]
+        [TestCase(EarthCharacterImpactSourceKind.PillarCrest, 1f, 42f, 0f)]
+        [TestCase(EarthCharacterImpactSourceKind.SurfNose, 0.1f, 42f, 3.5f)]
+        [TestCase(EarthCharacterImpactSourceKind.Physics, 50000f, 10f, 0f)]
+        public void ExplicitLegacyModeMatchesCompatibilityEntryPoint(
+            EarthCharacterImpactSourceKind source,
+            float impulse,
+            float mass,
+            float closingSpeed)
+        {
+            EarthCharacterImpact impact = Impact(source, impulse, mass, closingSpeed);
+
+            EarthCharacterImpactResolution compatibility = EarthCharacterImpactSolver.Resolve(
+                in impact,
+                in Tuning);
+            EarthCharacterImpactResolution explicitLegacy = EarthCharacterImpactSolver.Resolve(
+                in impact,
+                in Tuning,
+                ImpactResponseMode.Legacy);
+
+            Assert.That(explicitLegacy.Response, Is.EqualTo(compatibility.Response));
+            Assert.That(
+                explicitLegacy.EffectiveVelocityChange,
+                Is.EqualTo(compatibility.EffectiveVelocityChange).Within(0.000001f));
+        }
+
         private static EarthCharacterImpact Impact(
             EarthCharacterImpactSourceKind kind,
             float impulse,

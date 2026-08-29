@@ -1,0 +1,15 @@
+{
+  "schema": "elemental.earth-polish-baseline.v1",
+  "mode": "Legacy",
+  "notes": "Deterministic solver baseline. Physics launch limits are recorded separately from effective response velocity.",
+  "samples": [
+    { "name": "light-stone", "sourceKind": "LooseStone", "impulse": 42.0, "targetMass": 42.0, "effectiveDeltaV": 1.0, "response": "Flinch", "maximumRootSpeed": 0.8, "maximumRiseMeters": 2.0, "acceptedImpactCount": 1, "ragdoll": false, "brokenBondCount": 0 },
+    { "name": "heavy-boulder", "sourceKind": "LooseStone", "impulse": 252.0, "targetMass": 42.0, "effectiveDeltaV": 6.0, "response": "Knockout", "maximumRootSpeed": 4.0, "maximumRiseMeters": 2.0, "acceptedImpactCount": 1, "ragdoll": true, "brokenBondCount": 0 },
+    { "name": "pillar-wave", "sourceKind": "PillarWave", "impulse": 1.0, "targetMass": 42.0, "effectiveDeltaV": 5.0, "response": "Knockout", "maximumRootSpeed": 2.8, "maximumRiseMeters": 1.0, "acceptedImpactCount": 1, "ragdoll": true, "brokenBondCount": 0 },
+    { "name": "pillar-crest", "sourceKind": "PillarCrest", "impulse": 1.0, "targetMass": 42.0, "effectiveDeltaV": 5.0, "response": "Knockout", "maximumRootSpeed": 2.2, "maximumRiseMeters": 0.75, "acceptedImpactCount": 1, "ragdoll": true, "brokenBondCount": 0 },
+    { "name": "surf-contact", "sourceKind": "SurfNose", "impulse": 0.1, "targetMass": 42.0, "effectiveDeltaV": 2.0, "response": "Stagger", "maximumRootSpeed": 3.0, "maximumRiseMeters": 1.0, "acceptedImpactCount": 1, "ragdoll": false, "brokenBondCount": 0 },
+    { "name": "short-fall", "sourceKind": "FallLanding", "impulse": 84.0, "targetMass": 42.0, "effectiveDeltaV": 2.0, "response": "RecoverableRagdoll", "maximumRootSpeed": 4.0, "maximumRiseMeters": 2.0, "acceptedImpactCount": 1, "ragdoll": true, "brokenBondCount": 0 },
+    { "name": "hard-landing", "sourceKind": "FallLanding", "impulse": 462.0, "targetMass": 42.0, "effectiveDeltaV": 11.0, "response": "Knockout", "maximumRootSpeed": 4.0, "maximumRiseMeters": 2.0, "acceptedImpactCount": 1, "ragdoll": true, "brokenBondCount": 0 },
+    { "name": "production-wall", "sourceKind": "Physics", "impulse": 2.0, "targetMass": 1.0, "effectiveDeltaV": 2.0, "response": "Stagger", "maximumRootSpeed": 2.0, "maximumRiseMeters": 2.0, "acceptedImpactCount": 1, "ragdoll": false, "brokenBondCount": 0 }
+  ]
+}
