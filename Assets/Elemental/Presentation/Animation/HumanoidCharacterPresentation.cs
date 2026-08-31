@@ -357,6 +357,21 @@ namespace Elemental.Presentation.Animation
         private void UpdatePresentation()
         {
             if (animator == null || rootBody == null || motor == null) return;
+            CharacterPhysicalMode presentationPhysicalMode = visibleRagdoll != null
+                ? visibleRagdoll.PhysicalAnimationMode
+                : _physicalMode;
+            bool poseMatchedRecoveryOwnsBaseState =
+                presentationPhysicalMode == CharacterPhysicalMode.Recovery &&
+                visibleRagdoll != null &&
+                visibleRagdoll.UsedPoseMatchedRecovery;
+            if (poseMatchedRecoveryOwnsBaseState)
+            {
+                MaintainRecoveryBaseStateOwnership();
+                return;
+            }
+            transitionDirector?.SynchronizeBaseStateOwnership(
+                presentationPhysicalMode,
+                0);
             Vector3 supportVelocity = Vector3.zero;
             if (motor.CurrentSupportFrame.IsValid)
             {
@@ -964,6 +979,17 @@ namespace Elemental.Presentation.Animation
         {
             _dodgeUntil = 0f;
             _dodgeWasActive = false;
+            int recoveryStateHash = handoff.HasSelectedState
+                ? handoff.AnimationStateId
+                : KnockdownRecoveryStateHash;
+            if (handoff.HasSelectedState)
+                transitionDirector?.SynchronizeBaseStateOwnership(
+                    CharacterPhysicalMode.Recovery,
+                    recoveryStateHash);
+            else
+                transitionDirector?.SynchronizeBaseStateOwnership(
+                    CharacterPhysicalMode.Recovery,
+                    0);
             if (animator != null && animator.enabled && transitionDirector != null)
             {
                 if (handoff.HasSelectedState)
@@ -1014,6 +1040,25 @@ namespace Elemental.Presentation.Animation
                 .FootPolicyAt(0.18f);
             footContactController?.SetAuthoredFootPolicy(CurrentFootPolicy);
             ResetMagicIK();
+        }
+
+        private void MaintainRecoveryBaseStateOwnership()
+        {
+            int recoveryStateHash = _activeBaseStateHash != 0
+                ? _activeBaseStateHash
+                : KnockdownRecoveryStateHash;
+            transitionDirector?.SynchronizeBaseStateOwnership(
+                CharacterPhysicalMode.Recovery,
+                recoveryStateHash);
+            _activeBaseStateHash = recoveryStateHash;
+            _activeMotionState = EarthMotionStateId.KnockdownRecovery;
+            CurrentAuthoredAction = EarthAuthoredActionId.RecoverableKnockdownRecovery;
+            CurrentFootPolicy = EarthAuthoredActionCatalog.Resolve(CurrentAuthoredAction)
+                .FootPolicyAt(ResolveCurrentActionNormalizedTime());
+            footContactController?.SetAuthoredFootPolicy(CurrentFootPolicy);
+            UpdateImpactPresentation();
+            ResetMagicIK();
+            _wasCasting = false;
         }
 
         private void UpdateImpactPresentation()

@@ -10,6 +10,7 @@ namespace Elemental.Presentation.Animation
     /// selects timing/continuity; this component only executes the Animator call
     /// and exposes bounded telemetry.
     /// </summary>
+    [DefaultExecutionOrder(-500)]
     [DisallowMultipleComponent]
     public sealed class EarthTransitionDirector : MonoBehaviour
     {
@@ -25,6 +26,10 @@ namespace Elemental.Presentation.Animation
         private EarthAnimationTransitionPriority _activePriority;
         private float _transitionStartedAt;
         private float _transitionDuration;
+        private CharacterPhysicalMode _baseStateOwnerMode;
+        private int _ownedBaseStateHash;
+        private float _ownedBaseStatePhase;
+        private bool _hasOwnedBaseStatePhase;
 
         public EarthMotionStateId ActiveState => _activeState;
         public int ActiveStateHash => _activeStateHash;
@@ -33,6 +38,11 @@ namespace Elemental.Presentation.Animation
         public EarthAnimationTransitionReason LastReason => LastDecision.Reason;
         public EarthAnimationInertializationReason LastInertializationReason { get; private set; }
         public uint ImmediateEvaluationSequence { get; private set; }
+        public CharacterPhysicalMode BaseStateOwnerMode => _baseStateOwnerMode;
+        public int OwnedBaseStateHash => _ownedBaseStateHash;
+        public uint RecoveryOwnedTransitionRejectCount { get; private set; }
+        public uint RecoveryOwnedStateRestoreCount { get; private set; }
+        public int LastRecoveryOwnedRejectedStateHash { get; private set; }
         public float TransitionElapsedSeconds => Mathf.Max(0f, Time.time - _transitionStartedAt);
         public float TransitionWeight => _transitionDuration > 0.0001f
             ? Mathf.Clamp01(TransitionElapsedSeconds / _transitionDuration)
@@ -46,6 +56,8 @@ namespace Elemental.Presentation.Animation
             _activeState = EarthMotionStateId.None;
             _activeStateHash = 0;
             _activePriority = EarthAnimationTransitionPriority.Idle;
+            _baseStateOwnerMode = CharacterPhysicalMode.AnimatedMotor;
+            _ownedBaseStateHash = 0;
             LastDecision = default;
             LastInertializationReason = EarthAnimationInertializationReason.None;
         }
@@ -61,12 +73,41 @@ namespace Elemental.Presentation.Animation
             return accepted;
         }
 
+        public void SynchronizeBaseStateOwnership(
+            CharacterPhysicalMode mode,
+            int ownedStateHash)
+        {
+            if (mode == CharacterPhysicalMode.Recovery && ownedStateHash != 0)
+            {
+                if (_baseStateOwnerMode != mode || _ownedBaseStateHash != ownedStateHash)
+                    _hasOwnedBaseStatePhase = false;
+                _baseStateOwnerMode = mode;
+                _ownedBaseStateHash = ownedStateHash;
+                return;
+            }
+
+            _baseStateOwnerMode = mode;
+            _ownedBaseStateHash = 0;
+            _hasOwnedBaseStatePhase = false;
+        }
+
         public bool RequestTransition(
             int destinationHash,
             in EarthAnimationTransitionContext context)
         {
             using (TransitionMarker.Auto())
             {
+                if (_baseStateOwnerMode == CharacterPhysicalMode.Recovery &&
+                    _ownedBaseStateHash != 0 &&
+                    destinationHash != _ownedBaseStateHash)
+                {
+                    LastRecoveryOwnedRejectedStateHash = destinationHash;
+                    RecoveryOwnedTransitionRejectCount =
+                        RecoveryOwnedTransitionRejectCount == uint.MaxValue
+                            ? 1u
+                            : RecoveryOwnedTransitionRejectCount + 1u;
+                    return false;
+                }
                 EarthAnimationTransitionTuning tuning = ResolveTuning();
                 EarthAnimationTransitionDecision decision =
                     EarthAnimationTransitionPolicy.Resolve(in context, in tuning);
@@ -160,9 +201,57 @@ namespace Elemental.Presentation.Animation
             // This method is the sole immediate base-state writer, so complete
             // that evaluation before returning to ordered handoff observers.
             animator.Update(0f);
+            CaptureOwnedBaseStatePhase();
             ImmediateEvaluationSequence = ImmediateEvaluationSequence == uint.MaxValue
                 ? 1u
                 : ImmediateEvaluationSequence + 1u;
+        }
+
+        private void LateUpdate()
+        {
+            if (_baseStateOwnerMode != CharacterPhysicalMode.Recovery ||
+                _ownedBaseStateHash == 0 || animator == null || !animator.enabled)
+                return;
+
+            AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+            bool currentOwned = current.fullPathHash == _ownedBaseStateHash;
+            bool leavingOwnedState = animator.IsInTransition(0) &&
+                                     animator.GetNextAnimatorStateInfo(0).fullPathHash !=
+                                     _ownedBaseStateHash;
+            if (currentOwned && !leavingOwnedState)
+            {
+                _ownedBaseStatePhase = Mathf.Repeat(current.normalizedTime, 1f);
+                _hasOwnedBaseStatePhase = true;
+                return;
+            }
+
+            float recoveryPhase = currentOwned
+                ? Mathf.Repeat(current.normalizedTime, 1f)
+                : _hasOwnedBaseStatePhase
+                    ? _ownedBaseStatePhase
+                    : 0f;
+            ForcePlayImmediate(
+                EarthMotionStateId.KnockdownRecovery,
+                _ownedBaseStateHash,
+                recoveryPhase);
+            SynchronizeState(
+                EarthMotionStateId.KnockdownRecovery,
+                _ownedBaseStateHash,
+                EarthAnimationTransitionPriority.HeavyImpact);
+            RecoveryOwnedStateRestoreCount = RecoveryOwnedStateRestoreCount == uint.MaxValue
+                ? 1u
+                : RecoveryOwnedStateRestoreCount + 1u;
+        }
+
+        private void CaptureOwnedBaseStatePhase()
+        {
+            if (_baseStateOwnerMode != CharacterPhysicalMode.Recovery ||
+                animator == null || !animator.enabled)
+                return;
+            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+            if (state.fullPathHash != _ownedBaseStateHash) return;
+            _ownedBaseStatePhase = Mathf.Repeat(state.normalizedTime, 1f);
+            _hasOwnedBaseStatePhase = true;
         }
 
         private EarthAnimationTransitionTuning ResolveTuning() => profile != null

@@ -280,9 +280,40 @@ namespace Elemental.Tests.PlayMode
             Assert.That(eventTransitionOwnerStateHash,
                 Is.EqualTo(rig.LastPoseMatchedRecovery.AnimationStateId),
                 "The presentation transition owner must commit before later recovery observers run.");
+            Assert.That(recoveryTransitionOwner.BaseStateOwnerMode,
+                Is.EqualTo(CharacterPhysicalMode.Recovery));
+            Assert.That(recoveryTransitionOwner.OwnedBaseStateHash,
+                Is.EqualTo(rig.LastPoseMatchedRecovery.AnimationStateId));
             Assert.That(eventTransitionEvaluationSequence,
                 Is.EqualTo(transitionEvaluationBefore + 1u),
                 "The selected state must be evaluated by the sole transition owner before later observers run.");
+            uint rejectedTransitionsBefore =
+                recoveryTransitionOwner.RecoveryOwnedTransitionRejectCount;
+            var conflictingLocomotion = new EarthAnimationTransitionContext(
+                EarthMotionStateId.KnockdownRecovery,
+                EarthMotionStateId.Locomotion,
+                EarthMotionCategory.RagdollRecovery,
+                EarthMotionCategory.Locomotion,
+                EarthAnimationTransitionPriority.Locomotion,
+                EarthAnimationTransitionPriority.HeavyImpact,
+                0.55f,
+                0f,
+                1f,
+                0f,
+                0f,
+                false,
+                true,
+                false,
+                true);
+            Assert.That(recoveryTransitionOwner.RequestTransition(
+                    Animator.StringToHash("Base Layer.Locomotion"),
+                    in conflictingLocomotion),
+                Is.False,
+                "Ordinary locomotion must not overwrite a Recovery-owned base state.");
+            Assert.That(recoveryTransitionOwner.RecoveryOwnedTransitionRejectCount,
+                Is.EqualTo(rejectedTransitionsBefore + 1u));
+            Assert.That(recoveryTransitionOwner.LastRecoveryOwnedRejectedStateHash,
+                Is.EqualTo(Animator.StringToHash("Base Layer.Locomotion")));
             Assert.That(eventStateHash,
                 Is.EqualTo(rig.LastPoseMatchedRecovery.AnimationStateId));
             Assert.That(eventStatePhase,
@@ -299,6 +330,10 @@ namespace Elemental.Tests.PlayMode
             Assert.That(rig.RecoveryStatePhaseNextFrame,
                 Is.EqualTo(0.55f).Within(0.08f));
             Assert.That(rig.RecoveryStateVerifiedNextFrame, Is.True);
+            Assert.That(recoveryTransitionOwner.BaseStateOwnerMode,
+                Is.EqualTo(CharacterPhysicalMode.Recovery));
+            Assert.That(recoveryTransitionOwner.ActiveStateHash,
+                Is.EqualTo(rig.LastPoseMatchedRecovery.AnimationStateId));
             rig.AuthoredRecoveryBegan -= observeSelectedState;
 
             int supportWaitFrames = 0;
@@ -355,7 +390,15 @@ namespace Elemental.Tests.PlayMode
 
             int renderedFrames = 0;
             while (rig.IsRecoveringToAnimation && renderedFrames++ < 180)
+            {
+                AnimatorStateInfo ownedRecoveryState = recoveryAnimator.IsInTransition(0)
+                    ? recoveryAnimator.GetNextAnimatorStateInfo(0)
+                    : recoveryAnimator.GetCurrentAnimatorStateInfo(0);
+                Assert.That(ownedRecoveryState.fullPathHash,
+                    Is.EqualTo(rig.LastPoseMatchedRecovery.AnimationStateId),
+                    "The selected recovery must own the base state until its exit marker.");
                 yield return null;
+            }
 
             Assert.That(rig.IsRecoveringToAnimation, Is.False,
                 "A valid supported recovery must reach its exit marker.");
@@ -365,6 +408,8 @@ namespace Elemental.Tests.PlayMode
             Assert.That(rig.PhysicalAnimationMode,
                 Is.EqualTo(CharacterPhysicalMode.AnimatedMotor));
             Assert.That(rig.PhysicalOwnershipConsistent, Is.True);
+            yield return null;
+            Assert.That(recoveryTransitionOwner.OwnedBaseStateHash, Is.EqualTo(0));
             rig.CompleteRecovery();
             rig.ResetToAnimated();
 
