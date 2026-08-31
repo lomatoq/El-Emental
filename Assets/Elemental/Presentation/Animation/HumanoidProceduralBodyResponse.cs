@@ -25,6 +25,8 @@ namespace Elemental.Presentation.Animation
         [SerializeField] private HumanoidRagdollRig ragdoll;
         [SerializeField] private HumanoidCharacterPresentation presentation;
         [SerializeField] private EarthCharacterImpactTarget impactTarget;
+        [SerializeField, Range(0.25f, 1f)] private float impactTransferWeight = 0.88f;
+        [SerializeField, Range(60f, 200f)] private float impactAngularVelocityCap = 170f;
 
         private Transform _chest;
         private Transform _head;
@@ -33,8 +35,12 @@ namespace Elemental.Presentation.Animation
         private bool _subscribed;
         private EarthInertialBodyState _state;
         private float3 _pendingImpactKick;
+        private float _impactChestTransfer = 1f;
+        private float _impactHeadTransfer = 0.30f;
 
         public float3 CurrentAnglesDegrees { get; private set; }
+        public float3 CurrentImpactAnglesDegrees { get; private set; }
+        public int AcceptedProceduralImpactCount { get; private set; }
 
         public void Configure(
             Animator configuredAnimator,
@@ -74,6 +80,8 @@ namespace Elemental.Presentation.Animation
             _pendingImpactKick = float3.zero;
             _hasVelocity = false;
             CurrentAnglesDegrees = float3.zero;
+            CurrentImpactAnglesDegrees = float3.zero;
+            AcceptedProceduralImpactCount = 0;
         }
 
         private void Subscribe()
@@ -95,19 +103,30 @@ namespace Elemental.Presentation.Animation
         {
             if (impactTarget == null || response.TargetStableId != impactTarget.StableFighterId)
                 return;
+            if (EarthImpactPresentationOwnership.Resolve(response.Response) !=
+                EarthImpactPresentationOwner.ProceduralAngularSpring)
+                return;
             presentation?.NotifyImpactResponse(response.Response);
             Vector3 worldDirection = new Vector3(
                 response.Direction.x,
                 response.Direction.y,
                 response.Direction.z);
             Vector3 local = transform.InverseTransformDirection(worldDirection);
-            _pendingImpactKick += EarthInertialBodyMotionSolver.ResolveDirectionalKick(
+            bool headHit = _head != null && _chest != null &&
+                           Vector3.SqrMagnitude(ToVector3(response.Point) - _head.position) <
+                           Vector3.SqrMagnitude(ToVector3(response.Point) - _chest.position);
+            _impactChestTransfer = headHit ? 0.62f : 1f;
+            _impactHeadTransfer = headHit ? 0.78f : 0.30f;
+            _pendingImpactKick += EarthInertialBodyMotionSolver.ResolveDirectionalAngularVelocity(
                 new float3(local.x, local.y, local.z),
-                math.lerp(0.8f, 4.6f, response.Intensity01));
+                math.lerp(0.8f, 4.6f, response.Intensity01),
+                impactTransferWeight,
+                impactAngularVelocityCap);
             _pendingImpactKick = math.clamp(
                 _pendingImpactKick,
-                new float3(-8f),
-                new float3(8f));
+                new float3(-impactAngularVelocityCap),
+                new float3(impactAngularVelocityCap));
+            AcceptedProceduralImpactCount++;
         }
 
         private void LateUpdate()
@@ -150,13 +169,17 @@ namespace Elemental.Presentation.Animation
                 _state = sample.State;
                 _pendingImpactKick = float3.zero;
                 CurrentAnglesDegrees = sample.AnglesDegrees;
+                CurrentImpactAnglesDegrees = sample.ImpactAnglesDegrees;
                 if (isRagdoll) return;
-                Vector3 angles = new Vector3(
-                    sample.AnglesDegrees.x,
-                    sample.AnglesDegrees.y,
-                    sample.AnglesDegrees.z);
-                _chest.localRotation *= Quaternion.Euler(angles);
-                _head.localRotation *= Quaternion.Euler(-angles.x * 0.20f, -angles.y * 0.28f, -angles.z * 0.32f);
+                float3 chestAngles = sample.LocomotionAnglesDegrees +
+                                     sample.ImpactAnglesDegrees * _impactChestTransfer;
+                float3 headAngles = new float3(
+                    -sample.LocomotionAnglesDegrees.x * 0.20f,
+                    -sample.LocomotionAnglesDegrees.y * 0.28f,
+                    -sample.LocomotionAnglesDegrees.z * 0.32f) +
+                    sample.ImpactAnglesDegrees * _impactHeadTransfer;
+                _chest.localRotation *= Quaternion.Euler(ToVector3(chestAngles));
+                _head.localRotation *= Quaternion.Euler(ToVector3(headAngles));
             }
         }
 
@@ -167,5 +190,8 @@ namespace Elemental.Presentation.Animation
                      animator.GetBoneTransform(HumanBodyBones.Chest);
             _head = animator.GetBoneTransform(HumanBodyBones.Head);
         }
+
+        private static Vector3 ToVector3(float3 value) =>
+            new Vector3(value.x, value.y, value.z);
     }
 }

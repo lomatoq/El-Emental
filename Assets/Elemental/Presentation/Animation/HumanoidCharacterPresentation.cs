@@ -797,7 +797,8 @@ namespace Elemental.Presentation.Animation
             }
             float duration = response == EarthCharacterImpactResponse.Stagger ? 0.46f : 0.24f;
             _impactUntil = Mathf.Max(_impactUntil, Time.time + duration);
-            if (animator != null && animator.enabled) animator.SetTrigger(ImpactHash);
+            if (!HasProceduralImpactOwner && animator != null && animator.enabled)
+                animator.SetTrigger(ImpactHash);
         }
 
         /// <summary>
@@ -866,7 +867,8 @@ namespace Elemental.Presentation.Animation
         {
             if (animator == null) return;
             float impactTarget = Time.time < _impactUntil &&
-                                 _physicalMode != CharacterPhysicalMode.FullRagdoll
+                                 _physicalMode != CharacterPhysicalMode.FullRagdoll &&
+                                 !HasProceduralImpactOwner
                 ? 0.56f
                 : 0f;
             _impactWeight = Mathf.MoveTowards(
@@ -875,6 +877,9 @@ namespace Elemental.Presentation.Animation
                 Time.deltaTime / (impactTarget > 0f ? 0.045f : 0.18f));
             if (_impactLayerIndex >= 0) animator.SetLayerWeight(_impactLayerIndex, _impactWeight);
         }
+
+        private bool HasProceduralImpactOwner =>
+            proceduralBodyResponse != null && proceduralBodyResponse.isActiveAndEnabled;
 
         private void OnAnimatorIK(int layerIndex)
         {

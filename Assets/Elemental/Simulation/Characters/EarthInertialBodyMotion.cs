@@ -7,17 +7,26 @@ namespace Elemental.Simulation.Characters
         public float3 AnglesDegrees;
         public float3 AngularVelocity;
         public float3 ImpactOffsetDegrees;
+        public float3 ImpactAngularVelocityDegrees;
     }
 
     public readonly struct EarthInertialBodySample
     {
-        public EarthInertialBodySample(EarthInertialBodyState state, float3 anglesDegrees)
+        public EarthInertialBodySample(
+            EarthInertialBodyState state,
+            float3 locomotionAnglesDegrees,
+            float3 impactAnglesDegrees,
+            float3 anglesDegrees)
         {
             State = state;
+            LocomotionAnglesDegrees = locomotionAnglesDegrees;
+            ImpactAnglesDegrees = impactAnglesDegrees;
             AnglesDegrees = anglesDegrees;
         }
 
         public EarthInertialBodyState State { get; }
+        public float3 LocomotionAnglesDegrees { get; }
+        public float3 ImpactAnglesDegrees { get; }
         public float3 AnglesDegrees { get; }
     }
 
@@ -27,6 +36,12 @@ namespace Elemental.Simulation.Characters
     /// </summary>
     public static class EarthInertialBodyMotionSolver
     {
+        public const float MaximumImpactAngleDegrees = 9f;
+        public const float MaximumImpactAngularVelocityDegrees = 200f;
+        private const float ImpactAngularFrequency = 30f;
+        private const float ImpactDampingRatio = 0.72f;
+        private const float MaximumImpactSubstep = 1f / 240f;
+
         public static EarthInertialBodySample Step(
             in EarthInertialBodyState input,
             float3 localAcceleration,
@@ -42,7 +57,11 @@ namespace Elemental.Simulation.Characters
             if (ragdoll)
             {
                 state = default;
-                return new EarthInertialBodySample(state, float3.zero);
+                return new EarthInertialBodySample(
+                    state,
+                    float3.zero,
+                    float3.zero,
+                    float3.zero);
             }
 
             float groundedWeight = grounded ? 1f : 0.36f;
@@ -61,17 +80,57 @@ namespace Elemental.Simulation.Characters
                 dt);
             state.AngularVelocity = velocity;
 
-            state.ImpactOffsetDegrees = math.clamp(
-                state.ImpactOffsetDegrees + impactKickDegrees,
-                new float3(-9f),
-                new float3(9f));
-            float impactDecay = math.exp(-dt / 0.115f);
-            state.ImpactOffsetDegrees *= impactDecay;
+            state.ImpactAngularVelocityDegrees = math.clamp(
+                state.ImpactAngularVelocityDegrees + SelectFinite(impactKickDegrees),
+                new float3(-MaximumImpactAngularVelocityDegrees),
+                new float3(MaximumImpactAngularVelocityDegrees));
+            StepImpactSpring(ref state, dt);
             float3 result = math.clamp(
                 state.AnglesDegrees + state.ImpactOffsetDegrees,
                 new float3(-10f),
                 new float3(10f));
-            return new EarthInertialBodySample(state, result);
+            return new EarthInertialBodySample(
+                state,
+                state.AnglesDegrees,
+                state.ImpactOffsetDegrees,
+                result);
+        }
+
+        private static void StepImpactSpring(ref EarthInertialBodyState state, float deltaTime)
+        {
+            float remaining = math.max(0f, deltaTime);
+            float stiffness = ImpactAngularFrequency * ImpactAngularFrequency;
+            float damping = 2f * ImpactDampingRatio * ImpactAngularFrequency;
+            while (remaining > 0.000001f)
+            {
+                float step = math.min(MaximumImpactSubstep, remaining);
+                float3 acceleration = -stiffness * state.ImpactOffsetDegrees -
+                                      damping * state.ImpactAngularVelocityDegrees;
+                state.ImpactAngularVelocityDegrees = math.clamp(
+                    state.ImpactAngularVelocityDegrees + acceleration * step,
+                    new float3(-MaximumImpactAngularVelocityDegrees),
+                    new float3(MaximumImpactAngularVelocityDegrees));
+                float3 next = state.ImpactOffsetDegrees +
+                              state.ImpactAngularVelocityDegrees * step;
+                float3 clamped = math.clamp(
+                    next,
+                    new float3(-MaximumImpactAngleDegrees),
+                    new float3(MaximumImpactAngleDegrees));
+                bool3 hitLimit = math.abs(next - clamped) > 0.000001f;
+                state.ImpactOffsetDegrees = clamped;
+                state.ImpactAngularVelocityDegrees = math.select(
+                    state.ImpactAngularVelocityDegrees,
+                    float3.zero,
+                    hitLimit & (math.sign(state.ImpactAngularVelocityDegrees) == math.sign(next)));
+                remaining -= step;
+            }
+
+            if (math.cmax(math.abs(state.ImpactOffsetDegrees)) < 0.001f &&
+                math.cmax(math.abs(state.ImpactAngularVelocityDegrees)) < 0.02f)
+            {
+                state.ImpactOffsetDegrees = float3.zero;
+                state.ImpactAngularVelocityDegrees = float3.zero;
+            }
         }
 
         private static float3 SmoothDamp(
@@ -91,14 +150,28 @@ namespace Elemental.Simulation.Characters
             return target + (change + temporary) * decay;
         }
 
-        public static float3 ResolveDirectionalKick(float3 localDirection, float severity)
+        public static float3 ResolveDirectionalAngularVelocity(
+            float3 localDirection,
+            float severity,
+            float transferWeight = 1f,
+            float angularVelocityCap = MaximumImpactAngularVelocityDegrees)
         {
             float3 direction = math.normalizesafe(localDirection, new float3(0f, 0f, 1f));
-            float magnitude = math.clamp(severity * 1.35f, 1.5f, 7.5f);
+            float cap = math.clamp(
+                math.isfinite(angularVelocityCap)
+                    ? angularVelocityCap
+                    : MaximumImpactAngularVelocityDegrees,
+                20f,
+                MaximumImpactAngularVelocityDegrees);
+            float magnitude = math.clamp(severity * 34f, 28f, cap) *
+                              math.saturate(math.isfinite(transferWeight) ? transferWeight : 1f);
             return new float3(
-                math.clamp(-direction.z * magnitude, -7.5f, 7.5f),
-                math.clamp(direction.x * magnitude * 0.35f, -3f, 3f),
-                math.clamp(-direction.x * magnitude, -7.5f, 7.5f));
+                math.clamp(-direction.z * magnitude, -cap, cap),
+                math.clamp(direction.x * magnitude * 0.35f, -cap * 0.45f, cap * 0.45f),
+                math.clamp(-direction.x * magnitude, -cap, cap));
         }
+
+        private static float3 SelectFinite(float3 value) =>
+            math.select(float3.zero, value, math.isfinite(value));
     }
 }

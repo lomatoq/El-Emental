@@ -178,10 +178,6 @@ namespace Elemental.Runtime.Characters
                 EarthCharacterImpactResponse response = resolution.Response;
                 if (stoneImpact)
                 {
-                    _visibleRagdoll?.ApplyLocalizedRagdollImpulse(
-                        point,
-                        safeDirection,
-                        resolution.ReactionVelocityChange);
                     var outcomeInput = new CharacterOutcomeInput(
                         sourceKind,
                         0f,

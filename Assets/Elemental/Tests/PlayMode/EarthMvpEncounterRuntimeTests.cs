@@ -591,6 +591,9 @@ namespace Elemental.Tests.PlayMode
             Assert.That(playerRig, Is.Not.Null);
             Assert.That(botPresentation, Is.Not.Null);
             Assert.That(playerPresentation, Is.Not.Null);
+            HumanoidProceduralBodyResponse botBodyResponse =
+                botPresentation.ProceduralBodyResponse;
+            Assert.That(botBodyResponse, Is.Not.Null);
 
             int botKnockoutsBeforeStone = duel.BotKnockoutCount;
             int worldResponses = 0;
@@ -656,9 +659,12 @@ namespace Elemental.Tests.PlayMode
             Assert.That(authoredRecoilResponse, Is.EqualTo(EarthCharacterImpactResponse.Stagger));
             Assert.That(botPresentation.CurrentAuthoredAction,
                 Is.EqualTo(EarthAuthoredActionId.HitRecoil),
-                "The bot must use the same authored hit-recoil lane as the player.");
+                "The bot must expose the same semantic hit-recoil lane as the player.");
             Assert.That(impactLayer, Is.GreaterThanOrEqualTo(0));
-            Assert.That(botPresentation.Animator.GetLayerWeight(impactLayer), Is.GreaterThan(0f));
+            Assert.That(botPresentation.Animator.GetLayerWeight(impactLayer), Is.Zero.Within(0.001f),
+                "The Animator additive layer must not duplicate the procedural spring owner.");
+            Assert.That(math.cmax(math.abs(botBodyResponse.CurrentImpactAnglesDegrees)),
+                Is.GreaterThan(0f));
             yield return new WaitForSeconds(0.55f);
 
             EarthCharacterImpactResponse surfResponse = botImpact.ApplyImpact(
@@ -743,6 +749,10 @@ namespace Elemental.Tests.PlayMode
             yield return new WaitForSeconds(0.20f);
 
             int localizedBefore = playerRig.LocalizedRagdollHitCount;
+            HumanoidProceduralBodyResponse playerBodyResponse =
+                playerPresentation.ProceduralBodyResponse;
+            Assert.That(playerBodyResponse, Is.Not.Null);
+            int proceduralBefore = playerBodyResponse.AcceptedProceduralImpactCount;
             EarthCharacterImpactResponse firstProjectileResponse = playerImpact.ApplyImpact(
                 playerImpact.transform.position,
                 playerImpact.transform.up + playerImpact.transform.right,
@@ -776,7 +786,11 @@ namespace Elemental.Tests.PlayMode
             Assert.That(firstProjectileResponse, Is.EqualTo(EarthCharacterImpactResponse.Stagger));
             Assert.That(secondProjectileResponse, Is.EqualTo(EarthCharacterImpactResponse.Stagger));
             Assert.That(thirdProjectileResponse, Is.EqualTo(EarthCharacterImpactResponse.Knockout));
-            Assert.That(playerRig.LocalizedRagdollHitCount, Is.GreaterThanOrEqualTo(localizedBefore + 3));
+            Assert.That(playerRig.LocalizedRagdollHitCount, Is.EqualTo(localizedBefore),
+                "The legacy localized-bone path must not duplicate the procedural spring.");
+            Assert.That(playerBodyResponse.AcceptedProceduralImpactCount,
+                Is.EqualTo(proceduralBefore + 2),
+                "Two staggers use the spring; the knockout belongs only to full ragdoll.");
             Assert.That(duel.PlayerPhase, Is.EqualTo(EarthDuelFighterPhase.KnockedOut));
             Assert.That(playerRig.IsRagdollActive, Is.True);
             Assert.That(playerRig.DynamicBodyCount, Is.EqualTo(11));

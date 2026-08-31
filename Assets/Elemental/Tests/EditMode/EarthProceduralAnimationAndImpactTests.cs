@@ -215,37 +215,88 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
-        public void DirectionalImpactRecoveryDecaysOnceWithoutJellyRebound()
+        public void DirectionalImpactSpringProducesOneControlledOvershootAndConverges()
         {
             EarthInertialBodyState state = default;
-            float previousMagnitude = float.PositiveInfinity;
-            float initialPitchSign = 0f;
-            float initialRollSign = 0f;
-            for (int frame = 0; frame < 90; frame++)
+            float primarySign = 0f;
+            int significantCrossings = 0;
+            float previousSign = 0f;
+            bool sawOvershoot = false;
+            for (int frame = 0; frame < 120; frame++)
             {
                 EarthInertialBodySample sample = EarthInertialBodyMotionSolver.Step(
                     in state,
                     float3.zero,
                     0f,
                     0f,
-                    frame == 0 ? new float3(6f, 0f, -4f) : float3.zero,
+                    frame == 0 ? new float3(130f, 0f, 0f) : float3.zero,
                     true,
                     false,
                     1f / 60f);
                 state = sample.State;
-                float magnitude = math.length(sample.AnglesDegrees);
-                if (frame == 0)
+                float angle = sample.ImpactAnglesDegrees.x;
+                Assert.That(math.abs(angle), Is.LessThanOrEqualTo(
+                    EarthInertialBodyMotionSolver.MaximumImpactAngleDegrees + 0.001f));
+                Assert.That(math.abs(state.ImpactAngularVelocityDegrees.x), Is.LessThanOrEqualTo(
+                    EarthInertialBodyMotionSolver.MaximumImpactAngularVelocityDegrees + 0.001f));
+                if (primarySign == 0f && math.abs(angle) > 0.02f)
                 {
-                    initialPitchSign = math.sign(sample.AnglesDegrees.x);
-                    initialRollSign = math.sign(sample.AnglesDegrees.z);
+                    primarySign = math.sign(angle);
+                    previousSign = primarySign;
                 }
-                Assert.That(magnitude, Is.LessThanOrEqualTo(previousMagnitude + 0.0001f));
-                if (math.abs(sample.AnglesDegrees.x) > 0.000001f)
-                    Assert.That(math.sign(sample.AnglesDegrees.x), Is.EqualTo(initialPitchSign));
-                if (math.abs(sample.AnglesDegrees.z) > 0.000001f)
-                    Assert.That(math.sign(sample.AnglesDegrees.z), Is.EqualTo(initialRollSign));
-                previousMagnitude = magnitude;
+                else if (math.abs(angle) > 0.02f)
+                {
+                    float sign = math.sign(angle);
+                    if (sign != previousSign)
+                    {
+                        significantCrossings++;
+                        previousSign = sign;
+                    }
+                    sawOvershoot |= sign != primarySign;
+                }
             }
+
+            Assert.That(sawOvershoot, Is.True);
+            Assert.That(significantCrossings, Is.EqualTo(1));
+            Assert.That(math.abs(state.ImpactOffsetDegrees.x), Is.LessThan(0.002f));
+            Assert.That(math.abs(state.ImpactAngularVelocityDegrees.x), Is.LessThan(0.03f));
+        }
+
+        [Test]
+        public void DirectionalKickAndRepeatedHitCompositionPreservePhysicalSign()
+        {
+            float3 rightHit = EarthInertialBodyMotionSolver.ResolveDirectionalAngularVelocity(
+                new float3(1f, 0f, 0f),
+                3f);
+            float3 leftHit = EarthInertialBodyMotionSolver.ResolveDirectionalAngularVelocity(
+                new float3(-1f, 0f, 0f),
+                3f);
+            Assert.That(rightHit.z, Is.LessThan(0f));
+            Assert.That(leftHit.z, Is.GreaterThan(0f));
+
+            EarthInertialBodyState once = default;
+            EarthInertialBodyState repeated = default;
+            EarthInertialBodySample onceSample = EarthInertialBodyMotionSolver.Step(
+                in once, float3.zero, 0f, 0f, rightHit, true, false, 1f / 60f);
+            once = onceSample.State;
+            EarthInertialBodySample first = EarthInertialBodyMotionSolver.Step(
+                in repeated, float3.zero, 0f, 0f, rightHit, true, false, 1f / 60f);
+            repeated = first.State;
+            EarthInertialBodySample second = EarthInertialBodyMotionSolver.Step(
+                in repeated, float3.zero, 0f, 0f, rightHit, true, false, 1f / 60f);
+            Assert.That(math.abs(second.State.ImpactAngularVelocityDegrees.z), Is.GreaterThan(
+                math.abs(once.ImpactAngularVelocityDegrees.z)));
+        }
+
+        [TestCase(EarthCharacterImpactResponse.Flinch, EarthImpactPresentationOwner.ProceduralAngularSpring)]
+        [TestCase(EarthCharacterImpactResponse.Stagger, EarthImpactPresentationOwner.ProceduralAngularSpring)]
+        [TestCase(EarthCharacterImpactResponse.RecoverableKnockdown, EarthImpactPresentationOwner.FullRagdoll)]
+        [TestCase(EarthCharacterImpactResponse.Knockout, EarthImpactPresentationOwner.FullRagdoll)]
+        public void ImpactSeverityHasExactlyOnePresentationOwner(
+            EarthCharacterImpactResponse response,
+            EarthImpactPresentationOwner expected)
+        {
+            Assert.That(EarthImpactPresentationOwnership.Resolve(response), Is.EqualTo(expected));
         }
 
         [Test]
@@ -344,7 +395,7 @@ namespace Elemental.Tests.EditMode
             int frames = frameRate;
             for (int frame = 0; frame < frames; frame++)
             {
-                float3 kick = frame == 0 ? new float3(4f, 1f, -3f) : float3.zero;
+                float3 kick = frame == 0 ? new float3(120f, 30f, -90f) : float3.zero;
                 sample = EarthInertialBodyMotionSolver.Step(
                     in state,
                     new float3(3f, 0f, -8f),
