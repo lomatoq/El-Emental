@@ -183,6 +183,20 @@ namespace Elemental.Tests.PlayMode
             Assert.That(rig.UsedPoseMatchedRecovery, Is.False);
             Assert.That(rig.RecoveryOwnershipHandoffCount, Is.EqualTo(legacyRecoveryHandoffs),
                 "A disabled feature must keep the legacy recovery path exact.");
+            int legacyInterruptHandoffs = rig.RagdollOwnershipHandoffCount;
+            rig.BeginRagdoll(new RagdollHandoff(
+                rig.transform.position,
+                Vector3.right * 0.25f,
+                true));
+            Assert.That(rig.RagdollOwnershipHandoffCount,
+                Is.EqualTo(legacyInterruptHandoffs + 1));
+            Assert.That(rig.IsRagdollActive, Is.True);
+            Assert.That(rig.IsRecoveringToAnimation, Is.False);
+            Assert.That(rig.PhysicalAnimationMode,
+                Is.EqualTo(CharacterPhysicalMode.FullRagdoll));
+            Assert.That(rig.PhysicalOwnershipConsistent, Is.True);
+            yield return new WaitForFixedUpdate();
+            rig.RecoverToAnimated(localUp, preferredForward, false);
             rig.CompleteRecovery();
             rig.ResetToAnimated();
 
@@ -191,7 +205,7 @@ namespace Elemental.Tests.PlayMode
             Animation proceduralOwner = rig.gameObject.AddComponent<Animation>();
             var profile = ScriptableObject.CreateInstance<EarthPhysicalAnimationProfile>();
             EarthRecoveryMarkerAuthoring markers =
-                new EarthRecoveryMarkerAuthoring(0.05f, 0.10f, 0.20f);
+                new EarthRecoveryMarkerAuthoring(0.20f, 0.60f, 0.90f);
             profile.ConfigureRecovery(
                 true,
                 new[]
@@ -223,6 +237,37 @@ namespace Elemental.Tests.PlayMode
                 "Repeated recovery requests must not hand Animator ownership over twice.");
             Assert.That(feetOwner.enabled, Is.False,
                 "Feet must remain disabled before their authored marker.");
+            Assert.That(rig.RecoveryStateHashAfterEvent,
+                Is.EqualTo(rig.LastPoseMatchedRecovery.AnimationStateId));
+            Assert.That(rig.RecoveryStatePhaseAfterEvent,
+                Is.EqualTo(rig.LastPoseMatchedRecovery.EntryPhase).Within(0.02f));
+            Assert.That(rig.RecoveryStateVerifiedAfterEvent, Is.True);
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            Assert.That(rig.RecoveryStateHashNextFrame,
+                Is.EqualTo(rig.LastPoseMatchedRecovery.AnimationStateId));
+            Assert.That(rig.RecoveryStatePhaseNextFrame,
+                Is.EqualTo(rig.LastPoseMatchedRecovery.EntryPhase).Within(0.20f));
+            Assert.That(rig.RecoveryStateVerifiedNextFrame, Is.True);
+
+            int poseInterruptHandoffs = rig.RagdollOwnershipHandoffCount;
+            rig.BeginRagdoll(new RagdollHandoff(
+                rig.transform.position,
+                Vector3.forward * 0.25f,
+                true));
+            Assert.That(rig.RagdollOwnershipHandoffCount,
+                Is.EqualTo(poseInterruptHandoffs + 1));
+            Assert.That(rig.IsRecoveringToAnimation, Is.False);
+            Assert.That(rig.IsRagdollActive, Is.True);
+            Assert.That(feetOwner.enabled, Is.False);
+            Assert.That(controlOwner.enabled, Is.False);
+            Assert.That(proceduralOwner.enabled, Is.False);
+            Assert.That(rig.PhysicalOwnershipConsistent, Is.True);
+            yield return new WaitForFixedUpdate();
+            rig.RecoverToAnimated(localUp, preferredForward, false);
+            rig.RecoverToAnimated(localUp, preferredForward, false);
+            Assert.That(rig.RecoveryOwnershipHandoffCount,
+                Is.EqualTo(recoveryHandoffsBefore + 2));
 
             int renderedFrames = 0;
             while (rig.IsRecoveringToAnimation && renderedFrames++ < 180)
@@ -233,11 +278,65 @@ namespace Elemental.Tests.PlayMode
             Assert.That(feetOwner.enabled, Is.True);
             Assert.That(controlOwner.enabled, Is.True);
             Assert.That(proceduralOwner.enabled, Is.True);
-            Assert.That(rig.PhysicalAnimationMode, Is.EqualTo(EarthPhysicalAnimationMode.Animated));
+            Assert.That(rig.PhysicalAnimationMode,
+                Is.EqualTo(CharacterPhysicalMode.AnimatedMotor));
+            Assert.That(rig.PhysicalOwnershipConsistent, Is.True);
+            rig.CompleteRecovery();
+            rig.ResetToAnimated();
+
+            var missingStateProfile =
+                ScriptableObject.CreateInstance<EarthPhysicalAnimationProfile>();
+            EarthRecoveryMarkerAuthoring fallbackMarkers =
+                new EarthRecoveryMarkerAuthoring(0.20f, 0.60f, 0.90f);
+            missingStateProfile.ConfigureRecovery(
+                true,
+                new[]
+                {
+                    RecoverySample(
+                        501u,
+                        EarthRecoveryOrientation.Front,
+                        in fallbackMarkers,
+                        "Base Layer.State That Does Not Exist"),
+                    RecoverySample(
+                        502u,
+                        EarthRecoveryOrientation.Back,
+                        in fallbackMarkers,
+                        "Base Layer.State That Does Not Exist"),
+                    RecoverySample(
+                        503u,
+                        EarthRecoveryOrientation.Left,
+                        in fallbackMarkers,
+                        "Base Layer.State That Does Not Exist"),
+                    RecoverySample(
+                        504u,
+                        EarthRecoveryOrientation.Right,
+                        in fallbackMarkers,
+                        "Base Layer.State That Does Not Exist")
+                });
+            rig.ConfigurePhysicalAnimation(
+                missingStateProfile,
+                new Behaviour[] { feetOwner },
+                new Behaviour[] { controlOwner },
+                new Behaviour[] { proceduralOwner });
+            int fallbackRecoveryHandoffs = rig.RecoveryOwnershipHandoffCount;
+            rig.BeginRagdoll(Vector3.zero);
+            yield return new WaitForFixedUpdate();
+            LogAssert.Expect(
+                LogType.Warning,
+                new System.Text.RegularExpressions.Regex(
+                    "Pose-matched recovery is enabled but incomplete.*legacy live-pelvis recovery"));
+            rig.RecoverToAnimated(localUp, preferredForward, false);
+            Assert.That(rig.UsedPoseMatchedRecovery, Is.False);
+            Assert.That(rig.RecoveryOwnershipHandoffCount,
+                Is.EqualTo(fallbackRecoveryHandoffs));
+            Assert.That(rig.IsRecoveringToAnimation, Is.True);
+            Assert.That(rig.PhysicalAnimationMode,
+                Is.EqualTo(CharacterPhysicalMode.Recovery));
             rig.CompleteRecovery();
             rig.ResetToAnimated();
 
             Object.Destroy(profile);
+            Object.Destroy(missingStateProfile);
             AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
             if (unload != null) yield return unload;
         }
@@ -250,10 +349,11 @@ namespace Elemental.Tests.PlayMode
         private static EarthRecoveryPoseSampleAuthoring RecoverySample(
             uint clipId,
             EarthRecoveryOrientation orientation,
-            in EarthRecoveryMarkerAuthoring markers) =>
+            in EarthRecoveryMarkerAuthoring markers,
+            string animationStatePath = "Base Layer.Knockdown Recovery") =>
             new EarthRecoveryPoseSampleAuthoring(
                 clipId,
-                "Base Layer.Knockdown Recovery",
+                animationStatePath,
                 orientation,
                 0.01f,
                 new Vector3(0f, 0.9f, 0f),

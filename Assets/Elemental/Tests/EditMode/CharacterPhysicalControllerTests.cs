@@ -86,6 +86,25 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void ExternalRecoveryUsesCanonicalModeAndAcceptedHitInterruptsIt()
+        {
+            var controller = CreateController();
+
+            Assert.That(controller.TryForceRecovery(RecoveryCandidate.FaceUp), Is.False);
+            Assert.That(controller.Mode, Is.EqualTo(CharacterPhysicalMode.AnimatedMotor));
+            controller.ForceFullRagdoll();
+            Assert.That(controller.TryForceRecovery(RecoveryCandidate.LeftSide), Is.True);
+            Assert.That(controller.Mode, Is.EqualTo(CharacterPhysicalMode.Recovery));
+            Assert.That(controller.Step(StableFrame(0.0001f)).Recovery,
+                Is.EqualTo(RecoveryCandidate.LeftSide));
+
+            controller.ForceFullRagdoll();
+            Assert.That(controller.Mode, Is.EqualTo(CharacterPhysicalMode.FullRagdoll));
+            Assert.That(controller.Step(StableFrame(0.0001f)).Recovery,
+                Is.EqualTo(RecoveryCandidate.None));
+        }
+
+        [Test]
         public void SteadyStateControllerStep_AllocatesZeroManagedBytes()
         {
             var controller = CreateController();

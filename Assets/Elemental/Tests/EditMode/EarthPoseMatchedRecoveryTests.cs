@@ -173,31 +173,146 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
-        public void OwnershipHandoffsAndRepeatedRecoveryRequestsAreIdempotent()
+        public void OwnershipAdapterRequiresCanonicalModeAndRecoveryIsInterruptible()
         {
             var coordinator = new EarthPhysicalAnimationCoordinator();
             EarthRecoveryResult result = ValidResult();
 
-            Assert.That(coordinator.TryBeginFullRagdoll(1u), Is.True);
-            Assert.That(coordinator.TryBeginFullRagdoll(1u), Is.False);
-            Assert.That(coordinator.TryBeginFullRagdoll(2u), Is.False);
+            Assert.That(coordinator.TryBeginFullRagdoll(
+                CharacterPhysicalMode.AnimatedMotor, 1u), Is.False);
+            Assert.That(coordinator.TryBeginFullRagdoll(
+                CharacterPhysicalMode.FullRagdoll, 1u), Is.True);
+            Assert.That(coordinator.TryBeginFullRagdoll(
+                CharacterPhysicalMode.FullRagdoll, 1u), Is.False);
+            Assert.That(coordinator.TryBeginFullRagdoll(
+                CharacterPhysicalMode.FullRagdoll, 2u), Is.False);
             Assert.That(coordinator.RagdollHandoffCount, Is.EqualTo(1));
-            Assert.That(coordinator.TryBeginGetUp(1u, in result), Is.True);
-            Assert.That(coordinator.TryBeginGetUp(1u, in result), Is.False);
+            Assert.That(coordinator.IsConsistentWith(
+                CharacterPhysicalMode.FullRagdoll), Is.True);
+            Assert.That(coordinator.TryBeginPoseMatchedRecovery(
+                CharacterPhysicalMode.FullRagdoll, 1u, in result), Is.False);
+            Assert.That(coordinator.TryBeginPoseMatchedRecovery(
+                CharacterPhysicalMode.Recovery, 1u, in result), Is.True);
+            Assert.That(coordinator.TryBeginPoseMatchedRecovery(
+                CharacterPhysicalMode.Recovery, 1u, in result), Is.False);
             Assert.That(coordinator.RecoveryHandoffCount, Is.EqualTo(1));
+            Assert.That(coordinator.IsConsistentWith(
+                CharacterPhysicalMode.Recovery), Is.True);
 
-            EarthPhysicalAnimationOwnership beforeSupport = coordinator.AdvanceGetUp(1f, false);
+            Assert.That(coordinator.TryAdvancePoseMatchedRecovery(
+                CharacterPhysicalMode.Recovery,
+                1f,
+                false,
+                out EarthPhysicalAnimationOwnership beforeSupport), Is.True);
             Assert.That(beforeSupport.FeetEnabled, Is.False);
             Assert.That(beforeSupport.ControlsEnabled, Is.False);
             Assert.That(beforeSupport.RecoveryExitReady, Is.False);
 
-            EarthPhysicalAnimationOwnership afterSupport = coordinator.AdvanceGetUp(1f, true);
+            Assert.That(coordinator.TryAdvancePoseMatchedRecovery(
+                CharacterPhysicalMode.Recovery,
+                1f,
+                true,
+                out EarthPhysicalAnimationOwnership afterSupport), Is.True);
             Assert.That(afterSupport.FeetEnabled, Is.True);
             Assert.That(afterSupport.ControlsEnabled, Is.True);
             Assert.That(afterSupport.RecoveryExitReady, Is.True);
-            coordinator.CompleteGetUp();
-            coordinator.CompleteGetUp();
-            Assert.That(coordinator.Mode, Is.EqualTo(EarthPhysicalAnimationMode.Animated));
+
+            Assert.That(coordinator.TryBeginFullRagdoll(
+                CharacterPhysicalMode.FullRagdoll, 2u), Is.True,
+                "A distinct accepted hit must atomically interrupt recovery ownership.");
+            Assert.That(coordinator.RagdollHandoffCount, Is.EqualTo(2));
+            Assert.That(coordinator.Ownership.FeetEnabled, Is.False);
+            Assert.That(coordinator.Ownership.ControlsEnabled, Is.False);
+            Assert.That(coordinator.IsConsistentWith(
+                CharacterPhysicalMode.FullRagdoll), Is.True);
+        }
+
+        [Test]
+        public void SupportLossRevokesEveryMarkerOwnerUntilSupportReturns()
+        {
+            var coordinator = new EarthPhysicalAnimationCoordinator();
+            EarthRecoveryResult result = ValidResult();
+            Assert.That(coordinator.TryBeginFullRagdoll(
+                CharacterPhysicalMode.FullRagdoll, 1u), Is.True);
+            Assert.That(coordinator.TryBeginPoseMatchedRecovery(
+                CharacterPhysicalMode.Recovery, 1u, in result), Is.True);
+
+            Assert.That(coordinator.TryAdvancePoseMatchedRecovery(
+                CharacterPhysicalMode.Recovery, 1f, true, out var supported), Is.True);
+            Assert.That(supported.RecoveryExitReady, Is.True);
+            Assert.That(coordinator.TryAdvancePoseMatchedRecovery(
+                CharacterPhysicalMode.Recovery, 1f, false, out var lost), Is.True);
+            Assert.That(lost.FeetEnabled, Is.False);
+            Assert.That(lost.ControlsEnabled, Is.False);
+            Assert.That(lost.ProceduralOwnersEnabled, Is.False);
+            Assert.That(lost.RecoveryExitReady, Is.False);
+            Assert.That(coordinator.TryCompleteRecovery(
+                CharacterPhysicalMode.AnimatedMotor), Is.False);
+        }
+
+        [TestCase(30)]
+        [TestCase(60)]
+        [TestCase(120)]
+        public void MarkerThresholdsAndSkippedThresholdsAreFrameRateEquivalent(int frameRate)
+        {
+            EarthRecoveryMarkerProfile markers = new EarthRecoveryMarkerProfile(
+                0.38f, 0.72f, 0.94f);
+            EarthRecoveryResult result = ValidResult(in markers);
+            var stepped = BeginRecovery(in result);
+            float phase = 0f;
+            float step = 1f / frameRate;
+            EarthPhysicalAnimationOwnership steppedOwnership = default;
+            while (phase < 1f)
+            {
+                phase = math.min(1f, phase + step);
+                Assert.That(stepped.TryAdvancePoseMatchedRecovery(
+                    CharacterPhysicalMode.Recovery,
+                    phase,
+                    true,
+                    out steppedOwnership), Is.True);
+                Assert.That(steppedOwnership.FeetEnabled,
+                    Is.EqualTo(phase >= markers.FeetEnablePhase));
+                Assert.That(steppedOwnership.ControlsEnabled,
+                    Is.EqualTo(phase >= markers.ControlsEnablePhase));
+                Assert.That(steppedOwnership.RecoveryExitReady,
+                    Is.EqualTo(phase >= markers.ExitPhase));
+            }
+
+            var skipped = BeginRecovery(in result);
+            Assert.That(skipped.TryAdvancePoseMatchedRecovery(
+                CharacterPhysicalMode.Recovery,
+                1f,
+                true,
+                out EarthPhysicalAnimationOwnership skippedOwnership), Is.True);
+            Assert.That(skippedOwnership.FeetEnabled,
+                Is.EqualTo(steppedOwnership.FeetEnabled));
+            Assert.That(skippedOwnership.ControlsEnabled,
+                Is.EqualTo(steppedOwnership.ControlsEnabled));
+            Assert.That(skippedOwnership.RecoveryExitReady,
+                Is.EqualTo(steppedOwnership.RecoveryExitReady));
+        }
+
+        [Test]
+        public void MisorderedMarkersRejectSampleInsteadOfUsingDefaults()
+        {
+            var profile = ScriptableObject.CreateInstance<EarthPhysicalAnimationProfile>();
+            try
+            {
+                EarthRecoveryMarkerAuthoring invalid =
+                    new EarthRecoveryMarkerAuthoring(0.8f, 0.2f, 0.9f);
+                profile.ConfigureRecovery(
+                    true,
+                    new[]
+                    {
+                        RecoverySample(7u, EarthRecoveryOrientation.Back, in invalid)
+                    });
+
+                Assert.That(profile.TryGetRecoveryDatabase(out _), Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(profile);
+            }
         }
 
         [Test]
@@ -278,11 +393,46 @@ namespace Elemental.Tests.EditMode
                 new float3(0f, 0f, 1f),
                 pelvisOffset);
 
+        private static EarthPhysicalAnimationCoordinator BeginRecovery(
+            in EarthRecoveryResult result)
+        {
+            var coordinator = new EarthPhysicalAnimationCoordinator();
+            Assert.That(coordinator.TryBeginFullRagdoll(
+                CharacterPhysicalMode.FullRagdoll, 1u), Is.True);
+            Assert.That(coordinator.TryBeginPoseMatchedRecovery(
+                CharacterPhysicalMode.Recovery, 1u, in result), Is.True);
+            return coordinator;
+        }
+
+        private static EarthRecoveryPoseSampleAuthoring RecoverySample(
+            uint clipId,
+            EarthRecoveryOrientation orientation,
+            in EarthRecoveryMarkerAuthoring markers) =>
+            new EarthRecoveryPoseSampleAuthoring(
+                clipId,
+                "Base Layer.Knockdown Recovery",
+                orientation,
+                0.01f,
+                new Vector3(0f, 0.9f, 0f),
+                new Vector3(0f, 0.4f, 0.1f),
+                new Vector3(-0.45f, 0.1f, 0.15f),
+                new Vector3(0.45f, 0.1f, 0.15f),
+                new Vector3(-0.2f, -0.7f, 0f),
+                new Vector3(0.2f, -0.7f, 0f),
+                Vector3.up,
+                in markers);
+
         private static EarthRecoveryResult ValidResult()
+        {
+            EarthRecoveryMarkerProfile markers = EarthRecoveryMarkerProfile.Default;
+            return ValidResult(in markers);
+        }
+
+        private static EarthRecoveryResult ValidResult(
+            in EarthRecoveryMarkerProfile markers)
         {
             EarthRecoveryClearanceResult clearance =
                 EarthRecoveryAlignmentSolver.SelectClearance(true, true, true);
-            EarthRecoveryMarkerProfile markers = EarthRecoveryMarkerProfile.Default;
             return new EarthRecoveryResult(
                 EarthRecoveryOrientation.Back,
                 1u,

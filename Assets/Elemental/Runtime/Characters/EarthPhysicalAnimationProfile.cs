@@ -22,13 +22,13 @@ namespace Elemental.Runtime.Characters
             this.exitPhase = exitPhase;
         }
 
-        public EarthRecoveryMarkerProfile Bake()
+        public bool TryBake(out EarthRecoveryMarkerProfile profile)
         {
-            var markers = new EarthRecoveryMarkerProfile(
+            profile = new EarthRecoveryMarkerProfile(
                 feetEnablePhase,
                 controlsEnablePhase,
                 exitPhase);
-            return markers.IsValid ? markers : EarthRecoveryMarkerProfile.Default;
+            return profile.IsValid;
         }
     }
 
@@ -90,7 +90,7 @@ namespace Elemental.Runtime.Characters
                 ToFloat3(leftFootOffset),
                 ToFloat3(rightFootOffset),
                 ToFloat3(chestOutward));
-            EarthRecoveryMarkerProfile bakedMarkers = markers.Bake();
+            bool markersValid = markers.TryBake(out EarthRecoveryMarkerProfile bakedMarkers);
             candidate = new EarthRecoveryPoseCandidate(
                 clipId,
                 stateHash,
@@ -100,7 +100,7 @@ namespace Elemental.Runtime.Characters
                 ToFloat3(pelvisOffsetLocal),
                 in bakedMarkers,
                 validEntry);
-            return candidate.IsUsable;
+            return markersValid && candidate.IsUsable;
         }
 
         private static float3 ToFloat3(Vector3 value) =>

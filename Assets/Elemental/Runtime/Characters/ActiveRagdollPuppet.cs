@@ -54,6 +54,8 @@ namespace Elemental.Runtime.Characters
         private bool[] _externalColliderWasEnabled = Array.Empty<bool>();
 
         public CharacterPhysicalState CurrentState { get; private set; }
+        public CharacterPhysicalMode CanonicalMode =>
+            _controller != null ? _controller.Mode : CurrentState.Mode;
         public Vector3 LastBalanceTorque { get; private set; }
         public float MaximumJointError { get; private set; }
         public PhysicalCollisionImpact LastCollisionImpact { get; private set; }
@@ -61,6 +63,7 @@ namespace Elemental.Runtime.Characters
         public event Action<CharacterPhysicalState> StateChanged;
         public event Action<Vector3, float> ImpactObserved;
         public bool IsExternalRagdollAuthority { get; private set; }
+        public bool IsExternalRecoveryAuthority { get; private set; }
 
         public bool OwnsCollider(Collider candidate) => IsSelfCollider(candidate);
 
@@ -96,8 +99,42 @@ namespace Elemental.Runtime.Characters
             _forcedRagdollUntil = Mathf.Max(
                 _forcedRagdollUntil,
                 Time.time + Mathf.Max(0.1f, holdSeconds));
-            _controller.ForceFullRagdoll();
+            TryBeginExternalFullRagdoll();
             ApplyUniformVelocityChange(launchVelocityChange);
+        }
+
+        public bool TryBeginExternalFullRagdoll()
+        {
+            EnsureController();
+            IsExternalRecoveryAuthority = false;
+            _controller.ForceFullRagdoll();
+            PublishExternalMode(
+                CharacterPhysicalMode.FullRagdoll,
+                0f,
+                RecoveryCandidate.None);
+            return _controller.Mode == CharacterPhysicalMode.FullRagdoll;
+        }
+
+        public bool TryBeginExternalRecovery(RecoveryCandidate recovery)
+        {
+            EnsureController();
+            if (!_controller.TryForceRecovery(recovery)) return false;
+            IsExternalRecoveryAuthority = true;
+            PublishExternalMode(CharacterPhysicalMode.Recovery, 0f, recovery);
+            return true;
+        }
+
+        public bool TryCompleteExternalRecovery()
+        {
+            EnsureController();
+            if (_controller.Mode != CharacterPhysicalMode.Recovery) return false;
+            _controller.Reset();
+            IsExternalRecoveryAuthority = false;
+            PublishExternalMode(
+                CharacterPhysicalMode.AnimatedMotor,
+                1f,
+                RecoveryCandidate.None);
+            return true;
         }
 
         public void SetExternalRagdollAuthority(bool active)
@@ -170,6 +207,7 @@ namespace Elemental.Runtime.Characters
             // scene reloads are disabled. Never carry visible-ragdoll authority into
             // a fresh gameplay run.
             if (IsExternalRagdollAuthority) SetExternalRagdollAuthority(false);
+            IsExternalRecoveryAuthority = false;
 
             Vector3 previousPosition = rootBody.position;
             Quaternion previousRotation = rootBody.rotation;
@@ -285,7 +323,9 @@ namespace Elemental.Runtime.Characters
 
         private void FixedUpdate()
         {
-            if (rootBody == null || IsExternalRagdollAuthority)
+            if (rootBody == null ||
+                IsExternalRagdollAuthority ||
+                IsExternalRecoveryAuthority)
             {
                 return;
             }
@@ -365,6 +405,31 @@ namespace Elemental.Runtime.Characters
                 maximumBalanceTorque);
             LastBalanceTorque = ToVector3(torque);
             rootBody.AddTorque(LastBalanceTorque, ForceMode.Acceleration);
+        }
+
+        private void PublishExternalMode(
+            CharacterPhysicalMode mode,
+            float muscleStrength,
+            RecoveryCandidate recovery)
+        {
+            Vector3 linearVelocity = rootBody != null
+                ? rootBody.linearVelocity
+                : Vector3.zero;
+            Vector3 angularVelocity = rootBody != null
+                ? rootBody.angularVelocity
+                : Vector3.zero;
+            CurrentState = new CharacterPhysicalState(
+                new ActorId(Math.Max(1u, actorId)),
+                mode,
+                ToFloat3(linearVelocity),
+                ToFloat3(angularVelocity),
+                ToFloat3(_gravityUp),
+                CurrentState.BalanceError,
+                CurrentState.StaggerDebt,
+                muscleStrength,
+                recovery);
+            ApplyControl(CurrentState);
+            PublishStateIfChanged();
         }
 
         private void SampleGravity()

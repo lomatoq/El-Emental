@@ -106,7 +106,6 @@ namespace Elemental.Runtime.Characters
         private readonly float[] _localizedHitAngles = new float[HumanBones.Length];
         private readonly bool[] _localizedHitActive = new bool[HumanBones.Length];
         private readonly Collider[] _recoveryOverlaps = new Collider[16];
-        private readonly RaycastHit[] _recoverySupportHits = new RaycastHit[8];
         private EarthRagdollRecoveryGateState _recoveryGate;
         private readonly EarthPhysicalAnimationCoordinator _physicalAnimationCoordinator =
             new EarthPhysicalAnimationCoordinator();
@@ -117,11 +116,14 @@ namespace Elemental.Runtime.Characters
         private uint _recoverySequence;
         private bool _poseMatchedRecoveryActive;
         private bool _poseMatchedRecoveryPrepared;
-        private bool _recoveryRootAndSupportValid;
         private bool _feetOwnersRestored;
         private bool _controlOwnersRestored;
         private bool _proceduralOwnersRestored;
         private bool _poseMatchedConfigurationWarningIssued;
+        private bool _recoveryStateValidationPending;
+        private int _recoveryStateSelectionFrame;
+        private int _expectedRecoveryStateHash;
+        private float _expectedRecoveryEntryPhase;
 
         public bool IsRagdollActive { get; private set; }
         public bool IsRecoveringToAnimation { get; private set; }
@@ -148,9 +150,26 @@ namespace Elemental.Runtime.Characters
         public bool RecoveryExitReady => _physicalAnimationCoordinator.Ownership.RecoveryExitReady;
         public int RagdollOwnershipHandoffCount => _physicalAnimationCoordinator.RagdollHandoffCount;
         public int RecoveryOwnershipHandoffCount => _physicalAnimationCoordinator.RecoveryHandoffCount;
-        public EarthPhysicalAnimationMode PhysicalAnimationMode => _physicalAnimationCoordinator.Mode;
+        public CharacterPhysicalMode PhysicalAnimationMode => CanonicalPhysicalMode;
+        public bool PhysicalOwnershipConsistent =>
+            _physicalAnimationCoordinator.IsConsistentWith(CanonicalPhysicalMode);
+        public bool RecoveryStateVerifiedAfterEvent { get; private set; }
+        public bool RecoveryStateVerifiedNextFrame { get; private set; }
+        public int RecoveryStateHashAfterEvent { get; private set; }
+        public int RecoveryStateHashNextFrame { get; private set; }
+        public float RecoveryStatePhaseAfterEvent { get; private set; }
+        public float RecoveryStatePhaseNextFrame { get; private set; }
         public EarthRecoveryResult LastPoseMatchedRecovery => _lastPoseMatchedRecovery;
         public event Action AuthoredRecoveryBegan;
+
+        private CharacterPhysicalMode CanonicalPhysicalMode =>
+            physicalStateOwner != null
+                ? physicalStateOwner.CanonicalMode
+                : IsRagdollActive
+                    ? CharacterPhysicalMode.FullRagdoll
+                    : IsRecoveringToAnimation
+                        ? CharacterPhysicalMode.Recovery
+                        : CharacterPhysicalMode.AnimatedMotor;
 
         public void ConfigureLocalizedReactionProfile(CharacterImpactResponseProfile profile) =>
             impactResponseProfile = profile;
@@ -321,7 +340,6 @@ namespace Elemental.Runtime.Characters
                     Debug.LogError("[Elemental] Visible Humanoid ragdoll was not authored for this fighter.", this);
                     return;
                 }
-                if (IsRecoveringToAnimation) return;
                 if (IsRagdollActive)
                 {
                     // RagdollHandoff has no canonical response identity. Preserve
@@ -330,19 +348,32 @@ namespace Elemental.Runtime.Characters
                     ApplyHandoff(in handoff);
                     return;
                 }
+                if (IsRecoveringToAnimation)
+                    PrepareRecoveryInterruptionForRagdoll();
+
+                CaptureRuntimeState();
+                CaptureRendererPresentationState();
+                CharacterPhysicalMode canonicalMode = CharacterPhysicalMode.FullRagdoll;
+                if (physicalStateOwner != null)
+                {
+                    if (!physicalStateOwner.TryBeginExternalFullRagdoll()) return;
+                    canonicalMode = physicalStateOwner.CanonicalMode;
+                }
                 uint handoffSequence = NextSequence(ref _handoffSequence);
-                if (!_physicalAnimationCoordinator.TryBeginFullRagdoll(handoffSequence)) return;
+                if (!_physicalAnimationCoordinator.TryBeginFullRagdoll(
+                        canonicalMode,
+                        handoffSequence))
+                    return;
 
                 ResetLocalizedReactions();
                 IsRecoveringToAnimation = false;
                 UsedPoseMatchedRecovery = false;
                 _poseMatchedRecoveryActive = false;
                 _poseMatchedRecoveryPrepared = CanUsePoseMatchedRecovery();
-                _recoveryRootAndSupportValid = false;
                 _recoveryGate = default;
-
-                CaptureRuntimeState();
-                CaptureRendererPresentationState();
+                _recoveryStateValidationPending = false;
+                RecoveryStateVerifiedAfterEvent = false;
+                RecoveryStateVerifiedNextFrame = false;
                 if (animator != null && animator.enabled) animator.Update(0f);
                 Vector3 inheritedVelocity = motorRootBody != null
                     ? motorRootBody.linearVelocity
@@ -503,6 +534,17 @@ namespace Elemental.Runtime.Characters
                 LastRecoveryClearanceSucceeded = recoveryPose.ClearanceSucceeded;
                 LastRecoveryUsedFacingFallback = recoveryPose.UsedFacingFallback;
 
+                CharacterPhysicalMode canonicalMode = CharacterPhysicalMode.Recovery;
+                if (physicalStateOwner != null)
+                {
+                    if (!physicalStateOwner.TryBeginExternalRecovery(
+                            ToRecoveryCandidate(recoveryPose.Side)))
+                        return;
+                    canonicalMode = physicalStateOwner.CanonicalMode;
+                }
+                if (!_physicalAnimationCoordinator.TryBeginLegacyRecovery(canonicalMode))
+                    return;
+
                 if (bones != null)
                     for (int index = 0; index < bones.Length; index++)
                     {
@@ -541,7 +583,16 @@ namespace Elemental.Runtime.Characters
                 IsRagdollActive = false;
                 IsRecoveringToAnimation = !restoreControls;
                 _poseMatchedRecoveryPrepared = _poseMatchedRecoveryPrepared && !restoreControls;
-                _physicalAnimationCoordinator.ResetAnimated();
+                if (restoreControls)
+                {
+                    CharacterPhysicalMode completedMode = CharacterPhysicalMode.AnimatedMotor;
+                    if (physicalStateOwner != null)
+                    {
+                        physicalStateOwner.TryCompleteExternalRecovery();
+                        completedMode = physicalStateOwner.CanonicalMode;
+                    }
+                    _physicalAnimationCoordinator.TryCompleteRecovery(completedMode);
+                }
                 ResetLocalizedReactions();
                 StoneFade01 = 0f;
                 RestoreVisiblePresentation();
@@ -704,11 +755,34 @@ namespace Elemental.Runtime.Characters
                 return false;
             }
 
+            // Validate the authored state before changing either canonical mode
+            // or any PhysX/Animator ownership. A missing state must take the
+            // byte-for-byte legacy recovery path below.
+            if (animator == null || !_animatorWasEnabled ||
+                !animator.HasState(0, result.AnimationStateId))
+            {
+                WarnPoseMatchedFallback(
+                    $"add animation state hash {result.AnimationStateId} to Animator layer 0");
+                return false;
+            }
+
+            CharacterPhysicalMode canonicalMode = CharacterPhysicalMode.Recovery;
+            if (physicalStateOwner != null)
+            {
+                if (!physicalStateOwner.TryBeginExternalRecovery(
+                        ToRecoveryCandidate(result.Orientation)))
+                    return false;
+                canonicalMode = physicalStateOwner.CanonicalMode;
+            }
+
             uint recoverySequence = NextSequence(ref _recoverySequence);
-            if (!_physicalAnimationCoordinator.TryBeginGetUp(recoverySequence, in result))
+            if (!_physicalAnimationCoordinator.TryBeginPoseMatchedRecovery(
+                    canonicalMode,
+                    recoverySequence,
+                    in result))
                 return false;
             _recoveryGate.Consumed = true;
-            CommitPoseMatchedRecovery(in result, up);
+            CommitPoseMatchedRecovery(in result);
             return true;
         }
 
@@ -740,9 +814,7 @@ namespace Elemental.Runtime.Characters
                 : Vector3.zero;
         }
 
-        private void CommitPoseMatchedRecovery(
-            in EarthRecoveryResult result,
-            Vector3 localUp)
+        private void CommitPoseMatchedRecovery(in EarthRecoveryResult result)
         {
             if (bones != null)
                 for (int index = 0; index < bones.Length; index++)
@@ -799,22 +871,26 @@ namespace Elemental.Runtime.Characters
                 if (animator.enabled)
                 {
                     animator.Rebind();
+                    animator.Play(result.AnimationStateId, 0, result.EntryPhase);
                     animator.Update(0f);
                 }
             }
+            _expectedRecoveryStateHash = result.AnimationStateId;
+            _expectedRecoveryEntryPhase = result.EntryPhase;
+            _recoveryStateSelectionFrame = Time.frameCount;
             AuthoredRecoveryBegan?.Invoke();
-            if (animator != null && animator.enabled)
-            {
-                animator.Play(result.AnimationStateId, 0, result.EntryPhase);
-                animator.Update(0f);
-            }
+            CaptureRecoveryAnimatorState(
+                out int stateHash,
+                out float statePhase);
+            RecoveryStateHashAfterEvent = stateHash;
+            RecoveryStatePhaseAfterEvent = statePhase;
+            RecoveryStateVerifiedAfterEvent = IsExpectedRecoveryState(
+                stateHash,
+                statePhase,
+                0.02f);
+            _recoveryStateValidationPending = true;
             UnityEngine.Physics.SyncTransforms();
-            _recoveryRootAndSupportValid = result.Clearance.Succeeded &&
-                                           HasRecoverySupport(rootPosition, localUp);
-            ApplyPoseMatchedOwnership(
-                _physicalAnimationCoordinator.AdvanceGetUp(
-                    result.EntryPhase,
-                    _recoveryRootAndSupportValid));
+            UpdatePoseMatchedRecoveryOwnership();
         }
 
         public void CompleteRecovery()
@@ -832,7 +908,13 @@ namespace Elemental.Runtime.Characters
                 _poseMatchedRecoveryPrepared = false;
             }
             IsRecoveringToAnimation = false;
-            _physicalAnimationCoordinator.ResetAnimated();
+            CharacterPhysicalMode canonicalMode = CharacterPhysicalMode.AnimatedMotor;
+            if (physicalStateOwner != null)
+            {
+                physicalStateOwner.TryCompleteExternalRecovery();
+                canonicalMode = physicalStateOwner.CanonicalMode;
+            }
+            _physicalAnimationCoordinator.TryCompleteRecovery(canonicalMode);
         }
 
         public void SetStoneFade(float fade01)
@@ -918,8 +1000,15 @@ namespace Elemental.Runtime.Characters
                 UsedPoseMatchedRecovery = false;
                 _poseMatchedRecoveryActive = false;
                 _poseMatchedRecoveryPrepared = false;
-                _recoveryRootAndSupportValid = false;
-                _physicalAnimationCoordinator.ResetAnimated();
+                _recoveryStateValidationPending = false;
+                CharacterPhysicalMode canonicalMode = CharacterPhysicalMode.AnimatedMotor;
+                if (physicalStateOwner != null)
+                {
+                    if (physicalStateOwner.CanonicalMode == CharacterPhysicalMode.Recovery)
+                        physicalStateOwner.TryCompleteExternalRecovery();
+                    canonicalMode = physicalStateOwner.CanonicalMode;
+                }
+                _physicalAnimationCoordinator.TryResetAnimated(canonicalMode);
                 ResetLocalizedReactions();
                 StoneFade01 = 0f;
                 _dustEmitted = false;
@@ -980,6 +1069,7 @@ namespace Elemental.Runtime.Characters
         {
             if (_poseMatchedRecoveryActive && IsRecoveringToAnimation)
                 UpdatePoseMatchedRecoveryOwnership();
+            ValidateRecoveryStateNextFrame();
             if (IsRagdollActive) return;
             for (int index = 0; index < _localizedHitActive.Length; index++)
             {
@@ -1232,32 +1322,13 @@ namespace Elemental.Runtime.Characters
             return true;
         }
 
-        private bool HasRecoverySupport(Vector3 rootPosition, Vector3 localUp)
+        private bool HasRecoverySupport()
         {
-            if (motorRootBody == null || physicalAnimationProfile == null) return false;
-            Vector3 up = localUp.sqrMagnitude > 0.25f
-                ? localUp.normalized
-                : motorRootBody.rotation * Vector3.up;
+            if (motorRootBody == null) return false;
             PlanetMotor motor = motorRootBody.GetComponent<PlanetMotor>();
-            int mask = motor != null ? motor.GroundMask.value : 1;
-            Vector3 origin = rootPosition + up * 0.25f;
-            int count = UnityEngine.Physics.RaycastNonAlloc(
-                origin,
-                -up,
-                _recoverySupportHits,
-                physicalAnimationProfile.SupportProbeDistance,
-                mask,
-                QueryTriggerInteraction.Ignore);
-            for (int index = 0; index < count; index++)
-            {
-                Collider candidate = _recoverySupportHits[index].collider;
-                if (candidate == null || candidate == motorCollider) continue;
-                if (candidate.transform.IsChildOf(transform) ||
-                    candidate.transform.IsChildOf(motorRootBody.transform))
-                    continue;
-                return true;
-            }
-            return false;
+            return motor != null &&
+                   motor.HasStableSupport &&
+                   motor.GroundSupport.HasSupport;
         }
 
         private void UpdatePoseMatchedRecoveryOwnership()
@@ -1268,52 +1339,122 @@ namespace Elemental.Runtime.Characters
                 !animator.enabled)
                 return;
 
-            if (!_recoveryRootAndSupportValid)
-            {
-                Vector3 root = motorRootBody != null
-                    ? motorRootBody.position
-                    : ToVector3(_lastPoseMatchedRecovery.RootPosition);
-                _recoveryRootAndSupportValid =
-                    _lastPoseMatchedRecovery.Clearance.Succeeded &&
-                    HasRecoverySupport(root, ToVector3(_lastPoseMatchedRecovery.RadialUp));
-            }
+            bool rootAndSupportValid =
+                _lastPoseMatchedRecovery.Clearance.Succeeded &&
+                motorRootBody != null &&
+                IsFinite(motorRootBody.position) &&
+                HasRecoverySupport();
 
             AnimatorStateInfo state = animator.IsInTransition(0)
                 ? animator.GetNextAnimatorStateInfo(0)
                 : animator.GetCurrentAnimatorStateInfo(0);
             float phase = Mathf.Clamp01(state.normalizedTime);
-            EarthPhysicalAnimationOwnership ownership =
-                _physicalAnimationCoordinator.AdvanceGetUp(
+            if (!_physicalAnimationCoordinator.TryAdvancePoseMatchedRecovery(
+                    CanonicalPhysicalMode,
                     phase,
-                    _recoveryRootAndSupportValid);
+                    rootAndSupportValid,
+                    out EarthPhysicalAnimationOwnership ownership))
+                return;
             ApplyPoseMatchedOwnership(ownership);
         }
 
         private void ApplyPoseMatchedOwnership(EarthPhysicalAnimationOwnership ownership)
         {
-            if (ownership.FeetEnabled && !_feetOwnersRestored)
+            if (ownership.FeetEnabled != _feetOwnersRestored)
             {
-                SetOwnerGroup(recoveryFeetOwners, _feetOwnerEnabled, true);
-                _feetOwnersRestored = true;
+                SetOwnerGroup(
+                    recoveryFeetOwners,
+                    _feetOwnerEnabled,
+                    ownership.FeetEnabled);
+                _feetOwnersRestored = ownership.FeetEnabled;
             }
-            if (ownership.ControlsEnabled && !_controlOwnersRestored)
+            if (ownership.ControlsEnabled != _controlOwnersRestored)
             {
-                SetOwnerGroup(recoveryControlOwners, _controlOwnerEnabled, true);
-                _controlOwnersRestored = true;
+                SetOwnerGroup(
+                    recoveryControlOwners,
+                    _controlOwnerEnabled,
+                    ownership.ControlsEnabled);
+                _controlOwnersRestored = ownership.ControlsEnabled;
             }
-            if (ownership.ProceduralOwnersEnabled && !_proceduralOwnersRestored)
+            if (ownership.ProceduralOwnersEnabled != _proceduralOwnersRestored)
             {
-                SetOwnerGroup(recoveryProceduralOwners, _proceduralOwnerEnabled, true);
-                _proceduralOwnersRestored = true;
+                SetOwnerGroup(
+                    recoveryProceduralOwners,
+                    _proceduralOwnerEnabled,
+                    ownership.ProceduralOwnersEnabled);
+                _proceduralOwnersRestored = ownership.ProceduralOwnersEnabled;
             }
             if (!ownership.RecoveryExitReady) return;
 
             SetControlBehaviours(true);
             SetRecoveryOwnerGroups(true, true, true);
-            _physicalAnimationCoordinator.CompleteGetUp();
+            CharacterPhysicalMode canonicalMode = CharacterPhysicalMode.AnimatedMotor;
+            if (physicalStateOwner != null)
+            {
+                if (!physicalStateOwner.TryCompleteExternalRecovery()) return;
+                canonicalMode = physicalStateOwner.CanonicalMode;
+            }
+            if (!_physicalAnimationCoordinator.TryCompleteRecovery(canonicalMode)) return;
             IsRecoveringToAnimation = false;
             _poseMatchedRecoveryActive = false;
             _poseMatchedRecoveryPrepared = false;
+        }
+
+        private void PrepareRecoveryInterruptionForRagdoll()
+        {
+            SetControlBehaviours(true);
+            if (_poseMatchedRecoveryPrepared || _poseMatchedRecoveryActive)
+                SetRecoveryOwnerGroups(true, true, true);
+            IsRecoveringToAnimation = false;
+            _poseMatchedRecoveryActive = false;
+            _poseMatchedRecoveryPrepared = false;
+            UsedPoseMatchedRecovery = false;
+            _recoveryStateValidationPending = false;
+        }
+
+        private void ValidateRecoveryStateNextFrame()
+        {
+            if (!_recoveryStateValidationPending ||
+                Time.frameCount <= _recoveryStateSelectionFrame)
+                return;
+
+            _recoveryStateValidationPending = false;
+            CaptureRecoveryAnimatorState(out int stateHash, out float statePhase);
+            RecoveryStateHashNextFrame = stateHash;
+            RecoveryStatePhaseNextFrame = statePhase;
+            RecoveryStateVerifiedNextFrame = IsExpectedRecoveryState(
+                stateHash,
+                statePhase,
+                0.2f);
+            if (!RecoveryStateVerifiedNextFrame)
+                Debug.LogError(
+                    $"[Elemental] Recovery state {_expectedRecoveryStateHash} at phase " +
+                    $"{_expectedRecoveryEntryPhase:F3} did not persist through the next frame.",
+                    this);
+        }
+
+        private void CaptureRecoveryAnimatorState(out int stateHash, out float phase)
+        {
+            if (animator == null || !animator.enabled)
+            {
+                stateHash = 0;
+                phase = 0f;
+                return;
+            }
+
+            AnimatorStateInfo state = animator.IsInTransition(0)
+                ? animator.GetNextAnimatorStateInfo(0)
+                : animator.GetCurrentAnimatorStateInfo(0);
+            stateHash = state.fullPathHash;
+            phase = Mathf.Repeat(state.normalizedTime, 1f);
+        }
+
+        private bool IsExpectedRecoveryState(int stateHash, float phase, float phaseTolerance)
+        {
+            float phaseDistance = Mathf.Abs(phase - _expectedRecoveryEntryPhase);
+            phaseDistance = Mathf.Min(phaseDistance, 1f - phaseDistance);
+            return stateHash == _expectedRecoveryStateHash &&
+                   phaseDistance <= phaseTolerance;
         }
 
         private void SetRecoveryOwnerGroups(
@@ -1547,6 +1688,26 @@ namespace Elemental.Runtime.Characters
                 EarthRecoveryOrientation.Left => EarthRagdollRecoverySide.Left,
                 EarthRecoveryOrientation.Right => EarthRagdollRecoverySide.Right,
                 _ => EarthRagdollRecoverySide.Unknown
+            };
+
+        private static RecoveryCandidate ToRecoveryCandidate(
+            EarthRecoveryOrientation orientation) => orientation switch
+            {
+                EarthRecoveryOrientation.Front => RecoveryCandidate.FaceDown,
+                EarthRecoveryOrientation.Back => RecoveryCandidate.FaceUp,
+                EarthRecoveryOrientation.Left => RecoveryCandidate.LeftSide,
+                EarthRecoveryOrientation.Right => RecoveryCandidate.RightSide,
+                _ => RecoveryCandidate.None
+            };
+
+        private static RecoveryCandidate ToRecoveryCandidate(
+            EarthRagdollRecoverySide side) => side switch
+            {
+                EarthRagdollRecoverySide.Front => RecoveryCandidate.FaceDown,
+                EarthRagdollRecoverySide.Back => RecoveryCandidate.FaceUp,
+                EarthRagdollRecoverySide.Left => RecoveryCandidate.LeftSide,
+                EarthRagdollRecoverySide.Right => RecoveryCandidate.RightSide,
+                _ => RecoveryCandidate.None
             };
 
         private static uint NextSequence(ref uint sequence)

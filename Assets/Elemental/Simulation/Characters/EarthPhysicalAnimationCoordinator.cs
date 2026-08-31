@@ -1,17 +1,5 @@
 namespace Elemental.Simulation.Characters
 {
-    public enum EarthPhysicalAnimationMode : byte
-    {
-        Animated = 0,
-        PhysicalAssist = 1,
-        Stagger = 2,
-        BalanceRecovery = 3,
-        Brace = 4,
-        FallProtect = 5,
-        FullRagdoll = 6,
-        GetUp = 7
-    }
-
     public readonly struct EarthPhysicalAnimationOwnership
     {
         public EarthPhysicalAnimationOwnership(
@@ -36,69 +24,102 @@ namespace Elemental.Simulation.Characters
     }
 
     /// <summary>
-    /// Pure ownership protocol for the existing animation/active-ragdoll stack.
-    /// It does not implement P2 muscle behaviours; it only makes handoff and
-    /// recovery marker decisions single-owner and idempotent.
+    /// Pure ownership adapter for the existing animation/active-ragdoll stack.
+    /// CharacterPhysicalController remains the sole mode authority; every mutation
+    /// is accepted only when its canonical CharacterPhysicalMode agrees.
     /// </summary>
     public sealed class EarthPhysicalAnimationCoordinator
     {
         private uint _activeHandoffSequence;
         private uint _activeRecoverySequence;
         private EarthRecoveryMarkerProfile _markers;
-        private EarthPhysicalAnimationOwnership _ownership =
-            new EarthPhysicalAnimationOwnership(true, true, true, true, true);
+        private bool _ragdollOwnershipActive;
+        private bool _recoveryOwnershipActive;
+        private bool _poseMatchedRecoveryActive;
+        private EarthPhysicalAnimationOwnership _ownership = AnimatedOwnership();
 
-        public EarthPhysicalAnimationMode Mode { get; private set; } =
-            EarthPhysicalAnimationMode.Animated;
         public int RagdollHandoffCount { get; private set; }
         public int RecoveryHandoffCount { get; private set; }
         public EarthPhysicalAnimationOwnership Ownership => _ownership;
+        public bool IsRagdollOwnershipActive => _ragdollOwnershipActive;
+        public bool IsRecoveryOwnershipActive => _recoveryOwnershipActive;
+        public bool IsPoseMatchedRecoveryActive => _poseMatchedRecoveryActive;
 
-        public bool TryBeginFullRagdoll(uint handoffSequence)
+        public bool TryBeginFullRagdoll(
+            CharacterPhysicalMode canonicalMode,
+            uint handoffSequence)
         {
-            if (handoffSequence == 0u ||
-                Mode == EarthPhysicalAnimationMode.FullRagdoll ||
-                Mode == EarthPhysicalAnimationMode.GetUp ||
-                handoffSequence == _activeHandoffSequence)
+            if (canonicalMode != CharacterPhysicalMode.FullRagdoll ||
+                handoffSequence == 0u ||
+                handoffSequence == _activeHandoffSequence ||
+                _ragdollOwnershipActive)
                 return false;
 
             _activeHandoffSequence = handoffSequence;
             _activeRecoverySequence = 0u;
-            Mode = EarthPhysicalAnimationMode.FullRagdoll;
-            _ownership = new EarthPhysicalAnimationOwnership(false, false, false, false, false);
+            _markers = default;
+            _ragdollOwnershipActive = true;
+            _recoveryOwnershipActive = false;
+            _poseMatchedRecoveryActive = false;
+            _ownership = RagdollOwnership();
             RagdollHandoffCount++;
             return true;
         }
 
-        public bool TryBeginGetUp(
+        public bool TryBeginLegacyRecovery(CharacterPhysicalMode canonicalMode)
+        {
+            if (canonicalMode != CharacterPhysicalMode.Recovery ||
+                !_ragdollOwnershipActive ||
+                _recoveryOwnershipActive)
+                return false;
+
+            _ragdollOwnershipActive = false;
+            _recoveryOwnershipActive = true;
+            _poseMatchedRecoveryActive = false;
+            _markers = default;
+            _ownership = AnimatedOwnership();
+            return true;
+        }
+
+        public bool TryBeginPoseMatchedRecovery(
+            CharacterPhysicalMode canonicalMode,
             uint recoverySequence,
             in EarthRecoveryResult result)
         {
-            if (recoverySequence == 0u ||
-                Mode != EarthPhysicalAnimationMode.FullRagdoll ||
+            if (canonicalMode != CharacterPhysicalMode.Recovery ||
+                recoverySequence == 0u ||
                 recoverySequence == _activeRecoverySequence ||
-                !result.IsValid)
+                !_ragdollOwnershipActive ||
+                _recoveryOwnershipActive ||
+                !result.IsValid ||
+                !result.Markers.IsValid)
                 return false;
 
             _activeRecoverySequence = recoverySequence;
             _markers = result.Markers;
-            Mode = EarthPhysicalAnimationMode.GetUp;
+            _ragdollOwnershipActive = false;
+            _recoveryOwnershipActive = true;
+            _poseMatchedRecoveryActive = true;
             _ownership = new EarthPhysicalAnimationOwnership(true, false, false, false, false);
             RecoveryHandoffCount++;
             return true;
         }
 
-        public EarthPhysicalAnimationOwnership AdvanceGetUp(
+        public bool TryAdvancePoseMatchedRecovery(
+            CharacterPhysicalMode canonicalMode,
             float normalizedPhase,
-            bool rootAndSupportValid)
+            bool rootAndSupportValid,
+            out EarthPhysicalAnimationOwnership ownership)
         {
-            if (Mode != EarthPhysicalAnimationMode.GetUp)
-                return _ownership;
+            ownership = _ownership;
+            if (canonicalMode != CharacterPhysicalMode.Recovery ||
+                !_recoveryOwnershipActive ||
+                !_poseMatchedRecoveryActive ||
+                !float.IsFinite(normalizedPhase) ||
+                normalizedPhase < 0f)
+                return false;
 
-            float phase = normalizedPhase;
-            if (!float.IsFinite(phase)) phase = 0f;
-            if (phase < 0f) phase = 0f;
-            if (phase > 1f) phase = 1f;
+            float phase = normalizedPhase > 1f ? 1f : normalizedPhase;
             bool feet = rootAndSupportValid && phase >= _markers.FeetEnablePhase;
             bool controls = rootAndSupportValid && phase >= _markers.ControlsEnablePhase;
             bool exit = rootAndSupportValid && phase >= _markers.ExitPhase;
@@ -108,23 +129,72 @@ namespace Elemental.Simulation.Characters
                 feet,
                 controls,
                 exit);
-            return _ownership;
+            ownership = _ownership;
+            return true;
         }
 
-        public void CompleteGetUp()
+        public bool TryCompleteRecovery(CharacterPhysicalMode canonicalMode)
         {
-            if (Mode != EarthPhysicalAnimationMode.GetUp || !_ownership.RecoveryExitReady)
-                return;
-            Mode = EarthPhysicalAnimationMode.Animated;
-            _ownership = new EarthPhysicalAnimationOwnership(true, true, true, true, true);
+            if (canonicalMode != CharacterPhysicalMode.AnimatedMotor ||
+                !_recoveryOwnershipActive ||
+                (_poseMatchedRecoveryActive && !_ownership.RecoveryExitReady))
+                return false;
+
+            ClearToAnimated();
+            return true;
         }
 
-        public void ResetAnimated()
+        public bool TryResetAnimated(CharacterPhysicalMode canonicalMode)
         {
-            Mode = EarthPhysicalAnimationMode.Animated;
+            if (canonicalMode != CharacterPhysicalMode.AnimatedMotor)
+                return false;
+
+            ClearToAnimated();
+            return true;
+        }
+
+        public bool IsConsistentWith(CharacterPhysicalMode canonicalMode)
+        {
+            switch (canonicalMode)
+            {
+                case CharacterPhysicalMode.AnimatedMotor:
+                    return !_ragdollOwnershipActive &&
+                           !_recoveryOwnershipActive &&
+                           _ownership.AnimationOwnerEnabled &&
+                           _ownership.ProceduralOwnersEnabled &&
+                           _ownership.FeetEnabled &&
+                           _ownership.ControlsEnabled;
+                case CharacterPhysicalMode.FullRagdoll:
+                    return _ragdollOwnershipActive &&
+                           !_recoveryOwnershipActive &&
+                           !_ownership.AnimationOwnerEnabled &&
+                           !_ownership.ProceduralOwnersEnabled &&
+                           !_ownership.FeetEnabled &&
+                           !_ownership.ControlsEnabled;
+                case CharacterPhysicalMode.Recovery:
+                    return !_ragdollOwnershipActive &&
+                           _recoveryOwnershipActive &&
+                           _ownership.AnimationOwnerEnabled;
+                default:
+                    return false;
+            }
+        }
+
+        private void ClearToAnimated()
+        {
             _activeHandoffSequence = 0u;
             _activeRecoverySequence = 0u;
-            _ownership = new EarthPhysicalAnimationOwnership(true, true, true, true, true);
+            _markers = default;
+            _ragdollOwnershipActive = false;
+            _recoveryOwnershipActive = false;
+            _poseMatchedRecoveryActive = false;
+            _ownership = AnimatedOwnership();
         }
+
+        private static EarthPhysicalAnimationOwnership AnimatedOwnership() =>
+            new EarthPhysicalAnimationOwnership(true, true, true, true, true);
+
+        private static EarthPhysicalAnimationOwnership RagdollOwnership() =>
+            new EarthPhysicalAnimationOwnership(false, false, false, false, false);
     }
 }

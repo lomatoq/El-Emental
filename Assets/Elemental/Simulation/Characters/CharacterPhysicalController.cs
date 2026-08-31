@@ -84,6 +84,18 @@ namespace Elemental.Simulation.Characters
             _muscleStrength = 0f;
         }
 
+        public bool TryForceRecovery(RecoveryCandidate recovery)
+        {
+            if (_mode != CharacterPhysicalMode.FullRagdoll &&
+                _mode != CharacterPhysicalMode.Recovery)
+                return false;
+
+            _recovery = recovery;
+            Enter(CharacterPhysicalMode.Recovery);
+            _muscleStrength = 0f;
+            return true;
+        }
+
         public void Reset()
         {
             _mode = CharacterPhysicalMode.AnimatedMotor;
