@@ -51,10 +51,19 @@ namespace Elemental.Simulation.Structures
             in EarthMatterMassProfile profile)
         {
             float volume = math.max(0f, Sanitize(volumeCubicMetres));
-            if (volume <= 0f)
+            return ResolveGameplayMassFromPhysicalMass(
+                volume * profile.DensityKilogramsPerCubicMetre,
+                in profile);
+        }
+
+        public static float ResolveGameplayMassFromPhysicalMass(
+            float physicalMassKilograms,
+            in EarthMatterMassProfile profile)
+        {
+            float physicalMass = math.max(0f, Sanitize(physicalMassKilograms));
+            if (physicalMass <= 0f)
                 return profile.MinimumGameplayMassKilograms;
 
-            float physicalMass = volume * profile.DensityKilogramsPerCubicMetre;
             float normalized = math.max(
                 0.000001f,
                 physicalMass / profile.ReferencePhysicalMassKilograms);
