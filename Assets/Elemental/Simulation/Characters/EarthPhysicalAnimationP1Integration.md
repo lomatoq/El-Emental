@@ -37,10 +37,12 @@
 3. Keep existing `disabledDuringRagdoll` wiring. P1 captures prior enabled state
    before the single ownership handoff and restores only originally enabled
    behaviours.
-4. Marker eligibility uses the existing `PlanetMotor.HasStableSupport` and
-   `PlanetMotor.GroundSupport` authority. It is re-evaluated at feet, controls,
-   and exit; support loss revokes marker owners and blocks exit until support is
-   valid again. The profile support distance is not a second support authority.
+4. Marker eligibility uses a bounded, non-alloc recovery sampler with the
+   existing PlanetMotor capsule, slope, distance, and ground-mask configuration,
+   then passes candidates through `CharacterSupportRuntimeAdapter` and the pure
+   `CharacterSupportAuthority`. It continues sampling while movement control and
+   PlanetMotor updates are disabled. Support loss revokes marker owners and
+   blocks exit until live support is reacquired.
 5. After steps 1-4 validate cleanly, enable `UsePoseMatchedRecovery` only in the
    integrated preset/scene. Do not enable the empty default asset.
 
@@ -48,8 +50,9 @@ The result exposes orientation, clip/state IDs, closest valid entry phase, match
 cost, live pelvis, root pose, radial up/facing, clearance result, feet/control/
 exit markers, and facing-fallback diagnostic. Root alignment is reconstructed
 from the live physics pelvis; no pre-hit root participates. The selected Animator
-state hash and phase are captured immediately after the recovery event and again
-on the following frame.
+state hash and phase are passed through `HumanoidCharacterPresentation` to the
+existing `EarthTransitionDirector`, which is the sole selected-state writer.
+They are captured immediately after the event and again on the following frame.
 
 ## Tests and evidence required
 
@@ -76,9 +79,9 @@ on the following frame.
   adapter verifies `HasState` before ownership mutation, but director validation
   must confirm the transition director does not overwrite the state on the event
   callback or following frame.
-- PlanetMotor must continue publishing stable support while recovery controls are
-  withheld. Validate arena floor, spherical terrain, platforms, moving-support
-  generation swaps, and deliberate support loss.
+- The recovery sampler intentionally does not apply movement. Validate its live
+  classification on arena floor, spherical terrain, platforms, moving-support
+  generation swaps, and deliberate support loss/reacquisition.
 - Owner groups must not contain the Animator or another writer required to
   evaluate the recovery clip.
 

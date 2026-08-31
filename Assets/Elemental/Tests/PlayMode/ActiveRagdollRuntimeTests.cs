@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
@@ -205,7 +206,7 @@ namespace Elemental.Tests.PlayMode
             Animation proceduralOwner = rig.gameObject.AddComponent<Animation>();
             var profile = ScriptableObject.CreateInstance<EarthPhysicalAnimationProfile>();
             EarthRecoveryMarkerAuthoring markers =
-                new EarthRecoveryMarkerAuthoring(0.20f, 0.60f, 0.90f);
+                new EarthRecoveryMarkerAuthoring(0.56f, 0.80f, 0.95f);
             profile.ConfigureRecovery(
                 true,
                 new[]
@@ -227,6 +228,20 @@ namespace Elemental.Tests.PlayMode
             Assert.That(controlOwner.enabled, Is.False);
             Assert.That(proceduralOwner.enabled, Is.False);
             int recoveryHandoffsBefore = rig.RecoveryOwnershipHandoffCount;
+            Animator recoveryAnimator = rig.GetComponentInChildren<Animator>(true);
+            Assert.That(recoveryAnimator, Is.Not.Null);
+            bool observedSelectedStateInEvent = false;
+            int eventStateHash = 0;
+            float eventStatePhase = 0f;
+            Action<AuthoredRecoveryHandoff> observeSelectedState = handoff =>
+            {
+                if (!handoff.HasSelectedState) return;
+                AnimatorStateInfo state = recoveryAnimator.GetCurrentAnimatorStateInfo(0);
+                observedSelectedStateInEvent = true;
+                eventStateHash = state.fullPathHash;
+                eventStatePhase = Mathf.Repeat(state.normalizedTime, 1f);
+            };
+            rig.AuthoredRecoveryBegan += observeSelectedState;
             rig.RecoverToAnimated(localUp, preferredForward, false);
             rig.RecoverToAnimated(localUp, preferredForward, false);
 
@@ -237,18 +252,57 @@ namespace Elemental.Tests.PlayMode
                 "Repeated recovery requests must not hand Animator ownership over twice.");
             Assert.That(feetOwner.enabled, Is.False,
                 "Feet must remain disabled before their authored marker.");
+            Assert.That(observedSelectedStateInEvent, Is.True);
+            Assert.That(eventStateHash,
+                Is.EqualTo(rig.LastPoseMatchedRecovery.AnimationStateId));
+            Assert.That(eventStatePhase,
+                Is.EqualTo(0.55f).Within(0.005f));
             Assert.That(rig.RecoveryStateHashAfterEvent,
                 Is.EqualTo(rig.LastPoseMatchedRecovery.AnimationStateId));
             Assert.That(rig.RecoveryStatePhaseAfterEvent,
-                Is.EqualTo(rig.LastPoseMatchedRecovery.EntryPhase).Within(0.02f));
+                Is.EqualTo(0.55f).Within(0.005f));
             Assert.That(rig.RecoveryStateVerifiedAfterEvent, Is.True);
             yield return null;
             yield return new WaitForEndOfFrame();
             Assert.That(rig.RecoveryStateHashNextFrame,
                 Is.EqualTo(rig.LastPoseMatchedRecovery.AnimationStateId));
             Assert.That(rig.RecoveryStatePhaseNextFrame,
-                Is.EqualTo(rig.LastPoseMatchedRecovery.EntryPhase).Within(0.20f));
+                Is.EqualTo(0.55f).Within(0.08f));
             Assert.That(rig.RecoveryStateVerifiedNextFrame, Is.True);
+            rig.AuthoredRecoveryBegan -= observeSelectedState;
+
+            int supportWaitFrames = 0;
+            while ((!rig.RecoveryHasLiveSupport || !rig.RecoveryFeetEnabled) &&
+                   supportWaitFrames++ < 4)
+                yield return null;
+            Assert.That(rig.RecoveryHasLiveSupport, Is.True);
+            Assert.That(rig.RecoveryFeetEnabled, Is.True);
+            Assert.That(motor, Is.Not.Null);
+            Assert.That(motor.Body, Is.Not.Null);
+            int supportSamplesBeforeLoss = rig.RecoverySupportSampleCount;
+            bool motorWasEnabled = motor.enabled;
+            motor.enabled = false;
+            Vector3 supportedRootPosition = motor.Body.position;
+            Quaternion supportedRootRotation = motor.Body.rotation;
+            motor.Body.position = supportedRootPosition + localUp * 3f;
+            UnityEngine.Physics.SyncTransforms();
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            Assert.That(rig.RecoverySupportSampleCount,
+                Is.GreaterThan(supportSamplesBeforeLoss));
+            Assert.That(rig.RecoveryHasLiveSupport, Is.False);
+            Assert.That(rig.RecoveryFeetEnabled, Is.False,
+                "Live support loss must revoke feet while movement control is disabled.");
+
+            motor.Body.position = supportedRootPosition;
+            motor.Body.rotation = supportedRootRotation;
+            UnityEngine.Physics.SyncTransforms();
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            Assert.That(rig.RecoveryHasLiveSupport, Is.True);
+            Assert.That(rig.RecoveryFeetEnabled, Is.True,
+                "Live support reacquisition must re-enable marker ownership.");
+            motor.enabled = motorWasEnabled;
 
             int poseInterruptHandoffs = rig.RagdollOwnershipHandoffCount;
             rig.BeginRagdoll(new RagdollHandoff(
@@ -355,7 +409,7 @@ namespace Elemental.Tests.PlayMode
                 clipId,
                 animationStatePath,
                 orientation,
-                0.01f,
+                0.55f,
                 new Vector3(0f, 0.9f, 0f),
                 new Vector3(0f, 0.4f, 0.1f),
                 new Vector3(-0.45f, 0.1f, 0.15f),

@@ -960,34 +960,54 @@ namespace Elemental.Presentation.Animation
             return true;
         }
 
-        private void HandleAuthoredRecoveryBegan()
+        private void HandleAuthoredRecoveryBegan(AuthoredRecoveryHandoff handoff)
         {
             _dodgeUntil = 0f;
             _dodgeWasActive = false;
             if (animator != null && animator.enabled && transitionDirector != null)
             {
-                AnimatorStateInfo current = GetCurrentAnimatorStateInfo(0);
-                var context = new EarthAnimationTransitionContext(
-                    _activeMotionState,
-                    EarthMotionStateId.KnockdownRecovery,
-                    CategoryFor(_activeMotionState),
-                    EarthMotionCategory.RagdollRecovery,
-                    EarthAnimationTransitionPriority.HeavyImpact,
-                    PriorityFor(_activeMotionState),
-                    Mathf.Repeat(current.normalizedTime, 1f),
-                    _gaitPhase01,
-                    Mathf.Max(0.01f, current.length),
-                    0f,
-                    0f,
-                    false,
-                    true,
-                    false,
-                    false);
-                transitionDirector.RequestTransition(
-                    KnockdownRecoveryStateHash,
-                    in context);
+                if (handoff.HasSelectedState)
+                {
+                    // Pose matching already selected the only valid destination
+                    // and entry phase. The transition director remains the sole
+                    // base-state writer; this semantic callback must not issue a
+                    // second transition at normalized time zero.
+                    transitionDirector.ForcePlayImmediate(
+                        EarthMotionStateId.KnockdownRecovery,
+                        handoff.AnimationStateId,
+                        handoff.EntryPhase);
+                    transitionDirector.SynchronizeState(
+                        EarthMotionStateId.KnockdownRecovery,
+                        handoff.AnimationStateId,
+                        EarthAnimationTransitionPriority.HeavyImpact);
+                }
+                else
+                {
+                    AnimatorStateInfo current = GetCurrentAnimatorStateInfo(0);
+                    var context = new EarthAnimationTransitionContext(
+                        _activeMotionState,
+                        EarthMotionStateId.KnockdownRecovery,
+                        CategoryFor(_activeMotionState),
+                        EarthMotionCategory.RagdollRecovery,
+                        EarthAnimationTransitionPriority.HeavyImpact,
+                        PriorityFor(_activeMotionState),
+                        Mathf.Repeat(current.normalizedTime, 1f),
+                        _gaitPhase01,
+                        Mathf.Max(0.01f, current.length),
+                        0f,
+                        0f,
+                        false,
+                        true,
+                        false,
+                        false);
+                    transitionDirector.RequestTransition(
+                        KnockdownRecoveryStateHash,
+                        in context);
+                }
             }
-            _activeBaseStateHash = KnockdownRecoveryStateHash;
+            _activeBaseStateHash = handoff.HasSelectedState
+                ? handoff.AnimationStateId
+                : KnockdownRecoveryStateHash;
             _activeMotionState = EarthMotionStateId.KnockdownRecovery;
             CurrentAuthoredAction = EarthAuthoredActionId.RecoverableKnockdownRecovery;
             CurrentFootPolicy = EarthAuthoredActionCatalog.Resolve(CurrentAuthoredAction)

@@ -26,6 +26,30 @@ namespace Elemental.Runtime.Characters
             new RagdollHandoff(Vector3.zero, velocityChange, false);
     }
 
+    public readonly struct AuthoredRecoveryHandoff
+    {
+        public AuthoredRecoveryHandoff(
+            bool hasSelectedState,
+            int animationStateId,
+            float entryPhase)
+        {
+            HasSelectedState = hasSelectedState;
+            AnimationStateId = animationStateId;
+            EntryPhase = entryPhase;
+        }
+
+        public bool HasSelectedState { get; }
+        public int AnimationStateId { get; }
+        public float EntryPhase { get; }
+
+        public static AuthoredRecoveryHandoff Legacy => default;
+
+        public static AuthoredRecoveryHandoff PoseMatched(
+            int animationStateId,
+            float entryPhase) =>
+            new AuthoredRecoveryHandoff(true, animationStateId, entryPhase);
+    }
+
     /// <summary>
     /// Runtime adapter that hands the currently rendered Humanoid pose to PhysX.
     /// Gameplay still owns KO timing; this component owns only visible bone physics,
@@ -38,6 +62,8 @@ namespace Elemental.Runtime.Characters
             new ProfilerMarker("Elemental.Character.RagdollHandoff");
         private static readonly ProfilerMarker PoseMatchedRecoveryMarker =
             new ProfilerMarker("Elemental.Character.PoseMatchedRecovery");
+        private static readonly ProfilerMarker RecoverySupportMarker =
+            new ProfilerMarker("Elemental.Character.RecoverySupport");
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int LegacyColorId = Shader.PropertyToID("_Color");
         private static readonly HumanBodyBones[] HumanBones =
@@ -106,6 +132,10 @@ namespace Elemental.Runtime.Characters
         private readonly float[] _localizedHitAngles = new float[HumanBones.Length];
         private readonly bool[] _localizedHitActive = new bool[HumanBones.Length];
         private readonly Collider[] _recoveryOverlaps = new Collider[16];
+        private readonly RaycastHit[] _recoverySupportHits = new RaycastHit[8];
+        private readonly CharacterSupportCandidate[] _recoverySupportCandidates =
+            new CharacterSupportCandidate[8];
+        private CharacterSupportSelection _liveRecoverySupport;
         private EarthRagdollRecoveryGateState _recoveryGate;
         private readonly EarthPhysicalAnimationCoordinator _physicalAnimationCoordinator =
             new EarthPhysicalAnimationCoordinator();
@@ -159,8 +189,10 @@ namespace Elemental.Runtime.Characters
         public int RecoveryStateHashNextFrame { get; private set; }
         public float RecoveryStatePhaseAfterEvent { get; private set; }
         public float RecoveryStatePhaseNextFrame { get; private set; }
+        public bool RecoveryHasLiveSupport => _liveRecoverySupport.HasSupport;
+        public int RecoverySupportSampleCount { get; private set; }
         public EarthRecoveryResult LastPoseMatchedRecovery => _lastPoseMatchedRecovery;
-        public event Action AuthoredRecoveryBegan;
+        public event Action<AuthoredRecoveryHandoff> AuthoredRecoveryBegan;
 
         private CharacterPhysicalMode CanonicalPhysicalMode =>
             physicalStateOwner != null
@@ -371,6 +403,7 @@ namespace Elemental.Runtime.Characters
                 _poseMatchedRecoveryActive = false;
                 _poseMatchedRecoveryPrepared = CanUsePoseMatchedRecovery();
                 _recoveryGate = default;
+                _liveRecoverySupport = CharacterSupportSelection.None;
                 _recoveryStateValidationPending = false;
                 RecoveryStateVerifiedAfterEvent = false;
                 RecoveryStateVerifiedNextFrame = false;
@@ -605,7 +638,8 @@ namespace Elemental.Runtime.Characters
                         animator.Update(0f);
                     }
                 }
-                if (IsRecoveringToAnimation) AuthoredRecoveryBegan?.Invoke();
+                if (IsRecoveringToAnimation)
+                    AuthoredRecoveryBegan?.Invoke(AuthoredRecoveryHandoff.Legacy);
                 UnityEngine.Physics.SyncTransforms();
             }
         }
@@ -765,6 +799,12 @@ namespace Elemental.Runtime.Characters
                     $"add animation state hash {result.AnimationStateId} to Animator layer 0");
                 return false;
             }
+            if (AuthoredRecoveryBegan == null)
+            {
+                WarnPoseMatchedFallback(
+                    "wire one authored-recovery transition owner before enabling pose matching");
+                return false;
+            }
 
             CharacterPhysicalMode canonicalMode = CharacterPhysicalMode.Recovery;
             if (physicalStateOwner != null)
@@ -871,14 +911,15 @@ namespace Elemental.Runtime.Characters
                 if (animator.enabled)
                 {
                     animator.Rebind();
-                    animator.Play(result.AnimationStateId, 0, result.EntryPhase);
                     animator.Update(0f);
                 }
             }
             _expectedRecoveryStateHash = result.AnimationStateId;
             _expectedRecoveryEntryPhase = result.EntryPhase;
             _recoveryStateSelectionFrame = Time.frameCount;
-            AuthoredRecoveryBegan?.Invoke();
+            AuthoredRecoveryBegan.Invoke(AuthoredRecoveryHandoff.PoseMatched(
+                result.AnimationStateId,
+                result.EntryPhase));
             CaptureRecoveryAnimatorState(
                 out int stateHash,
                 out float statePhase);
@@ -1001,6 +1042,7 @@ namespace Elemental.Runtime.Characters
                 _poseMatchedRecoveryActive = false;
                 _poseMatchedRecoveryPrepared = false;
                 _recoveryStateValidationPending = false;
+                _liveRecoverySupport = CharacterSupportSelection.None;
                 CharacterPhysicalMode canonicalMode = CharacterPhysicalMode.AnimatedMotor;
                 if (physicalStateOwner != null)
                 {
@@ -1324,11 +1366,104 @@ namespace Elemental.Runtime.Characters
 
         private bool HasRecoverySupport()
         {
-            if (motorRootBody == null) return false;
-            PlanetMotor motor = motorRootBody.GetComponent<PlanetMotor>();
-            return motor != null &&
-                   motor.HasStableSupport &&
-                   motor.GroundSupport.HasSupport;
+            using (RecoverySupportMarker.Auto())
+            {
+                RecoverySupportSampleCount++;
+                if (motorRootBody == null)
+                {
+                    _liveRecoverySupport = CharacterSupportSelection.None;
+                    return false;
+                }
+
+                PlanetMotor motor = motorRootBody.GetComponent<PlanetMotor>();
+                CapsuleCollider capsule = motor != null ? motor.Capsule : null;
+                if (motor == null || capsule == null)
+                {
+                    _liveRecoverySupport = CharacterSupportSelection.None;
+                    return false;
+                }
+
+                Vector3 up = ToVector3(_lastPoseMatchedRecovery.RadialUp);
+                if (up.sqrMagnitude < 0.25f) up = motor.LocalUp;
+                if (up.sqrMagnitude < 0.25f) up = motorRootBody.rotation * Vector3.up;
+                up.Normalize();
+                Vector3 scale = capsule.transform.lossyScale;
+                float radius = capsule.radius *
+                               Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z)) * 0.92f;
+                float halfHeight = Mathf.Max(
+                    radius,
+                    capsule.height * 0.5f * Mathf.Abs(scale.y));
+                float centerToBottom = Mathf.Max(0f, halfHeight - radius);
+                Vector3 origin = capsule.transform.TransformPoint(capsule.center);
+                int hitCount = UnityEngine.Physics.SphereCastNonAlloc(
+                    origin,
+                    radius,
+                    -up,
+                    _recoverySupportHits,
+                    centerToBottom + motor.GroundProbeDistance,
+                    motor.GroundMask,
+                    QueryTriggerInteraction.Ignore);
+                if (TrySelectRecoverySupport(
+                        motor,
+                        hitCount,
+                        up,
+                        out CharacterSupportSelection selected))
+                {
+                    _liveRecoverySupport = selected;
+                    return true;
+                }
+
+                hitCount = UnityEngine.Physics.RaycastNonAlloc(
+                    origin,
+                    -up,
+                    _recoverySupportHits,
+                    halfHeight + motor.GroundProbeDistance,
+                    motor.GroundMask,
+                    QueryTriggerInteraction.Ignore);
+                if (TrySelectRecoverySupport(motor, hitCount, up, out selected))
+                {
+                    _liveRecoverySupport = selected;
+                    return true;
+                }
+
+                _liveRecoverySupport = CharacterSupportSelection.None;
+                return false;
+            }
+        }
+
+        private bool TrySelectRecoverySupport(
+            PlanetMotor motor,
+            int hitCount,
+            Vector3 up,
+            out CharacterSupportSelection selected)
+        {
+            int candidateCount = 0;
+            int safeHitCount = Mathf.Min(hitCount, _recoverySupportHits.Length);
+            for (int hitIndex = 0; hitIndex < safeHitCount; hitIndex++)
+            {
+                RaycastHit hit = _recoverySupportHits[hitIndex];
+                if (hit.collider == null ||
+                    hit.collider == motor.Capsule ||
+                    hit.rigidbody == motor.Body ||
+                    (physicalStateOwner != null &&
+                     physicalStateOwner.OwnsCollider(hit.collider)))
+                    continue;
+
+                _recoverySupportCandidates[candidateCount] =
+                    CharacterSupportRuntimeAdapter.Classify(
+                        hit.collider,
+                        hit.distance,
+                        Vector3.Dot(hit.normal, up));
+                candidateCount++;
+            }
+
+            selected = CharacterSupportAuthority.Select(
+                _recoverySupportCandidates,
+                candidateCount,
+                in _liveRecoverySupport,
+                Mathf.Cos(motor.MaximumSlopeAngle * Mathf.Deg2Rad),
+                motor.GroundContactSkin);
+            return selected.HasSupport;
         }
 
         private void UpdatePoseMatchedRecoveryOwnership()
@@ -1398,6 +1533,7 @@ namespace Elemental.Runtime.Characters
             IsRecoveringToAnimation = false;
             _poseMatchedRecoveryActive = false;
             _poseMatchedRecoveryPrepared = false;
+            _liveRecoverySupport = CharacterSupportSelection.None;
         }
 
         private void PrepareRecoveryInterruptionForRagdoll()
@@ -1410,6 +1546,7 @@ namespace Elemental.Runtime.Characters
             _poseMatchedRecoveryPrepared = false;
             UsedPoseMatchedRecovery = false;
             _recoveryStateValidationPending = false;
+            _liveRecoverySupport = CharacterSupportSelection.None;
         }
 
         private void ValidateRecoveryStateNextFrame()
@@ -1425,7 +1562,7 @@ namespace Elemental.Runtime.Characters
             RecoveryStateVerifiedNextFrame = IsExpectedRecoveryState(
                 stateHash,
                 statePhase,
-                0.2f);
+                0.08f);
             if (!RecoveryStateVerifiedNextFrame)
                 Debug.LogError(
                     $"[Elemental] Recovery state {_expectedRecoveryStateHash} at phase " +
