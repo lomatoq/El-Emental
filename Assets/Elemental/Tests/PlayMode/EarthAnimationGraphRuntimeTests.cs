@@ -147,7 +147,6 @@ namespace Elemental.Tests.PlayMode
             int globalGcFramesOverZero = 0;
             long globalMaximumGcBytes = 0L;
             int graphMarkerFrames = 0;
-            var endOfFrame = new WaitForEndOfFrame();
             ProfilerRecorderOptions recorderOptions =
                 ProfilerRecorderOptions.WrapAroundWhenCapacityReached |
                 ProfilerRecorderOptions.SumAllSamplesInFrame;
@@ -160,13 +159,16 @@ namespace Elemental.Tests.PlayMode
             try
             {
                 graphUpdateRecorder.Start();
-                yield return endOfFrame;
+                // A null yield advances one complete player loop in both headed
+                // and batchmode test runs. WaitForEndOfFrame is not scheduled in
+                // batchmode and therefore cannot be used for Gate-1 evidence.
+                yield return null;
                 _ = graphUpdateRecorder.LastValue;
                 graph.ResetHotPathEvidence();
                 long gcWindowStart = GC.GetAllocatedBytesForCurrentThread();
                 for (int frame = 0; frame < evidenceFrameCount; frame++)
                 {
-                    yield return endOfFrame;
+                    yield return null;
                     long gcWindowEnd = GC.GetAllocatedBytesForCurrentThread();
                     long frameAllocatedBytes = Math.Max(0L, gcWindowEnd - gcWindowStart);
                     if (frameAllocatedBytes > 0L) globalGcFramesOverZero++;
