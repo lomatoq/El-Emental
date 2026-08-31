@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using Elemental.Presentation.Animation;
 using Elemental.Runtime.Characters;
 using Elemental.Simulation.Characters;
@@ -221,11 +222,16 @@ namespace Elemental.Tests.EditMode
 
                 PlayableGraph activeGraph = graph.ControllerPlayable.GetGraph();
                 Assert.That(activeGraph.IsValid(), Is.True);
-                UnityEngine.Object.DestroyImmediate(graph);
+                MethodInfo teardown = typeof(EarthAnimationGraph).GetMethod(
+                    "OnDestroy",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(teardown, Is.Not.Null);
+                teardown.Invoke(graph, null);
                 Assert.That(activeGraph.IsValid(), Is.False,
-                    "Explicit EditMode destruction must invalidate every graph handle.");
+                    "Explicit teardown must invalidate every graph handle.");
                 Assert.That(legacyRigBuilder.enabled, Is.True,
                     "Disposal must restore legacy RigBuilder ownership without stale graph handles.");
+                UnityEngine.Object.DestroyImmediate(graph);
             }
             finally
             {
