@@ -12,6 +12,8 @@ namespace Elemental.Presentation.Animation
 
     public static class SecondaryBoneSpringSolver
     {
+        private const float MaximumSubstepSeconds = 1f / 120f;
+
         public static SecondaryBoneSpringState Step(
             SecondaryBoneSpringState state,
             Vector2 targetDegrees,
@@ -29,19 +31,30 @@ namespace Elemental.Presentation.Animation
                 return state;
             }
 
+            // The old one-step integration became underdamped after render hitches
+            // and could kick a belt or helmet tail far outside its authored arc.
+            // Small deterministic substeps keep the same spring feel stable from
+            // 30 Hz through high-refresh play without frame-rate-specific tuning.
+            int steps = Mathf.Clamp(Mathf.CeilToInt(dt / MaximumSubstepSeconds), 1, 8);
+            float step = dt / steps;
             float omega = 2f * Mathf.PI * frequencyHz;
-            Vector2 acceleration =
-                (targetDegrees - state.AngleDegrees) * (omega * omega) -
-                state.AngularVelocity * (2f * Mathf.Max(0f, dampingRatio) * omega);
-            state.AngularVelocity += acceleration * dt;
-            state.AngleDegrees += state.AngularVelocity * dt;
+            float damping = 2f * Mathf.Max(0f, dampingRatio) * omega;
+            for (int index = 0; index < steps; index++)
+            {
+                Vector2 acceleration =
+                    (targetDegrees - state.AngleDegrees) * (omega * omega) -
+                    state.AngularVelocity * damping;
+                state.AngularVelocity += acceleration * step;
+                state.AngleDegrees += state.AngularVelocity * step;
 
-            float magnitude = state.AngleDegrees.magnitude;
-            if (magnitude <= maximum || magnitude <= 0.0001f) return state;
-            Vector2 normal = state.AngleDegrees / magnitude;
-            state.AngleDegrees = normal * maximum;
-            float outwardVelocity = Vector2.Dot(state.AngularVelocity, normal);
-            if (outwardVelocity > 0f) state.AngularVelocity -= normal * outwardVelocity;
+                float magnitude = state.AngleDegrees.magnitude;
+                if (magnitude <= maximum || magnitude <= 0.0001f) continue;
+                Vector2 normal = state.AngleDegrees / magnitude;
+                state.AngleDegrees = normal * maximum;
+                float outwardVelocity = Vector2.Dot(state.AngularVelocity, normal);
+                if (outwardVelocity > 0f)
+                    state.AngularVelocity -= normal * outwardVelocity;
+            }
             return state;
         }
     }
@@ -61,7 +74,9 @@ namespace Elemental.Presentation.Animation
                 BindRotations = new Quaternion[count];
                 Springs = new SecondaryBoneSpringState[count];
                 for (int index = 0; index < count; index++)
-                    BindRotations[index] = bones[index] != null ? bones[index].localRotation : Quaternion.identity;
+                    BindRotations[index] = bones[index] != null
+                        ? bones[index].localRotation
+                        : Quaternion.identity;
             }
 
             public void ResetDynamics(Transform[] bones)
@@ -74,11 +89,15 @@ namespace Elemental.Presentation.Animation
                 }
                 Springs = new SecondaryBoneSpringState[count];
                 for (int index = 0; index < count; index++)
-                    if (bones[index] != null) bones[index].localRotation = BindRotations[index];
+                    if (bones[index] != null)
+                        bones[index].localRotation = BindRotations[index];
             }
         }
 
         [SerializeField] private Animator animator;
+        [SerializeField] private Rigidbody motionSourceBody;
+        [SerializeField] private Transform helmetAnchor;
+        [SerializeField] private Transform hairLock;
         [SerializeField] private Transform[] tailBones = Array.Empty<Transform>();
         [SerializeField] private Transform[] leftBeltBones = Array.Empty<Transform>();
         [SerializeField] private Transform[] rightBeltBones = Array.Empty<Transform>();
@@ -97,17 +116,32 @@ namespace Elemental.Presentation.Animation
         private Vector3 _previousVelocity;
         private Vector3 _filteredLocalAcceleration;
         private bool _hasKinematicSample;
+        private Vector3 _hairBindLocalPosition;
+        private Quaternion _hairBindLocalRotation = Quaternion.identity;
+        private Vector3 _hairBindLocalScale = Vector3.one;
+        private bool _hasHairBind;
 
         public int TailBoneCount => tailBones != null ? tailBones.Length : 0;
         public int BeltBoneCount =>
             (leftBeltBones != null ? leftBeltBones.Length : 0) +
             (rightBeltBones != null ? rightBeltBones.Length : 0);
-        public bool IsConfigured => TailBoneCount == 3 && BeltBoneCount == 4;
+        public bool IsConfigured =>
+            HasEveryBone(tailBones, 3) &&
+            HasEveryBone(leftBeltBones, 2) &&
+            HasEveryBone(rightBeltBones, 2);
+        public bool HasHelmetHairLock => helmetAnchor != null && hairLock != null &&
+                                         hairLock.parent == helmetAnchor;
+        public bool HasValidSecondaryHierarchy => IsConfigured &&
+                                                  HasExpectedChain(tailBones, helmetAnchor) &&
+                                                  HasExpectedChain(leftBeltBones, null) &&
+                                                  HasExpectedChain(rightBeltBones, null);
 
         public void ConfigureFromHierarchy(Animator configuredAnimator)
         {
             animator = configuredAnimator;
             Transform searchRoot = animator != null ? animator.transform : transform;
+            helmetAnchor = FindBone(searchRoot, "Secondary_HelmetAnchor");
+            hairLock = FindBone(searchRoot, "Secondary_HairLock");
             tailBones = FindBones(searchRoot,
                 "Secondary_Tail_01", "Secondary_Tail_02", "Secondary_Tail_03");
             leftBeltBones = FindBones(searchRoot,
@@ -120,8 +154,18 @@ namespace Elemental.Presentation.Animation
         private void Awake()
         {
             if (animator == null) animator = GetComponentInChildren<Animator>(true);
+            if (motionSourceBody == null) motionSourceBody = GetComponentInParent<Rigidbody>();
             if (!IsConfigured) ConfigureFromHierarchy(animator);
-            else CaptureBindPose();
+            else
+            {
+                if (helmetAnchor == null)
+                    helmetAnchor = FindBone(animator != null ? animator.transform : transform,
+                        "Secondary_HelmetAnchor");
+                if (hairLock == null)
+                    hairLock = FindBone(animator != null ? animator.transform : transform,
+                        "Secondary_HairLock");
+                CaptureBindPose();
+            }
         }
 
         private void OnEnable()
@@ -138,11 +182,17 @@ namespace Elemental.Presentation.Animation
             if (dt <= 0.0001f) return;
 
             Vector3 position = transform.position;
+            Vector3 sampledVelocity = motionSourceBody != null
+                ? motionSourceBody.linearVelocity
+                : Vector3.zero;
             if (!_hasKinematicSample)
             {
                 _previousPosition = position;
-                _previousVelocity = Vector3.zero;
+                _previousVelocity = motionSourceBody != null
+                    ? sampledVelocity
+                    : Vector3.zero;
                 _hasKinematicSample = true;
+                EnforceHairLock();
                 return;
             }
 
@@ -151,16 +201,27 @@ namespace Elemental.Presentation.Animation
             {
                 ResetDynamics();
                 _previousPosition = position;
-                _previousVelocity = Vector3.zero;
+                _previousVelocity = motionSourceBody != null
+                    ? sampledVelocity
+                    : Vector3.zero;
+                EnforceHairLock();
                 return;
             }
 
-            Vector3 velocity = displacement / dt;
+            Vector3 velocity = motionSourceBody != null
+                ? sampledVelocity
+                : displacement / dt;
             Vector3 worldAcceleration = (velocity - _previousVelocity) / dt;
-            worldAcceleration = Vector3.ClampMagnitude(worldAcceleration, maximumSampledAcceleration);
+            worldAcceleration = Vector3.ClampMagnitude(
+                worldAcceleration,
+                maximumSampledAcceleration);
             Vector3 localAcceleration = transform.InverseTransformDirection(worldAcceleration);
-            float filter = 1f - Mathf.Exp(-dt / Mathf.Max(0.001f, accelerationFilterSeconds));
-            _filteredLocalAcceleration = Vector3.Lerp(_filteredLocalAcceleration, localAcceleration, filter);
+            float filter = 1f - Mathf.Exp(
+                -dt / Mathf.Max(0.001f, accelerationFilterSeconds));
+            _filteredLocalAcceleration = Vector3.Lerp(
+                _filteredLocalAcceleration,
+                localAcceleration,
+                filter);
 
             // Acceleration is converted only into presentation rotation. It never feeds
             // movement, collision, hit response or the Animator state machine.
@@ -170,6 +231,7 @@ namespace Elemental.Presentation.Animation
             ApplyChain(tailBones, _tail, inertialTarget * 0.78f, maximumTailAngle, dt);
             ApplyChain(leftBeltBones, _leftBelt, inertialTarget, maximumBeltAngle, dt);
             ApplyChain(rightBeltBones, _rightBelt, inertialTarget, maximumBeltAngle, dt);
+            EnforceHairLock();
 
             _previousPosition = position;
             _previousVelocity = velocity;
@@ -180,6 +242,17 @@ namespace Elemental.Presentation.Animation
             _tail.CaptureBindPose(tailBones);
             _leftBelt.CaptureBindPose(leftBeltBones);
             _rightBelt.CaptureBindPose(rightBeltBones);
+            if (hairLock != null)
+            {
+                _hairBindLocalPosition = hairLock.localPosition;
+                _hairBindLocalRotation = hairLock.localRotation;
+                _hairBindLocalScale = hairLock.localScale;
+                _hasHairBind = true;
+            }
+            else
+            {
+                _hasHairBind = false;
+            }
             ResetDynamics();
         }
 
@@ -190,6 +263,15 @@ namespace Elemental.Presentation.Animation
             _rightBelt.ResetDynamics(rightBeltBones);
             _filteredLocalAcceleration = Vector3.zero;
             _hasKinematicSample = false;
+            EnforceHairLock();
+        }
+
+        private void EnforceHairLock()
+        {
+            if (!_hasHairBind || hairLock == null) return;
+            hairLock.localPosition = _hairBindLocalPosition;
+            hairLock.localRotation = _hairBindLocalRotation;
+            hairLock.localScale = _hairBindLocalScale;
         }
 
         private void ApplyChain(
@@ -199,7 +281,8 @@ namespace Elemental.Presentation.Animation
             float maximumAngle,
             float deltaTime)
         {
-            if (bones == null || chain.Springs.Length != bones.Length) return;
+            if (bones == null || bones.Length == 0 || chain.Springs.Length != bones.Length)
+                return;
             float weightSum = 0f;
             for (int index = 0; index < bones.Length; index++)
                 weightSum += Mathf.Lerp(0.42f, 1f, (index + 1f) / bones.Length);
@@ -220,8 +303,26 @@ namespace Elemental.Presentation.Animation
                     maximumAngle * tipWeight,
                     deltaTime);
                 Vector2 angle = chain.Springs[index].AngleDegrees;
-                bone.localRotation = chain.BindRotations[index] * Quaternion.Euler(angle.x, 0f, angle.y);
+                bone.localRotation = chain.BindRotations[index] *
+                                     Quaternion.Euler(angle.x, 0f, angle.y);
             }
+        }
+
+        private static bool HasEveryBone(Transform[] bones, int expectedCount)
+        {
+            if (bones == null || bones.Length != expectedCount) return false;
+            for (int index = 0; index < bones.Length; index++)
+                if (bones[index] == null) return false;
+            return true;
+        }
+
+        private static bool HasExpectedChain(Transform[] bones, Transform expectedRootParent)
+        {
+            if (bones == null || bones.Length == 0) return false;
+            if (expectedRootParent != null && bones[0].parent != expectedRootParent) return false;
+            for (int index = 1; index < bones.Length; index++)
+                if (bones[index].parent != bones[index - 1]) return false;
+            return true;
         }
 
         private static Transform[] FindBones(Transform root, params string[] names)
@@ -237,6 +338,15 @@ namespace Elemental.Presentation.Animation
                         break;
                     }
             return result;
+        }
+
+        private static Transform FindBone(Transform root, string name)
+        {
+            if (root == null) return null;
+            Transform[] candidates = root.GetComponentsInChildren<Transform>(true);
+            for (int index = 0; index < candidates.Length; index++)
+                if (candidates[index].name == name) return candidates[index];
+            return null;
         }
     }
 }
