@@ -357,9 +357,12 @@ namespace Elemental.Tests.PlayMode
             Animator animator)
         {
             AnimatorControllerParameter[] parameters = animator.parameters;
+            int testedParameterCount = 0;
             for (int index = 0; index < parameters.Length; index++)
             {
                 AnimatorControllerParameter parameter = parameters[index];
+                if (!IsTestableControllerParameter(animator, parameter)) continue;
+                testedParameterCount++;
                 int hash = parameter.nameHash;
                 switch (parameter.type)
                 {
@@ -377,6 +380,8 @@ namespace Elemental.Tests.PlayMode
                         break;
                 }
             }
+            Assert.That(testedParameterCount, Is.GreaterThan(0),
+                "The canonical controller must expose a writable float, int, or bool parameter.");
         }
 
         private static void SetDistinctPlayableParameters(
@@ -384,9 +389,12 @@ namespace Elemental.Tests.PlayMode
             Animator animator)
         {
             AnimatorControllerParameter[] parameters = animator.parameters;
+            int testedParameterCount = 0;
             for (int index = 0; index < parameters.Length; index++)
             {
                 AnimatorControllerParameter parameter = parameters[index];
+                if (!IsTestableControllerParameter(animator, parameter)) continue;
+                testedParameterCount++;
                 switch (parameter.type)
                 {
                     case AnimatorControllerParameterType.Float:
@@ -400,14 +408,19 @@ namespace Elemental.Tests.PlayMode
                         break;
                 }
             }
+            Assert.That(testedParameterCount, Is.GreaterThan(0),
+                "The canonical controller must expose a writable float, int, or bool parameter.");
         }
 
         private static void AssertAnimatorParametersHavePlayableValues(Animator animator)
         {
             AnimatorControllerParameter[] parameters = animator.parameters;
+            int testedParameterCount = 0;
             for (int index = 0; index < parameters.Length; index++)
             {
                 AnimatorControllerParameter parameter = parameters[index];
+                if (!IsTestableControllerParameter(animator, parameter)) continue;
+                testedParameterCount++;
                 switch (parameter.type)
                 {
                     case AnimatorControllerParameterType.Float:
@@ -422,6 +435,18 @@ namespace Elemental.Tests.PlayMode
                         break;
                 }
             }
+            Assert.That(testedParameterCount, Is.GreaterThan(0),
+                "The canonical controller must expose a writable float, int, or bool parameter.");
+        }
+
+        private static bool IsTestableControllerParameter(
+            Animator animator,
+            AnimatorControllerParameter parameter)
+        {
+            bool supported = parameter.type == AnimatorControllerParameterType.Float ||
+                             parameter.type == AnimatorControllerParameterType.Int ||
+                             parameter.type == AnimatorControllerParameterType.Bool;
+            return supported && !animator.IsParameterControlledByCurve(parameter.nameHash);
         }
 
         private static void AssertAnimatorParametersHavePlayableValues(
