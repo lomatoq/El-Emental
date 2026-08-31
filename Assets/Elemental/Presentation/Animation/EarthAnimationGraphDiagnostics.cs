@@ -25,7 +25,8 @@ namespace Elemental.Presentation.Animation
         MissingController = 3,
         GraphBuildFailed = 4,
         ComponentDisabled = 5,
-        InvalidTopology = 6
+        InvalidTopology = 6,
+        EnableDeferredForTransition = 7
     }
 
     public readonly struct EarthAnimationGraphDiagnostics
@@ -36,6 +37,8 @@ namespace Elemental.Presentation.Animation
             bool animationScriptPlayableValid,
             bool topologyValid,
             bool rigLayersAppended,
+            int rigOutputCount,
+            bool rigOutputsUsePreviousInputs,
             bool legacyFallbackActive,
             EarthAnimationGraphFallbackReason fallbackReason,
             int trackedBoneCount,
@@ -44,13 +47,19 @@ namespace Elemental.Presentation.Animation
             bool inertiaActive,
             float inertiaElapsedSeconds,
             float maximumPositionOffset,
-            float maximumRotationOffsetRadians)
+            float maximumRotationOffsetRadians,
+            bool runtimeEnablePending,
+            bool runtimeDisablePending,
+            bool poseDisablePending,
+            uint stateHandoffCount)
         {
             GraphValid = graphValid;
             ControllerPlayableValid = controllerPlayableValid;
             AnimationScriptPlayableValid = animationScriptPlayableValid;
             TopologyValid = topologyValid;
             RigLayersAppended = rigLayersAppended;
+            RigOutputCount = rigOutputCount;
+            RigOutputsUsePreviousInputs = rigOutputsUsePreviousInputs;
             LegacyFallbackActive = legacyFallbackActive;
             FallbackReason = fallbackReason;
             TrackedBoneCount = trackedBoneCount;
@@ -60,6 +69,10 @@ namespace Elemental.Presentation.Animation
             InertiaElapsedSeconds = inertiaElapsedSeconds;
             MaximumPositionOffset = maximumPositionOffset;
             MaximumRotationOffsetRadians = maximumRotationOffsetRadians;
+            RuntimeEnablePending = runtimeEnablePending;
+            RuntimeDisablePending = runtimeDisablePending;
+            PoseDisablePending = poseDisablePending;
+            StateHandoffCount = stateHandoffCount;
         }
 
         public bool GraphValid { get; }
@@ -67,6 +80,8 @@ namespace Elemental.Presentation.Animation
         public bool AnimationScriptPlayableValid { get; }
         public bool TopologyValid { get; }
         public bool RigLayersAppended { get; }
+        public int RigOutputCount { get; }
+        public bool RigOutputsUsePreviousInputs { get; }
         public bool LegacyFallbackActive { get; }
         public EarthAnimationGraphFallbackReason FallbackReason { get; }
         public int TrackedBoneCount { get; }
@@ -76,6 +91,10 @@ namespace Elemental.Presentation.Animation
         public float InertiaElapsedSeconds { get; }
         public float MaximumPositionOffset { get; }
         public float MaximumRotationOffsetRadians { get; }
+        public bool RuntimeEnablePending { get; }
+        public bool RuntimeDisablePending { get; }
+        public bool PoseDisablePending { get; }
+        public uint StateHandoffCount { get; }
     }
 
     public struct EarthAnimationGraphControl

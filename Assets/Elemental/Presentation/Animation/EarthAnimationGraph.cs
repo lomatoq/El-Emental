@@ -1,9 +1,11 @@
 using System;
 using Elemental.Runtime.Characters;
+using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Animations.Rigging;
+using UnityEngine.Experimental.Animations;
 using UnityEngine.Playables;
 
 namespace Elemental.Presentation.Animation
@@ -21,6 +23,9 @@ namespace Elemental.Presentation.Animation
             new ProfilerMarker("Elemental.Character.AnimationGraph");
         private static readonly ProfilerMarker TransitionMarker =
             new ProfilerMarker("Elemental.Character.PoseInertialization.Begin");
+        private static readonly ProfilerMarker CaptureMarker =
+            new ProfilerMarker("Elemental.Character.AnimationGraph.Capture");
+        public const int CaptureFrameCapacity = 720;
 
         [SerializeField] private Animator animator;
         [SerializeField] private EarthAnimationGraphProfile profile;
@@ -34,20 +39,41 @@ namespace Elemental.Presentation.Animation
         private EarthPoseHistory _poseHistory;
         private RigBuilder _rigBuilder;
         private EarthAnimationGraphSettings _settings;
+        private EarthAnimationGraphSettings _activeSettings;
         private bool _configured;
         private bool _rigLayersAppended;
+        private int _rigOutputStartIndex;
+        private int _rigOutputCount;
         private bool _legacyRigBuilderWasEnabled;
         private bool _leftHandContact;
         private bool _rightHandContact;
         private AnimatorControllerParameter[] _controllerParameters;
+        private AnimatorStateInfo[] _handoffStates = Array.Empty<AnimatorStateInfo>();
+        private float[] _handoffLayerWeights = Array.Empty<float>();
+        private bool[] _handoffStateValid = Array.Empty<bool>();
+        private bool _runtimeEnablePending;
+        private bool _runtimeDisablePending;
+        private bool _poseDisablePending;
+        private uint _stateHandoffCount;
+        private readonly EarthAnimationGraphCaptureSample[] _captureFrames =
+            new EarthAnimationGraphCaptureSample[CaptureFrameCapacity];
+        private int _captureWriteIndex;
+        private int _captureCount;
         private EarthAnimationGraphFallbackReason _fallbackReason =
             EarthAnimationGraphFallbackReason.FeatureDisabled;
 
         public bool IsActive => _graph.IsValid() && _controllerPlayable.IsValid() &&
                                 _inertializationPlayable.IsValid();
-        public bool UsePoseInertialization => IsActive && _settings.UsePoseInertialization;
+        public bool UsePoseInertialization => IsActive &&
+                                              _settings.UsePlayablesAnimationGraph &&
+                                              _settings.UsePoseInertialization &&
+                                              !_runtimeDisablePending;
         public AnimatorControllerPlayable ControllerPlayable => _controllerPlayable;
         public EarthAnimationGraphProfile Profile => profile;
+        public int CapturedFrameCount => _captureCount;
+        public EarthAnimationGraphCaptureSample LatestCaptureSample => _captureCount > 0
+            ? _captureFrames[(_captureWriteIndex - 1 + CaptureFrameCapacity) % CaptureFrameCapacity]
+            : default;
 
         public EarthAnimationGraphDiagnostics Diagnostics
         {
@@ -63,6 +89,8 @@ namespace Elemental.Presentation.Animation
                     _inertializationPlayable.IsValid(),
                     ValidateTopology(),
                     _rigLayersAppended,
+                    _rigOutputCount,
+                    _rigLayersAppended && ValidateRigOutputs(),
                     !IsActive,
                     _fallbackReason,
                     _poseHistory?.BoneCount ?? 0,
@@ -71,7 +99,11 @@ namespace Elemental.Presentation.Animation
                     job.InertiaActive != 0,
                     job.ElapsedSeconds,
                     job.MaximumPositionOffset,
-                    job.MaximumRotationOffsetRadians);
+                    job.MaximumRotationOffsetRadians,
+                    _runtimeEnablePending,
+                    _runtimeDisablePending,
+                    _poseDisablePending,
+                    _stateHandoffCount);
             }
         }
 
@@ -87,7 +119,7 @@ namespace Elemental.Presentation.Animation
             visibleRagdoll = configuredVisibleRagdoll;
             _settings = profile != null ? profile.Settings : EarthAnimationGraphSettings.Disabled;
             _configured = true;
-            return ApplyFeatureState();
+            return ApplyRequestedSettings();
         }
 
         public bool Configure(
@@ -102,7 +134,7 @@ namespace Elemental.Presentation.Animation
             visibleRagdoll = configuredVisibleRagdoll;
             _settings = settings;
             _configured = true;
-            return ApplyFeatureState();
+            return ApplyRequestedSettings();
         }
 
         public void SetHandContactOwnership(bool leftActive, bool rightActive)
@@ -202,7 +234,7 @@ namespace Elemental.Presentation.Animation
 
         private void OnEnable()
         {
-            if (_configured) ApplyFeatureState();
+            if (_configured) ApplyRequestedSettings();
         }
 
         private void Update()
@@ -212,38 +244,162 @@ namespace Elemental.Presentation.Animation
                 if (profile != null)
                 {
                     EarthAnimationGraphSettings current = profile.Settings;
-                    bool graphFlagChanged = current.UsePlayablesAnimationGraph !=
-                                            _settings.UsePlayablesAnimationGraph;
-                    _settings = current;
-                    if (graphFlagChanged) ApplyFeatureState();
+                    if (!SettingsEqual(in current, in _settings))
+                    {
+                        _settings = current;
+                        ApplyRequestedSettings();
+                    }
                 }
 
+                if (_runtimeEnablePending)
+                {
+                    if (!IsLegacyAnimatorTransitioning())
+                    {
+                        _runtimeEnablePending = false;
+                        TryBuildGraph();
+                    }
+                    if (!IsActive) return;
+                }
                 if (!IsActive) return;
                 MirrorAnimatorControllerInputs();
-                RefreshControlSettings();
                 UpdateOwnershipMask();
                 if (_rigLayersAppended && _rigBuilder != null) _rigBuilder.SyncLayers();
+                if (_poseDisablePending && !IsInertiaActive())
+                {
+                    _poseDisablePending = false;
+                    _activeSettings = _settings;
+                }
+                RefreshControlSettings();
+                if (_runtimeDisablePending && CanShutdownContinuously())
+                {
+                    _runtimeDisablePending = false;
+                    ShutdownGraph(
+                        true,
+                        EarthAnimationGraphFallbackReason.FeatureDisabled,
+                        true);
+                }
             }
         }
 
         private void OnDisable()
         {
-            ShutdownGraph(true, EarthAnimationGraphFallbackReason.ComponentDisabled);
+            ShutdownGraph(true, EarthAnimationGraphFallbackReason.ComponentDisabled, true);
+        }
+
+        private void LateUpdate()
+        {
+            using (CaptureMarker.Auto())
+            {
+                EarthAnimationGraphDiagnostics diagnostics = Diagnostics;
+                _captureFrames[_captureWriteIndex] = new EarthAnimationGraphCaptureSample(
+                    Time.frameCount,
+                    Time.unscaledTime,
+                    in diagnostics);
+                _captureWriteIndex = (_captureWriteIndex + 1) % CaptureFrameCapacity;
+                if (_captureCount < CaptureFrameCapacity) _captureCount++;
+            }
         }
 
         private void OnDestroy()
         {
-            ShutdownGraph(true, EarthAnimationGraphFallbackReason.ComponentDisabled);
+            ShutdownGraph(true, EarthAnimationGraphFallbackReason.ComponentDisabled, false);
         }
 
-        private bool ApplyFeatureState()
+        private bool ApplyRequestedSettings()
         {
             if (!_settings.UsePlayablesAnimationGraph)
             {
-                ShutdownGraph(true, EarthAnimationGraphFallbackReason.FeatureDisabled);
+                _runtimeEnablePending = false;
+                _poseDisablePending = false;
+                if (IsActive && !CanShutdownContinuously())
+                {
+                    _runtimeDisablePending = true;
+                    return false;
+                }
+                _runtimeDisablePending = false;
+                ShutdownGraph(true, EarthAnimationGraphFallbackReason.FeatureDisabled, true);
                 return false;
             }
-            return IsActive || TryBuildGraph();
+            _runtimeDisablePending = false;
+            if (IsActive)
+            {
+                if (_activeSettings.UsePoseInertialization &&
+                    !_settings.UsePoseInertialization && IsInertiaActive())
+                {
+                    _poseDisablePending = true;
+                }
+                else
+                {
+                    _poseDisablePending = false;
+                    _activeSettings = _settings;
+                }
+                RefreshControlSettings();
+                return true;
+            }
+            if (IsLegacyAnimatorTransitioning())
+            {
+                _runtimeEnablePending = true;
+                _fallbackReason = EarthAnimationGraphFallbackReason.EnableDeferredForTransition;
+                return false;
+            }
+            _runtimeEnablePending = false;
+            _activeSettings = _settings;
+            return TryBuildGraph();
+        }
+
+        public int CopyRecentCaptureSamplesNonAlloc(
+            EarthAnimationGraphCaptureSample[] destination)
+        {
+            if (destination == null) throw new ArgumentNullException(nameof(destination));
+            int copyCount = Math.Min(destination.Length, _captureCount);
+            int sourceIndex = (_captureWriteIndex - copyCount + CaptureFrameCapacity) %
+                              CaptureFrameCapacity;
+            for (int index = 0; index < copyCount; index++)
+                destination[index] = _captureFrames[(sourceIndex + index) % CaptureFrameCapacity];
+            return copyCount;
+        }
+
+        public EarthAnimationGraphCaptureSummary GetCaptureSummary()
+        {
+            int graphActiveFrames = 0;
+            int topologyFailureFrames = 0;
+            int legacyFallbackFrames = 0;
+            int inertiaActiveFrames = 0;
+            int pendingHandoffFrames = 0;
+            float maximumPositionOffset = 0f;
+            float maximumRotationOffset = 0f;
+            uint finalStateHandoffCount = 0;
+            int first = (_captureWriteIndex - _captureCount + CaptureFrameCapacity) %
+                        CaptureFrameCapacity;
+            for (int index = 0; index < _captureCount; index++)
+            {
+                EarthAnimationGraphCaptureSample sample =
+                    _captureFrames[(first + index) % CaptureFrameCapacity];
+                if (sample.GraphValid) graphActiveFrames++;
+                if (sample.GraphValid && !sample.TopologyValid) topologyFailureFrames++;
+                if (sample.LegacyFallbackActive) legacyFallbackFrames++;
+                if (sample.InertiaActive) inertiaActiveFrames++;
+                if (sample.RuntimeEnablePending || sample.RuntimeDisablePending ||
+                    sample.PoseDisablePending)
+                    pendingHandoffFrames++;
+                maximumPositionOffset = Mathf.Max(
+                    maximumPositionOffset,
+                    sample.MaximumPositionOffset);
+                maximumRotationOffset = Mathf.Max(
+                    maximumRotationOffset,
+                    sample.MaximumRotationOffsetRadians);
+                finalStateHandoffCount = sample.StateHandoffCount;
+            }
+            return new EarthAnimationGraphCaptureSummary(
+                _captureCount,
+                graphActiveFrames,
+                topologyFailureFrames,
+                legacyFallbackFrames,
+                inertiaActiveFrames,
+                pendingHandoffFrames,
+                maximumPositionOffset,
+                maximumRotationOffset,
+                finalStateHandoffCount);
         }
 
         private bool TryBuildGraph()
@@ -254,7 +410,8 @@ namespace Elemental.Presentation.Animation
             if (controller == null)
                 return FailToLegacy(EarthAnimationGraphFallbackReason.MissingController, null);
 
-            ShutdownGraph(true, EarthAnimationGraphFallbackReason.None);
+            CaptureAnimatorHandoffState();
+            ShutdownGraph(true, EarthAnimationGraphFallbackReason.None, false);
             try
             {
                 _rigBuilder = animator.GetComponent<RigBuilder>();
@@ -268,12 +425,14 @@ namespace Elemental.Presentation.Animation
                 int boneCount = CountBoundBones(animator);
                 _poseHistory = new EarthPoseHistory(boneCount);
                 BindBones(animator, _poseHistory);
+                _activeSettings = _settings;
                 RefreshControlSettings();
 
                 _graph = PlayableGraph.Create($"{animator.gameObject.name}_EarthAnimationGraph");
                 _graph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
                 _controllerPlayable = AnimatorControllerPlayable.Create(_graph, controller);
-                _controllerParameters = animator.parameters;
+                CacheControllerParameters();
+                ApplyAnimatorStateToControllerPlayable();
                 _inertializationPlayable = AnimationScriptPlayable.Create(
                     _graph,
                     _poseHistory.CreateJob(),
@@ -289,13 +448,20 @@ namespace Elemental.Presentation.Animation
                 _baseOutput.SetWeight(1f);
                 _baseOutput.SetSortingOrder(0);
 
-                _rigLayersAppended = _rigBuilder != null &&
-                                     _rigBuilder.layers.Count > 0 &&
-                                     _rigBuilder.Build(_graph);
+                _rigOutputStartIndex = _graph.GetOutputCount();
+                bool rigLayersRequested = _rigBuilder != null && _rigBuilder.layers.Count > 0;
+                bool rigBuildSucceeded = rigLayersRequested && _rigBuilder.Build(_graph);
+                _rigOutputCount = _graph.GetOutputCount() - _rigOutputStartIndex;
+                _rigLayersAppended = rigBuildSucceeded && _rigOutputCount > 0;
+                RequestInitialPoseContinuity();
                 _graph.Play();
                 _fallbackReason = EarthAnimationGraphFallbackReason.None;
-                return ValidateTopology() ||
-                       FailToLegacy(EarthAnimationGraphFallbackReason.InvalidTopology, null);
+                if (!ValidateTopology())
+                    return FailToLegacy(
+                        EarthAnimationGraphFallbackReason.InvalidTopology,
+                        null);
+                _stateHandoffCount++;
+                return true;
             }
             catch (Exception exception)
             {
@@ -305,7 +471,7 @@ namespace Elemental.Presentation.Animation
 
         private bool FailToLegacy(EarthAnimationGraphFallbackReason reason, Exception exception)
         {
-            ShutdownGraph(true, reason);
+            ShutdownGraph(true, reason, false);
             string detail = exception != null ? $": {exception.Message}" : string.Empty;
             Debug.LogWarning(
                 $"Earth animation graph fell back to legacy Animator ({reason}){detail}",
@@ -313,8 +479,12 @@ namespace Elemental.Presentation.Animation
             return false;
         }
 
-        private void ShutdownGraph(bool restoreLegacyRig, EarthAnimationGraphFallbackReason reason)
+        private void ShutdownGraph(
+            bool restoreLegacyRig,
+            EarthAnimationGraphFallbackReason reason,
+            bool preserveControllerState)
         {
+            bool stateCaptured = preserveControllerState && CapturePlayableHandoffState();
             bool hadExternalRig = _rigLayersAppended;
             _rigLayersAppended = false;
             if (hadExternalRig && _rigBuilder != null) _rigBuilder.Clear();
@@ -324,32 +494,41 @@ namespace Elemental.Presentation.Animation
                 _graph.Destroy();
             }
             _controllerPlayable = default;
-            _controllerParameters = null;
             _inertializationPlayable = default;
             _baseOutput = default;
+            _rigOutputStartIndex = 0;
+            _rigOutputCount = 0;
             _poseHistory?.Dispose();
             _poseHistory = null;
             _fallbackReason = reason;
+            _runtimeDisablePending = false;
+            _poseDisablePending = false;
+            if (reason != EarthAnimationGraphFallbackReason.None)
+                _runtimeEnablePending = false;
 
-            if (!restoreLegacyRig || _rigBuilder == null) return;
-            _rigBuilder.enabled = _legacyRigBuilderWasEnabled;
-            if (_legacyRigBuilderWasEnabled && Application.isPlaying &&
-                _rigBuilder.isActiveAndEnabled && !_rigBuilder.graph.IsValid())
-                _rigBuilder.Build();
+            if (!restoreLegacyRig) return;
+            if (_rigBuilder != null)
+            {
+                _rigBuilder.enabled = _legacyRigBuilderWasEnabled;
+                if (_legacyRigBuilderWasEnabled && Application.isPlaying &&
+                    _rigBuilder.isActiveAndEnabled && !_rigBuilder.graph.IsValid())
+                    _rigBuilder.Build();
+            }
+            if (stateCaptured) ApplyHandoffStateToAnimator();
         }
 
         private void RefreshControlSettings()
         {
             if (_poseHistory == null || !_poseHistory.Control.IsCreated) return;
             EarthAnimationGraphControl control = _poseHistory.Control[0];
-            control.UsePoseInertialization = _settings.UsePoseInertialization ? (byte)1 : (byte)0;
-            control.PositionHalfLifeSeconds = _settings.PositionHalfLifeSeconds;
-            control.RotationHalfLifeSeconds = _settings.RotationHalfLifeSeconds;
-            control.MaximumDurationSeconds = _settings.MaximumDurationSeconds;
-            control.MaximumPositionOffset = _settings.MaximumPositionOffsetMeters;
-            control.MaximumRotationOffsetRadians = _settings.MaximumRotationOffsetRadians;
-            control.MaximumLinearVelocity = _settings.MaximumLinearVelocity;
-            control.MaximumAngularVelocity = _settings.MaximumAngularVelocityRadians;
+            control.UsePoseInertialization = _activeSettings.UsePoseInertialization ? (byte)1 : (byte)0;
+            control.PositionHalfLifeSeconds = _activeSettings.PositionHalfLifeSeconds;
+            control.RotationHalfLifeSeconds = _activeSettings.RotationHalfLifeSeconds;
+            control.MaximumDurationSeconds = _activeSettings.MaximumDurationSeconds;
+            control.MaximumPositionOffset = _activeSettings.MaximumPositionOffsetMeters;
+            control.MaximumRotationOffsetRadians = _activeSettings.MaximumRotationOffsetRadians;
+            control.MaximumLinearVelocity = _activeSettings.MaximumLinearVelocity;
+            control.MaximumAngularVelocity = _activeSettings.MaximumAngularVelocityRadians;
             _poseHistory.Control[0] = control;
         }
 
@@ -398,6 +577,7 @@ namespace Elemental.Presentation.Animation
             int layerCount = animator.layerCount;
             for (int layer = 0; layer < layerCount; layer++)
                 _controllerPlayable.SetLayerWeight(layer, animator.GetLayerWeight(layer));
+            _controllerPlayable.SetSpeed(animator.speed);
         }
 
         private bool ValidateTopology()
@@ -407,8 +587,190 @@ namespace Elemental.Presentation.Animation
                 return false;
             Playable input = _inertializationPlayable.GetInput(0);
             return input.IsValid() && input.Equals((Playable)_controllerPlayable) &&
-                   _baseOutput.GetSourcePlayable().Equals((Playable)_inertializationPlayable);
+                   _baseOutput.GetSourcePlayable().Equals((Playable)_inertializationPlayable) &&
+                   _baseOutput.GetSortingOrder() == 0 &&
+                   ValidateRigOutputs();
         }
+
+        private bool ValidateRigOutputs()
+        {
+            bool rigLayersExpected = _rigBuilder != null && _rigBuilder.layers.Count > 0;
+            if (!rigLayersExpected) return !_rigLayersAppended && _rigOutputCount == 0;
+            if (!_rigLayersAppended || _rigOutputCount <= 0 || !_graph.IsValid()) return false;
+            int outputCount = _graph.GetOutputCount();
+            if (_rigOutputStartIndex < 1 ||
+                _rigOutputStartIndex + _rigOutputCount > outputCount)
+                return false;
+            for (int index = 0; index < _rigOutputCount; index++)
+            {
+                AnimationPlayableOutput output =
+                    (AnimationPlayableOutput)_graph.GetOutput(_rigOutputStartIndex + index);
+                if (!output.IsOutputValid() || output.GetTarget() != animator ||
+                    output.GetSortingOrder() <= _baseOutput.GetSortingOrder() ||
+                    output.GetAnimationStreamSource() != AnimationStreamSource.PreviousInputs ||
+                    !output.GetSourcePlayable().IsValid())
+                    return false;
+            }
+            return true;
+        }
+
+        private bool CanShutdownContinuously() =>
+            !IsInertiaActive() && !IsAnyControllerLayerTransitioning();
+
+        private bool IsLegacyAnimatorTransitioning()
+        {
+            if (animator == null || !animator.isActiveAndEnabled) return false;
+            for (int layer = 0; layer < animator.layerCount; layer++)
+                if (animator.IsInTransition(layer)) return true;
+            return false;
+        }
+
+        private bool IsInertiaActive() => _poseHistory != null &&
+                                          _poseHistory.Diagnostics.IsCreated &&
+                                          _poseHistory.Diagnostics[0].InertiaActive != 0;
+
+        private bool IsAnyControllerLayerTransitioning()
+        {
+            if (!IsActive) return false;
+            for (int layer = 0; layer < _controllerPlayable.GetLayerCount(); layer++)
+                if (_controllerPlayable.IsInTransition(layer)) return true;
+            return false;
+        }
+
+        private void CacheControllerParameters()
+        {
+            if (_controllerParameters == null && animator != null)
+                _controllerParameters = animator.parameters;
+        }
+
+        private void EnsureHandoffBuffers()
+        {
+            int layerCount = animator != null ? animator.layerCount : 0;
+            if (_handoffStates.Length == layerCount) return;
+            _handoffStates = new AnimatorStateInfo[layerCount];
+            _handoffLayerWeights = new float[layerCount];
+            _handoffStateValid = new bool[layerCount];
+        }
+
+        private void CaptureAnimatorHandoffState()
+        {
+            if (animator == null) return;
+            CacheControllerParameters();
+            EnsureHandoffBuffers();
+            for (int layer = 0; layer < _handoffStates.Length; layer++)
+            {
+                AnimatorStateInfo state = animator.IsInTransition(layer)
+                    ? animator.GetNextAnimatorStateInfo(layer)
+                    : animator.GetCurrentAnimatorStateInfo(layer);
+                _handoffStates[layer] = state;
+                _handoffLayerWeights[layer] = animator.GetLayerWeight(layer);
+                _handoffStateValid[layer] = state.fullPathHash != 0;
+            }
+        }
+
+        private void ApplyAnimatorStateToControllerPlayable()
+        {
+            if (!_controllerPlayable.IsValid() || animator == null) return;
+            for (int index = 0; index < _controllerParameters.Length; index++)
+            {
+                AnimatorControllerParameter parameter = _controllerParameters[index];
+                int hash = parameter.nameHash;
+                switch (parameter.type)
+                {
+                    case AnimatorControllerParameterType.Float:
+                        _controllerPlayable.SetFloat(hash, animator.GetFloat(hash));
+                        break;
+                    case AnimatorControllerParameterType.Int:
+                        _controllerPlayable.SetInteger(hash, animator.GetInteger(hash));
+                        break;
+                    case AnimatorControllerParameterType.Bool:
+                        _controllerPlayable.SetBool(hash, animator.GetBool(hash));
+                        break;
+                }
+            }
+            for (int layer = 0; layer < _handoffStates.Length; layer++)
+            {
+                _controllerPlayable.SetLayerWeight(layer, _handoffLayerWeights[layer]);
+                if (_handoffStateValid[layer])
+                    _controllerPlayable.Play(
+                        _handoffStates[layer].fullPathHash,
+                        layer,
+                        _handoffStates[layer].normalizedTime);
+            }
+            _controllerPlayable.SetSpeed(animator.speed);
+        }
+
+        private bool CapturePlayableHandoffState()
+        {
+            if (!IsActive || animator == null) return false;
+            CacheControllerParameters();
+            EnsureHandoffBuffers();
+            for (int index = 0; index < _controllerParameters.Length; index++)
+            {
+                AnimatorControllerParameter parameter = _controllerParameters[index];
+                int hash = parameter.nameHash;
+                switch (parameter.type)
+                {
+                    case AnimatorControllerParameterType.Float:
+                        animator.SetFloat(hash, _controllerPlayable.GetFloat(hash));
+                        break;
+                    case AnimatorControllerParameterType.Int:
+                        animator.SetInteger(hash, _controllerPlayable.GetInteger(hash));
+                        break;
+                    case AnimatorControllerParameterType.Bool:
+                        animator.SetBool(hash, _controllerPlayable.GetBool(hash));
+                        break;
+                }
+            }
+            for (int layer = 0; layer < _handoffStates.Length; layer++)
+            {
+                AnimatorStateInfo state = _controllerPlayable.GetCurrentAnimatorStateInfo(layer);
+                _handoffStates[layer] = state;
+                _handoffLayerWeights[layer] = _controllerPlayable.GetLayerWeight(layer);
+                _handoffStateValid[layer] = state.fullPathHash != 0;
+            }
+            animator.speed = (float)_controllerPlayable.GetSpeed();
+            _stateHandoffCount++;
+            return true;
+        }
+
+        private void ApplyHandoffStateToAnimator()
+        {
+            if (animator == null || !animator.enabled) return;
+            for (int layer = 0; layer < _handoffStates.Length; layer++)
+            {
+                animator.SetLayerWeight(layer, _handoffLayerWeights[layer]);
+                if (_handoffStateValid[layer])
+                    animator.Play(
+                        _handoffStates[layer].fullPathHash,
+                        layer,
+                        _handoffStates[layer].normalizedTime);
+            }
+            animator.Update(0f);
+        }
+
+        private void RequestInitialPoseContinuity()
+        {
+            if (!_activeSettings.UsePoseInertialization || _poseHistory == null) return;
+            EarthAnimationGraphControl control = _poseHistory.Control[0];
+            control.RequestSequence = control.RequestSequence == uint.MaxValue
+                ? 1u
+                : control.RequestSequence + 1u;
+            _poseHistory.Control[0] = control;
+        }
+
+        private static bool SettingsEqual(
+            in EarthAnimationGraphSettings left,
+            in EarthAnimationGraphSettings right) =>
+            left.UsePlayablesAnimationGraph == right.UsePlayablesAnimationGraph &&
+            left.UsePoseInertialization == right.UsePoseInertialization &&
+            Mathf.Approximately(left.PositionHalfLifeSeconds, right.PositionHalfLifeSeconds) &&
+            Mathf.Approximately(left.RotationHalfLifeSeconds, right.RotationHalfLifeSeconds) &&
+            Mathf.Approximately(left.MaximumDurationSeconds, right.MaximumDurationSeconds) &&
+            Mathf.Approximately(left.MaximumPositionOffsetMeters, right.MaximumPositionOffsetMeters) &&
+            Mathf.Approximately(left.MaximumRotationOffsetRadians, right.MaximumRotationOffsetRadians) &&
+            Mathf.Approximately(left.MaximumLinearVelocity, right.MaximumLinearVelocity) &&
+            Mathf.Approximately(left.MaximumAngularVelocityRadians, right.MaximumAngularVelocityRadians);
 
         private static int CountBoundBones(Animator targetAnimator)
         {
@@ -433,6 +795,20 @@ namespace Elemental.Presentation.Animation
                 if (transform == null) continue;
                 history.BoneHandles[writeIndex] = targetAnimator.BindStreamTransform(transform);
                 history.BoneOwnership[writeIndex] = EarthAnimationBoneMask.OwnershipFor(bone);
+                history.Initialized[writeIndex] = 1;
+                float3 localPosition = new float3(
+                    transform.localPosition.x,
+                    transform.localPosition.y,
+                    transform.localPosition.z);
+                quaternion localRotation = new quaternion(
+                    transform.localRotation.x,
+                    transform.localRotation.y,
+                    transform.localRotation.z,
+                    transform.localRotation.w);
+                history.PreviousTargetPositions[writeIndex] = localPosition;
+                history.PreviousTargetRotations[writeIndex] = localRotation;
+                history.PreviousOutputPositions[writeIndex] = localPosition;
+                history.PreviousOutputRotations[writeIndex] = localRotation;
                 writeIndex++;
             }
         }
