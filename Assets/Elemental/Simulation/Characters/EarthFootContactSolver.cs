@@ -14,6 +14,16 @@ namespace Elemental.Simulation.Characters
         Brace = 7
     }
 
+    public enum EarthFootPlantState : byte
+    {
+        Free = 0,
+        Candidate = 1,
+        Planting = 2,
+        Planted = 3,
+        Releasing = 4,
+        AirborneReset = 5
+    }
+
     public readonly struct EarthFootContactInput
     {
         public EarthFootContactInput(
@@ -80,6 +90,7 @@ namespace Elemental.Simulation.Characters
 
     public struct EarthFootContactState
     {
+        public EarthFootPlantState PlantState;
         public bool Locked;
         public bool Armed;
         public bool PoseOwned;
@@ -123,6 +134,7 @@ namespace Elemental.Simulation.Characters
         public float3 TargetLocal { get; }
         public float3 NormalLocal { get; }
         public bool Locked => State.Locked;
+        public EarthFootPlantState PlantState => State.PlantState;
         public bool Captured { get; }
         public bool Maintained { get; }
         public float ReleaseCooldownSeconds => State.ReleaseCooldownSeconds;
@@ -232,6 +244,9 @@ namespace Elemental.Simulation.Characters
                     Release(ref prepared.State, EarthFootContactReason.SupportSwap, ref prepared);
                 else
                 {
+                    prepared.State.PlantState = input.Supported
+                        ? EarthFootPlantState.Free
+                        : EarthFootPlantState.AirborneReset;
                     prepared.State.Locked = false;
                     prepared.State.PoseOwned = false;
                     prepared.State.Armed = false;
@@ -263,6 +278,7 @@ namespace Elemental.Simulation.Characters
             if (!input.Locomoting)
             {
                 prepared.State.Locked = false;
+                prepared.State.PlantState = EarthFootPlantState.Free;
                 prepared.State.PoseOwned = false;
                 prepared.State.Armed = true;
                 prepared.State.HasPreviousClearance = true;
@@ -313,7 +329,7 @@ namespace Elemental.Simulation.Characters
                 return prepared;
             }
 
-            bool armed = previous.Armed || !previous.HasPreviousClearance ||
+            bool armed = input.PivotingInPlace || previous.Armed || !previous.HasPreviousClearance ||
                          input.SoleClearance >= RearmClearance;
             bool descending = !previous.HasPreviousClearance ||
                               input.VerticalVelocity <= 0.12f &&
@@ -364,6 +380,9 @@ namespace Elemental.Simulation.Characters
                     }
                 }
                 state.Locked = true;
+                state.PlantState = prepared.Maintained
+                    ? EarthFootPlantState.Planted
+                    : EarthFootPlantState.Planting;
                 state.PoseOwned = input.PoseLock;
                 state.Armed = false;
                 state.ReleaseCooldownSeconds = 0f;
@@ -376,6 +395,13 @@ namespace Elemental.Simulation.Characters
                 state.PoseOwned = false;
                 state.SupportId = 0u;
                 state.SupportGeneration = 0u;
+                state.PlantState = !input.Supported
+                    ? EarthFootPlantState.AirborneReset
+                    : state.ReleaseCooldownSeconds > 0f
+                        ? EarthFootPlantState.Releasing
+                        : prepared.Valid && input.Locomoting
+                            ? EarthFootPlantState.Candidate
+                            : EarthFootPlantState.Free;
                 if (input.Locomoting)
                     // Swing is authored animation. A residual procedural weight
                     // still pulls the whole humanoid chain toward the released
@@ -425,6 +451,9 @@ namespace Elemental.Simulation.Characters
             prepared.Captured = false;
             prepared.Maintained = false;
             prepared.State.Locked = false;
+            prepared.State.PlantState = releasedExistingLock
+                ? EarthFootPlantState.Releasing
+                : EarthFootPlantState.Candidate;
             prepared.State.PoseOwned = false;
             // Losing simultaneous *capture* arbitration is not a release and
             // must not continuously re-arm the 120 ms cooldown; doing so can
@@ -446,6 +475,7 @@ namespace Elemental.Simulation.Characters
             ref PreparedFoot prepared)
         {
             state.Locked = false;
+            state.PlantState = EarthFootPlantState.Releasing;
             state.PoseOwned = false;
             state.Armed = false;
             state.SupportId = 0u;

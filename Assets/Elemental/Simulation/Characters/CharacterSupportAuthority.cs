@@ -123,6 +123,15 @@ namespace Elemental.Simulation.Characters
                    candidate.Kind == CharacterSupportKind.MovingAbilitySurface;
         }
 
+        public static bool Matches(
+            in CharacterSupportCandidate candidate,
+            in CharacterSupportCandidate selected) =>
+            candidate.SurfaceId == selected.SurfaceId &&
+            candidate.Generation == selected.Generation &&
+            candidate.Kind == selected.Kind &&
+            math.abs(candidate.Distance - selected.Distance) <= 0.0001f &&
+            math.abs(candidate.UpDot - selected.UpDot) <= 0.0001f;
+
         private static bool IsPreferred(
             in CharacterSupportCandidate candidate,
             in CharacterSupportCandidate incumbent)

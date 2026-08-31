@@ -527,11 +527,7 @@ namespace Elemental.Runtime.Characters
             for (int candidateIndex = 0; candidateIndex < candidateCount; candidateIndex++)
             {
                 CharacterSupportCandidate candidate = _groundCandidates[candidateIndex];
-                if (candidate.SurfaceId != owner.SurfaceId ||
-                    candidate.Generation != owner.Generation ||
-                    candidate.Kind != owner.Kind ||
-                    Mathf.Abs(candidate.Distance - owner.Distance) > 0.0001f ||
-                    Mathf.Abs(candidate.UpDot - owner.UpDot) > 0.0001f)
+                if (!CharacterSupportAuthority.Matches(in candidate, in owner))
                     continue;
                 selectedHit = _groundHits[_groundCandidateHitIndices[candidateIndex]];
                 return selectedHit.collider != null;

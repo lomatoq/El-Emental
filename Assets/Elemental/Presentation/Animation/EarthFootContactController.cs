@@ -30,6 +30,12 @@ namespace Elemental.Presentation.Animation
 
         private readonly RaycastHit[] _leftHits = new RaycastHit[FootHitCapacity];
         private readonly RaycastHit[] _rightHits = new RaycastHit[FootHitCapacity];
+        private readonly CharacterSupportCandidate[] _leftSupportCandidates =
+            new CharacterSupportCandidate[FootHitCapacity];
+        private readonly CharacterSupportCandidate[] _rightSupportCandidates =
+            new CharacterSupportCandidate[FootHitCapacity];
+        private readonly int[] _leftSupportHitIndices = new int[FootHitCapacity];
+        private readonly int[] _rightSupportHitIndices = new int[FootHitCapacity];
         private Transform _leftFoot;
         private Transform _rightFoot;
         private Transform _leftUpperLeg;
@@ -57,6 +63,8 @@ namespace Elemental.Presentation.Animation
         private SupportFrameSnapshot _rightContactSupport;
         private Collider _leftSupportCollider;
         private Collider _rightSupportCollider;
+        private CharacterSupportSelection _leftSupportSelection;
+        private CharacterSupportSelection _rightSupportSelection;
         private bool _poseLocked;
         private EarthAuthoredFootPolicy _authoredFootPolicy;
         private float _turnIntent;
@@ -91,6 +99,14 @@ namespace Elemental.Presentation.Animation
         public bool RightFootLocked => _rightDecision.Locked;
         public EarthFootContactReason LeftReason => _leftDecision.Reason;
         public EarthFootContactReason RightReason => _rightDecision.Reason;
+        public EarthFootPlantState LeftPlantState => _leftDecision.PlantState;
+        public EarthFootPlantState RightPlantState => _rightDecision.PlantState;
+        public CharacterSupportKind LeftSupportKind => _leftSupportSelection.HasSupport
+            ? _leftSupportSelection.Candidate.Kind
+            : CharacterSupportKind.Unknown;
+        public CharacterSupportKind RightSupportKind => _rightSupportSelection.HasSupport
+            ? _rightSupportSelection.Candidate.Kind
+            : CharacterSupportKind.Unknown;
         public float LeftAnchorErrorMeters { get; private set; }
         public float RightAnchorErrorMeters { get; private set; }
         public float LeftSoleClearance { get; private set; }
@@ -199,6 +215,8 @@ namespace Elemental.Presentation.Animation
             _hasPreviousAnimatedFeet = false;
             _leftSupportCollider = null;
             _rightSupportCollider = null;
+            _leftSupportSelection = CharacterSupportSelection.None;
+            _rightSupportSelection = CharacterSupportSelection.None;
             _authoredFootPolicy = EarthAuthoredFootPolicy.DefaultContact;
             _turnIntent = 0f;
             _hasPreviousAnklePose = false;
@@ -372,11 +390,29 @@ namespace Elemental.Presentation.Animation
             _surfing = surfLock;
 
             FootProbe leftProbe = ProbeFoot(
-                _leftFoot, _leftHits, -1f, up, _leftSupportCollider);
+                _leftFoot,
+                _leftHits,
+                _leftSupportCandidates,
+                _leftSupportHitIndices,
+                -1f,
+                up,
+                in _leftState,
+                in _leftContactSupport,
+                in _leftSupportSelection);
             FootProbe rightProbe = ProbeFoot(
-                _rightFoot, _rightHits, 1f, up, _rightSupportCollider);
+                _rightFoot,
+                _rightHits,
+                _rightSupportCandidates,
+                _rightSupportHitIndices,
+                1f,
+                up,
+                in _rightState,
+                in _rightContactSupport,
+                in _rightSupportSelection);
             _leftSupportCollider = leftProbe.SupportCollider;
             _rightSupportCollider = rightProbe.SupportCollider;
+            _leftSupportSelection = leftProbe.SupportSelection;
+            _rightSupportSelection = rightProbe.SupportSelection;
             _leftContactSupport = ResolvePresentationSupport(in leftProbe, up);
             _rightContactSupport = ResolvePresentationSupport(in rightProbe, up);
             _leftRawContactWorld = leftProbe.ContactPoint;
@@ -544,55 +580,82 @@ namespace Elemental.Presentation.Animation
         private FootProbe ProbeFoot(
             Transform foot,
             RaycastHit[] hits,
+            CharacterSupportCandidate[] candidates,
+            int[] candidateHitIndices,
             float side,
             Vector3 up,
-            Collider preferredSupport)
+            in EarthFootContactState previousFootState,
+            in SupportFrameSnapshot previousSupportFrame,
+            in CharacterSupportSelection previousSupport)
         {
             Vector3 animated = foot.position;
             EarthPoseIntent poseIntent = poseIntentSource != null
                 ? poseIntentSource.CurrentIntent
                 : default;
             Vector3 stanceOffset = transform.right * side * poseIntent.StanceWidth01 * 0.11f;
-            Vector3 origin = animated + stanceOffset + up * footProbeLift;
+            Vector3 probeBase = animated + stanceOffset;
+            bool stableLockedAnchor = previousFootState.Locked &&
+                                      previousSupportFrame.IsValid &&
+                                      previousFootState.SupportId == previousSupportFrame.SurfaceId &&
+                                      previousFootState.SupportGeneration == previousSupportFrame.Generation;
+            if (stableLockedAnchor)
+            {
+                probeBase = ToVector3(EarthSupportFootLockSolver.ResolveWorld(
+                    previousFootState.AnchorLocal,
+                    in previousSupportFrame));
+            }
+            Vector3 origin = probeBase + up * footProbeLift;
             int count = UnityEngine.Physics.RaycastNonAlloc(
                 origin,
                 -up,
                 hits,
                 footProbeLift + footProbeDistance,
-                ~0,
+                motor.GroundMask,
                 QueryTriggerInteraction.Ignore);
-            float nearest = float.PositiveInfinity;
-            RaycastHit selected = default;
-            float preferredDistance = float.PositiveInfinity;
-            RaycastHit preferred = default;
-            for (int index = 0; index < count; index++)
+            int candidateCount = 0;
+            int safeCount = Mathf.Min(count, hits.Length);
+            float minimumWalkableUpDot = Mathf.Cos(
+                motor.MaximumSlopeAngle * Mathf.Deg2Rad);
+            for (int index = 0; index < safeCount; index++)
             {
                 RaycastHit hit = hits[index];
                 if (hit.collider == null) continue;
-                if (rootBody != null && hit.collider.transform.IsChildOf(rootBody.transform)) continue;
+                if (rootBody != null && hit.collider.transform.IsChildOf(rootBody.transform))
+                    continue;
                 if (hit.collider.GetComponentInParent<PlanetMotor>() != null) continue;
-                if (Vector3.Dot(hit.normal, up) < 0.25f) continue;
-                if (hit.distance < nearest)
+                float upDot = Vector3.Dot(hit.normal, up);
+                candidates[candidateCount] = CharacterSupportRuntimeAdapter.Classify(
+                    hit.collider,
+                    hit.distance,
+                    upDot);
+                candidateHitIndices[candidateCount] = index;
+                candidateCount++;
+            }
+
+            CharacterSupportSelection selection = CharacterSupportAuthority.Select(
+                candidates,
+                candidateCount,
+                in previousSupport,
+                minimumWalkableUpDot,
+                supportSwapHysteresis);
+            RaycastHit selected = default;
+            if (selection.HasSupport)
+            {
+                CharacterSupportCandidate selectedCandidate = selection.Candidate;
+                for (int candidateIndex = 0; candidateIndex < candidateCount; candidateIndex++)
                 {
-                    nearest = hit.distance;
-                    selected = hit;
-                }
-                if (hit.collider == preferredSupport && hit.distance < preferredDistance)
-                {
-                    preferredDistance = hit.distance;
-                    preferred = hit;
+                    CharacterSupportCandidate candidate = candidates[candidateIndex];
+                    if (!CharacterSupportAuthority.Matches(
+                            in candidate,
+                            in selectedCandidate))
+                        continue;
+                    selected = hits[candidateHitIndices[candidateIndex]];
+                    break;
                 }
             }
 
-            // Arena floor and planet collision can be nearly coincident at the
-            // crown seam. Retain the current support while it remains within a
-            // small geometric band so a planted foot cannot release/recapture on
-            // alternating raycast winners. A real step still wins immediately.
-            if (preferred.collider != null &&
-                preferredDistance <= nearest + supportSwapHysteresis)
-                selected = preferred;
-
             bool hasContact = selected.collider != null;
+            if (!hasContact) selection = CharacterSupportSelection.None;
             Vector3 normal = hasContact ? selected.normal.normalized : up;
             Vector3 target = hasContact
                 ? selected.point + normal * soleOffset
@@ -607,7 +670,8 @@ namespace Elemental.Presentation.Animation
                 normal,
                 clearance,
                 hasContact,
-                selected.collider);
+                selected.collider,
+                in selection);
         }
 
         private void ApplyFoot(
@@ -758,7 +822,10 @@ namespace Elemental.Presentation.Animation
                 return surfController.PresentationSupportFrame;
             SupportFrameSnapshot fixedSupport = motor.CurrentSupportFrame;
             float renderLead = Mathf.Clamp(Time.time - Time.fixedTime, 0f, Time.fixedDeltaTime);
-            if (fixedSupport.IsValid)
+            CharacterSupportCandidate selectedCandidate = probe.SupportSelection.Candidate;
+            if (fixedSupport.IsValid && probe.SupportSelection.HasSupport &&
+                fixedSupport.SurfaceId == selectedCandidate.SurfaceId &&
+                fixedSupport.Generation == selectedCandidate.Generation)
                 return EarthPresentationSupportSolver.Extrapolate(in fixedSupport, renderLead);
 
             Collider supportCollider = probe.SupportCollider;
@@ -768,34 +835,19 @@ namespace Elemental.Presentation.Animation
             if (movingSurface != null)
             {
                 SupportFrameSnapshot movingFrame = movingSurface.SupportFrame;
-                if (movingFrame.IsValid)
+                if (movingFrame.IsValid && probe.SupportSelection.HasSupport &&
+                    movingFrame.SurfaceId == selectedCandidate.SurfaceId &&
+                    movingFrame.Generation == selectedCandidate.Generation)
                     return EarthPresentationSupportSolver.Extrapolate(in movingFrame, renderLead);
             }
 
-            uint surfaceId = 0u;
-            uint generation = 1u;
-            EarthArenaStructure arena = supportCollider.GetComponentInParent<EarthArenaStructure>();
-            if (arena != null)
-            {
-                surfaceId = arena.StructureId;
-                generation = arena.Generation;
-            }
-            else
-            {
-                IEarthPhysicalTarget physicalTarget = supportCollider.GetComponentInParent(
-                    typeof(IEarthPhysicalTarget)) as IEarthPhysicalTarget;
-                if (physicalTarget != null && physicalTarget.TargetHandle.IsValid)
-                {
-                    surfaceId = physicalTarget.TargetHandle.StableId;
-                    generation = physicalTarget.TargetHandle.Generation;
-                }
-            }
-            if (surfaceId == 0u)
-            {
-                surfaceId = unchecked((uint)supportCollider.GetEntityId().GetHashCode());
-                if (surfaceId == 0u) surfaceId = 1u;
-            }
-            if (generation == 0u) generation = 1u;
+            uint surfaceId = probe.SupportSelection.HasSupport
+                ? selectedCandidate.SurfaceId
+                : 0u;
+            uint generation = probe.SupportSelection.HasSupport
+                ? selectedCandidate.Generation
+                : 0u;
+            if (surfaceId == 0u || generation == 0u) return default;
 
             Rigidbody supportBody = supportCollider.attachedRigidbody;
             Transform frame = supportBody != null
@@ -903,7 +955,8 @@ namespace Elemental.Presentation.Animation
                 Vector3 normal,
                 float clearance,
                 bool hasContact,
-                Collider supportCollider)
+                Collider supportCollider,
+                in CharacterSupportSelection supportSelection)
             {
                 AnimatedPosition = animatedPosition;
                 ContactPoint = contactPoint;
@@ -912,6 +965,7 @@ namespace Elemental.Presentation.Animation
                 Clearance = clearance;
                 HasContact = hasContact;
                 SupportCollider = supportCollider;
+                SupportSelection = supportSelection;
             }
 
             public Vector3 AnimatedPosition { get; }
@@ -921,6 +975,7 @@ namespace Elemental.Presentation.Animation
             public float Clearance { get; }
             public bool HasContact { get; }
             public Collider SupportCollider { get; }
+            public CharacterSupportSelection SupportSelection { get; }
         }
     }
 }

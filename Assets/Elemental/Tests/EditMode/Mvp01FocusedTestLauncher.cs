@@ -289,7 +289,8 @@ namespace Elemental.Tests.EditMode
             Run(
                 TestMode.EditMode,
                 "AnimationTransitionsVNextEdit",
-                "Elemental.Tests.EditMode.EarthAnimationTransitionPolicyTests");
+                "Elemental.Tests.EditMode.EarthAnimationTransitionPolicyTests",
+                "Elemental.Tests.EditMode.EarthFootSupportAuthorityIntegrationTests");
         }
 
         [MenuItem("Elemental/QA/Run Animation Contact 30 60 120 Matrix")]

@@ -232,6 +232,8 @@ namespace Elemental.Tests.PlayMode
                 rightSupportId = foot.RightSupportId,
                 leftSupportGeneration = foot.LeftSupportGeneration,
                 rightSupportGeneration = foot.RightSupportGeneration,
+                leftSupportKind = foot.LeftSupportKind.ToString(),
+                rightSupportKind = foot.RightSupportKind.ToString(),
                 leftSupportLocalAnchor = foot.LeftSupportLocalAnchor,
                 rightSupportLocalAnchor = foot.RightSupportLocalAnchor,
                 leftActualSupportLocal = foot.LeftActualSupportLocal,
@@ -248,6 +250,8 @@ namespace Elemental.Tests.PlayMode
                 rightLocked = foot.RightFootLocked,
                 leftReason = foot.LeftReason.ToString(),
                 rightReason = foot.RightReason.ToString(),
+                leftPlantState = foot.LeftPlantState.ToString(),
+                rightPlantState = foot.RightPlantState.ToString(),
                 pelvisOffsetMeters = foot.PelvisCorrectionMeters,
                 leftKneeAngleDegrees = foot.LeftKneeAngleDegrees,
                 rightKneeAngleDegrees = foot.RightKneeAngleDegrees,
@@ -580,11 +584,13 @@ namespace Elemental.Tests.PlayMode
                 "leftRawNormalX,leftRawNormalY,leftRawNormalZ,rightRawNormalX,rightRawNormalY,rightRawNormalZ," +
                 "leftFilteredX,leftFilteredY,leftFilteredZ,rightFilteredX,rightFilteredY,rightFilteredZ," +
                 "leftSupportId,rightSupportId,leftSupportGeneration,rightSupportGeneration," +
+                "leftSupportKind,rightSupportKind," +
                 "leftAnchorX,leftAnchorY,leftAnchorZ,rightAnchorX,rightAnchorY,rightAnchorZ," +
                 "leftActualLocalX,leftActualLocalY,leftActualLocalZ," +
                 "rightActualLocalX,rightActualLocalY,rightActualLocalZ," +
                 "leftActualX,leftActualY,leftActualZ,rightActualX,rightActualY,rightActualZ," +
                 "leftIkWeight,rightIkWeight,leftLocked,rightLocked,leftReason,rightReason," +
+                "leftPlantState,rightPlantState," +
                 "pelvisOffset,leftKneeAngle,rightKneeAngle,leftAnkleAngle,rightAnkleAngle," +
                 "leftGap,rightGap,leftFootStep60Hz,rightFootStep60Hz," +
                 "leftKneeStep60Hz,rightKneeStep60Hz,leftAnkleStep60Hz,rightAnkleStep60Hz," +
@@ -621,7 +627,8 @@ namespace Elemental.Tests.PlayMode
             AppendVector(csv, row.leftRawContactNormal, c); AppendVector(csv, row.rightRawContactNormal, c);
             AppendVector(csv, row.leftFilteredContactPoint, c); AppendVector(csv, row.rightFilteredContactPoint, c);
             csv.Append(row.leftSupportId).Append(',').Append(row.rightSupportId).Append(',')
-                .Append(row.leftSupportGeneration).Append(',').Append(row.rightSupportGeneration).Append(',');
+                .Append(row.leftSupportGeneration).Append(',').Append(row.rightSupportGeneration).Append(',')
+                .Append(row.leftSupportKind).Append(',').Append(row.rightSupportKind).Append(',');
             AppendVector(csv, row.leftSupportLocalAnchor, c); AppendVector(csv, row.rightSupportLocalAnchor, c);
             AppendVector(csv, row.leftActualSupportLocal, c); AppendVector(csv, row.rightActualSupportLocal, c);
             AppendVector(csv, row.leftActualBonePosition, c); AppendVector(csv, row.rightActualBonePosition, c);
@@ -629,6 +636,7 @@ namespace Elemental.Tests.PlayMode
                 .Append(row.rightIkWeight.ToString("F6", c)).Append(',')
                 .Append(row.leftLocked ? 1 : 0).Append(',').Append(row.rightLocked ? 1 : 0).Append(',')
                 .Append(row.leftReason).Append(',').Append(row.rightReason).Append(',')
+                .Append(row.leftPlantState).Append(',').Append(row.rightPlantState).Append(',')
                 .Append(row.pelvisOffsetMeters.ToString("F6", c)).Append(',')
                 .Append(row.leftKneeAngleDegrees.ToString("F6", c)).Append(',')
                 .Append(row.rightKneeAngleDegrees.ToString("F6", c)).Append(',')
@@ -1337,6 +1345,8 @@ namespace Elemental.Tests.PlayMode
             public uint rightSupportId;
             public uint leftSupportGeneration;
             public uint rightSupportGeneration;
+            public string leftSupportKind;
+            public string rightSupportKind;
             public Vector3 leftSupportLocalAnchor;
             public Vector3 rightSupportLocalAnchor;
             public Vector3 leftActualSupportLocal;
@@ -1353,6 +1363,8 @@ namespace Elemental.Tests.PlayMode
             public bool rightLocked;
             public string leftReason;
             public string rightReason;
+            public string leftPlantState;
+            public string rightPlantState;
             public float pelvisOffsetMeters;
             public float leftKneeAngleDegrees;
             public float rightKneeAngleDegrees;
