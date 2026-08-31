@@ -283,6 +283,15 @@ namespace Elemental.Tests.EditMode
                 "Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests");
         }
 
+        [MenuItem("Elemental/QA/Run Animation Transitions VNext EditMode Tests")]
+        private static void RunAnimationTransitionsVNextEditMode()
+        {
+            Run(
+                TestMode.EditMode,
+                "AnimationTransitionsVNextEdit",
+                "Elemental.Tests.EditMode.EarthAnimationTransitionPolicyTests");
+        }
+
         [MenuItem("Elemental/QA/Run Animation Contact 30 60 120 Matrix")]
         private static void RunAnimationContactMatrixPlayMode()
         {

@@ -33,6 +33,18 @@ namespace Elemental.Runtime.Characters
         [SerializeField, Range(0.1f, 1.2f)] private float movingLandingContactSeconds = 0.533f;
         [SerializeField, Range(0.1f, 1.2f)] private float hardLandingContactSeconds = 0.625f;
 
+        [Header("Animation VNext / Transition Policy")]
+        [SerializeField] private bool useLegacyTransitionPolicy;
+        [SerializeField] private bool enableAnimationInertialization;
+        [SerializeField, Range(0.06f, 0.24f)] private float locomotionTransitionSeconds = 0.14f;
+        [SerializeField, Range(0.06f, 0.22f)] private float turnTransitionSeconds = 0.12f;
+        [SerializeField, Range(0.03f, 0.12f)] private float takeoffTransitionSeconds = 0.06f;
+        [SerializeField, Range(0.05f, 0.20f)] private float airborneTransitionSeconds = 0.10f;
+        [SerializeField, Range(0.03f, 0.14f)] private float landingTransitionSeconds = 0.07f;
+        [SerializeField, Range(0.05f, 0.26f)] private float authoredActionTransitionSeconds = 0.12f;
+        [SerializeField, Range(0.08f, 0.28f)] private float ragdollRecoveryTransitionSeconds = 0.16f;
+        [SerializeField, Range(0.06f, 0.22f)] private float surfTransitionSeconds = 0.12f;
+
         [Header("Animation Rescue / Locomotion")]
         [SerializeField, Range(30f, 240f)] private float referenceYawRateDegrees = 145f;
         [SerializeField, Range(0f, 30f)] private float measuredYawFallbackThreshold = 7f;
@@ -74,6 +86,16 @@ namespace Elemental.Runtime.Characters
         public float SoftLandingContactSeconds => softLandingContactSeconds;
         public float MovingLandingContactSeconds => movingLandingContactSeconds;
         public float HardLandingContactSeconds => hardLandingContactSeconds;
+        public bool UseLegacyTransitionPolicy => useLegacyTransitionPolicy;
+        public bool EnableAnimationInertialization => enableAnimationInertialization;
+        public float LocomotionTransitionSeconds => locomotionTransitionSeconds;
+        public float TurnTransitionSeconds => turnTransitionSeconds;
+        public float TakeoffTransitionSeconds => takeoffTransitionSeconds;
+        public float AirborneTransitionSeconds => airborneTransitionSeconds;
+        public float LandingTransitionSeconds => landingTransitionSeconds;
+        public float AuthoredActionTransitionSeconds => authoredActionTransitionSeconds;
+        public float RagdollRecoveryTransitionSeconds => ragdollRecoveryTransitionSeconds;
+        public float SurfTransitionSeconds => surfTransitionSeconds;
         public float ReferenceYawRateDegrees => referenceYawRateDegrees;
         public float MeasuredYawFallbackThreshold => measuredYawFallbackThreshold;
         public float TurnDeadZone => turnDeadZone;
