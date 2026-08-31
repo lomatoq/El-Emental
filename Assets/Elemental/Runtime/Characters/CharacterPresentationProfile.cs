@@ -40,7 +40,7 @@ namespace Elemental.Runtime.Characters
         [SerializeField, Range(0.02f, 0.18f)] private float turnEnterSeconds = 0.065f;
         [SerializeField, Range(0.12f, 0.30f)] private float turnReleaseSeconds = 0.16f;
         [SerializeField, Range(0.02f, 0.18f)] private float speedAccelerationSeconds = 0.075f;
-        [SerializeField, Range(0.04f, 0.24f)] private float speedDecelerationSeconds = 0.11f;
+        [SerializeField, Range(0.04f, 0.24f)] private float speedDecelerationSeconds = 0.24f;
         [SerializeField, Range(0f, 0.4f)] private float passiveLocomotionDriftDeadZone = 0.14f;
         [SerializeField, Range(0.2f, 3f)] private float organicIdleBlendInSeconds = 0.65f;
         [SerializeField, Range(0.05f, 0.5f)] private float organicIdleBlendOutSeconds = 0.14f;
@@ -107,6 +107,10 @@ namespace Elemental.Runtime.Characters
             locomotionBlendSeconds = 0.08f;
             castingBlendSeconds = 0.1f;
             castingRecoverySeconds = 0.22f;
+            // The locomotion tree blends a phase-coherent walk into a one-frame
+            // neutral stance. A deliberate stop response prevents that neutral
+            // pose from rotating a visible knee by double digits in one frame.
+            speedDecelerationSeconds = 0.24f;
         }
     }
 }

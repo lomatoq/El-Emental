@@ -103,14 +103,6 @@ namespace Elemental.Presentation.Diagnostics
 
         private void OnDisable()
         {
-            if (Application.isEditor && _sampleCount > 0)
-            {
-                WriteSnapshot(Path.Combine(
-                    Application.dataPath,
-                    "..",
-                    "BuildReports",
-                    "Mvp01PerformanceLatest.json"));
-            }
             if (_gcRecorder.Valid) _gcRecorder.Dispose();
         }
 

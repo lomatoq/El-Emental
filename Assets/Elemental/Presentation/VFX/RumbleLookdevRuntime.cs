@@ -283,7 +283,9 @@ namespace Elemental.Presentation.VFX
 
             keyLight.type = LightType.Directional;
             keyLight.shadows = LightShadows.Soft;
-            keyLight.shadowStrength = 0.82f;
+            keyLight.shadowStrength = 0.76f;
+            keyLight.shadowBias = 0.50f;
+            keyLight.shadowNormalBias = 0.30f;
             keyLight.color = color;
             keyLight.intensity = intensity;
             keyLight.transform.rotation = rotation;

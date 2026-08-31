@@ -70,7 +70,7 @@ namespace Elemental.Tests.PlayMode
             const string scenePath = "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
             yield return SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
             Scene scene = SceneManager.GetSceneByPath(scenePath);
-            HumanoidCharacterPresentation presentation = FindInScene<HumanoidCharacterPresentation>(scene);
+            HumanoidCharacterPresentation presentation = FindPlayerPresentation(scene);
             Assert.That(presentation, Is.Not.Null);
             Animator animator = presentation.Animator;
             PlanetMotor motor = presentation.GetComponentInParent<PlanetMotor>();
@@ -150,8 +150,8 @@ namespace Elemental.Tests.PlayMode
                 "Movement must not cancel the MMB session.");
             Assert.That(pose.FeetLocked, Is.False,
                 "MMB may remain active, but its old foot constraints must release as soon as locomotion begins.");
-            Assert.That(pose.FootIkWeight, Is.LessThan(0.2f),
-                "The walk clip must own the feet instead of dragging them behind the moving root.");
+            Assert.That(pose.FootIkWeight, Is.InRange(0.35f, 0.85f),
+                "Walking should retain support-following IK while the authored gait owns the swing arc.");
             executor.CancelGravityWell();
             scriptedInput.Move = float2.zero;
 
@@ -160,9 +160,23 @@ namespace Elemental.Tests.PlayMode
             executor.UpdateVectorField(tangent, 1f);
             yield return new WaitForSeconds(0.24f);
             int magicLayer = animator.GetLayerIndex("Earth Magic Upper Body");
+            const System.Reflection.BindingFlags privateInstance =
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            bool drivesMagic = (bool)typeof(HumanoidCharacterPresentation)
+                .GetField("driveMagicPresentation", privateInstance).GetValue(presentation);
+            int cachedMagicLayer = (int)typeof(HumanoidCharacterPresentation)
+                .GetField("_magicLayerIndex", privateInstance).GetValue(presentation);
+            float cachedCastWeight = (float)typeof(HumanoidCharacterPresentation)
+                .GetField("_castWeight", privateInstance).GetValue(presentation);
             Assert.That(magicLayer, Is.GreaterThanOrEqualTo(0));
             Assert.That(animator.GetLayerWeight(magicLayer), Is.GreaterThan(0.75f),
-                "The Cast parameter alone is insufficient; the authored upper-body layer must receive visible weight.");
+                $"The Cast parameter alone is insufficient; the authored upper-body layer must receive visible weight. " +
+                $"vectorActive={executor.IsVectorFieldActive}, request={pose.CurrentRequest.Technique}/" +
+                $"{pose.CurrentRequest.Phase}, cast={animator.GetBool("Cast")}, " +
+                $"castKind={animator.GetInteger("CastKind")}, motion={presentation.MotionPhase}, " +
+                $"presentation={presentation.name}/enabled:{presentation.enabled}, motor={motor.enabled}, " +
+                $"motorName={motor.name}, drive={drivesMagic}, cachedLayer={cachedMagicLayer}, " +
+                $"castWeight={cachedCastWeight:F2}, duel={FindInScene<EarthMvpDuelController>(scene)?.PlayerPhase}.");
             AnimatorStateInfo magicState = animator.GetCurrentAnimatorStateInfo(magicLayer);
             Assert.That(magicState.IsName("Earth Magic Upper Body.Earth Cast") || magicState.IsName("Earth Cast"), Is.True);
             Assert.That(pose.CurrentRequest.Technique, Is.EqualTo(EarthTechniqueId.VectorPush),
@@ -265,14 +279,22 @@ namespace Elemental.Tests.PlayMode
         public IEnumerator ProductionCameraRayLocksAndQuicklyShovesVisibleWall()
         {
             const string scenePath = "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
-            yield return SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
             Scene scene = SceneManager.GetSceneByPath(scenePath);
+            bool loadedForTest = !scene.IsValid() || !scene.isLoaded;
+            if (loadedForTest)
+            {
+                yield return SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
+                scene = SceneManager.GetSceneByPath(scenePath);
+            }
             Camera camera = FindInScene<Camera>(scene);
             PlanetMotor motor = FindInScene<PlanetMotor>(scene);
             MagicInputController input = FindInScene<MagicInputController>(scene);
             MagicExecutor executor = FindInScene<MagicExecutor>(scene);
             EarthWallPool wallPool = FindInScene<EarthWallPool>(scene);
             VoxelPlanetBehaviour planet = FindInScene<VoxelPlanetBehaviour>(scene);
+            EarthMvpBotController bot = FindInScene<EarthMvpBotController>(scene);
+            bool botWasEnabled = bot != null && bot.enabled;
+            if (bot != null) bot.enabled = false;
             Assert.That(camera, Is.Not.Null);
             Assert.That(motor, Is.Not.Null);
             Assert.That(input, Is.Not.Null);
@@ -300,8 +322,25 @@ namespace Elemental.Tests.PlayMode
             Assert.That(screen.x, Is.InRange(0f, (float)Screen.width));
             Assert.That(screen.y, Is.InRange(0f, (float)Screen.height));
             Vector3 casterBefore = motor.transform.position;
+            Ray diagnosticRay = camera.ScreenPointToRay(screen);
+            RaycastHit[] diagnosticHits = Physics.RaycastAll(
+                diagnosticRay, 200f, ~0, QueryTriggerInteraction.Ignore);
+            System.Array.Sort(diagnosticHits, (left, rightHit) => left.distance.CompareTo(rightHit.distance));
+            var targetSummary = new System.Text.StringBuilder();
+            for (int index = 0; index < diagnosticHits.Length; index++)
+            {
+                RaycastHit hit = diagnosticHits[index];
+                EarthResolvedTarget resolved = EarthTargetResolver.Resolve(hit.collider, input.PlanetCollider);
+                EarthArenaStructure arena = hit.collider != null
+                    ? hit.collider.GetComponentInParent<EarthArenaStructure>()
+                    : null;
+                targetSummary.Append($"{hit.collider?.name}@{hit.distance:F2}:" +
+                    $"valid={resolved.IsValid}:caps={resolved.Capabilities}:" +
+                    $"arenaSuppressed={arena?.CameraSuppressed}; ");
+            }
             input.ReplayBufferedForcePress(new Vector2(screen.x, screen.y));
-            Assert.That(executor.VectorFieldBody, Is.SameAs(wall.Body));
+            Assert.That(executor.VectorFieldBody, Is.SameAs(wall.Body),
+                $"Production target ray: {targetSummary}");
             Ray pushRay = camera.ScreenPointToRay(screen);
             executor.UpdateVectorField(pushRay.direction, 0f);
             input.ReplayBufferedForceRelease(new Vector2(screen.x, screen.y));
@@ -325,7 +364,10 @@ namespace Elemental.Tests.PlayMode
 
             float wallTravel = Vector3.Distance(wall.transform.position, wallBefore);
             float casterTravel = Vector3.Distance(motor.transform.position, casterBefore);
-            yield return SceneManager.UnloadSceneAsync(scene);
+            wallPool.ReleaseTransient(wall);
+            yield return new WaitForFixedUpdate();
+            if (bot != null) bot.enabled = botWasEnabled;
+            if (loadedForTest) yield return SceneManager.UnloadSceneAsync(scene);
 
             Assert.That(canonicalLock, Is.True,
                 "The wall must remain targetable after an atomically replayed RMB tap.");
@@ -372,6 +414,23 @@ namespace Elemental.Tests.PlayMode
             {
                 T found = roots[index].GetComponentInChildren<T>(true);
                 if (found != null) return found;
+            }
+            return null;
+        }
+
+        private static HumanoidCharacterPresentation FindPlayerPresentation(Scene scene)
+        {
+            GameObject[] roots = scene.GetRootGameObjects();
+            for (int index = 0; index < roots.Length; index++)
+            {
+                HumanoidCharacterPresentation[] candidates =
+                    roots[index].GetComponentsInChildren<HumanoidCharacterPresentation>(true);
+                for (int candidateIndex = 0; candidateIndex < candidates.Length; candidateIndex++)
+                {
+                    PlanetMotor candidateMotor = candidates[candidateIndex].GetComponentInParent<PlanetMotor>();
+                    if (candidateMotor != null && candidateMotor.CompareTag("Player"))
+                        return candidates[candidateIndex];
+                }
             }
             return null;
         }

@@ -141,7 +141,8 @@ namespace Elemental.Presentation.Rendering
                 sunLight.transform.rotation = Quaternion.LookRotation(
                     -keyDirection.normalized,
                     targetCamera.transform.up);
-                float horizon = Mathf.Clamp01(1f - Mathf.Abs(sunDirection.y) * 5f);
+                float horizon = Mathf.Clamp01(
+                    1f - Mathf.Abs(Vector3.Dot(sunDirection, localUp)) * 5f);
                 Color solarColor = Color.Lerp(profile.DayColor, profile.DuskColor, horizon);
                 // The same directional owner becomes a restrained moon key at night.
                 // Keeping the warm dusk tint after sunset made every earth family
@@ -150,9 +151,23 @@ namespace Elemental.Presentation.Rendering
                 sunLight.intensity = Mathf.Lerp(profile.MoonlightIntensity, profile.DaylightIntensity, daylight);
             }
             float ambientDaylight = 1f - Snapshot.Night01;
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = Color.Lerp(
+                profile.NightAmbient * 1.15f,
+                profile.DayAmbientSky,
+                ambientDaylight);
+            RenderSettings.ambientEquatorColor = Color.Lerp(
+                profile.NightAmbient * 0.72f,
+                profile.DayAmbientEquator,
+                ambientDaylight);
+            RenderSettings.ambientGroundColor = Color.Lerp(
+                profile.NightAmbient * 0.34f,
+                profile.DayAmbientGround,
+                ambientDaylight);
+            RenderSettings.ambientIntensity = Mathf.Lerp(0.58f, 0.82f, ambientDaylight);
             RenderSettings.ambientLight = Color.Lerp(
                 profile.NightAmbient,
-                profile.DayColor * 0.34f,
+                profile.DayAmbientSky,
                 ambientDaylight);
             Shader.SetGlobalFloat("_ElementalNight01", Snapshot.Night01);
             _skyController?.Apply(Snapshot, sunDirection);
@@ -167,6 +182,17 @@ namespace Elemental.Presentation.Rendering
                     atmosphereProfile.RayleighStrength,
                     atmosphereProfile.MieStrength,
                     atmosphereProfile.HorizonStrength));
+                Shader.SetGlobalVector("_ElementalAerialPerspectiveParams", new Vector4(
+                    atmosphereProfile.AerialPerspectiveStrength,
+                    atmosphereProfile.AerialPerspectiveDistance,
+                    atmosphereProfile.HeightFalloff,
+                    atmosphereProfile.MaximumAerialOpacity));
+                Shader.SetGlobalVector("_ElementalCloudParams", new Vector4(
+                    atmosphereProfile.CloudCoverage,
+                    atmosphereProfile.CloudOpacity,
+                    atmosphereProfile.CloudScale,
+                    atmosphereProfile.CloudSpeed));
+                Shader.SetGlobalFloat("_ElementalNightOpacity", atmosphereProfile.NightOpacity);
                 Shader.SetGlobalColor("_ElementalRayleighColor", atmosphereProfile.RayleighColor);
                 Shader.SetGlobalColor("_ElementalMieColor", atmosphereProfile.MieColor);
             }

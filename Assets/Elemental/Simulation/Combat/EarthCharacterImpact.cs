@@ -27,7 +27,8 @@ namespace Elemental.Simulation.Combat
         Ignore = 0,
         Flinch = 1,
         Stagger = 2,
-        Knockout = 3
+        RecoverableKnockdown = 3,
+        Knockout = 4
     }
 
     public enum ImpactResponseMode : byte

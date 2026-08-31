@@ -28,6 +28,7 @@ namespace Elemental.Presentation.Animation
         [SerializeField] private EarthPillarMobility pillarMobility;
         [SerializeField] private EarthSurfController surfController;
         [SerializeField] private EarthTechniquePresentationProfile profile;
+        [SerializeField] private EarthFootContactController footContactController;
         [SerializeField, Min(0.01f)] private float footProbeLift = 0.42f;
         [SerializeField, Min(0.05f)] private float footProbeDistance = 0.95f;
         [SerializeField, Min(0f)] private float soleOffset = 0.035f;
@@ -41,15 +42,24 @@ namespace Elemental.Presentation.Animation
         private Transform _rightUpperLeg;
         private EarthFootPlantResult _leftPlant;
         private EarthFootPlantResult _rightPlant;
+        private EarthFootStanceState _leftStanceState;
+        private EarthFootStanceState _rightStanceState;
         private float _footIkWeight;
+        private float _leftAppliedFootIkWeight;
+        private float _rightAppliedFootIkWeight;
         private float3 _leftKneeDirection;
         private float3 _rightKneeDirection;
+        private bool _feetPoseLocked;
         private float3 _leftSupportLocal;
         private float3 _rightSupportLocal;
-        private uint _lockedSupportId;
-        private uint _lockedSupportGeneration;
+        private uint _leftLockedSupportId;
+        private uint _leftLockedSupportGeneration;
+        private uint _rightLockedSupportId;
+        private uint _rightLockedSupportGeneration;
         private float _pelvisOffset;
         private float _pelvisVelocity;
+        private float _legacyLeftAnchorErrorMeters;
+        private float _legacyRightAnchorErrorMeters;
         private float _pelvisResponseSeconds = 0.085f;
         private float _pelvisMaximumSpeed = 0.8f;
         private uint _presentationTick;
@@ -69,12 +79,39 @@ namespace Elemental.Presentation.Animation
         public BendingPoseRequest CurrentRequest { get; private set; }
         public uint LastAuthoritativeTick => _authoritativeTick;
         public uint PresentationTick => _presentationTick;
-        public bool FeetLocked => _leftPlant.Locked && _rightPlant.Locked;
-        public float FootIkWeight => _footIkWeight;
-        public float LeftAnchorErrorMeters { get; private set; }
-        public float RightAnchorErrorMeters { get; private set; }
-        public float PelvisCorrectionMeters => _pelvisOffset;
-        public float PelvisCorrectionVelocity => _pelvisVelocity;
+        // Public pose-lock state intentionally excludes the per-foot gait stance
+        // anchors below. During locomotion one support foot may be planted while
+        // the other swings; that is support IK, not a magic/casting feet lock.
+        public bool FeetLocked => footContactController != null && footContactController.FeetLocked;
+        public bool LeftFootLocked => footContactController != null && footContactController.LeftFootLocked;
+        public bool RightFootLocked => footContactController != null && footContactController.RightFootLocked;
+        public float FootIkWeight => footContactController != null ? footContactController.FootIkWeight : 0f;
+        public float LeftFootIkWeight => footContactController != null
+            ? footContactController.LeftFootIkWeight
+            : 0f;
+        public float RightFootIkWeight => footContactController != null
+            ? footContactController.RightFootIkWeight
+            : 0f;
+        public float LeftAnchorErrorMeters
+        {
+            get => footContactController != null
+                ? footContactController.LeftAnchorErrorMeters
+                : _legacyLeftAnchorErrorMeters;
+            private set => _legacyLeftAnchorErrorMeters = value;
+        }
+        public float RightAnchorErrorMeters
+        {
+            get => footContactController != null
+                ? footContactController.RightAnchorErrorMeters
+                : _legacyRightAnchorErrorMeters;
+            private set => _legacyRightAnchorErrorMeters = value;
+        }
+        public float PelvisCorrectionMeters => footContactController != null
+            ? footContactController.PelvisCorrectionMeters
+            : 0f;
+        public float PelvisCorrectionVelocity => footContactController != null
+            ? footContactController.PelvisCorrectionVelocity
+            : 0f;
 
         public void Configure(
             Animator configuredAnimator,
@@ -102,6 +139,15 @@ namespace Elemental.Presentation.Animation
         {
             _pelvisResponseSeconds = Mathf.Clamp(pelvisResponseSeconds, 0.02f, 0.25f);
             _pelvisMaximumSpeed = Mathf.Clamp(pelvisMaximumSpeed, 0.2f, 1.5f);
+            footContactController?.ConfigureAnimationRescue(
+                _pelvisResponseSeconds,
+                _pelvisMaximumSpeed);
+        }
+
+        public void SetFootContactController(EarthFootContactController controller)
+        {
+            footContactController = controller;
+            footContactController?.SetPoseIntentSource(this);
         }
 
         private void Awake()
@@ -363,7 +409,10 @@ namespace Elemental.Presentation.Animation
             return new EarthCastTiming(10, 6, 16, 0.35f);
         }
 
-        private void OnAnimatorIK(int layerIndex)
+        // Retained temporarily as a source-level rollback while the new pair-wise
+        // controller is verified. The Unity callback name is deliberately removed:
+        // EarthFootContactController is the sole writer of feet, knees and pelvis.
+        private void LegacyFootPlacementDisabled(int layerIndex)
         {
             // Foot placement has one owner and is evaluated after the base
             // locomotion layer. Re-applying bodyPosition from every IK-enabled upper
@@ -383,13 +432,16 @@ namespace Elemental.Presentation.Animation
                 CurrentIntent.Brace01,
                 tangentSpeed,
                 moveInput);
+            _feetPoseLocked = requestLock;
             float targetFootWeight = EarthFootPlantMotionGate.TargetContactWeight(
                 supported,
                 surfLock,
                 requestLock,
                 tangentSpeed,
                 moveInput);
-            bool locomoting = EarthFootPlantMotionGate.HasLocomotionIntent(moveInput) && !surfLock;
+            bool locomoting = EarthFootPlantMotionGate.IsLocomoting(
+                moveInput,
+                tangentSpeed) && !surfLock;
             float blendSeconds = requestLock ? 0.13f : locomoting ? 0.035f : supported ? 0.09f : 0.07f;
             _footIkWeight = Mathf.MoveTowards(
                 _footIkWeight,
@@ -397,15 +449,20 @@ namespace Elemental.Presentation.Animation
                 Time.deltaTime / Mathf.Max(0.01f, blendSeconds));
             if (!supported)
             {
-                ApplyFoot(AvatarIKGoal.LeftFoot, _leftFoot, in _leftPlant, _footIkWeight);
-                ApplyFoot(AvatarIKGoal.RightFoot, _rightFoot, in _rightPlant, _footIkWeight);
-                ApplyKneeHints(_footIkWeight);
+                _leftAppliedFootIkWeight = EarthFootIkWeightBlend.Step(
+                    _leftAppliedFootIkWeight, 0f, Time.deltaTime, 0.06f);
+                _rightAppliedFootIkWeight = EarthFootIkWeightBlend.Step(
+                    _rightAppliedFootIkWeight, 0f, Time.deltaTime, 0.06f);
+                ApplyFoot(
+                    AvatarIKGoal.LeftFoot, _leftFoot, in _leftPlant, LeftFootIkWeight);
+                ApplyFoot(
+                    AvatarIKGoal.RightFoot, _rightFoot, in _rightPlant, RightFootIkWeight);
+                ApplyKneeHints(LeftFootIkWeight, RightFootIkWeight);
                 if (_footIkWeight <= 0.001f)
                 {
                     _leftPlant = default;
                     _rightPlant = default;
-                    _lockedSupportId = 0u;
-                    _lockedSupportGeneration = 0u;
+                    ClearFootSupportLocks();
                 }
                 _pelvisOffset = Mathf.SmoothDamp(
                     _pelvisOffset, 0f, ref _pelvisVelocity, _pelvisResponseSeconds,
@@ -415,37 +472,53 @@ namespace Elemental.Presentation.Animation
                 return;
             }
             SupportFrameSnapshot presentationSupport = ResolvePresentationSupport();
-            bool hasPersistentSupportLock = requestLock &&
-                                            EarthSupportFootLockSolver.SameSupport(
-                                                _lockedSupportId,
-                                                _lockedSupportGeneration,
-                                                in presentationSupport) &&
-                                            _leftPlant.Locked && _rightPlant.Locked;
-            if (hasPersistentSupportLock)
-            {
-                ResolveSupportRelativeLocks(in presentationSupport);
-            }
-            else
-            {
-                _leftPlant = ProbeFoot(_leftFoot, _leftHits, _leftPlant, requestLock, -1f);
-                _rightPlant = ProbeFoot(_rightFoot, _rightHits, _rightPlant, requestLock, 1f);
-                if (requestLock) CaptureSupportRelativeLocks(in presentationSupport);
-            }
-            if (!requestLock)
-            {
-                _lockedSupportId = 0u;
-                _lockedSupportGeneration = 0u;
-            }
-            ApplyFoot(AvatarIKGoal.LeftFoot, _leftFoot, in _leftPlant, _footIkWeight);
-            ApplyFoot(AvatarIKGoal.RightFoot, _rightFoot, in _rightPlant, _footIkWeight);
-            ApplyKneeHints(_footIkWeight);
+            UpdateFootPlant(
+                true,
+                _leftFoot,
+                _leftHits,
+                ref _leftPlant,
+                ref _leftStanceState,
+                requestLock,
+                locomoting,
+                _rightPlant.Locked,
+                -1f,
+                in presentationSupport);
+            UpdateFootPlant(
+                false,
+                _rightFoot,
+                _rightHits,
+                ref _rightPlant,
+                ref _rightStanceState,
+                requestLock,
+                locomoting,
+                _leftPlant.Locked,
+                1f,
+                in presentationSupport);
+            float perFootResponse = requestLock ? 0.04f : 0.055f;
+            _leftAppliedFootIkWeight = EarthFootIkWeightBlend.Step(
+                _leftAppliedFootIkWeight,
+                _leftPlant.Weight01 * _footIkWeight,
+                Time.deltaTime,
+                perFootResponse);
+            _rightAppliedFootIkWeight = EarthFootIkWeightBlend.Step(
+                _rightAppliedFootIkWeight,
+                _rightPlant.Weight01 * _footIkWeight,
+                Time.deltaTime,
+                perFootResponse);
+            ApplyFoot(AvatarIKGoal.LeftFoot, _leftFoot, in _leftPlant, LeftFootIkWeight);
+            ApplyFoot(AvatarIKGoal.RightFoot, _rightFoot, in _rightPlant, RightFootIkWeight);
+            ApplyKneeHints(LeftFootIkWeight, RightFootIkWeight);
 
             Vector3 up = motor.LocalUp;
-            float leftError = Vector3.Dot(ToVector3(_leftPlant.Position) - _leftFoot.position, up);
-            float rightError = Vector3.Dot(ToVector3(_rightPlant.Position) - _rightFoot.position, up);
+            float leftError = LeftFootIkWeight > 0.05f
+                ? Vector3.Dot(ToVector3(_leftPlant.Position) - _leftFoot.position, up)
+                : 0f;
+            float rightError = RightFootIkWeight > 0.05f
+                ? Vector3.Dot(ToVector3(_rightPlant.Position) - _rightFoot.position, up)
+                : 0f;
             float allowedPelvisDrop = requestLock
                 ? maximumPelvisDrop
-                : Mathf.Min(0.08f, maximumPelvisDrop) * _footIkWeight;
+                : Mathf.Min(0.045f, maximumPelvisDrop) * _footIkWeight;
             float pelvisOffset = EarthPelvisCompensation.Solve(
                 leftError,
                 rightError,
@@ -525,7 +598,7 @@ namespace Elemental.Presentation.Animation
             in EarthFootPlantResult plant,
             float weight)
         {
-            float appliedWeight = plant.Weight01 * Mathf.Clamp01(weight);
+            float appliedWeight = Mathf.Clamp01(weight);
             animator.SetIKPositionWeight(goal, appliedWeight);
             animator.SetIKRotationWeight(goal, appliedWeight);
             if (appliedWeight <= 0.001f) return;
@@ -544,12 +617,14 @@ namespace Elemental.Presentation.Animation
             _rightUpperLeg = animator.GetBoneTransform(HumanBodyBones.RightUpperLeg);
         }
 
-        private void ApplyKneeHints(float weight)
+        private void ApplyKneeHints(float leftWeight, float rightWeight)
         {
-            float applied = Mathf.Clamp01(weight) * 0.86f;
-            animator.SetIKHintPositionWeight(AvatarIKHint.LeftKnee, applied);
-            animator.SetIKHintPositionWeight(AvatarIKHint.RightKnee, applied);
-            if (applied <= 0.001f || _leftUpperLeg == null || _rightUpperLeg == null) return;
+            float leftApplied = Mathf.Clamp01(leftWeight) * 0.86f;
+            float rightApplied = Mathf.Clamp01(rightWeight) * 0.86f;
+            animator.SetIKHintPositionWeight(AvatarIKHint.LeftKnee, leftApplied);
+            animator.SetIKHintPositionWeight(AvatarIKHint.RightKnee, rightApplied);
+            if (Mathf.Max(leftApplied, rightApplied) <= 0.001f ||
+                _leftUpperLeg == null || _rightUpperLeg == null) return;
             float3 forward = ToFloat3(Vector3.ProjectOnPlane(transform.forward, motor.LocalUp).normalized);
             float3 right = ToFloat3(Vector3.Cross(motor.LocalUp, ToVector3(forward)).normalized);
             float3 up = ToFloat3(motor.LocalUp);
@@ -572,33 +647,111 @@ namespace Elemental.Presentation.Animation
             return EarthPresentationSupportSolver.Extrapolate(in fixedSupport, renderLead);
         }
 
-        private void ResolveSupportRelativeLocks(in SupportFrameSnapshot support)
+        private void UpdateFootPlant(
+            bool left,
+            Transform foot,
+            RaycastHit[] hits,
+            ref EarthFootPlantResult plant,
+            ref EarthFootStanceState stanceState,
+            bool poseLock,
+            bool locomoting,
+            bool otherLocomotionFootLocked,
+            float side,
+            in SupportFrameSnapshot support)
         {
-            if (!EarthSupportFootLockSolver.SameSupport(
-                    _lockedSupportId,
-                    _lockedSupportGeneration,
-                    in support)) return;
-            if (_leftPlant.Locked)
-                _leftPlant = new EarthFootPlantResult(
-                    EarthSupportFootLockSolver.ResolveWorld(_leftSupportLocal, in support),
-                    support.Up,
-                    _leftPlant.Weight01,
+            uint supportId = left ? _leftLockedSupportId : _rightLockedSupportId;
+            uint supportGeneration = left
+                ? _leftLockedSupportGeneration
+                : _rightLockedSupportGeneration;
+            bool sameSupport = plant.Locked && EarthSupportFootLockSolver.SameSupport(
+                supportId,
+                supportGeneration,
+                in support);
+            Vector3 up = motor.LocalUp;
+            EarthFootPlantResult candidate = ProbeFoot(foot, hits, default, false, side);
+            bool hasContact = candidate.Weight01 > 0f;
+            float soleClearance = plant.Locked
+                ? Vector3.Dot(foot.position - ToVector3(plant.Position), up)
+                : hasContact
+                    ? Vector3.Dot(foot.position - ToVector3(candidate.Position), up)
+                    : float.PositiveInfinity;
+            EarthFootStanceDecision decision = EarthFootStanceGate.Step(
+                in stanceState,
+                motor.HasStableSupport,
+                locomoting,
+                poseLock,
+                sameSupport,
+                hasContact,
+                soleClearance,
+                otherLocomotionFootLocked);
+            stanceState = decision.State;
+            if (decision.Maintained)
+            {
+                float3 local = left ? _leftSupportLocal : _rightSupportLocal;
+                plant = new EarthFootPlantResult(
+                    EarthSupportFootLockSolver.ResolveWorld(local, in support),
+                    support.IsValid ? support.Up : ToFloat3(up),
+                    1f,
                     true);
-            if (_rightPlant.Locked)
-                _rightPlant = new EarthFootPlantResult(
-                    EarthSupportFootLockSolver.ResolveWorld(_rightSupportLocal, in support),
-                    support.Up,
-                    _rightPlant.Weight01,
-                    true);
+                return;
+            }
+
+            plant = decision.Locked && hasContact
+                ? new EarthFootPlantResult(candidate.Position, candidate.Normal, 1f, true)
+                : new EarthFootPlantResult(
+                    candidate.Position,
+                    candidate.Normal,
+                    EarthFootStanceGate.ContactWeight(locomoting, false, soleClearance) *
+                    candidate.Weight01,
+                    false);
+            if (plant.Locked) CaptureSupportRelativeLock(left, in support, in plant);
+            else ClearFootSupportLock(left);
         }
 
-        private void CaptureSupportRelativeLocks(in SupportFrameSnapshot support)
+        private void CaptureSupportRelativeLock(
+            bool left,
+            in SupportFrameSnapshot support,
+            in EarthFootPlantResult plant)
         {
-            if (!support.IsValid || !_leftPlant.Locked || !_rightPlant.Locked) return;
-            _lockedSupportId = support.SurfaceId;
-            _lockedSupportGeneration = support.Generation;
-            _leftSupportLocal = EarthSupportFootLockSolver.CaptureLocal(_leftPlant.Position, in support);
-            _rightSupportLocal = EarthSupportFootLockSolver.CaptureLocal(_rightPlant.Position, in support);
+            uint id = support.IsValid ? support.SurfaceId : 0u;
+            uint generation = support.IsValid ? support.Generation : 0u;
+            float3 local = EarthSupportFootLockSolver.CaptureLocal(plant.Position, in support);
+            if (left)
+            {
+                _leftLockedSupportId = id;
+                _leftLockedSupportGeneration = generation;
+                _leftSupportLocal = local;
+            }
+            else
+            {
+                _rightLockedSupportId = id;
+                _rightLockedSupportGeneration = generation;
+                _rightSupportLocal = local;
+            }
+        }
+
+        private void ClearFootSupportLock(bool left)
+        {
+            if (left)
+            {
+                _leftLockedSupportId = 0u;
+                _leftLockedSupportGeneration = 0u;
+            }
+            else
+            {
+                _rightLockedSupportId = 0u;
+                _rightLockedSupportGeneration = 0u;
+            }
+        }
+
+        private void ClearFootSupportLocks()
+        {
+            ClearFootSupportLock(true);
+            ClearFootSupportLock(false);
+            _leftStanceState = default;
+            _rightStanceState = default;
+            _leftAppliedFootIkWeight = 0f;
+            _rightAppliedFootIkWeight = 0f;
         }
 
         private void Subscribe()

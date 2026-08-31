@@ -19,6 +19,7 @@ namespace Elemental.Runtime.Characters
         private static void Install()
         {
             EarthRuntimeRescueInstaller.Ensure();
+            EarthRuntimeRescueInstaller.ResetPlayerGameplayAuthority();
         }
     }
 
@@ -36,6 +37,22 @@ namespace Elemental.Runtime.Characters
             };
             DontDestroyOnLoad(host);
             _instance = host.AddComponent<EarthRuntimeRescueInstaller>();
+        }
+
+        public static void ResetPlayerGameplayAuthority()
+        {
+            ActiveRagdollPuppet[] puppets = FindObjectsByType<ActiveRagdollPuppet>(
+                FindObjectsInactive.Exclude);
+            for (int index = 0; index < puppets.Length; index++)
+            {
+                ActiveRagdollPuppet puppet = puppets[index];
+                if (puppet == null || !puppet.CompareTag("Player")) continue;
+                HumanoidRagdollRig visibleRig =
+                    puppet.GetComponentInChildren<HumanoidRagdollRig>(true);
+                if (visibleRig != null && visibleRig.IsRagdollActive)
+                    visibleRig.ResetToAnimated();
+                puppet.ResetPhysicalState(puppet.transform.position, puppet.transform.rotation);
+            }
         }
 
         private void OnEnable()

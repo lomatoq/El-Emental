@@ -346,6 +346,41 @@ namespace Elemental.Simulation.Characters
 
     public static class EarthAnimationParameterFilter
     {
+        public static float ResolveGaitRateTarget(float tangentSpeed)
+        {
+            float speed = math.abs(math.isfinite(tangentSpeed) ? tangentSpeed : 0f);
+            if (speed < 0.12f) return 1f;
+            if (speed <= 2f)
+                return math.lerp(0.72f, 0.92f, math.saturate((speed - 0.35f) / 1.65f));
+            // The current coherent locomotion lane is one authored Mixamo walk
+            // cycle. Driving it at 1.35x turns the knee arc into an 8+ degree
+            // normalized-frame snap at run speed. Until a same-avatar run clip is
+            // imported, keep the cycle in its stable authored timing envelope.
+            return math.lerp(0.92f, 1.10f, math.saturate((speed - 2f) / 4f));
+        }
+
+        public static float StepGaitRate(
+            ref EarthScalarPresentationState state,
+            float tangentSpeed,
+            float deltaTime,
+            float responseSeconds = 0.12f)
+        {
+            if (!math.isfinite(state.Value) || state.Value < 0.5f || state.Value > 1.6f)
+            {
+                state.Value = 1f;
+                state.Velocity = 0f;
+            }
+            float target = ResolveGaitRateTarget(tangentSpeed);
+            state.Value = SmoothDamp(
+                state.Value,
+                target,
+                ref state.Velocity,
+                math.max(0.01f, responseSeconds),
+                deltaTime);
+            state.Value = math.clamp(state.Value, 0.70f, 1.10f);
+            return state.Value;
+        }
+
         public static EarthTurnPresentationSample StepTurn(
             ref EarthScalarPresentationState state,
             float measuredYawRateDegrees,

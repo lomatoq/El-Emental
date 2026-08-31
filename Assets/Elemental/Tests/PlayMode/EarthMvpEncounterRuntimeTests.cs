@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
+using System.Globalization;
 using System.IO;
+using System.Text;
 using Elemental.Input.Gestures;
 using Elemental.Presentation.Animation;
 using Elemental.Presentation.Rendering;
@@ -10,7 +12,9 @@ using Elemental.Runtime.Physics;
 using Elemental.Runtime.World;
 using Elemental.Simulation.Combat;
 using Elemental.Simulation.Bending;
+using Elemental.Simulation.Characters;
 using NUnit.Framework;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -25,31 +29,95 @@ namespace Elemental.Tests.PlayMode
         {
             const string scenePath = "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
             const string statusPath = "BuildReports/Mvp01RescueCurrent.json";
-            if (File.Exists(statusPath)) File.Delete(statusPath);
-            AsyncOperation load = SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
-            Assert.That(load, Is.Not.Null);
-            yield return load;
+            const string profilerPath =
+                "BuildReports/Mvp01ProfilerEditorDiagnosticLatest.json";
+            const string capturePath = "BuildReports/Mvp01RescueCurrent.png";
+            string[] evidencePaths = { statusPath, profilerPath, capturePath };
+            for (int index = 0; index < evidencePaths.Length; index++)
+                if (File.Exists(evidencePaths[index])) File.Delete(evidencePaths[index]);
+            DateTime startedUtc = DateTime.UtcNow;
+            Scene scene = SceneManager.GetSceneByPath(scenePath);
+            bool loadedForTest = !scene.IsValid() || !scene.isLoaded;
+            if (loadedForTest)
+            {
+                AsyncOperation load = SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
+                Assert.That(load, Is.Not.Null);
+                yield return load;
+                scene = SceneManager.GetSceneByPath(scenePath);
+            }
             yield return null;
 
-            Scene scene = SceneManager.GetSceneByPath(scenePath);
             VisualQaCaptureBehaviour qa = FindInScene<VisualQaCaptureBehaviour>(scene);
             Assert.That(qa, Is.Not.Null);
             Assert.That(qa.BeginMvpRescueEvidence(), Is.True);
-            float deadline = Time.realtimeSinceStartup + 45f;
+            float deadline = Time.realtimeSinceStartup + 90f;
             while (!File.Exists(statusPath) && Time.realtimeSinceStartup < deadline)
                 yield return null;
 
             bool statusExists = File.Exists(statusPath);
             string status = statusExists ? File.ReadAllText(statusPath) : string.Empty;
-            bool profilerExists = File.Exists("BuildReports/Mvp01Profiler.json");
-            bool captureExists = File.Exists("BuildReports/Mvp01RescueCurrent.png");
+            bool profilerExists = File.Exists(profilerPath);
+            bool captureExists = File.Exists(capturePath);
+            DateTime statusWriteUtc = statusExists
+                ? File.GetLastWriteTimeUtc(statusPath)
+                : DateTime.MinValue;
+            DateTime profilerWriteUtc = profilerExists
+                ? File.GetLastWriteTimeUtc(profilerPath)
+                : DateTime.MinValue;
+            DateTime captureWriteUtc = captureExists
+                ? File.GetLastWriteTimeUtc(capturePath)
+                : DateTime.MinValue;
+            VisualQaCaptureBehaviour.Mvp01ProfilerEvidence profiler = profilerExists
+                ? JsonUtility.FromJson<VisualQaCaptureBehaviour.Mvp01ProfilerEvidence>(
+                    File.ReadAllText(profilerPath))
+                : null;
 
-            AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
-            if (unload != null) yield return unload;
-            Assert.That(statusExists, Is.True, "Accepted evidence did not finish within 45 seconds.");
+            if (loadedForTest)
+            {
+                AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
+                if (unload != null) yield return unload;
+            }
+            DateTime freshnessFloor = startedUtc.AddSeconds(-1.0);
+            Assert.That(statusExists, Is.True, "Accepted evidence did not finish within 90 seconds.");
             Assert.That(status, Does.Contain("\"success\": true"));
             Assert.That(profilerExists, Is.True);
             Assert.That(captureExists, Is.True);
+            Assert.That(statusWriteUtc, Is.GreaterThanOrEqualTo(freshnessFloor));
+            Assert.That(profilerWriteUtc, Is.GreaterThanOrEqualTo(freshnessFloor));
+            Assert.That(captureWriteUtc, Is.GreaterThanOrEqualTo(freshnessFloor));
+            Assert.That(profiler, Is.Not.Null);
+            Assert.That(profiler.schema, Is.EqualTo("mvp-performance-evidence-v2"));
+            Assert.That(profiler.captureId, Is.Not.Null.And.Not.Empty);
+            Assert.That(profiler.mode, Is.EqualTo("editor-diagnostic-camera-rt"));
+            Assert.That(profiler.isEditor, Is.True);
+            Assert.That(profiler.requestedFrameSamples, Is.EqualTo(720));
+            Assert.That(profiler.warmupFrames, Is.EqualTo(60));
+            Assert.That(profiler.totalFrameSamples, Is.EqualTo(720));
+            Assert.That(profiler.frameTimingSamples, Is.EqualTo(720));
+            Assert.That(profiler.renderWidth, Is.EqualTo(1920));
+            Assert.That(profiler.renderHeight, Is.EqualTo(1080));
+            Assert.That(profiler.activeFootControllerCount, Is.GreaterThanOrEqualTo(2));
+            Assert.That(profiler.footContactFrameSamples, Is.EqualTo(720));
+            Assert.That(profiler.footContactMissingFrames, Is.Zero);
+            Assert.That(profiler.footContactMinimumInvocations, Is.GreaterThanOrEqualTo(2));
+            Assert.That(profiler.footContactP95Milliseconds, Is.LessThanOrEqualTo(0.30));
+            Assert.That(profiler.resolutionGatePassed, Is.True);
+            Assert.That(profiler.sampleCoverageGatePassed, Is.True);
+            Assert.That(profiler.gpuTimingAvailable, Is.True,
+                "Missing GPU timing cannot satisfy a CPU/GPU acceptance gate.");
+            Assert.That(profiler.cpuGpuBudgetGatePassed, Is.True);
+            Assert.That(profiler.footContactGatePassed, Is.True);
+            Assert.That(profiler.runtimeRenderAudit, Is.Not.Null);
+            Assert.That(profiler.runtimeRenderAudit.pipelineContractPassed, Is.True);
+            Assert.That(profiler.runtimeRenderAudit.cameraContractPassed, Is.True);
+            Assert.That(profiler.runtimeRenderAudit.ssaoContractPassed, Is.True);
+            Assert.That(profiler.runtimeRenderAudit.authoredLookContractPassed, Is.True,
+                profiler.runtimeRenderAudit.mismatchSummary);
+            Assert.That(profiler.runtimeRenderAuditPassed, Is.True);
+            Assert.That(profiler.editorDiagnosticPassed, Is.True);
+            Assert.That(profiler.authoritativePassed, Is.False,
+                "An Editor camera-RT diagnostic must never masquerade as standalone acceptance.");
+            Assert.That(profiler.passed, Is.False);
         }
 
         [UnityTest]
@@ -77,7 +145,7 @@ namespace Elemental.Tests.PlayMode
             EarthFragmentPool fragmentPool = FindInScene<EarthFragmentPool>(scene);
             EarthRockDebrisPool debrisPool = FindInScene<EarthRockDebrisPool>(scene);
             EarthPillarWavePool wavePool = FindInScene<EarthPillarWavePool>(scene);
-            GameObject arena = FindByName(scene, "Rumble Stone Amphitheatre");
+            GameObject arena = FindByName(scene, "Broken Crown Arena");
             bool hasRumbleArenaMaterial = HasShader(arena, "Elemental/Graphics V5/Rumble Rock Lit");
             Animator botAnimator = bot != null ? bot.GetComponentInChildren<Animator>(true) : null;
             GameObject player = FindByName(scene, "Planet Character");
@@ -109,6 +177,12 @@ namespace Elemental.Tests.PlayMode
                 $"sameController={botAnimator != null && playerAnimator != null && botAnimator.runtimeAnimatorController == playerAnimator.runtimeAnimatorController}.");
             HumanoidCharacterPresentation botSharedPresentation = bot != null
                 ? bot.GetComponentInChildren<HumanoidCharacterPresentation>(true)
+                : null;
+            HumanoidCharacterPresentation playerSharedPresentation = player != null
+                ? player.GetComponentInChildren<HumanoidCharacterPresentation>(true)
+                : null;
+            EarthFootContactController botFootContact = bot != null
+                ? bot.GetComponentInChildren<EarthFootContactController>(true)
                 : null;
             bool botHasNoPlayerOwnership = bot != null &&
                                            bot.GetComponentInChildren<MagicInputController>(true) == null &&
@@ -151,6 +225,117 @@ namespace Elemental.Tests.PlayMode
             }
             if (bot != null) sampled = bot.HasSampled;
 
+            EarthAnimationMotionAuditState botMotionAudit = default;
+            var botMotionTrace = new StringBuilder(32768);
+            float maximumBotAnimatorSpeed = 0f;
+            botMotionTrace.AppendLine(
+                "frame,time,dt,speed,gaitRate,leftIkWeight,rightIkWeight,pelvis," +
+                 "leftLocked,rightLocked,supportId,supportGeneration,leftX,leftY,leftZ," +
+                 "rightX,rightY,rightZ,leftKneeX,leftKneeY,leftKneeZ,rightKneeX,rightKneeY," +
+                 "rightKneeZ,leftReason,rightReason,animatorState,normalizedTime," +
+                 "authoredAction,footPolicy,bodyPitch,bodyYaw,bodyRoll");
+            if (botAnimator != null && botFootContact != null)
+            {
+                // The shipping spawn is intentionally within strike range, so the
+                // encounter smoke test otherwise samples 120 idle/windup frames.
+                // Narrow attack range only inside this disposable test scene to
+                // force a real chase and exercise rival gait/IK hand-offs.
+                bot.ConfigureTuning(1.25f, 0.82f, 15f, 0.24f, 0.72f, 1f);
+                bot.ResetPlanner();
+                Transform leftFoot = botAnimator.GetBoneTransform(HumanBodyBones.LeftFoot);
+                Transform rightFoot = botAnimator.GetBoneTransform(HumanBodyBones.RightFoot);
+                Transform leftUpperLeg = botAnimator.GetBoneTransform(HumanBodyBones.LeftUpperLeg);
+                Transform leftLowerLeg = botAnimator.GetBoneTransform(HumanBodyBones.LeftLowerLeg);
+                Transform rightUpperLeg = botAnimator.GetBoneTransform(HumanBodyBones.RightUpperLeg);
+                Transform rightLowerLeg = botAnimator.GetBoneTransform(HumanBodyBones.RightLowerLeg);
+                for (int frame = 0; frame < 120; frame++)
+                {
+                    yield return null;
+                    Vector3 leftLocal = botAnimator.transform.InverseTransformPoint(leftFoot.position);
+                    Vector3 rightLocal = botAnimator.transform.InverseTransformPoint(rightFoot.position);
+                    Vector3 leftKnee = botAnimator.transform.InverseTransformDirection(
+                        (leftLowerLeg.position - leftUpperLeg.position).normalized);
+                    Vector3 rightKnee = botAnimator.transform.InverseTransformDirection(
+                        (rightLowerLeg.position - rightUpperLeg.position).normalized);
+                    uint supportId = botFootContact.LeftSupportId != 0u
+                        ? botFootContact.LeftSupportId
+                        : botFootContact.RightSupportId;
+                    uint supportGeneration = botFootContact.LeftSupportId != 0u
+                        ? botFootContact.LeftSupportGeneration
+                        : botFootContact.RightSupportGeneration;
+                    var botSample = new EarthAnimationMotionSample(
+                        Mathf.Max(0.0001f, Time.deltaTime),
+                        ToFloat3(leftLocal),
+                        ToFloat3(rightLocal),
+                        ToFloat3(leftKnee),
+                        ToFloat3(rightKnee),
+                        botFootContact.FootIkWeight,
+                        botFootContact.LeftFootIkWeight,
+                        botFootContact.RightFootIkWeight,
+                        botFootContact.PelvisCorrectionMeters,
+                        botFootContact.LeftFootLocked,
+                        botFootContact.RightFootLocked,
+                        true,
+                        supportId,
+                        supportGeneration);
+                    EarthAnimationMotionAudit.Step(ref botMotionAudit, in botSample);
+                    AnimatorStateInfo state = botAnimator.GetCurrentAnimatorStateInfo(0);
+                    maximumBotAnimatorSpeed = Mathf.Max(
+                        maximumBotAnimatorSpeed,
+                        Mathf.Abs(botAnimator.GetFloat("Speed")));
+                    float3 bodyAngles = botSharedPresentation != null &&
+                                        botSharedPresentation.ProceduralBodyResponse != null
+                        ? botSharedPresentation.ProceduralBodyResponse.CurrentAnglesDegrees
+                        : float3.zero;
+                    botMotionTrace.AppendFormat(
+                        CultureInfo.InvariantCulture,
+                        "{0},{1:F6},{2:F6},{3:F5},{4:F5},{5:F5},{6:F5},{7:F5}," +
+                        "{8},{9},{10},{11},{12:F6},{13:F6},{14:F6},{15:F6},{16:F6}," +
+                        "{17:F6},{18:F6},{19:F6},{20:F6},{21:F6},{22:F6},{23:F6}," +
+                        "{24},{25},{26},{27:F6},{28},{29},{30:F5},{31:F5},{32:F5}\n",
+                        frame,
+                        Time.time,
+                        Time.deltaTime,
+                        botAnimator.GetFloat("Speed"),
+                        botAnimator.GetFloat("GaitRate"),
+                        botFootContact.LeftFootIkWeight,
+                        botFootContact.RightFootIkWeight,
+                        botFootContact.PelvisCorrectionMeters,
+                        botFootContact.LeftFootLocked ? 1 : 0,
+                        botFootContact.RightFootLocked ? 1 : 0,
+                        supportId,
+                        supportGeneration,
+                        leftLocal.x,
+                        leftLocal.y,
+                        leftLocal.z,
+                        rightLocal.x,
+                        rightLocal.y,
+                        rightLocal.z,
+                        leftKnee.x,
+                        leftKnee.y,
+                        leftKnee.z,
+                        rightKnee.x,
+                        rightKnee.y,
+                        rightKnee.z,
+                        botFootContact.LeftReason,
+                        botFootContact.RightReason,
+                        state.fullPathHash,
+                        state.normalizedTime,
+                        botSharedPresentation != null
+                            ? botSharedPresentation.CurrentAuthoredAction
+                            : EarthAuthoredActionId.None,
+                        botSharedPresentation != null
+                            ? botSharedPresentation.CurrentFootPolicy
+                            : EarthAuthoredFootPolicy.DefaultContact,
+                        bodyAngles.x,
+                        bodyAngles.y,
+                        bodyAngles.z);
+                }
+            }
+            EarthAnimationMotionAuditSummary botMotionSummary =
+                EarthAnimationMotionAudit.Snapshot(in botMotionAudit);
+            WriteBotAnimationAudit(botMotionTrace, in botMotionSummary);
+
             for (int frame = 0; frame < 300 && planet != null &&
                  (planet.PendingRenderCount > 0 || planet.PendingColliderCount > 0); frame++)
             {
@@ -166,7 +351,7 @@ namespace Elemental.Tests.PlayMode
             double renderQueuePeak = planet != null ? planet.PeakRenderQueueMilliseconds : double.MaxValue;
             double colliderQueuePeak = planet != null ? planet.PeakColliderQueueMilliseconds : double.MaxValue;
             float frameDeltaP95Milliseconds = ComputePercentile95(coldFrameDeltaMilliseconds, coldFrameCount);
-            Debug.Log($"[Elemental.Tests] M11 radius-36 cold run: frames={coldFrameCount}, " +
+            Debug.Log($"[Elemental.Tests] M11 radius-55.1 cold run: frames={coldFrameCount}, " +
                       $"frame p95={frameDeltaP95Milliseconds:0.00} ms, " +
                       $"max frame delta={maximumFrameDeltaMilliseconds:0.00} ms, " +
                       $"render queue peak={renderQueuePeak:0.00} ms, " +
@@ -187,13 +372,20 @@ namespace Elemental.Tests.PlayMode
                                           FindByName(scene, "Earth Combat Sentinel") == null &&
                                           FindByName(scene, "Earth Combat Trap") == null;
             int arenaPieceCount = arena != null ? arena.transform.childCount : 0;
+            bool botFootContactEnabled = botFootContact != null && botFootContact.enabled;
+            bool playerHasOrderedBodyPass = playerSharedPresentation != null &&
+                                            playerSharedPresentation.ProceduralBodyResponse != null &&
+                                            playerSharedPresentation.ProceduralBodyResponse.enabled;
+            bool botHasOrderedBodyPass = botSharedPresentation != null &&
+                                         botSharedPresentation.ProceduralBodyResponse != null &&
+                                         botSharedPresentation.ProceduralBodyResponse.enabled;
 
             AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
             if (unload != null) yield return unload;
 
             Assert.That(loaded, Is.True);
             Assert.That(hasPlanet, Is.True);
-            Assert.That(planetRadius, Is.EqualTo(36f).Within(0.001f));
+            Assert.That(planetRadius, Is.EqualTo(55.1f).Within(0.001f));
             Assert.That(hasArena, Is.True);
             Assert.That(arenaPieceCount, Is.InRange(20, 32));
             Assert.That(hasRumbleArenaMaterial, Is.True);
@@ -226,6 +418,24 @@ namespace Elemental.Tests.PlayMode
                 "The rival visual must not clone player input, magic or presentation ownership.");
             Assert.That(botSharedPresentation, Is.Not.Null,
                 "Player and rival must share the base animation presentation pipeline.");
+            Assert.That(botFootContact, Is.Not.Null,
+                "The rival Humanoid must own the same independent foot-contact controller as the player.");
+            Assert.That(botFootContactEnabled, Is.True);
+            Assert.That(playerHasOrderedBodyPass, Is.True,
+                "The player must own the bounded final upper-body response pass.");
+            Assert.That(botHasOrderedBodyPass, Is.True,
+                "The bot must own the same bounded final upper-body response pass.");
+            Assert.That(botMotionSummary.SampleCount, Is.EqualTo(120));
+            Assert.That(maximumBotAnimatorSpeed, Is.GreaterThan(0.5f),
+                "The rival telemetry scenario must contain actual locomotion, not 120 idle frames.");
+            Assert.That(botMotionSummary.LeftLockTransitions, Is.GreaterThan(0));
+            Assert.That(botMotionSummary.RightLockTransitions, Is.GreaterThan(0));
+            Assert.That(botMotionSummary.BothLockedFrames, Is.Zero);
+            Assert.That(botMotionSummary.DiscontinuityFrames, Is.Zero,
+                $"The rival contained {botMotionSummary.DiscontinuityFrames} untagged leg discontinuities.");
+            Assert.That(botMotionSummary.MaximumKneeAngleStep, Is.LessThanOrEqualTo(8.001f));
+            Assert.That(botMotionSummary.MaximumPelvisStep, Is.LessThanOrEqualTo(0.0201f));
+            Assert.That(botMotionSummary.MaximumIkWeightStep, Is.LessThanOrEqualTo(0.3001f));
             Assert.That(playerRagdoll, Is.Not.Null);
             Assert.That(botRagdoll, Is.Not.Null);
             Assert.That(oldStoneBodyRemoved, Is.True);
@@ -237,9 +447,9 @@ namespace Elemental.Tests.PlayMode
             Assert.That(finiteBotPosition, Is.True);
             Assert.That(planetQueuesDrained, Is.True);
             Assert.That(renderQueuePeak, Is.LessThan(30.0),
-                "Radius-36 startup meshing must stay inside the bounded rescue budget.");
+                "Radius-55.1 startup meshing must stay inside the bounded rescue budget.");
             Assert.That(frameDeltaP95Milliseconds, Is.LessThan(33.3f),
-                "The radius-36 Editor cold run must keep its total-frame P95 below one 30 Hz frame.");
+                "The radius-55.1 Editor cold run must keep its total-frame P95 below one 30 Hz frame.");
             Assert.That(liveDirectionalLights, Is.EqualTo(1));
             Assert.That(isolatedFromLookdevDemo, Is.True);
             Assert.That(obsoleteTargetsRemoved, Is.True);
@@ -320,12 +530,89 @@ namespace Elemental.Tests.PlayMode
             HumanoidRagdollRig playerRig = playerImpact != null
                 ? playerImpact.GetComponentInChildren<HumanoidRagdollRig>(true)
                 : null;
+            HumanoidCharacterPresentation botPresentation = botImpact != null
+                ? botImpact.GetComponentInChildren<HumanoidCharacterPresentation>(true)
+                : null;
+            HumanoidCharacterPresentation playerPresentation = playerImpact != null
+                ? playerImpact.GetComponentInChildren<HumanoidCharacterPresentation>(true)
+                : null;
 
             Assert.That(duel, Is.Not.Null);
             Assert.That(botImpact, Is.Not.Null);
             Assert.That(playerImpact, Is.Not.Null);
             Assert.That(botRig, Is.Not.Null);
             Assert.That(playerRig, Is.Not.Null);
+            Assert.That(botPresentation, Is.Not.Null);
+            Assert.That(playerPresentation, Is.Not.Null);
+
+            int botKnockoutsBeforeStone = duel.BotKnockoutCount;
+            int worldResponses = 0;
+            EarthWorldResponseEvent singleStoneWorldResponse = default;
+            botImpact.WorldResponseRequested += response =>
+            {
+                worldResponses++;
+                singleStoneWorldResponse = response;
+            };
+            EarthCharacterImpactResponse singleStoneResponse = botImpact.ApplyImpact(
+                botImpact.transform.position,
+                botImpact.transform.right + botImpact.transform.up * 0.15f,
+                botImpact.Body.mass * 8.2f,
+                EarthCharacterImpactSourceKind.LooseStone,
+                0x57000100u,
+                8.2f,
+                1f,
+                100u);
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+
+            Assert.That(singleStoneResponse,
+                Is.EqualTo(EarthCharacterImpactResponse.RecoverableKnockdown),
+                "One heavy stone must knock the fighter down without ending the round.");
+            Assert.That(duel.BotPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
+            Assert.That(duel.BotKnockoutCount, Is.EqualTo(botKnockoutsBeforeStone));
+            Assert.That(duel.IsRecoverablyKnockedDown(EarthDuelFighterId.Bot), Is.True);
+            Assert.That(botRig.IsRagdollActive, Is.True);
+            Assert.That(worldResponses, Is.EqualTo(1),
+                "One accepted impact must emit one canonical world response.");
+            Assert.That(singleStoneWorldResponse.ResponseId, Is.Not.EqualTo(0u));
+            Assert.That(singleStoneWorldResponse.Kind, Is.EqualTo(EarthWorldResponseKind.Knockdown));
+
+            yield return new WaitForSeconds(0.80f);
+            Assert.That(botRig.IsRecoveringToAnimation, Is.True,
+                "Physical knockdown must hand off once into authored recovery.");
+            Assert.That(botPresentation.CurrentAuthoredAction,
+                Is.EqualTo(EarthAuthoredActionId.RecoverableKnockdownRecovery));
+            Assert.That(botPresentation.CurrentFootPolicy,
+                Is.EqualTo(EarthAuthoredFootPolicy.AuthoredContact),
+                "Get-up must own its contact window before Animator evaluates the recovery clip.");
+            yield return new WaitForSeconds(0.67f);
+            yield return new WaitForFixedUpdate();
+            Assert.That(duel.IsRecoverablyKnockedDown(EarthDuelFighterId.Bot), Is.False);
+            Assert.That(duel.BotPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
+            Assert.That(duel.BotKnockoutCount, Is.EqualTo(botKnockoutsBeforeStone),
+                "Recoverable knockdown must not increment KO or enter respawn.");
+            Assert.That(botRig.IsRagdollActive, Is.False);
+            Assert.That(botRig.IsRecoveringToAnimation, Is.False);
+            Assert.That(botRig.GetComponentInChildren<Animator>(true).enabled, Is.True);
+
+            EarthCharacterImpactResponse authoredRecoilResponse = botImpact.ApplyImpact(
+                botImpact.transform.position + botImpact.transform.up * 0.9f,
+                botImpact.transform.right,
+                botImpact.Body.mass * 2.4f,
+                EarthCharacterImpactSourceKind.LooseStone,
+                0x57000101u,
+                2.4f,
+                0.55f,
+                101u);
+            yield return null;
+            int impactLayer = botPresentation.Animator.GetLayerIndex("Impact Additive");
+            Assert.That(authoredRecoilResponse, Is.EqualTo(EarthCharacterImpactResponse.Stagger));
+            Assert.That(botPresentation.CurrentAuthoredAction,
+                Is.EqualTo(EarthAuthoredActionId.HitRecoil),
+                "The bot must use the same authored hit-recoil lane as the player.");
+            Assert.That(impactLayer, Is.GreaterThanOrEqualTo(0));
+            Assert.That(botPresentation.Animator.GetLayerWeight(impactLayer), Is.GreaterThan(0f));
+            yield return new WaitForSeconds(0.55f);
 
             EarthCharacterImpactResponse surfResponse = botImpact.ApplyImpact(
                 botImpact.transform.position,
@@ -371,6 +658,42 @@ namespace Elemental.Tests.PlayMode
             Assert.That(duel.BotPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
             Assert.That(botRig.IsRagdollActive, Is.False);
             yield return new WaitForSeconds(0.8f);
+
+            int playerKnockoutsBeforeStone = duel.PlayerKnockoutCount;
+            EarthCharacterImpactResponse playerSingleStoneResponse = playerImpact.ApplyImpact(
+                playerImpact.transform.position,
+                playerImpact.transform.right + playerImpact.transform.up * 0.15f,
+                playerImpact.Body.mass * 8.2f,
+                EarthCharacterImpactSourceKind.LooseStone,
+                0x57000200u,
+                8.2f,
+                1f,
+                210u);
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            Assert.That(playerSingleStoneResponse,
+                Is.EqualTo(EarthCharacterImpactResponse.RecoverableKnockdown));
+            Assert.That(duel.PlayerPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
+            Assert.That(duel.PlayerKnockoutCount, Is.EqualTo(playerKnockoutsBeforeStone));
+            Assert.That(playerRig.IsRagdollActive, Is.True);
+            yield return new WaitForSeconds(0.80f);
+            Assert.That(playerRig.IsRecoveringToAnimation, Is.True);
+            Assert.That(playerPresentation.CurrentAuthoredAction,
+                Is.EqualTo(EarthAuthoredActionId.RecoverableKnockdownRecovery));
+            Assert.That(playerPresentation.CurrentFootPolicy,
+                Is.EqualTo(EarthAuthoredFootPolicy.AuthoredContact));
+            yield return new WaitForSeconds(0.67f);
+            yield return new WaitForFixedUpdate();
+            Assert.That(duel.IsRecoverablyKnockedDown(EarthDuelFighterId.Player), Is.False);
+            Assert.That(duel.PlayerPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
+            Assert.That(duel.PlayerKnockoutCount, Is.EqualTo(playerKnockoutsBeforeStone));
+            Assert.That(playerRig.IsRagdollActive, Is.False);
+            Assert.That(playerRig.IsRecoveringToAnimation, Is.False);
+            PlanetMotor recoveredPlayerMotor = playerImpact.GetComponent<PlanetMotor>();
+            Assert.That(recoveredPlayerMotor, Is.Not.Null);
+            Assert.That(recoveredPlayerMotor.enabled, Is.True,
+                "Player movement authority must return after authored recovery.");
+            yield return new WaitForSeconds(0.20f);
 
             int localizedBefore = playerRig.LocalizedRagdollHitCount;
             EarthCharacterImpactResponse firstProjectileResponse = playerImpact.ApplyImpact(
@@ -454,7 +777,13 @@ namespace Elemental.Tests.PlayMode
                 "The hover phase must switch to the authored boxer punch slot.");
             Vector3 crosshairAim = camera.transform.forward.normalized;
 
-            yield return new WaitForSeconds(0.27f);
+            // Sample the authored launch on its first rendered frame. With the arena
+            // and combatant now seated on the enlarged planet, a centre-screen punch
+            // can legitimately contact Earth or the enemy well before 0.27 seconds;
+            // measuring later confused a successful impact with a weak launch.
+            float launchDeadline = Time.time + 0.4f;
+            while (ability.IsStompStoneActive && Time.time < launchDeadline)
+                yield return null;
             Assert.That(ability.IsStompStoneActive, Is.False);
             Assert.That(launchedStone.Body.linearVelocity.magnitude, Is.GreaterThan(20f));
             Assert.That(Vector3.Dot(launchedStone.Body.linearVelocity.normalized, crosshairAim),
@@ -567,6 +896,70 @@ namespace Elemental.Tests.PlayMode
                 count += root.GetComponentsInChildren<T>(true).Length;
             return count;
         }
+
+        private static void WriteBotAnimationAudit(
+            StringBuilder trace,
+            in EarthAnimationMotionAuditSummary summary)
+        {
+            string directory = Path.GetFullPath("BuildReports");
+            Directory.CreateDirectory(directory);
+            string stamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
+            string historicalCsv = Path.Combine(
+                directory,
+                $"AnimationArenaTelemetryBot-{stamp}.csv");
+            string latestCsv = Path.Combine(directory, "AnimationArenaTelemetryBotLatest.csv");
+            string latestJson = Path.Combine(directory, "AnimationArenaTelemetryBotLatest.json");
+            File.WriteAllText(historicalCsv, trace.ToString());
+            File.WriteAllText(latestCsv, trace.ToString());
+            bool passed = summary.SampleCount == 120 &&
+                          summary.LeftLockTransitions > 0 &&
+                          summary.RightLockTransitions > 0 &&
+                          summary.BothLockedFrames == 0 &&
+                          summary.DiscontinuityFrames == 0 &&
+                          summary.MaximumKneeAngleStep <= 8.001f &&
+                          summary.MaximumPelvisStep <= 0.0201f &&
+                          summary.MaximumIkWeightStep <= 0.3001f;
+            string json = string.Format(
+                CultureInfo.InvariantCulture,
+                "{{\n" +
+                "  \"schema\": \"animation-contact-v1\",\n" +
+                "  \"utc\": \"{0}\",\n" +
+                "  \"historicalCsv\": \"{1}\",\n" +
+                "  \"actorId\": \"Rumble Linebreaker Bot\",\n" +
+                "  \"scenarioId\": \"shipping-duel-runtime\",\n" +
+                "  \"targetFrameRate\": 60,\n" +
+                "  \"elapsedSeconds\": {2:F6},\n" +
+                "  \"sampleCount\": {3},\n" +
+                "  \"leftLockTransitions\": {4},\n" +
+                "  \"rightLockTransitions\": {5},\n" +
+                "  \"bothLockedFrames\": {6},\n" +
+                "  \"supportTransitions\": {7},\n" +
+                "  \"discontinuityFrames\": {8},\n" +
+                "  \"maximumFootStepMeters\": {9:F6},\n" +
+                "  \"maximumKneeAngleStepDegrees\": {10:F6},\n" +
+                "  \"maximumPelvisStepMeters\": {11:F6},\n" +
+                "  \"maximumIkWeightStep\": {12:F6},\n" +
+                "  \"hardGatesPassed\": {13}\n" +
+                "}}\n",
+                DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture),
+                historicalCsv.Replace('\\', '/'),
+                summary.ElapsedSeconds,
+                summary.SampleCount,
+                summary.LeftLockTransitions,
+                summary.RightLockTransitions,
+                summary.BothLockedFrames,
+                summary.SupportTransitions,
+                summary.DiscontinuityFrames,
+                summary.MaximumFootStep,
+                summary.MaximumKneeAngleStep,
+                summary.MaximumPelvisStep,
+                summary.MaximumIkWeightStep,
+                passed ? "true" : "false");
+            File.WriteAllText(latestJson, json);
+        }
+
+        private static float3 ToFloat3(Vector3 value) =>
+            new float3(value.x, value.y, value.z);
 
         private static GameObject FindByName(Scene scene, string name)
         {

@@ -594,6 +594,36 @@ namespace Elemental.Runtime.Physics
         public bool ApplyEarthImpact(in EarthStructureImpact impact) =>
             ApplyStructureImpact(impact.Point, impact.Direction, impact.Impulse);
 
+        /// <summary>
+        /// A surf plough cuts the foot of a wall instead of applying a full-height
+        /// fracture pulse. The intact proxy still swaps to its prebuilt fracture
+        /// graph, but only bonds in the lower authored band receive damage and the
+        /// legacy automatic whole-wall decay remains paused.
+        /// </summary>
+        public bool ApplySurfLowerBandImpact(in EarthStructureImpact impact, float surfSpeed)
+        {
+            if (impact.Impulse < MinimumRockImpactImpulse || Height <= 0.01f) return false;
+            Vector3 baseCenter = transform.position - _up * (Height * 0.5f);
+            float hitHeight01 = Vector3.Dot(impact.Point - baseCenter, _up) / Height;
+            EarthSurfWallBandDecision band = EarthSurfWallBandSolver.Resolve(hitHeight01, surfSpeed);
+            if (!band.Accepted) return false;
+
+            Vector3 tangentDirection = Vector3.ProjectOnPlane(impact.Direction, _up).normalized;
+            if (tangentDirection.sqrMagnitude < 0.5f) tangentDirection = _forward;
+            Vector3 planarOffset = Vector3.ProjectOnPlane(impact.Point - baseCenter, _up);
+            Vector3 lowerPoint = baseCenter + planarOffset + _up * (band.ImpactHeight01 * Height);
+            _fractureOrigin = lowerPoint;
+            _fractureBias = tangentDirection;
+            if (!_fractured) BeginCohesiveFracture();
+            _manualFracturePaused = true;
+            DamageLowerBandBonds(
+                lowerPoint,
+                tangentDirection,
+                impact.Impulse,
+                band.DamageRadius01);
+            return true;
+        }
+
         public bool TryPluckCell(Vector3 point, out IEarthPhysicalTarget target)
         {
             target = null;
@@ -1237,6 +1267,62 @@ namespace Elemental.Runtime.Physics
             if (anyActive) return;
             HideFracturePieces();
             gameObject.SetActive(false);
+        }
+
+        private void DamageLowerBandBonds(
+            Vector3 point,
+            Vector3 direction,
+            float impulse,
+            float damageRadius01)
+        {
+            if (!_fractured || _bonds == null || impulse <= 0f) return;
+            float safeRadius01 = Mathf.Clamp(damageRadius01, 0.05f, 0.28f);
+            if (_structureRuntime != null && _structureRuntime.IsConfigured)
+            {
+                Vector3 localPointVector = transform.InverseTransformPoint(point);
+                localPointVector.y = Mathf.Min(
+                    localPointVector.y,
+                    -0.5f + EarthSurfWallBandSolver.MaximumLowerBand01);
+                Vector3 localDirection = transform.InverseTransformDirection(direction).normalized;
+                _structureRuntime.ApplyImpact(
+                    new float3(localPointVector.x, localPointVector.y, localPointVector.z),
+                    new float3(localDirection.x, localDirection.y, localDirection.z) *
+                    (impulse * ImpactDamageMultiplier),
+                    safeRadius01,
+                    1f,
+                    CurrentStructureTick);
+                bool releasedAny = false;
+                for (int index = 0; index < _bonds.Length; index++)
+                {
+                    if (_bondBroken[index] || !_structureRuntime.IsBondBroken(index)) continue;
+                    ReleaseBond(index, 0f, point, direction);
+                    releasedAny = true;
+                }
+                if (releasedAny) RecomputeConnectivity();
+                return;
+            }
+
+            Vector3 baseCenter = transform.position - _up * (Height * 0.5f);
+            float radius = Mathf.Max(Thickness * 1.15f, Height * safeRadius01);
+            bool connectivityDirty = false;
+            for (int index = 0; index < _bonds.Length; index++)
+            {
+                if (_bondBroken[index]) continue;
+                EarthWallBond bond = _bonds[index];
+                Vector3 a = _pieces[bond.PieceA].position;
+                Vector3 b = bond.Foundation ? _body.worldCenterOfMass : _pieces[bond.PieceB].position;
+                Vector3 center = (a + b) * 0.5f;
+                float height01 = Vector3.Dot(center - baseCenter, _up) / Mathf.Max(0.01f, Height);
+                if (height01 > EarthSurfWallBandSolver.MaximumLowerBand01 + 0.035f) continue;
+                float falloff = Mathf.Clamp01(1f - Vector3.Distance(center, point) / radius);
+                if (falloff <= 0f) continue;
+                _bondDamage[index] += impulse * ImpactDamageMultiplier * falloff * falloff;
+                if (_bondDamage[index] < _bondStrength[index]) continue;
+                float excess = _bondDamage[index] - _bondStrength[index];
+                ReleaseBond(index, excess, point, direction);
+                connectivityDirty = true;
+            }
+            if (connectivityDirty) RecomputeConnectivity();
         }
 
         private void DamageBonds(Vector3 point, Vector3 direction, float impulse)

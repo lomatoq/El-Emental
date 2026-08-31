@@ -1,0 +1,92 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4eac64621f6e09e4f8ad0a35cf2832d1, type: 3}
+  m_Name: BrokenCrownArenaCatalog
+  m_EditorClassIdentifier: Elemental.Authoring::Elemental.Authoring.Fracture.EarthArenaFractureCatalog
+  schemaVersion: 1
+  importedModel: {fileID: 919132149155446097, guid: f69e60c4c194a2648a804484ba1ab563, type: 3}
+  structures:
+  - structureId: arena_floor_base
+    intactObjectName: Arena_FloorBase_INTACT
+    fractureProfile: meteor_radial_plane_v1
+    activationCause: 1
+    ordinaryDamageEnabled: 0
+    repairable: 0
+    usesVirtualDormantSupport: 1
+    fractureAsset: {fileID: 11400000, guid: 29a10db7e1eef0f4095ded2587f3fd95, type: 2}
+  - structureId: arena_gate
+    intactObjectName: Arena_Gate_INTACT
+    fractureProfile: architectural_plane_split_v1
+    activationCause: 0
+    ordinaryDamageEnabled: 1
+    repairable: 1
+    usesVirtualDormantSupport: 0
+    fractureAsset: {fileID: 11400000, guid: 52a393584eec227449d4eb4411fa27df, type: 2}
+  - structureId: arena_wall_east
+    intactObjectName: Arena_Wall_East_INTACT
+    fractureProfile: masonry_watershed_power_v1
+    activationCause: 0
+    ordinaryDamageEnabled: 1
+    repairable: 1
+    usesVirtualDormantSupport: 0
+    fractureAsset: {fileID: 11400000, guid: 7fc56291cf67adc4e8c8de8f8ca6a4a7, type: 2}
+  - structureId: arena_wall_west
+    intactObjectName: Arena_Wall_West_INTACT
+    fractureProfile: masonry_watershed_power_v1
+    activationCause: 0
+    ordinaryDamageEnabled: 1
+    repairable: 1
+    usesVirtualDormantSupport: 0
+    fractureAsset: {fileID: 11400000, guid: 6c6c9f5abb808c7438c8e4356e0acafe, type: 2}
+  - structureId: arena_column_north_west
+    intactObjectName: Arena_Column_NorthWest_INTACT
+    fractureProfile: column_break_plane_split_v1
+    activationCause: 0
+    ordinaryDamageEnabled: 1
+    repairable: 1
+    usesVirtualDormantSupport: 0
+    fractureAsset: {fileID: 11400000, guid: 13808c6dddad641498ee75eac2f9f5cf, type: 2}
+  - structureId: arena_column_north_east
+    intactObjectName: Arena_Column_NorthEast_INTACT
+    fractureProfile: column_break_plane_split_v1
+    activationCause: 0
+    ordinaryDamageEnabled: 1
+    repairable: 1
+    usesVirtualDormantSupport: 0
+    fractureAsset: {fileID: 11400000, guid: adee91c77a2a4074488755e490d05531, type: 2}
+  - structureId: arena_column_south_east
+    intactObjectName: Arena_Column_SouthEast_INTACT
+    fractureProfile: column_break_plane_split_v1
+    activationCause: 0
+    ordinaryDamageEnabled: 1
+    repairable: 1
+    usesVirtualDormantSupport: 0
+    fractureAsset: {fileID: 11400000, guid: 71ddc323a70341a46b5949a9181a79f4, type: 2}
+  - structureId: arena_column_south_west
+    intactObjectName: Arena_Column_SouthWest_INTACT
+    fractureProfile: column_break_plane_split_v1
+    activationCause: 0
+    ordinaryDamageEnabled: 1
+    repairable: 1
+    usesVirtualDormantSupport: 0
+    fractureAsset: {fileID: 11400000, guid: f49c8a8e72872ef4982906dc89fb1bbe, type: 2}
+  looseRockObjectNames:
+  - Arena_Rock_SouthEast_Large
+  - Arena_Rock_SouthWest_Slab
+  - Arena_Rock_NorthEast_Large
+  - Arena_Rock_SouthEast_Small
+  - Arena_Rock_NorthWest_Large
+  - Arena_Rock_SouthWest_Large
+  - Arena_Rock_West_Slab
+  cosmeticRubbleObjectNames:
+  - Arena_Rubble_SouthWest_01
+  - Arena_Rubble_SouthWest_02

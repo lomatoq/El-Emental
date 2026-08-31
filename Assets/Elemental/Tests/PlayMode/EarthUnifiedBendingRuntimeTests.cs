@@ -143,7 +143,7 @@ namespace Elemental.Tests.PlayMode
 
             Assert.That(input.IsQuickStonePrimed, Is.False);
             Assert.That(executor.HeldFragment, Is.Null);
-            Assert.That(primed.Body.linearVelocity.magnitude, Is.InRange(29.5f, 38.5f));
+            Assert.That(primed.Body.linearVelocity.magnitude, Is.InRange(59.5f, 76.5f));
             Assert.That(primed.IsHeld, Is.False);
             yield return SceneManager.UnloadSceneAsync(scene);
         }

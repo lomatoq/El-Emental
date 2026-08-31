@@ -18,6 +18,7 @@ using Elemental.Runtime.Geometry;
 using Elemental.Simulation.Magic;
 using Elemental.Simulation.Combat;
 using Elemental.Simulation.Bending;
+using MiniBokeh;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEditor.SceneManagement;
@@ -71,6 +72,8 @@ namespace Elemental.Authoring.Editor
         private const string StructureFractureProfilePath = "Assets/Elemental/Content/Profiles/EarthStructureFractureProfile.asset";
         private const string EarthMaterialProfilePath = "Assets/Elemental/Content/Profiles/EarthMaterialProfile.asset";
         private const string EarthFeedbackProfilePath = "Assets/Elemental/Content/Profiles/EarthFeedbackProfile.asset";
+        public const string EarthEffectsProfilePath =
+            "Assets/Elemental/Content/Profiles/EarthEffectsTuningProfile.asset";
         private const string GestureProfilePath = "Assets/Elemental/Content/Profiles/EarthGestureProfile.asset";
         private const string TechniquePresentationProfilePath =
             "Assets/Elemental/Content/Profiles/EarthTechniquePresentationProfile.asset";
@@ -111,6 +114,7 @@ namespace Elemental.Authoring.Editor
                                      AssetDatabase.LoadAssetAtPath<Material>(
                                          "Assets/Elemental/Content/Materials/VoxelPlanetSurface.mat");
             EarthCoreVisualStyle style = CreateOrLoadVisualStyle();
+            EarthEffectsTuningProfile effectsProfile = CreateOrLoadEffectsProfile();
             EarthMaterialProfile earthMaterialProfile = CreateOrLoadProfile<EarthMaterialProfile>(
                 EarthMaterialProfilePath,
                 "Earth Material Profile");
@@ -170,6 +174,7 @@ namespace Elemental.Authoring.Editor
                 earthMaterialProfile.Apply(fractureInteriorMaterial, true);
             EarthWallPool wallPool = magicRoot.AddComponent<EarthWallPool>();
             wallPool.Configure(8, wallMesh, wallMaterial, CreateOrLoadWallProfile());
+            wallPool.ConfigureGravity(gravityWorld);
             wallPool.ConfigureShapeGrammar(shapeGrammar);
             EarthStructureFractureProfile structureFracture =
                 CreateOrLoadProfile<EarthStructureFractureProfile>(
@@ -188,6 +193,7 @@ namespace Elemental.Authoring.Editor
             EarthPlatformProfile platformProfile = CreateOrLoadPlatformProfile();
             EarthPlatformPool platformPool = magicRoot.AddComponent<EarthPlatformPool>();
             platformPool.Configure(6, wallMaterial, platformProfile);
+            platformPool.ConfigureGravity(gravityWorld);
             platformPool.ConfigureFractureProfile(structureFracture);
             platformPool.ConfigureSurfaceQueries(surfaceQueries);
             platformPool.ConfigurePhysicsFeel(physicsFeel);
@@ -198,6 +204,7 @@ namespace Elemental.Authoring.Editor
             EditorUtility.SetDirty(waveProfile);
             EarthPillarWavePool wavePool = magicRoot.AddComponent<EarthPillarWavePool>();
             wavePool.Configure(96, wallMesh, wallMaterial, collisionProxy.transform, waveProfile);
+            wavePool.ConfigureSurfaceQueries(surfaceQueries);
             wavePool.ConfigureMeshVariants(fragmentMeshes);
             EarthTelekinesisController telekinesis = magicRoot.AddComponent<EarthTelekinesisController>();
             telekinesis.ConfigureHover(hoverProfile, collisionProxy.transform);
@@ -317,7 +324,8 @@ namespace Elemental.Authoring.Editor
                 collisionProxy.transform,
                 CreateOrLoadProfile<EarthSurfProfile>(SurfProfilePath, "Earth Surf Profile"),
                 looseEarthMaterial,
-                LoadRumbleMaterial("RumbleDustLit.mat"));
+                effectsProfile.Materials.SurfDust,
+                effectsProfile);
             CreateOrLoadProfile<EarthTechniquePresentationProfile>(
                 TechniquePresentationProfilePath,
                 "Earth Technique Presentation Profile");
@@ -333,17 +341,35 @@ namespace Elemental.Authoring.Editor
             ConfigurePresentation(
                 scene, character, camera, executor, input, pillarMobility, cushion, preview, style, looseEarthMaterial,
                 gravityWorld, debrisPool, wavePool, collisionProxy.transform, worldProfile);
-            CreateRumbleAmphitheatre(
-                collisionProxy.transform.position,
-                worldProfile.Radius,
-                gravityWorld,
-                debrisPool);
             CreateMvpLinebreaker(
                 gravityWorld,
                 worldProfile.Radius,
                 character,
                 collisionProxy.transform,
                 pool);
+            // Both fighters must exist before the arena's final collision seating.
+            // Creating the bot afterwards left it inside the gate and floor.
+            BrokenCrownArenaSceneIntegrator.Integrate(
+                collisionProxy.transform.position,
+                worldProfile.Radius,
+                gravityWorld,
+                debrisPool,
+                looseEarthMaterial);
+            RestoreApprovedLinebreakerSpawn(
+                collisionProxy.transform.position,
+                worldProfile.Radius);
+            GameObject focusEnemy = GameObject.Find("Rumble Linebreaker Bot");
+            Transform enemyFocusProxy = focusEnemy != null
+                ? focusEnemy.transform.Find("EnemyFocusProxy")
+                : null;
+            EarthCinematicDepthOfFieldController cinematicDepthOfField =
+                camera.GetComponent<EarthCinematicDepthOfFieldController>();
+            cinematicDepthOfField?.ConfigureSubjects(
+                character.transform,
+                focusEnemy != null ? focusEnemy.transform : null);
+            if (cinematicDepthOfField != null)
+                EditorUtility.SetDirty(cinematicDepthOfField);
+            ConfigureMiniBokeh(camera, enemyFocusProxy);
             CreatePushBoulders(
                 gravityWorld,
                 looseEarthMaterial,
@@ -412,10 +438,20 @@ namespace Elemental.Authoring.Editor
         private static EarthPillarWaveProfile CreateOrLoadWaveProfile()
         {
             EarthPillarWaveProfile profile = AssetDatabase.LoadAssetAtPath<EarthPillarWaveProfile>(WaveProfilePath);
-            if (profile != null) return profile;
+            if (profile != null)
+            {
+                const string canonicalAssetName = "EarthPillarWaveProfile";
+                if (profile.name != canonicalAssetName)
+                {
+                    profile.name = canonicalAssetName;
+                    EditorUtility.SetDirty(profile);
+                    AssetDatabase.SaveAssetIfDirty(profile);
+                }
+                return profile;
+            }
             System.IO.Directory.CreateDirectory("Assets/Elemental/Content/Profiles");
             profile = ScriptableObject.CreateInstance<EarthPillarWaveProfile>();
-            profile.name = "Earth Pillar Wave Profile";
+            profile.name = "EarthPillarWaveProfile";
             AssetDatabase.CreateAsset(profile, WaveProfilePath);
             return profile;
         }
@@ -557,25 +593,37 @@ namespace Elemental.Authoring.Editor
             PlanetWorldProfile worldProfile)
         {
             RenderSettings.ambientMode = AmbientMode.Trilight;
+            // Restore the cooler pre-rescue grade. The hotter key/exposure pass
+            // turned the whole authored sandstone assembly into a flat orange wash.
             RenderSettings.ambientSkyColor = new Color(0.32f, 0.39f, 0.48f);
             RenderSettings.ambientEquatorColor = new Color(0.20f, 0.18f, 0.17f);
             RenderSettings.ambientGroundColor = new Color(0.075f, 0.065f, 0.06f);
             RenderSettings.ambientIntensity = 1f;
             RenderSettings.reflectionIntensity = 0.72f;
-            RenderSettings.fog = true;
-            RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = new Color(0.37f, 0.42f, 0.47f);
-            RenderSettings.fogDensity = 0.0035f;
-            QualitySettings.shadowDistance = 48f;
+            // The depth-aware atmosphere pass is the one fog authority. Keeping
+            // legacy RenderSettings fog here would attenuate geometry twice.
+            RenderSettings.fog = false;
+            QualitySettings.shadowDistance = 90f;
             QualitySettings.shadowCascades = 4;
 
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = style.SkyColor;
-            camera.fieldOfView = 64f;
+            camera.usePhysicalProperties = true;
+            camera.sensorSize = new Vector2(36f, 24f);
+            camera.focalLength = 47f;
+            camera.nearClipPlane = 0.1f;
             camera.allowHDR = true;
             UniversalAdditionalCameraData cameraData = camera.GetUniversalAdditionalCameraData();
             cameraData.renderPostProcessing = true;
+            // EarthCore uses restrained SSAO plus analytic material form depth.
+            // Realtime directional shadows are intentionally disabled because
+            // their moving cascade bands were the source of the visible stripes.
+            cameraData.renderShadows = false;
             cameraData.requiresDepthTexture = true;
+            cameraData.stopNaN = true;
+            cameraData.dithering = true;
+            cameraData.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing;
+            cameraData.antialiasingQuality = AntialiasingQuality.High;
             PlanetCameraRig cameraRig = camera.GetComponent<PlanetCameraRig>();
             cameraRig?.ConfigureFraming(
                 style.CameraDistance,
@@ -590,9 +638,9 @@ namespace Elemental.Authoring.Editor
                 "Planet Motor Feel Profile"));
             motor?.ConfigureTankSteering(true, 170f);
             motor?.ConfigureOrientationFeel(60f, 12f, 140f);
+            EarthCameraDirector cameraDirector = camera.GetComponent<EarthCameraDirector>();
             if (cameraRig != null)
             {
-                EarthCameraDirector cameraDirector = camera.GetComponent<EarthCameraDirector>();
                 if (cameraDirector == null) cameraDirector = camera.gameObject.AddComponent<EarthCameraDirector>();
                 cameraDirector.Configure(
                     cameraRig,
@@ -633,7 +681,14 @@ namespace Elemental.Authoring.Editor
             CreateGravityWellFeedback(executor, cameraRig, style, planetCenter);
             CreateEarthPillarFeedback(pillarMobility, cameraRig, style);
             CreateHud(input, executor, pillarMobility, landingCushion);
-            CreatePostProcessing();
+            Volume postVolume = CreatePostProcessing();
+            ParticleSystem lightMotes = CreateAmbientLightMotes(
+                camera.transform,
+                CreateOrLoadEffectsProfile());
+            EarthChargeCameraLookdevV2 clarity = camera.GetComponent<EarthChargeCameraLookdevV2>();
+            if (clarity == null) clarity = camera.gameObject.AddComponent<EarthChargeCameraLookdevV2>();
+            clarity.Configure(cameraDirector, postVolume, lightMotes);
+            EditorUtility.SetDirty(clarity);
             EditorSceneManager.MarkSceneDirty(scene);
         }
 
@@ -665,7 +720,10 @@ namespace Elemental.Authoring.Editor
             if (brain == null) brain = camera.gameObject.AddComponent<CinemachineBrain>();
             CinemachineCamera virtualCamera = virtualCameraObject.AddComponent<CinemachineCamera>();
             CinemachineThirdPersonFollow follow = virtualCameraObject.AddComponent<CinemachineThirdPersonFollow>();
-            EarthCinemachineCameraController controller = system.AddComponent<EarthCinemachineCameraController>();
+            // Keep all live gameplay-camera and MiniBokeh tuning controls on the
+            // real camera so artists can tune them together during Play Mode.
+            EarthCinemachineCameraController controller =
+                camera.gameObject.AddComponent<EarthCinemachineCameraController>();
             controller.Configure(
                 camera,
                 brain,
@@ -708,18 +766,19 @@ namespace Elemental.Authoring.Editor
             }
         }
 
-        private static void ConfigureLights(EarthCoreVisualStyle style)
+private static void ConfigureLights(EarthCoreVisualStyle style)
         {
             Light sun = GameObject.Find("Sun")?.GetComponent<Light>();
             if (sun != null)
             {
                 sun.color = new Color(1f, 0.91f, 0.78f);
                 sun.intensity = 1.28f;
-                sun.shadows = LightShadows.Soft;
-                sun.shadowStrength = 0.74f;
-                sun.shadowBias = 0.11f;
-                sun.shadowNormalBias = 0.20f;
-                sun.transform.rotation = Quaternion.Euler(42f, -34f, 0f);
+                // Broken Crown's broad planar courses alias as travelling shadow
+                // bands in Game view. Contact depth belongs to the restrained
+                // DepthNormals SSAO path; realtime sun shadows stay disabled.
+                sun.shadows = LightShadows.None;
+                sun.shadowStrength = 0f;
+                sun.transform.rotation = Quaternion.Euler(38f, -36f, 0f);
                 RenderSettings.sun = sun;
             }
 
@@ -1158,7 +1217,8 @@ namespace Elemental.Authoring.Editor
             Transform rightTarget = CreatePoseTarget("Right Hand IK", targetRoot.transform, new Vector3(0.34f, 0.55f, 0.58f));
 
             ActiveRagdollPuppet puppet = character.GetComponent<ActiveRagdollPuppet>();
-            ParticleSystem stoneFadeDust = CreateStoneFadeDust(presentationObject.transform);
+            EarthEffectsTuningProfile effectsProfile = CreateOrLoadEffectsProfile();
+            ParticleSystem stoneFadeDust = CreateStoneFadeDust(presentationObject.transform, effectsProfile);
             HumanoidRagdollRig visibleRagdoll = presentationObject.GetComponent<HumanoidRagdollRig>();
             if (visibleRagdoll == null) visibleRagdoll = presentationObject.AddComponent<HumanoidRagdollRig>();
             visibleRagdoll.ConfigureAndBuild(
@@ -1172,6 +1232,7 @@ namespace Elemental.Authoring.Editor
                 character.GetComponent<PlanetMotor>(),
                 input,
                 character.GetComponent<PlanetInputReader>());
+            visibleRagdoll.ConfigureEffectsProfile(effectsProfile);
             HumanoidCharacterPresentation presentation = presentationObject.GetComponent<HumanoidCharacterPresentation>();
             if (presentation == null) presentation = presentationObject.AddComponent<HumanoidCharacterPresentation>();
             presentation.Configure(
@@ -1292,14 +1353,14 @@ namespace Elemental.Authoring.Editor
                 ? ModelImporterAvatarSetup.CreateFromThisModel
                 : ModelImporterAvatarSetup.CopyFromOther;
             HumanDescription human = importer.humanDescription;
-            bool needsTranslationDof = sourceAvatar == null && !human.hasTranslationDoF;
+            bool translationDofChanged = human.hasTranslationDoF;
             bool animationLoopingChanged = ConfigureAnimationLooping(importer, isAnimationSource);
             bool dirty = forceReimport ||
                          importer.animationType != ModelImporterAnimationType.Human ||
                          importer.avatarSetup != desiredSetup ||
                          (sourceAvatar != null && importer.sourceAvatar != sourceAvatar) ||
                          (sourceAvatar == null && importer.sourceAvatar != null) ||
-                         needsTranslationDof ||
+                         translationDofChanged ||
                          animationLoopingChanged;
             if (!dirty) return false;
             importer.animationType = ModelImporterAnimationType.Human;
@@ -1315,14 +1376,16 @@ namespace Elemental.Authoring.Editor
                 // Avatar hierarchy mismatch even though avatarSetup has changed.
                 importer.sourceAvatar = null;
 
-                // KayKit locomotion contains meaningful upper-leg and hip translation.
-                // Without Humanoid Translate DoF Unity discards those curves during
-                // retargeting, leaving rigid-piece characters visibly frozen.
-                if (needsTranslationDof)
-                {
-                    human.hasTranslationDoF = true;
-                    importer.humanDescription = human;
-                }
+            }
+            // Humanoid retargeting owns limb rotation; PlanetMotor owns root
+            // translation. Translation DoF imported incompatible per-bone
+            // offsets from otherwise valid source clips and made knees/feet jump
+            // metres between adjacent samples. Keep it disabled on model Avatars
+            // and on CopyFromOther motion importers alike.
+            if (translationDofChanged)
+            {
+                human.hasTranslationDoF = false;
+                importer.humanDescription = human;
             }
             importer.importAnimation = true;
             importer.SaveAndReimport();
@@ -2010,6 +2073,7 @@ namespace Elemental.Authoring.Editor
             AtmosphereProfile atmosphere = CreateOrLoadProfile<AtmosphereProfile>(AtmosphereProfilePath, "Atmosphere Profile");
             EarthSkyProfile skyProfile = CreateOrLoadProfile<EarthSkyProfile>(SkyProfilePath, "Earth Sky Profile");
             MeteorShowerProfile meteors = CreateOrLoadProfile<MeteorShowerProfile>(MeteorProfilePath, "Meteor Shower Profile");
+            EarthEffectsTuningProfile effectsProfile = CreateOrLoadEffectsProfile();
             CreateOrLoadProfile<CharacterPresentationProfile>(CharacterProfilePath, "Character Presentation Profile");
             CreateOrLoadProfile<EarthPhysicsFeelProfile>(PhysicsFeelProfilePath, "Earth Physics Feel Profile");
 
@@ -2020,6 +2084,16 @@ namespace Elemental.Authoring.Editor
                 "AtmosphereFullscreen.mat",
                 "Elemental/Atmosphere Fullscreen");
             ConfigureAtmosphereRendererFeature(fullscreenAtmosphere);
+            Material cinematicDepthOfField = CreateOrLoadShaderMaterial(
+                "EarthCinematicDepthOfField.mat",
+                "Hidden/Elemental/Cinematic Depth Of Field");
+            ConfigureCinematicDepthOfFieldRendererFeature(cinematicDepthOfField);
+            EarthCinematicDepthOfFieldController depthOfFieldController =
+                camera.GetComponent<EarthCinematicDepthOfFieldController>();
+            if (depthOfFieldController == null)
+                depthOfFieldController = camera.gameObject.AddComponent<
+                    EarthCinematicDepthOfFieldController>();
+            EditorUtility.SetDirty(depthOfFieldController);
             sky.SetColor("_Tint", new Color(0.42f, 0.58f, 1f));
             sky.SetFloat("_Seed", worldProfile.Seed);
             RenderSettings.skybox = sky;
@@ -2070,7 +2144,11 @@ namespace Elemental.Authoring.Editor
                 new Color(0.16f, 0.11f, 0.08f),
                 0.08f,
                 new Color(1.8f, 0.24f, 0.025f));
-            ParticleSystem streaks = CreateDistantMeteorStreaks(meteorRoot.transform, celestial, meteors);
+            ParticleSystem streaks = CreateDistantMeteorStreaks(
+                meteorRoot.transform,
+                celestial,
+                meteors,
+                effectsProfile);
             MeteorShowerBehaviour meteorSystem = meteorRoot.AddComponent<MeteorShowerBehaviour>();
             meteorSystem.ConfigurePhysicsFeel(CreateOrLoadProfile<EarthPhysicsFeelProfile>(
                 PhysicsFeelProfilePath,
@@ -2081,36 +2159,51 @@ namespace Elemental.Authoring.Editor
                 planetCenter,
                 executor,
                 meteorMaterial,
-                streaks);
+                streaks,
+                effectsProfile);
         }
 
         private static ParticleSystem CreateDistantMeteorStreaks(
             Transform parent,
             CelestialSystemProfile celestial,
-            MeteorShowerProfile profile)
+            MeteorShowerProfile profile,
+            EarthEffectsTuningProfile effectsProfile)
         {
             GameObject streakObject = new GameObject("Scaled Space Meteor Streaks");
             streakObject.transform.SetParent(parent, false);
             ParticleSystem particles = streakObject.AddComponent<ParticleSystem>();
+            EarthMeteorEffectsTuning tuning = effectsProfile != null ? effectsProfile.Meteor : null;
+            if (tuning != null)
+                EarthParticleSystemTuningApplier.Apply(
+                    particles,
+                    tuning.Streaks,
+                    effectsProfile.Materials.MeteorStreaks);
             ParticleSystem.MainModule main = particles.main;
             main.loop = true;
             main.playOnAwake = true;
-            main.maxParticles = profile.DistantPoolSize;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.8f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(55f, 95f);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.025f, 0.065f);
+            if (tuning == null)
+            {
+                main.maxParticles = profile.DistantPoolSize;
+                main.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.8f);
+                main.startSpeed = new ParticleSystem.MinMaxCurve(55f, 95f);
+                main.startSize = new ParticleSystem.MinMaxCurve(0.025f, 0.065f);
+            }
             main.simulationSpace = ParticleSystemSimulationSpace.World;
             ParticleSystem.EmissionModule emission = particles.emission;
-            emission.rateOverTime = profile.DistantRatePerSecond;
+            emission.rateOverTime = tuning != null ? tuning.DistantRate : profile.DistantRatePerSecond;
             ParticleSystem.ShapeModule shape = particles.shape;
             shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = Mathf.Min(240f, celestial.ScaledSpaceDistance * 0.2f);
-            shape.radiusThickness = 0.05f;
+            shape.radius = Mathf.Min(
+                tuning != null ? tuning.Radius : 240f,
+                celestial.ScaledSpaceDistance * 0.2f);
+            shape.radiusThickness = tuning != null ? tuning.RadiusThickness : 0.05f;
             ParticleSystemRenderer renderer = streakObject.GetComponent<ParticleSystemRenderer>();
             renderer.renderMode = ParticleSystemRenderMode.Stretch;
-            renderer.velocityScale = 0.12f;
-            renderer.lengthScale = 3.5f;
-            renderer.sharedMaterial = CreateOrLoadUnlitMaterial("MeteorStreak.mat", new Color(1.8f, 0.62f, 0.18f));
+            renderer.velocityScale = tuning != null ? tuning.VelocityScale : 0.12f;
+            renderer.lengthScale = tuning != null ? tuning.LengthScale : 3.5f;
+            renderer.sharedMaterial = effectsProfile != null
+                ? effectsProfile.Materials.MeteorStreaks
+                : CreateOrLoadUnlitMaterial("MeteorStreak.mat", new Color(1.8f, 0.62f, 0.18f));
             return particles;
         }
 
@@ -2121,6 +2214,49 @@ namespace Elemental.Authoring.Editor
             profile = ScriptableObject.CreateInstance<T>();
             profile.name = displayName;
             AssetDatabase.CreateAsset(profile, path);
+            return profile;
+        }
+
+        internal static EarthEffectsTuningProfile CreateOrLoadEffectsProfile()
+        {
+            EarthEffectsTuningProfile profile = CreateOrLoadProfile<EarthEffectsTuningProfile>(
+                EarthEffectsProfilePath,
+                "Earth Effects Tuning Profile");
+            if (profile.SchemaVersion >= EarthEffectsTuningProfile.CurrentSchemaVersion) return profile;
+
+            Material dust = LoadRumbleMaterial("RumbleDustLit.mat");
+            Material sparks = CreateOrLoadLitMaterial(
+                "AmberShardVfx.mat",
+                new Color(1f, 0.38f, 0.045f),
+                0.04f,
+                new Color(2f, 0.42f, 0.035f));
+            Material rubble = CreateOrLoadLitMaterial(
+                "LooseEarthChipVfx.mat",
+                new Color(0.54f, 0.38f, 0.23f),
+                0.04f,
+                Color.black);
+            Material surfTrail = LoadRumbleMaterial("RumbleSandstone.mat");
+            Material ambient = CreateOrLoadShaderMaterial(
+                "LightDustMote.mat",
+                "Elemental/Light Dust Mote");
+            Material meteor = CreateOrLoadUnlitMaterial(
+                "MeteorStreak.mat",
+                new Color(1.8f, 0.62f, 0.18f));
+            Material pillar = LoadRumbleMaterial("RumbleSandstone.mat");
+            if (dust == null || sparks == null || rubble == null || surfTrail == null ||
+                ambient == null || meteor == null || pillar == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "EarthEffectsTuningProfile could not resolve every required effect material.");
+            profile.InitializeAuthoringDefaults(
+                dust,
+                sparks,
+                rubble,
+                surfTrail,
+                ambient,
+                meteor,
+                pillar);
+            EditorUtility.SetDirty(profile);
+            AssetDatabase.SaveAssets();
             return profile;
         }
 
@@ -2166,6 +2302,91 @@ namespace Elemental.Authoring.Editor
             return effect;
         }
 
+        private static void ConfigureMiniBokeh(
+            Camera camera,
+            Transform enemyFocusProxy)
+        {
+            if (camera == null || enemyFocusProxy == null || enemyFocusProxy.parent == null) return;
+
+            ConfigureMiniBokehRendererFeature();
+
+            GameObject oldPlane = GameObject.Find("ArenaBokehPlane");
+            if (oldPlane != null) Object.DestroyImmediate(oldPlane);
+            GameObject plane = new GameObject("ArenaBokehPlane");
+            plane.transform.SetParent(camera.transform, false);
+            plane.transform.localPosition = new Vector3(0f, 0f, 43f);
+            plane.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+
+            MiniBokehController controller = camera.GetComponent<MiniBokehController>();
+            if (controller == null)
+                controller = camera.gameObject.AddComponent<MiniBokehController>();
+            controller.enabled = false;
+            controller.ReferencePlane = plane.transform;
+            controller.AutoFocus = false;
+            controller.FocusDistance = 43f;
+            controller.BokehStrength = 2f;
+            controller.MaxBlurRadius = 0.9f;
+            controller.BoundaryFade = 0.56f;
+            controller.DownsampleMode = MiniBokehController.ResolutionMode.Half;
+            controller.BokehMode = MiniBokehController.BokehType.Circular;
+
+            EarthMiniBokehCameraPlane cameraPlane =
+                camera.GetComponent<EarthMiniBokehCameraPlane>();
+            if (cameraPlane == null)
+                cameraPlane = camera.gameObject.AddComponent<EarthMiniBokehCameraPlane>();
+            cameraPlane.Configure(controller, plane.transform);
+            cameraPlane.enabled = false;
+
+            EarthMiniBokehFocus focus = camera.GetComponent<EarthMiniBokehFocus>();
+            if (focus == null) focus = camera.gameObject.AddComponent<EarthMiniBokehFocus>();
+            focus.enabled = false;
+            focus.Configure(enemyFocusProxy, controller, plane.transform);
+            EditorUtility.SetDirty(controller);
+            EditorUtility.SetDirty(cameraPlane);
+            EditorUtility.SetDirty(focus);
+        }
+
+        private static void ConfigureMiniBokehRendererFeature()
+        {
+            UniversalRenderPipelineAsset pipeline =
+                GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+            if (pipeline == null) return;
+            SerializedObject pipelineObject = new SerializedObject(pipeline);
+            SerializedProperty rendererList = pipelineObject.FindProperty("m_RendererDataList");
+            ScriptableRendererData rendererData = rendererList != null && rendererList.arraySize > 0
+                ? rendererList.GetArrayElementAtIndex(0).objectReferenceValue as ScriptableRendererData
+                : null;
+            if (rendererData == null) return;
+
+            MiniBokehFeature feature = null;
+            for (int index = 0; index < rendererData.rendererFeatures.Count; index++)
+                if (rendererData.rendererFeatures[index] is MiniBokehFeature existing)
+                    feature = existing;
+            if (feature == null)
+            {
+                feature = ScriptableObject.CreateInstance<MiniBokehFeature>();
+                feature.name = "Elemental MiniBokeh";
+                AssetDatabase.AddObjectToAsset(feature, rendererData);
+                rendererData.rendererFeatures.Add(feature);
+            }
+
+            Shader shader = Shader.Find("Hidden/MiniBokeh");
+            if (shader == null)
+                shader = AssetDatabase.LoadAssetAtPath<Shader>(
+                    "Packages/jp.keijiro.minibokeh/Shaders/MiniBokeh.shader");
+            SerializedObject featureObject = new SerializedObject(feature);
+            SerializedProperty shaderProperty = featureObject.FindProperty("_shader");
+            if (shaderProperty != null) shaderProperty.objectReferenceValue = shader;
+            featureObject.ApplyModifiedPropertiesWithoutUndo();
+            feature.Create();
+            // MiniBokeh is a planar/miniature fallback. Earth Core is a layered
+            // 3D arena, so the native-high owner is the project-local depth-aware
+            // RenderGraph feature.
+            feature.SetActive(false);
+            EditorUtility.SetDirty(feature);
+            EditorUtility.SetDirty(rendererData);
+        }
+
         private static void ConfigureAtmosphereRendererFeature(Material atmosphereMaterial)
         {
             UniversalRenderPipelineAsset pipeline = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
@@ -2188,6 +2409,37 @@ namespace Elemental.Authoring.Editor
                 rendererData.rendererFeatures.Add(feature);
             }
             feature.Configure(atmosphereMaterial);
+            EditorUtility.SetDirty(feature);
+            EditorUtility.SetDirty(rendererData);
+        }
+
+        private static void ConfigureCinematicDepthOfFieldRendererFeature(
+            Material depthOfFieldMaterial)
+        {
+            UniversalRenderPipelineAsset pipeline =
+                GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+            if (pipeline == null || depthOfFieldMaterial == null) return;
+            SerializedObject pipelineObject = new SerializedObject(pipeline);
+            SerializedProperty rendererList = pipelineObject.FindProperty("m_RendererDataList");
+            ScriptableRendererData rendererData = rendererList != null && rendererList.arraySize > 0
+                ? rendererList.GetArrayElementAtIndex(0).objectReferenceValue as ScriptableRendererData
+                : null;
+            if (rendererData == null) return;
+
+            EarthCinematicDepthOfFieldFeature feature = null;
+            for (int index = 0; index < rendererData.rendererFeatures.Count; index++)
+                if (rendererData.rendererFeatures[index] is EarthCinematicDepthOfFieldFeature existing)
+                    feature = existing;
+            if (feature == null)
+            {
+                feature = ScriptableObject.CreateInstance<EarthCinematicDepthOfFieldFeature>();
+                feature.name = "Elemental Cinematic Depth Of Field";
+                AssetDatabase.AddObjectToAsset(feature, rendererData);
+                rendererData.rendererFeatures.Add(feature);
+            }
+
+            feature.Configure(depthOfFieldMaterial);
+            feature.SetActive(true);
             EditorUtility.SetDirty(feature);
             EditorUtility.SetDirty(rendererData);
         }
@@ -2245,6 +2497,7 @@ namespace Elemental.Authoring.Editor
             EarthPillarWavePool wavePool,
             Transform planetCenter)
         {
+            EarthEffectsTuningProfile effectsProfile = CreateOrLoadEffectsProfile();
             GameObject old = GameObject.Find("Earth Magic Feedback");
             if (old != null) Object.DestroyImmediate(old);
             GameObject root = new GameObject("Earth Magic Feedback");
@@ -2289,6 +2542,7 @@ namespace Elemental.Authoring.Editor
             EarthMagicFeedback feedback = root.AddComponent<EarthMagicFeedback>();
             feedback.Configure(
                 executor, dust, sparks, pulse, cracks, rubble, cameraRig, input, wavePool, planetCenter);
+            feedback.ConfigureEffectsProfile(effectsProfile);
             PlanetaryParticleGravity particleGravity = root.AddComponent<PlanetaryParticleGravity>();
             particleGravity.Configure(
                 planetCenter,
@@ -2402,29 +2656,39 @@ namespace Elemental.Authoring.Editor
             return ps;
         }
 
-        private static ParticleSystem CreateStoneFadeDust(Transform parent)
+        private static ParticleSystem CreateStoneFadeDust(
+            Transform parent,
+            EarthEffectsTuningProfile effectsProfile)
         {
             Transform existing = parent != null ? parent.Find("Stone Fade Dust") : null;
             if (existing != null) Object.DestroyImmediate(existing.gameObject);
             GameObject go = new GameObject("Stone Fade Dust");
             go.transform.SetParent(parent, false);
             ParticleSystem dust = go.AddComponent<ParticleSystem>();
+            if (effectsProfile != null)
+                EarthParticleSystemTuningApplier.Apply(
+                    dust,
+                    effectsProfile.StoneFade.Dust,
+                    effectsProfile.Materials.StoneFadeDust);
             ParticleSystem.MainModule main = dust.main;
             main.playOnAwake = false;
             main.loop = false;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.45f, 0.82f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(0.45f, 1.65f);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.10f, 0.28f);
-            main.startColor = new ParticleSystem.MinMaxGradient(
-                new Color(0.46f, 0.33f, 0.22f, 0.72f),
-                new Color(0.24f, 0.17f, 0.12f, 0.48f));
-            main.maxParticles = 32;
+            if (effectsProfile == null)
+            {
+                main.startLifetime = new ParticleSystem.MinMaxCurve(0.45f, 0.82f);
+                main.startSpeed = new ParticleSystem.MinMaxCurve(0.45f, 1.65f);
+                main.startSize = new ParticleSystem.MinMaxCurve(0.10f, 0.28f);
+                main.startColor = new ParticleSystem.MinMaxGradient(
+                    new Color(0.46f, 0.33f, 0.22f, 0.72f),
+                    new Color(0.24f, 0.17f, 0.12f, 0.48f));
+                main.maxParticles = 32;
+            }
             ParticleSystem.EmissionModule emission = dust.emission;
             emission.enabled = false;
             ParticleSystem.ShapeModule shape = dust.shape;
             shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = 0.46f;
+            shape.radius = effectsProfile != null ? effectsProfile.StoneFade.EmitterRadius : 0.46f;
             ParticleSystem.ColorOverLifetimeModule color = dust.colorOverLifetime;
             color.enabled = true;
             color.color = new ParticleSystem.MinMaxGradient(
@@ -2432,7 +2696,9 @@ namespace Elemental.Authoring.Editor
                 new Color(1f, 1f, 1f, 0f));
             ParticleSystemRenderer renderer = go.GetComponent<ParticleSystemRenderer>();
             renderer.renderMode = ParticleSystemRenderMode.Billboard;
-            renderer.sharedMaterial = LoadRumbleMaterial("RumbleDustLit.mat");
+            renderer.sharedMaterial = effectsProfile != null
+                ? effectsProfile.Materials.StoneFadeDust
+                : LoadRumbleMaterial("RumbleDustLit.mat");
             renderer.shadowCastingMode = ShadowCastingMode.Off;
             renderer.receiveShadows = false;
             return dust;
@@ -2500,10 +2766,11 @@ namespace Elemental.Authoring.Editor
             PlanetCameraRig cameraRig,
             EarthCoreVisualStyle style)
         {
+            EarthEffectsTuningProfile effectsProfile = CreateOrLoadEffectsProfile();
             GameObject old = GameObject.Find("Earth Pillar Feedback");
             if (old != null) Object.DestroyImmediate(old);
             GameObject root = new GameObject("Earth Pillar Feedback");
-            Material pillarMaterial = LoadRumbleMaterial("RumbleSandstone.mat");
+            Material pillarMaterial = effectsProfile.Materials.PillarChips;
             Mesh pillarMesh = CreateOrLoadBeveledPillarMesh();
             Mesh chipMesh = CreateOrLoadChippedWallMesh();
             if (!IsRumbleMaterial(pillarMaterial))
@@ -2529,7 +2796,7 @@ namespace Elemental.Authoring.Editor
                 edgeChip.GetComponent<MeshFilter>().sharedMesh = chipMesh;
             }
 
-            var chips = new Transform[20];
+            var chips = new Transform[effectsProfile.Pillar.ChipPoolCount];
             for (int index = 0; index < chips.Length; index++)
             {
                 GameObject chip = CreatePart(
@@ -2539,7 +2806,7 @@ namespace Elemental.Authoring.Editor
                 chips[index] = chip.transform;
             }
             EarthPillarFeedback feedback = root.AddComponent<EarthPillarFeedback>();
-            feedback.Configure(mobility, pillar.transform, chips, cameraRig);
+            feedback.Configure(mobility, pillar.transform, chips, cameraRig, effectsProfile);
         }
 
         private static Transform CreateLandingCushionVisual(Mesh mesh, Material material)
@@ -2589,14 +2856,14 @@ namespace Elemental.Authoring.Editor
             return panel;
         }
 
-        private static void CreatePostProcessing()
+private static Volume CreatePostProcessing()
         {
             GameObject old = GameObject.Find("Earth Core Post Processing");
             if (old != null) Object.DestroyImmediate(old);
             GameObject go = new GameObject("Earth Core Post Processing");
             Volume volume = go.AddComponent<Volume>();
             volume.isGlobal = true;
-            volume.priority = 50f;
+            volume.priority = 910f;
             VolumeProfile profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(VolumeProfilePath);
             if (profile == null)
             {
@@ -2604,15 +2871,16 @@ namespace Elemental.Authoring.Editor
                 profile.name = "Earth Core Volume Profile";
                 AssetDatabase.CreateAsset(profile, VolumeProfilePath);
             }
+            profile.components.RemoveAll(component => component == null);
             Bloom bloom = GetOrAdd<Bloom>(profile);
             bloom.active = true;
-            bloom.intensity.Override(0.07f);
-            bloom.threshold.Override(1.12f);
-            bloom.scatter.Override(0.54f);
+            bloom.intensity.Override(0f);
+            bloom.threshold.Override(1.1f);
+            bloom.scatter.Override(0.58f);
             Vignette vignette = GetOrAdd<Vignette>(profile);
             vignette.active = true;
-            vignette.intensity.Override(0.075f);
-            vignette.smoothness.Override(0.48f);
+            vignette.intensity.Override(0.10f);
+            vignette.smoothness.Override(0.52f);
             ColorAdjustments color = GetOrAdd<ColorAdjustments>(profile);
             color.active = true;
             color.postExposure.Override(0f);
@@ -2623,18 +2891,132 @@ namespace Elemental.Authoring.Editor
             whiteBalance.temperature.Override(2f);
             whiteBalance.tint.Override(-1f);
             DepthOfField depthOfField = GetOrAdd<DepthOfField>(profile);
-            depthOfField.active = false;
+            depthOfField.active = true;
+            depthOfField.mode.Override(DepthOfFieldMode.Off);
+            depthOfField.focusDistance.Override(8f);
+            depthOfField.aperture.Override(5.6f);
+            depthOfField.focalLength.Override(50f);
+            depthOfField.bladeCount.Override(7);
+            depthOfField.bladeCurvature.Override(0.82f);
+            depthOfField.bladeRotation.Override(18f);
+            depthOfField.gaussianStart.Override(8.55f);
+            depthOfField.gaussianEnd.Override(12.75f);
+            depthOfField.gaussianMaxRadius.Override(2f);
+            depthOfField.highQualitySampling.Override(false);
             Tonemapping tonemapping = GetOrAdd<Tonemapping>(profile);
             tonemapping.active = true;
             tonemapping.mode.Override(TonemappingMode.ACES);
-            volume.sharedProfile = profile;
+            EditorUtility.SetDirty(bloom);
+            EditorUtility.SetDirty(vignette);
+            EditorUtility.SetDirty(color);
+            EditorUtility.SetDirty(whiteBalance);
+            EditorUtility.SetDirty(depthOfField);
+            EditorUtility.SetDirty(tonemapping);
             EditorUtility.SetDirty(profile);
+            volume.sharedProfile = profile;
+            return volume;
         }
 
-        private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
+private static ParticleSystem CreateAmbientLightMotes(
+            Transform cameraTransform,
+            EarthEffectsTuningProfile effectsProfile)
+        {
+            GameObject old = GameObject.Find("Sunlit Air Motes");
+            if (old != null) Object.DestroyImmediate(old);
+
+            GameObject go = new GameObject("Sunlit Air Motes");
+            go.transform.SetParent(cameraTransform, false);
+            EarthAmbientEffectsTuning tuning = effectsProfile != null ? effectsProfile.Ambient : null;
+            go.transform.localPosition = tuning != null ? tuning.LocalOffset : new Vector3(0f, 0.15f, 5.1f);
+            ParticleSystem particles = go.AddComponent<ParticleSystem>();
+            if (tuning != null)
+                EarthParticleSystemTuningApplier.Apply(
+                    particles,
+                    tuning.Motes,
+                    effectsProfile.Materials.AmbientMotes);
+
+            ParticleSystem.MainModule main = particles.main;
+            main.loop = true;
+            main.playOnAwake = true;
+            main.duration = 8f;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.scalingMode = ParticleSystemScalingMode.Local;
+            if (tuning == null)
+            {
+                main.startLifetime = new ParticleSystem.MinMaxCurve(4.5f, 7f);
+                main.startSpeed = new ParticleSystem.MinMaxCurve(0.018f, 0.07f);
+                main.startSize = new ParticleSystem.MinMaxCurve(0.030f, 0.084f);
+            }
+            main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+            if (tuning == null)
+            {
+                main.startColor = new ParticleSystem.MinMaxGradient(
+                    new Color(1f, 0.76f, 0.40f, 0.24f),
+                    new Color(1f, 0.95f, 0.78f, 0.58f));
+                main.maxParticles = 64;
+            }
+
+            ParticleSystem.EmissionModule emission = particles.emission;
+            emission.enabled = true;
+            emission.rateOverTime = tuning != null ? tuning.EmissionRate : 18f;
+
+            ParticleSystem.ShapeModule shape = particles.shape;
+            shape.enabled = true;
+            shape.shapeType = ParticleSystemShapeType.Box;
+            shape.scale = tuning != null ? tuning.BoxSize : new Vector3(10f, 5.5f, 9f);
+            shape.randomDirectionAmount = 1f;
+
+            ParticleSystem.VelocityOverLifetimeModule velocity = particles.velocityOverLifetime;
+            velocity.enabled = true;
+            velocity.space = ParticleSystemSimulationSpace.World;
+            Vector2 horizontal = tuning != null ? tuning.HorizontalVelocity : new Vector2(-0.022f, 0.022f);
+            Vector2 vertical = tuning != null ? tuning.VerticalVelocity : new Vector2(0.018f, 0.06f);
+            velocity.x = new ParticleSystem.MinMaxCurve(horizontal.x, horizontal.y);
+            velocity.y = new ParticleSystem.MinMaxCurve(vertical.x, vertical.y);
+            velocity.z = new ParticleSystem.MinMaxCurve(horizontal.x, horizontal.y);
+
+            ParticleSystem.ColorOverLifetimeModule color = particles.colorOverLifetime;
+            color.enabled = true;
+            var alpha = new Gradient();
+            alpha.SetKeys(
+                new[]
+                {
+                    new GradientColorKey(Color.white, 0f),
+                    new GradientColorKey(new Color(1f, 0.84f, 0.60f), 1f)
+                },
+                new[]
+                {
+                    new GradientAlphaKey(0f, 0f),
+                    new GradientAlphaKey(0.92f, 0.14f),
+                    new GradientAlphaKey(0.72f, 0.74f),
+                    new GradientAlphaKey(0f, 1f)
+                });
+            color.color = alpha;
+
+            ParticleSystemRenderer renderer = go.GetComponent<ParticleSystemRenderer>();
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.alignment = ParticleSystemRenderSpace.View;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.motionVectorGenerationMode = MotionVectorGenerationMode.ForceNoMotion;
+            renderer.sharedMaterial = effectsProfile != null
+                ? effectsProfile.Materials.AmbientMotes
+                : CreateOrLoadShaderMaterial("LightDustMote.mat", "Elemental/Light Dust Mote");
+            renderer.sortingFudge = 0.4f;
+
+            particles.Play();
+            return particles;
+        }
+
+private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
         {
             if (profile.TryGet(out T component)) return component;
-            return profile.Add<T>();
+            component = profile.Add<T>();
+            if (AssetDatabase.Contains(profile) && !AssetDatabase.Contains(component))
+                AssetDatabase.AddObjectToAsset(component, profile);
+            EditorUtility.SetDirty(component);
+            EditorUtility.SetDirty(profile);
+            return component;
         }
 
         private static Material CreateOrLoadLitMaterial(string fileName, Color color, float smoothness, Color emission)
@@ -2901,7 +3283,10 @@ namespace Elemental.Authoring.Editor
 
             Vector3 center = planetCenter != null ? planetCenter.position : Vector3.zero;
             Vector3 arenaCenter = center + Vector3.up * planetRadius;
-            Vector3 surface = ProjectTangentPointToPlanet(center, planetRadius, new Vector3(0f, 0f, 5.25f));
+            // 5.25 m intersects the authored gate after Broken Crown integration.
+            // 3.50 m is inside the clear court and is still finalized by the same
+            // collision-seating pass as the player.
+            Vector3 surface = ProjectTangentPointToPlanet(center, planetRadius, new Vector3(0f, 0f, 3.50f));
             Vector3 up = (surface - center).normalized;
             Vector3 facing = Vector3.ProjectOnPlane(player.transform.position - surface, up).normalized;
             if (facing.sqrMagnitude < 0.1f) facing = Vector3.back;
@@ -2909,6 +3294,9 @@ namespace Elemental.Authoring.Editor
             GameObject bot = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             bot.name = "Rumble Linebreaker Bot";
             bot.SetActive(false);
+            GameObject enemyFocusProxy = new GameObject("EnemyFocusProxy");
+            enemyFocusProxy.transform.SetParent(bot.transform, false);
+            enemyFocusProxy.transform.localPosition = new Vector3(0f, 0.45f, 0f);
             // Half of the 2.15 m capsule: exact first-frame surface contact.
             bot.transform.position = surface + up * 1.075f;
             bot.transform.rotation = Quaternion.LookRotation(facing, up);
@@ -2934,6 +3322,9 @@ namespace Elemental.Authoring.Editor
             PlanetMotor motor = bot.AddComponent<PlanetMotor>();
             EarthMvpBotController controller = bot.AddComponent<EarthMvpBotController>();
             motor.Configure(gravityWorld, body, capsule, controller, bot.transform);
+            // The authored crater floor is a detailed non-convex mesh. Persist a
+            // wider solver skin on the motor so it is restored after scene load.
+            motor.ConfigureGroundContactSkin(0.045f);
             motor.ConfigureFeel(3.1f, 18f, 0.18f);
             motor.ConfigureTankSteering(true, 245f);
             motor.ConfigureOrientationFeel(62f, 13f, 150f);
@@ -2955,7 +3346,8 @@ namespace Elemental.Authoring.Editor
             if (botVisualRoot == null)
                 throw new UnityEditor.Build.BuildFailedException(
                     "Linebreaker visible Humanoid root was not created.");
-            ParticleSystem botFadeDust = CreateStoneFadeDust(botVisualRoot);
+            EarthEffectsTuningProfile botEffectsProfile = CreateOrLoadEffectsProfile();
+            ParticleSystem botFadeDust = CreateStoneFadeDust(botVisualRoot, botEffectsProfile);
             HumanoidRagdollRig botVisibleRagdoll = botVisualRoot.gameObject.AddComponent<HumanoidRagdollRig>();
             botVisibleRagdoll.ConfigureAndBuild(
                 humanoidAnimator,
@@ -2964,6 +3356,7 @@ namespace Elemental.Authoring.Editor
                 gravityWorld,
                 null,
                 botFadeDust);
+            botVisibleRagdoll.ConfigureEffectsProfile(botEffectsProfile);
             CharacterPresentationProfile characterProfile = CreateOrLoadProfile<CharacterPresentationProfile>(
                 CharacterProfilePath,
                 "Character Presentation Profile");
@@ -3060,6 +3453,28 @@ namespace Elemental.Authoring.Editor
                 body,
                 botSharedPresentation);
             bot.SetActive(true);
+        }
+
+        private static void RestoreApprovedLinebreakerSpawn(
+            Vector3 planetCenter,
+            float planetRadius)
+        {
+            GameObject bot = GameObject.Find("Rumble Linebreaker Bot");
+            if (bot == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "Rumble Linebreaker Bot was lost before authored spawn restoration.");
+
+            // Captured from the user-approved saved EarthCoreSlice scene. Keeping
+            // this final pose after arena collision integration prevents the bot
+            // from being half-buried or silently shifted back toward the gate on
+            // the next generated-scene rebuild.
+            bot.transform.SetPositionAndRotation(
+                planetCenter + new Vector3(
+                    -0.26751554f,
+                    planetRadius + 2.9f,
+                    3.5498571f),
+                new Quaternion(0f, 0.999495f, 0.031776477f, 0f));
+            EditorUtility.SetDirty(bot.transform);
         }
 
         private static Animator CreateLinebreakerHumanoidVisual(Transform bot)

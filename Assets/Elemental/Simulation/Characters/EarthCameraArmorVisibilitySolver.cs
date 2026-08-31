@@ -52,12 +52,10 @@ namespace Elemental.Simulation.Characters
 
         public static float ResolveBodyCoverageScale(bool readabilityRegion, float3 localDirection)
         {
-            if (!readabilityRegion) return 1f;
-            float3 direction = math.normalizesafe(localDirection, new float3(0f, 0f, 1f));
-            float front = math.saturate((direction.z - 0.12f) / 0.72f);
-            float center = 1f - math.saturate(math.abs(direction.x) / 0.62f);
-            float aperture = front * center;
-            return math.lerp(1f, 0.38f, aperture);
+            // Armor is a protection state, not a readability costume. Earlier
+            // camera-facing head/chest tiles were shrunk to 38%, leaving a large
+            // visible hole in exactly the direction an opponent attacks from.
+            return 1f;
         }
     }
 }

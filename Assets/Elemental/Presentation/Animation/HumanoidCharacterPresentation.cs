@@ -4,6 +4,8 @@ using Elemental.Runtime.World;
 using Elemental.Runtime.Physics;
 using Elemental.Simulation.Characters;
 using Elemental.Simulation.Bending;
+using Elemental.Simulation.Combat;
+using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine;
 
@@ -20,10 +22,14 @@ namespace Elemental.Presentation.Animation
         private static readonly int HardLandingHash = Animator.StringToHash("HardLanding");
         private static readonly int GroundedHash = Animator.StringToHash("Grounded");
         private static readonly int VerticalSpeedHash = Animator.StringToHash("VerticalSpeed");
+        private static readonly int GaitRateHash = Animator.StringToHash("GaitRate");
         private static readonly int CastHash = Animator.StringToHash("Cast");
         private static readonly int CastKindHash = Animator.StringToHash("CastKind");
         private static readonly int EarthPoseHash = Animator.StringToHash("EarthPose");
         private static readonly int ImpactHash = Animator.StringToHash("Impact");
+        private static readonly int DodgeHash = Animator.StringToHash("Dodge");
+        private static readonly int DodgeXHash = Animator.StringToHash("DodgeX");
+        private static readonly int DodgeYHash = Animator.StringToHash("DodgeY");
         private static readonly int MotionTimeHash = Animator.StringToHash("EarthMotionTime");
         private static readonly int LocomotionStateHash = Animator.StringToHash("Base Layer.Locomotion");
         private static readonly int JumpStateHash = Animator.StringToHash("Base Layer.Jump");
@@ -31,6 +37,11 @@ namespace Elemental.Presentation.Animation
         private static readonly int LandStateHash = Animator.StringToHash("Base Layer.Land");
         private static readonly int MovingLandStateHash = Animator.StringToHash("Base Layer.Moving Land");
         private static readonly int HardLandStateHash = Animator.StringToHash("Base Layer.Hard Land");
+        private static readonly int KnockdownRecoveryStateHash =
+            Animator.StringToHash("Base Layer.Knockdown Recovery");
+        private static readonly int DodgeStateHash = Animator.StringToHash("Base Layer.Dodge");
+        private static readonly int TurnInPlaceStateHash =
+            Animator.StringToHash("Base Layer.Turn In Place");
         private static readonly int SurfStateHash = Animator.StringToHash("Base Layer.Surf Crouch");
         private static readonly int[] EarthPoseWeightHashes =
         {
@@ -61,11 +72,13 @@ namespace Elemental.Presentation.Animation
         [SerializeField] private EarthTechniquePresentationProfile techniqueProfile;
         [SerializeField] private EarthPillarMobility pillarMobility;
         [SerializeField] private EarthCharacterPoseController poseController;
+        [SerializeField] private EarthFootContactController footContactController;
         [SerializeField] private EarthChoreographyDirector choreographyDirector;
         [SerializeField] private EarthSurfController surfController;
         [SerializeField] private EarthAnimationRigBridge animationRigBridge;
         [SerializeField] private EarthAnimationContactPredictor contactPredictor;
         [SerializeField] private HumanoidRagdollRig visibleRagdoll;
+        [SerializeField] private HumanoidProceduralBodyResponse proceduralBodyResponse;
         [SerializeField] private bool driveMagicPresentation = true;
 
         private float _castWeight;
@@ -76,15 +89,20 @@ namespace Elemental.Presentation.Animation
         private bool _wasCasting;
         private float _impactUntil;
         private bool _ragdollSubscribed;
+        private bool _visibleRagdollSubscribed;
         private bool _animationGrounded = true;
         private float _unsupportedSeconds;
         private EarthAnimationRescueState _rescueState;
         private EarthScalarPresentationState _speedFilter;
+        private EarthScalarPresentationState _gaitRateFilter;
         private EarthScalarPresentationState _turnFilter;
         private Vector3 _previousFacing;
         private bool _hasPreviousFacing;
         private int _activeBaseStateHash;
         private HandIkState _handIkState;
+        private float _gaitPhaseSeconds;
+        private float _dodgeUntil;
+        private bool _dodgeWasActive;
 
         public Animator Animator => animator;
         public CharacterPresentationProfile Profile => profile;
@@ -97,6 +115,12 @@ namespace Elemental.Presentation.Animation
         public float FilteredTurn => _turnFilter.Value;
         public float MeasuredYawRateDegrees { get; private set; }
         public EarthCharacterPoseController PoseController => poseController;
+        public EarthFootContactController FootContactController => footContactController;
+        public HumanoidProceduralBodyResponse ProceduralBodyResponse => proceduralBodyResponse;
+        public EarthAuthoredActionId CurrentAuthoredAction { get; private set; }
+        public EarthAuthoredFootPolicy CurrentFootPolicy { get; private set; }
+        public EarthDirectionalDodgeDecision LastDodgeDecision { get; private set; }
+        public bool IsDirectionalDodgeActive => Time.time < _dodgeUntil;
 
         public void Configure(
             CharacterPresentationProfile configuredProfile,
@@ -128,7 +152,9 @@ namespace Elemental.Presentation.Animation
             visibleRagdoll = configuredVisibleRagdoll;
             driveMagicPresentation = configuredDriveMagicPresentation;
             PrepareAnimator();
+            ConfigureFootContactController();
             ConfigurePoseController();
+            ConfigureProceduralBodyResponse();
             if (isActiveAndEnabled) SubscribeRagdoll();
         }
 
@@ -141,7 +167,9 @@ namespace Elemental.Presentation.Animation
             if (surfController == null) surfController = GetComponentInParent<EarthSurfController>();
             if (visibleRagdoll == null) visibleRagdoll = GetComponent<HumanoidRagdollRig>();
             PrepareAnimator();
+            ConfigureFootContactController();
             ConfigurePoseController();
+            ConfigureProceduralBodyResponse();
         }
 
         private void PrepareAnimator()
@@ -150,7 +178,7 @@ namespace Elemental.Presentation.Animation
             animator.applyRootMotion = false;
             animator.updateMode = AnimatorUpdateMode.Normal;
             animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-            // EarthCharacterPoseController is the single foot-contact owner.
+            // EarthFootContactController is the single base-layer foot owner.
             // Mecanim's automatic stabilizer evaluates a second solution from a
             // different clock and fights persistent surf/casting anchors.
             animator.stabilizeFeet = false;
@@ -174,9 +202,26 @@ namespace Elemental.Presentation.Animation
             contactPredictor.Configure(motor);
         }
 
+        private void ConfigureFootContactController()
+        {
+            if (animator == null || motor == null || rootBody == null) return;
+            if (footContactController == null)
+                footContactController = GetComponent<EarthFootContactController>();
+            if (footContactController == null)
+                footContactController = gameObject.AddComponent<EarthFootContactController>();
+            footContactController.Configure(animator, motor, rootBody, poseController);
+            footContactController.ConfigureAnimationRescue(
+                profile != null ? profile.SurfPelvisResponseSeconds : 0.085f,
+                profile != null ? profile.SurfPelvisMaximumSpeed : 0.8f);
+        }
+
         private void ConfigurePoseController()
         {
-            if (!driveMagicPresentation || animator == null || motor == null || rootBody == null) return;
+            if (!driveMagicPresentation || animator == null || motor == null || rootBody == null)
+            {
+                footContactController?.SetPoseIntentSource(null);
+                return;
+            }
             if (poseController == null) poseController = GetComponent<EarthCharacterPoseController>();
             if (poseController == null) poseController = gameObject.AddComponent<EarthCharacterPoseController>();
             poseController.Configure(
@@ -184,6 +229,8 @@ namespace Elemental.Presentation.Animation
             poseController.ConfigureAnimationRescue(
                 profile != null ? profile.SurfPelvisResponseSeconds : 0.085f,
                 profile != null ? profile.SurfPelvisMaximumSpeed : 0.8f);
+            poseController.SetFootContactController(footContactController);
+            footContactController?.SetPoseIntentSource(poseController);
             if (choreographyDirector == null)
                 choreographyDirector = GetComponent<EarthChoreographyDirector>();
             if (choreographyDirector == null)
@@ -194,6 +241,21 @@ namespace Elemental.Presentation.Animation
             if (animationRigBridge == null)
                 animationRigBridge = gameObject.AddComponent<EarthAnimationRigBridge>();
             animationRigBridge.Configure(animator, leftHandTarget, rightHandTarget);
+        }
+
+        private void ConfigureProceduralBodyResponse()
+        {
+            if (animator == null || motor == null || rootBody == null) return;
+            if (proceduralBodyResponse == null)
+                proceduralBodyResponse = GetComponent<HumanoidProceduralBodyResponse>();
+            if (proceduralBodyResponse == null)
+                proceduralBodyResponse = gameObject.AddComponent<HumanoidProceduralBodyResponse>();
+            proceduralBodyResponse.Configure(
+                animator,
+                motor,
+                rootBody,
+                visibleRagdoll,
+                this);
         }
 
         private void OnEnable()
@@ -209,16 +271,31 @@ namespace Elemental.Presentation.Animation
 
         private void SubscribeRagdoll()
         {
-            if (_ragdollSubscribed || ragdoll == null) return;
-            ragdoll.StateChanged += HandlePhysicalState;
-            _ragdollSubscribed = true;
+            if (!_ragdollSubscribed && ragdoll != null)
+            {
+                ragdoll.StateChanged += HandlePhysicalState;
+                _ragdollSubscribed = true;
+            }
+            if (!_visibleRagdollSubscribed && visibleRagdoll != null)
+            {
+                visibleRagdoll.AuthoredRecoveryBegan += HandleAuthoredRecoveryBegan;
+                _visibleRagdollSubscribed = true;
+            }
         }
 
         private void UnsubscribeRagdoll()
         {
-            if (!_ragdollSubscribed) return;
-            if (ragdoll != null) ragdoll.StateChanged -= HandlePhysicalState;
-            _ragdollSubscribed = false;
+            if (_ragdollSubscribed)
+            {
+                if (ragdoll != null) ragdoll.StateChanged -= HandlePhysicalState;
+                _ragdollSubscribed = false;
+            }
+            if (_visibleRagdollSubscribed)
+            {
+                if (visibleRagdoll != null)
+                    visibleRagdoll.AuthoredRecoveryBegan -= HandleAuthoredRecoveryBegan;
+                _visibleRagdollSubscribed = false;
+            }
         }
 
         private void Update()
@@ -258,9 +335,21 @@ namespace Elemental.Presentation.Animation
             float presentationSpeed = EarthAnimationParameterFilter.StepSpeed(
                 ref _speedFilter,
                 targetSpeed,
-                profile != null ? profile.SpeedAccelerationSeconds : 0.075f,
-                profile != null ? profile.SpeedDecelerationSeconds : 0.11f,
+                // The zero-speed child is a neutralized first frame of the same
+                // Mixamo walk. Blending from it into the live cycle in 75 ms can
+                // rotate a knee by 10+ degrees in one normalized frame, especially
+                // on the bot's stop/start planner. Give the authored legs enough
+                // time to enter the cycle coherently.
+                profile != null
+                    ? Mathf.Max(0.14f, profile.SpeedAccelerationSeconds)
+                    : 0.14f,
+                profile != null ? profile.SpeedDecelerationSeconds : 0.24f,
                 Time.deltaTime);
+            float gaitRate = EarthAnimationParameterFilter.StepGaitRate(
+                ref _gaitRateFilter,
+                tangentVelocity.magnitude,
+                Time.deltaTime,
+                0.12f);
             EarthTurnPresentationSample turn = EarthAnimationParameterFilter.StepTurn(
                 ref _turnFilter,
                 measuredYaw,
@@ -298,7 +387,9 @@ namespace Elemental.Presentation.Animation
                 Time.deltaTime);
 
             animator.SetFloat(SpeedHash, presentationSpeed);
+            animator.SetFloat(GaitRateHash, gaitRate);
             animator.SetFloat(TurnHash, turn.Value);
+            footContactController?.SetTurnIntent(turn.Value);
             animator.SetBool(SurfingHash, surfing);
             animator.SetBool(GroundedHash, _animationGrounded);
             animator.SetFloat(VerticalSpeedHash, verticalSpeed);
@@ -306,10 +397,33 @@ namespace Elemental.Presentation.Animation
                                                     (rescue.Phase == EarthAnimationPhase.PreLanding ||
                                                      rescue.Phase == EarthAnimationPhase.LandingContact ||
                                                      rescue.Phase == EarthAnimationPhase.LandingRecovery));
+            CaptureGaitPhase();
             bool landingStyleChanged = rescue.LandingStyle != previousLandingStyle &&
                                        (rescue.Phase == EarthAnimationPhase.PreLanding ||
                                         rescue.Phase == EarthAnimationPhase.LandingContact);
-            if (rescue.PhaseChanged || landingStyleChanged) DriveRescueTransition(in rescue);
+            bool directionalDodge = IsDirectionalDodgeActive;
+            bool authoredKnockdownRecovery = visibleRagdoll != null &&
+                                               visibleRagdoll.IsRecoveringToAnimation;
+            int desiredGroundedState = ResolveGroundedStateHash(in rescue);
+            bool groundedLaneChanged = desiredGroundedState != 0 &&
+                                       desiredGroundedState != _activeBaseStateHash;
+            if (!directionalDodge && !authoredKnockdownRecovery && _dodgeWasActive)
+            {
+                _activeBaseStateHash = 0;
+                DriveRescueTransition(in rescue);
+            }
+            else if (!directionalDodge && !authoredKnockdownRecovery &&
+                     (rescue.PhaseChanged || landingStyleChanged || groundedLaneChanged))
+            {
+                DriveRescueTransition(in rescue);
+            }
+            _dodgeWasActive = directionalDodge;
+            // The bot's telegraph presenter owns its magic layer, while this shared
+            // component still owns action/contact policy. Read the already-authored
+            // Cast parameter so player and bot report the same semantic graph state.
+            bool externallyAuthoredCast = !driveMagicPresentation && animator.GetBool(CastHash);
+            UpdateAuthoredAction(in rescue, externallyAuthoredCast, directionalDodge);
+            UpdateImpactPresentation();
             if (!driveMagicPresentation)
             {
                 ResetMagicIK();
@@ -329,6 +443,7 @@ namespace Elemental.Presentation.Animation
                                                       motor.LastCommand.Move.x * motor.LastCommand.Move.x +
                                                       motor.LastCommand.Move.y * motor.LastCommand.Move.y));
             if (movementInterruptsRecovery) casting = false;
+            UpdateAuthoredAction(in rescue, casting, directionalDodge);
             float targetWeight = casting && _physicalMode != CharacterPhysicalMode.FullRagdoll
                 ? (profile != null ? profile.HandIkWeight : 0.92f)
                 : 0f;
@@ -365,15 +480,6 @@ namespace Elemental.Presentation.Animation
                     Time.deltaTime);
             }
             if (_magicLayerIndex >= 0) animator.SetLayerWeight(_magicLayerIndex, _castWeight);
-            float impactTarget = Time.time < _impactUntil &&
-                                 _physicalMode != CharacterPhysicalMode.FullRagdoll
-                ? 0.56f
-                : 0f;
-            _impactWeight = Mathf.MoveTowards(
-                _impactWeight,
-                impactTarget,
-                Time.deltaTime / (impactTarget > 0f ? 0.045f : 0.18f));
-            if (_impactLayerIndex >= 0) animator.SetLayerWeight(_impactLayerIndex, _impactWeight);
             animationRigBridge?.SetMagicWeight(_castWeight);
             UpdateHandTargets();
             _wasCasting = casting;
@@ -418,7 +524,7 @@ namespace Elemental.Presentation.Animation
             {
                 case EarthAnimationPhase.GroundedIdle:
                 case EarthAnimationPhase.LocomotionLoop:
-                    stateHash = LocomotionStateHash;
+                    stateHash = ResolveGroundedStateHash(in rescue);
                     break;
                 case EarthAnimationPhase.Rising:
                     stateHash = JumpStateHash;
@@ -447,6 +553,8 @@ namespace Elemental.Presentation.Animation
             if (_activeBaseStateHash == stateHash) return;
             _activeBaseStateHash = stateHash;
             float startSeconds = 0f;
+            if (stateHash == LocomotionStateHash)
+                startSeconds = _gaitPhaseSeconds;
             if (rescue.Phase == EarthAnimationPhase.PreLanding ||
                 rescue.Phase == EarthAnimationPhase.LandingContact)
             {
@@ -464,6 +572,28 @@ namespace Elemental.Presentation.Animation
                 startSeconds);
         }
 
+        private int ResolveGroundedStateHash(in EarthAnimationRescueSample rescue)
+        {
+            if (rescue.Phase != EarthAnimationPhase.GroundedIdle &&
+                rescue.Phase != EarthAnimationPhase.LocomotionLoop)
+                return 0;
+            bool turningInPlace = Mathf.Abs(_speedFilter.Value) < 0.35f &&
+                                  Mathf.Abs(_turnFilter.Value) >= 0.20f;
+            return turningInPlace ? TurnInPlaceStateHash : LocomotionStateHash;
+        }
+
+        private void CaptureGaitPhase()
+        {
+            if (animator == null || animator.IsInTransition(0)) return;
+            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+            if (state.fullPathHash != LocomotionStateHash) return;
+            AnimatorClipInfo[] clips = animator.GetCurrentAnimatorClipInfo(0);
+            float length = clips.Length > 0 && clips[0].clip != null
+                ? Mathf.Max(0.01f, clips[0].clip.length)
+                : 1f;
+            _gaitPhaseSeconds = Mathf.Repeat(state.normalizedTime, 1f) * length;
+        }
+
         private float ResolveLandingContactSeconds(EarthLandingStyle style)
         {
             if (profile == null) return style == EarthLandingStyle.Moving ? 0.533f : 0.625f;
@@ -473,6 +603,184 @@ namespace Elemental.Presentation.Animation
                 EarthLandingStyle.Hard => profile.HardLandingContactSeconds,
                 _ => profile.SoftLandingContactSeconds
             };
+        }
+
+        private void UpdateAuthoredAction(
+            in EarthAnimationRescueSample rescue,
+            bool casting,
+            bool directionalDodge)
+        {
+            bool recoverableRecovery = visibleRagdoll != null &&
+                                       visibleRagdoll.IsRecoveringToAnimation;
+            bool impactReaction = Time.time < _impactUntil &&
+                                  _physicalMode != CharacterPhysicalMode.FullRagdoll;
+            EarthAuthoredActionId resolvedAction = EarthAuthoredActionResolver.Resolve(
+                rescue.Phase,
+                rescue.LandingStyle,
+                recoverableRecovery,
+                casting,
+                impactReaction,
+                directionalDodge);
+            float normalizedTime = ResolveCurrentActionNormalizedTime();
+            if (TryResolveActiveBaseLayerLanding(
+                    out EarthAuthoredActionId activeLanding,
+                    out float activeLandingNormalizedTime))
+            {
+                resolvedAction = EarthAuthoredActionResolver.ResolveBaseLayerContactOwnership(
+                    resolvedAction,
+                    activeLanding);
+                if (resolvedAction == activeLanding)
+                    normalizedTime = activeLandingNormalizedTime;
+            }
+            CurrentAuthoredAction = resolvedAction;
+            EarthAuthoredActionDefinition definition =
+                EarthAuthoredActionCatalog.Resolve(CurrentAuthoredAction);
+            CurrentFootPolicy = definition.FootPolicyAt(normalizedTime);
+            footContactController?.SetAuthoredFootPolicy(CurrentFootPolicy);
+        }
+
+        private bool TryResolveActiveBaseLayerLanding(
+            out EarthAuthoredActionId action,
+            out float normalizedTime)
+        {
+            action = EarthAuthoredActionId.None;
+            normalizedTime = 0f;
+            if (animator == null || !animator.enabled) return false;
+
+            // Prefer the current landing while it blends out. On entry, where
+            // the current state is still Fall, use the incoming landing state.
+            AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+            if (TryMapLandingState(current, out action))
+            {
+                normalizedTime = Mathf.Clamp01(current.normalizedTime);
+                return true;
+            }
+            if (!animator.IsInTransition(0)) return false;
+            AnimatorStateInfo next = animator.GetNextAnimatorStateInfo(0);
+            if (!TryMapLandingState(next, out action)) return false;
+            normalizedTime = Mathf.Clamp01(next.normalizedTime);
+            return true;
+        }
+
+        private static bool TryMapLandingState(
+            AnimatorStateInfo state,
+            out EarthAuthoredActionId action)
+        {
+            if (state.fullPathHash == MovingLandStateHash)
+            {
+                action = EarthAuthoredActionId.MovingLandingRoll;
+                return true;
+            }
+            if (state.fullPathHash == HardLandStateHash)
+            {
+                action = EarthAuthoredActionId.HardLandingBrace;
+                return true;
+            }
+            if (state.fullPathHash == LandStateHash)
+            {
+                action = EarthAuthoredActionId.SoftLanding;
+                return true;
+            }
+            action = EarthAuthoredActionId.None;
+            return false;
+        }
+
+        private float ResolveCurrentActionNormalizedTime()
+        {
+            if (animator == null || !animator.enabled) return 0f;
+            // During an authored cross-fade the outgoing state can already be near
+            // its end while the incoming jump/land/recovery clip is at frame zero.
+            // Contact windows must follow the incoming action, otherwise IK can be
+            // re-enabled for one frame exactly at take-off or landing contact.
+            AnimatorStateInfo state = animator.IsInTransition(0)
+                ? animator.GetNextAnimatorStateInfo(0)
+                : animator.GetCurrentAnimatorStateInfo(0);
+            return Mathf.Clamp01(state.normalizedTime);
+        }
+
+        public void NotifyImpactResponse(EarthCharacterImpactResponse response)
+        {
+            if (response != EarthCharacterImpactResponse.Flinch &&
+                response != EarthCharacterImpactResponse.Stagger) return;
+            if (CurrentAuthoredAction == EarthAuthoredActionId.DirectionalDodge)
+            {
+                float normalizedTime = ResolveCurrentActionNormalizedTime();
+                if (!EarthAuthoredActionCatalog.CanInterrupt(
+                        CurrentAuthoredAction,
+                        normalizedTime,
+                        EarthAuthoredActionId.HitRecoil)) return;
+                _dodgeUntil = 0f;
+                _dodgeWasActive = true;
+            }
+            float duration = response == EarthCharacterImpactResponse.Stagger ? 0.46f : 0.24f;
+            _impactUntil = Mathf.Max(_impactUntil, Time.time + duration);
+            if (animator != null && animator.enabled) animator.SetTrigger(ImpactHash);
+        }
+
+        /// <summary>
+        /// Presentation-side authored dodge request. The gameplay motor keeps all
+        /// displacement/collision authority; this selects one of four real KayKit
+        /// clips and publishes its deterministic foot-contact window.
+        /// </summary>
+        public bool TryPlayDirectionalDodge(Vector2 localDirection)
+        {
+            float normalizedTime = ResolveCurrentActionNormalizedTime();
+            bool recovering = _physicalMode == CharacterPhysicalMode.FullRagdoll ||
+                              (visibleRagdoll != null &&
+                               (visibleRagdoll.IsRagdollActive ||
+                                visibleRagdoll.IsRecoveringToAnimation));
+            bool casting = animator != null && animator.enabled &&
+                           (animator.GetBool(CastHash) || _castWeight > 0.05f);
+            var input = new EarthDirectionalDodgeInput(
+                new float2(localDirection.x, localDirection.y),
+                motor != null && motor.HasStableSupport && _animationGrounded,
+                surfController != null && surfController.IsActive,
+                casting,
+                recovering,
+                CurrentAuthoredAction,
+                normalizedTime);
+            LastDodgeDecision = EarthDirectionalDodgeGate.Resolve(in input);
+            if (!LastDodgeDecision.Accepted || animator == null || !animator.enabled)
+                return false;
+
+            _dodgeUntil = Time.time + 0.48f;
+            _dodgeWasActive = true;
+            animator.SetFloat(DodgeXHash, LastDodgeDecision.BlendDirection.x);
+            animator.SetFloat(DodgeYHash, LastDodgeDecision.BlendDirection.y);
+            animator.ResetTrigger(DodgeHash);
+            animator.SetTrigger(DodgeHash);
+            _activeBaseStateHash = DodgeStateHash;
+            CurrentAuthoredAction = EarthAuthoredActionId.DirectionalDodge;
+            CurrentFootPolicy = EarthAuthoredActionCatalog.Resolve(CurrentAuthoredAction)
+                .FootPolicyAt(0f);
+            footContactController?.SetAuthoredFootPolicy(CurrentFootPolicy);
+            return true;
+        }
+
+        private void HandleAuthoredRecoveryBegan()
+        {
+            _dodgeUntil = 0f;
+            _dodgeWasActive = false;
+            _activeBaseStateHash = KnockdownRecoveryStateHash;
+            CurrentAuthoredAction = EarthAuthoredActionId.RecoverableKnockdownRecovery;
+            CurrentFootPolicy = EarthAuthoredActionCatalog.Resolve(CurrentAuthoredAction)
+                .FootPolicyAt(0.18f);
+            footContactController?.SetAuthoredFootPolicy(CurrentFootPolicy);
+            ResetMagicIK();
+        }
+
+        private void UpdateImpactPresentation()
+        {
+            if (animator == null) return;
+            float impactTarget = Time.time < _impactUntil &&
+                                 _physicalMode != CharacterPhysicalMode.FullRagdoll
+                ? 0.56f
+                : 0f;
+            _impactWeight = Mathf.MoveTowards(
+                _impactWeight,
+                impactTarget,
+                Time.deltaTime / (impactTarget > 0f ? 0.045f : 0.18f));
+            if (_impactLayerIndex >= 0) animator.SetLayerWeight(_impactLayerIndex, _impactWeight);
         }
 
         private void OnAnimatorIK(int layerIndex)
@@ -551,7 +859,12 @@ namespace Elemental.Presentation.Animation
         private void HandlePhysicalState(CharacterPhysicalState state)
         {
             _physicalMode = state.Mode;
-            if (state.Mode == CharacterPhysicalMode.FullRagdoll) ResetMagicIK();
+            if (state.Mode == CharacterPhysicalMode.FullRagdoll)
+            {
+                _dodgeUntil = 0f;
+                _dodgeWasActive = false;
+                ResetMagicIK();
+            }
             if (animator == null) return;
             bool animatorEnabled = state.Mode != CharacterPhysicalMode.FullRagdoll;
             if (visibleRagdoll == null && animator.enabled != animatorEnabled)
@@ -570,10 +883,7 @@ namespace Elemental.Presentation.Animation
                 }
             }
             if (state.Mode == CharacterPhysicalMode.Stagger)
-            {
-                _impactUntil = Time.time + 0.46f;
-                animator.SetTrigger(ImpactHash);
-            }
+                NotifyImpactResponse(EarthCharacterImpactResponse.Stagger);
         }
 
         private float CastingBlendSeconds => profile != null ? profile.CastingBlendSeconds : 0.1f;

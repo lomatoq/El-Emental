@@ -295,6 +295,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(Vector3.Distance(wall.transform.position, wallStart), Is.GreaterThan(0.8f));
             Assert.That(Vector3.Angle(wall.transform.up, wall.transform.position.normalized), Is.LessThan(1f));
             Object.Destroy(root);
+            yield return null;
         }
 
         [UnityTest]
@@ -452,9 +453,11 @@ namespace Elemental.Tests.PlayMode
             ActiveRagdollPuppet puppet = null;
             Animator humanoidAnimator = null;
             Collider planet = null;
+            EarthSurfaceQueryService surfaceQueries = null;
             foreach (GameObject rootObject in scene.GetRootGameObjects())
             {
                 pool ??= rootObject.GetComponentInChildren<EarthPlatformPool>(true);
+                surfaceQueries ??= rootObject.GetComponentInChildren<EarthSurfaceQueryService>(true);
                 if (rootObject.name == "Planet Character")
                 {
                     motor = rootObject.GetComponentInChildren<PlanetMotor>(true);
@@ -466,6 +469,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(pool, Is.Not.Null);
             Assert.That(motor, Is.Not.Null);
             Assert.That(planet, Is.Not.Null);
+            Assert.That(surfaceQueries, Is.Not.Null);
 
             // This contract isolates moving-surface continuity. The shipping bot can
             // otherwise land a valid KO while the test waits for platform emergence,
@@ -480,7 +484,16 @@ namespace Elemental.Tests.PlayMode
 
             Rigidbody rider = motor.GetComponent<Rigidbody>();
             Vector3 up = (rider.worldCenterOfMass - planet.transform.position).normalized;
-            Vector3 surface = planet.ClosestPoint(rider.worldCenterOfMass);
+            var supportQuery = new EarthSurfaceQuery(
+                ToFloat3(rider.worldCenterOfMass + up * 1.5f),
+                ToFloat3(-up),
+                5f,
+                EarthSurfaceCapabilities.Support | EarthSurfaceCapabilities.Pillar,
+                0.18f);
+            Assert.That(surfaceQueries.TrySample(in supportQuery, out EarthSurfaceSample support), Is.True,
+                "The production player must have one current support surface before drawing a platform.");
+            Vector3 surface = new Vector3(support.Point.x, support.Point.y, support.Point.z);
+            up = new Vector3(support.Normal.x, support.Normal.y, support.Normal.z).normalized;
             Vector3 forward = Vector3.ProjectOnPlane(motor.FacingForward, up).normalized;
             if (forward.sqrMagnitude < 0.5f) forward = Vector3.Cross(up, Vector3.right).normalized;
             Vector3 right = Vector3.Cross(up, forward).normalized;
@@ -770,18 +783,24 @@ namespace Elemental.Tests.PlayMode
 
             Object.Destroy(columnObject);
             Object.Destroy(casterObject);
+            yield return null;
         }
 
         [UnityTest]
         public IEnumerator RaisedPillarCanBeControlledThenFlickedAsAProjectile()
         {
+            // Let the previous pooled-column proof flush its destroyed rigidbodies
+            // from the PhysX world before creating another column at the same origin.
+            yield return new WaitForFixedUpdate();
             GameObject columnObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
             Rigidbody columnBody = columnObject.AddComponent<Rigidbody>();
             columnBody.useGravity = false;
             EarthPillarWaveColumn column = columnObject.AddComponent<EarthPillarWaveColumn>();
+            Vector3 isolatedSurface = new Vector3(320f, 0f, 320f);
             column.Schedule(
-                null, Vector3.zero, Vector3.up, Vector3.forward,
+                null, isolatedSurface, Vector3.up, Vector3.forward,
                 2f, 1f, 1f, 0f, 5f, 1f, 17u, 0f, null, null, new Collider[4]);
+            Physics.SyncTransforms();
             yield return new WaitForSeconds(0.25f);
 
             EarthMatterIdentity columnMatter = column.GetComponent<EarthMatterIdentity>();
@@ -801,8 +820,15 @@ namespace Elemental.Tests.PlayMode
                 yield return new WaitForFixedUpdate();
             }
             float controlledSpeed = columnBody.linearVelocity.z;
+            GravityBody pillarGravity = column.GetComponent<GravityBody>();
             Assert.That(controlledSpeed, Is.GreaterThan(0.1f));
-            Assert.That(controlledSpeed, Is.LessThanOrEqualTo(9.1f));
+            Assert.That(controlledSpeed, Is.LessThanOrEqualTo(9.1f),
+                $"velocity={columnBody.linearVelocity}, mass={columnBody.mass:F2}, " +
+                $"position={columnBody.position}, gravityBodies=" +
+                $"{Object.FindObjectsByType<GravityBody>(FindObjectsInactive.Include).Length}, " +
+                $"gravityWorlds={Object.FindObjectsByType<GravityWorldBehaviour>(FindObjectsInactive.Include).Length}, " +
+                $"gravityEnabled={pillarGravity != null && pillarGravity.enabled}, " +
+                $"gravityAcceleration={pillarGravity?.LastAcceleration}");
 
             Assert.That(executor.ReleaseVectorField(
                 EarthVectorReleaseIntent.ProjectileFlick, Vector3.forward, 1f), Is.True);

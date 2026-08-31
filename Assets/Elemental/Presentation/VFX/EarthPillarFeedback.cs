@@ -1,5 +1,6 @@
 using Elemental.Presentation.Camera;
 using Elemental.Runtime.Characters;
+using Elemental.Runtime.World;
 using Elemental.Simulation.Bending;
 using UnityEngine;
 
@@ -12,9 +13,10 @@ namespace Elemental.Presentation.VFX
         [SerializeField] private Transform pillar;
         [SerializeField] private Transform[] groundChips;
         [SerializeField] private PlanetCameraRig cameraRig;
+        [SerializeField] private EarthEffectsTuningProfile effectsProfile;
 
-        private readonly Vector3[] _chipVelocities = new Vector3[20];
-        private readonly Vector3[] _chipInitialScales = new Vector3[20];
+        private Vector3[] _chipVelocities = System.Array.Empty<Vector3>();
+        private Vector3[] _chipInitialScales = System.Array.Empty<Vector3>();
         private Vector3 _surfaceBase;
         private Vector3 _up;
         private Vector3 _side;
@@ -30,13 +32,18 @@ namespace Elemental.Presentation.VFX
             EarthPillarMobility configuredMobility,
             Transform configuredPillar,
             Transform[] configuredGroundChips,
-            PlanetCameraRig configuredCameraRig)
+            PlanetCameraRig configuredCameraRig,
+            EarthEffectsTuningProfile configuredEffectsProfile = null)
         {
             if (mobility != null) mobility.PillarRaised -= OnPillarRaised;
             mobility = configuredMobility;
             pillar = configuredPillar;
             groundChips = configuredGroundChips;
             cameraRig = configuredCameraRig;
+            effectsProfile = configuredEffectsProfile;
+            int chipCount = groundChips != null ? groundChips.Length : 0;
+            _chipVelocities = new Vector3[chipCount];
+            _chipInitialScales = new Vector3[chipCount];
             if (mobility != null && isActiveAndEnabled) mobility.PillarRaised += OnPillarRaised;
             HideAll();
         }
@@ -107,6 +114,10 @@ namespace Elemental.Presentation.VFX
         private void PrepareChips(uint seed)
         {
             if (groundChips == null) return;
+            EarthPillarEffectsTuning tuning = effectsProfile != null ? effectsProfile.Pillar : null;
+            Vector2 sizeRange = tuning != null ? tuning.ChipSize : new Vector2(0.09f, 0.24f);
+            Vector2 radialSpeed = tuning != null ? tuning.ChipRadialSpeed : new Vector2(1.4f, 4.2f);
+            Vector2 upSpeed = tuning != null ? tuning.ChipUpSpeed : new Vector2(0.8f, 2.5f);
             int count = Mathf.Min(groundChips.Length, _chipVelocities.Length);
             for (int index = 0; index < count; index++)
             {
@@ -118,10 +129,10 @@ namespace Elemental.Presentation.VFX
                 chip.position = _surfaceBase + (radial * (_radius * 0.55f));
                 chip.rotation = Quaternion.FromToRotation(Vector3.up, _up) *
                                 Quaternion.Euler(index * 17f, index * 29f, index * 11f);
-                chip.localScale = Vector3.one * Mathf.Lerp(0.09f, 0.24f, (index % 5) / 4f);
+                chip.localScale = Vector3.one * Mathf.Lerp(sizeRange.x, sizeRange.y, (index % 5) / 4f);
                 _chipInitialScales[index] = chip.localScale;
-                _chipVelocities[index] = (radial * Mathf.Lerp(1.4f, 4.2f, (index % 7) / 6f)) +
-                                         (_up * Mathf.Lerp(0.8f, 2.5f, (index % 4) / 3f));
+                _chipVelocities[index] = (radial * Mathf.Lerp(radialSpeed.x, radialSpeed.y, (index % 7) / 6f)) +
+                                         (_up * Mathf.Lerp(upSpeed.x, upSpeed.y, (index % 4) / 3f));
                 chip.gameObject.SetActive(true);
             }
         }

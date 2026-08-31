@@ -51,6 +51,7 @@ namespace Elemental.Runtime.World
         private readonly List<float3> _platformPathScratch = new List<float3>(32);
         private readonly List<TerrainExtractionTransaction> _pendingExtractions =
             new List<TerrainExtractionTransaction>(4);
+        private readonly RaycastHit[] _extractionSurfaceHits = new RaycastHit[12];
         private EarthFragment _heldFragment;
         private Vector3 _pendingExtractionTarget;
         private Vector3 _pendingExtractionVelocity;
@@ -89,6 +90,13 @@ namespace Elemental.Runtime.World
         private float _gravityThrowStartedAt;
         private float _gravityThrowCharge01;
         private Vector3 _gravityThrowDirection;
+        private readonly EarthFragment[] _heldFractureCluster = new EarthFragment[4];
+        private readonly Vector3[] _heldFractureOffsets = new Vector3[4];
+        private int _heldFractureCount;
+        private bool _heldFractureThrowCharging;
+        private float _heldFractureThrowStartedAt;
+        private Vector3 _heldFractureThrowDirection;
+        private Vector3 _heldFractureCenter;
 
         public MagicWorldEvents Events { get; } = new MagicWorldEvents();
         public MagicReplayRecorder Recorder { get; } = new MagicReplayRecorder();
@@ -140,11 +148,131 @@ namespace Elemental.Runtime.World
         public float GravityWellFocusLift => gravityWellProfile != null ? gravityWellProfile.FocusLift : 0.75f;
         public int GravityWellCapturedCount => _gravityGripSession.Count;
         public int GravityWellMaximumCapturedTargets => GravityMaximumCapturedTargets;
-        public bool HasGravityStructureTarget => _gravityWellWall != null || _gravityWellPlatform != null;
+        public bool HasGravityStructureTarget => _gravityFractureSource != null;
         public EarthGravityStructureIntent GravityStructureIntent => _gravityStructureIntent;
         public float GravityStructurePhase => _gravityStructurePhase;
         public bool IsGravityClusterThrowCharging => _gravityThrowCharging;
         public float GravityClusterThrowCharge01 => _gravityThrowCharge01;
+        public bool HasHeldFractureCluster => _heldFractureCount > 0;
+        public int HeldFractureClusterCount => _heldFractureCount;
+
+        public bool TryFractureHeldBoulder()
+        {
+            EarthFragment source = HeldFragment;
+            if (source == null || source.Body == null || fragmentPool == null ||
+                HasPendingExtraction || _heldFractureCount > 0) return false;
+
+            const int desiredCount = 4;
+            float sourceMass = Mathf.Max(0.4f, source.Mass);
+            float chunkMass = sourceMass / desiredCount;
+            float chunkRadius = Mathf.Max(0.12f, source.Radius * 0.58f);
+            Vector3 center = source.BendTargetPosition;
+            _heldFractureCenter = center;
+            Vector3 up = planetCenter != null
+                ? SafeDirection(center - planetCenter.position)
+                : SafeDirection(transform.up);
+            Vector3 right = Vector3.ProjectOnPlane(source.transform.right, up).normalized;
+            if (right.sqrMagnitude < 0.5f) right = Vector3.Cross(up, Vector3.forward).normalized;
+            Vector3 forward = Vector3.Cross(right, up).normalized;
+            _heldFractureOffsets[0] = (up * 0.16f - right * 0.14f) * chunkRadius;
+            _heldFractureOffsets[1] = (right * 0.72f + up * 0.12f) * chunkRadius;
+            _heldFractureOffsets[2] = (-right * 0.38f + forward * 0.66f - up * 0.18f) * chunkRadius;
+            _heldFractureOffsets[3] = (-right * 0.34f - forward * 0.64f - up * 0.10f) * chunkRadius;
+
+            source.transform.localScale *= 0.66f;
+            source.Body.mass = chunkMass;
+            _heldFractureCluster[0] = source;
+            _heldFractureCount = 1;
+            for (int index = 1; index < desiredCount; index++)
+            {
+                EarthFragment chunk = fragmentPool.Acquire(
+                    this,
+                    center + _heldFractureOffsets[index],
+                    chunkRadius,
+                    chunkMass,
+                    null);
+                if (chunk == null) break;
+                chunk.BeginBendControl(
+                    center + _heldFractureOffsets[index], Vector3.zero, 0.45f, BendTuning.Default);
+                _heldFractureCluster[index] = chunk;
+                _heldFractureCount++;
+            }
+            for (int index = 0; index < _heldFractureCluster.Length; index++)
+                _heldFractureCluster[index]?.SetFormationKinematic(true);
+            return _heldFractureCount >= 2;
+        }
+
+        public bool BeginHeldFractureThrow(Vector3 direction)
+        {
+            if (!HasHeldFractureCluster || _heldFractureThrowCharging) return false;
+            _heldFractureThrowCharging = true;
+            _heldFractureThrowStartedAt = Time.unscaledTime;
+            _heldFractureThrowDirection = SafeDirection(direction);
+            return true;
+        }
+
+        public void UpdateHeldFractureThrow(Vector3 direction)
+        {
+            if (_heldFractureThrowCharging)
+                _heldFractureThrowDirection = SafeDirection(direction);
+        }
+
+        public int ReleaseHeldFractureThrow(Vector3 direction)
+        {
+            if (!_heldFractureThrowCharging || !HasHeldFractureCluster) return 0;
+            UpdateHeldFractureThrow(direction);
+            float heldSeconds = Mathf.Max(0f, Time.unscaledTime - _heldFractureThrowStartedAt);
+            _heldFractureThrowCharging = false;
+            Vector3 forward = SafeDirection(_heldFractureThrowDirection);
+            if (heldSeconds <= 0.22f)
+            {
+                for (int index = _heldFractureCluster.Length - 1; index >= 0; index--)
+                {
+                    EarthFragment chunk = _heldFractureCluster[index];
+                    if (chunk == null) continue;
+                    LaunchHeldFractureChunk(chunk, forward * 13.5f);
+                    _heldFractureCluster[index] = null;
+                    _heldFractureCount--;
+                    return 1;
+                }
+                return 0;
+            }
+
+            float charge01 = Mathf.Clamp01((heldSeconds - 0.22f) / 0.83f);
+            float speed = Mathf.Lerp(11.5f, 18f, charge01);
+            Vector3 up = planetCenter != null
+                ? SafeDirection((_heldFragment != null ? _heldFragment.transform.position : transform.position) -
+                                planetCenter.position)
+                : SafeDirection(transform.up);
+            Vector3 side = Vector3.Cross(up, forward).normalized;
+            int launched = 0;
+            for (int index = 0; index < _heldFractureCluster.Length; index++)
+            {
+                EarthFragment chunk = _heldFractureCluster[index];
+                if (chunk == null) continue;
+                float spread = (index - 1.5f) * 0.11f;
+                Vector3 velocity = (forward + side * spread + up * (0.04f + index * 0.015f)).normalized * speed;
+                LaunchHeldFractureChunk(chunk, velocity);
+                _heldFractureCluster[index] = null;
+                launched++;
+            }
+            _heldFractureCount = 0;
+            _heldFragment = null;
+            LastLaunchVelocityChange = speed;
+            return launched;
+        }
+
+        private void LaunchHeldFractureChunk(EarthFragment chunk, Vector3 velocity)
+        {
+            if (chunk == null || chunk.Body == null) return;
+            chunk.SetFormationKinematic(false);
+            chunk.StopBendControl();
+            chunk.Body.linearVelocity = velocity;
+            chunk.Body.angularVelocity = Vector3.Cross(velocity.normalized, chunk.transform.up) * 2.4f;
+            chunk.Body.WakeUp();
+            if (chunk == _heldFragment) _heldFragment = null;
+            LastLaunchVelocityChange = velocity.magnitude;
+        }
 
         private void Awake()
         {
@@ -236,9 +364,14 @@ namespace Elemental.Runtime.World
             _gravityWellPlatform = aimedCollider.GetComponentInParent<EarthPlatform>();
             if (_gravityWellPlatform == null)
                 _gravityWellPlatform = aimedCollider.GetComponentInParent<EarthPlatformPiece>()?.Owner;
+            EarthArenaStructure arenaStructure = aimedCollider.GetComponentInParent<EarthArenaStructure>();
+            if (arenaStructure == null)
+                arenaStructure = aimedCollider.GetComponentInParent<EarthArenaPiece>()?.Owner;
             _gravityFractureSource = _gravityWellWall != null
                 ? (IEarthFractureSource)_gravityWellWall
-                : _gravityWellPlatform;
+                : _gravityWellPlatform != null
+                    ? _gravityWellPlatform
+                    : arenaStructure;
             if (_gravityFractureSource != null)
                 _gravityFractureSource.TargetsActivated += HandleGravityTargetsActivated;
             _gravityWellFocus = focus;
@@ -436,6 +569,7 @@ namespace Elemental.Runtime.World
                 body.mass,
                 ToFloat3(body.worldCenterOfMass));
             Events.Emit(in grabbed);
+            SuccessfulCommandCount++;
             return true;
         }
 
@@ -445,7 +579,12 @@ namespace Elemental.Runtime.World
             float charge01,
             in Elemental.Simulation.Bending.BendTuning tuning)
         {
-            if (HeldFragment != null)
+            if (HasHeldFractureCluster)
+            {
+                _heldFractureCenter = target;
+                UpdateHeldFractureFormation();
+            }
+            else if (HeldFragment != null)
                 HeldFragment.BeginBendControl(target, velocity, charge01, in tuning);
             else if (HasPendingExtraction)
             {
@@ -460,7 +599,12 @@ namespace Elemental.Runtime.World
 
         public void UpdateHeldEarthTarget(Vector3 target, Vector3 velocity, float charge01)
         {
-            if (HeldFragment != null)
+            if (HasHeldFractureCluster)
+            {
+                _heldFractureCenter = target;
+                UpdateHeldFractureFormation();
+            }
+            else if (HeldFragment != null)
                 HeldFragment.UpdateBendTarget(target, velocity, charge01);
             else if (HasPendingExtraction)
             {
@@ -513,11 +657,16 @@ namespace Elemental.Runtime.World
             EarthFragment fragment = HeldFragment;
             if (fragment == null || fragment.Body == null) return false;
             Vector3 safeDirection = SafeDirection(direction);
-            releaseVelocity = safeDirection * Mathf.Clamp(targetSpeed, 1f, VectorRockSpeedLimit);
-            fragment.StopBendControl();
-            fragment.Body.linearVelocity = releaseVelocity;
-            fragment.Body.angularVelocity *= 0.2f;
-            fragment.Body.WakeUp();
+            // Quick Stone owns its launch envelope through EarthQuickCastProfile.
+            // Reusing the slower vector-field cap silently flattened the authored
+            // 30..38 m/s lane to 32 m/s and would also defeat its 2x power tuning.
+            // The high ceiling is only a numerical/CCD guard; ordinary values stay
+            // completely profile-driven.
+            releaseVelocity = safeDirection * Mathf.Clamp(
+                targetSpeed,
+                1f,
+                EarthQuickCastProfile.MaximumProjectileSpeed);
+            fragment.ReleaseControlledProjectile(releaseVelocity);
             LastLaunchVelocityChange = releaseVelocity.magnitude;
             FragmentLaunchedEvent launched = new FragmentLaunchedEvent(
                 tick,
@@ -561,6 +710,15 @@ namespace Elemental.Runtime.World
             CancelVectorField();
             if (IsCharacterBody(body)) return false;
             IEarthPhysicalTarget target = ResolveEarthTarget(hitCollider, body);
+            if (target == null && hitCollider != null)
+            {
+                EarthArenaStructure arena = hitCollider.GetComponentInParent<EarthArenaStructure>();
+                if (arena != null)
+                {
+                    arena.TryPluckCell(point, out target);
+                    body = target?.Body;
+                }
+            }
             if (target == null || !target.IsEarthTargetValid || target.Body == null) return false;
             _vectorFieldTarget = target;
             _vectorFieldPoint = point;
@@ -699,6 +857,7 @@ namespace Elemental.Runtime.World
 
         private void FixedUpdate()
         {
+            UpdateHeldFractureFormation();
             if (_gravityWellActive && _repairController == null) ApplyGravityWell();
             IEarthPhysicalTarget target = _vectorFieldTarget;
             if (target == null) return;
@@ -728,6 +887,18 @@ namespace Elemental.Runtime.World
                 Vector3 delta = ToVector3(sample.VelocityChange);
                 if (delta.sqrMagnitude > 0f) target.Body.AddForce(delta, ForceMode.VelocityChange);
                 LastMagicPushVelocityChange = delta.magnitude / Mathf.Max(0.0001f, Time.fixedDeltaTime);
+            }
+        }
+
+        private void UpdateHeldFractureFormation()
+        {
+            if (!HasHeldFractureCluster) return;
+            for (int index = 0; index < _heldFractureCluster.Length; index++)
+            {
+                EarthFragment chunk = _heldFractureCluster[index];
+                if (chunk == null) continue;
+                chunk.UpdateBendTarget(
+                    _heldFractureCenter + _heldFractureOffsets[index], Vector3.zero, 0.55f);
             }
         }
 
@@ -846,6 +1017,13 @@ namespace Elemental.Runtime.World
 
         private void ApplyGestureRepair()
         {
+            if (_gravityFractureSource is EarthArenaStructure arenaStructure)
+            {
+                _gravityGripSession.ReleaseAll(EarthMagicGripKind.GravityWell);
+                _gravityWellBodies.Clear();
+                arenaStructure.SetMagicRepairProgress(_gravityStructurePhase);
+                return;
+            }
             bool wallRepairable = _gravityWellWall != null && _gravityWellWall.IsCollapsing;
             bool platformRepairable = _gravityWellPlatform != null && _gravityWellPlatform.IsFractured;
             if ((!wallRepairable && !platformRepairable) || _gravityStructurePhase <= 0f) return;
@@ -881,17 +1059,28 @@ namespace Elemental.Runtime.World
                     unchecked((uint)Time.frameCount));
                 _repairController = null;
             }
+            Component genericComponent = _gravityFractureSource as Component;
             Vector3 structurePosition = _gravityWellWall != null
                 ? _gravityWellWall.transform.position
                 : _gravityWellPlatform != null
                     ? _gravityWellPlatform.transform.position
-                    : _gravityWellFocus - _gravityWellUp;
+                    : genericComponent != null
+                        ? genericComponent.transform.position
+                        : _gravityWellFocus - _gravityWellUp;
             Vector3 direction = SafeDirection(_gravityWellFocus - structurePosition);
             if (_gravityWellWall != null)
             {
                 _gravityWellWall.SetMagicDisassemblyProgress(
                     _gravityStructurePhase, _gravityWellFocus, direction);
                 _gravityWellFracturedStructure = _gravityWellWall.IsCollapsing;
+                CaptureFracturedStructureTargets();
+                return;
+            }
+            if (_gravityFractureSource is EarthArenaStructure arenaStructure)
+            {
+                arenaStructure.SetMagicDisassemblyProgress(
+                    _gravityStructurePhase, _gravityWellFocus, direction);
+                _gravityWellFracturedStructure = arenaStructure.IsFractured;
                 CaptureFracturedStructureTargets();
                 return;
             }
@@ -910,9 +1099,7 @@ namespace Elemental.Runtime.World
 
         private void CaptureFracturedStructureTargets()
         {
-            IEarthFractureSource source = _gravityWellWall != null
-                ? (IEarthFractureSource)_gravityWellWall
-                : _gravityWellPlatform;
+            IEarthFractureSource source = _gravityFractureSource;
             if (source == null || !source.IsFractured) return;
             int count = source.CopyActiveTargetsNonAlloc(_gravityWellStructureTargets);
             for (int index = 0; index < count; index++)
@@ -942,11 +1129,15 @@ namespace Elemental.Runtime.World
 
         private void StressGravityWellStructure()
         {
+            IEarthDamageableStructure genericStructure =
+                _gravityFractureSource as IEarthDamageableStructure;
+            Component genericComponent = _gravityFractureSource as Component;
             if (!_gravityWellFracturedStructure && _gravityWellElapsed >= GravityFractureDelay)
             {
                 Vector3 direction = SafeDirection(_gravityWellFocus -
                     (_gravityWellWall != null ? _gravityWellWall.transform.position :
                      _gravityWellPlatform != null ? _gravityWellPlatform.transform.position :
+                     genericComponent != null ? genericComponent.transform.position :
                      _gravityWellFocus - _gravityWellUp));
                 bool fractured = _gravityWellWall != null &&
                                   _gravityWellWall.ApplyStructureImpact(
@@ -954,17 +1145,38 @@ namespace Elemental.Runtime.World
                 fractured |= _gravityWellPlatform != null &&
                               _gravityWellPlatform.ApplyStructureImpact(
                                   _gravityWellFocus, direction, GravityFractureImpulse);
+                if (_gravityWellWall == null && _gravityWellPlatform == null && genericStructure != null)
+                {
+                    var impact = new EarthStructureImpact(
+                        _gravityWellFocus,
+                        direction,
+                        GravityFractureImpulse,
+                        EarthStructureImpactKind.Pluck);
+                    fractured = genericStructure.ApplyEarthImpact(in impact);
+                }
                 _gravityWellFracturedStructure = fractured ||
-                                                  (_gravityWellWall == null && _gravityWellPlatform == null);
+                                                  (_gravityWellWall == null &&
+                                                   _gravityWellPlatform == null &&
+                                                   genericStructure == null);
             }
             if (!_gravityWellFracturedStructure) return;
             float impulse = GravitySustainedImpulse * Time.fixedDeltaTime;
             Vector3 pull = SafeDirection(_gravityWellFocus -
                 (_gravityWellWall != null ? _gravityWellWall.transform.position :
                  _gravityWellPlatform != null ? _gravityWellPlatform.transform.position :
+                 genericComponent != null ? genericComponent.transform.position :
                  _gravityWellFocus - _gravityWellUp));
             _gravityWellWall?.ApplyStructureImpact(_gravityWellFocus, pull, impulse);
             _gravityWellPlatform?.ApplyStructureImpact(_gravityWellFocus, pull, impulse);
+            if (_gravityWellWall == null && _gravityWellPlatform == null && genericStructure != null)
+            {
+                var sustained = new EarthStructureImpact(
+                    _gravityWellFocus,
+                    pull,
+                    impulse,
+                    EarthStructureImpactKind.Pluck);
+                genericStructure.ApplyEarthImpact(in sustained);
+            }
         }
 
         private IEarthPhysicalTarget ResolveExplicitGravityTarget(Collider hitCollider)
@@ -980,6 +1192,8 @@ namespace Elemental.Runtime.World
             if (pillar != null) return pillar;
             EarthArmorPiece armorPiece = hitCollider.GetComponentInParent<EarthArmorPiece>();
             if (armorPiece != null) return armorPiece;
+            EarthArenaPiece arenaPiece = hitCollider.GetComponentInParent<EarthArenaPiece>();
+            if (arenaPiece != null) return arenaPiece;
             EarthWall wall = hitCollider.GetComponentInParent<EarthWall>();
             if (wall != null) return wall;
             PhysicalImpactTarget physical = hitCollider.GetComponentInParent<PhysicalImpactTarget>();
@@ -1183,12 +1397,27 @@ namespace Elemental.Runtime.World
                 : null;
             if (platform == null && collision.collider != null)
                 platform = collision.collider.GetComponent<EarthPlatformPiece>()?.Owner;
+            EarthArenaStructure arenaStructure = collision.collider != null
+                ? collision.collider.GetComponentInParent<EarthArenaStructure>()
+                : null;
+            if (arenaStructure == null && collision.collider != null)
+                arenaStructure = collision.collider.GetComponentInParent<EarthArenaPiece>()?.Owner;
             Collider terrainCollider = planetCenter != null ? planetCenter.GetComponent<Collider>() : null;
             bool terrainHit = terrainCollider != null && collision.collider != null &&
                               (collision.collider == terrainCollider ||
                                collision.collider.transform.IsChildOf(terrainCollider.transform));
             wall?.ApplyRockImpact(contact.point, direction, impulse);
             platform?.ApplyStructureImpact(contact.point, direction, impulse);
+            if (arenaStructure != null)
+            {
+                var arenaImpact = new EarthStructureImpact(
+                    contact.point,
+                    direction,
+                    impulse,
+                    EarthStructureImpactKind.Projectile,
+                    fragment.FragmentId);
+                arenaStructure.ApplyEarthImpact(in arenaImpact);
+            }
             EarthDestructibleDecorRock decorRock = collision.collider != null
                 ? collision.collider.GetComponentInParent<EarthDestructibleDecorRock>()
                 : null;
@@ -1233,12 +1462,25 @@ namespace Elemental.Runtime.World
             if (wall == null) wall = hitCollider.GetComponent<EarthWallPiece>()?.Owner;
             EarthPlatform platform = hitCollider.GetComponentInParent<EarthPlatform>();
             if (platform == null) platform = hitCollider.GetComponent<EarthPlatformPiece>()?.Owner;
+            EarthArenaStructure arenaStructure = hitCollider.GetComponentInParent<EarthArenaStructure>();
+            if (arenaStructure == null)
+                arenaStructure = hitCollider.GetComponentInParent<EarthArenaPiece>()?.Owner;
             PhysicalImpactTarget physical = hitCollider.GetComponentInParent<PhysicalImpactTarget>();
             EarthCharacterImpactTarget character = hitCollider.GetComponentInParent<EarthCharacterImpactTarget>();
             EarthDestructibleDecorRock decorRock =
                 hitCollider.GetComponentInParent<EarthDestructibleDecorRock>();
             wall?.ApplyRockImpact(point, direction, impulse);
             platform?.ApplyStructureImpact(point, direction, impulse);
+            if (arenaStructure != null)
+            {
+                var arenaImpact = new EarthStructureImpact(
+                    point,
+                    direction,
+                    impulse,
+                    EarthStructureImpactKind.Projectile,
+                    fragment.FragmentId);
+                arenaStructure.ApplyEarthImpact(in arenaImpact);
+            }
             if (decorRock != null)
             {
                 decorRock.ApplyImpact(point, direction, impulse);
@@ -1465,7 +1707,9 @@ namespace Elemental.Runtime.World
                     attachment.Configure(wall, parent, (start + end) * 0.5f);
                 }
             }
-            return wall != null;
+            if (wall == null) return false;
+            SuccessfulCommandCount++;
+            return true;
         }
 
         public bool TryRaisePlatformOnSurface(
@@ -1573,6 +1817,7 @@ namespace Elemental.Runtime.World
                     attachment = platform.gameObject.AddComponent<EarthStructureAttachment>();
                 attachment.Configure(platform, parent, center);
             }
+            SuccessfulCommandCount++;
             return true;
         }
 
@@ -1703,7 +1948,10 @@ namespace Elemental.Runtime.World
                 in command, ToFloat3(planetCenter.position), extractionRadius);
             float volume = (4f / 3f) * math.PI * extractionRadius * extractionRadius * extractionRadius;
             float mass = volume * earthMaterialDensity;
-            Vector3 emergence = ToVector3(extraction.EmergencePosition);
+            Vector3 surface = ToVector3(extraction.SurfaceAnchor);
+            Vector3 up = (surface - planetCenter.position).normalized;
+            ResolveExtractionSurface(ref surface, up);
+            Vector3 emergence = surface - up * Mathf.Max(0.05f, extractionRadius * 0.92f);
 
             // Reserve physical matter before touching the canonical SDF. A full pool
             // therefore rejects the cast without leaving a cavity behind.
@@ -1723,8 +1971,6 @@ namespace Elemental.Runtime.World
                 return Reject(command, "Terrain extraction could not be staged.");
             }
 
-            Vector3 surface = ToVector3(extraction.SurfaceAnchor);
-            Vector3 up = (surface - planetCenter.position).normalized;
             var transaction = new TerrainExtractionTransaction(
                 receipt,
                 fragment,
@@ -1766,10 +2012,15 @@ namespace Elemental.Runtime.World
                         return;
                     }
 
+                    Vector3 emergenceSurface = transaction.SurfacePoint;
+                    Collider emergenceCollider = ResolveExtractionSurface(
+                        ref emergenceSurface, transaction.LocalUp);
                     fragment.CommitExtraction(
                         heldFragmentAnchor,
-                        planetCenter != null ? planetCenter.GetComponent<Collider>() : null,
-                        transaction.SurfacePoint,
+                        emergenceCollider != null
+                            ? emergenceCollider
+                            : planetCenter != null ? planetCenter.GetComponent<Collider>() : null,
+                        emergenceSurface,
                         transaction.LocalUp,
                         transaction.Radius);
                     fragment.BeginBendControl(
@@ -1816,6 +2067,35 @@ namespace Elemental.Runtime.World
                     return;
                 }
             }
+        }
+
+        private Collider ResolveExtractionSurface(ref Vector3 surface, Vector3 up)
+        {
+            if (up.sqrMagnitude < 0.5f) return null;
+            up.Normalize();
+            Ray ray = new Ray(surface + up * 4f, -up);
+            int count = UnityEngine.Physics.RaycastNonAlloc(
+                ray,
+                _extractionSurfaceHits,
+                8f,
+                ~0,
+                QueryTriggerInteraction.Ignore);
+            float nearest = float.PositiveInfinity;
+            Collider selected = null;
+            Vector3 selectedPoint = surface;
+            for (int index = 0; index < count; index++)
+            {
+                RaycastHit hit = _extractionSurfaceHits[index];
+                if (hit.collider == null || hit.distance >= nearest) continue;
+                EarthArenaStructure structure =
+                    hit.collider.GetComponentInParent<EarthArenaStructure>();
+                if (structure == null) continue;
+                nearest = hit.distance;
+                selected = hit.collider;
+                selectedPoint = hit.point;
+            }
+            if (selected != null) surface = selectedPoint;
+            return selected;
         }
 
         private bool ExecuteSpawnFragment(CompiledAbilityRecipe recipe, in MagicCommand command)
@@ -1910,6 +2190,8 @@ namespace Elemental.Runtime.World
                 EarthDestructibleDecorRock decorRock =
                     hitCollider.GetComponentInParent<EarthDestructibleDecorRock>();
                 if (decorRock != null) return decorRock;
+                EarthArenaPiece arenaPiece = hitCollider.GetComponentInParent<EarthArenaPiece>();
+                if (arenaPiece != null) return arenaPiece;
                 EarthWall wall = hitCollider.GetComponentInParent<EarthWall>();
                 if (wall != null) return wall;
                 PhysicalImpactTarget physical = hitCollider.GetComponentInParent<PhysicalImpactTarget>();

@@ -120,11 +120,18 @@ namespace Elemental.Runtime.Physics
         {
             if (body == null) return;
             _anchored = true;
-            body.isKinematic = false;
+            // An anchored prop is authored world geometry until the first
+            // impact/grab. Keeping a dynamic body with FreezeAll still lets the
+            // physics depenetration solver move it on the first PlayMode frame,
+            // which was the source of the visibly floating arena rocks.
+            if (!body.isKinematic)
+            {
+                body.linearVelocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+            }
+            body.isKinematic = true;
             body.useGravity = false;
             body.constraints = RigidbodyConstraints.FreezeAll;
-            body.linearVelocity = Vector3.zero;
-            body.angularVelocity = Vector3.zero;
             if (gravityBody != null) gravityBody.enabled = false;
         }
 

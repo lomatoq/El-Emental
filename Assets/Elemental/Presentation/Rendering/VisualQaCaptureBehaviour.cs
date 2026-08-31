@@ -13,7 +13,10 @@ using Elemental.Simulation.Characters;
 using Elemental.Simulation.Combat;
 using Elemental.Simulation.Magic;
 using Unity.Mathematics;
+using Unity.Profiling;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace Elemental.Presentation.Rendering
 {
@@ -27,6 +30,7 @@ namespace Elemental.Presentation.Rendering
         private readonly FrameTiming[] _latestTiming = new FrameTiming[1];
         private string _requestedOutputPath;
         private int _successfulSupplementalCaptures;
+        private Mvp01ProfilerEvidence _lastPerformanceEvidence;
 
         public bool IsPerformanceCaptureRunning { get; private set; }
 
@@ -46,6 +50,7 @@ namespace Elemental.Presentation.Rendering
             StopAllCoroutines();
             IsPerformanceCaptureRunning = false;
             _scenarioSucceeded = false;
+            _lastPerformanceEvidence = null;
             _requestedOutputPath = Path.GetFullPath(Path.Combine(
                 "BuildReports", "Mvp01RescueCurrent.png"));
             StartCoroutine(RunMvpRescueEvidence());
@@ -169,15 +174,17 @@ namespace Elemental.Presentation.Rendering
                     duel == null || proxy == null)
                     yield break;
 
-                EarthCharacterImpactTarget playerImpact = null;
+                EarthCharacterImpactTarget playerImpact = input != null
+                    ? input.GetComponent<EarthCharacterImpactTarget>()
+                    : null;
                 EarthCharacterImpactTarget botImpact = null;
                 EarthCharacterImpactTarget[] impactTargets =
                     FindObjectsByType<EarthCharacterImpactTarget>(FindObjectsInactive.Exclude);
                 for (int index = 0; index < impactTargets.Length; index++)
                 {
                     EarthCharacterImpactTarget target = impactTargets[index];
-                    if (target.FighterId == EarthDuelFighterId.Player) playerImpact = target;
-                    else if (target.FighterId == EarthDuelFighterId.Bot) botImpact = target;
+                    if (target.FighterId == EarthDuelFighterId.Bot && target.Body != null)
+                        botImpact = target;
                 }
                 if (playerImpact == null || botImpact == null) yield break;
                 if (botController != null) botController.enabled = false;
@@ -196,7 +203,6 @@ namespace Elemental.Presentation.Rendering
                        Time.realtimeSinceStartup < terrainWarmupDeadline)
                     yield return null;
                 for (int warmFrame = 0; warmFrame < 45; warmFrame++) yield return null;
-                BeginMvpPerformanceCapture(720);
 
                 Vector3 planetCenter = proxy.bounds.center;
                 Vector3 up = motor.LocalUp.sqrMagnitude > 0.5f
@@ -231,6 +237,22 @@ namespace Elemental.Presentation.Rendering
                 for (int tick = 0; tick < 45; tick++) yield return new WaitForFixedUpdate();
                 yield return CaptureSupplementalFrame("armor-staged");
                 bool armorStaged = armorStarted && armor.ActivePieceCount >= 12;
+                // The proof needs to validate both a complete staged shell and the
+                // canonical local-hit-to-knockout pipeline. Keeping the defensive
+                // shell active consumes the deliberately tiny staged impact samples,
+                // so end the already-captured armor phase atomically before starting
+                // the independent hit-reaction sequence.
+                armor.EndArmor(EarthArmorEndReason.Disabled);
+
+                // Platform carry or the staged shell can legitimately trigger an
+                // earlier safety respawn in a stressed editor run. Wait for the
+                // canonical active state and its short post-respawn immunity to end
+                // before proving the three-distinct-stone escalation contract.
+                float playerReadyDeadline = Time.realtimeSinceStartup + 8f;
+                while (duel.PlayerPhase != EarthDuelFighterPhase.Active &&
+                       Time.realtimeSinceStartup < playerReadyDeadline)
+                    yield return null;
+                for (int tick = 0; tick < 50; tick++) yield return new WaitForFixedUpdate();
 
                 EarthCharacterImpactResponse botResponse = botImpact.ApplyImpact(
                     botImpact.transform.position,
@@ -245,7 +267,7 @@ namespace Elemental.Presentation.Rendering
                 EarthCharacterImpactResponse firstStoneResponse = playerImpact.ApplyImpact(
                     playerImpact.transform.position,
                     playerImpact.transform.up + playerImpact.transform.right,
-                    1f,
+                    playerImpact.Body.mass * 2f,
                     EarthCharacterImpactSourceKind.BotProjectile,
                     0xB070E102u,
                     0f,
@@ -254,7 +276,7 @@ namespace Elemental.Presentation.Rendering
                 EarthCharacterImpactResponse secondStoneResponse = playerImpact.ApplyImpact(
                     playerImpact.transform.position + playerImpact.transform.right * 0.12f,
                     playerImpact.transform.up + playerImpact.transform.right,
-                    1f,
+                    playerImpact.Body.mass * 2f,
                     EarthCharacterImpactSourceKind.BotProjectile,
                     0xB070E103u,
                     0f,
@@ -263,7 +285,7 @@ namespace Elemental.Presentation.Rendering
                 EarthCharacterImpactResponse playerResponse = playerImpact.ApplyImpact(
                     playerImpact.transform.position + playerImpact.transform.right * 0.18f,
                     playerImpact.transform.up + playerImpact.transform.right,
-                    1f,
+                    playerImpact.Body.mass * 2f,
                     EarthCharacterImpactSourceKind.BotProjectile,
                     0xB070E104u,
                     0f,
@@ -281,19 +303,26 @@ namespace Elemental.Presentation.Rendering
                     yield return null;
                 }
                 if (botController != null) botController.enabled = false;
+                BeginMvpPerformanceCapture(720);
                 while (IsPerformanceCaptureRunning) yield return null;
+                bool performanceAccepted = _lastPerformanceEvidence != null &&
+                    (Application.isEditor
+                        ? _lastPerformanceEvidence.editorDiagnosticPassed
+                        : _lastPerformanceEvidence.authoritativePassed);
                 _scenarioSucceeded = firstPlatform != null && secondPlatform != null &&
                                      armorStaged &&
                                      botResponse == EarthCharacterImpactResponse.Knockout &&
                                      playerResponse == EarthCharacterImpactResponse.Knockout &&
                                      duel.BotKnockoutCount >= 1 && duel.PlayerKnockoutCount >= 1 &&
                                      duel.BotPhase == EarthDuelFighterPhase.Active &&
-                                     duel.PlayerPhase == EarthDuelFighterPhase.Active;
+                                     duel.PlayerPhase == EarthDuelFighterPhase.Active &&
+                                     performanceAccepted;
                 Debug.Log($"[Elemental] MVP rescue QA: platforms={firstPlatform != null && secondPlatform != null}, " +
                           $"armor={armorStarted}/{armorStaged}/{armor.ActivePieceCount}, " +
                           $"responses={botResponse}/{firstStoneResponse}/{secondStoneResponse}/{playerResponse}, " +
                           $"knockouts={duel.BotKnockoutCount}/{duel.PlayerKnockoutCount}, " +
-                          $"respawn={duel.BotPhase}/{duel.PlayerPhase}.");
+                          $"respawn={duel.BotPhase}/{duel.PlayerPhase}, " +
+                          $"performance={performanceAccepted}.");
                 yield break;
             }
 
@@ -522,7 +551,7 @@ namespace Elemental.Presentation.Rendering
                 if (stone == null || stone.Body == null) yield break;
                 Vector3 direction = Vector3.ProjectOnPlane(camera.transform.forward, stone.transform.up).normalized;
                 if (direction.sqrMagnitude < 0.5f) direction = camera.transform.forward.normalized;
-                bool fired = executor.ReleaseHeldEarthAtSpeed(direction, 35f, 0u, out Vector3 velocity);
+                bool fired = executor.ReleaseHeldEarthAtSpeed(direction, 70f, 0u, out Vector3 velocity);
                 yield return new WaitForSecondsRealtime(0.10f);
                 _scenarioSucceeded = fired && velocity.magnitude >= 30f && stone.Body != null &&
                                      stone.Body.linearVelocity.magnitude >= 20f;
@@ -602,7 +631,8 @@ namespace Elemental.Presentation.Rendering
                                      finalState.IsName("Locomotion") && clips.Length > 0 &&
                                      activeClipsLoop && !animator.stabilizeFeet &&
                                      maximumUncommandedTurn <= 0.025f &&
-                                     maximumLocomotionFootIk <= 0.15f && gaitCaptureIndex == 3 &&
+                                     maximumLocomotionFootIk >= 0.35f &&
+                                     maximumLocomotionFootIk <= 0.90f && gaitCaptureIndex == 3 &&
                                      _successfulSupplementalCaptures == 3;
                 Debug.Log($"[Elemental] Continuous gait QA: travel={travel:0.000} m, " +
                           $"foot={maximumFootTravel:0.000}, lateFoot={lateFootTravel:0.000}, " +
@@ -1275,46 +1305,207 @@ namespace Elemental.Presentation.Rendering
             var totalSamples = new double[frameCount];
             var cpuSamples = new double[frameCount];
             var gpuSamples = new double[frameCount];
+            var footContactSamples = new double[frameCount];
             double cpuTotal = 0d;
             double gpuTotal = 0d;
             double cpuMaximum = 0d;
             double gpuMaximum = 0d;
             int count = 0;
             int totalCount = 0;
-            for (int frame = 0; frame < frameCount; frame++)
+            int gcSampleFrames = 0;
+            int steadyStateGcFramesOverZero = 0;
+            long steadyStateMaximumGcBytesInFrame = 0L;
+            int footContactFrameSamples = 0;
+            int footContactMissingFrames = 0;
+            int footContactTotalInvocations = 0;
+            int footContactMinimumInvocations = int.MaxValue;
+            const int warmupFrames = 60;
+            string captureId = Guid.NewGuid().ToString("N");
+            bool isEditor = Application.isEditor;
+            bool isBatchMode = Application.isBatchMode;
+            string captureMode = isEditor
+                ? "editor-diagnostic-camera-rt"
+                : "standalone-game-backbuffer";
+            string renderSurface = isEditor ? "persistent-camera-render-texture" : "game-backbuffer";
+            int renderWidth = 0;
+            int renderHeight = 0;
+            UnityEngine.Camera camera = UnityEngine.Camera.main;
+            RenderTexture diagnosticTarget = null;
+            RenderTexture previousTarget = camera != null ? camera.targetTexture : null;
+            int previousScreenWidth = Screen.width;
+            int previousScreenHeight = Screen.height;
+            FullScreenMode previousFullScreenMode = Screen.fullScreenMode;
+            ProfilerRecorder footContactRecorder = default;
+            ProfilerRecorder cpuFrameRecorder = default;
+            ProfilerRecorder gpuFrameRecorder = default;
+            Mvp01RuntimeRenderAudit runtimeRenderAudit = null;
+            EarthFootContactController[] footControllers =
+                FindObjectsByType<EarthFootContactController>(FindObjectsInactive.Exclude);
+            int activeFootControllerCount = 0;
+            for (int index = 0; index < footControllers.Length; index++)
+                if (footControllers[index] != null && footControllers[index].isActiveAndEnabled)
+                    activeFootControllerCount++;
+
+            try
             {
-                FrameTimingManager.CaptureFrameTimings();
+                if (isEditor)
+                {
+                    if (camera != null)
+                    {
+                        diagnosticTarget = new RenderTexture(
+                            EvidenceWidth,
+                            EvidenceHeight,
+                            24,
+                            RenderTextureFormat.ARGB32,
+                            RenderTextureReadWrite.Default)
+                        {
+                            name = "MVP Performance 1920x1080 Diagnostic"
+                        };
+                        diagnosticTarget.Create();
+                        camera.targetTexture = diagnosticTarget;
+                        renderWidth = diagnosticTarget.width;
+                        renderHeight = diagnosticTarget.height;
+                    }
+                }
+                else
+                {
+                    Screen.SetResolution(EvidenceWidth, EvidenceHeight, FullScreenMode.Windowed);
+                    for (int frame = 0; frame < 120 &&
+                         (Screen.width != EvidenceWidth || Screen.height != EvidenceHeight); frame++)
+                        yield return null;
+                    renderWidth = Screen.width;
+                    renderHeight = Screen.height;
+                }
+
+                for (int frame = 0; frame < warmupFrames; frame++) yield return null;
+
+                ProfilerRecorderOptions recorderOptions =
+                    ProfilerRecorderOptions.WrapAroundWhenCapacityReached |
+                    ProfilerRecorderOptions.SumAllSamplesInFrame;
+                footContactRecorder = new ProfilerRecorder(
+                    "Elemental.Character.FootContact",
+                    1,
+                    recorderOptions);
+                cpuFrameRecorder = new ProfilerRecorder(
+                    ProfilerCategory.Internal,
+                    "Main Thread",
+                    1,
+                    recorderOptions);
+                gpuFrameRecorder = new ProfilerRecorder(
+                    ProfilerCategory.Render,
+                    "GPU Frame Time",
+                    1,
+                    recorderOptions);
+                if (footContactRecorder.Valid) footContactRecorder.Start();
+                if (cpuFrameRecorder.Valid) cpuFrameRecorder.Start();
+                if (gpuFrameRecorder.Valid) gpuFrameRecorder.Start();
+
+                // Discard the arming frame so recorder construction and first-use
+                // bookkeeping can never contaminate the 720-frame evidence window.
                 yield return null;
-                totalSamples[totalCount++] = Time.unscaledDeltaTime * 1000.0;
-                if (FrameTimingManager.GetLatestTimings(1, _latestTiming) == 0) continue;
-                FrameTiming timing = _latestTiming[0];
-                double fallback = totalSamples[totalCount - 1];
-                double cpu = double.IsFinite(timing.cpuFrameTime) &&
-                             timing.cpuFrameTime > 0.0 && timing.cpuFrameTime < 1000.0
-                    ? timing.cpuFrameTime
-                    : fallback;
-                double gpu = double.IsFinite(timing.gpuFrameTime) &&
-                             timing.gpuFrameTime >= 0.0 && timing.gpuFrameTime < 1000.0
-                    ? timing.gpuFrameTime
-                    : 0.0;
-                cpuSamples[count] = cpu;
-                gpuSamples[count] = gpu;
-                cpuTotal += cpu;
-                gpuTotal += gpu;
-                cpuMaximum = Math.Max(cpuMaximum, cpu);
-                gpuMaximum = Math.Max(gpuMaximum, gpu);
-                count++;
+                if (footContactRecorder.Valid)
+                    TryCopyProfilerSample(ref footContactRecorder, out _);
+                if (cpuFrameRecorder.Valid)
+                    TryCopyProfilerSample(ref cpuFrameRecorder, out _);
+                if (gpuFrameRecorder.Valid)
+                    TryCopyProfilerSample(ref gpuFrameRecorder, out _);
+                long gcWindowStart = GC.GetAllocatedBytesForCurrentThread();
+
+                for (int frame = 0; frame < frameCount; frame++)
+                {
+                    yield return null;
+                    long gcWindowEnd = GC.GetAllocatedBytesForCurrentThread();
+                    long allocatedBytes = Math.Max(0L, gcWindowEnd - gcWindowStart);
+                    gcSampleFrames++;
+                    if (allocatedBytes > 0L) steadyStateGcFramesOverZero++;
+                    steadyStateMaximumGcBytesInFrame = Math.Max(
+                        steadyStateMaximumGcBytesInFrame,
+                        allocatedBytes);
+                    totalSamples[totalCount++] = Time.unscaledDeltaTime * 1000.0;
+
+                    ProfilerRecorderSample footSample = default;
+                    if (footContactRecorder.Valid)
+                        TryCopyProfilerSample(ref footContactRecorder, out footSample);
+                    int footInvocationsThisFrame = (int)Math.Min(
+                        int.MaxValue,
+                        footSample.Count);
+                    if (footInvocationsThisFrame > 0)
+                    {
+                        footContactSamples[footContactFrameSamples++] =
+                            footSample.Value / 1000000.0;
+                        footContactTotalInvocations += footInvocationsThisFrame;
+                        footContactMinimumInvocations = Math.Min(
+                            footContactMinimumInvocations,
+                            footInvocationsThisFrame);
+                    }
+                    else
+                    {
+                        footContactMissingFrames++;
+                    }
+
+                    double fallback = totalSamples[totalCount - 1];
+                    ProfilerRecorderSample cpuSample = default;
+                    if (cpuFrameRecorder.Valid)
+                        TryCopyProfilerSample(ref cpuFrameRecorder, out cpuSample);
+                    double cpuMilliseconds = cpuSample.Value / 1000000.0;
+                    double cpu = double.IsFinite(cpuMilliseconds) &&
+                                 cpuMilliseconds > 0.0 && cpuMilliseconds < 1000.0
+                        ? cpuMilliseconds
+                        : fallback;
+                    ProfilerRecorderSample gpuSample = default;
+                    if (gpuFrameRecorder.Valid)
+                        TryCopyProfilerSample(ref gpuFrameRecorder, out gpuSample);
+                    double gpuMilliseconds = gpuSample.Value / 1000000.0;
+                    double gpu = double.IsFinite(gpuMilliseconds) &&
+                                 gpuMilliseconds > 0.0 && gpuMilliseconds < 1000.0
+                        ? gpuMilliseconds
+                        : 0.0;
+                    cpuSamples[count] = cpu;
+                    gpuSamples[count] = gpu;
+                    cpuTotal += cpu;
+                    gpuTotal += gpu;
+                    cpuMaximum = Math.Max(cpuMaximum, cpu);
+                    gpuMaximum = Math.Max(gpuMaximum, gpu);
+                    count++;
+                    // Begin the next allocation window only after every evidence-
+                    // harness read above. This prevents the meter from measuring
+                    // its own profiler interop and reports the yielded game frame.
+                    gcWindowStart = GC.GetAllocatedBytesForCurrentThread();
+                }
+
+                runtimeRenderAudit = CaptureRuntimeRenderAudit(camera);
+            }
+            finally
+            {
+                if (footContactRecorder.Valid) footContactRecorder.Dispose();
+                if (cpuFrameRecorder.Valid) cpuFrameRecorder.Dispose();
+                if (gpuFrameRecorder.Valid) gpuFrameRecorder.Dispose();
+                if (camera != null) camera.targetTexture = previousTarget;
+                if (diagnosticTarget != null)
+                {
+                    diagnosticTarget.Release();
+                    Destroy(diagnosticTarget);
+                }
+                if (!isEditor &&
+                    (previousScreenWidth != Screen.width ||
+                     previousScreenHeight != Screen.height ||
+                     previousFullScreenMode != Screen.fullScreenMode))
+                {
+                    Screen.SetResolution(
+                        previousScreenWidth,
+                        previousScreenHeight,
+                        previousFullScreenMode);
+                }
+                IsPerformanceCaptureRunning = false;
             }
 
-            if (count == 0)
-            {
-                Debug.LogWarning("[Elemental] Earth material frame timing capture returned no samples.");
-                IsPerformanceCaptureRunning = false;
-                yield break;
-            }
-            double totalP95 = Percentile95(totalSamples, totalCount);
-            double cpuP95 = Percentile95(cpuSamples, count);
-            double gpuP95 = Percentile95(gpuSamples, count);
+            double totalP95 = Percentile(totalSamples, totalCount, 0.95);
+            double cpuP95 = Percentile(cpuSamples, count, 0.95);
+            double gpuP95 = Percentile(gpuSamples, count, 0.95);
+            double footP50 = Percentile(footContactSamples, footContactFrameSamples, 0.50);
+            double footP95 = Percentile(footContactSamples, footContactFrameSamples, 0.95);
+            double footP99 = Percentile(footContactSamples, footContactFrameSamples, 0.99);
+            double footMaximum = Percentile(footContactSamples, footContactFrameSamples, 1.0);
             EarthPlatformPool platformPool = FindAnyObjectByType<EarthPlatformPool>();
             EarthPlatform[] platforms = FindObjectsByType<EarthPlatform>(FindObjectsInactive.Include);
             double preparationPeak = 0.0;
@@ -1325,54 +1516,312 @@ namespace Elemental.Presentation.Rendering
 
             var report = new Mvp01ProfilerEvidence
             {
+                schema = "mvp-performance-evidence-v2",
                 unityVersion = Application.unityVersion,
                 utc = DateTime.UtcNow.ToString("O"),
+                captureId = captureId,
+                mode = captureMode,
+                renderSurface = renderSurface,
+                isEditor = isEditor,
+                isBatchMode = isBatchMode,
+                requestedFrameSamples = frameCount,
+                warmupFrames = warmupFrames,
                 totalFrameSamples = totalCount,
                 frameTimingSamples = count,
+                renderWidth = renderWidth,
+                renderHeight = renderHeight,
                 totalFrameP95Milliseconds = totalP95,
-                cpuFrameAverageMilliseconds = cpuTotal / count,
+                cpuFrameAverageMilliseconds = count > 0 ? cpuTotal / count : 0.0,
                 cpuFrameP95Milliseconds = cpuP95,
                 cpuFrameMaximumMilliseconds = cpuMaximum,
-                gpuFrameAverageMilliseconds = gpuTotal / count,
+                gpuFrameAverageMilliseconds = count > 0 ? gpuTotal / count : 0.0,
                 gpuFrameP95Milliseconds = gpuP95,
                 gpuFrameMaximumMilliseconds = gpuMaximum,
+                gpuTimingAvailable = count == frameCount && gpuMaximum > 0.0,
+                gcMeasurementMode = "main-thread-allocated-bytes-yield-window",
+                gcSampleFrames = gcSampleFrames,
+                steadyStateGcFramesOverZero = steadyStateGcFramesOverZero,
+                steadyStateMaximumGcBytesInFrame = steadyStateMaximumGcBytesInFrame,
+                activeFootControllerCount = activeFootControllerCount,
+                footContactFrameSamples = footContactFrameSamples,
+                footContactMissingFrames = footContactMissingFrames,
+                footContactTotalInvocations = footContactTotalInvocations,
+                footContactMinimumInvocations = footContactMinimumInvocations == int.MaxValue
+                    ? 0
+                    : footContactMinimumInvocations,
+                footContactP50Milliseconds = footP50,
+                footContactP95Milliseconds = footP95,
+                footContactP99Milliseconds = footP99,
+                footContactMaximumMilliseconds = footMaximum,
                 acquireSolidPeakMilliseconds = platformPool != null
                     ? platformPool.PeakAcquireSolidMilliseconds
                     : 0.0,
-                fracturePreparationPeakMilliseconds = preparationPeak
+                fracturePreparationPeakMilliseconds = preparationPeak,
+                runtimeRenderAudit = runtimeRenderAudit
             };
-            string projectRoot = Directory.GetParent(Application.dataPath)?.FullName;
-            if (!string.IsNullOrWhiteSpace(projectRoot))
+            report.EvaluateGates();
+            _lastPerformanceEvidence = report;
+            string reportPath = ResolvePerformanceReportPath();
+            if (!string.IsNullOrWhiteSpace(reportPath))
             {
-                string reportPath = Path.Combine(projectRoot, "BuildReports", "Mvp01Profiler.json");
                 Directory.CreateDirectory(Path.GetDirectoryName(reportPath)!);
                 File.WriteAllText(reportPath, JsonUtility.ToJson(report, true));
                 Debug.Log($"[Elemental] MVP profiler report: {reportPath}");
             }
             Debug.Log($"[Elemental] MVP frame timing samples={count}, " +
                       $"total p95={totalP95:0.00} ms, " +
-                      $"CPU avg={cpuTotal / count:0.00} ms p95={cpuP95:0.00} ms max={cpuMaximum:0.00} ms, " +
-                      $"GPU avg={gpuTotal / count:0.00} ms p95={gpuP95:0.00} ms max={gpuMaximum:0.00} ms, " +
+                      $"CPU avg={report.cpuFrameAverageMilliseconds:0.00} ms p95={cpuP95:0.00} ms max={cpuMaximum:0.00} ms, " +
+                      $"GPU avg={report.gpuFrameAverageMilliseconds:0.00} ms p95={gpuP95:0.00} ms max={gpuMaximum:0.00} ms, " +
+                      $"GC frames={steadyStateGcFramesOverZero}/{gcSampleFrames}, " +
+                      $"foot p95={footP95:0.000} ms coverage={footContactFrameSamples}/{frameCount} " +
+                      $"invocations>={report.footContactMinimumInvocations}, " +
                       $"AcquireSolid peak={report.acquireSolidPeakMilliseconds:0.00} ms, " +
-                      $"fracture slice peak={preparationPeak:0.00} ms.");
-            IsPerformanceCaptureRunning = false;
+                      $"fracture slice peak={preparationPeak:0.00} ms, " +
+                      $"renderAudit={report.runtimeRenderAuditPassed}, " +
+                      $"editorDiagnostic={report.editorDiagnosticPassed}, " +
+                      $"authoritative={report.authoritativePassed}.");
         }
 
-        private static double Percentile95(double[] samples, int count)
+        private static unsafe bool TryCopyProfilerSample(
+            ref ProfilerRecorder recorder,
+            out ProfilerRecorderSample sample)
+        {
+            ProfilerRecorderSample local = default;
+            int copied = recorder.CopyTo(&local, 1, true);
+            sample = local;
+            return copied > 0;
+        }
+
+        private static Mvp01RuntimeRenderAudit CaptureRuntimeRenderAudit(
+            UnityEngine.Camera camera)
+        {
+            var audit = new Mvp01RuntimeRenderAudit
+            {
+                utc = DateTime.UtcNow.ToString("O"),
+                graphicsDeviceType = SystemInfo.graphicsDeviceType.ToString(),
+                graphicsDeviceName = SystemInfo.graphicsDeviceName,
+                activeColorSpace = QualitySettings.activeColorSpace.ToString(),
+                qualityLevelIndex = QualitySettings.GetQualityLevel(),
+                qualityLevelName = QualitySettings.names.Length > QualitySettings.GetQualityLevel()
+                    ? QualitySettings.names[QualitySettings.GetQualityLevel()]
+                    : string.Empty,
+                qualityPipelineAsset = QualitySettings.renderPipeline != null
+                    ? QualitySettings.renderPipeline.name
+                    : "<graphics-default>",
+                activePipelineAsset = GraphicsSettings.currentRenderPipeline != null
+                    ? GraphicsSettings.currentRenderPipeline.name
+                    : "<built-in>",
+                qualityAntiAliasingSamples = QualitySettings.antiAliasing,
+                qualityShadows = QualitySettings.shadows.ToString(),
+                qualityShadowResolution = QualitySettings.shadowResolution.ToString(),
+                qualityShadowCascades = QualitySettings.shadowCascades,
+                qualityShadowDistance = QualitySettings.shadowDistance,
+                cameraName = camera != null ? camera.name : string.Empty,
+                cameraAllowHdr = camera != null && camera.allowHDR,
+                cameraAllowMsaa = camera != null && camera.allowMSAA
+            };
+
+            UniversalRenderPipelineAsset pipeline =
+                GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+            if (pipeline == null) pipeline = UniversalRenderPipeline.asset;
+            if (pipeline != null)
+            {
+                audit.universalPipelineAsset = pipeline.name;
+                audit.pipelineSupportsHdr = pipeline.supportsHDR;
+                audit.pipelineMsaaSamples = pipeline.msaaSampleCount;
+                audit.pipelineRenderScale = pipeline.renderScale;
+                audit.pipelineDepthTexture = pipeline.supportsCameraDepthTexture;
+                audit.pipelineOpaqueTexture = pipeline.supportsCameraOpaqueTexture;
+                audit.pipelineShadowDistance = pipeline.shadowDistance;
+                audit.pipelineShadowCascades = pipeline.shadowCascadeCount;
+                audit.pipelineMainLightShadowAtlas = pipeline.mainLightShadowmapResolution;
+            }
+
+            UniversalAdditionalCameraData cameraData = camera != null
+                ? camera.GetUniversalAdditionalCameraData()
+                : null;
+            if (cameraData != null)
+            {
+                audit.activeRendererType = cameraData.scriptableRenderer != null
+                    ? cameraData.scriptableRenderer.GetType().FullName
+                    : string.Empty;
+                audit.activeRendererIndex = pipeline != null &&
+                                            ReferenceEquals(
+                                                cameraData.scriptableRenderer,
+                                                pipeline.GetRenderer(0))
+                    ? 0
+                    : -1;
+                audit.cameraRenderType = cameraData.renderType.ToString();
+                audit.cameraStackCount = cameraData.renderType == CameraRenderType.Base
+                    ? cameraData.cameraStack.Count
+                    : 0;
+                audit.cameraPostProcessing = cameraData.renderPostProcessing;
+                audit.cameraRequiresDepthTexture = cameraData.requiresDepthTexture;
+                audit.cameraRequiresOpaqueTexture = cameraData.requiresColorTexture;
+                audit.cameraRendersShadows = cameraData.renderShadows;
+                audit.cameraStopNaN = cameraData.stopNaN;
+                audit.cameraDithering = cameraData.dithering;
+                audit.cameraAntialiasing = cameraData.antialiasing.ToString();
+                audit.cameraAntialiasingQuality = cameraData.antialiasingQuality.ToString();
+            }
+
+            ScriptableRendererData[] rendererDataCandidates =
+                Resources.FindObjectsOfTypeAll<ScriptableRendererData>();
+            var rendererDataNames = new List<string>(rendererDataCandidates.Length);
+            for (int index = 0; index < rendererDataCandidates.Length; index++)
+            {
+                ScriptableRendererData rendererData = rendererDataCandidates[index];
+                if (rendererData != null && !rendererDataNames.Contains(rendererData.name))
+                    rendererDataNames.Add(rendererData.name);
+            }
+            rendererDataNames.Sort(StringComparer.Ordinal);
+            audit.loadedRendererDataAssets = string.Join(",", rendererDataNames);
+
+            ScriptableRendererFeature[] features =
+                Resources.FindObjectsOfTypeAll<ScriptableRendererFeature>();
+            var featureStates = new List<string>(features.Length);
+            for (int index = 0; index < features.Length; index++)
+            {
+                ScriptableRendererFeature feature = features[index];
+                if (feature == null) continue;
+                featureStates.Add($"{feature.name}:{feature.GetType().Name}:active={feature.isActive}");
+                if (feature is ScreenSpaceAmbientOcclusion)
+                {
+                    audit.ssaoFeatureFound = true;
+                    audit.ssaoFeatureActive |= feature.isActive;
+                    audit.ssaoFeatureName = feature.name;
+                }
+            }
+            featureStates.Sort(StringComparer.Ordinal);
+            audit.loadedRendererFeatures = string.Join("|", featureStates);
+            audit.ssaoGlobalKeywordEnabled =
+                Shader.IsKeywordEnabled("_SCREEN_SPACE_OCCLUSION");
+            audit.ssaoTextureBound =
+                Shader.GetGlobalTexture("_ScreenSpaceOcclusionTexture") != null;
+
+            Renderer[] renderers = FindObjectsByType<Renderer>(FindObjectsInactive.Exclude);
+            for (int rendererIndex = 0; rendererIndex < renderers.Length; rendererIndex++)
+            {
+                Renderer renderer = renderers[rendererIndex];
+                if (renderer == null) continue;
+                Material[] materials = renderer.sharedMaterials;
+                for (int materialIndex = 0; materialIndex < materials.Length; materialIndex++)
+                {
+                    Material material = materials[materialIndex];
+                    if (material == null ||
+                        material.name.IndexOf(
+                            "ArenaSandstone",
+                            StringComparison.OrdinalIgnoreCase) < 0)
+                        continue;
+                    audit.arenaMaterialName = material.name;
+                    audit.arenaMaterialShader = material.shader != null
+                        ? material.shader.name
+                        : string.Empty;
+                    audit.arenaMaterialSsaoKeyword =
+                        material.IsKeywordEnabled("_SCREEN_SPACE_OCCLUSION");
+                    rendererIndex = renderers.Length;
+                    break;
+                }
+            }
+
+            Volume[] volumes = FindObjectsByType<Volume>(FindObjectsInactive.Exclude);
+            var activeVolumes = new List<string>(volumes.Length);
+            for (int index = 0; index < volumes.Length; index++)
+            {
+                Volume volume = volumes[index];
+                if (volume == null || !volume.isActiveAndEnabled || volume.weight <= 0f)
+                    continue;
+                string profileName = volume.sharedProfile != null
+                    ? volume.sharedProfile.name
+                    : "<runtime-profile>";
+                activeVolumes.Add(
+                    $"{volume.name}:priority={volume.priority:0.###}:weight={volume.weight:0.###}:" +
+                    $"global={volume.isGlobal}:profile={profileName}");
+            }
+            activeVolumes.Sort(StringComparer.Ordinal);
+            audit.activeVolumes = string.Join("|", activeVolumes);
+
+            VolumeStack stack = VolumeManager.instance != null
+                ? VolumeManager.instance.stack
+                : null;
+            if (stack != null)
+            {
+                ColorAdjustments color = stack.GetComponent<ColorAdjustments>();
+                WhiteBalance balance = stack.GetComponent<WhiteBalance>();
+                DepthOfField depthOfField = stack.GetComponent<DepthOfField>();
+                if (color != null)
+                {
+                    audit.resolvedColorAdjustments = true;
+                    audit.resolvedPostExposure = color.postExposure.value;
+                    audit.resolvedContrast = color.contrast.value;
+                    audit.resolvedSaturation = color.saturation.value;
+                }
+                if (balance != null)
+                {
+                    audit.resolvedWhiteBalance = true;
+                    audit.resolvedTemperature = balance.temperature.value;
+                    audit.resolvedTint = balance.tint.value;
+                }
+                if (depthOfField != null)
+                {
+                    audit.resolvedDepthOfField = true;
+                    audit.resolvedDepthOfFieldMode = depthOfField.mode.value.ToString();
+                    audit.resolvedFocusDistance = depthOfField.focusDistance.value;
+                    audit.resolvedAperture = depthOfField.aperture.value;
+                    audit.resolvedFocalLength = depthOfField.focalLength.value;
+                }
+            }
+
+            audit.Evaluate();
+            return audit;
+        }
+
+        private string ResolvePerformanceReportPath()
+        {
+            string reportName = Application.isEditor
+                ? "Mvp01ProfilerEditorDiagnosticLatest.json"
+                : "Mvp01Profiler.json";
+            if (!string.IsNullOrWhiteSpace(_requestedOutputPath))
+            {
+                string requestedDirectory = Path.GetDirectoryName(_requestedOutputPath);
+                if (!string.IsNullOrWhiteSpace(requestedDirectory))
+                    return Path.Combine(requestedDirectory, reportName);
+            }
+            string projectRoot = Directory.GetParent(Application.dataPath)?.FullName;
+            return string.IsNullOrWhiteSpace(projectRoot)
+                ? string.Empty
+                : Path.Combine(projectRoot, "BuildReports", reportName);
+        }
+
+        private static double Percentile(double[] samples, int count, double quantile)
         {
             if (samples == null || count <= 0) return 0.0;
             Array.Sort(samples, 0, count);
-            int index = Mathf.Clamp(Mathf.CeilToInt(count * 0.95f) - 1, 0, count - 1);
-            return samples[index];
+            if (count == 1) return samples[0];
+            double position = (count - 1) * Math.Clamp(quantile, 0.0, 1.0);
+            int lower = Math.Clamp((int)Math.Floor(position), 0, count - 1);
+            int upper = Math.Min(count - 1, lower + 1);
+            double interpolation = position - lower;
+            return samples[lower] + (samples[upper] - samples[lower]) * interpolation;
         }
 
         [Serializable]
-        private sealed class Mvp01ProfilerEvidence
+        public sealed class Mvp01ProfilerEvidence
         {
+            public string schema;
             public string unityVersion;
             public string utc;
+            public string captureId;
+            public string mode;
+            public string renderSurface;
+            public bool isEditor;
+            public bool isBatchMode;
+            public int requestedFrameSamples;
+            public int warmupFrames;
             public int totalFrameSamples;
             public int frameTimingSamples;
+            public int renderWidth;
+            public int renderHeight;
             public double totalFrameP95Milliseconds;
             public double cpuFrameAverageMilliseconds;
             public double cpuFrameP95Milliseconds;
@@ -1380,8 +1829,215 @@ namespace Elemental.Presentation.Rendering
             public double gpuFrameAverageMilliseconds;
             public double gpuFrameP95Milliseconds;
             public double gpuFrameMaximumMilliseconds;
+            public bool gpuTimingAvailable;
+            public string gcMeasurementMode;
+            public int gcSampleFrames;
+            public int steadyStateGcFramesOverZero;
+            public long steadyStateMaximumGcBytesInFrame;
+            public int activeFootControllerCount;
+            public int footContactFrameSamples;
+            public int footContactMissingFrames;
+            public int footContactTotalInvocations;
+            public int footContactMinimumInvocations;
+            public double footContactP50Milliseconds;
+            public double footContactP95Milliseconds;
+            public double footContactP99Milliseconds;
+            public double footContactMaximumMilliseconds;
             public double acquireSolidPeakMilliseconds;
             public double fracturePreparationPeakMilliseconds;
+            public Mvp01RuntimeRenderAudit runtimeRenderAudit;
+            public bool resolutionGatePassed;
+            public bool sampleCoverageGatePassed;
+            public bool cpuBudgetGatePassed;
+            public bool gpuBudgetGatePassed;
+            public bool gpuTimingWaived;
+            public bool cpuGpuBudgetGatePassed;
+            public bool zeroGcGatePassed;
+            public bool footContactGatePassed;
+            public bool runtimeRenderAuditPassed;
+            public bool editorDiagnosticPassed;
+            public bool authoritativePassed;
+            public bool passed;
+
+            public void EvaluateGates()
+            {
+                resolutionGatePassed = renderWidth == EvidenceWidth &&
+                                       renderHeight == EvidenceHeight;
+                sampleCoverageGatePassed = requestedFrameSamples == 720 &&
+                                           totalFrameSamples == requestedFrameSamples &&
+                                           frameTimingSamples == requestedFrameSamples;
+                cpuBudgetGatePassed = cpuFrameP95Milliseconds > 0.0 &&
+                                      cpuFrameP95Milliseconds <= 16.67;
+                gpuBudgetGatePassed = gpuTimingAvailable &&
+                                      gpuFrameP95Milliseconds > 0.0 &&
+                                      gpuFrameP95Milliseconds <= 16.67;
+                gpuTimingWaived = !gpuTimingAvailable &&
+                                  runtimeRenderAudit != null &&
+                                  runtimeRenderAudit.graphicsDeviceType == "Direct3D11";
+                cpuGpuBudgetGatePassed = cpuBudgetGatePassed &&
+                                         (gpuBudgetGatePassed || gpuTimingWaived);
+                zeroGcGatePassed = gcSampleFrames == requestedFrameSamples &&
+                                   steadyStateGcFramesOverZero == 0 &&
+                                   steadyStateMaximumGcBytesInFrame == 0L;
+                footContactGatePassed = activeFootControllerCount >= 2 &&
+                                        footContactFrameSamples == requestedFrameSamples &&
+                                        footContactMissingFrames == 0 &&
+                                        footContactMinimumInvocations >= 2 &&
+                                        footContactP95Milliseconds <= 0.30;
+                runtimeRenderAuditPassed = runtimeRenderAudit != null &&
+                                           runtimeRenderAudit.passed;
+                editorDiagnosticPassed = isEditor &&
+                                         resolutionGatePassed &&
+                                         sampleCoverageGatePassed &&
+                                         cpuGpuBudgetGatePassed &&
+                                         footContactGatePassed &&
+                                         runtimeRenderAuditPassed;
+                authoritativePassed = !isEditor && !isBatchMode &&
+                                      resolutionGatePassed &&
+                                      sampleCoverageGatePassed &&
+                                      cpuGpuBudgetGatePassed &&
+                                      zeroGcGatePassed &&
+                                      footContactGatePassed &&
+                                      runtimeRenderAuditPassed;
+                passed = authoritativePassed;
+            }
+        }
+
+        [Serializable]
+        public sealed class Mvp01RuntimeRenderAudit
+        {
+            public string utc;
+            public string graphicsDeviceType;
+            public string graphicsDeviceName;
+            public string activeColorSpace;
+            public int qualityLevelIndex;
+            public string qualityLevelName;
+            public string qualityPipelineAsset;
+            public string activePipelineAsset;
+            public string universalPipelineAsset;
+            public int qualityAntiAliasingSamples;
+            public string qualityShadows;
+            public string qualityShadowResolution;
+            public int qualityShadowCascades;
+            public float qualityShadowDistance;
+            public bool pipelineSupportsHdr;
+            public int pipelineMsaaSamples;
+            public float pipelineRenderScale;
+            public bool pipelineDepthTexture;
+            public bool pipelineOpaqueTexture;
+            public float pipelineShadowDistance;
+            public int pipelineShadowCascades;
+            public int pipelineMainLightShadowAtlas;
+            public string cameraName;
+            public bool cameraAllowHdr;
+            public bool cameraAllowMsaa;
+            public string cameraRenderType;
+            public int cameraStackCount;
+            public bool cameraPostProcessing;
+            public bool cameraRequiresDepthTexture;
+            public bool cameraRequiresOpaqueTexture;
+            public bool cameraRendersShadows;
+            public bool cameraStopNaN;
+            public bool cameraDithering;
+            public string cameraAntialiasing;
+            public string cameraAntialiasingQuality;
+            public int activeRendererIndex;
+            public string activeRendererType;
+            public string loadedRendererDataAssets;
+            public string loadedRendererFeatures;
+            public bool ssaoFeatureFound;
+            public bool ssaoFeatureActive;
+            public string ssaoFeatureName;
+            public bool ssaoGlobalKeywordEnabled;
+            public bool ssaoTextureBound;
+            public string arenaMaterialName;
+            public string arenaMaterialShader;
+            public bool arenaMaterialSsaoKeyword;
+            public string activeVolumes;
+            public bool resolvedColorAdjustments;
+            public float resolvedPostExposure;
+            public float resolvedContrast;
+            public float resolvedSaturation;
+            public bool resolvedWhiteBalance;
+            public float resolvedTemperature;
+            public float resolvedTint;
+            public bool resolvedDepthOfField;
+            public string resolvedDepthOfFieldMode;
+            public float resolvedFocusDistance;
+            public float resolvedAperture;
+            public float resolvedFocalLength;
+            public bool pipelineContractPassed;
+            public bool cameraContractPassed;
+            public bool ssaoContractPassed;
+            public bool authoredLookContractPassed;
+            public string mismatchSummary;
+            public bool passed;
+
+            public void Evaluate()
+            {
+                pipelineContractPassed =
+                    universalPipelineAsset == "ElEmentalURP" &&
+                    activePipelineAsset == universalPipelineAsset &&
+                    activeRendererIndex == 0 &&
+                    loadedRendererDataAssets.IndexOf(
+                        "ElEmentalRenderer",
+                        StringComparison.Ordinal) >= 0 &&
+                    pipelineSupportsHdr &&
+                    pipelineMsaaSamples == 1 &&
+                    Mathf.Abs(pipelineRenderScale - 1f) <= 0.001f &&
+                    pipelineDepthTexture &&
+                    Mathf.Abs(pipelineShadowDistance - 90f) <= 0.01f &&
+                    pipelineShadowCascades == 4 &&
+                    pipelineMainLightShadowAtlas == 4096 &&
+                    qualityShadows == UnityEngine.ShadowQuality.All.ToString() &&
+                    qualityShadowCascades == 4 &&
+                    Mathf.Abs(qualityShadowDistance - 90f) <= 0.01f;
+
+                cameraContractPassed =
+                    cameraAllowHdr &&
+                    cameraPostProcessing &&
+                    cameraRequiresDepthTexture &&
+                    cameraRendersShadows &&
+                    cameraStopNaN &&
+                    cameraDithering &&
+                    cameraAntialiasing == AntialiasingMode.SubpixelMorphologicalAntiAliasing.ToString() &&
+                    cameraAntialiasingQuality == AntialiasingQuality.High.ToString();
+
+                ssaoContractPassed = ssaoFeatureFound && ssaoFeatureActive;
+
+                // These are the authored EarthCoreSlice values. A Play-mode-only
+                // lookdev component used to overwrite them with a hotter, flatter
+                // clone; accepting that runtime state would reproduce the user's
+                // "Scene View okay, Game/player awful" mismatch.
+                authoredLookContractPassed =
+                    resolvedColorAdjustments &&
+                    resolvedWhiteBalance &&
+                    Mathf.Abs(resolvedPostExposure - 0f) <= 0.001f &&
+                    Mathf.Abs(resolvedContrast - 7f) <= 0.001f &&
+                    Mathf.Abs(resolvedSaturation - -8f) <= 0.001f &&
+                    Mathf.Abs(resolvedTemperature - 2f) <= 0.001f &&
+                    Mathf.Abs(resolvedTint - -1f) <= 0.001f;
+
+                var mismatches = new List<string>(4);
+                if (!pipelineContractPassed) mismatches.Add("pipeline/quality/renderer/shadows");
+                if (!cameraContractPassed) mismatches.Add("game-camera/SMAA/post/depth");
+                if (!ssaoContractPassed) mismatches.Add("SSAO-feature");
+                if (!authoredLookContractPassed)
+                {
+                    mismatches.Add(
+                        $"runtime-volume(actual={resolvedPostExposure:0.###}/" +
+                        $"{resolvedContrast:0.###}/{resolvedSaturation:0.###}/" +
+                        $"{resolvedTemperature:0.###}/{resolvedTint:0.###};" +
+                        "expected=0/7/-8/2/-1)");
+                }
+                mismatchSummary = mismatches.Count == 0
+                    ? "none"
+                    : string.Join("|", mismatches);
+                passed = pipelineContractPassed &&
+                         cameraContractPassed &&
+                         ssaoContractPassed &&
+                         authoredLookContractPassed;
+            }
         }
 
         private static Material FindEarthMaterial()

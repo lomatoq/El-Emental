@@ -269,6 +269,10 @@ namespace Elemental.Input.Actions
         {
             _bufferedPrimaryPathCount = 1;
             _bufferedPrimaryPath[0] = pointer;
+            // The dual-button disambiguation window delays single-LMB replay by a
+            // few frames. Capture the authoritative surface now, before a moving
+            // gameplay camera can shift the same screen pixel off an arena face.
+            magicInput?.BufferPrimarySurface(pointer);
         }
 
         private void AppendBufferedPrimaryPath(Vector2 pointer)
@@ -427,14 +431,18 @@ namespace Elemental.Input.Actions
             if (waveAbility.IsCharging)
             {
                 if (waveAbility.ReleaseCharge())
-                    RecordTechnique(EarthTechniqueId.WebWave, waveAbility.PrimaryMatterId,
+                    RecordTechnique(EarthTechniqueId.FaultLine, waveAbility.PrimaryMatterId,
                         EarthEventTag.Formed, route.Charge01, AimDirection());
+                magicInput?.ReportStatus(
+                    $"FAULT LINE — {waveAbility.LastColumnCount} rising cells; one destructible target maximum.");
                 return;
             }
             Vector3 forward = motor != null ? motor.FacingForward : transform.forward;
             if (waveAbility.TryCast(forward, 0.18f, 0.12f, out _))
-                RecordTechnique(EarthTechniqueId.WebWave, waveAbility.PrimaryMatterId,
+                RecordTechnique(EarthTechniqueId.FaultLine, waveAbility.PrimaryMatterId,
                     EarthEventTag.Formed, route.Charge01, forward);
+            magicInput?.ReportStatus(
+                $"FAULT LINE — {waveAbility.LastColumnCount} rising cells; one destructible target maximum.");
         }
 
         private void RecordTechnique(

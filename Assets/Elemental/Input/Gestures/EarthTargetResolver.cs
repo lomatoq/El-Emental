@@ -66,6 +66,34 @@ namespace Elemental.Input.Gestures
             if (decorRock != null)
                 return new EarthResolvedTarget(
                     EarthSourceKind.Rock, collider, decorRock.Body, decorRock, null);
+            EarthArenaPiece arenaPiece = collider.GetComponentInParent<EarthArenaPiece>();
+            if (arenaPiece != null)
+                return Broken(collider, arenaPiece.Body, arenaPiece, arenaPiece.Owner);
+            EarthArenaStructure arenaStructure = collider.GetComponentInParent<EarthArenaStructure>();
+            if (arenaStructure != null)
+            {
+                EarthTargetCapabilities capabilities = EarthTargetCapabilities.Surface |
+                                                       EarthTargetCapabilities.Draw;
+                // The protected floor remains a complete spell/support surface but
+                // must not steal RMB/MMB targeting from a visible movable wall behind
+                // it. Destructible/repairable Crown structures keep the full physical
+                // interaction contract.
+                if (arenaStructure.OrdinaryDamageEnabled || arenaStructure.Repairable)
+                    capabilities |= EarthTargetCapabilities.Push |
+                                    EarthTargetCapabilities.Gravity |
+                                    EarthTargetCapabilities.Damage |
+                                    EarthTargetCapabilities.Pluck |
+                                    EarthTargetCapabilities.Repair;
+                return new EarthResolvedTarget(
+                    arenaStructure.IsFractured
+                        ? EarthSourceKind.BrokenStructure
+                        : EarthSourceKind.IntactStructure,
+                    collider,
+                    null,
+                    null,
+                    arenaStructure,
+                    capabilities);
+            }
             EarthWall wall = collider.GetComponentInParent<EarthWall>();
             if (wall != null)
                 return new EarthResolvedTarget(

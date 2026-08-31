@@ -37,6 +37,26 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void FaultLineClaimsOnlyOneDestructibleTargetPerCast()
+        {
+            var owner = new GameObject("Fault Line Claim Test");
+            owner.SetActive(false);
+            EarthPillarWavePool pool = owner.AddComponent<EarthPillarWavePool>();
+            try
+            {
+                Assert.That(pool.TryClaimFaultLineTarget(700u, 11u), Is.True);
+                Assert.That(pool.TryClaimFaultLineTarget(700u, 12u), Is.False);
+                Assert.That(pool.TryClaimFaultLineTarget(700u, 11u), Is.False);
+                Assert.That(pool.TryClaimFaultLineTarget(701u, 12u), Is.True);
+                Assert.That(pool.LastFaultLineTargetStructureId, Is.EqualTo(12u));
+            }
+            finally
+            {
+                Object.DestroyImmediate(owner);
+            }
+        }
+
+        [Test]
         public void TerminalWaveCellsStayBoundedAndTaperAcrossFamiliesAndCharges()
         {
             EarthPillarWaveTuning tuning = EarthPillarWaveTuning.Default;
@@ -222,7 +242,7 @@ namespace Elemental.Tests.EditMode
             var session = new EarthQuickStoneSession(in data);
             Assert.That(session.TryPrime(10f, 42u), Is.True);
             Assert.That(session.TryFire(10.18f, out float speed), Is.True);
-            Assert.That(speed, Is.InRange(30f, 38f));
+            Assert.That(speed, Is.InRange(60f, 76f));
             session.Reset();
             session.TryPrime(20f, 43u);
             Assert.That(session.ExpireIfNeeded(20.421f), Is.True);
@@ -242,7 +262,7 @@ namespace Elemental.Tests.EditMode
             Assert.That(session.HasBufferedFire, Is.True);
             Assert.That(session.TryConsumeBufferedFire(2.149f, out _), Is.False);
             Assert.That(session.TryConsumeBufferedFire(2.151f, out float launchSpeed), Is.True);
-            Assert.That(launchSpeed, Is.InRange(30f, 38f));
+            Assert.That(launchSpeed, Is.InRange(60f, 76f));
             Assert.That(session.State, Is.EqualTo(EarthQuickStoneState.Fired));
         }
 
@@ -261,7 +281,7 @@ namespace Elemental.Tests.EditMode
                 "A staged SDF transaction must not consume the double-click window.");
             Assert.That(session.HasBufferedFire, Is.True);
             Assert.That(session.TryConsumeBufferedFire(3.96f, out float speed), Is.True);
-            Assert.That(speed, Is.InRange(30f, 38f));
+            Assert.That(speed, Is.InRange(60f, 76f));
         }
 
         [Test]

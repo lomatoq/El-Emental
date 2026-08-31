@@ -88,6 +88,7 @@ namespace Elemental.Runtime.Physics
             public Vector3 LocalDirection;
             public Vector3 PlateScale;
             public float SurfaceRadius;
+            public float AlongBone01;
         }
 
         public bool IsActive => _session != null && _session.Active;
@@ -168,11 +169,14 @@ namespace Elemental.Runtime.Physics
                     ? _profile.PieceCount
                     : EarthArmorShellDefinition.RequiredSegmentCount;
                 _pieceCount = Mathf.Clamp(requestedPieces, 40, MaximumPieces);
-                if (_anchorPieceCount != _pieceCount)
-                {
-                    BuildBodySurfaceAnchors();
-                    _anchorPieceCount = _pieceCount;
-                }
+                // Animator.Rebind, ragdoll recovery and presentation swaps preserve
+                // the same component instance but can invalidate cached renderer and
+                // Humanoid surface ownership. A cast is rare and already performs a
+                // bounded 96-piece setup, so refresh the live body contract here
+                // instead of letting plates chase stale pre-recovery anchors.
+                CacheCasterColliders();
+                BuildBodySurfaceAnchors();
+                _anchorPieceCount = _pieceCount;
                 // Armor is an external shell around the hero, not a replacement avatar.
                 SetBodyRendererVisibility(true);
                 SetStoneSkin(false);
@@ -697,7 +701,13 @@ namespace Elemental.Runtime.Physics
                 if (IsLongLimb(anchor.BoneId) && anchor.AxisTarget != null)
                 {
                     Vector3 boneAxis = anchor.AxisTarget.position - anchor.Bone.position;
-                    boneCenter += boneAxis * 0.5f;
+                    // A limb ring contains several independent plates. They used to
+                    // share the exact segment midpoint, producing one stone clump at
+                    // the biceps/calf and leaving both joints visibly bare. Spread
+                    // those same authored plates along the live bone while retaining
+                    // their radial directions, so the shell follows animation without
+                    // stretching or snapping between joint centres.
+                    boneCenter += boneAxis * Mathf.Clamp01(anchor.AlongBone01);
                     Vector3 axis = boneAxis.normalized;
                     Vector3 radialForward = Vector3.ProjectOnPlane(forward, axis).normalized;
                     if (radialForward.sqrMagnitude < 0.25f)
@@ -1036,6 +1046,18 @@ namespace Elemental.Runtime.Physics
                     : Mathf.Clamp(Mathf.RoundToInt(index * (segments.Length - 1f) /
                                                    Mathf.Max(1f, _pieceCount - 1f)), 0, segments.Length - 1);
                 EarthArmorShellSegment segment = segments[sourceIndex];
+                int matchingBoneCount = 0;
+                int matchingBoneRank = 0;
+                for (int segmentIndex = 0; segmentIndex < segments.Length; segmentIndex++)
+                {
+                    if (segments[segmentIndex].Bone != segment.Bone) continue;
+                    if (segmentIndex < sourceIndex) matchingBoneRank++;
+                    matchingBoneCount++;
+                }
+                float alongBone01 = matchingBoneCount > 1
+                    ? Mathf.Lerp(0.12f, 0.88f,
+                        matchingBoneRank / (float)(matchingBoneCount - 1))
+                    : 0.5f;
                 Transform bone = ResolveBone(animator, segment.Bone);
                 AddShellAnchor(
                     ref output,
@@ -1045,7 +1067,8 @@ namespace Elemental.Runtime.Physics
                     segment.Region,
                     segment.CharacterDirection,
                     segment.Scale,
-                    ResolveSurfaceRadius(animator, segment.Bone, segment.Region));
+                    ResolveSurfaceRadius(animator, segment.Bone, segment.Region),
+                    alongBone01);
             }
             return output == _pieceCount;
         }
@@ -1058,7 +1081,8 @@ namespace Elemental.Runtime.Physics
             EarthArmorShellRegion region,
             Vector3 direction,
             Vector3 scale,
-            float surfaceRadius = 0f)
+            float surfaceRadius = 0f,
+            float alongBone01 = 0.5f)
         {
             if (output >= _bodyAnchors.Length) return;
             _bodyAnchors[output++] = new BodySurfaceAnchor
@@ -1069,7 +1093,8 @@ namespace Elemental.Runtime.Physics
                 Region = region,
                 LocalDirection = direction.normalized,
                 PlateScale = scale,
-                SurfaceRadius = surfaceRadius
+                SurfaceRadius = surfaceRadius,
+                AlongBone01 = alongBone01
             };
         }
 

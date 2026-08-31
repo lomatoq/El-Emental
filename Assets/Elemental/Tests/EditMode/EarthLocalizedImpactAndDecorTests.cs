@@ -1,7 +1,9 @@
 using Elemental.Simulation.Combat;
 using Elemental.Simulation.Structures;
+using Elemental.Runtime.Characters;
 using NUnit.Framework;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace Elemental.Tests.EditMode
 {
@@ -66,6 +68,27 @@ namespace Elemental.Tests.EditMode
             Assert.That(detach.Detach, Is.True);
             Assert.That(detach.Shatter, Is.False);
             Assert.That(shatter.Shatter, Is.True);
+        }
+
+        [Test]
+        public void LocalizedHitProfileStaysInsideReadableShortReactionBudget()
+        {
+            CharacterImpactResponseProfile profile =
+                ScriptableObject.CreateInstance<CharacterImpactResponseProfile>();
+            try
+            {
+                Assert.That(profile.LocalizedHitReaction, Is.True);
+                Assert.That(profile.LocalizedHitDuration, Is.InRange(0.12f, 0.22f));
+                Assert.That(profile.LocalizedParentWeight, Is.InRange(0.45f, 0.60f));
+                Assert.That(profile.LocalizedTorsoWeight, Is.InRange(0.20f, 0.32f));
+                Assert.That(profile.LocalizedArmChestMaxAngle, Is.InRange(7f, 14f));
+                Assert.That(profile.LocalizedHeadMaxAngle, Is.InRange(4f, 8f));
+                Assert.That(profile.LocalizedHipsLegWeight, Is.LessThanOrEqualTo(0.35f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(profile);
+            }
         }
     }
 }

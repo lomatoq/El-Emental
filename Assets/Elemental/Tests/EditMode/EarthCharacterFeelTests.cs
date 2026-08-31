@@ -149,8 +149,17 @@ namespace Elemental.Tests.EditMode
                 "A stationary MMB brace should still feel rooted.");
             Assert.That(moving, Is.False,
                 "Movement input must win before velocity rises so old foot constraints cannot trail behind.");
-            Assert.That(movingWeight, Is.Zero,
-                "Locomotion clips must own both feet while the player moves during MMB.");
+            Assert.That(movingWeight, Is.InRange(0.35f, 0.8f),
+                "Locomotion must keep surface-following IK without preserving the old casting lock.");
+        }
+
+        [Test]
+        public void SupportRelativeCoastKeepsGaitContactActiveAfterInputRelease()
+        {
+            Assert.That(EarthFootPlantMotionGate.IsLocomoting(float2.zero, 1.2f), Is.True);
+            Assert.That(EarthFootPlantMotionGate.IsLocomoting(float2.zero, 0.05f), Is.False);
+            Assert.That(EarthFootPlantMotionGate.IsLocomoting(
+                new float2(0f, 1f), 0f), Is.True);
         }
 
         [Test]
@@ -174,8 +183,8 @@ namespace Elemental.Tests.EditMode
                 true, false, locked, 0f, float2.zero);
 
             Assert.That(locked, Is.False);
-            Assert.That(weight, Is.Zero,
-                "An idle character must not receive procedural knee/foot constraints unless a cast requests a brace.");
+            Assert.That(weight, Is.InRange(0.7f, 0.9f),
+                "An idle character should settle both soles onto the radial support without a world-space lock.");
         }
 
         [Test]
@@ -229,6 +238,340 @@ namespace Elemental.Tests.EditMode
             Assert.That(math.distance(world, new float3(5.1f, 3.2f, 3.6f)), Is.LessThan(0.001f));
             Assert.That(EarthSupportFootLockSolver.SameSupport(77u, 4u, in moved), Is.True);
             Assert.That(EarthSupportFootLockSolver.SameSupport(77u, 3u, in moved), Is.False);
+        }
+
+        [Test]
+        public void GaitRateTracksMeasuredTangentSpeedInsideAuthoredClamp()
+        {
+            Assert.That(EarthAnimationParameterFilter.ResolveGaitRateTarget(0f), Is.EqualTo(1f));
+            Assert.That(EarthAnimationParameterFilter.ResolveGaitRateTarget(2f), Is.EqualTo(0.92f).Within(0.001f));
+            Assert.That(EarthAnimationParameterFilter.ResolveGaitRateTarget(6f), Is.EqualTo(1.10f).Within(0.001f));
+            Assert.That(EarthAnimationParameterFilter.ResolveGaitRateTarget(50f), Is.EqualTo(1.10f));
+        }
+
+        [Test]
+        public void EachFootCanEnterAndLeaveStanceIndependently()
+        {
+            EarthFootStanceState state = default;
+            EarthFootStanceDecision captured = EarthFootStanceGate.Step(
+                in state, true, true, false, false, true, 0.04f, false);
+            EarthFootStanceState capturedState = captured.State;
+            EarthFootStanceDecision maintained = EarthFootStanceGate.Step(
+                in capturedState, true, true, false, true, true, 0.12f, false);
+            EarthFootStanceState maintainedState = maintained.State;
+            EarthFootStanceDecision released = EarthFootStanceGate.Step(
+                in maintainedState, true, true, false, true, true, 0.18f, false);
+
+            Assert.That(captured.Captured, Is.True);
+            Assert.That(maintained.Maintained, Is.True);
+            Assert.That(released.Locked, Is.False);
+        }
+
+        [Test]
+        public void LocomotionStanceCannotDoubleLockOrRecaptureAnUnrearmedSwingFoot()
+        {
+            EarthFootStanceState left = default;
+            EarthFootStanceDecision leftContact = EarthFootStanceGate.Step(
+                in left, true, true, false, false, true, 0.03f, false);
+            EarthFootStanceState right = default;
+            EarthFootStanceDecision rightBlocked = EarthFootStanceGate.Step(
+                in right, true, true, false, false, true, 0.02f, leftContact.Locked);
+
+            EarthFootStanceState leftLocked = leftContact.State;
+            EarthFootStanceDecision leftReleased = EarthFootStanceGate.Step(
+                in leftLocked, true, true, false, true, true, 0.16f, false);
+            EarthFootStanceState leftSwing = leftReleased.State;
+            EarthFootStanceDecision leftTooSoon = EarthFootStanceGate.Step(
+                in leftSwing, true, true, false, true, true, 0.04f, false);
+
+            Assert.That(leftContact.Locked, Is.True);
+            Assert.That(rightBlocked.Locked, Is.False,
+                "Only one locomotion foot may own a support-relative anchor.");
+            Assert.That(leftReleased.Locked, Is.False);
+            Assert.That(leftTooSoon.Locked, Is.False,
+                "A released foot must complete a swing/re-arm cycle before another capture.");
+            Assert.That(EarthFootStanceGate.ContactWeight(true, false, 0.15f), Is.LessThan(0.1f),
+                "The airborne swing foot must not inherit the stance foot's high IK weight.");
+        }
+
+        [Test]
+        public void AppliedFootIkWeightCannotPopAcrossAContactTransition()
+        {
+            float released = EarthFootIkWeightBlend.Step(1f, 0f, 1f / 30f, 0.055f);
+            float captured = EarthFootIkWeightBlend.Step(0f, 1f, 1f / 30f, 0.04f);
+
+            Assert.That(1f - released, Is.LessThanOrEqualTo(0.2801f));
+            Assert.That(captured, Is.LessThanOrEqualTo(0.2801f));
+        }
+
+        [TestCase(30)]
+        [TestCase(60)]
+        [TestCase(120)]
+        public void ContactWeightReleasesSwingWithinTwoNormalizedFrames(int frameRate)
+        {
+            float weight = 1f;
+            float elapsedFrames = 0f;
+            float deltaTime = 1f / frameRate;
+            while (elapsedFrames < 2f)
+            {
+                weight = EarthFootIkWeightBlend.StepContact(
+                    weight,
+                    0f,
+                    deltaTime);
+                elapsedFrames += deltaTime * 60f;
+            }
+            Assert.That(weight, Is.LessThanOrEqualTo(0.15f));
+        }
+
+        [Test]
+        public void PairWiseFootResolverNeverDoubleLocksOrdinaryLocomotion()
+        {
+            EarthFootContactState leftState = default;
+            EarthFootContactState rightState = default;
+            EarthFootContactInput left = CreateContactInput(true, true, 0.03f, -0.4f, 0f, 0.75f);
+            EarthFootContactInput right = CreateContactInput(false, true, 0.03f, -0.4f, 0f, 0.75f);
+
+            EarthFootContactPairDecision pair = EarthFootContactSolver.ResolvePair(
+                ref leftState, ref rightState, in left, in right);
+
+            Assert.That(pair.BothLocked, Is.False);
+            Assert.That(pair.Left.Locked, Is.False,
+                "The gait phase, not left-first evaluation order, should resolve an exact tie.");
+            Assert.That(pair.Right.Locked, Is.True);
+            Assert.That(pair.Left.ReleaseCooldownSeconds, Is.Zero,
+                "Losing first-capture arbitration is not a release and must not starve that leg.");
+        }
+
+        [Test]
+        public void TurnInPlaceCapturesExactlyOnePivotFootAtNeutralClearance()
+        {
+            EarthFootContactState leftState = default;
+            EarthFootContactState rightState = default;
+            EarthFootContactInput left = CreateContactInput(
+                true, true, 0.12f, -0.01f, -0.12f, 0f,
+                pivotingInPlace: true);
+            EarthFootContactInput right = CreateContactInput(
+                false, true, 0.10f, -0.01f, -0.10f, 0f,
+                pivotingInPlace: true);
+
+            EarthFootContactPairDecision pair = EarthFootContactSolver.ResolvePair(
+                ref leftState, ref rightState, in left, in right);
+
+            Assert.That(pair.BothLocked, Is.False);
+            Assert.That(pair.Left.Locked || pair.Right.Locked, Is.True,
+                "A turn-in-place needs one stable pivot anchor even from the neutral idle clearance.");
+        }
+
+        [Test]
+        public void PivotCapturePreservesRenderedTangentialFootPosition()
+        {
+            float3 rendered = new float3(0.18f, 0.09f, -0.14f);
+            float3 contact = new float3(0.42f, 0.01f, 0.22f);
+            float3 normal = new float3(0f, 1f, 0f);
+
+            float3 anchor = EarthFootContactSolver.CaptureRenderedPivotAnchor(
+                rendered,
+                contact,
+                normal);
+
+            Assert.That(anchor.x, Is.EqualTo(rendered.x).Within(0.0001f));
+            Assert.That(anchor.z, Is.EqualTo(rendered.z).Within(0.0001f));
+            Assert.That(anchor.y, Is.EqualTo(contact.y).Within(0.0001f));
+        }
+
+        [Test]
+        public void ActiveLandingBaseLayerOwnsContactUntilAnimatorLeavesIt()
+        {
+            EarthAuthoredActionId action =
+                EarthAuthoredActionResolver.ResolveBaseLayerContactOwnership(
+                    EarthAuthoredActionId.Locomotion,
+                    EarthAuthoredActionId.MovingLandingRoll);
+
+            Assert.That(action, Is.EqualTo(EarthAuthoredActionId.MovingLandingRoll));
+            Assert.That(
+                EarthAuthoredActionResolver.ResolveBaseLayerContactOwnership(
+                    EarthAuthoredActionId.Jump,
+                    EarthAuthoredActionId.MovingLandingRoll),
+                Is.EqualTo(EarthAuthoredActionId.Jump),
+                "A new flight action must remain able to interrupt an outgoing landing.");
+        }
+
+        [Test]
+        public void DeniedOrReleasedFootCannotRecaptureInsideHysteresisWindow()
+        {
+            EarthFootContactState leftState = default;
+            EarthFootContactState rightState = default;
+            EarthFootContactInput firstLeft = CreateContactInput(true, true, 0.03f, -0.4f, 1f, 0.25f);
+            EarthFootContactInput firstRight = CreateContactInput(false, true, 0.18f, 0.4f, 0f, 0.25f);
+            EarthFootContactSolver.ResolvePair(
+                ref leftState, ref rightState, in firstLeft, in firstRight);
+
+            EarthFootContactInput leftRelease = CreateContactInput(
+                true, true, 0.18f, 0.4f, 1f, 0.30f, 0.02f);
+            EarthFootContactInput rightSwing = CreateContactInput(
+                false, true, 0.18f, 0.4f, 0f, 0.30f, 0.02f);
+            EarthFootContactSolver.ResolvePair(
+                ref leftState, ref rightState, in leftRelease, in rightSwing);
+
+            EarthFootContactInput leftTooSoon = CreateContactInput(
+                true, true, 0.03f, -0.4f, 1f, 0.10f, 0.02f);
+            EarthFootContactPairDecision second = EarthFootContactSolver.ResolvePair(
+                ref leftState, ref rightState, in leftTooSoon, in rightSwing);
+
+            Assert.That(second.Left.Locked, Is.False);
+            Assert.That(second.Left.ReleaseCooldownSeconds, Is.GreaterThan(0.09f));
+        }
+
+        [Test]
+        public void ContactTargetFilteringBoundsSupportLocalSteps()
+        {
+            EarthFootContactState leftState = default;
+            EarthFootContactState rightState = default;
+            EarthFootContactInput firstLeft = CreateContactInput(
+                true, false, 0.01f, 0f, 0f, 0f, 1f / 60f, float3.zero);
+            EarthFootContactInput firstRight = CreateContactInput(
+                false, false, 0.01f, 0f, 0f, 0f, 1f / 60f, new float3(0.2f, 0f, 0f));
+            EarthFootContactSolver.ResolvePair(
+                ref leftState, ref rightState, in firstLeft, in firstRight);
+
+            EarthFootContactInput movedLeft = CreateContactInput(
+                true, false, 0.01f, 0f, 0f, 0f, 1f / 60f, new float3(0.5f, 0f, 0f));
+            EarthFootContactInput movedRight = CreateContactInput(
+                false, false, 0.01f, 0f, 0f, 0f, 1f / 60f, new float3(0.2f, 0f, 0f));
+            EarthFootContactPairDecision moved = EarthFootContactSolver.ResolvePair(
+                ref leftState, ref rightState, in movedLeft, in movedRight);
+
+            Assert.That(math.length(moved.Left.TargetLocal), Is.LessThanOrEqualTo(0.0251f));
+        }
+
+        [TestCase(30)]
+        [TestCase(60)]
+        [TestCase(120)]
+        public void AnkleInertializationBoundsAuthoredIkSeamAtEveryFrameRate(int fps)
+        {
+            quaternion current = quaternion.identity;
+            quaternion target = quaternion.AxisAngle(
+                new float3(1f, 0f, 0f),
+                math.radians(120f));
+            float deltaTime = 1f / fps;
+            float maximumNormalizedStep = 0f;
+            for (int frame = 0; frame < fps; frame++)
+            {
+                quaternion next = EarthAnkleRotationInertializer.Step(
+                    current,
+                    target,
+                    deltaTime);
+                float actualStep = QuaternionAngleDegrees(current, next);
+                maximumNormalizedStep = math.max(
+                    maximumNormalizedStep,
+                    actualStep * fps / 60f);
+                current = next;
+            }
+
+            Assert.That(maximumNormalizedStep,
+                Is.LessThanOrEqualTo(
+                    EarthAnkleRotationInertializer.MaximumDegreesAt60Hz + 0.001f));
+            Assert.That(QuaternionAngleDegrees(current, target), Is.LessThan(0.01f));
+        }
+
+        private static float QuaternionAngleDegrees(quaternion from, quaternion to)
+        {
+            quaternion delta = math.mul(math.inverse(from), to);
+            return math.degrees(2f * math.acos(
+                math.clamp(math.abs(delta.value.w), 0f, 1f)));
+        }
+
+        private static EarthFootContactInput CreateContactInput(
+            bool left,
+            bool locomoting,
+            float clearance,
+            float verticalVelocity,
+            float priority,
+            float gaitPhase,
+            float deltaTime = 1f / 60f,
+            float3 target = default,
+            bool pivotingInPlace = false)
+        {
+            return new EarthFootContactInput(
+                left,
+                true,
+                locomoting,
+                pivotingInPlace,
+                false,
+                true,
+                clearance,
+                verticalVelocity,
+                priority,
+                gaitPhase,
+                target,
+                new float3(0f, 1f, 0f),
+                target,
+                new float3(0f, 1f, 0f),
+                77u,
+                4u,
+                deltaTime);
+        }
+
+        [Test]
+        public void MotionAuditCountsLockChatterAndTemporalDiscontinuities()
+        {
+            EarthAnimationMotionAuditState state = default;
+            var first = new EarthAnimationMotionSample(
+                0.02f,
+                new float3(-0.1f, 0.04f, 0f),
+                new float3(0.1f, 0.04f, 0f),
+                new float3(0f, -1f, 0.1f),
+                new float3(0f, -1f, 0.1f),
+                0.7f,
+                0.7f,
+                0.7f,
+                -0.03f,
+                false,
+                false,
+                true,
+                7u,
+                2u);
+            EarthAnimationMotionAudit.Step(ref state, in first);
+            var second = new EarthAnimationMotionSample(
+                0.02f,
+                new float3(-0.1f, 0.04f, 0.02f),
+                new float3(0.1f, 0.04f, 0.02f),
+                new float3(0f, -1f, 0.1f),
+                new float3(0f, -1f, 0.1f),
+                0.72f,
+                0.72f,
+                0.2f,
+                -0.032f,
+                true,
+                false,
+                true,
+                7u,
+                2u);
+            EarthAnimationMotionAudit.Step(ref state, in second);
+            var discontinuous = new EarthAnimationMotionSample(
+                0.02f,
+                new float3(-0.1f, 0.04f, 0.14f),
+                new float3(0.1f, 0.04f, 0.02f),
+                new float3(0.7f, -0.3f, 0f),
+                new float3(0f, -1f, 0.1f),
+                0.2f,
+                0.2f,
+                0.8f,
+                -0.082f,
+                false,
+                true,
+                true,
+                7u,
+                2u);
+            EarthAnimationMotionAuditSummary summary =
+                EarthAnimationMotionAudit.Step(ref state, in discontinuous);
+
+            Assert.That(summary.SampleCount, Is.EqualTo(3));
+            Assert.That(summary.LeftLockTransitions, Is.EqualTo(2));
+            Assert.That(summary.RightLockTransitions, Is.EqualTo(1));
+            Assert.That(summary.DiscontinuityFrames, Is.EqualTo(1));
+            Assert.That(summary.MaximumFootStep, Is.GreaterThan(0.1f));
+            Assert.That(summary.MaximumPelvisStep, Is.GreaterThan(0.04f));
         }
 
         [Test]

@@ -21,6 +21,34 @@ MonoBehaviour:
       surfaceData: 2
     screenSpaceSettings:
       normalBlend: 0
+--- !u!114 &-4992813354828537069
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5cc80020e5e4b64824e1f9e901e6312, type: 3}
+  m_Name: Elemental Cinematic Depth Of Field
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.Rendering.EarthCinematicDepthOfFieldFeature
+  m_Active: 1
+  material: {fileID: 2100000, guid: cf82acf4b789d334eb71e99c29c8e69a, type: 2}
+--- !u!114 &-4159853085265101775
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8eb194ee677a4d7ea433a25d4213a15, type: 3}
+  m_Name: Elemental MiniBokeh
+  m_EditorClassIdentifier: MiniBokeh.Runtime::MiniBokeh.MiniBokehFeature
+  m_Active: 0
+  _shader: {fileID: 4800000, guid: d5a4e4db689924d619b1bbb0feee8414, type: 3}
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -49,9 +77,11 @@ MonoBehaviour:
   - {fileID: 1710190104392729854}
   - {fileID: -8370448704513156065}
   - {fileID: 6842087012945519021}
+  - {fileID: -4159853085265101775}
+  - {fileID: -4992813354828537069}
   m_RendererFeatureMap: 
   xrSystemData: {fileID: 0}
-  postProcessData: {fileID: 0}
+  postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   m_AssetVersion: 3
   m_PrepassLayerMask:
     serializedVersion: 2
@@ -110,11 +140,11 @@ MonoBehaviour:
     Downsample: 0
     AfterOpaque: 0
     Source: 1
-    NormalSamples: 1
-    Intensity: 1.35
-    DirectLightingStrength: 0.16
-    Radius: 0.085
-    Samples: 1
-    BlurQuality: 1
-    Falloff: 28
+    NormalSamples: 2
+    Intensity: 0.82
+    DirectLightingStrength: 0.08
+    Radius: 0.065
+    Samples: 0
+    BlurQuality: 0
+    Falloff: 40
     SampleCount: -1

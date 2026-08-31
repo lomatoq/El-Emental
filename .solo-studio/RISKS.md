@@ -1,6 +1,6 @@
 # Risk Register — El-Emental
 
-Updated: 2026-08-14
+Updated: 2026-08-30
 
 ## Active
 
@@ -31,6 +31,31 @@ Updated: 2026-08-14
 - Leading indicator: valid Avatar/controller yet no visible speed/state change in runtime capture.
 - Mitigation: fail-fast asset validator plus runtime Speed/state test and locomotion capture.
 - Fallback: retain the existing primitive pose driver only as a development fallback.
+
+### R-006 — Procedural foot contact passes the arena but fails general terrain
+
+- Category: animation/technical
+- Probability: high until the terrain corpus is captured
+- Impact: high
+- Leading indicator: simultaneous locomotion locks, repeated lock transitions without
+  a swing re-arm, applied-IK step above 0.30, knee discontinuity, or anchor error after
+  support ID/generation changes.
+- Mitigation: one pure per-foot stance FSM, per-foot weight/hint blending, raw frame
+  telemetry and the flat/slope/step/ridge/moving-support/sphere corpus in ADR 0033.
+- Fallback: restore authored locomotion with ordinary foot IK at zero while retaining
+  cast/surf locks and all diagnostics.
+
+### R-007 — Shadow cleanup flattens geometry or hides contact
+
+- Category: technical art
+- Probability: medium
+- Impact: medium
+- Leading indicator: bright detached vertical faces, missing cast-shadow shapes,
+  peter-panning at feet/rocks, or noisy AO bands in quiet stone areas.
+- Mitigation: authored arena normals, restrained side-shadow fade, bounded light bias,
+  High soft-shadow filtering, clean contact AO and before/after 1920×1080 captures.
+- Fallback: retain authored normals/SMAA and disable only contact AO; never restore
+  radial normals on architecture to conceal shadow acne.
 
 ### R-004 — Sky ownership conflicts with celestial/atmosphere presentation
 

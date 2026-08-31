@@ -1,6 +1,7 @@
 using System.Collections;
 using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
+using Elemental.Simulation.Structures;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -10,6 +11,57 @@ namespace Elemental.Tests.PlayMode
 {
     public sealed class EarthSurfRuntimeTests
     {
+        [UnityTest]
+        public IEnumerator DamageDetachesPrebuiltOuterCellsButKeepsOccupiedCore()
+        {
+            GameObject casterObject = new GameObject("Finite Surf Test Caster");
+            Rigidbody caster = casterObject.AddComponent<Rigidbody>();
+            caster.useGravity = false;
+            caster.isKinematic = true;
+            casterObject.AddComponent<CapsuleCollider>();
+            EarthSurfController surf = casterObject.AddComponent<EarthSurfController>();
+            surf.Configure(caster, null, null, null, null);
+            Assert.That(surf.Begin(Time.fixedUnscaledTime, Vector3.forward), Is.True);
+
+            GameObject board = surf.BoardTransform != null ? surf.BoardTransform.gameObject : null;
+            Assert.That(board, Is.Not.Null);
+            Assert.That(board.GetComponentsInChildren<MeshCollider>(true), Is.Empty,
+                "Finite surf cells must be prebuilt views; damage cannot cook mesh colliders.");
+            Assert.That(CountActiveSemanticCells(), Is.EqualTo(EarthSurfCellGraph.CellCount));
+
+            bool applied = surf.ApplyIntegrityEvent(
+                EarthSurfDamageKind.Bump,
+                4.2f,
+                30f,
+                -0.8f,
+                board.transform.position - board.transform.right,
+                -board.transform.forward + board.transform.up);
+            Assert.That(applied, Is.True);
+            Assert.That(surf.DetachedOuterCellCount, Is.InRange(1, 3));
+            Assert.That(surf.AttachedCellMask & EarthSurfCellGraph.SupportCoreMask,
+                Is.EqualTo(EarthSurfCellGraph.SupportCoreMask));
+            Assert.That(CountAttachedActiveSemanticCells(board.transform),
+                Is.EqualTo(EarthSurfCellGraph.CellCount - surf.DetachedOuterCellCount));
+            ParticleSystem dust = board.GetComponent<ParticleSystem>();
+            Assert.That(dust, Is.Not.Null);
+            Assert.That(dust.particleCount, Is.GreaterThan(0));
+
+            surf.ApplyIntegrityEvent(
+                EarthSurfDamageKind.NoseCrash,
+                12f,
+                0f,
+                0f,
+                board.transform.position + board.transform.forward,
+                -board.transform.forward + board.transform.up * 0.4f);
+            Assert.That(surf.IsEmerging, Is.False,
+                "A severe nose/wall crash must begin the surf release instead of riding forever.");
+            Assert.That(surf.AttachedCellMask & EarthSurfCellGraph.SupportCoreMask,
+                Is.EqualTo(EarthSurfCellGraph.SupportCoreMask));
+
+            Object.Destroy(casterObject);
+            yield return null;
+        }
+
         [UnityTest]
         public IEnumerator ShiftMovementSurfFindsSupportEmergesAndMovesTangentially()
         {
@@ -33,11 +85,12 @@ namespace Elemental.Tests.PlayMode
             Assert.That(surf.HasNearbyStartSurface(), Is.True,
                 "Shift+movement must accept a stable planet surface even if the motor ground bit flickers.");
             Assert.That(surf.Begin(Time.fixedUnscaledTime, Vector3.forward), Is.True);
-            Vector3 startedAt = GameObject.Find("Earth Surf Plough").transform.position;
+            Assert.That(surf.BoardTransform, Is.Not.Null);
+            Vector3 startedAt = surf.BoardTransform.position;
 
             for (int frame = 0; frame < 12; frame++) yield return new WaitForFixedUpdate();
 
-            GameObject board = GameObject.Find("Earth Surf Plough");
+            GameObject board = surf.BoardTransform != null ? surf.BoardTransform.gameObject : null;
             Assert.That(board, Is.Not.Null);
             Assert.That(surf.IsActive, Is.True);
             Assert.That(surf.Speed, Is.GreaterThanOrEqualTo(4f));
@@ -90,7 +143,11 @@ namespace Elemental.Tests.PlayMode
             float tangentTravel = Vector3.ProjectOnPlane(displacement, up).magnitude;
             Assert.That(tangentTravel, Is.GreaterThan(0.8f),
                 "Shift+movement must carry the hero with the wedge; moving only the effect is not gameplay.");
-            Assert.That(motor.MovingSurfaceId, Is.EqualTo(surf.SurfaceId));
+            Assert.That(motor.MovingSurfaceId, Is.EqualTo(surf.SurfaceId),
+                $"surf active={surf.IsActive} emerging={surf.IsEmerging} speed={surf.Speed:F2} " +
+                $"integrity={surf.BoardIntegrity:F1} cells={surf.AttachedCellMask:X4} " +
+                $"acceptsSupport={motor.AcceptsMovingSupport} motorState={motor.MotionState} " +
+                $"lastTarget={surf.LastIntegrityTargetName}");
             Assert.That(animator, Is.Not.Null);
             Assert.That(animator.GetBool("Surfing"), Is.True);
             AnimatorStateInfo surfState = animator.GetCurrentAnimatorStateInfo(0);
@@ -114,6 +171,26 @@ namespace Elemental.Tests.PlayMode
                 if (found != null) return found;
             }
             return null;
+        }
+
+        private static int CountActiveSemanticCells()
+        {
+            int count = 0;
+            Transform[] transforms = Object.FindObjectsByType<Transform>(FindObjectsInactive.Include);
+            for (int index = 0; index < transforms.Length; index++)
+                if (transforms[index].name.StartsWith("Surf Cell ") &&
+                    transforms[index].gameObject.activeSelf) count++;
+            return count;
+        }
+
+        private static int CountAttachedActiveSemanticCells(Transform board)
+        {
+            int count = 0;
+            Transform[] transforms = board.GetComponentsInChildren<Transform>(true);
+            for (int index = 0; index < transforms.Length; index++)
+                if (transforms[index].name.StartsWith("Surf Cell ") &&
+                    transforms[index].gameObject.activeSelf) count++;
+            return count;
         }
     }
 }

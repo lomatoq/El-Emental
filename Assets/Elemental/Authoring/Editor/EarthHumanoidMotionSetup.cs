@@ -17,6 +17,7 @@ namespace Elemental.Authoring.Editor
         private const string Root = "Assets/ThirdParty/Mixamo/";
         private const string CharacterPath = Root + "X Bot.fbx";
         public const string NeutralIdleClipName = "XBot Neutral Idle";
+        public const string NeutralWalkClipName = "XBot Walk Neutral";
 
         public const string WalkPath = Root + "X Bot@Walking.fbx";
         public const string WalkBackPath = Root + "X Bot@Walking Backwards.fbx";
@@ -29,6 +30,7 @@ namespace Elemental.Authoring.Editor
         public const string FallingRollPath = Root + "X Bot@Falling To Roll.fbx";
         public const string LeadJabPath = Root + "X Bot@Lead Jab.fbx";
         public const string PunchComboPath = Root + "X Bot@Punch Combo.fbx";
+        public const string PunchingPath = Root + "X Bot@Punching.fbx";
         public const string MmaKickPath = Root + "X Bot@Mma Kick.fbx";
         public const string SideHitPath = Root + "X Bot@Hit To Side Of Body.fbx";
         public const string MagicAttack05Path = Root + "X Bot@Standing 2H Magic Attack 05.fbx";
@@ -39,6 +41,10 @@ namespace Elemental.Authoring.Editor
         public const string Magic2HCast01Path = Root + "X Bot@Standing 2H Cast Spell 01.fbx";
         public const string StandToCrouchPath = Root + "X Bot@Standing Idle To Crouch.fbx";
         public const string CrouchIdlePath = Root + "X Bot@Crouch Idle.fbx";
+        public const string KayKitDirectionalDodgePath =
+            "Assets/ThirdParty/KayKit/Animations/Rig_Medium_MovementAdvanced.fbx";
+        public const string KayKitMovementBasicPath =
+            "Assets/ThirdParty/KayKit/Animations/Rig_Medium_MovementBasic.fbx";
 
         public static readonly string[] CuratedPaths =
         {
@@ -53,6 +59,7 @@ namespace Elemental.Authoring.Editor
             FallingRollPath,
             LeadJabPath,
             PunchComboPath,
+            PunchingPath,
             MmaKickPath,
             SideHitPath,
             Root + "Standing 2H Magic Attack 05.fbx",
@@ -87,6 +94,11 @@ namespace Elemental.Authoring.Editor
             if (!AreCuratedImportersCurrent()) return false;
             bool hasFinalWeight = false;
             bool hasMotionTime = false;
+            bool hasGaitRate = false;
+            bool hasImpactTrigger = false;
+            bool hasDodgeTrigger = false;
+            bool hasDodgeX = false;
+            bool hasDodgeY = false;
             AnimatorControllerParameter[] parameters = controller.parameters;
             for (int index = 0; index < parameters.Length; index++)
             {
@@ -96,12 +108,56 @@ namespace Elemental.Authoring.Editor
                 if (parameters[index].name == "EarthMotionTime" &&
                     parameters[index].type == AnimatorControllerParameterType.Float)
                     hasMotionTime = true;
+                if (parameters[index].name == "GaitRate" &&
+                    parameters[index].type == AnimatorControllerParameterType.Float)
+                    hasGaitRate = true;
+                if (parameters[index].name == "Impact" &&
+                    parameters[index].type == AnimatorControllerParameterType.Trigger)
+                    hasImpactTrigger = true;
+                if (parameters[index].name == "Dodge" &&
+                    parameters[index].type == AnimatorControllerParameterType.Trigger)
+                    hasDodgeTrigger = true;
+                if (parameters[index].name == "DodgeX" &&
+                    parameters[index].type == AnimatorControllerParameterType.Float)
+                    hasDodgeX = true;
+                if (parameters[index].name == "DodgeY" &&
+                    parameters[index].type == AnimatorControllerParameterType.Float)
+                    hasDodgeY = true;
             }
-            if (!hasFinalWeight || !hasMotionTime) return false;
-            if (controller.layers.Length == 0 ||
-                FindState(controller.layers[0].stateMachine, "Moving Land") == null)
+            if (!hasFinalWeight || !hasMotionTime || !hasGaitRate || !hasImpactTrigger ||
+                !hasDodgeTrigger || !hasDodgeX || !hasDodgeY)
                 return false;
+            if (controller.layers.Length == 0 ||
+                FindState(controller.layers[0].stateMachine, "Moving Land") == null ||
+                FindState(controller.layers[0].stateMachine, "Knockdown Recovery") == null ||
+                FindState(controller.layers[0].stateMachine, "Dodge") == null ||
+                FindState(controller.layers[0].stateMachine, "Turn In Place") == null)
+                return false;
+            if (controller.layers.Length < 3 ||
+                FindState(controller.layers[2].stateMachine, "Recoil") == null)
+                return false;
+            AnimatorState locomotion = FindState(controller.layers[0].stateMachine, "Locomotion");
+            if (locomotion == null || !locomotion.speedParameterActive ||
+                locomotion.speedParameter != "GaitRate") return false;
             UnityEngine.Object[] assets = AssetDatabase.LoadAllAssetsAtPath(ControllerPath);
+            bool hasAuthoredRun = false;
+            for (int index = 0; index < assets.Length; index++)
+                if (assets[index] is BlendTree locomotionTree &&
+                    locomotionTree.name == "Earth Locomotion 2D")
+                {
+                    if (locomotionTree.blendType != BlendTreeType.Simple1D ||
+                        locomotionTree.blendParameter != "Speed" ||
+                        locomotionTree.children.Length != 4)
+                        return false;
+                    ChildMotion[] children = locomotionTree.children;
+                    for (int childIndex = 0; childIndex < children.Length; childIndex++)
+                        if (Mathf.Abs(children[childIndex].position.y - 6f) < 0.001f &&
+                            children[childIndex].motion != null &&
+                            children[childIndex].motion.name == "Running_A" &&
+                            Mathf.Abs(children[childIndex].timeScale - 1f) < 0.001f)
+                            hasAuthoredRun = true;
+                }
+            if (!hasAuthoredRun) return false;
             for (int index = 0; index < assets.Length; index++)
                 if (assets[index] is BlendTree tree && tree.name == "Earth Curated Casts")
                 {
@@ -114,6 +170,9 @@ namespace Elemental.Authoring.Editor
 
         private static bool AreCuratedImportersCurrent()
         {
+            ModelImporter canonical = AssetImporter.GetAtPath(CharacterPath) as ModelImporter;
+            if (canonical == null || canonical.humanDescription.hasTranslationDoF)
+                return false;
             Avatar sharedAvatar = LoadAvatar(CharacterPath);
             if (sharedAvatar == null || !sharedAvatar.isValid || !sharedAvatar.isHuman) return false;
             for (int pathIndex = 0; pathIndex < CuratedPaths.Length; pathIndex++)
@@ -122,7 +181,8 @@ namespace Elemental.Authoring.Editor
                 ModelImporter importer = AssetImporter.GetAtPath(path) as ModelImporter;
                 if (importer == null || importer.animationType != ModelImporterAnimationType.Human ||
                     importer.avatarSetup != ModelImporterAvatarSetup.CopyFromOther ||
-                    importer.sourceAvatar != sharedAvatar || !importer.importAnimation)
+                    importer.sourceAvatar != sharedAvatar || !importer.importAnimation ||
+                    importer.humanDescription.hasTranslationDoF)
                     return false;
                 ModelImporterClipAnimation[] clips = importer.clipAnimations;
                 if (clips == null || clips.Length == 0) clips = importer.defaultClipAnimations;
@@ -164,13 +224,33 @@ namespace Elemental.Authoring.Editor
             UpgradeController(controller);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log("[Elemental] Curated Earth Humanoid motion tree rebuilt: locomotion, surf, air, casting and impact lanes.");
+            Debug.Log("[Elemental] Curated Earth Humanoid motion tree rebuilt: locomotion, directional dodge, surf, air, casting and impact lanes.");
         }
 
         public static void ConfigureCuratedImporters()
         {
+            ConfigureCanonicalAvatarImporter();
             for (int index = 0; index < CuratedPaths.Length; index++)
                 ConfigureMotionImporter(CuratedPaths[index]);
+        }
+
+        private static void ConfigureCanonicalAvatarImporter()
+        {
+            ModelImporter importer = AssetImporter.GetAtPath(CharacterPath) as ModelImporter;
+            if (importer == null)
+                throw new InvalidOperationException($"Canonical Mixamo character is missing: {CharacterPath}");
+            HumanDescription human = importer.humanDescription;
+            bool dirty = importer.animationType != ModelImporterAnimationType.Human ||
+                         importer.avatarSetup != ModelImporterAvatarSetup.CreateFromThisModel ||
+                         importer.sourceAvatar != null ||
+                         human.hasTranslationDoF;
+            if (!dirty) return;
+            importer.animationType = ModelImporterAnimationType.Human;
+            importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+            importer.sourceAvatar = null;
+            human.hasTranslationDoF = false;
+            importer.humanDescription = human;
+            importer.SaveAndReimport();
         }
 
         public static void UpgradeController(AnimatorController controller)
@@ -179,7 +259,12 @@ namespace Elemental.Authoring.Editor
             AddParameterIfMissing(controller, "Turn", AnimatorControllerParameterType.Float);
             AddParameterIfMissing(controller, "Surfing", AnimatorControllerParameterType.Bool);
             AddParameterIfMissing(controller, "HardLanding", AnimatorControllerParameterType.Bool);
+            AddParameterIfMissing(controller, "Impact", AnimatorControllerParameterType.Trigger);
+            AddParameterIfMissing(controller, "Dodge", AnimatorControllerParameterType.Trigger);
+            AddParameterIfMissing(controller, "DodgeX", AnimatorControllerParameterType.Float);
+            AddParameterIfMissing(controller, "DodgeY", AnimatorControllerParameterType.Float);
             AddParameterIfMissing(controller, "EarthMotionTime", AnimatorControllerParameterType.Float);
+            AddParameterIfMissing(controller, "GaitRate", AnimatorControllerParameterType.Float);
             for (int slot = 1; slot <= 11; slot++)
                 AddParameterIfMissing(controller, PoseWeightParameter(slot), AnimatorControllerParameterType.Float);
             ConfigureBaseLayer(controller);
@@ -201,9 +286,11 @@ namespace Elemental.Authoring.Editor
             if (sharedAvatar == null || !sharedAvatar.isValid || !sharedAvatar.isHuman)
                 throw new InvalidOperationException(
                     "The canonical Mixamo X Bot Humanoid Avatar is missing or invalid.");
+            HumanDescription human = importer.humanDescription;
             bool dirty = importer.animationType != ModelImporterAnimationType.Human ||
                          importer.avatarSetup != ModelImporterAvatarSetup.CopyFromOther ||
-                         importer.sourceAvatar != sharedAvatar || !importer.importAnimation;
+                         importer.sourceAvatar != sharedAvatar || !importer.importAnimation ||
+                         human.hasTranslationDoF;
             importer.animationType = ModelImporterAnimationType.Human;
             // All downloaded clips target the exact same Mixamo X Bot skeleton.
             // Sharing the model Avatar prevents each FBX from inventing a subtly
@@ -211,9 +298,19 @@ namespace Elemental.Authoring.Editor
             importer.avatarSetup = ModelImporterAvatarSetup.CopyFromOther;
             importer.sourceAvatar = sharedAvatar;
             importer.importAnimation = true;
+            if (human.hasTranslationDoF)
+            {
+                human.hasTranslationDoF = false;
+                importer.humanDescription = human;
+            }
 
             ModelImporterClipAnimation[] clips = importer.clipAnimations;
             if (clips == null || clips.Length == 0) clips = importer.defaultClipAnimations;
+            if (string.Equals(path, WalkPath, StringComparison.Ordinal))
+            {
+                clips = ConfigureWalkNeutral(clips, out bool walkNeutralAdded);
+                dirty |= walkNeutralAdded;
+            }
             if (string.Equals(path, StandToCrouchPath, StringComparison.Ordinal))
             {
                 clips = ConfigureNeutralIdleAndCrouchTransition(clips);
@@ -296,6 +393,43 @@ namespace Elemental.Authoring.Editor
             return new[] { neutral, crouch };
         }
 
+        private static ModelImporterClipAnimation[] ConfigureWalkNeutral(
+            ModelImporterClipAnimation[] sourceClips,
+            out bool added)
+        {
+            added = false;
+            if (sourceClips == null || sourceClips.Length == 0) return sourceClips;
+            for (int index = 0; index < sourceClips.Length; index++)
+                if (string.Equals(
+                        sourceClips[index].name,
+                        NeutralWalkClipName,
+                        StringComparison.Ordinal))
+                    return sourceClips;
+
+            ModelImporterClipAnimation source = sourceClips[0];
+            var neutral = new ModelImporterClipAnimation
+            {
+                name = NeutralWalkClipName,
+                takeName = source.takeName,
+                firstFrame = source.firstFrame,
+                lastFrame = Mathf.Min(source.lastFrame, source.firstFrame + 1f),
+                loopTime = true,
+                loopPose = true,
+                lockRootRotation = false,
+                lockRootHeightY = false,
+                lockRootPositionXZ = false,
+                keepOriginalOrientation = true,
+                keepOriginalPositionY = false,
+                keepOriginalPositionXZ = true,
+                heightFromFeet = true
+            };
+            var expanded = new ModelImporterClipAnimation[sourceClips.Length + 1];
+            Array.Copy(sourceClips, expanded, sourceClips.Length);
+            expanded[expanded.Length - 1] = neutral;
+            added = true;
+            return expanded;
+        }
+
         private static bool IsLooping(string path) =>
             string.Equals(path, WalkPath, StringComparison.Ordinal) ||
             string.Equals(path, WalkBackPath, StringComparison.Ordinal) ||
@@ -313,32 +447,37 @@ namespace Elemental.Authoring.Editor
             AnimatorState land = FindOrCreateState(machine, "Land");
             AnimatorState movingLand = FindOrCreateState(machine, "Moving Land");
             AnimatorState hardLand = FindOrCreateState(machine, "Hard Land");
+            AnimatorState knockdownRecovery = FindOrCreateState(machine, "Knockdown Recovery");
+            AnimatorState dodge = FindOrCreateState(machine, "Dodge");
+            AnimatorState turnInPlace = FindOrCreateState(machine, "Turn In Place");
             AnimatorState surfEnter = FindOrCreateState(machine, "Surf Enter");
             AnimatorState surf = FindOrCreateState(machine, "Surf Crouch");
 
             BlendTree tree = FindOrCreateBlendTree(controller, "Earth Locomotion 2D");
-            tree.blendType = BlendTreeType.FreeformCartesian2D;
-            tree.blendParameter = "Turn";
-            tree.blendParameterY = "Speed";
+            tree.blendType = BlendTreeType.Simple1D;
+            tree.blendParameter = "Speed";
             tree.useAutomaticThresholds = false;
             // Keep the complete base layer on one shared X Bot Avatar. The first
             // upright frame of StandToCrouch is a neutral temporary idle; the
             // provided Injured Idle belongs to the damage lane, not locomotion.
-            AnimationClip idle = LoadClip(StandToCrouchPath, NeutralIdleClipName) ?? LoadClip(WalkPath);
+            AnimationClip idle = LoadClip(WalkPath, NeutralWalkClipName) ?? LoadClip(WalkPath);
             AnimationClip walkBack = LoadClip(WalkBackPath);
             AnimationClip walk = LoadClip(WalkPath);
-            AnimationClip run = walk;
-            AnimationClip turn = LoadClip(LeftTurnPath);
+            AnimationClip run = LoadClip(KayKitMovementBasicPath, "Running_A") ?? walk;
             tree.children = new[]
             {
                 Child(idle, 0f, 0f),
                 Child(walkBack, 0f, -2f),
                 Child(walk, 0f, 2f),
-                Child(run, 0f, 6f, timeScale: 1.65f),
-                Child(turn, -1f, 0f),
-                Child(turn, 1f, 0f, mirror: true)
+                // Running_A is a licensed authored Humanoid cycle. A real run at
+                // the high-speed sample prevents the previous slow-walk moonwalk;
+                // GaitRate remains bounded and PlanetMotor still owns displacement.
+                Child(run, 0f, 6f)
             };
             locomotion.motion = tree;
+            locomotion.speed = 1f;
+            locomotion.speedParameter = "GaitRate";
+            locomotion.speedParameterActive = true;
             machine.defaultState = locomotion;
 
             jump.motion = LoadClip(FallingPath) ?? idle;
@@ -346,6 +485,39 @@ namespace Elemental.Authoring.Editor
             land.motion = LoadClip(HardLandingPath) ?? idle;
             movingLand.motion = LoadClip(FallingRollPath) ?? LoadClip(HardLandingPath) ?? idle;
             hardLand.motion = LoadClip(HardLandingPath) ?? land.motion;
+            knockdownRecovery.motion = LoadClip(FallingRollPath) ?? hardLand.motion;
+            // Falling-To-Roll is 64 authored frames. Starting at normalized 0.18
+            // and playing at 1.9x reaches the 0.82 exit in ~0.72 s, matching the
+            // deterministic recoverable-knockdown recovery stage instead of
+            // returning controls halfway through the get-up.
+            knockdownRecovery.speed = 1.9f;
+            BlendTree dodgeTree = FindOrCreateBlendTree(controller, "Earth Directional Dodge");
+            dodgeTree.blendType = BlendTreeType.FreeformDirectional2D;
+            dodgeTree.blendParameter = "DodgeX";
+            dodgeTree.blendParameterY = "DodgeY";
+            dodgeTree.useAutomaticThresholds = false;
+            dodgeTree.children = new[]
+            {
+                Child(LoadClip(KayKitDirectionalDodgePath, "Dodge_Forward") ?? idle, 0f, 1f),
+                Child(LoadClip(KayKitDirectionalDodgePath, "Dodge_Backward") ?? idle, 0f, -1f),
+                Child(LoadClip(KayKitDirectionalDodgePath, "Dodge_Left") ?? idle, -1f, 0f),
+                Child(LoadClip(KayKitDirectionalDodgePath, "Dodge_Right") ?? idle, 1f, 0f)
+            };
+            dodge.motion = dodgeTree;
+            dodge.speed = 1f;
+            AnimationClip leftTurn = LoadClip(LeftTurnPath) ?? idle;
+            BlendTree turnTree = FindOrCreateBlendTree(controller, "Earth Turn In Place");
+            turnTree.blendType = BlendTreeType.Simple1D;
+            turnTree.blendParameter = "Turn";
+            turnTree.useAutomaticThresholds = false;
+            turnTree.children = new[]
+            {
+                Child(leftTurn, 0f, -1f),
+                Child(idle, 0f, 0f),
+                Child(leftTurn, 0f, 1f, true)
+            };
+            turnInPlace.motion = turnTree;
+            turnInPlace.speed = 1f;
             surfEnter.motion = LoadClip(StandToCrouchPath, "Standing Idle To Crouch") ??
                                LoadClip(CrouchIdlePath) ?? idle;
             surf.motion = LoadClip(CrouchIdlePath) ?? idle;
@@ -356,6 +528,9 @@ namespace Elemental.Authoring.Editor
             land.transitions = Array.Empty<AnimatorStateTransition>();
             movingLand.transitions = Array.Empty<AnimatorStateTransition>();
             hardLand.transitions = Array.Empty<AnimatorStateTransition>();
+            knockdownRecovery.transitions = Array.Empty<AnimatorStateTransition>();
+            dodge.transitions = Array.Empty<AnimatorStateTransition>();
+            turnInPlace.transitions = Array.Empty<AnimatorStateTransition>();
             surfEnter.transitions = Array.Empty<AnimatorStateTransition>();
             surf.transitions = Array.Empty<AnimatorStateTransition>();
             machine.anyStateTransitions = Array.Empty<AnimatorStateTransition>();
@@ -369,6 +544,14 @@ namespace Elemental.Authoring.Editor
             AddExitTransition(land, locomotion, 0.70f, 0.10f);
             AddExitTransition(movingLand, locomotion, 0.58f, 0.08f);
             AddExitTransition(hardLand, locomotion, 0.82f, 0.12f);
+            AddExitTransition(knockdownRecovery, locomotion, 0.82f, 0.12f);
+            AnimatorStateTransition dodgeTransition = machine.AddAnyStateTransition(dodge);
+            dodgeTransition.hasExitTime = false;
+            dodgeTransition.duration = 0.045f;
+            dodgeTransition.canTransitionToSelf = false;
+            dodgeTransition.interruptionSource = TransitionInterruptionSource.SourceThenDestination;
+            dodgeTransition.AddCondition(AnimatorConditionMode.If, 0f, "Dodge");
+            AddExitTransition(dodge, locomotion, 0.90f, 0.07f);
             AddConditionTransition(locomotion, surfEnter, "Surfing", AnimatorConditionMode.If, 0f, 0.10f);
             AddConditionTransition(land, surfEnter, "Surfing", AnimatorConditionMode.If, 0f, 0.10f);
             AddConditionTransition(movingLand, surfEnter, "Surfing", AnimatorConditionMode.If, 0f, 0.10f);
@@ -396,10 +579,10 @@ namespace Elemental.Authoring.Editor
                 DirectChild(LoadClip(LeadJabPath) ?? generic, 5),
                 DirectChild(LoadClip(Magic1HCast01Path) ?? generic, 6),
                 DirectChild(LoadClip(Magic2HAttack03Path) ?? generic, 7),
-                DirectChild(LoadClip(Magic1HAttack03Path) ?? generic, 8),
+                DirectChild(LoadClip(MmaKickPath) ?? LoadClip(Magic1HAttack03Path) ?? generic, 8),
                 DirectChild(LoadClip(Magic2HCast01Path) ?? generic, 9),
-                DirectChild(LoadClip(MagicAttack05Path) ?? generic, 10),
-                DirectChild(generic, 11)
+                DirectChild(LoadClip(PunchComboPath) ?? LoadClip(MagicAttack05Path) ?? generic, 10),
+                DirectChild(LoadClip(PunchingPath) ?? LoadClip(Magic1HAttack03Path) ?? generic, 11)
             };
             cast.motion = tree;
             ready.motion = LoadClip(StandToCrouchPath, NeutralIdleClipName) ?? ready.motion;

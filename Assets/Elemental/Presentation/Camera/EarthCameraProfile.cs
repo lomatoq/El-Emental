@@ -54,13 +54,13 @@ namespace Elemental.Presentation.Camera
             return new EarthCameraStateProfile
             {
                 state = state,
-                distance = structure ? 7.55f : airborne ? 7.45f : heavy ? 7f : 6.85f,
-                height = structure ? 4.55f : airborne ? 4.7f : heavy ? 4.05f : 3.85f,
+                distance = structure ? 8.2f : airborne ? 8.05f : heavy ? 7.9f : 7.65f,
+                height = structure ? 3.2f : airborne ? 3.25f : heavy ? 2.95f : 2.7f,
                 shoulderOffset = structure ? 0.62f : 0.74f,
                 fieldOfView = structure ? 63f : airborne ? 64f : heavy ? 59f :
                     state == EarthCameraState.Explore ? 60f : 60f,
-                playerFocusWeight = state == EarthCameraState.Explore ? 0.8f : 1f,
-                aimFocusWeight = state == EarthCameraState.Explore ? 2f : 0.7f,
+                playerFocusWeight = state == EarthCameraState.Explore ? 1.35f : 1.25f,
+                aimFocusWeight = state == EarthCameraState.Explore ? 0.75f : 0.7f,
                 heldFocusWeight = state == EarthCameraState.HoldMass ? 1.15f : 0.15f,
                 constructFocusWeight = structure ? 1f : 0.12f,
                 velocityLookAhead = airborne ? 2.1f : 1.15f,
@@ -81,7 +81,7 @@ namespace Elemental.Presentation.Camera
     {
         [SerializeField] private EarthCameraStateProfile[] states = CreateDefaults();
         [Header("Composition")]
-        [SerializeField, Min(0.5f)] private float maximumFocusDistance = 7.5f;
+        [SerializeField, Min(0.5f)] private float maximumFocusDistance = 4.5f;
         [SerializeField, Min(0.1f)] private float pullInSpeed = 24f;
         [SerializeField, Min(0.1f)] private float releaseSpeed = 4.5f;
         [SerializeField, Min(0f)] private float occlusionReleaseDelay = 0.12f;

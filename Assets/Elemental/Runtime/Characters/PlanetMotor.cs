@@ -34,6 +34,7 @@ namespace Elemental.Runtime.Characters
 
         [Header("Grounding")]
         [SerializeField, Min(0.01f)] private float groundProbeDistance = 0.35f;
+        [SerializeField, Range(0.001f, 0.10f)] private float groundContactSkin = 0.01f;
         [SerializeField, Range(0f, 89f)] private float maxSlopeAngle = 55f;
         [SerializeField, Min(0f)] private float adhesionSpring = 90f;
         [SerializeField, Min(0f)] private float adhesionDamping = 12f;
@@ -76,6 +77,7 @@ namespace Elemental.Runtime.Characters
         public LayerMask GroundMask => groundMask;
         public float MaximumSlopeAngle => maxSlopeAngle;
         public float GroundProbeDistance => groundProbeDistance;
+        public float GroundContactSkin => groundContactSkin;
         public PlanetMotorCommand LastCommand { get; private set; }
         public uint MovingSurfaceId => _movingSupportTicks > 0 ? _movingSupport.SurfaceId : 0u;
         public uint MovingSurfaceGeneration => _movingSupportTicks > 0 ? _movingSupport.Generation : 0u;
@@ -242,6 +244,12 @@ namespace Elemental.Runtime.Characters
             airControl = Mathf.Clamp01(configuredAirControl);
         }
 
+        public void ConfigureGroundContactSkin(float configuredContactSkin)
+        {
+            groundContactSkin = Mathf.Clamp(configuredContactSkin, 0.001f, 0.10f);
+            ApplyGroundContactSkin();
+        }
+
         public void ConfigureFeel(PlanetMotorFeelProfile configuredProfile)
         {
             feelProfile = configuredProfile;
@@ -295,6 +303,7 @@ namespace Elemental.Runtime.Characters
             ApplyFeelProfile();
             targetBody.useGravity = false;
             targetBody.maxAngularVelocity = 20f;
+            ApplyGroundContactSkin();
         }
 
         private void ResolveReferences()
@@ -321,6 +330,12 @@ namespace Elemental.Runtime.Characters
                     feelProfile.MaximumSlopeAngle))
                 : 0u;
             _motionRecorder.Configure(0u, profileHash);
+        }
+
+        private void ApplyGroundContactSkin()
+        {
+            if (capsule != null)
+                capsule.contactOffset = Mathf.Clamp(groundContactSkin, 0.001f, 0.10f);
         }
 
         private void FixedUpdate()

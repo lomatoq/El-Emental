@@ -10,15 +10,9 @@ namespace Elemental.Presentation.VFX
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
-            if (Object.FindAnyObjectByType<EarthSurfIkOwnershipInstaller>(
-                    FindObjectsInactive.Include) != null)
-                return;
-            var host = new GameObject("Earth Surf IK Ownership Installer")
-            {
-                hideFlags = HideFlags.HideAndDontSave
-            };
-            Object.DontDestroyOnLoad(host);
-            host.AddComponent<EarthSurfIkOwnershipInstaller>();
+            // Retained as an empty migration hook. Surf no longer installs a
+            // parallel IK/pelvis stack; EarthFootContactController owns the same
+            // support through the normal contact pipeline.
         }
     }
 
@@ -58,7 +52,7 @@ namespace Elemental.Presentation.VFX
 
         private void Awake() => _animator = GetComponent<Animator>();
 
-        private void OnAnimatorIK(int layerIndex)
+        private void LegacyAnimatorIkDisabled(int layerIndex)
         {
             if (layerIndex != 0 || _animator == null) return;
             BodyPosition = _animator.bodyPosition;
@@ -99,7 +93,7 @@ namespace Elemental.Presentation.VFX
             _motor = GetComponentInParent<PlanetMotor>();
         }
 
-        private void OnAnimatorIK(int layerIndex)
+        private void LegacyAnimatorIkDisabled(int layerIndex)
         {
             if (layerIndex != 0 || _animator == null || _rescue == null ||
                 _baseline == null || _baseline.CapturedFrame != Time.frameCount ||

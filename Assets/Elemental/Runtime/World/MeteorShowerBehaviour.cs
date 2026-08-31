@@ -21,6 +21,7 @@ namespace Elemental.Runtime.World
         [SerializeField] private ParticleSystem distantStreaks;
         [SerializeField] private Material meteorMaterial;
         [SerializeField] private EarthPhysicsFeelProfile physicsFeelProfile;
+        [SerializeField] private EarthEffectsTuningProfile effectsProfile;
 
         private readonly PhysicalMeteor[] _meteors = new PhysicalMeteor[MaximumPhysicalPool];
         private readonly ApproachMeteor[] _approaches = new ApproachMeteor[MaximumApproachPool];
@@ -64,7 +65,8 @@ namespace Elemental.Runtime.World
             Transform center,
             MagicExecutor executor,
             Material material,
-            ParticleSystem streaks)
+            ParticleSystem streaks,
+            EarthEffectsTuningProfile configuredEffectsProfile = null)
         {
             profile = configuredProfile;
             voxelPlanet = planet;
@@ -72,7 +74,9 @@ namespace Elemental.Runtime.World
             magicExecutor = executor;
             meteorMaterial = material;
             distantStreaks = streaks;
+            effectsProfile = configuredEffectsProfile;
             EnsurePool();
+            ApplyTrailTuning();
             ConfigureDistantStreaks();
             ScheduleNext(true);
         }
@@ -187,11 +191,15 @@ namespace Elemental.Runtime.World
                     meteorObject.GetComponent<Collider>(),
                     EarthPhysicsBodyClass.HeavyBlock);
                 TrailRenderer trail = meteorObject.AddComponent<TrailRenderer>();
-                trail.time = 0.95f;
+                trail.time = effectsProfile != null
+                    ? effectsProfile.Meteor.PhysicalTrailLifetime
+                    : 0.95f;
                 trail.startWidth = 0.34f;
                 trail.endWidth = 0f;
                 trail.minVertexDistance = 0.10f;
-                trail.sharedMaterial = meteorMaterial;
+                trail.sharedMaterial = effectsProfile != null
+                    ? effectsProfile.Materials.MeteorStreaks
+                    : meteorMaterial;
                 trail.emitting = false;
                 PhysicalMeteor meteor = meteorObject.AddComponent<PhysicalMeteor>();
                 meteor.Configure(this, body);
@@ -209,11 +217,15 @@ namespace Elemental.Runtime.World
                 MeshRenderer renderer = approachObject.AddComponent<MeshRenderer>();
                 renderer.sharedMaterial = meteorMaterial;
                 TrailRenderer trail = approachObject.AddComponent<TrailRenderer>();
-                trail.time = 1.55f;
+                trail.time = effectsProfile != null
+                    ? effectsProfile.Meteor.ApproachTrailLifetime
+                    : 1.55f;
                 trail.startWidth = 0.25f;
                 trail.endWidth = 0f;
                 trail.minVertexDistance = 0.22f;
-                trail.sharedMaterial = meteorMaterial;
+                trail.sharedMaterial = effectsProfile != null
+                    ? effectsProfile.Materials.MeteorStreaks
+                    : meteorMaterial;
                 trail.emitting = false;
                 approachObject.SetActive(false);
                 _approaches[index] = new ApproachMeteor
@@ -360,14 +372,50 @@ namespace Elemental.Runtime.World
 
         private void ConfigureDistantStreaks()
         {
-            if (distantStreaks == null || profile == null) return;
+            if (distantStreaks == null) return;
+            EarthMeteorEffectsTuning tuning = effectsProfile != null ? effectsProfile.Meteor : null;
+            if (tuning != null)
+                EarthParticleSystemTuningApplier.Apply(
+                    distantStreaks, tuning.Streaks, effectsProfile.Materials.MeteorStreaks);
             ParticleSystem.EmissionModule emission = distantStreaks.emission;
-            emission.rateOverTime = profile.Enabled ? Mathf.Max(0.24f, profile.DistantRatePerSecond) : 0f;
+            emission.rateOverTime = profile != null && profile.Enabled
+                ? tuning != null ? tuning.DistantRate : Mathf.Max(0.24f, profile.DistantRatePerSecond)
+                : 0f;
             ParticleSystem.MainModule main = distantStreaks.main;
-            main.maxParticles = Mathf.Max(96, profile.DistantPoolSize);
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.8f, 2.2f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(18f, 46f);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.05f, 0.22f);
+            if (tuning == null && profile != null)
+            {
+                main.maxParticles = Mathf.Max(96, profile.DistantPoolSize);
+                main.startLifetime = new ParticleSystem.MinMaxCurve(0.8f, 2.2f);
+                main.startSpeed = new ParticleSystem.MinMaxCurve(18f, 46f);
+                main.startSize = new ParticleSystem.MinMaxCurve(0.05f, 0.22f);
+            }
+        }
+
+        private void ApplyTrailTuning()
+        {
+            Material trailMaterial = effectsProfile != null
+                ? effectsProfile.Materials.MeteorStreaks
+                : meteorMaterial;
+            for (int index = 0; index < _meteors.Length; index++)
+            {
+                TrailRenderer trail = _meteors[index] != null
+                    ? _meteors[index].GetComponent<TrailRenderer>()
+                    : null;
+                if (trail == null) continue;
+                trail.time = effectsProfile != null
+                    ? effectsProfile.Meteor.PhysicalTrailLifetime
+                    : 0.95f;
+                trail.sharedMaterial = trailMaterial;
+            }
+            for (int index = 0; index < _approaches.Length; index++)
+            {
+                TrailRenderer trail = _approaches[index]?.Trail;
+                if (trail == null) continue;
+                trail.time = effectsProfile != null
+                    ? effectsProfile.Meteor.ApproachTrailLifetime
+                    : 1.55f;
+                trail.sharedMaterial = trailMaterial;
+            }
         }
 
         private bool TryConsumeTerrainEdit()

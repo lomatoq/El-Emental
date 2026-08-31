@@ -68,6 +68,7 @@ Elemental.Authoring
 - ReplayRecorder will own the ordered command stream and seeds.
 - Structural authoring assets own immutable meshes and baked definitions. A runtime Earth structure copies those definitions into caller-owned bounded buffers; `EarthBondDamageSolver` and `EarthIslandSolver` own no Unity objects and allocate no storage.
 - Structural provenance is stable across proxy switches and pooling: structure, piece and bond IDs are canonical, while Rigidbody handles are replaceable adapters. World/foundation bonds use the explicit `-1` endpoint rather than a scene-object reference.
+- Imported arena fracture content crosses the Blender/Unity boundary as an FBX plus a deterministic JSON sidecar. Editor compilers may create `EarthFractureAsset` and cause-aware catalog assets only after topology, face-mask, rest-seam, foundation and connected-graph validation; scene visibility never substitutes for activation authority.
 
 No subsystem may locate these owners through a global static registry.
 
@@ -89,6 +90,12 @@ source ID/generation, charge, wheel parameter, modifiers, ticks, seed, and optio
 raw pointer streams and screen pixels are not authoritative.
 
 Simulation emits typed past-tense events such as TerrainEdited, ImpactOccurred, AbilityRejected, and CharacterStateChanged. Presentation may route those events to effects without feeding visual state back into simulation.
+
+Character impact resolution emits one `EarthWorldResponseEvent` after the gameplay
+outcome has been accepted. Its deterministic response ID is the common identity for
+dust, indirect debris, surface scars, audio and camera impulse. The runtime fan-out may
+adapt that fact into existing pooled presentation streams, but it must not call damage,
+resolve an outcome again, or manufacture a second gameplay hit.
 
 Dense same-frame Earth impact bursts are presentation-batched after the typed event boundary. The accumulator caps particles and camera requests while retaining an impulse-weighted contact frame, maximum energy and deterministic seed. It cannot merge, suppress or rewrite the canonical impact, bond damage or replay stream that produced those events.
 

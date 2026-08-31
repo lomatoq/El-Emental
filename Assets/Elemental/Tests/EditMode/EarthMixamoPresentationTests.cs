@@ -2,6 +2,7 @@ using System.Linq;
 using Elemental.Authoring.Editor;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEngine;
 
 namespace Elemental.Tests.EditMode
@@ -66,6 +67,71 @@ namespace Elemental.Tests.EditMode
             Assert.That(dependencies, Does.Contain(WalkPath));
             Assert.That(dependencies, Does.Contain(WalkBackPath));
             Assert.That(dependencies, Does.Contain(PushPath));
+            Assert.That(dependencies, Does.Contain(EarthHumanoidMotionSetup.FallingRollPath));
+            Assert.That(dependencies, Does.Contain(EarthHumanoidMotionSetup.HardLandingPath));
+            Assert.That(dependencies, Does.Contain(EarthHumanoidMotionSetup.PunchComboPath));
+            Assert.That(dependencies, Does.Contain(EarthHumanoidMotionSetup.MmaKickPath));
+            Assert.That(dependencies, Does.Contain(EarthHumanoidMotionSetup.PunchingPath));
+            Assert.That(dependencies, Does.Contain(EarthHumanoidMotionSetup.SideHitPath));
+            Assert.That(dependencies, Does.Contain(EarthHumanoidMotionSetup.KayKitDirectionalDodgePath));
+            Assert.That(dependencies, Does.Contain(EarthHumanoidMotionSetup.KayKitMovementBasicPath),
+                "High-speed locomotion must use the licensed authored Running_A cycle.");
+            Assert.That(dependencies, Does.Contain(EarthHumanoidMotionSetup.LeftTurnPath),
+                "Tank steering needs an authored turn-in-place instead of rotating a neutral idle.");
+        }
+
+        [Test]
+        public void ControllerContainsExplicitRecoverableKnockdownRecoveryState()
+        {
+            AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+            Assert.That(controller, Is.Not.Null);
+            Assert.That(controller.layers, Is.Not.Empty);
+            Assert.That(controller.layers[0].stateMachine.states.Any(child =>
+                child.state != null && child.state.name == "Knockdown Recovery"), Is.True);
+            Assert.That(controller.layers, Has.Length.GreaterThanOrEqualTo(3));
+            Assert.That(controller.layers[2].stateMachine.states.Any(child =>
+                child.state != null && child.state.name == "Recoil" &&
+                child.state.motion != null), Is.True,
+                "Player and bot need the same authored hit-recoil clip on the impact lane.");
+            Assert.That(controller.parameters.Any(parameter =>
+                parameter.name == "Impact" &&
+                parameter.type == AnimatorControllerParameterType.Trigger), Is.True);
+            Assert.That(controller.layers[0].stateMachine.states.Any(child =>
+                child.state != null && child.state.name == "Dodge" &&
+                child.state.motion is BlendTree tree && tree.children.Length == 4), Is.True,
+                "The base graph must contain the four-way authored KayKit dodge tree.");
+            Assert.That(controller.layers[0].stateMachine.states.Any(child =>
+                child.state != null && child.state.name == "Turn In Place" &&
+                child.state.motion is BlendTree tree && tree.children.Length == 3), Is.True,
+                "The base graph must contain mirrored authored left/right pivot motion.");
+            Assert.That(controller.parameters.Any(parameter =>
+                parameter.name == "Dodge" &&
+                parameter.type == AnimatorControllerParameterType.Trigger), Is.True);
+            Assert.That(controller.parameters.Any(parameter =>
+                parameter.name == "DodgeX" &&
+                parameter.type == AnimatorControllerParameterType.Float), Is.True);
+            Assert.That(controller.parameters.Any(parameter =>
+                parameter.name == "DodgeY" &&
+                parameter.type == AnimatorControllerParameterType.Float), Is.True);
+        }
+
+        [Test]
+        public void DirectionalKayKitDodgesRemainFourValidHumanoidClips()
+        {
+            ModelImporter importer = AssetImporter.GetAtPath(
+                EarthHumanoidMotionSetup.KayKitDirectionalDodgePath) as ModelImporter;
+            Assert.That(importer, Is.Not.Null);
+            Assert.That(importer.animationType, Is.EqualTo(ModelImporterAnimationType.Human));
+            string[] required = { "Dodge_Forward", "Dodge_Backward", "Dodge_Left", "Dodge_Right" };
+            AnimationClip[] clips = AssetDatabase.LoadAllAssetsAtPath(
+                    EarthHumanoidMotionSetup.KayKitDirectionalDodgePath)
+                .OfType<AnimationClip>()
+                .Where(candidate => !candidate.name.StartsWith("__preview__"))
+                .ToArray();
+            for (int index = 0; index < required.Length; index++)
+                Assert.That(clips.Any(candidate =>
+                    candidate.name == required[index] && candidate.isHumanMotion), Is.True,
+                    required[index]);
         }
 
         [TestCase(EarthHumanoidMotionSetup.HardLandingPath)]

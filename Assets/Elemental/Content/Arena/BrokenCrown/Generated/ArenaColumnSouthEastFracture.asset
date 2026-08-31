@@ -1,0 +1,127 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8f760538da7e7941aecf49f49ce0579, type: 3}
+  m_Name: ArenaColumnSouthEastFracture
+  m_EditorClassIdentifier: Elemental.Authoring::Elemental.Authoring.Fracture.EarthFractureAsset
+  schemaVersion: 3
+  intactRenderMesh: {fileID: -5877294090923454748, guid: f69e60c4c194a2648a804484ba1ab563, type: 3}
+  intactColliderMesh: {fileID: -5877294090923454748, guid: f69e60c4c194a2648a804484ba1ab563, type: 3}
+  pieces:
+  - id: 1
+    parentPieceIndex: -1
+    hierarchyLevel: 0
+    flags: 3
+    restLocalPosition: {x: -7.5615253, y: -3.160542, z: 1.9178487}
+    restLocalRotation: {x: -0.000000021855692, y: 0, z: 0, w: 1}
+    restLocalScale: {x: 1, y: 0.9999999, z: 0.9999999}
+    mass: 1567.9943
+    volume: 0.68173665
+    localCenterOfMass: {x: 0, y: 0, z: 0}
+    materialId: 1
+    renderMesh: {fileID: -4881616469146232853, guid: f69e60c4c194a2648a804484ba1ab563, type: 3}
+    colliderMesh: {fileID: -871073393271024843, guid: f69e60c4c194a2648a804484ba1ab563, type: 3}
+    faceFlags: 7
+    exteriorSubmesh: 0
+    interiorSubmesh: 1
+    magicMaskChannel: 2
+  - id: 2
+    parentPieceIndex: -1
+    hierarchyLevel: 0
+    flags: 11
+    restLocalPosition: {x: -7.655794, y: -3.0935047, z: 2.7735846}
+    restLocalRotation: {x: -0.000000021855692, y: 0, z: 0, w: 1}
+    restLocalScale: {x: 1, y: 0.9999999, z: 0.9999999}
+    mass: 2145.3591
+    volume: 0.9327648
+    localCenterOfMass: {x: 0, y: 0, z: 0}
+    materialId: 1
+    renderMesh: {fileID: 7090631733080296799, guid: f69e60c4c194a2648a804484ba1ab563, type: 3}
+    colliderMesh: {fileID: 8236694035410164094, guid: f69e60c4c194a2648a804484ba1ab563, type: 3}
+    faceFlags: 7
+    exteriorSubmesh: 0
+    interiorSubmesh: 1
+    magicMaskChannel: 2
+  - id: 3
+    parentPieceIndex: -1
+    hierarchyLevel: 0
+    flags: 3
+    restLocalPosition: {x: -7.8031297, y: -3.3433883, z: 0.40478748}
+    restLocalRotation: {x: -0.000000021855692, y: 0, z: 0, w: 1}
+    restLocalScale: {x: 1, y: 0.9999999, z: 0.9999999}
+    mass: 1118.7795
+    volume: 0.4864259
+    localCenterOfMass: {x: 0, y: 0, z: 0}
+    materialId: 1
+    renderMesh: {fileID: 2955963289900156466, guid: f69e60c4c194a2648a804484ba1ab563, type: 3}
+    colliderMesh: {fileID: -1028009861823924606, guid: f69e60c4c194a2648a804484ba1ab563, type: 3}
+    faceFlags: 7
+    exteriorSubmesh: 0
+    interiorSubmesh: 1
+    magicMaskChannel: 2
+  - id: 4
+    parentPieceIndex: -1
+    hierarchyLevel: 0
+    flags: 3
+    restLocalPosition: {x: -7.7224236, y: -3.2438874, z: 1.098339}
+    restLocalRotation: {x: -0.000000021855692, y: 0, z: 0, w: 1}
+    restLocalScale: {x: 1, y: 0.9999999, z: 0.9999999}
+    mass: 1520.2516
+    volume: 0.660979
+    localCenterOfMass: {x: 0, y: 0, z: 0}
+    materialId: 1
+    renderMesh: {fileID: -2589492559278149525, guid: f69e60c4c194a2648a804484ba1ab563, type: 3}
+    colliderMesh: {fileID: 2373563010232166710, guid: f69e60c4c194a2648a804484ba1ab563, type: 3}
+    faceFlags: 7
+    exteriorSubmesh: 0
+    interiorSubmesh: 1
+    magicMaskChannel: 2
+  bonds:
+  - id: 1
+    pieceA: 0
+    pieceB: 3
+    flags: 2
+    localCentroid: {x: -7.6922836, y: -3.1263742, z: 1.5228862}
+    localNormalA: {x: -0.19170436, y: -0.09930303, z: -0.97641605}
+    contactArea: 0.94110584
+    tensileStrength: 9.701061
+    shearStrength: 12.126327
+    compressionStrength: 33.953712
+  - id: 2
+    pieceA: 0
+    pieceB: 1
+    flags: 2
+    localCentroid: {x: -7.646426, y: -3.2091963, z: 2.5224462}
+    localNormalA: {x: -0.109168224, y: 0.07763277, z: 0.9909871}
+    contactArea: 0.7035266
+    tensileStrength: 8.38765
+    shearStrength: 10.484561
+    compressionStrength: 29.356771
+  - id: 3
+    pieceA: 2
+    pieceB: 3
+    flags: 2
+    localCentroid: {x: -7.8070593, y: -3.4098287, z: 0.65237284}
+    localNormalA: {x: 0.114430435, y: 0.1410789, z: 0.98336285}
+    contactArea: 0.93728554
+    tensileStrength: 9.681351
+    shearStrength: 12.101688
+    compressionStrength: 33.884727
+  - id: 4
+    pieceA: 2
+    pieceB: -1
+    flags: 3
+    localCentroid: {x: -7.8031297, y: -3.3433883, z: 0.12186501}
+    localNormalA: {x: 0, y: -1, z: 0}
+    contactArea: 0.21647738
+    tensileStrength: 6.746434
+    shearStrength: 8.433043
+    compressionStrength: 23.612518

@@ -1,5 +1,10 @@
 Shader "Elemental/Atmosphere Fullscreen"
 {
+    Properties
+    {
+        _CloudNoise("Cloud Noise", 2D) = "gray" {}
+    }
+
     SubShader
     {
         Tags { "RenderPipeline"="UniversalPipeline" }
@@ -18,8 +23,55 @@ Shader "Elemental/Atmosphere Fullscreen"
             float4 _ElementalSunDirection;
             float4 _ElementalPlanetCenterRadius;
             float4 _ElementalAtmosphereParams;
+            float4 _ElementalAerialPerspectiveParams;
+            float4 _ElementalCloudParams;
             float4 _ElementalRayleighColor;
+            TEXTURE2D(_CloudNoise);
+            SAMPLER(sampler_CloudNoise);
+            float4 _CloudNoise_ST;
             float4 _ElementalMieColor;
+            float _ElementalNight01;
+            float _ElementalNightOpacity;
+
+            half3 ApplyCloudCue(
+                half3 baseColor,
+                float3 ray,
+                float3 cameraRadial,
+                half day,
+                half geometryMask)
+            {
+                if (geometryMask > 0.5h || _ElementalCloudParams.y <= 0.001)
+                    return baseColor;
+
+                float rayDenominator = max(0.30, abs(ray.y) + 0.22);
+                float2 cloudUv = ray.xz / rayDenominator;
+                cloudUv *= max(0.1, _ElementalCloudParams.z);
+                float cloudTime = _Time.y * _ElementalCloudParams.w;
+                cloudUv += float2(cloudTime, cloudTime * 0.37);
+                half cloudA = SAMPLE_TEXTURE2D(
+                    _CloudNoise, sampler_CloudNoise, cloudUv).r;
+                half cloudB = SAMPLE_TEXTURE2D(
+                    _CloudNoise, sampler_CloudNoise,
+                    cloudUv * 0.43 + float2(cloudTime * -0.31, cloudTime * 0.19)).r;
+                half cloudNoise = cloudA * 0.68h + cloudB * 0.32h;
+                half coverage = saturate((half)_ElementalCloudParams.x);
+                half cloud = smoothstep(
+                    coverage, min(0.98h, coverage + 0.18h), cloudNoise);
+                half upDot = (half)dot(ray, cameraRadial);
+                // The playable diorama camera looks down across the planet limb,
+                // so its visible sky occupies negative camera-radial elevations.
+                half cloudBand = smoothstep(-0.62h, -0.30h, upDot) *
+                                 (1.0h - smoothstep(0.36h, 0.78h, upDot));
+                half cloudAlpha = cloud * cloudBand *
+                                  saturate((half)_ElementalCloudParams.y) *
+                                  (1.0h - saturate((half)_ElementalNight01)) *
+                                  (0.58h + day * 0.42h);
+                half3 cloudColor = lerp(
+                    _ElementalMieColor.rgb,
+                    half3(0.92h, 0.94h, 0.96h),
+                    0.72h);
+                return lerp(baseColor, cloudColor, cloudAlpha);
+            }
 
             half4 Frag(Varyings input) : SV_Target
             {
@@ -35,29 +87,74 @@ Shader "Elemental/Atmosphere Fullscreen"
                 float innerRadius = max(0.01, _ElementalPlanetCenterRadius.w);
                 float outerRadius = innerRadius * max(1.001, _ElementalAtmosphereParams.x);
                 float3 offset = _WorldSpaceCameraPos - center;
+                float3 cameraRadial = SafeNormalize(offset);
+                float3 sunDirection = SafeNormalize(_ElementalSunDirection.xyz);
+                half cameraDay = (half)saturate(dot(cameraRadial, sunDirection) * 0.5 + 0.5);
+                float rawDepth = SampleSceneDepth(uv);
+                #if UNITY_REVERSED_Z
+                    bool hasGeometry = rawDepth > 0.00001;
+                #else
+                    bool hasGeometry = rawDepth < 0.99999;
+                #endif
+                // The fullscreen atmosphere owns sky/limb scattering only. Applying
+                // a single midpoint-density estimate to nearby opaque geometry made
+                // broad screen-space altitude bands crawl across the arena, character
+                // and shadows. Those bands survived the albedo/unlit debug views and
+                // vanished only when this pass was disabled. Preserve authored surface
+                // shading exactly; distant world fog needs a dedicated multi-sample
+                // aerial-perspective pass instead of this cheap sky approximation.
+                if (hasGeometry)
+                    return source;
                 float b = dot(offset, ray);
                 float c = dot(offset, offset) - outerRadius * outerRadius;
                 float discriminant = b * b - c;
-                if (discriminant <= 0.0) return source;
+                if (discriminant <= 0.0)
+                    return half4(ApplyCloudCue(
+                        source.rgb, ray, cameraRadial, cameraDay,
+                        0.0h), source.a);
                 float root = sqrt(discriminant);
                 float enter = max(0.0, -b - root);
                 float leave = max(0.0, -b + root);
                 float segment = max(0.0, leave - enter);
-                float rawDepth = SampleSceneDepth(uv);
-                float eyeDepth = LinearEyeDepth(rawDepth, _ZBufferParams);
-                if (rawDepth > 0.00001 && rawDepth < 0.99999) segment = min(segment, eyeDepth);
+                if (segment <= 0.0001) return source;
+
                 float thickness = max(0.01, outerRadius - innerRadius);
-                float density = saturate(segment / (thickness * 5.0));
                 float3 samplePoint = _WorldSpaceCameraPos + ray * (enter + segment * 0.5);
                 float3 radial = SafeNormalize(samplePoint - center);
-                float horizon = pow(saturate(1.0 - abs(dot(ray, radial))), max(0.2, _ElementalAtmosphereParams.w));
-                float3 sunDirection = SafeNormalize(_ElementalSunDirection.xyz);
+                float normalizedAltitude = saturate(
+                    (distance(samplePoint, center) - innerRadius) / thickness);
+                float heightDensity = exp2(
+                    -normalizedAltitude * max(0.1, _ElementalAerialPerspectiveParams.z) * 3.0);
+                float distanceDensity = 1.0 - exp2(
+                    -segment / max(1.0, _ElementalAerialPerspectiveParams.y));
+                float horizon = pow(
+                    saturate(1.0 - abs(dot(ray, radial))),
+                    max(0.2, _ElementalAtmosphereParams.w));
                 float day = saturate(dot(radial, sunDirection) * 0.5 + 0.5);
-                float forwardMie = pow(saturate(dot(ray, sunDirection)), 18.0);
-                half3 scatter = _ElementalRayleighColor.rgb * _ElementalAtmosphereParams.y;
-                scatter += _ElementalMieColor.rgb * forwardMie * _ElementalAtmosphereParams.z;
-                half alpha = saturate(density * lerp(_ElementalAtmosphereParams.w * 0.08, 0.5, day) * (0.3 + horizon));
-                return half4(source.rgb + scatter * alpha, source.a);
+                float forwardMie = pow(saturate(dot(ray, sunDirection)), 12.0);
+                float opticalDepth = distanceDensity * heightDensity *
+                                     max(0.0, _ElementalAerialPerspectiveParams.x) *
+                                     (0.58 + horizon * 0.72);
+                float nightVisibility = lerp(1.0, 0.38, saturate(_ElementalNight01));
+                half extinction = min(
+                    max(0.0, _ElementalAerialPerspectiveParams.w),
+                    saturate(opticalDepth) * nightVisibility);
+
+                half3 scatter = _ElementalRayleighColor.rgb *
+                                (_ElementalAtmosphereParams.y * (0.42 + day * 0.58));
+                scatter += _ElementalMieColor.rgb * forwardMie *
+                           _ElementalAtmosphereParams.z;
+                half nightScatter = lerp(1.0h, (half)_ElementalNightOpacity,
+                                         saturate((half)_ElementalNight01));
+                scatter = saturate(scatter * nightScatter);
+                half transmittance = 1.0h - extinction;
+                half3 composed = source.rgb * transmittance + scatter * extinction;
+
+                composed = ApplyCloudCue(
+                    composed, ray, cameraRadial, (half)day,
+                    0.0h);
+
+                return half4(composed, source.a);
             }
             ENDHLSL
         }

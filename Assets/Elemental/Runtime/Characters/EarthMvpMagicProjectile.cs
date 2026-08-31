@@ -18,6 +18,7 @@ namespace Elemental.Runtime.Characters
     public sealed class EarthMvpMagicProjectile : MonoBehaviour
     {
         private EarthFragment _fragment;
+        private EarthFragment _subscribedFragment;
         private ActiveRagdollPuppet _target;
         private EarthMvpDuelController _duel;
         private EarthMvpBotController _owner;
@@ -42,6 +43,7 @@ namespace Elemental.Runtime.Characters
             float lifetimeSeconds)
         {
             _fragment = fragment;
+            SubscribeToFragment();
             _target = target;
             _duel = duel;
             _owner = owner;
@@ -105,18 +107,18 @@ namespace Elemental.Runtime.Characters
                 CompleteReintegration();
         }
 
-        private void OnCollisionEnter(Collision collision)
+        private void HandleSurfaceImpact(EarthProjectileSurfaceImpact impact)
         {
-            if (State != EarthMvpProjectileState.Armed || collision == null || collision.contactCount == 0) return;
+            if (State != EarthMvpProjectileState.Armed) return;
             State = EarthMvpProjectileState.SpentDynamic;
             _groundedAt = Time.time;
-            Collider hit = collision.collider;
+            Collider hit = impact.Surface;
             bool hitTarget = _target != null &&
                              (_target.OwnsCollider(hit) ||
                               (hit != null &&
                                (hit.transform == _target.transform ||
                                 hit.transform.IsChildOf(_target.transform))));
-            Vector3 point = collision.GetContact(0).point;
+            Vector3 point = impact.Point;
             if (hitTarget)
             {
                 Vector3 up = _target.transform.up;
@@ -125,6 +127,12 @@ namespace Elemental.Runtime.Characters
                 EarthCharacterImpactTarget impactTarget = hit != null
                     ? hit.GetComponentInParent<EarthCharacterImpactTarget>()
                     : null;
+                if (impactTarget == null && _target != null)
+                {
+                    impactTarget = _target.GetComponent<EarthCharacterImpactTarget>();
+                    if (impactTarget == null)
+                        impactTarget = _target.GetComponentInParent<EarthCharacterImpactTarget>();
+                }
                 if (impactTarget != null)
                 {
                     float targetMass = impactTarget.Body != null ? impactTarget.Body.mass : 42f;
@@ -173,8 +181,30 @@ namespace Elemental.Runtime.Characters
             !float.IsFinite(position.x) || !float.IsFinite(position.y) ||
             !float.IsFinite(position.z) || position.sqrMagnitude > 62500f;
 
+        private void Awake()
+        {
+            if (_fragment == null) _fragment = GetComponent<EarthFragment>();
+        }
+
+        private void OnEnable() => SubscribeToFragment();
+
+        private void SubscribeToFragment()
+        {
+            EarthFragment resolved = _fragment != null ? _fragment : GetComponent<EarthFragment>();
+            if (_subscribedFragment == resolved) return;
+            if (_subscribedFragment != null)
+                _subscribedFragment.SurfaceImpactAccepted -= HandleSurfaceImpact;
+            _fragment = resolved;
+            _subscribedFragment = resolved;
+            if (_subscribedFragment != null)
+                _subscribedFragment.SurfaceImpactAccepted += HandleSurfaceImpact;
+        }
+
         private void OnDisable()
         {
+            if (_subscribedFragment != null)
+                _subscribedFragment.SurfaceImpactAccepted -= HandleSurfaceImpact;
+            _subscribedFragment = null;
             State = EarthMvpProjectileState.Inactive;
             _target = null;
             _duel = null;

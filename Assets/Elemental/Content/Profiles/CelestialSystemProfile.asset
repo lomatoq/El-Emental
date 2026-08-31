@@ -19,15 +19,18 @@ MonoBehaviour:
   startTime01: 0.21
   timeScale: 1
   paused: 0
-  daylightIntensity: 1.45
-  moonlightIntensity: 0.72
-  dayColor: {r: 1, g: 0.88, b: 0.68, a: 1}
-  duskColor: {r: 1, g: 0.42, b: 0.2, a: 1}
-  nightAmbient: {r: 0.12, g: 0.16, b: 0.28, a: 1}
+  daylightIntensity: 1.55
+  moonlightIntensity: 0.22
+  dayColor: {r: 1, g: 0.9, b: 0.74, a: 1}
+  duskColor: {r: 1, g: 0.55, b: 0.3, a: 1}
+  dayAmbientSky: {r: 0.18, g: 0.23, b: 0.31, a: 1}
+  dayAmbientEquator: {r: 0.12, g: 0.105, b: 0.1, a: 1}
+  dayAmbientGround: {r: 0.045, g: 0.035, b: 0.03, a: 1}
+  nightAmbient: {r: 0.025, g: 0.04, b: 0.085, a: 1}
   sunAngularSize: 2.2
   moonAngularSize: 1.25
   distantPlanetAngularSize: 2.8
-  sunDiscColor: {r: 3.4, g: 1.55, b: 0.34, a: 1}
-  moonColor: {r: 0.52, g: 0.57, b: 0.68, a: 1}
+  sunDiscColor: {r: 2.4, g: 1.7, b: 0.65, a: 1}
+  moonColor: {r: 0.42, g: 0.52, b: 0.75, a: 1}
   distantPlanetColor: {r: 0.16, g: 0.22, b: 0.42, a: 1}
   scaledSpaceDistance: 1200

@@ -1,0 +1,180 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a90a628c0bdcbf94181b12584e2f5f25, type: 3}
+  m_Name: EarthEffectsTuningProfile
+  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.World.EarthEffectsTuningProfile
+  schemaVersion: 1
+  materials:
+    fractureDust: {fileID: 2100000, guid: cc90a2dce6ef7d747955d2b1c251e5b2, type: 2}
+    impactDust: {fileID: 2100000, guid: cc90a2dce6ef7d747955d2b1c251e5b2, type: 2}
+    impactSparks: {fileID: 2100000, guid: 0388dc4b18d8d6e4c9a45c636ecbf5b5, type: 2}
+    impactRubble: {fileID: 2100000, guid: 837f24b86b2d04f4789fbb039ddf1f87, type: 2}
+    surfDust: {fileID: 2100000, guid: cc90a2dce6ef7d747955d2b1c251e5b2, type: 2}
+    surfTrail: {fileID: 2100000, guid: d0239ba4c83ca2a4e8f8ebeea7e809c4, type: 2}
+    stoneFadeDust: {fileID: 2100000, guid: cc90a2dce6ef7d747955d2b1c251e5b2, type: 2}
+    ambientMotes: {fileID: 2100000, guid: 34714a3004c40a54a9742afb3a720b6c, type: 2}
+    meteorStreaks: {fileID: 2100000, guid: bde88af213432a5438b4863cd2e40a90, type: 2}
+    pillarChips: {fileID: 2100000, guid: d0239ba4c83ca2a4e8f8ebeea7e809c4, type: 2}
+  fracture:
+    dust:
+      enabled: 1
+      maxParticles: 1600
+      lifetime: {x: 0.85, y: 1.75}
+      speed: {x: 0.32, y: 2.35}
+      size: {x: 0.18, y: 0.82}
+      colorA: {r: 0.88, g: 0.7, b: 0.49, a: 0.68}
+      colorB: {r: 0.56, g: 0.39, b: 0.25, a: 0.38}
+      gravity: {x: 0.05, y: 0.18}
+      noiseStrength: {x: 0.16, y: 0.42}
+      noiseFrequency: 0.5
+      noiseScrollSpeed: 0.15
+    baseCount: 105
+    perReleasedPiece: 34
+    perImpulse: 0.045
+    minimumCount: 120
+    maximumCount: 260
+    directionBlend: 0.24
+    emitterInset: 0.05
+    emitterRadius: 0.42
+    radiusThickness: 0.72
+  impact:
+    dust:
+      enabled: 1
+      maxParticles: 768
+      lifetime: {x: 0.35, y: 0.95}
+      speed: {x: 0.35, y: 2.2}
+      size: {x: 0.12, y: 0.46}
+      colorA: {r: 0.67, g: 0.48, b: 0.29, a: 0.68}
+      colorB: {r: 0.34, g: 0.23, b: 0.15, a: 0.36}
+      gravity: {x: 0, y: 0}
+      noiseStrength: {x: 0.06, y: 0.18}
+      noiseFrequency: 0.5
+      noiseScrollSpeed: 0.15
+    sparks:
+      enabled: 1
+      maxParticles: 192
+      lifetime: {x: 0.18, y: 0.48}
+      speed: {x: 1.8, y: 5.5}
+      size: {x: 0.035, y: 0.11}
+      colorA: {r: 1, g: 0.48, b: 0.08, a: 1}
+      colorB: {r: 1, g: 0.18, b: 0.015, a: 0.7}
+      gravity: {x: 0, y: 0}
+      noiseStrength: {x: 0, y: 0}
+      noiseFrequency: 0.5
+      noiseScrollSpeed: 0.15
+    rubble:
+      enabled: 1
+      maxParticles: 256
+      lifetime: {x: 0.45, y: 0.92}
+      speed: {x: 1.4, y: 4.1}
+      size: {x: 0.1, y: 0.24}
+      colorA: {r: 0.68, g: 0.5, b: 0.31, a: 1}
+      colorB: {r: 0.35, g: 0.24, b: 0.16, a: 1}
+      gravity: {x: 0, y: 0}
+      noiseStrength: {x: 0, y: 0}
+      noiseFrequency: 0.5
+      noiseScrollSpeed: 0.15
+    maximumDustCount: 52
+    maximumRubbleCount: 14
+    maximumBatchedDustPerFrame: 72
+    maximumBatchedRubblePerFrame: 20
+    impulseNormalization: 2200
+    sparkEnergyThreshold: 18000
+    heroSparkEnergyThreshold: 65000
+    sparkCount: 1
+    heroSparkCount: 3
+  surf:
+    dust:
+      enabled: 1
+      maxParticles: 512
+      lifetime: {x: 0.32, y: 0.68}
+      speed: {x: 0.7, y: 2.2}
+      size: {x: 0.12, y: 0.34}
+      colorA: {r: 0.3, g: 0.18, b: 0.1, a: 0.62}
+      colorB: {r: 0.52, g: 0.35, b: 0.2, a: 0.34}
+      gravity: {x: 0, y: 0}
+      noiseStrength: {x: 0.04, y: 0.15}
+      noiseFrequency: 0.5
+      noiseScrollSpeed: 0.15
+    rateOverDistance: 29
+    trailLifetime: 0.85
+    trailEndWidth: 0.34
+    trailStartColor: {r: 0.24, g: 0.13, b: 0.065, a: 0.72}
+    trailEndColor: {r: 0.16, g: 0.075, b: 0.03, a: 0}
+    cutChipInterval: 0.055
+    coarseCount: {x: 4, y: 14}
+    bodyCount: {x: 14, y: 44}
+    veilCount: {x: 18, y: 54}
+  stoneFade:
+    dust:
+      enabled: 1
+      maxParticles: 32
+      lifetime: {x: 0.45, y: 0.82}
+      speed: {x: 0.45, y: 1.65}
+      size: {x: 0.1, y: 0.28}
+      colorA: {r: 0.46, g: 0.33, b: 0.22, a: 0.72}
+      colorB: {r: 0.24, g: 0.17, b: 0.12, a: 0.48}
+      gravity: {x: 0, y: 0}
+      noiseStrength: {x: 0.02, y: 0.1}
+      noiseFrequency: 0.5
+      noiseScrollSpeed: 0.15
+    trigger01: 0.42
+    emitCount: 20
+    emitterRadius: 0.46
+  ambient:
+    motes:
+      enabled: 1
+      maxParticles: 64
+      lifetime: {x: 4.5, y: 7}
+      speed: {x: 0.018, y: 0.07}
+      size: {x: 0.03, y: 0.084}
+      colorA: {r: 1, g: 0.76, b: 0.4, a: 0.24}
+      colorB: {r: 1, g: 0.95, b: 0.78, a: 0.58}
+      gravity: {x: 0, y: 0}
+      noiseStrength: {x: 0, y: 0}
+      noiseFrequency: 0.5
+      noiseScrollSpeed: 0.15
+    emissionRate: 18
+    localOffset: {x: 0, y: 0.15, z: 5.1}
+    boxSize: {x: 10, y: 5.5, z: 9}
+    horizontalVelocity: {x: -0.022, y: 0.022}
+    verticalVelocity: {x: 0.018, y: 0.06}
+  meteor:
+    streaks:
+      enabled: 1
+      maxParticles: 96
+      lifetime: {x: 0.8, y: 2.2}
+      speed: {x: 18, y: 46}
+      size: {x: 0.05, y: 0.22}
+      colorA: {r: 1, g: 0.62, b: 0.18, a: 1}
+      colorB: {r: 1, g: 0.22, b: 0.035, a: 0.68}
+      gravity: {x: 0, y: 0}
+      noiseStrength: {x: 0, y: 0}
+      noiseFrequency: 0.5
+      noiseScrollSpeed: 0.15
+    distantRate: 0.24
+    radius: 240
+    radiusThickness: 0.05
+    velocityScale: 0.12
+    lengthScale: 3.5
+    physicalTrailLifetime: 0.95
+    approachTrailLifetime: 1.55
+  pillar:
+    chipPoolCount: 20
+    chipSize: {x: 0.09, y: 0.24}
+    chipRadialSpeed: {x: 1.4, y: 4.2}
+    chipUpSpeed: {x: 0.8, y: 2.5}
+    waveDustCount: {x: 2, y: 8}
+    waveRubbleCount: {x: 1, y: 5}
+    waveSparkThreshold: 0.48
+    waveSparkCount: 2
+    pulseStrength: {x: 0.15, y: 0.62}

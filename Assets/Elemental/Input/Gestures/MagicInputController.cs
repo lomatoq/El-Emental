@@ -51,6 +51,7 @@ namespace Elemental.Input.Gestures
         [SerializeField, Min(0.1f)] private float minimumHoldDistance = 2.5f;
         [SerializeField, Min(1f)] private float maximumHoldDistance = 16f;
         [SerializeField, Min(0.01f)] private float wheelDistanceStep = 0.012f;
+        [SerializeField, Range(0.05f, 0.35f)] private float earthAcquireAssistRadius = 0.18f;
         [SerializeField, Min(0.05f)] private float pushAssistRadius = 0.65f;
 
         private readonly PointerPathSampler _sampler = new PointerPathSampler();
@@ -134,6 +135,10 @@ namespace Elemental.Input.Gestures
         private bool _suppressPrimaryUntilReleased;
         private bool _drawSurfaceLocked;
         private EarthSurfaceSample _drawSurface;
+        private bool _bufferedPrimarySurfaceValid;
+        private EarthSurfaceSample _bufferedPrimarySurface;
+        private Vector3 _bufferedPrimarySurfacePoint;
+        private Ray _bufferedPrimaryRay;
         private IEarthPluckableStructure _pluckSource;
         private Vector3 _pluckPoint;
         private bool _pluckPending;
@@ -227,6 +232,8 @@ namespace Elemental.Input.Gestures
                 ? inputAdapter != null && inputAdapter.BendModifierHeld ? _wallThickness01 : _wallHeight01
             : _formingAmount01;
         public event Action<string> StatusChanged;
+
+        public void ReportStatus(string message) => StatusChanged?.Invoke(message);
         public event Action<IReadOnlyList<Vector3>> PreviewChanged;
         public event Action PreviewCleared;
         public event Action<float> PushChargeChanged;
@@ -326,6 +333,24 @@ namespace Elemental.Input.Gestures
             Vector2 viewport = EarthInputAdapter.ScreenToViewport(pointer);
             _strokeSampler.Begin(new float2(viewport.x, viewport.y), Time.unscaledTime);
             if (selectedElement == ElementId.Earth) BeginEarthAcquireDecision(point);
+        }
+
+        internal void BufferPrimarySurface(Vector2 pointer)
+        {
+            _bufferedPrimarySurfaceValid = false;
+            _bufferedPrimarySurface = default;
+            _bufferedPrimarySurfacePoint = default;
+            if (castCamera == null) return;
+
+            float2 screenPoint = new float2(pointer.x, pointer.y);
+            _bufferedPrimaryRay = castCamera.ScreenPointToRay(pointer);
+            if (!TrySampleDrawSurface(
+                    screenPoint,
+                    out EarthSurfaceSample sample,
+                    out Vector3 point)) return;
+            _bufferedPrimarySurfaceValid = true;
+            _bufferedPrimarySurface = sample;
+            _bufferedPrimarySurfacePoint = point;
         }
 
         public void ReplayBufferedPrimaryPath(Vector2[] points, int count)
@@ -1140,6 +1165,31 @@ namespace Elemental.Input.Gestures
         private void UpdateGravityWellInput(float2 pointer)
         {
             if (inputAdapter == null || executor == null || castCamera == null) return;
+            if (inputAdapter.BendFieldPressed && executor.HeldFragment != null &&
+                !executor.HasHeldFractureCluster)
+            {
+                if (executor.TryFractureHeldBoulder())
+                    StatusChanged?.Invoke(
+                        $"BOULDER FRACTURE — {executor.HeldFractureClusterCount} controlled chunks; tap/hold RMB.");
+                return;
+            }
+            if (executor.HasHeldFractureCluster)
+            {
+                Ray clusterRay = castCamera.ScreenPointToRay(new Vector2(pointer.x, pointer.y));
+                if (inputAdapter.BendForcePressed)
+                    executor.BeginHeldFractureThrow(clusterRay.direction);
+                if (inputAdapter.BendForceHeld)
+                    executor.UpdateHeldFractureThrow(clusterRay.direction);
+                if (inputAdapter.BendForceReleased)
+                {
+                    int launched = executor.ReleaseHeldFractureThrow(clusterRay.direction);
+                    StatusChanged?.Invoke(
+                        launched == 1
+                            ? "FRACTURE TAP — one physical chunk launched."
+                            : $"COMPRESSION BLAST — {launched} deterministic chunks launched.");
+                }
+                return;
+            }
             if (inputAdapter.BendFieldPressed)
             {
                 Vector2 viewport = inputAdapter.PointerViewport01;
@@ -1425,7 +1475,6 @@ namespace Elemental.Input.Gestures
             _bendStartedAt = Time.unscaledTime;
             _holdDistance = Mathf.Clamp(initialHoldDistance, minimumHoldDistance, maximumHoldDistance);
             _heldTargetSurfaceLift = 0f;
-            CaptureEarthAcquireSource(pointer);
             _smoothedBendTargetVelocity = Vector3.zero;
             _lastBendPointer = pointer;
             _formingAmount01 = 0.18f;
@@ -1433,6 +1482,24 @@ namespace Elemental.Input.Gestures
             _platformTilt01 = 0.5f;
             _wallHeight01 = 0.35f;
             _wallThickness01 = 0.5f;
+            if (_bufferedPrimarySurfaceValid)
+            {
+                _earthAcquireRayValid = true;
+                _earthAcquireRay = _bufferedPrimaryRay;
+                _formingSourceValid = true;
+                _formingSourceWorld = _bufferedPrimarySurfacePoint;
+                if (_bufferedPrimarySurface.IsValid)
+                {
+                    _drawSurface = _bufferedPrimarySurface;
+                    _drawSurfaceLocked = IsConstructedDrawSurface(_drawSurface.Handle.Kind);
+                }
+                _bufferedPrimarySurfaceValid = false;
+                _bufferedPrimarySurface = default;
+            }
+            else
+            {
+                CaptureEarthAcquireSource(pointer);
+            }
             // Do not let a loose rock or constructed cell steal LMB before we know
             // whether the player is drawing. Motion owns wall/platform grammar;
             // a body/pluck is only acquired after a short stationary decision.
@@ -1572,20 +1639,25 @@ namespace Elemental.Input.Gestures
             Ray ray = _earthAcquireRayValid
                 ? _earthAcquireRay
                 : castCamera.ScreenPointToRay(new Vector2(pointer.x, pointer.y));
-            // A broad physics ray can see dynamic rocks on the far side of the
-            // planet. Without an occlusion limit a stationary LMB on apparently
-            // clear terrain could grab one of those hidden bodies instead of
-            // starting the canonical terrain extraction transaction.
-            float visibleSurfaceDistance = float.PositiveInfinity;
-            if (planetCollider != null && planetCollider.enabled &&
-                planetCollider.Raycast(ray, out RaycastHit terrainHit, projectionDistance))
-                visibleSurfaceDistance = Mathf.Max(0f, terrainHit.distance - 0.01f);
             int hitCount = UnityEngine.Physics.RaycastNonAlloc(
                 ray,
                 _projectionHits,
                 projectionDistance,
                 ~0,
                 QueryTriggerInteraction.Ignore);
+            // The enlarged planet proxy is spherical while Broken Crown is a flat
+            // raised court. At shallow angles the proxy can mathematically
+            // intersect before a visibly unobstructed arena rock. Use the actual
+            // nearest rendered/physical hit instead of treating the proxy as a
+            // universal depth cap; this still rejects far-side rocks.
+            float visibleSurfaceDistance = float.PositiveInfinity;
+            for (int index = 0; index < hitCount; index++)
+            {
+                RaycastHit hit = _projectionHits[index];
+                if (hit.collider == null || hit.collider.isTrigger ||
+                    IsCasterCollider(hit.collider)) continue;
+                visibleSurfaceDistance = Mathf.Min(visibleSurfaceDistance, hit.distance);
+            }
             float nearest = float.PositiveInfinity;
             Rigidbody selected = null;
             Collider selectedCollider = null;
@@ -1598,7 +1670,7 @@ namespace Elemental.Input.Gestures
                 bool releasablePiece = earthTarget is EarthWallPiece || earthTarget is EarthPlatformPiece;
                 if (_casterBody != null && hit.collider != null &&
                     hit.collider.transform.IsChildOf(_casterBody.transform)) continue;
-                if (hit.distance > visibleSurfaceDistance) continue;
+                if (hit.distance > visibleSurfaceDistance + 0.035f) continue;
                 if (body == null || body == _casterBody || (body.isKinematic && !releasablePiece) ||
                     hit.distance >= nearest) continue;
                 if (earthTarget == null && body.GetComponent<GravityBody>() == null &&
@@ -1610,6 +1682,21 @@ namespace Elemental.Input.Gestures
                 selectedEarthTarget = earthTarget;
             }
 
+            if (selected == null && _targetQueryService.TryQuery(
+                    ray,
+                    projectionDistance,
+                    earthAcquireAssistRadius,
+                    planetCollider,
+                    _casterBody,
+                    EarthTargetCapabilities.Grab,
+                    out EarthTargetQueryHit assisted))
+            {
+                selected = assisted.Target.Body != null
+                    ? assisted.Target.Body
+                    : assisted.Hit.rigidbody;
+                selectedCollider = assisted.Hit.collider;
+                selectedEarthTarget = assisted.Target.PhysicalTarget;
+            }
             if (selected == null) return false;
             float cameraDistance = Vector3.Distance(
                 castCamera.transform.position,
@@ -2326,11 +2413,31 @@ namespace Elemental.Input.Gestures
                 if (surfaceQueries != null && !surfaceQueries.IsCurrent(in lockedHandle)) return false;
                 Vector3 normal = ToVector3(_drawSurface.Normal);
                 float denominator = Vector3.Dot(ray.direction, normal);
-                if (Mathf.Abs(denominator) < 0.0001f) return false;
-                float travel = Vector3.Dot(ToVector3(_drawSurface.Point) - ray.origin, normal) / denominator;
-                if (travel < 0f || travel > projectionDistance) return false;
-                point = ray.GetPoint(travel);
-                return true;
+                if (Mathf.Abs(denominator) >= 0.0001f)
+                {
+                    float travel = Vector3.Dot(
+                        ToVector3(_drawSurface.Point) - ray.origin,
+                        normal) / denominator;
+                    if (travel >= 0f && travel <= projectionDistance)
+                    {
+                        point = ray.GetPoint(travel);
+                        return true;
+                    }
+                }
+
+                // A wide screen-space stroke can leave the finite silhouette of a
+                // narrow column even though its source face is still the player's
+                // authored draw plane. At grazing camera angles a strict ray/plane
+                // intersection then lies behind the camera or beyond the projection
+                // budget and cancels the entire wall/platform gesture. Preserve the
+                // locked stable handle and orthogonally flatten the ray sample back
+                // onto that plane. The pool still bounds length/area, so this expands
+                // input forgiveness without granting cross-surface authority.
+                float fallbackTravel = Mathf.Clamp(_drawSurface.Distance, 0.1f, projectionDistance);
+                Vector3 fallback = ray.GetPoint(fallbackTravel);
+                Vector3 surfacePoint = ToVector3(_drawSurface.Point);
+                point = fallback - normal * Vector3.Dot(fallback - surfacePoint, normal);
+                return float.IsFinite(point.x) && float.IsFinite(point.y) && float.IsFinite(point.z);
             }
             // Terrain drawing must not depend on the order or capacity of a broad
             // Physics.RaycastNonAlloc result. Dense arena rocks could fill that
@@ -2349,27 +2456,42 @@ namespace Elemental.Input.Gestures
 
         private bool TryCaptureDrawSurface(float2 screenPoint, out Vector3 point)
         {
+            if (!TrySampleDrawSurface(screenPoint, out EarthSurfaceSample sample, out point))
+                return false;
+            _drawSurface = sample;
+            // A constructed face is a plane and should stay locked. Planet terrain
+            // is curved, so subsequent samples stay on the canonical planet collider.
+            _drawSurfaceLocked = sample.IsValid && IsConstructedDrawSurface(sample.Handle.Kind);
+            return true;
+        }
+
+        private bool TrySampleDrawSurface(
+            float2 screenPoint,
+            out EarthSurfaceSample sample,
+            out Vector3 point)
+        {
+            sample = default;
             point = default;
-            if (surfaceQueries != null && castCamera != null)
+            if (castCamera == null) return false;
+            Ray ray = castCamera.ScreenPointToRay(new Vector2(screenPoint.x, screenPoint.y));
+            if (surfaceQueries != null)
             {
-                Ray ray = castCamera.ScreenPointToRay(new Vector2(screenPoint.x, screenPoint.y));
                 var query = new EarthSurfaceQuery(
                     new float3(ray.origin.x, ray.origin.y, ray.origin.z),
                     new float3(ray.direction.x, ray.direction.y, ray.direction.z),
                     projectionDistance,
-                    EarthSurfaceCapabilities.Draw);
-                if (surfaceQueries.TrySample(in query, out EarthSurfaceSample sample))
+                    EarthSurfaceCapabilities.Draw,
+                    earthAcquireAssistRadius);
+                if (surfaceQueries.TrySample(in query, out sample))
                 {
-                    _drawSurface = sample;
-                    // A constructed face is a plane and should stay locked. Planet
-                    // terrain is curved, so every subsequent sample must be projected
-                    // back to the planet instead of drifting along the first tangent.
-                    _drawSurfaceLocked = IsConstructedDrawSurface(sample.Handle.Kind);
                     point = ToVector3(sample.Point);
                     return true;
                 }
             }
-            return TryProject(screenPoint, out point);
+            if (planetCollider == null || !planetCollider.enabled ||
+                !planetCollider.Raycast(ray, out RaycastHit terrainHit, projectionDistance)) return false;
+            point = terrainHit.point;
+            return true;
         }
 
         private void CaptureEarthAcquireSource(float2 screenPoint)

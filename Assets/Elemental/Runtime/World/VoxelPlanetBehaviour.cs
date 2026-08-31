@@ -65,6 +65,9 @@ namespace Elemental.Runtime.World
         private readonly List<PendingEditTransaction> _pendingTransactions =
             new List<PendingEditTransaction>(16);
         private readonly List<ChunkCoord> _transactionCoordScratch = new List<ChunkCoord>(32);
+        private readonly List<ChunkCoord> _queueOrderScratch = new List<ChunkCoord>(256);
+        private readonly HashSet<ChunkCoord> _queuePriorityScratch = new HashSet<ChunkCoord>();
+        private readonly ChunkCoord[] _singlePriorityScratch = new ChunkCoord[1];
 
         private VoxelPlanetState _state;
         private IChunkMesher _mesher;
@@ -220,6 +223,10 @@ namespace Elemental.Runtime.World
             for (int index = 0; index < pending.Coords.Length; index++)
                 pending.RequiredVersions[index] = _state.Chunks.GetOrCreate(pending.Coords[index]).Version;
             _pendingTransactions.Add(pending);
+            // A freshly authored extraction must not wait behind the planet's entire
+            // cold-start shell queue. Reordering only the already-budgeted work keeps
+            // frame cost bounded while making the visible matter transaction responsive.
+            PrioritizeQueuedCoordinates(_renderQueue, _renderQueued, pending.Coords);
             return receipt;
         }
 
@@ -390,6 +397,7 @@ namespace Elemental.Runtime.World
                 mesh.Clear();
                 MarkVisualVersion(runtimeChunk, visualVersion, stageForTransaction);
                 EnqueueCollider(coord);
+                if (stageForTransaction) PrioritizeCollider(coord);
 
                 return;
             }
@@ -421,6 +429,33 @@ namespace Elemental.Runtime.World
             mesh.SetTriangles(_uploadIndices, 0, true);
             mesh.RecalculateBounds();
             EnqueueCollider(coord);
+            if (stageForTransaction) PrioritizeCollider(coord);
+        }
+
+        private void PrioritizeCollider(ChunkCoord coord)
+        {
+            _singlePriorityScratch[0] = coord;
+            PrioritizeQueuedCoordinates(_colliderQueue, _colliderQueued, _singlePriorityScratch);
+        }
+
+        private void PrioritizeQueuedCoordinates(
+            Queue<ChunkCoord> queue,
+            HashSet<ChunkCoord> queued,
+            IReadOnlyList<ChunkCoord> priority)
+        {
+            if (queue.Count <= 1 || priority == null || priority.Count == 0) return;
+            _queuePriorityScratch.Clear();
+            for (int index = 0; index < priority.Count; index++)
+                if (queued.Contains(priority[index])) _queuePriorityScratch.Add(priority[index]);
+            if (_queuePriorityScratch.Count == 0) return;
+
+            _queueOrderScratch.Clear();
+            while (queue.Count > 0) _queueOrderScratch.Add(queue.Dequeue());
+            for (int index = 0; index < priority.Count; index++)
+                if (_queuePriorityScratch.Contains(priority[index])) queue.Enqueue(priority[index]);
+            for (int index = 0; index < _queueOrderScratch.Count; index++)
+                if (!_queuePriorityScratch.Contains(_queueOrderScratch[index]))
+                    queue.Enqueue(_queueOrderScratch[index]);
         }
 
         private RuntimeChunk GetOrCreateRuntimeChunk(ChunkCoord coord)

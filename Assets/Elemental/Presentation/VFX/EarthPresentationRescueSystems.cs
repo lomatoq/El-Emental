@@ -33,8 +33,6 @@ namespace Elemental.Presentation.VFX
             };
             DontDestroyOnLoad(host);
             _instance = host.AddComponent<EarthPresentationRescueInstaller>();
-            if (host.GetComponent<EarthDustLookdevTuner>() == null)
-                host.AddComponent<EarthDustLookdevTuner>();
             if (host.GetComponent<EarthMaterialLookdevTuner>() == null)
                 host.AddComponent<EarthMaterialLookdevTuner>();
         }
@@ -61,8 +59,10 @@ namespace Elemental.Presentation.VFX
             {
                 EarthCharacterPoseController pose = poses[index];
                 if (pose == null) continue;
-                if (pose.GetComponent<EarthSurfFootContactRescue>() == null)
-                    pose.gameObject.AddComponent<EarthSurfFootContactRescue>();
+                // EarthFootContactController is the only runtime writer of feet,
+                // knees and pelvis on every support, including surf. The old
+                // rendered-board rescue stacked a second Animator IK pass and was
+                // the source of the visible foot snaps this rescue is replacing.
                 PlanetMotor motor = pose.GetComponentInParent<PlanetMotor>();
                 if (motor != null && motor.GetComponent<EarthSeismicVision>() == null)
                     motor.gameObject.AddComponent<EarthSeismicVision>();
@@ -127,7 +127,10 @@ namespace Elemental.Presentation.VFX
             _rightUpperLeg = _animator.GetBoneTransform(HumanBodyBones.RightUpperLeg);
         }
 
-        private void OnAnimatorIK(int layerIndex)
+        // Deliberately not a Unity OnAnimatorIK callback. Kept only as a dormant
+        // migration shell for old serialized references; the independent
+        // EarthFootContactController owns all visible lower-body IK.
+        private void LegacyAnimatorIkDisabled(int layerIndex)
         {
             if (layerIndex != 0 || _animator == null || !_animator.isHuman ||
                 _surf == null || !_surf.IsActive || _leftFoot == null || _rightFoot == null)

@@ -83,31 +83,52 @@ namespace Elemental.Runtime.Physics
                 distance,
                 ~0,
                 QueryTriggerInteraction.Ignore);
-            int selected = -1;
-            float nearest = float.PositiveInfinity;
-            for (int index = 0; index < count; index++)
+            while (_armed)
             {
-                RaycastHit hit = _hits[index];
-                if (hit.collider == null || hit.collider == _collider ||
-                    hit.rigidbody == _body || hit.distance >= nearest) continue;
-                EarthPlatform platform = hit.collider.GetComponentInParent<EarthPlatform>();
-                EarthWall wall = hit.collider.GetComponentInParent<EarthWall>();
-                if (platform == null && wall == null) continue;
-                selected = index;
-                nearest = hit.distance;
-            }
-            if (selected >= 0)
-            {
+                int selected = -1;
+                float nearest = float.PositiveInfinity;
+                for (int index = 0; index < count; index++)
+                {
+                    RaycastHit candidate = _hits[index];
+                    if (candidate.collider == null || candidate.collider == _collider ||
+                        candidate.rigidbody == _body || candidate.distance >= nearest) continue;
+                    EarthPlatform platform = candidate.collider.GetComponentInParent<EarthPlatform>();
+                    if (platform == null)
+                        platform = candidate.collider.GetComponentInParent<EarthPlatformPiece>()?.Owner;
+                    EarthWall wall = candidate.collider.GetComponentInParent<EarthWall>();
+                    if (wall == null)
+                        wall = candidate.collider.GetComponentInParent<EarthWallPiece>()?.Owner;
+                    EarthArenaStructure arena = candidate.collider.GetComponentInParent<EarthArenaStructure>();
+                    if (arena == null)
+                        arena = candidate.collider.GetComponentInParent<EarthArenaPiece>()?.Owner;
+                    if (platform == null && wall == null && arena == null) continue;
+                    selected = index;
+                    nearest = candidate.distance;
+                }
+                if (selected < 0) break;
+
                 RaycastHit hit = _hits[selected];
+                _hits[selected] = default;
+                Vector3 surfaceVelocity = hit.rigidbody != null
+                    ? hit.rigidbody.GetPointVelocity(hit.point)
+                    : Vector3.zero;
+                float normalSpeed = Vector3.Dot(_body.linearVelocity - surfaceVelocity, hit.normal);
+                float impulse = Mathf.Abs(Mathf.Min(0f, normalSpeed)) * Mathf.Max(0.01f, _body.mass);
+                if (!_fragment.HandleSweptImpact(
+                        hit.collider,
+                        hit.point,
+                        hit.normal,
+                        0f,
+                        impulse,
+                        out _))
+                    continue;
+
                 float skin = _profile != null ? _profile.ProjectileSweepSkin : 0.015f;
                 Vector3 corrected = _previousPosition + direction * Mathf.Max(0f, hit.distance - skin);
                 _body.position = corrected;
-                float normalSpeed = Vector3.Dot(_body.linearVelocity, hit.normal);
                 float rebound = _profile != null ? _profile.ProjectileSweepRebound : 0.06f;
                 if (normalSpeed < 0f)
                     _body.linearVelocity -= hit.normal * normalSpeed * (1f + rebound);
-                float impulse = Mathf.Abs(normalSpeed) * Mathf.Max(0.01f, _body.mass);
-                _fragment.HandleSweptImpact(hit.collider, hit.point, hit.normal, impulse);
                 _armed = false;
                 current = corrected;
             }

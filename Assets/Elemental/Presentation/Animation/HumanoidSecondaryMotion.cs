@@ -55,13 +55,26 @@ namespace Elemental.Presentation.Animation
             public Quaternion[] BindRotations = Array.Empty<Quaternion>();
             public SecondaryBoneSpringState[] Springs = Array.Empty<SecondaryBoneSpringState>();
 
-            public void Reset(Transform[] bones)
+            public void CaptureBindPose(Transform[] bones)
             {
                 int count = bones != null ? bones.Length : 0;
                 BindRotations = new Quaternion[count];
                 Springs = new SecondaryBoneSpringState[count];
                 for (int index = 0; index < count; index++)
                     BindRotations[index] = bones[index] != null ? bones[index].localRotation : Quaternion.identity;
+            }
+
+            public void ResetDynamics(Transform[] bones)
+            {
+                int count = bones != null ? bones.Length : 0;
+                if (BindRotations.Length != count)
+                {
+                    CaptureBindPose(bones);
+                    return;
+                }
+                Springs = new SecondaryBoneSpringState[count];
+                for (int index = 0; index < count; index++)
+                    if (bones[index] != null) bones[index].localRotation = BindRotations[index];
             }
         }
 
@@ -101,21 +114,22 @@ namespace Elemental.Presentation.Animation
                 "Secondary_Belt_L_01", "Secondary_Belt_L_02");
             rightBeltBones = FindBones(searchRoot,
                 "Secondary_Belt_R_01", "Secondary_Belt_R_02");
-            ResetState();
+            CaptureBindPose();
         }
 
         private void Awake()
         {
             if (animator == null) animator = GetComponentInChildren<Animator>(true);
             if (!IsConfigured) ConfigureFromHierarchy(animator);
-            else ResetState();
+            else CaptureBindPose();
         }
 
         private void OnEnable()
         {
-            _hasKinematicSample = false;
-            _filteredLocalAcceleration = Vector3.zero;
+            ResetDynamics();
         }
+
+        private void OnDisable() => ResetDynamics();
 
         private void LateUpdate()
         {
@@ -135,7 +149,7 @@ namespace Elemental.Presentation.Animation
             Vector3 displacement = position - _previousPosition;
             if (displacement.sqrMagnitude > 9f)
             {
-                ResetState();
+                ResetDynamics();
                 _previousPosition = position;
                 _previousVelocity = Vector3.zero;
                 return;
@@ -161,11 +175,19 @@ namespace Elemental.Presentation.Animation
             _previousVelocity = velocity;
         }
 
-        private void ResetState()
+        private void CaptureBindPose()
         {
-            _tail.Reset(tailBones);
-            _leftBelt.Reset(leftBeltBones);
-            _rightBelt.Reset(rightBeltBones);
+            _tail.CaptureBindPose(tailBones);
+            _leftBelt.CaptureBindPose(leftBeltBones);
+            _rightBelt.CaptureBindPose(rightBeltBones);
+            ResetDynamics();
+        }
+
+        private void ResetDynamics()
+        {
+            _tail.ResetDynamics(tailBones);
+            _leftBelt.ResetDynamics(leftBeltBones);
+            _rightBelt.ResetDynamics(rightBeltBones);
             _filteredLocalAcceleration = Vector3.zero;
             _hasKinematicSample = false;
         }
@@ -178,17 +200,24 @@ namespace Elemental.Presentation.Animation
             float deltaTime)
         {
             if (bones == null || chain.Springs.Length != bones.Length) return;
+            float weightSum = 0f;
+            for (int index = 0; index < bones.Length; index++)
+                weightSum += Mathf.Lerp(0.42f, 1f, (index + 1f) / bones.Length);
             for (int index = 0; index < bones.Length; index++)
             {
                 Transform bone = bones[index];
                 if (bone == null) continue;
-                float tipWeight = Mathf.Lerp(0.58f, 1f, (index + 1f) / bones.Length);
+                // The authored limit is for the whole chain, not every bone.
+                // Normalized weights prevent a three-bone tail from accumulating
+                // three times the requested bend and clipping through the helmet.
+                float tipWeight = Mathf.Lerp(0.42f, 1f, (index + 1f) / bones.Length) /
+                                  Mathf.Max(0.001f, weightSum);
                 chain.Springs[index] = SecondaryBoneSpringSolver.Step(
                     chain.Springs[index],
                     target * tipWeight,
                     responseFrequencyHz,
                     dampingRatio,
-                    maximumAngle,
+                    maximumAngle * tipWeight,
                     deltaTime);
                 Vector2 angle = chain.Springs[index].AngleDegrees;
                 bone.localRotation = chain.BindRotations[index] * Quaternion.Euler(angle.x, 0f, angle.y);

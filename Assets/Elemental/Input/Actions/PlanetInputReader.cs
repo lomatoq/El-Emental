@@ -15,9 +15,11 @@ namespace Elemental.Input.Actions
         [SerializeField] private EarthPillarWaveAbility earthPillarWave;
         [SerializeField] private EarthLandingCushion earthLandingCushion;
         [SerializeField] private EarthActionRouterBehaviour actionRouter;
+        [SerializeField, Min(0.05f)] private float tapJumpThresholdSeconds = 0.18f;
 
         private bool _jumpQueued;
         private JumpCastMode _jumpCastMode;
+        private float _jumpStartedAt;
 
         public bool UsesEarthPillarMobility => earthPillarMobility != null;
 
@@ -62,6 +64,16 @@ namespace Elemental.Input.Actions
             earthPillarWave?.CancelCharge();
             earthLandingCushion?.EndHold();
             _jumpCastMode = JumpCastMode.None;
+            _jumpStartedAt = 0f;
+        }
+
+        private void Update()
+        {
+            if (_jumpCastMode != JumpCastMode.PendingPillar || earthPillarMobility == null)
+                return;
+            if (Time.unscaledTime - _jumpStartedAt < tapJumpThresholdSeconds)
+                return;
+            if (earthPillarMobility.BeginCharge()) _jumpCastMode = JumpCastMode.Pillar;
         }
 
         public PlanetMotorCommand SampleCommand(uint tick)
@@ -87,18 +99,27 @@ namespace Elemental.Input.Actions
                 _jumpCastMode = JumpCastMode.Cushion;
                 return;
             }
-            _jumpCastMode = earthPillarMobility != null && earthPillarMobility.BeginCharge()
-                ? JumpCastMode.Pillar
-                : JumpCastMode.None;
-            if (_jumpCastMode == JumpCastMode.None && earthPillarMobility == null)
-                _jumpQueued = true;
+            if (earthPillarMobility != null)
+            {
+                _jumpStartedAt = Time.unscaledTime;
+                _jumpCastMode = JumpCastMode.PendingPillar;
+                return;
+            }
+            _jumpQueued = true;
+            _jumpCastMode = JumpCastMode.None;
         }
 
         public void RouteJumpCanceled()
         {
             if (_jumpCastMode == JumpCastMode.Pillar) earthPillarMobility?.ReleaseCharge();
+            else if (_jumpCastMode == JumpCastMode.PendingPillar)
+            {
+                earthPillarMobility?.CancelCharge();
+                _jumpQueued = true;
+            }
             else if (_jumpCastMode == JumpCastMode.Cushion) earthLandingCushion?.EndHold();
             _jumpCastMode = JumpCastMode.None;
+            _jumpStartedAt = 0f;
         }
 
         public void RouteCancel()
@@ -106,12 +127,14 @@ namespace Elemental.Input.Actions
             earthPillarMobility?.CancelCharge();
             earthLandingCushion?.EndHold();
             _jumpCastMode = JumpCastMode.None;
+            _jumpStartedAt = 0f;
             _jumpQueued = false;
         }
 
         private enum JumpCastMode : byte
         {
             None,
+            PendingPillar,
             Pillar,
             Cushion
         }

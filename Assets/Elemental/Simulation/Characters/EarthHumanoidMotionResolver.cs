@@ -43,7 +43,8 @@ namespace Elemental.Simulation.Characters
             EarthTechniqueId.ThrowStone => EarthHumanoidPoseSlot.HeavyThrow,
             EarthTechniqueId.VectorPush => EarthHumanoidPoseSlot.VectorPush,
             EarthTechniqueId.GravityGrip or EarthTechniqueId.Repair => EarthHumanoidPoseSlot.GravityRepair,
-            EarthTechniqueId.WebWave or EarthTechniqueId.Resonance => EarthHumanoidPoseSlot.WaveResonance,
+            EarthTechniqueId.WebWave or EarthTechniqueId.FaultLine or
+                EarthTechniqueId.Resonance => EarthHumanoidPoseSlot.WaveResonance,
             EarthTechniqueId.PillarJump => EarthHumanoidPoseSlot.Pillar,
             EarthTechniqueId.Armor or EarthTechniqueId.ArmorDome or EarthTechniqueId.ArmorOrbit or
                 EarthTechniqueId.ArmorRepack => EarthHumanoidPoseSlot.ArmorAssemble,

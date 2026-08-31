@@ -19,7 +19,6 @@ namespace Elemental.Presentation.Animation
         [SerializeField, Range(0.2f, 3f)] private float blendInSeconds = 0.65f;
         [SerializeField, Range(0.05f, 0.5f)] private float blendOutSeconds = 0.14f;
 
-        private Transform _hips;
         private Transform _chest;
         private Transform _head;
         private Transform _leftShoulder;
@@ -91,12 +90,13 @@ namespace Elemental.Presentation.Animation
                 12f,
                 Mathf.Max(0.0001f, Time.deltaTime));
             if ((_weight <= 0.0001f && _surfWeight <= 0.0001f) ||
-                _hips == null || _chest == null || _head == null) return;
+                _chest == null || _head == null) return;
 
             if (_weight > 0.0001f)
             {
                 EarthOrganicIdlePose pose = EarthOrganicIdleSolver.Evaluate(Time.time, _phase01, _weight);
-                _hips.localRotation *= Quaternion.Euler(0f, pose.WeightShift * 0.65f, pose.CounterMotion * 0.55f);
+                // Hip/pelvis ownership belongs to EarthFootContactController.
+                // Organic idle remains an additive chest/head/shoulder pass.
                 _chest.localRotation *= Quaternion.Euler(
                     pose.Breath * 1.15f,
                     pose.CounterMotion * 0.72f,
@@ -131,7 +131,6 @@ namespace Elemental.Presentation.Animation
         private void CacheBones()
         {
             if (animator == null || !animator.isHuman) return;
-            _hips = animator.GetBoneTransform(HumanBodyBones.Hips);
             _chest = animator.GetBoneTransform(HumanBodyBones.UpperChest) ??
                      animator.GetBoneTransform(HumanBodyBones.Chest);
             _head = animator.GetBoneTransform(HumanBodyBones.Head);

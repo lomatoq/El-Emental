@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: RumbleSandstoneFractureInterior
+  m_Shader: {fileID: 4800000, guid: e8f2c9b6af3546f2a2ab1b0a479c63c7, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AmbientStrength: 0.76
+    - _BevelLight: 0.2
+    - _Cutoff: 0.5
+    - _DebugMode: 0
+    - _FacetContrast: 0.16
+    - _Fade: 1
+    - _FractureInteriorDepth: 0.16
+    - _FractureMappingEnabled: 0
+    - _MacroScale: 5
+    - _MacroStrength: 0.012
+    - _Roughness: 0.92
+    - _ShadowFloor: 0.56
+    - _SideShadingSmoothness: 0
+    - _SideShadowFade: 1
+    - _StableSideFormOcclusion: 0.075
+    - _Surface: 0
+    - _SurfaceMode: 0
+    - _TextureScale: 0.22
+    - _TextureStrength: 0.025
+    - _TriplanarSharpness: 4
+    - _UsePlanetFrame: 0
+    - _VertexFaceTone: 0
+    m_Colors:
+    - _BaseColor: {r: 0.472392, g: 0.36337602, b: 0.28877598, a: 1}
+    - _EdgeColor: {r: 0.535705, g: 0.4397709, b: 0.37412286, a: 1}
+    - _FractureColor: {r: 0.472392, g: 0.36337602, b: 0.28877598, a: 1}
+    - _PlanetCenter: {r: 0, g: 0, b: 0, a: 0}
+    - _ReceiverPlanetCenter: {r: 0, g: 0, b: 0, a: 0}
+    - _ShadowColor: {r: 0.19840464, g: 0.15261793, b: 0.121285915, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

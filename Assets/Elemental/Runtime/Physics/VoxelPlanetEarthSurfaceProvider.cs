@@ -13,6 +13,7 @@ namespace Elemental.Runtime.Physics
         [SerializeField] private Collider surfaceCollider;
         [SerializeField] private VoxelPlanetBehaviour voxelPlanet;
         [SerializeField] private EarthSurfaceQueryService queryService;
+        private readonly RaycastHit[] _assistHits = new RaycastHit[8];
 
         public void Configure(
             Collider configuredCollider,
@@ -31,7 +32,7 @@ namespace Elemental.Runtime.Physics
             sample = default;
             if (!isActiveAndEnabled || surfaceCollider == null || !surfaceCollider.enabled) return false;
             var ray = new Ray(ToVector3(query.Origin), ToVector3(query.Direction));
-            if (!surfaceCollider.Raycast(ray, out RaycastHit hit, query.MaximumDistance)) return false;
+            if (!TryRaycastSurface(ray, in query, out RaycastHit hit)) return false;
             Vector3 center = voxelPlanet != null ? voxelPlanet.transform.position : surfaceCollider.bounds.center;
             Vector3 normal = (hit.point - center).normalized;
             if (normal.sqrMagnitude < 0.5f) normal = hit.normal;
@@ -60,6 +61,31 @@ namespace Elemental.Runtime.Physics
         }
 
         private void OnDisable() => queryService?.Unregister(this);
+        private bool TryRaycastSurface(
+            Ray ray,
+            in EarthSurfaceQuery query,
+            out RaycastHit selected)
+        {
+            if (surfaceCollider.Raycast(ray, out selected, query.MaximumDistance)) return true;
+            selected = default;
+            if (query.CastRadius <= 0.0001f) return false;
+            int count = UnityEngine.Physics.SphereCastNonAlloc(
+                ray,
+                query.CastRadius,
+                _assistHits,
+                query.MaximumDistance,
+                ~0,
+                QueryTriggerInteraction.Ignore);
+            float nearest = float.PositiveInfinity;
+            for (int index = 0; index < count; index++)
+            {
+                RaycastHit candidate = _assistHits[index];
+                if (candidate.collider != surfaceCollider || candidate.distance >= nearest) continue;
+                selected = candidate;
+                nearest = candidate.distance;
+            }
+            return selected.collider != null;
+        }
         private static Vector3 ToVector3(Unity.Mathematics.float3 value) => new Vector3(value.x, value.y, value.z);
     }
 }

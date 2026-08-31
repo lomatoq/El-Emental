@@ -36,6 +36,63 @@ namespace Elemental.Authoring.Editor
             Debug.Log($"[Elemental] Validated baked wall fracture: {asset.PieceCount} pieces, {asset.BondCount} bonds.");
         }
 
+        [MenuItem("Elemental/Fracture/Bake Selected Destructible")]
+        public static void BakeSelectedDestructibleFromMenu()
+        {
+            GameObject selected = Selection.activeGameObject;
+            MeshFilter filter = selected != null ? selected.GetComponent<MeshFilter>() : null;
+            MeshCollider meshCollider = selected != null ? selected.GetComponent<MeshCollider>() : null;
+            Mesh renderMesh = filter != null ? filter.sharedMesh : null;
+            Mesh collisionMesh = meshCollider != null && meshCollider.sharedMesh != null
+                ? meshCollider.sharedMesh
+                : renderMesh;
+            if (selected == null || renderMesh == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "Select one GameObject with a MeshFilter before fracture baking.");
+
+            string preset = InferSelectedPreset(renderMesh.bounds.size);
+            const string folder = "Assets/Elemental/Content/Fracture/Selected";
+            if (!AssetDatabase.IsValidFolder(folder)) CreateFolders(folder);
+            string safeName = string.Concat(selected.name.Split(Path.GetInvalidFileNameChars()));
+            string assetPath = AssetDatabase.GenerateUniqueAssetPath(
+                $"{folder}/{safeName}_{preset}Fracture.asset");
+            var asset = ScriptableObject.CreateInstance<EarthFractureAsset>();
+            asset.name = $"{selected.name} {preset} Fracture";
+            AssetDatabase.CreateAsset(asset, assetPath);
+            BakeInto(asset, renderMesh, collisionMesh);
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+
+            EarthFractureValidationResult validation = EarthFractureValidator.Validate(asset);
+            if (!validation.IsValid)
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"Selected fracture is invalid: {validation.Error} at {validation.Index}.");
+            Selection.activeObject = asset;
+            EditorGUIUtility.PingObject(asset);
+            Debug.Log(
+                $"[Elemental] Baked selected {preset} destructible: {asset.PieceCount} pieces, " +
+                $"{asset.BondCount} bonds at {assetPath}.");
+        }
+
+        [MenuItem("Elemental/Fracture/Bake Selected Destructible", true)]
+        private static bool ValidateBakeSelectedDestructible() =>
+            Selection.activeGameObject != null &&
+            Selection.activeGameObject.GetComponent<MeshFilter>()?.sharedMesh != null;
+
+        private static string InferSelectedPreset(Vector3 size)
+        {
+            Vector3 safe = new Vector3(
+                Mathf.Max(0.001f, Mathf.Abs(size.x)),
+                Mathf.Max(0.001f, Mathf.Abs(size.y)),
+                Mathf.Max(0.001f, Mathf.Abs(size.z)));
+            float longest = Mathf.Max(safe.x, Mathf.Max(safe.y, safe.z));
+            float shortest = Mathf.Min(safe.x, Mathf.Min(safe.y, safe.z));
+            if (safe.y <= longest * 0.34f && safe.x > safe.y * 1.4f && safe.z > safe.y * 1.4f)
+                return "Platform";
+            if (longest / shortest <= 1.8f) return "Boulder";
+            return "Wall";
+        }
+
         public static EarthFractureAsset CreateOrLoadProductionWall(
             Mesh intactRenderMesh,
             Mesh intactColliderMesh)

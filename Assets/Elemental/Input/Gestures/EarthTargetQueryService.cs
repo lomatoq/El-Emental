@@ -61,6 +61,8 @@ namespace Elemental.Input.Gestures
             {
                 RaycastHit hit = _hits[index];
                 if (hit.collider == null || hit.distance >= nearest || IsCaster(hit.collider, casterBody)) continue;
+                EarthArenaStructure arena = hit.collider.GetComponentInParent<EarthArenaStructure>();
+                if (arena != null && arena.CameraSuppressed) continue;
                 EarthResolvedTarget target = EarthTargetResolver.Resolve(hit.collider, planetCollider);
                 if (!target.IsValid || (requiredAny != EarthTargetCapabilities.None &&
                     (target.Capabilities & requiredAny) == EarthTargetCapabilities.None)) continue;

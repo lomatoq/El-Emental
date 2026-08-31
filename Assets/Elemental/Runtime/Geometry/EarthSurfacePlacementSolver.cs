@@ -64,7 +64,11 @@ namespace Elemental.Runtime.Geometry
                 Vector3[] vertices = GetVertices(mesh);
                 if (vertices == null || vertices.Length == 0) return default;
                 Vector3 normal = surfaceNormal.normalized;
-                float clampedEmbed = Mathf.Clamp(embed, 0.02f, 0.05f);
+                // Authored structures may choose a deeper hidden foundation, but
+                // visible runtime contacts need the same one-centimetre gate as
+                // arena props. Do not silently turn a requested 1 cm seat into the
+                // historical 2 cm burial.
+                float clampedEmbed = Mathf.Clamp(embed, 0f, 0.05f);
                 float minimum = float.PositiveInfinity;
                 Vector3 supportOffset = Vector3.zero;
                 for (int index = 0; index < vertices.Length; index++)

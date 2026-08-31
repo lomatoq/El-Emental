@@ -2,10 +2,12 @@ using System.Collections.Generic;
 using Elemental.Runtime.Characters;
 using Elemental.Runtime.Geometry;
 using Elemental.Runtime.Matter;
+using Elemental.Runtime.World;
 using Elemental.Simulation.Bending;
 using Elemental.Simulation.Characters;
 using Elemental.Simulation.Combat;
 using Elemental.Simulation.Matter;
+using Elemental.Simulation.Structures;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -21,6 +23,7 @@ namespace Elemental.Runtime.Physics
         [SerializeField] private PlanetMotor motor;
         [SerializeField] private Transform planetCenter;
         [SerializeField] private EarthSurfProfile profile;
+        [SerializeField] private EarthEffectsTuningProfile effectsProfile;
         [SerializeField] private Material material;
         [SerializeField] private Material dustMaterial;
 
@@ -34,8 +37,14 @@ namespace Elemental.Runtime.Physics
         private TrailRenderer _cutTrack;
         private ParticleSystem _dust;
         private readonly SurfChip[] _chips = new SurfChip[28];
+        private readonly SurfCellView[] _cells = new SurfCellView[EarthSurfCellGraph.CellCount];
         private Mesh _chipMesh;
-        private float _nextChipAt;
+        private Collider _lastSupportCollider;
+        private Vector3 _lastSupportPoint;
+        private Vector3 _lastSupportNormal;
+        private float _lastSupportDamageAt;
+        private bool _hasSupportSample;
+        private EarthSurfIntegrityState _integrityState = EarthSurfIntegrityState.Initial;
         private Vector3 _forward;
         private Vector3 _up;
         private Vector3 _previousPosition;
@@ -45,6 +54,7 @@ namespace Elemental.Runtime.Physics
         private uint _generation;
         private Collider _lastImpactCollider;
         private float _lastImpactAt;
+        private float _lastImpactMissingSince;
         private EarthMatterKernelBehaviour _matterKernel;
         private EarthMatterIdentity _boardMatter;
         private EarthSurfSilhouetteFamily _family = EarthSurfSilhouetteFamily.BrokenWedge;
@@ -57,6 +67,8 @@ namespace Elemental.Runtime.Physics
         private bool _ploughImpulseQueued;
         private bool _ploughBraceHeld;
         private Vector3 _riderAnchorLocal;
+        private string _lastIntegrityTargetName;
+        private float _nextCutChipAt;
 
         private sealed class SurfChip
         {
@@ -65,6 +77,20 @@ namespace Elemental.Runtime.Physics
             public float Life;
             public float FullLife;
             public Vector3 FullScale;
+        }
+
+        private sealed class SurfCellView
+        {
+            public Transform Transform;
+            public MeshFilter Filter;
+            public MeshRenderer Renderer;
+            public Mesh Mesh;
+            public Vector3 AttachedLocalPosition;
+            public Quaternion AttachedLocalRotation;
+            public Vector3 Velocity;
+            public Vector3 AngularVelocity;
+            public float Life;
+            public bool Detached;
         }
 
         public uint SurfaceId => 0x5F000000u + _generation;
@@ -78,6 +104,12 @@ namespace Elemental.Runtime.Physics
         public float Brake01 => _brake01;
         public float BankDegrees => _bankDegrees;
         public float RiderDriftMeters { get; private set; }
+        public float BoardIntegrity => _integrityState.Integrity;
+        public Transform BoardTransform => _boardBody != null ? _boardBody.transform : null;
+        public ushort AttachedCellMask => _integrityState.AttachedMask;
+        public ushort OccupiedSupportCellMask => _integrityState.OccupiedSupportMask;
+        public string LastIntegrityTargetName => _lastIntegrityTargetName;
+        public int DetachedOuterCellCount { get; private set; }
         public EarthMatterId MatterId => _boardMatter != null ? _boardMatter.MatterId : default;
         public SupportFrameSnapshot SupportFrame => new SupportFrameSnapshot(
             SurfaceId,
@@ -100,6 +132,22 @@ namespace Elemental.Runtime.Physics
             {
                 Vector3 position = _boardBody != null ? _boardBody.transform.position : _previousPosition;
                 Quaternion rotation = _boardBody != null ? _boardBody.transform.rotation : _previousRotation;
+                // Rigidbody interpolation can expose the board's pooled pose for
+                // one rendered frame immediately after Begin teleports the
+                // kinematic body onto the rider. Capturing a support-local foot
+                // anchor against that stale origin made the next frame resolve at
+                // roughly twice the planet radius. Use the canonical fixed pose
+                // until the interpolated Transform is inside a physically bounded
+                // render lead from it.
+                float maximumRenderLead = Mathf.Max(
+                    0.35f,
+                    SurfaceVelocity.magnitude * Time.fixedDeltaTime * 2f + 0.10f);
+                if (Vector3.Distance(position, _previousPosition) > maximumRenderLead ||
+                    Quaternion.Angle(rotation, _previousRotation) > 35f)
+                {
+                    position = _previousPosition;
+                    rotation = _previousRotation;
+                }
                 Vector3 up = rotation * Vector3.up;
                 return new SupportFrameSnapshot(
                     SurfaceId,
@@ -121,12 +169,14 @@ namespace Elemental.Runtime.Physics
             Transform configuredPlanetCenter,
             EarthSurfProfile configuredProfile,
             Material configuredMaterial,
-            Material configuredDustMaterial = null)
+            Material configuredDustMaterial = null,
+            EarthEffectsTuningProfile configuredEffectsProfile = null)
         {
             casterBody = configuredCaster;
             motor = configuredMotor;
             planetCenter = configuredPlanetCenter;
             profile = configuredProfile;
+            effectsProfile = configuredEffectsProfile;
             material = configuredMaterial;
             dustMaterial = configuredDustMaterial;
             EnsureBoard();
@@ -155,6 +205,18 @@ namespace Elemental.Runtime.Physics
             _rampCommitted = false;
             _ploughImpulseQueued = false;
             _ploughBraceHeld = false;
+            _integrityState = EarthSurfIntegrityState.Initial;
+            DetachedOuterCellCount = 0;
+            _lastSupportCollider = null;
+            _lastSupportPoint = Vector3.zero;
+            _lastSupportNormal = Vector3.zero;
+            _lastSupportDamageAt = float.NegativeInfinity;
+            _hasSupportSample = false;
+            _lastIntegrityTargetName = string.Empty;
+            _lastImpactCollider = null;
+            _lastImpactAt = float.NegativeInfinity;
+            _lastImpactMissingSince = float.PositiveInfinity;
+            _nextCutChipAt = now;
             RebuildBoardMesh();
             _up = CurrentUp(casterBody.worldCenterOfMass);
             _forward = Vector3.ProjectOnPlane(forward, _up).normalized;
@@ -172,7 +234,8 @@ namespace Elemental.Runtime.Physics
                                 (casterBody.worldCenterOfMass - position);
             RiderDriftMeters = 0f;
             _angularVelocity = Vector3.zero;
-            _boardRenderer.enabled = true;
+            _boardRenderer.enabled = false;
+            ResetSurfCells(true);
             _boardCollider.enabled = true;
             RegisterBoardMatter(position);
             if (_cutTrack != null)
@@ -183,7 +246,6 @@ namespace Elemental.Runtime.Physics
             // UnityEngine.Object overloads == null after destruction; null-conditional
             // access does not use that overload and can throw for a stale particle handle.
             if (_dust != null) _dust.Play(true);
-            _nextChipAt = Time.fixedUnscaledTime;
             IgnoreCasterCollisions();
             return true;
         }
@@ -267,6 +329,7 @@ namespace Elemental.Runtime.Physics
             SurfaceVelocity = Vector3.zero;
             if (_boardRenderer != null) _boardRenderer.enabled = false;
             if (_boardCollider != null) _boardCollider.enabled = false;
+            SetSurfCellVisibility(false);
             if (_cutTrack != null) _cutTrack.emitting = false;
             if (_dust != null) _dust.Stop(true, ParticleSystemStopBehavior.StopEmitting);
             if (_boardVisualRoot != null)
@@ -348,7 +411,9 @@ namespace Elemental.Runtime.Physics
                     38f,
                     carryAcceleration);
             }
+            EvaluateSupportTransfer(next);
             SweepNose(next, rotation);
+            EmitCutTrailChip(next);
             UpdatePloughDebris(next);
         }
 
@@ -369,11 +434,43 @@ namespace Elemental.Runtime.Physics
                 Mathf.Max(0.18f, Speed * Time.fixedDeltaTime + 0.12f),
                 ~0,
                 QueryTriggerInteraction.Ignore);
+            if (_lastImpactCollider != null)
+            {
+                bool stillOverlapping = false;
+                for (int index = 0; index < count; index++)
+                {
+                    if (_impactHits[index].collider != _lastImpactCollider) continue;
+                    stillOverlapping = true;
+                    break;
+                }
+                if (stillOverlapping)
+                {
+                    _lastImpactMissingSince = float.PositiveInfinity;
+                }
+                else if (float.IsPositiveInfinity(_lastImpactMissingSince))
+                {
+                    _lastImpactMissingSince = Time.fixedTime;
+                }
+                else if (Time.fixedTime - _lastImpactMissingSince >= 0.30f)
+                {
+                    _lastImpactCollider = null;
+                    _lastImpactMissingSince = float.PositiveInfinity;
+                }
+            }
             for (int index = 0; index < count; index++)
             {
                 Collider collider = _impactHits[index].collider;
                 if (collider == null || collider == _boardCollider || IsCasterCollider(collider)) continue;
-                if (collider == _lastImpactCollider && Time.fixedTime - _lastImpactAt < 0.18f) continue;
+                // The forward box overlaps the curved riding surface by design.
+                // Treating that same support as a wall crash repeatedly consumed
+                // integrity and released an otherwise healthy board.
+                if (collider == _lastSupportCollider) continue;
+                if (Vector3.Dot(_impactHits[index].normal, _up) > 0.35f) continue;
+                // One physical contact episode produces one integrity event. A
+                // timer alone repeatedly damaged the board while it remained
+                // overlapped with the same bot/wall.
+                if (collider == _lastImpactCollider) continue;
+                if (Time.fixedTime - _lastImpactAt < 0.75f) continue;
                 float impulse = (profile != null ? profile.NoseImpactImpulse : 2400f) *
                                 Mathf.InverseLerp(4f, 13f, Speed) *
                                 (_ploughBraceHeld ? 1.65f : 1f) *
@@ -386,10 +483,17 @@ namespace Elemental.Runtime.Physics
                     SurfaceId);
                 EarthWall wall = collider.GetComponentInParent<EarthWall>();
                 EarthPlatform platform = wall == null ? collider.GetComponentInParent<EarthPlatform>() : null;
+                EarthArenaStructure arena = wall == null && platform == null
+                    ? collider.GetComponentInParent<EarthArenaStructure>()
+                    : null;
                 bool applied = wall != null
-                    ? wall.ApplyEarthImpact(in impact)
+                    ? wall.ApplySurfLowerBandImpact(in impact, Speed)
                     : platform != null && Speed >= 5f &&
                       platform.ApplySurfBreach(in impact, _boardCollider);
+                if (!applied && arena != null)
+                    applied = arena.ApplyEarthImpact(in impact);
+                bool damagesBoard = applied && (wall != null || platform != null || arena != null);
+                EarthSurfDamageKind boardDamageKind = EarthSurfDamageKind.NoseCrash;
                 EarthCharacterImpactTarget characterTarget =
                     collider.GetComponentInParent<EarthCharacterImpactTarget>();
                 if (!applied && characterTarget != null)
@@ -415,12 +519,49 @@ namespace Elemental.Runtime.Physics
                         _forward + _up * 0.08f,
                         Mathf.Max(850f, impulse));
                     applied = true;
+                    damagesBoard = collider.bounds.extents.magnitude >= BoardWidth * 0.72f;
+                    boardDamageKind = damagesBoard
+                        ? EarthSurfDamageKind.NoseCrash
+                        : EarthSurfDamageKind.Bump;
                 }
                 Rigidbody body = collider.attachedRigidbody;
                 if (!applied && body != null && !body.isKinematic && body != casterBody)
+                {
                     body.AddForceAtPosition(_forward * Mathf.Min(28f, Speed * 2f), _impactHits[index].point, ForceMode.VelocityChange);
+                    applied = true;
+                    damagesBoard = body.mass >= 120f;
+                    boardDamageKind = damagesBoard
+                        ? EarthSurfDamageKind.NoseCrash
+                        : EarthSurfDamageKind.Bump;
+                }
+                // Static support seams and the protected arena floor can enter the
+                // forward box on a curved world. If no gameplay target accepted the
+                // impact, this is not a destructive nose event and cannot consume a
+                // finite cell.
+                if (!applied) continue;
+                _lastIntegrityTargetName = collider.name;
+                if (!damagesBoard)
+                {
+                    _lastImpactCollider = collider;
+                    _lastImpactAt = Time.fixedTime;
+                    _lastImpactMissingSince = float.PositiveInfinity;
+                    _ploughImpulseQueued = false;
+                    break;
+                }
+                float localContactX = _boardBody != null
+                    ? _boardBody.transform.InverseTransformPoint(_impactHits[index].point).x /
+                      Mathf.Max(0.1f, BoardWidth * 0.5f)
+                    : 0f;
+                ApplyIntegrityEvent(
+                    boardDamageKind,
+                    Speed,
+                    0f,
+                    localContactX,
+                    _impactHits[index].point,
+                    -_forward + _up * 0.35f);
                 _lastImpactCollider = collider;
                 _lastImpactAt = Time.fixedTime;
+                _lastImpactMissingSince = float.PositiveInfinity;
                 _ploughImpulseQueued = false;
                 break;
             }
@@ -441,6 +582,22 @@ namespace Elemental.Runtime.Physics
             _boardVisualFilter.sharedMesh = mesh;
             _boardRenderer = visual.AddComponent<MeshRenderer>();
             _boardRenderer.sharedMaterial = material;
+            _boardRenderer.enabled = false;
+            for (int index = 0; index < _cells.Length; index++)
+            {
+                EarthSurfCellDefinition definition = EarthSurfCellGraph.GetDefinition(index);
+                GameObject cellObject = new GameObject($"Surf Cell {index:00} {definition.Role}");
+                cellObject.transform.SetParent(_boardVisualRoot, false);
+                var cell = new SurfCellView
+                {
+                    Transform = cellObject.transform,
+                    Filter = cellObject.AddComponent<MeshFilter>(),
+                    Renderer = cellObject.AddComponent<MeshRenderer>()
+                };
+                cell.Renderer.sharedMaterial = material;
+                cell.Renderer.enabled = false;
+                _cells[index] = cell;
+            }
             _boardCollider = board.AddComponent<BoxCollider>();
             _boardCollider.center = new Vector3(0f, 0.08f, -BoardLength * 0.08f);
             _boardCollider.size = new Vector3(BoardWidth * 0.88f, 0.34f, BoardLength * 0.72f);
@@ -449,42 +606,56 @@ namespace Elemental.Runtime.Physics
             _boardBody.isKinematic = true;
             _boardBody.interpolation = RigidbodyInterpolation.Interpolate;
             ConfigurePloughEffects(board);
-            _boardRenderer.enabled = false;
             _boardCollider.enabled = false;
         }
 
         private void ConfigurePloughEffects(GameObject board)
         {
+            EarthSurfEffectsTuning tuning = effectsProfile != null ? effectsProfile.Surf : null;
             _cutTrack = board.AddComponent<TrailRenderer>();
-            _cutTrack.sharedMaterial = material;
-            _cutTrack.time = 0.85f;
+            _cutTrack.sharedMaterial = effectsProfile != null
+                ? effectsProfile.Materials.SurfTrail
+                : material;
+            _cutTrack.time = tuning != null ? tuning.TrailLifetime : 0.85f;
             _cutTrack.minVertexDistance = 0.12f;
             _cutTrack.startWidth = BoardWidth * 0.82f;
-            _cutTrack.endWidth = 0.34f;
-            _cutTrack.startColor = new Color(0.24f, 0.13f, 0.065f, 0.72f);
-            _cutTrack.endColor = new Color(0.16f, 0.075f, 0.03f, 0f);
+            _cutTrack.endWidth = tuning != null ? tuning.TrailEndWidth : 0.34f;
+            _cutTrack.startColor = tuning != null
+                ? tuning.TrailStartColor
+                : new Color(0.24f, 0.13f, 0.065f, 0.72f);
+            _cutTrack.endColor = tuning != null
+                ? tuning.TrailEndColor
+                : new Color(0.16f, 0.075f, 0.03f, 0f);
             _cutTrack.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             _cutTrack.emitting = false;
 
             _dust = board.AddComponent<ParticleSystem>();
+            if (tuning != null)
+                EarthParticleSystemTuningApplier.Apply(
+                    _dust, tuning.Dust, effectsProfile.Materials.SurfDust);
             ParticleSystem.MainModule main = _dust.main;
             main.playOnAwake = false;
             main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.32f, 0.68f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(0.7f, 2.2f);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.12f, 0.34f);
-            main.startColor = new ParticleSystem.MinMaxGradient(
-                new Color(0.30f, 0.18f, 0.10f, 0.62f),
-                new Color(0.52f, 0.35f, 0.20f, 0.34f));
-            main.maxParticles = 128;
+            if (tuning == null)
+            {
+                main.startLifetime = new ParticleSystem.MinMaxCurve(0.32f, 0.68f);
+                main.startSpeed = new ParticleSystem.MinMaxCurve(0.7f, 2.2f);
+                main.startSize = new ParticleSystem.MinMaxCurve(0.12f, 0.34f);
+                main.startColor = new ParticleSystem.MinMaxGradient(
+                    new Color(0.30f, 0.18f, 0.10f, 0.62f),
+                    new Color(0.52f, 0.35f, 0.20f, 0.34f));
+                main.maxParticles = 512;
+            }
             ParticleSystem.EmissionModule emission = _dust.emission;
             emission.rateOverTime = 0f;
-            emission.rateOverDistance = 29f;
+            emission.rateOverDistance = tuning != null ? tuning.RateOverDistance : 29f;
             ParticleSystem.ShapeModule shape = _dust.shape;
             shape.shapeType = ParticleSystemShapeType.Box;
             shape.scale = new Vector3(BoardWidth * 0.92f, 0.16f, 0.42f);
             ParticleSystemRenderer dustRenderer = _dust.GetComponent<ParticleSystemRenderer>();
-            dustRenderer.sharedMaterial = dustMaterial != null ? dustMaterial : material;
+            dustRenderer.sharedMaterial = effectsProfile != null
+                ? effectsProfile.Materials.SurfDust
+                : dustMaterial != null ? dustMaterial : material;
             dustRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             dustRenderer.receiveShadows = false;
             dustRenderer.renderMode = ParticleSystemRenderMode.Billboard;
@@ -504,6 +675,19 @@ namespace Elemental.Runtime.Physics
         {
             Vector3 center = planetCenter != null ? planetCenter.position : Vector3.zero;
             float delta = Time.fixedDeltaTime;
+            for (int index = 0; index < _cells.Length; index++)
+            {
+                SurfCellView cell = _cells[index];
+                if (cell?.Transform == null || !cell.Detached || !cell.Transform.gameObject.activeSelf) continue;
+                Vector3 cellUp = cell.Transform.position - center;
+                cellUp = cellUp.sqrMagnitude > 0.01f ? cellUp.normalized : _up;
+                cell.Velocity -= cellUp * (11.5f * delta);
+                cell.Transform.position += cell.Velocity * delta;
+                cell.Transform.Rotate(cell.AngularVelocity * delta, Space.Self);
+                cell.Life -= delta;
+                if (cell.Life > 0f) continue;
+                cell.Transform.gameObject.SetActive(false);
+            }
             for (int index = 0; index < _chips.Length; index++)
             {
                 SurfChip chip = _chips[index];
@@ -518,9 +702,238 @@ namespace Elemental.Runtime.Physics
                 chip.Transform.localScale = chip.FullScale * scale01;
                 if (chip.Life <= 0f) chip.Transform.gameObject.SetActive(false);
             }
-            if (_session == null || _session.Releasing || Speed < 3.5f ||
-                Time.fixedUnscaledTime < _nextChipAt) return;
-            _nextChipAt = Time.fixedUnscaledTime + Mathf.Lerp(0.07f, 0.032f, Mathf.InverseLerp(4f, 13f, Speed));
+        }
+
+        private void EvaluateSupportTransfer(Vector3 boardPosition)
+        {
+            int count = UnityEngine.Physics.RaycastNonAlloc(
+                boardPosition + _up * 1.15f,
+                -_up,
+                _supportHits,
+                2.6f,
+                ~0,
+                QueryTriggerInteraction.Ignore);
+            RaycastHit best = default;
+            bool found = false;
+            float bestDistance = float.PositiveInfinity;
+            for (int index = 0; index < count; index++)
+            {
+                RaycastHit hit = _supportHits[index];
+                Collider collider = hit.collider;
+                if (collider == null || collider == _boardCollider || IsCasterCollider(collider)) continue;
+                if (Vector3.Dot(hit.normal, _up) < 0.30f || hit.distance >= bestDistance) continue;
+                best = hit;
+                bestDistance = hit.distance;
+                found = true;
+            }
+            if (!found)
+            {
+                _hasSupportSample = false;
+                _lastSupportCollider = null;
+                return;
+            }
+
+            if (_hasSupportSample &&
+                Time.fixedUnscaledTime - _lastSupportDamageAt >= 0.12f)
+            {
+                bool supportSwap = best.collider != _lastSupportCollider;
+                float heightStep = Mathf.Abs(Vector3.Dot(
+                    best.point - _lastSupportPoint,
+                    _up));
+                float normalAngle = Vector3.Angle(_lastSupportNormal, best.normal);
+                float normalSpeed = heightStep / Mathf.Max(0.0001f, Time.fixedDeltaTime);
+                if (supportSwap || heightStep > 0.12f || normalAngle > 12f)
+                {
+                    EarthSurfDamageKind kind = supportSwap
+                        ? EarthSurfDamageKind.SupportTransfer
+                        : EarthSurfDamageKind.Bump;
+                    Vector3 localContact = _boardBody != null
+                        ? _boardBody.transform.InverseTransformPoint(best.point)
+                        : Vector3.zero;
+                    Vector3 right = Vector3.Cross(_up, _forward).normalized;
+                    if (ApplyIntegrityEvent(
+                            kind,
+                            normalSpeed,
+                            normalAngle,
+                            localContact.x / Mathf.Max(0.1f, BoardWidth * 0.5f),
+                            best.point + right * Mathf.Sign(localContact.x == 0f ? 1f : localContact.x) *
+                            BoardWidth * 0.42f,
+                            -_forward + _up * 0.55f + right * Mathf.Sign(localContact.x) * 0.35f))
+                    {
+                        _lastSupportDamageAt = Time.fixedUnscaledTime;
+                    }
+                }
+            }
+
+            _hasSupportSample = true;
+            _lastSupportCollider = best.collider;
+            _lastSupportPoint = best.point;
+            _lastSupportNormal = best.normal;
+        }
+
+        public bool ApplyIntegrityEvent(
+            EarthSurfDamageKind kind,
+            float relativeNormalSpeed,
+            float normalDiscontinuityDegrees,
+            float contactLocalX,
+            Vector3 point,
+            Vector3 ejectDirection)
+        {
+            var damageEvent = new EarthSurfDamageEvent(
+                kind,
+                relativeNormalSpeed,
+                normalDiscontinuityDegrees,
+                contactLocalX,
+                SurfaceId);
+            EarthSurfIntegrityDecision decision = EarthSurfIntegritySolver.Resolve(
+                in _integrityState,
+                in damageEvent);
+            if (decision.Damage <= 0f) return false;
+            ApplyIntegrityDecision(in decision, point, ejectDirection);
+            return true;
+        }
+
+        private void ApplyIntegrityDecision(
+            in EarthSurfIntegrityDecision decision,
+            Vector3 point,
+            Vector3 ejectDirection)
+        {
+            if (decision.Damage <= 0f) return;
+            _integrityState = decision.State;
+            if (decision.DetachedOuterCells > 0)
+            {
+                DetachedOuterCellCount += decision.DetachedOuterCells;
+                DetachSurfCells(decision.DetachedCellMask, point, ejectDirection, decision.Damage);
+                EmitSurfChips(point, ejectDirection, decision.DetachedOuterCells, decision.Damage);
+            }
+            if (decision.Collapse && _session != null && !_session.Releasing)
+                _session.Release(Time.fixedUnscaledTime);
+        }
+
+        private void RebuildSurfCells()
+        {
+            if (_boardVisualRoot == null) return;
+            for (int index = 0; index < _cells.Length; index++)
+            {
+                SurfCellView cell = _cells[index];
+                if (cell?.Filter == null) continue;
+                EarthSurfCellDefinition definition = EarthSurfCellGraph.GetDefinition(index);
+                Mesh old = cell.Mesh;
+                float width = definition.Size01.x * BoardWidth * 0.91f;
+                float length = definition.Size01.y * BoardLength * 0.91f;
+                float x = definition.Center01.x * BoardWidth;
+                float z = definition.Center01.y * BoardLength;
+                if (_family == EarthSurfSilhouetteFamily.CrescentPlough &&
+                    (definition.Role == EarthSurfCellRole.Nose || definition.Role == EarthSurfCellRole.OuterRail))
+                    x *= 1.08f;
+                else if (_family == EarthSurfSilhouetteFamily.SplitRail && definition.Role == EarthSurfCellRole.FootBridge)
+                    width *= 0.72f;
+                else if (_family == EarthSurfSilhouetteFamily.BrokenWedge)
+                {
+                    x += Mathf.Lerp(-0.06f, 0.06f, Hash01((uint)index + SurfaceId * 7u));
+                    z += Mathf.Lerp(-0.05f, 0.05f, Hash01((uint)index + SurfaceId * 13u));
+                }
+
+                float backZ = z - length * 0.5f;
+                float frontZ = z + length * 0.5f;
+                float topBack = BoardTopHeight(backZ);
+                float topFront = BoardTopHeight(frontZ);
+                cell.Mesh = BuildSemanticCellMesh(
+                    width,
+                    length,
+                    Mathf.Max(0.065f, topFront - topBack + 0.04f),
+                    SurfaceId ^ (uint)(index * 0x45D9F3B));
+                cell.Filter.sharedMesh = cell.Mesh;
+                cell.AttachedLocalPosition = new Vector3(x, topBack - 0.04f, z);
+                cell.AttachedLocalRotation = Quaternion.Euler(
+                    Mathf.Lerp(-1.5f, 1.5f, Hash01((uint)index + SurfaceId * 19u)),
+                    Mathf.Lerp(-2.4f, 2.4f, Hash01((uint)index + SurfaceId * 23u)),
+                    Mathf.Lerp(-1.2f, 1.2f, Hash01((uint)index + SurfaceId * 29u)));
+                if (cell.Renderer != null) cell.Renderer.sharedMaterial = material;
+                if (old != null) DestroyOwned(old);
+            }
+            ResetSurfCells(IsActive);
+        }
+
+        private float BoardTopHeight(float localZ)
+        {
+            float z01 = Mathf.InverseLerp(-BoardLength * 0.5f, BoardLength * 0.5f, localZ);
+            return Mathf.Lerp(0.04f, NoseHeight, Mathf.Pow(z01, 1.25f));
+        }
+
+        private void ResetSurfCells(bool visible)
+        {
+            for (int index = 0; index < _cells.Length; index++)
+            {
+                SurfCellView cell = _cells[index];
+                if (cell?.Transform == null) continue;
+                cell.Transform.SetParent(_boardVisualRoot, false);
+                cell.Transform.localPosition = cell.AttachedLocalPosition;
+                cell.Transform.localRotation = cell.AttachedLocalRotation;
+                cell.Transform.localScale = Vector3.one;
+                cell.Detached = false;
+                cell.Velocity = Vector3.zero;
+                cell.AngularVelocity = Vector3.zero;
+                cell.Life = 0f;
+                cell.Transform.gameObject.SetActive(visible);
+                if (cell.Renderer != null) cell.Renderer.enabled = visible;
+            }
+        }
+
+        private void SetSurfCellVisibility(bool visible)
+        {
+            for (int index = 0; index < _cells.Length; index++)
+            {
+                SurfCellView cell = _cells[index];
+                if (cell?.Transform == null) continue;
+                cell.Transform.gameObject.SetActive(visible);
+                if (cell.Renderer != null) cell.Renderer.enabled = visible;
+            }
+        }
+
+        private void DetachSurfCells(
+            ushort detachedMask,
+            Vector3 impactPoint,
+            Vector3 ejectDirection,
+            float damage)
+        {
+            Vector3 safeEject = ejectDirection.sqrMagnitude > 0.001f
+                ? ejectDirection.normalized
+                : -_forward + _up * 0.4f;
+            float damage01 = Mathf.InverseLerp(1f, 50f, damage);
+            for (int index = 0; index < _cells.Length; index++)
+            {
+                ushort bit = (ushort)(1 << index);
+                if ((detachedMask & bit) == 0 || (EarthSurfCellGraph.SupportCoreMask & bit) != 0) continue;
+                SurfCellView cell = _cells[index];
+                if (cell?.Transform == null || cell.Detached) continue;
+                Vector3 away = Vector3.ProjectOnPlane(cell.Transform.position - impactPoint, _up);
+                away = away.sqrMagnitude > 0.001f ? away.normalized : safeEject;
+                cell.Transform.SetParent(null, true);
+                cell.Detached = true;
+                cell.Velocity = safeEject * Mathf.Lerp(2.2f, 5.4f, damage01) +
+                                away * Mathf.Lerp(1.1f, 3.4f, Hash01((uint)index + SurfaceId * 31u)) +
+                                _up * Mathf.Lerp(1.5f, 3.8f, Hash01((uint)index + SurfaceId * 37u));
+                cell.AngularVelocity = new Vector3(
+                    Mathf.Lerp(110f, 260f, Hash01((uint)index + SurfaceId * 41u)),
+                    Mathf.Lerp(90f, 240f, Hash01((uint)index + SurfaceId * 43u)),
+                    Mathf.Lerp(120f, 280f, Hash01((uint)index + SurfaceId * 47u)));
+                cell.Life = Mathf.Lerp(0.68f, 0.96f, Hash01((uint)index + SurfaceId * 53u));
+                cell.Transform.gameObject.SetActive(true);
+                if (cell.Renderer != null) cell.Renderer.enabled = true;
+            }
+        }
+
+        private void EmitSurfChips(
+            Vector3 origin,
+            Vector3 ejectDirection,
+            int requested,
+            float damage)
+        {
+            Vector3 safeEject = ejectDirection.sqrMagnitude > 0.001f
+                ? ejectDirection.normalized
+                : -_forward + _up * 0.4f;
+            Vector3 right = Vector3.Cross(_up, _forward).normalized;
             int emitted = 0;
             for (int index = 0; index < _chips.Length; index++)
             {
@@ -529,20 +942,78 @@ namespace Elemental.Runtime.Physics
                 float side = ((index & 1) == 0 ? -1f : 1f) * Mathf.Lerp(
                     BoardWidth * 0.30f, BoardWidth * 0.58f,
                     Hash01((uint)index + _generation * 17u));
-                Vector3 right = Vector3.Cross(_up, _forward).normalized;
                 chip.Transform.SetPositionAndRotation(
-                    boardPosition + _forward * (BoardLength * 0.45f) + right * side + _up * 0.13f,
+                    origin + right * side * 0.42f + _up * 0.13f,
                     Quaternion.LookRotation(_forward, _up) * Quaternion.Euler(index * 29f, index * 47f, 0f));
-                float size = Mathf.Lerp(0.18f, 0.44f, Hash01((uint)index * 31u + _generation));
+                float damage01 = Mathf.InverseLerp(1f, 50f, damage);
+                float size = Mathf.Lerp(0.18f, 0.52f, damage01) *
+                             Mathf.Lerp(0.82f, 1.18f, Hash01((uint)index * 31u + _generation));
                 chip.FullScale = new Vector3(size * 1.35f, size * 0.52f, size);
                 chip.Transform.localScale = chip.FullScale;
-                chip.Velocity = -_forward * Mathf.Lerp(1.1f, 2.8f, Hash01((uint)index + 91u)) +
+                chip.Velocity = safeEject * Mathf.Lerp(1.8f, 4.2f, damage01) +
                                 right * Mathf.Sign(side) * Mathf.Lerp(1.6f, 3.2f, Hash01((uint)index + 121u)) +
                                 _up * Mathf.Lerp(1.2f, 3.4f, Hash01((uint)index + 173u));
                 chip.FullLife = chip.Life = Mathf.Lerp(0.48f, 0.78f, Hash01((uint)index + 251u));
                 chip.Transform.gameObject.SetActive(true);
                 emitted++;
-                if (emitted >= 3) break;
+                if (emitted >= Mathf.Clamp(requested, 1, 3)) break;
+            }
+
+            if (_dust != null)
+            {
+                float damage01 = Mathf.InverseLerp(1f, 50f, damage);
+                EarthSurfEffectsTuning tuning = effectsProfile != null ? effectsProfile.Surf : null;
+                var coarse = new ParticleSystem.EmitParams
+                {
+                    position = origin,
+                    velocity = safeEject * Mathf.Lerp(2.2f, 4.8f, damage01) + _up * 1.2f,
+                    startLifetime = Mathf.Lerp(0.45f, 0.78f, damage01),
+                    startSize = Mathf.Lerp(0.18f, 0.34f, damage01),
+                    startColor = new Color(0.43f, 0.27f, 0.14f, 0.78f)
+                };
+                Vector2 coarseRange = tuning != null ? tuning.CoarseCount : new Vector2(4f, 14f);
+                _dust.Emit(coarse, Mathf.RoundToInt(Mathf.Lerp(coarseRange.x, coarseRange.y, damage01)));
+                var body = coarse;
+                body.velocity = safeEject * Mathf.Lerp(1.2f, 3.2f, damage01) + _up * 0.72f;
+                body.startLifetime = Mathf.Lerp(0.72f, 1.28f, damage01);
+                body.startSize = Mathf.Lerp(0.24f, 0.58f, damage01);
+                body.startColor = new Color(0.56f, 0.39f, 0.23f, 0.62f);
+                Vector2 bodyRange = tuning != null ? tuning.BodyCount : new Vector2(14f, 44f);
+                _dust.Emit(body, Mathf.RoundToInt(Mathf.Lerp(bodyRange.x, bodyRange.y, damage01)));
+                var veil = body;
+                veil.velocity = safeEject * Mathf.Lerp(0.55f, 1.65f, damage01) + _up * 0.38f;
+                veil.startLifetime = Mathf.Lerp(1.05f, 1.65f, damage01);
+                veil.startSize = Mathf.Lerp(0.38f, 0.86f, damage01);
+                veil.startColor = new Color(0.67f, 0.50f, 0.32f, 0.34f);
+                Vector2 veilRange = tuning != null ? tuning.VeilCount : new Vector2(18f, 54f);
+                _dust.Emit(veil, Mathf.RoundToInt(Mathf.Lerp(veilRange.x, veilRange.y, damage01)));
+            }
+        }
+
+        private void EmitCutTrailChip(Vector3 boardPosition)
+        {
+            if (Time.fixedUnscaledTime + 0.0001f < _nextCutChipAt) return;
+            _nextCutChipAt = Time.fixedUnscaledTime +
+                             (effectsProfile != null ? effectsProfile.Surf.CutChipInterval : 0.055f);
+            Vector3 right = Vector3.Cross(_up, _forward).normalized;
+            for (int index = 0; index < _chips.Length; index++)
+            {
+                SurfChip chip = _chips[index];
+                if (chip == null || chip.Transform == null || chip.Transform.gameObject.activeSelf) continue;
+                float side = Mathf.Lerp(-1f, 1f, Hash01((uint)index + _generation * 61u));
+                chip.Transform.SetPositionAndRotation(
+                    boardPosition - _forward * (BoardLength * 0.27f) +
+                    right * side * BoardWidth * 0.38f + _up * 0.04f,
+                    Quaternion.LookRotation(_forward, _up) * Quaternion.Euler(index * 23f, index * 41f, 0f));
+                float size = Mathf.Lerp(0.11f, 0.23f, Hash01((uint)index + _generation * 67u));
+                chip.FullScale = new Vector3(size * 1.25f, size * 0.48f, size);
+                chip.Transform.localScale = chip.FullScale;
+                chip.Velocity = -_forward * Mathf.Lerp(0.45f, 1.1f, Hash01((uint)index + 71u)) +
+                                right * side * Mathf.Lerp(0.45f, 1.4f, Hash01((uint)index + 79u)) +
+                                _up * Mathf.Lerp(0.7f, 1.55f, Hash01((uint)index + 83u));
+                chip.FullLife = chip.Life = Mathf.Lerp(0.46f, 0.72f, Hash01((uint)index + 89u));
+                chip.Transform.gameObject.SetActive(true);
+                break;
             }
         }
 
@@ -583,6 +1054,14 @@ namespace Elemental.Runtime.Physics
         private void OnDestroy()
         {
             if (_boardBody != null) DestroyOwned(_boardBody.gameObject);
+            for (int index = 0; index < _cells.Length; index++)
+            {
+                SurfCellView cell = _cells[index];
+                if (cell?.Transform != null &&
+                    (_boardBody == null || !cell.Transform.IsChildOf(_boardBody.transform)))
+                    DestroyOwned(cell.Transform.gameObject);
+                if (cell?.Mesh != null) DestroyOwned(cell.Mesh);
+            }
             for (int index = 0; index < _chips.Length; index++)
                 if (_chips[index]?.Transform != null) DestroyOwned(_chips[index].Transform.gameObject);
             if (_chipMesh != null) DestroyOwned(_chipMesh);
@@ -604,6 +1083,7 @@ namespace Elemental.Runtime.Physics
             _boardCollider.size = new Vector3(BoardWidth * 0.88f, 0.34f, BoardLength * 0.72f);
             if (old != null) DestroyOwned(old);
             if (_cutTrack != null) _cutTrack.startWidth = BoardWidth * 0.82f;
+            RebuildSurfCells();
         }
 
         private static void DestroyOwned(Object value)
@@ -664,6 +1144,44 @@ namespace Elemental.Runtime.Physics
                     }, noseHeight * 1.08f, 0.10f, jitter);
                     break;
             }
+            mesh.SetVertices(vertices);
+            mesh.SetTriangles(triangles, 0, true);
+            mesh.SetUVs(0, uv);
+            mesh.SetColors(colors);
+            mesh.RecalculateNormals();
+            mesh.RecalculateTangents();
+            mesh.RecalculateBounds();
+            EarthMeshIntegrityGate.ValidateInPlaceOrUseFallback(
+                mesh,
+                EarthMeshIntegrityPolicy.ClosedHero,
+                mesh.name,
+                mesh.bounds);
+            return mesh;
+        }
+
+        private static Mesh BuildSemanticCellMesh(
+            float width,
+            float length,
+            float localNoseHeight,
+            uint seed)
+        {
+            var mesh = new Mesh { name = $"Earth Surf Semantic Cell {seed:X8}" };
+            var vertices = new List<Vector3>(24);
+            var triangles = new List<int>(48);
+            var uv = new List<Vector2>(24);
+            var colors = new List<Color>(24);
+            float halfWidth = Mathf.Max(0.08f, width * 0.5f);
+            float halfLength = Mathf.Max(0.10f, length * 0.5f);
+            float jitter = Mathf.Lerp(-0.018f, 0.018f, Hash01(seed ^ 0xB5297A4Du));
+            AppendBeveledPrism(
+                vertices,
+                triangles,
+                uv,
+                colors,
+                Rectangle(0f, halfWidth, halfLength),
+                Mathf.Max(0.065f, localNoseHeight),
+                0.09f,
+                jitter);
             mesh.SetVertices(vertices);
             mesh.SetTriangles(triangles, 0, true);
             mesh.SetUVs(0, uv);

@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   states:
   - state: 0
-    distance: 6.85
-    height: 3.85
+    distance: 7.65
+    height: 2.7
     shoulderOffset: 0.74
     fieldOfView: 60
-    playerFocusWeight: 0.8
-    aimFocusWeight: 2
+    playerFocusWeight: 1.35
+    aimFocusWeight: 0.75
     heldFocusWeight: 0.15
     constructFocusWeight: 0.12
     velocityLookAhead: 1.15
@@ -32,11 +32,11 @@ MonoBehaviour:
     maximumRoll: 2
     returnDelay: 0.14
   - state: 1
-    distance: 6.7
-    height: 3.8
+    distance: 7.5
+    height: 2.6
     shoulderOffset: 0.78
     fieldOfView: 60
-    playerFocusWeight: 1
+    playerFocusWeight: 1.25
     aimFocusWeight: 0.78
     heldFocusWeight: 0.15
     constructFocusWeight: 0.12
@@ -50,11 +50,11 @@ MonoBehaviour:
     maximumRoll: 2
     returnDelay: 0.14
   - state: 2
-    distance: 6.85
-    height: 3.9
+    distance: 7.65
+    height: 2.75
     shoulderOffset: 0.78
     fieldOfView: 60
-    playerFocusWeight: 1
+    playerFocusWeight: 1.25
     aimFocusWeight: 0.9
     heldFocusWeight: 0.2
     constructFocusWeight: 0.2
@@ -68,11 +68,11 @@ MonoBehaviour:
     maximumRoll: 2.2
     returnDelay: 0.14
   - state: 3
-    distance: 7.1
-    height: 4.05
+    distance: 7.9
+    height: 2.95
     shoulderOffset: 0.74
     fieldOfView: 59
-    playerFocusWeight: 1
+    playerFocusWeight: 1.25
     aimFocusWeight: 0.7
     heldFocusWeight: 0.35
     constructFocusWeight: 0.2
@@ -86,11 +86,11 @@ MonoBehaviour:
     maximumRoll: 3.5
     returnDelay: 0.18
   - state: 4
-    distance: 7.55
-    height: 4.55
+    distance: 8.2
+    height: 3.2
     shoulderOffset: 0.62
     fieldOfView: 63
-    playerFocusWeight: 1
+    playerFocusWeight: 1.25
     aimFocusWeight: 0.85
     heldFocusWeight: 0
     constructFocusWeight: 1
@@ -104,11 +104,11 @@ MonoBehaviour:
     maximumRoll: 2
     returnDelay: 0.2
   - state: 5
-    distance: 7.15
-    height: 4.1
+    distance: 7.9
+    height: 2.95
     shoulderOffset: 0.68
     fieldOfView: 59
-    playerFocusWeight: 1
+    playerFocusWeight: 1.25
     aimFocusWeight: 0.45
     heldFocusWeight: 1.15
     constructFocusWeight: 0.12
@@ -122,11 +122,11 @@ MonoBehaviour:
     maximumRoll: 3.5
     returnDelay: 0.2
   - state: 6
-    distance: 7.45
-    height: 4.7
+    distance: 8.05
+    height: 3.25
     shoulderOffset: 0.68
     fieldOfView: 64
-    playerFocusWeight: 1
+    playerFocusWeight: 1.25
     aimFocusWeight: 0.45
     heldFocusWeight: 0.25
     constructFocusWeight: 0.12
@@ -140,11 +140,11 @@ MonoBehaviour:
     maximumRoll: 2.4
     returnDelay: 0.16
   - state: 7
-    distance: 7.15
-    height: 4.2
+    distance: 7.9
+    height: 3
     shoulderOffset: 0.68
     fieldOfView: 59
-    playerFocusWeight: 1
+    playerFocusWeight: 1.25
     aimFocusWeight: 0.4
     heldFocusWeight: 0.45
     constructFocusWeight: 0.2
@@ -158,11 +158,11 @@ MonoBehaviour:
     maximumRoll: 3.5
     returnDelay: 0.24
   - state: 8
-    distance: 6.8
-    height: 3.95
+    distance: 7.6
+    height: 2.8
     shoulderOffset: 0.72
     fieldOfView: 61
-    playerFocusWeight: 1
+    playerFocusWeight: 1.25
     aimFocusWeight: 0.25
     heldFocusWeight: 0.15
     constructFocusWeight: 0.12
@@ -175,7 +175,7 @@ MonoBehaviour:
     impulseGain: 0.58
     maximumRoll: 1.6
     returnDelay: 0.22
-  maximumFocusDistance: 7.5
+  maximumFocusDistance: 4.5
   pullInSpeed: 24
   releaseSpeed: 4.5
   occlusionReleaseDelay: 0.12

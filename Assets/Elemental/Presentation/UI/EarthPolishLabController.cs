@@ -432,7 +432,8 @@ namespace Elemental.Runtime.World
             _motor.SettleTangentialMotion();
             bool passed = travel >= 3f && maximumFootTravel >= 0.05f && cycles >= 1f &&
                           locomotionState && _motor.HasStableSupport && settledSpeed <= 0.35f &&
-                          maximumUncommandedTurn <= 0.025f && maximumLocomotionFootIk <= 0.15f;
+                          maximumUncommandedTurn <= 0.025f &&
+                          maximumLocomotionFootIk >= 0.35f && maximumLocomotionFootIk <= 0.90f;
             _locomotionProofStatus =
                 $"{(passed ? "PASS" : "FAIL")} / travel {travel:0.00}m / local foot {maximumFootTravel:0.00}m / " +
                 $"cycles {cycles:0.00} / state {(locomotionState ? "locomotion" : "invalid")} / " +

@@ -166,6 +166,11 @@ namespace Elemental.Runtime.Characters
             if (rootBody == null || !IsFinite(worldPosition)) return;
             EnsureController();
 
+            // Enter Play Mode can keep non-serialized runtime state when domain and
+            // scene reloads are disabled. Never carry visible-ragdoll authority into
+            // a fresh gameplay run.
+            if (IsExternalRagdollAuthority) SetExternalRagdollAuthority(false);
+
             Vector3 previousPosition = rootBody.position;
             Quaternion previousRotation = rootBody.rotation;
             Quaternion deltaRotation = worldRotation * Quaternion.Inverse(previousRotation);
@@ -471,6 +476,28 @@ namespace Elemental.Runtime.Characters
             EnsureController();
             CaptureRootConstraints();
             ConfigureSelfCollisionFiltering();
+            // Scene rebuilds and domain reloads must always start with gameplay
+            // authority on the motor. The controller's default enum value happens
+            // to be AnimatedMotor, but relying on that left the Rigidbody/control
+            // behaviours in whatever serialized or interrupted ragdoll state they
+            // previously had until the first physics tick.
+            _controller.Reset();
+            CurrentState = new CharacterPhysicalState(
+                new ActorId(Math.Max(1u, actorId)),
+                CharacterPhysicalMode.AnimatedMotor,
+                float3.zero,
+                float3.zero,
+                ToFloat3(transform.up),
+                0f,
+                0f,
+                1f,
+                RecoveryCandidate.None);
+            if (rootBody != null)
+            {
+                rootBody.isKinematic = false;
+                rootBody.detectCollisions = true;
+            }
+            ApplyControl(CurrentState);
         }
 
         private void CaptureRootConstraints()

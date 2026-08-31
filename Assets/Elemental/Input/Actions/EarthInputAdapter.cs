@@ -96,7 +96,12 @@ namespace Elemental.Input.Actions
 
         public void Configure(PlayerInput configuredPlayerInput)
         {
-            if (playerInput == configuredPlayerInput && _map != null) return;
+            InputActionMap liveMap = configuredPlayerInput != null
+                ? configuredPlayerInput.actions?.FindActionMap(actionMapName, false)
+                : null;
+            if (playerInput == configuredPlayerInput &&
+                _map != null &&
+                ReferenceEquals(_map, liveMap)) return;
             Unbind();
             playerInput = configuredPlayerInput != null
                 ? configuredPlayerInput
@@ -138,22 +143,60 @@ namespace Elemental.Input.Actions
             if (playerInput == null) playerInput = GetComponent<PlayerInput>();
         }
 
-        private void OnEnable() => Bind();
+        private void OnEnable()
+        {
+            Bind();
+            EnsureGameplayInputActive();
+        }
+
+        private void Start() => EnsureGameplayInputActive();
+
+        private void Update()
+        {
+            // This project uses Enter Play Mode without a domain/scene reload.
+            // Editor-bound maps can therefore survive into Play while PlayerInput
+            // itself is inactive. PlayerInput may also replace the serialized action
+            // asset with its private runtime copy after another component has already
+            // bound. Never keep reading the stale editor asset: it bypasses the
+            // PlayerInput device pairing and made routed mouse gestures disappear.
+            // Verify the live device/map contract every frame; the steady-state path
+            // is only a few reference/boolean checks.
+            InputActionMap liveMap = playerInput != null
+                ? playerInput.actions?.FindActionMap(actionMapName, false)
+                : null;
+            if (Application.isPlaying &&
+                (playerInput == null || !playerInput.inputIsActive ||
+                 playerInput.currentActionMap == null ||
+                 playerInput.currentActionMap.name != actionMapName ||
+                 !playerInput.currentActionMap.enabled ||
+                 !ReferenceEquals(_map, liveMap)))
+                Bind();
+        }
 
         private void OnDisable() => Unbind();
 
         private void Bind()
         {
-            if (_map != null) return;
             if (playerInput == null) playerInput = GetComponent<PlayerInput>();
-            _map = playerInput != null
+            EnsureGameplayInputActive();
+
+            InputActionMap liveMap = playerInput != null
                 ? playerInput.actions?.FindActionMap(actionMapName, false)
                 : null;
+            if (!ReferenceEquals(_map, liveMap))
+            {
+                Unbind();
+                _map = liveMap;
+            }
             if (_map == null)
             {
                 Debug.LogError("[Elemental] Gameplay input map is not configured.", this);
                 return;
             }
+
+            // Bind delegates exactly once even when a no-domain-reload Play entry
+            // reuses the already resolved action map.
+            if (_jumpOrStomp != null) return;
 
             _move = Find("Move", true);
             _jumpOrStomp = Find("JumpOrStomp", true);
@@ -176,6 +219,18 @@ namespace Elemental.Input.Actions
             _jumpOrStomp.performed += HandleJumpPerformed;
             _jumpOrStomp.canceled += HandleJumpCanceled;
             _map.Enable();
+        }
+
+        private void EnsureGameplayInputActive()
+        {
+            if (!Application.isPlaying || playerInput == null || !playerInput.enabled) return;
+            playerInput.ActivateInput();
+            if (playerInput.currentActionMap == null ||
+                playerInput.currentActionMap.name != actionMapName)
+                playerInput.SwitchCurrentActionMap(actionMapName);
+            if (_map == null)
+                _map = playerInput.actions?.FindActionMap(actionMapName, false);
+            _map?.Enable();
         }
 
         private InputAction Find(string actionName, bool required)

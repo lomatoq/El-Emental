@@ -205,3 +205,22 @@ Raw evidence is kept under `BuildReports` and `TestResults`. Interactive P50/P95
 - Armor formation/release is sliced through its fixed pool and performs no
   velocity writes on kinematic bodies. The final 720-frame run emitted zero
   warnings/errors.
+
+## M11 performance-aware atmosphere and focus — 2026-08-29
+
+- The aerial-perspective path reuses the existing one-blit URP RenderGraph feature
+  and camera depth texture. Legacy fog is disabled, so there is no second fog pass or
+  duplicate geometry attenuation.
+- `Elemental.Presentation.Clarity` owns the state/capability policy. Explore uses
+  Gaussian on native tiers; unsafe motion and WebLab remain Off. NativeHigh may use
+  Bokeh only for stable deliberate focus, while NativeLow stays Gaussian without
+  high-quality sampling.
+- The cloud cue adds no pass or renderer: two slowly scrolling noise samples run in
+  the existing atmosphere shader and only for sky pixels.
+- Ambient air uses one renderer at 64/32/0 particles. Noise, collision, trails,
+  lights and shadow casting are disabled; the shader uses main-light attenuation to
+  reveal motes in bright regions.
+- Acceptance targets are `<=0.05 ms CPU P95` for clarity and `<=1.5 ms GPU P95` for
+  atmosphere plus motes at 1920×1080 NativeHigh. Automated contract and visual QA
+  are required in this pass; measured P95/P99 evidence is recorded only when a
+  standalone profiler capture is available and is never inferred from test time.

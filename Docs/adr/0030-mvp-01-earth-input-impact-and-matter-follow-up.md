@@ -66,3 +66,24 @@ damage adapter are independent runtime seams. Any one may be disabled without
 changing the canonical terrain, matter, ragdoll or duel contracts. Restoring
 delayed-pointer replay, non-transactional extraction visibility or one-hit stone
 KO is not an accepted rollback.
+
+## Finite surf follow-up — 2026-08-31
+
+- The surf plough is a fixed fifteen-cell semantic graph: left/right foot cores and
+  their bridge remain occupied support, while twelve nose/rail/tail cells are
+  prebuilt detachable views. Damage callbacks only change a bounded bit mask and
+  release existing views; they never create or cook a mesh/collider.
+- Time, travel and coplanar support transfers cause no durability loss. Qualifying
+  support discontinuities release one to three non-support cells. A severe large
+  wall/nose crash ends the session, while a character or small dynamic body is
+  ploughed without being misclassified as a board-killing wall.
+- One physical overlap produces one damage event. Contact latching, a 0.75 second
+  cross-target cooldown and a 0.30 second separation gate prevent repeated damage
+  from one bot or wall contact.
+- Surf impacts on an `EarthWall` use a lower-band-only bond query capped at 32% of
+  wall height. The legacy automatic whole-wall decay is paused for this route.
+- Three-scale dust bursts and actual released cells communicate damage. A separate
+  55 ms cosmetic cut-chip cadence uses the existing 28-object pool and does not
+  feed durability.
+- Fresh focused evidence: `BuildReports/SurfFinitePlay.json`, UTC
+  `2026-08-30T23:29:27.1008027Z`, `3/3` passed in `3.6499857 s`.

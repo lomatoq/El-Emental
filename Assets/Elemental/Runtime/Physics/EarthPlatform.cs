@@ -681,15 +681,52 @@ namespace Elemental.Runtime.Physics
                 BreakStructuralBonds(best);
                 damaged = true;
             }
-            bool releasedAny = damaged && ReleaseUnsupportedIslands(point, worldDirection, impulse);
+            bool releasedAny = damaged && (impulse < FractureImpulse * 2f
+                ? ReleaseSelectedLocalPieces(point, worldDirection, impulse, total)
+                : ReleaseUnsupportedIslands(point, worldDirection, impulse));
             if (releasedAny) TargetsActivated?.Invoke(this);
             return releasedAny;
+        }
+
+        private bool ReleaseSelectedLocalPieces(
+            Vector3 point,
+            Vector3 direction,
+            float impulse,
+            int count)
+        {
+            bool released = false;
+            for (int pieceIndex = 0; pieceIndex < count; pieceIndex++)
+            {
+                if (!_impactSelectedPieces[pieceIndex] || _pieceReleased[pieceIndex]) continue;
+                EarthPlatformPiece piece = _pieces[pieceIndex];
+                if (piece == null || !piece.gameObject.activeSelf) continue;
+                _pieceReleased[pieceIndex] = true;
+                _pieceReleasedAt[pieceIndex] = _fractureElapsed;
+                piece.transform.SetParent(transform.parent, true);
+                Rigidbody body = piece.Body;
+                body.isKinematic = false;
+                body.detectCollisions = true;
+                body.WakeUp();
+                float massShare = Mathf.Clamp01(_pieceVolume[pieceIndex] /
+                    Mathf.Max(0.001f, _fracturePlan.SourceVolume));
+                body.AddForceAtPosition(
+                    (direction + transform.up * 0.12f).normalized * impulse *
+                    Mathf.Lerp(0.018f, 0.055f, 1f - massShare),
+                    point,
+                    ForceMode.Impulse);
+                released = true;
+            }
+            return released;
         }
 
         internal void ReportPieceImpact(int pieceIndex, Collision collision)
         {
             if (!_fractured || collision == null || collision.contactCount == 0) return;
             if (pieceIndex < 0 || pieceIndex >= _pieceReleased.Length || _pieceReleased[pieceIndex]) return;
+            EarthPlatformPiece sibling = collision.collider != null
+                ? collision.collider.GetComponentInParent<EarthPlatformPiece>()
+                : null;
+            if (sibling != null && sibling.Owner == this) return;
             float impulse = collision.impulse.magnitude;
             if (impulse < FractureImpulse) return;
             Vector3 direction = collision.relativeVelocity.sqrMagnitude > 0.01f

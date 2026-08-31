@@ -106,7 +106,7 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
-        public void CompactArmorKeepsCameraOutsideAndPreservesFaceChestAperture()
+        public void CompactArmorKeepsCameraOutsideAndPreservesFullCoverage()
         {
             float normalDistance = EarthCameraArmorVisibilitySolver.ResolveCameraDistance(6.8f, false, 0f);
             float compactDistance = EarthCameraArmorVisibilitySolver.ResolveCameraDistance(6.8f, true, 0.15f);
@@ -121,8 +121,8 @@ namespace Elemental.Tests.EditMode
                 true, new float3(1f, 0f, 0.1f));
             float limb = EarthCameraArmorVisibilitySolver.ResolveBodyCoverageScale(
                 false, new float3(0f, 0f, 1f));
-            Assert.That(faceCenter, Is.LessThan(0.45f));
-            Assert.That(headSide, Is.GreaterThan(0.9f));
+            Assert.That(faceCenter, Is.EqualTo(1f));
+            Assert.That(headSide, Is.EqualTo(1f));
             Assert.That(limb, Is.EqualTo(1f));
         }
 

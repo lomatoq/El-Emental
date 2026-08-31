@@ -44,6 +44,7 @@ namespace Elemental.Presentation.Camera
         private float _requestUntil;
 
         public EarthCameraState State => _state;
+        public Transform Player => player;
         public float ShoulderSign => _shoulderSign;
         public EarthCameraProfile Profile => profile;
         public Vector3 LastWeightedFocus { get; private set; }

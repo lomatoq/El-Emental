@@ -24,6 +24,7 @@ namespace Elemental.Presentation.VFX
         [SerializeField] private EarthPillarWavePool wavePool;
         [SerializeField] private Transform planetCenter;
         [SerializeField] private EarthFeedbackProfile impactFeedbackProfile;
+        [SerializeField] private EarthEffectsTuningProfile effectsProfile;
 
         private float _pulse;
         private float _crackLife;
@@ -33,6 +34,12 @@ namespace Elemental.Presentation.VFX
 
         public void ConfigureImpactProfile(EarthFeedbackProfile configuredProfile) =>
             impactFeedbackProfile = configuredProfile;
+
+        public void ConfigureEffectsProfile(EarthEffectsTuningProfile configuredProfile)
+        {
+            effectsProfile = configuredProfile;
+            ApplyEffectsProfile();
+        }
 
         public void Configure(
             MagicExecutor configuredExecutor,
@@ -57,12 +64,14 @@ namespace Elemental.Presentation.VFX
             input = configuredInput;
             wavePool = configuredWavePool;
             planetCenter = configuredPlanetCenter;
+            ApplyEffectsProfile();
             HideCracks();
             if (isActiveAndEnabled) Subscribe();
         }
 
         private void OnEnable()
         {
+            ApplyEffectsProfile();
             Subscribe();
         }
 
@@ -194,7 +203,7 @@ namespace Elemental.Presentation.VFX
 
         private void OnImpact(ImpactEvent value)
         {
-            if (impactFeedbackProfile != null) return;
+            if (effectsProfile != null || impactFeedbackProfile != null) return;
             Emit(new Vector3(value.Point.x, value.Point.y, value.Point.z),
                 Mathf.Clamp(Mathf.RoundToInt(value.Impulse * 0.025f), 18, 72), 24);
             cameraRig?.AddPresentationImpulse(
@@ -205,13 +214,14 @@ namespace Elemental.Presentation.VFX
 
         private void OnEarthImpact(EarthImpactEvent value)
         {
-            if (impactFeedbackProfile == null) return;
-            EarthFeedbackSample sample = impactFeedbackProfile.Evaluate(in value);
+            if (effectsProfile == null) return;
+            EarthImpactEffectsSample evaluated = effectsProfile.EvaluateImpact(in value);
+            var sample = new EarthFeedbackSample(evaluated.DustCount, evaluated.RubbleCount, 0f, 0f);
             _impactBatch.Add(
                 in value,
                 in sample,
-                impactFeedbackProfile.MaximumBatchedDustPerFrame,
-                impactFeedbackProfile.MaximumBatchedChipsPerFrame);
+                effectsProfile.Impact.MaximumBatchedDustPerFrame,
+                effectsProfile.Impact.MaximumBatchedRubblePerFrame);
         }
 
         private void FlushImpactBatch()
@@ -224,10 +234,13 @@ namespace Elemental.Presentation.VFX
             dust?.Emit(batch.DustCount);
             rubble?.Emit(batch.ChipCount);
             // Bright motes are an accent for exceptional energy, never the dominant layer.
-            if (sparks != null && batch.MaximumKineticEnergy > 18000f)
+            if (sparks != null && effectsProfile != null &&
+                batch.MaximumKineticEnergy > effectsProfile.Impact.SparkEnergyThreshold)
             {
                 SetEmitterFrame(sparks, point + up * 0.04f, up);
-                sparks.Emit(batch.MaximumKineticEnergy > 65000f ? 3 : 1);
+                sparks.Emit(batch.MaximumKineticEnergy > effectsProfile.Impact.HeroSparkEnergyThreshold
+                    ? effectsProfile.Impact.HeroSparkCount
+                    : effectsProfile.Impact.SparkCount);
             }
             cameraRig?.AddPresentationImpulse(
                 Mathf.Clamp(Mathf.Log10(1f + batch.MaximumKineticEnergy) * 0.022f, 0.025f, 0.19f),
@@ -288,13 +301,18 @@ namespace Elemental.Presentation.VFX
 
         private void OnWaveColumnBurst(EarthPillarWavePulse pulse)
         {
-            int dustCount = Mathf.RoundToInt(Mathf.Lerp(2f, 8f, pulse.Crest01));
-            int chipCount = Mathf.RoundToInt(Mathf.Lerp(1f, 5f, pulse.Crest01));
+            EarthPillarEffectsTuning tuning = effectsProfile != null ? effectsProfile.Pillar : null;
+            Vector2 dustRange = tuning != null ? tuning.WaveDustCount : new Vector2(2f, 8f);
+            Vector2 rubbleRange = tuning != null ? tuning.WaveRubbleCount : new Vector2(1f, 5f);
+            int dustCount = Mathf.RoundToInt(Mathf.Lerp(dustRange.x, dustRange.y, pulse.Crest01));
+            int chipCount = Mathf.RoundToInt(Mathf.Lerp(rubbleRange.x, rubbleRange.y, pulse.Crest01));
             SetEmitterFrame(dust, pulse.Position, pulse.Up);
             SetEmitterFrame(sparks, pulse.Position + (pulse.Up * 0.08f), pulse.Up);
             SetEmitterFrame(rubble, pulse.Position + (pulse.Up * 0.06f), pulse.Up);
             dust?.Emit(dustCount);
-            sparks?.Emit(pulse.Crest01 > 0.48f ? 2 : 0);
+            float sparkThreshold = tuning != null ? tuning.WaveSparkThreshold : 0.48f;
+            int sparkCount = tuning != null ? tuning.WaveSparkCount : 2;
+            sparks?.Emit(pulse.Crest01 > sparkThreshold ? sparkCount : 0);
             rubble?.Emit(chipCount);
             if (pulse.Crest01 > 0.45f && Time.unscaledTime >= _nextWaveCameraPulse)
             {
@@ -305,7 +323,19 @@ namespace Elemental.Presentation.VFX
                     pulse.StableId ^ 0x57415645u);
             }
             if (pulseLight != null) pulseLight.transform.position = pulse.Position + (pulse.Up * 0.45f);
-            _pulse = Mathf.Max(_pulse, Mathf.Lerp(0.15f, 0.62f, pulse.Crest01));
+            Vector2 pulseRange = tuning != null ? tuning.PulseStrength : new Vector2(0.15f, 0.62f);
+            _pulse = Mathf.Max(_pulse, Mathf.Lerp(pulseRange.x, pulseRange.y, pulse.Crest01));
+        }
+
+        private void ApplyEffectsProfile()
+        {
+            if (effectsProfile == null) return;
+            EarthParticleSystemTuningApplier.Apply(
+                dust, effectsProfile.Impact.Dust, effectsProfile.Materials.ImpactDust);
+            EarthParticleSystemTuningApplier.Apply(
+                sparks, effectsProfile.Impact.Sparks, effectsProfile.Materials.ImpactSparks);
+            EarthParticleSystemTuningApplier.Apply(
+                rubble, effectsProfile.Impact.Rubble, effectsProfile.Materials.ImpactRubble);
         }
 
         private void Emit(Vector3 position, int dustCount, int sparkCount)

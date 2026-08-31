@@ -39,7 +39,8 @@ namespace Elemental.Runtime.Physics
 
         private void FixedUpdate()
         {
-            if (gravityWorld == null || !gravityWorld.IsReady)
+            if (targetBody == null || targetBody.isKinematic ||
+                gravityWorld == null || !gravityWorld.IsReady)
             {
                 return;
             }

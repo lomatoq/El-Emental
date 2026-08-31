@@ -1,8 +1,8 @@
 # Project Memory — El-Emental
 
-Updated: 2026-08-26
+Updated: 2026-08-30
 
-Current gate: Earth Core V3, self-armor camera/readability pass
+Current gate: M11 animation contact and Broken Crown rendering rehabilitation
 
 Baseline commit: `7bdce0dac855007ec14e1f7114a6af37e563614a`
 
@@ -25,6 +25,24 @@ Baseline commit: `7bdce0dac855007ec14e1f7114a6af37e563614a`
 
 ## Latest evidence
 
+- Animation/arena rescue is implemented but not yet accepted. Unity's own Roslyn
+  response files compile the current Simulation, Presentation, Authoring.Editor,
+  EditMode and PlayMode sources with zero diagnostics. The production locomotion
+  test now writes per-render-frame foot/knee/pelvis/support telemetry. Live Unity
+  test reports and rebuilt captures are still required; see ADR 0033.
+
+- M11 lookdev focused EditMode gate: `139/139` passed on Unity 6000.5.7f1,
+  including five deterministic clarity-tier/hysteresis tests. Runtime MCP
+  verification confirms exactly one directional light, legacy fog disabled,
+  clarity controller and bounded light motes present, both custom shaders
+  supported with zero shader compiler messages. Evidence:
+  `BuildReports/Mvp01FocusedEdit.json` and
+  `BuildReports/Mvp01CombatLatest.png`.
+- The latest long editor performance session on the shared checkout records CPU
+  p95 `9.30694 ms`, GPU p95 `3.50618 ms`, main-thread p95 `7.05697 ms` and
+  render-thread p95 `1.82327 ms` across 10,950 samples. This is a whole-frame
+  shared-scene sample, not an isolated atmosphere-only cost measurement.
+  Evidence: `BuildReports/Mvp01PerformanceLatest.json`.
 - MVP 0.1 input rescue: `109/109` focused EditMode and `12/12` focused
   PlayMode passed on Unity 6000.5.7f1. The PlayMode gate now drives near and
   distant wall strokes through the real 80 ms dual-button input buffer, proves
@@ -60,6 +78,11 @@ Baseline commit: `7bdce0dac855007ec14e1f7114a6af37e563614a`
   never disables their physics or target handles.
 - Compact armor is a physical external shell. It does not replace or recolour the
   animated character, and its plate family must contain real convex shape variation.
+- Lighting/readability uses one persistent sun, one depth-aware RenderGraph
+  atmosphere blit with a two-sample sky-only cloud cue and a single bounded
+  light-mote renderer. Depth of field is semantic: Gaussian in native Explore,
+  off during unsafe motion/Web, and Bokeh only for stable deliberate NativeHigh
+  states. See ADR 0032.
 
 ## Current architecture truth
 
@@ -70,15 +93,23 @@ Baseline commit: `7bdce0dac855007ec14e1f7114a6af37e563614a`
 
 ## Next executable slice
 
-Outcome: visually inspect the compiled self-armor pass in the live Game View while
-keeping the full V3 Earth grammar and the platform → walk → pillar loop protected.
+Outcome: rebuild the generated EarthCoreSlice and prove the animation/contact,
+arena seating and rendering rescue in the live Game View while keeping the full V3
+Earth grammar and platform → walk → pillar loop protected.
 
 Definition of done:
 
-- compact/dome/orbit armor preserves a useful gameplay composition through motion;
-- plate silhouettes read as different stones without exposing or repainting the hero;
-- future changes keep the 238 EditMode / 92 PlayMode baseline green;
-- no expansion is accepted if it reintroduces camera collapse, rider velocity
-  cancellation or stale collision-ignore pairs.
+- raw `AnimationArenaTelemetryLatest.csv/json` proves alternating single-foot
+  locomotion anchors, bounded applied-IK steps and no simultaneous gait locks;
+- every Broken Crown loose/cosmetic prop is within the measured floor/sphere seating
+  tolerance and the player spawn uses the local crater-floor hit;
+- the rebuilt camera serializes SMAA High; arena material, High soft-shadow filter
+  and clean contact-AO profile pass their asset contract;
+- fresh 1920×1080 capture visibly removes vertical stripe fringe, floating rocks and
+  jagged silhouettes without flattening real cast shadows;
+- focused EditMode, production locomotion, Broken Crown PlayMode and the representative
+  profiler are fresh and green.
 
-Non-goal: no new ability is added inside this camera/readability patch.
+Non-goal: no new ability, second animation owner, runtime neural animation, motion
+blur or TAA adoption is added inside this rescue. TAA remains a later motion-vector
+validation, with SMAA as the deterministic fallback.

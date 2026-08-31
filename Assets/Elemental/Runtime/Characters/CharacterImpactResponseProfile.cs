@@ -20,11 +20,29 @@ namespace Elemental.Runtime.Characters
         [SerializeField] private SourceCalibration surfNose = new SourceCalibration(1.15f, 0.65f, 2.4f);
         [SerializeField] private SourceCalibration genericPhysics = new SourceCalibration(1f, 0.8f, 1.5f);
 
+        [Header("Localized hit presentation")]
+        [SerializeField] private bool localizedHitReaction = true;
+        [SerializeField, Range(0.12f, 0.22f)] private float localizedHitDuration = 0.18f;
+        [SerializeField, Range(0.45f, 0.60f)] private float localizedParentWeight = 0.55f;
+        [SerializeField, Range(0.20f, 0.32f)] private float localizedTorsoWeight = 0.25f;
+        [SerializeField, Range(0.10f, 0.30f)] private float localizedHeadTransferWeight = 0.18f;
+        [SerializeField, Range(7f, 14f)] private float localizedArmChestMaxAngle = 12f;
+        [SerializeField, Range(4f, 8f)] private float localizedHeadMaxAngle = 6f;
+        [SerializeField, Range(0.05f, 0.35f)] private float localizedHipsLegWeight = 0.18f;
+
         public ImpactResponseMode ResponseMode => responseMode;
         public float SingleStoneRootVelocity => Mathf.Max(0.1f, singleStoneRootVelocity);
         public float MaximumRagdollRise => Mathf.Max(0.1f, maximumRagdollRise);
         public float MaximumRagdollTangentSpeed => Mathf.Max(0.1f, maximumRagdollTangentSpeed);
         public EarthCharacterImpactTuning Tuning => EarthCharacterImpactTuning.Default;
+        public bool LocalizedHitReaction => localizedHitReaction;
+        public float LocalizedHitDuration => Mathf.Clamp(localizedHitDuration, 0.12f, 0.22f);
+        public float LocalizedParentWeight => Mathf.Clamp(localizedParentWeight, 0.45f, 0.60f);
+        public float LocalizedTorsoWeight => Mathf.Clamp(localizedTorsoWeight, 0.20f, 0.32f);
+        public float LocalizedHeadTransferWeight => Mathf.Clamp(localizedHeadTransferWeight, 0.10f, 0.30f);
+        public float LocalizedArmChestMaxAngle => Mathf.Clamp(localizedArmChestMaxAngle, 7f, 14f);
+        public float LocalizedHeadMaxAngle => Mathf.Clamp(localizedHeadMaxAngle, 4f, 8f);
+        public float LocalizedHipsLegWeight => Mathf.Clamp(localizedHipsLegWeight, 0.05f, 0.35f);
 
         public EarthCharacterImpactCalibration CalibrationFor(EarthCharacterImpactSourceKind source)
         {

@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "assetId": "broken_crown_arena",
+  "targetWidthMetres": 16.0,
+  "sourceFiles": {
+    "raw": "BrokenCrownArena_TripoRaw.blend",
+    "preprocessBackup": "BrokenCrownArena_Preprocess.blend",
+    "working": "BrokenCrownArena_Working.blend"
+  },
+  "floor": {
+    "intactObject": "Arena_FloorBase_INTACT",
+    "ordinaryDamage": false,
+    "damageMode": "meteor_only",
+    "trigger": "MeteorImpact",
+    "pieceCount": 36,
+    "repairable": false,
+    "foundationPieces": 0
+  },
+  "staticObjects": [
+    "Arena_FloorBase_INTACT",
+    "Arena_GateThreshold_STATIC"
+  ],
+  "normalImpactStructures": [
+    { "id": "arena_gate", "intactObject": "Arena_Gate_INTACT", "pieceCount": 12 },
+    { "id": "arena_wall_east", "intactObject": "Arena_Wall_East_INTACT", "pieceCount": 12 },
+    { "id": "arena_wall_west", "intactObject": "Arena_Wall_West_INTACT", "pieceCount": 12 },
+    { "id": "arena_column_north_west", "intactObject": "Arena_Column_NorthWest_INTACT", "pieceCount": 5 },
+    { "id": "arena_column_north_east", "intactObject": "Arena_Column_NorthEast_INTACT", "pieceCount": 5 },
+    { "id": "arena_column_south_east", "intactObject": "Arena_Column_SouthEast_INTACT", "pieceCount": 4 },
+    { "id": "arena_column_south_west", "intactObject": "Arena_Column_SouthWest_INTACT", "pieceCount": 4 }
+  ],
+  "looseRocks": [
+    "Arena_Rock_SouthEast_Large",
+    "Arena_Rock_SouthWest_Slab",
+    "Arena_Rock_NorthEast_Large",
+    "Arena_Rock_SouthEast_Small",
+    "Arena_Rock_NorthWest_Large",
+    "Arena_Rock_SouthWest_Large",
+    "Arena_Rock_West_Slab"
+  ],
+  "cosmeticRubble": [
+    "Arena_Rubble_SouthWest_01",
+    "Arena_Rubble_SouthWest_02"
+  ],
+  "authoring": {
+    "baker": "../../../Tools/Blender/bake_broken_crown_arena.py",
+    "validator": "../../../Tools/Blender/validate_broken_crown_arena.py",
+    "piecePrefix": "FR_",
+    "colliderPrefix": "COL_FR_",
+    "fractureStage": "unity_import_ready_v1",
+    "wallArtStatus": "import_ready",
+    "currentWallProfile": "masonry_watershed_power_v1",
+    "wallSites": "BrokenCrownArena.wall-sites.json",
+    "uniformWholeWallVoronoiApproved": false
+  },
+  "unityImport": {
+    "model": "../../../Assets/Elemental/Content/Arena/BrokenCrown/BrokenCrownArena.fbx",
+    "sidecar": "../../../Assets/Elemental/Content/Arena/BrokenCrown/BrokenCrownArena.fracture.json",
+    "catalog": "../../../Assets/Elemental/Content/Arena/BrokenCrown/Generated/BrokenCrownArenaCatalog.asset",
+    "structureAssetCount": 8
+  },
+  "validation": {
+    "status": "PASS",
+    "scope": "topology_metadata_graphs_face_masks_and_collider_budget",
+    "visualFractureApproved": true,
+    "semanticObjectCount": 18,
+    "renderPieceCount": 90,
+    "colliderCount": 90,
+    "maxColliderFaces": 168,
+    "maxColliderVertices": 86,
+    "colliderVertexLimit": 255,
+    "graphFailureCount": 0,
+    "missingFaceMaskCount": 0,
+    "floorTriggerSet": ["MeteorImpact"]
+  }
+}

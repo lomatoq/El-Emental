@@ -122,7 +122,7 @@ namespace Elemental.Simulation.Characters
 
         private static bool IsRooted(EarthTechniqueId technique) => technique is
             EarthTechniqueId.RaiseWall or EarthTechniqueId.RaisePlatform or
-            EarthTechniqueId.PillarJump or EarthTechniqueId.WebWave or
+            EarthTechniqueId.PillarJump or EarthTechniqueId.WebWave or EarthTechniqueId.FaultLine or
             EarthTechniqueId.Armor or EarthTechniqueId.Repair or
             EarthTechniqueId.WallSlide or EarthTechniqueId.FractureFan;
     }
@@ -318,6 +318,10 @@ namespace Elemental.Simulation.Characters
         public static bool HasLocomotionIntent(float2 moveInput) =>
             math.lengthsq(moveInput) > LocomotionIntentThresholdSq;
 
+        public static bool IsLocomoting(float2 moveInput, float tangentSpeed) =>
+            HasLocomotionIntent(moveInput) ||
+            math.abs(math.isfinite(tangentSpeed) ? tangentSpeed : 0f) > 0.22f;
+
         public static bool ShouldLock(
             bool supported,
             bool surfActive,
@@ -350,8 +354,8 @@ namespace Elemental.Simulation.Characters
             float speed01 = math.saturate(
                 (math.max(0f, tangentSpeed) - FullContactSpeed) /
                 math.max(0.01f, ReducedContactSpeed - FullContactSpeed));
-            float contact = math.lerp(0.94f, 0.58f, speed01);
-            if (HasLocomotionIntent(moveInput)) contact *= 0.94f;
+            float contact = math.lerp(0.82f, 0.42f, speed01);
+            if (HasLocomotionIntent(moveInput)) contact *= 0.90f;
             return math.saturate(contact);
         }
     }

@@ -1,7 +1,9 @@
+using System;
 using Elemental.Runtime.World;
 using Elemental.Runtime.Matter;
 using Elemental.Runtime.Geometry;
 using Elemental.Simulation.Bending;
+using Elemental.Simulation.Combat;
 using Elemental.Simulation.Matter;
 using Unity.Mathematics;
 using Unity.Profiling;
@@ -9,6 +11,35 @@ using UnityEngine;
 
 namespace Elemental.Runtime.Physics
 {
+    public readonly struct EarthProjectileSurfaceImpact
+    {
+        public EarthProjectileSurfaceImpact(
+            Collider surface,
+            Vector3 point,
+            Vector3 normal,
+            Vector3 relativeVelocity,
+            float impulse,
+            float approachSpeed,
+            bool swept)
+        {
+            Surface = surface;
+            Point = point;
+            Normal = normal;
+            RelativeVelocity = relativeVelocity;
+            Impulse = impulse;
+            ApproachSpeed = approachSpeed;
+            Swept = swept;
+        }
+
+        public Collider Surface { get; }
+        public Vector3 Point { get; }
+        public Vector3 Normal { get; }
+        public Vector3 RelativeVelocity { get; }
+        public float Impulse { get; }
+        public float ApproachSpeed { get; }
+        public bool Swept { get; }
+    }
+
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody))]
     public sealed class EarthFragment : MonoBehaviour, IEarthPhysicalTarget
@@ -41,7 +72,8 @@ namespace Elemental.Runtime.Physics
         private Vector3 _emergenceUp;
         private float _emergenceClearance;
         private float _emergenceCollisionRestoreAt;
-        private int _lastImpactFrame = -100;
+        private EarthProjectileSurfaceContactState _surfaceContactState;
+        private Vector3 _prePhysicsVelocity;
         private float _radius;
         private float _nextAccretionAt;
         private EarthHoverFrame _hoverFrame;
@@ -69,6 +101,8 @@ namespace Elemental.Runtime.Physics
         public EarthPhysicalTargetKind TargetKind => _targetKind;
         public bool IsEarthTargetValid => targetBody != null && !targetBody.isKinematic && gameObject.activeSelf;
         public EarthMatterIdentity MatterIdentity => _matterIdentity;
+
+        public event Action<EarthProjectileSurfaceImpact> SurfaceImpactAccepted;
 
         public void ConfigureHover(EarthHoverProfile profile) => hoverProfile = profile;
 
@@ -103,6 +137,8 @@ namespace Elemental.Runtime.Physics
             _sourcePool = sourcePool;
             _profile = profile;
             _radius = Mathf.Max(0.05f, radius);
+            _surfaceContactState = default;
+            _prePhysicsVelocity = Vector3.zero;
             _nextAccretionAt = Time.fixedTime + 0.65f;
             if (_gravityBody == null) _gravityBody = GetComponent<GravityBody>();
             RestoreSourceCollision();
@@ -137,12 +173,9 @@ namespace Elemental.Runtime.Physics
             targetBody.angularVelocity = Vector3.zero;
             gameObject.SetActive(true);
             if (_bodyCollider == null) _bodyCollider = GetComponent<Collider>();
-            _ignoredControllerCollider = holdTarget != null
-                ? holdTarget.GetComponentInParent<Collider>()
-                : null;
-            if (_bodyCollider != null && _ignoredControllerCollider != null)
-                UnityEngine.Physics.IgnoreCollision(
-                    _bodyCollider, _ignoredControllerCollider, true);
+            ConfigureControllerCollision(
+                holdTarget != null ? holdTarget.GetComponentInParent<Collider>() : null,
+                0.65f);
             if (executor != null && executor.MatterKernel != null)
             {
                 float volume = Mathf.Max(0.000001f, mass / executor.EarthMaterialDensity);
@@ -196,6 +229,7 @@ namespace Elemental.Runtime.Physics
             _sweepGuard?.Arm();
             targetBody.AddForce(direction.normalized * (velocityChange * targetBody.mass), ForceMode.Impulse);
             targetBody.AddTorque(Vector3.Cross(direction.normalized, transform.up) * (targetBody.mass * 0.45f), ForceMode.Impulse);
+            _prePhysicsVelocity = targetBody.linearVelocity;
         }
 
         public void LaunchProjectile(
@@ -205,18 +239,43 @@ namespace Elemental.Runtime.Physics
             float collisionGraceSeconds = 0.45f)
         {
             StopBendControl();
-            _ignoredControllerCollider = casterCollider;
-            _controllerCollisionRestoreAt = Time.fixedTime + Mathf.Max(0.05f, collisionGraceSeconds);
-            if (_bodyCollider != null && _ignoredControllerCollider != null)
-                UnityEngine.Physics.IgnoreCollision(_bodyCollider, _ignoredControllerCollider, true);
+            ConfigureControllerCollision(casterCollider, collisionGraceSeconds);
             targetBody.linearVelocity = direction.sqrMagnitude > 0.0001f
                 ? direction.normalized * Mathf.Max(0f, velocityChange)
                 : Vector3.zero;
             targetBody.angularVelocity = Vector3.Cross(direction.normalized, transform.up) * 2.1f;
+            _prePhysicsVelocity = targetBody.linearVelocity;
             _sweepGuard?.Arm();
         }
 
+        /// <summary>
+        /// Releases a fragment that is already owned by a bending/quick-cast
+        /// session. Directly assigning Rigidbody velocity outside this class used
+        /// to leave the secondary sweep guard disarmed and its pre-physics sample
+        /// stale, which is unsafe for the 60-76 m/s Quick Stone lane.
+        /// </summary>
+        public void ReleaseControlledProjectile(Vector3 releaseVelocity)
+        {
+            StopBendControl();
+            targetBody.linearVelocity = releaseVelocity;
+            targetBody.angularVelocity *= 0.2f;
+            _prePhysicsVelocity = releaseVelocity;
+            _sweepGuard?.Arm();
+            targetBody.WakeUp();
+        }
+
         public void SetTargetKind(EarthPhysicalTargetKind kind) => _targetKind = kind;
+
+        public void SetFormationKinematic(bool value)
+        {
+            if (targetBody == null) return;
+            if (value)
+            {
+                targetBody.linearVelocity = Vector3.zero;
+                targetBody.angularVelocity = Vector3.zero;
+            }
+            targetBody.isKinematic = value;
+        }
 
         public void BeginBendControl(
             Vector3 targetPosition,
@@ -291,6 +350,9 @@ namespace Elemental.Runtime.Physics
                 targetBody.detectCollisions = true;
                 targetBody.isKinematic = false;
             }
+            ConfigureControllerCollision(
+                holdTarget != null ? holdTarget.GetComponentInParent<Collider>() : null,
+                0.65f);
             BeginSurfaceEmergence(sourceCollider, surfacePoint, localUp, radius);
             Vector3 target = holdTarget != null
                 ? holdTarget.position
@@ -318,6 +380,7 @@ namespace Elemental.Runtime.Physics
             Vector3 releaseVelocity = ToVector3(solved);
             StopBendControl();
             targetBody.linearVelocity = releaseVelocity;
+            _prePhysicsVelocity = releaseVelocity;
             _sweepGuard?.Arm();
             return releaseVelocity;
         }
@@ -334,7 +397,10 @@ namespace Elemental.Runtime.Physics
             LastAppliedControlForce = Vector3.zero;
             LastControlForceWasClamped = false;
             if (targetBody != null) targetBody.isKinematic = false;
-            RestoreControllerCollision();
+            if (_ignoredControllerCollider != null)
+                _controllerCollisionRestoreAt = Mathf.Max(
+                    _controllerCollisionRestoreAt,
+                    Time.fixedTime + 0.45f);
         }
 
         public void CompleteReintegration()
@@ -409,6 +475,7 @@ namespace Elemental.Runtime.Physics
 
         private void FixedUpdate()
         {
+            if (targetBody != null) _prePhysicsVelocity = targetBody.linearVelocity;
             UpdateEmergenceCollision();
             UpdateControllerCollision();
             if (!IsHeld) return;
@@ -426,6 +493,14 @@ namespace Elemental.Runtime.Physics
 
                 Vector3 hoverTarget = _bendTargetPosition + EarthHoverPhysics.BobOffset(
                     in _hoverFrame, CurrentLocalUp(), Time.fixedTime, hoverProfile);
+                if (targetBody.isKinematic)
+                {
+                    targetBody.MovePosition(hoverTarget);
+                    LastControlError = hoverTarget - targetBody.worldCenterOfMass;
+                    LastAppliedControlForce = Vector3.zero;
+                    LastControlForceWasClamped = false;
+                    return;
+                }
                 BendForceResult result = BendForceSolver.SolvePdForce(
                     ToFloat3(targetBody.worldCenterOfMass),
                     ToFloat3(targetBody.linearVelocity),
@@ -494,6 +569,18 @@ namespace Elemental.Runtime.Physics
             _controllerCollisionRestoreAt = 0f;
         }
 
+        private void ConfigureControllerCollision(Collider controllerCollider, float graceSeconds)
+        {
+            if (_ignoredControllerCollider != controllerCollider) RestoreControllerCollision();
+            _ignoredControllerCollider = controllerCollider;
+            _controllerCollisionRestoreAt = Time.fixedTime + Mathf.Max(0.05f, graceSeconds);
+            if (_bodyCollider != null && _ignoredControllerCollider != null)
+                UnityEngine.Physics.IgnoreCollision(
+                    _bodyCollider,
+                    _ignoredControllerCollider,
+                    true);
+        }
+
         private void UpdateControllerCollision()
         {
             if (_ignoredControllerCollider == null || _isControlled) return;
@@ -509,27 +596,166 @@ namespace Elemental.Runtime.Physics
 
         private void OnCollisionEnter(Collision collision)
         {
-            if (_executor == null || Time.frameCount - _lastImpactFrame < 3)
+            if (collision == null || collision.contactCount == 0 || targetBody == null) return;
+            ContactPoint contact = collision.GetContact(0);
+            Vector3 surfaceVelocity = SurfaceVelocity(collision.rigidbody, contact.point);
+            Vector3 projectileVelocity = _prePhysicsVelocity;
+            if ((projectileVelocity - surfaceVelocity).sqrMagnitude < 0.000001f &&
+                collision.relativeVelocity.sqrMagnitude > 0.000001f)
+                projectileVelocity = surfaceVelocity + collision.relativeVelocity;
+            EarthProjectileSurfaceContactResult result = ResolveSurfaceContact(
+                collision.collider,
+                projectileVelocity,
+                surfaceVelocity,
+                contact.normal,
+                Mathf.Max(0f, contact.separation));
+            if (!result.AcceptImpact)
             {
+                PreserveRejectedContactTravel(in result, contact.normal, surfaceVelocity);
                 return;
             }
 
-            float impulse = collision.impulse.magnitude;
-            if (impulse < 1f)
-            {
-                return;
-            }
-
-            _lastImpactFrame = Time.frameCount;
-            _executor.HandleFragmentImpact(this, collision, impulse);
+            float impulse = Mathf.Max(
+                collision.impulse.magnitude,
+                result.ApproachSpeed * Mathf.Max(0.01f, targetBody.mass));
+            if (impulse < 1f) return;
+            _surfaceContactState = result.State;
+            PublishSurfaceImpact(
+                collision.collider,
+                contact.point,
+                contact.normal,
+                projectileVelocity - surfaceVelocity,
+                impulse,
+                result.ApproachSpeed,
+                false);
+            _executor?.HandleFragmentImpact(this, collision, impulse);
         }
 
-        internal void HandleSweptImpact(Collider hitCollider, Vector3 point, Vector3 normal, float impulse)
+        internal bool HandleSweptImpact(
+            Collider hitCollider,
+            Vector3 point,
+            Vector3 normal,
+            float surfaceClearance,
+            float impulse,
+            out float approachSpeed)
         {
-            if (_executor == null || impulse < 1f || Time.frameCount - _lastImpactFrame < 3) return;
-            _lastImpactFrame = Time.frameCount;
-            _executor.HandleFragmentSweptImpact(this, hitCollider, point, normal, impulse);
+            approachSpeed = 0f;
+            if (hitCollider == null || targetBody == null) return false;
+            Rigidbody surfaceBody = hitCollider.attachedRigidbody;
+            Vector3 surfaceVelocity = SurfaceVelocity(surfaceBody, point);
+            Vector3 projectileVelocity = targetBody.linearVelocity;
+            EarthProjectileSurfaceContactResult result = ResolveSurfaceContact(
+                hitCollider,
+                projectileVelocity,
+                surfaceVelocity,
+                normal,
+                Mathf.Max(0f, surfaceClearance));
+            approachSpeed = result.ApproachSpeed;
+            if (!result.AcceptImpact) return false;
+
+            float resolvedImpulse = Mathf.Max(
+                impulse,
+                result.ApproachSpeed * Mathf.Max(0.01f, targetBody.mass));
+            if (resolvedImpulse < 1f) return false;
+            _surfaceContactState = result.State;
+            PublishSurfaceImpact(
+                hitCollider,
+                point,
+                normal,
+                projectileVelocity - surfaceVelocity,
+                resolvedImpulse,
+                result.ApproachSpeed,
+                true);
+            _executor?.HandleFragmentSweptImpact(
+                this,
+                hitCollider,
+                point,
+                normal,
+                resolvedImpulse);
+            return true;
         }
+
+        private EarthProjectileSurfaceContactResult ResolveSurfaceContact(
+            Collider surface,
+            Vector3 projectileVelocity,
+            Vector3 surfaceVelocity,
+            Vector3 normal,
+            float clearance)
+        {
+            var sample = new EarthProjectileSurfaceContactSample(
+                surface != null,
+                SurfaceStableId(surface),
+                Time.fixedTime,
+                ToFloat3(projectileVelocity),
+                ToFloat3(surfaceVelocity),
+                ToFloat3(normal),
+                clearance,
+                _radius);
+            EarthProjectileSurfaceContactTuning tuning =
+                EarthProjectileSurfaceContactTuning.Default;
+            return EarthProjectileSurfaceContactSolver.Resolve(
+                in _surfaceContactState,
+                in sample,
+                in tuning);
+        }
+
+        private void PreserveRejectedContactTravel(
+            in EarthProjectileSurfaceContactResult result,
+            Vector3 normal,
+            Vector3 surfaceVelocity)
+        {
+            if (!result.PreserveTangentialTravel || targetBody == null || targetBody.isKinematic) return;
+            Vector3 safeNormal = normal.sqrMagnitude > 0.0001f ? normal.normalized : Vector3.up;
+            if (result.Decision == EarthProjectileSurfaceContactDecision.OutsideClearance)
+            {
+                targetBody.linearVelocity = _prePhysicsVelocity;
+                return;
+            }
+
+            Vector3 relative = _prePhysicsVelocity - surfaceVelocity;
+            Vector3 outward = safeNormal * Mathf.Max(0f, Vector3.Dot(relative, safeNormal));
+            targetBody.linearVelocity = surfaceVelocity + Vector3.ProjectOnPlane(relative, safeNormal) + outward;
+        }
+
+        private void PublishSurfaceImpact(
+            Collider surface,
+            Vector3 point,
+            Vector3 normal,
+            Vector3 relativeVelocity,
+            float impulse,
+            float approachSpeed,
+            bool swept)
+        {
+            SurfaceImpactAccepted?.Invoke(new EarthProjectileSurfaceImpact(
+                surface,
+                point,
+                normal,
+                relativeVelocity,
+                impulse,
+                approachSpeed,
+                swept));
+        }
+
+        private static Vector3 SurfaceVelocity(Rigidbody body, Vector3 point) =>
+            body != null ? body.GetPointVelocity(point) : Vector3.zero;
+
+        private static uint SurfaceStableId(Collider surface)
+        {
+            if (surface == null) return 0u;
+            EarthArenaStructure arena = surface.GetComponentInParent<EarthArenaStructure>();
+            if (arena == null) arena = surface.GetComponentInParent<EarthArenaPiece>()?.Owner;
+            if (arena != null) return NonZero(arena.StructureId ^ 0xA8E10000u);
+            EarthWall wall = surface.GetComponentInParent<EarthWall>();
+            if (wall == null) wall = surface.GetComponentInParent<EarthWallPiece>()?.Owner;
+            if (wall != null) return NonZero(wall.WallId ^ 0x7A110000u);
+            EarthPlatform platform = surface.GetComponentInParent<EarthPlatform>();
+            if (platform == null) platform = surface.GetComponentInParent<EarthPlatformPiece>()?.Owner;
+            if (platform != null) return NonZero(platform.PlatformId ^ 0x91A70000u);
+            ulong entityId = EntityId.ToULong(surface.GetEntityId());
+            return NonZero(unchecked((uint)(entityId ^ (entityId >> 32))));
+        }
+
+        private static uint NonZero(uint value) => value != 0u ? value : 1u;
 
         private static float3 ToFloat3(Vector3 value) => new float3(value.x, value.y, value.z);
         private static Vector3 ToVector3(float3 value) => new Vector3(value.x, value.y, value.z);

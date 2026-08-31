@@ -34,7 +34,8 @@ namespace Elemental.Simulation.Bending
         TerrainStitch = 32,
         SubsurfaceReturn = 33,
         LaunchRamp = 34,
-        RearWall = 35
+        RearWall = 35,
+        FaultLine = 36
     }
 
     [Flags]

@@ -19,6 +19,7 @@ namespace Elemental.Runtime.Physics
         [SerializeField] private EarthSurfaceQueryService surfaceQueries;
         [SerializeField] private EarthStructureFractureProfile fractureProfile;
         [SerializeField] private EarthMatterKernelBehaviour matterKernel;
+        [SerializeField] private GravityWorldBehaviour gravityWorld;
 
         private readonly List<EarthPlatform> _platforms = new List<EarthPlatform>(6);
         private uint _nextId = 1u;
@@ -60,6 +61,15 @@ namespace Elemental.Runtime.Physics
 
         public void ConfigurePhysicsFeel(EarthPhysicsFeelProfile configuredProfile) =>
             physicsFeelProfile = configuredProfile;
+
+        public void ConfigureGravity(GravityWorldBehaviour configuredWorld)
+        {
+            gravityWorld = configuredWorld;
+            for (int index = 0; index < _platforms.Count; index++)
+                ConfigureGravityBodies(_platforms[index] != null
+                    ? _platforms[index].gameObject
+                    : null);
+        }
 
         public void ConfigureSurfaceQueries(EarthSurfaceQueryService configuredService)
         {
@@ -167,6 +177,7 @@ namespace Elemental.Runtime.Physics
             platform.Fractured += HandlePlatformFractured;
             platform.Configure(platformMaterial, profile, physicsFeelProfile, pieceMeshVariants);
             platform.ConfigureFractureProfile(fractureProfile);
+            ConfigureGravityBodies(go);
             EarthPlatformSurfaceProvider provider = go.AddComponent<EarthPlatformSurfaceProvider>();
             provider.Configure(platform, surfaceQueries);
             platform.PrepareForPool();
@@ -185,6 +196,7 @@ namespace Elemental.Runtime.Physics
                 platform.Fractured += HandlePlatformFractured;
                 platform.Configure(platformMaterial, profile, physicsFeelProfile, pieceMeshVariants);
                 platform.ConfigureFractureProfile(fractureProfile);
+                ConfigureGravityBodies(platform.gameObject);
                 EarthPlatformSurfaceProvider provider =
                     platform.GetComponent<EarthPlatformSurfaceProvider>();
                 provider?.Configure(platform, surfaceQueries);
@@ -195,5 +207,19 @@ namespace Elemental.Runtime.Physics
 
         private void HandlePlatformFractured(EarthPlatform platform) =>
             PlatformFractured?.Invoke(platform);
+
+        private void ConfigureGravityBodies(GameObject platformObject)
+        {
+            if (platformObject == null) return;
+            Rigidbody[] bodies = platformObject.GetComponentsInChildren<Rigidbody>(true);
+            for (int index = 0; index < bodies.Length; index++)
+            {
+                Rigidbody body = bodies[index];
+                if (body == null) continue;
+                GravityBody gravity = body.GetComponent<GravityBody>();
+                if (gravity == null) gravity = body.gameObject.AddComponent<GravityBody>();
+                gravity.Configure(gravityWorld, body);
+            }
+        }
     }
 }

@@ -183,6 +183,7 @@ namespace Elemental.Authoring.Editor
                 return;
             }
             RequireParameter(controller, "Speed", AnimatorControllerParameterType.Float, errors);
+            RequireParameter(controller, "GaitRate", AnimatorControllerParameterType.Float, errors);
             RequireParameter(controller, "Grounded", AnimatorControllerParameterType.Bool, errors);
             RequireParameter(controller, "VerticalSpeed", AnimatorControllerParameterType.Float, errors);
             RequireParameter(controller, "Cast", AnimatorControllerParameterType.Bool, errors);
@@ -280,15 +281,17 @@ namespace Elemental.Authoring.Editor
                 errors.Add("KayKitMage base default state must use a locomotion BlendTree.");
                 return;
             }
-            if (tree.blendType != BlendTreeType.FreeformCartesian2D ||
-                tree.blendParameter != "Turn" || tree.blendParameterY != "Speed")
-                errors.Add("KayKitMage locomotion must be a Turn/Speed Freeform Cartesian 2D BlendTree.");
+            if (tree.blendType != BlendTreeType.Simple1D ||
+                tree.blendParameter != "Speed")
+                errors.Add("KayKitMage leg locomotion must be a phase-coherent Speed 1D BlendTree; procedural body steering owns Turn.");
+            if (!state.speedParameterActive || state.speedParameter != "GaitRate")
+                errors.Add("KayKitMage locomotion cadence must be driven by the bounded GaitRate parameter.");
             if (tree.useAutomaticThresholds)
                 errors.Add("KayKitMage locomotion thresholds must use authored metre-per-second values, not automatic normalization.");
             ChildMotion[] children = tree.children;
-            if (children.Length != 6)
+            if (children.Length != 4)
             {
-                errors.Add("KayKitMage locomotion must contain Idle/WalkBack/Walk/Run/LeftTurn/RightTurn motions.");
+                errors.Add("KayKitMage leg locomotion must contain Idle/WalkBack/Walk/Run speed samples without one-shot turn clips.");
                 return;
             }
             for (int index = 0; index < children.Length; index++)

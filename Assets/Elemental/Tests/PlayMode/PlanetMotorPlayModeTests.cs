@@ -122,8 +122,10 @@ namespace Elemental.Tests.PlayMode
         [UnityTest]
         public IEnumerator FixedCommandReplay_CircumnavigatesAndMatchesIsolatedWorld()
         {
-            Fixture first = CreateFixture(Vector3.up, new Vector3(-30f, 0f, 0f), true);
-            Fixture second = CreateFixture(Vector3.up, new Vector3(30f, 0f, 0f), true);
+            // Keep deterministic fixture physics outside any production planet that
+            // may already be open while the focused PlayMode suite runs.
+            Fixture first = CreateFixture(Vector3.up, new Vector3(-240f, 0f, 0f), true);
+            Fixture second = CreateFixture(Vector3.up, new Vector3(240f, 0f, 0f), true);
             WaitForFixedUpdate fixedUpdate = new WaitForFixedUpdate();
 
             for (int tick = 0; tick < 50; tick++)
@@ -163,6 +165,7 @@ namespace Elemental.Tests.PlayMode
             Vector3 center = default,
             bool useCharacterAsCameraFrame = false)
         {
+            if (center == default) center = new Vector3(240f, 0f, 0f);
             Fixture fixture = new Fixture
             {
                 RadialUp = radialUp.normalized,

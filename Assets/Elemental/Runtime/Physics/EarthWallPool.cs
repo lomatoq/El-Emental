@@ -30,6 +30,7 @@ namespace Elemental.Runtime.Physics
         [SerializeField] private EarthStructureFractureProfile structureFractureProfile;
         [SerializeField] private EarthMatterKernelBehaviour matterKernel;
         [SerializeField] private EarthShapeGrammarProfile shapeGrammarProfile;
+        [SerializeField] private GravityWorldBehaviour gravityWorld;
 
         private readonly List<EarthWall> _walls = new List<EarthWall>(8);
         private readonly Dictionary<EarthWall, MeshFilter> _wallFilters = new Dictionary<EarthWall, MeshFilter>(8);
@@ -89,6 +90,15 @@ namespace Elemental.Runtime.Physics
         }
 
         public void ConfigurePhysicsFeel(EarthPhysicsFeelProfile profile) => physicsFeelProfile = profile;
+        public void ConfigureGravity(GravityWorldBehaviour configuredWorld)
+        {
+            gravityWorld = configuredWorld;
+            for (int index = 0; index < _walls.Count; index++)
+                ConfigureGravityBodies(_walls[index] != null
+                    ? _walls[index].gameObject
+                    : null);
+        }
+
         public void ConfigureSurfaceQueries(EarthSurfaceQueryService configuredService)
         {
             surfaceQueries = configuredService;
@@ -250,7 +260,14 @@ namespace Elemental.Runtime.Physics
                 if (hit == null || hit.transform.IsChildOf(newWall.transform)) continue;
                 EarthWall wall = hit.GetComponentInParent<EarthWall>();
                 EarthPlatform platform = wall == null ? hit.GetComponentInParent<EarthPlatform>() : null;
-                IEarthDamageableStructure target = wall != null ? wall : platform;
+                EarthArenaStructure arena = wall == null && platform == null
+                    ? hit.GetComponentInParent<EarthArenaStructure>()
+                    : null;
+                IEarthDamageableStructure target = wall != null
+                    ? wall
+                    : platform != null
+                        ? platform
+                        : arena;
                 if (target == null || !((MonoBehaviour)target).gameObject.activeInHierarchy ||
                     target.StructureId == excludedSupportId) continue;
                 bool duplicate = false;
@@ -258,8 +275,11 @@ namespace Elemental.Runtime.Physics
                     if (ReferenceEquals(_constructionTargets[existing], target)) duplicate = true;
                 if (duplicate) continue;
                 _constructionTargets[targetCount++] = target;
+                Vector3 impactPoint = hit is MeshCollider meshCollider && !meshCollider.convex
+                    ? hit.bounds.ClosestPoint(midpoint)
+                    : hit.ClosestPoint(midpoint);
                 var impact = new EarthStructureImpact(
-                    hit.ClosestPoint(midpoint),
+                    impactPoint,
                     up + forward * 0.18f,
                     structureFractureProfile != null
                         ? structureFractureProfile.ConstructionImpactImpulse
@@ -299,6 +319,7 @@ namespace Elemental.Runtime.Physics
             if (TryConfigureBakedWall(
                     wallObject, filter, wallBody, wall, out Transform[] bakedPieces))
             {
+                ConfigureGravityBodies(wallObject);
                 wallObject.SetActive(false);
                 _walls.Add(wall);
                 return wall;
@@ -350,9 +371,24 @@ namespace Elemental.Runtime.Physics
             }
             EarthWallBond[] bonds = BuildVolumetricFallbackBonds(wallBody, collapsePieces, plan);
             wall.ConfigureCollapsePieces(collapsePieces, volumeFractions, bonds);
+            ConfigureGravityBodies(wallObject);
             wallObject.SetActive(false);
             _walls.Add(wall);
             return wall;
+        }
+
+        private void ConfigureGravityBodies(GameObject wallObject)
+        {
+            if (wallObject == null) return;
+            Rigidbody[] bodies = wallObject.GetComponentsInChildren<Rigidbody>(true);
+            for (int index = 0; index < bodies.Length; index++)
+            {
+                Rigidbody body = bodies[index];
+                if (body == null) continue;
+                GravityBody gravity = body.GetComponent<GravityBody>();
+                if (gravity == null) gravity = body.gameObject.AddComponent<GravityBody>();
+                gravity.Configure(gravityWorld, body);
+            }
         }
 
         private void ApplyVisualShapeVariant(EarthWall wall, uint sourceTick)

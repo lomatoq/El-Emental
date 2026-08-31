@@ -1,12 +1,65 @@
 using System.Collections.Generic;
 using Elemental.Runtime.Geometry;
+using Elemental.Runtime.Physics;
 using NUnit.Framework;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Elemental.Tests.EditMode
 {
     public sealed class EarthSurfacePlacementSolverTests
     {
+        [Test]
+        public void PolygonAndLegacyPillarsUseExactOneCentimetreFullRiseSeat()
+        {
+            var polygon = new Mesh { name = "Pillar Support Polygon Test" };
+            Mesh legacy = null;
+            try
+            {
+                var footprint = new[]
+                {
+                    new float2(-0.65f, -0.45f),
+                    new float2(0.55f, -0.52f),
+                    new float2(0.72f, 0.30f),
+                    new float2(-0.42f, 0.61f)
+                };
+                EarthWebWaveCellMeshFactory.ConfigureSharedBoundaryCell(
+                    polygon,
+                    footprint,
+                    0xA511u,
+                    1.21f);
+                legacy = EarthWebWaveCellMeshFactory.Create(4);
+                Vector3 up = new Vector3(0.18f, 0.96f, -0.21f).normalized;
+                Vector3 surface = up * 18f;
+                Quaternion rotation = Quaternion.LookRotation(
+                    Vector3.ProjectOnPlane(Vector3.forward, up).normalized,
+                    up) * Quaternion.Euler(2.5f, 17f, 1.3f);
+
+                EarthSurfacePlacementResult polygonSeat =
+                    EarthPillarWaveColumn.ResolveFullRisePlacement(
+                        polygon, surface, up, rotation, Vector3.one);
+                EarthSurfacePlacementResult legacySeat =
+                    EarthPillarWaveColumn.ResolveFullRisePlacement(
+                        legacy,
+                        surface,
+                        up,
+                        rotation,
+                        new Vector3(0.75f, 1.2f, 0.58f));
+
+                Assert.That(polygonSeat.IsValid, Is.True);
+                Assert.That(legacySeat.IsValid, Is.True);
+                Assert.That(polygonSeat.SupportError, Is.EqualTo(-0.01f).Within(0.0001f));
+                Assert.That(legacySeat.SupportError, Is.EqualTo(-0.01f).Within(0.0001f));
+                Assert.That(polygonSeat.SupportError, Is.InRange(-0.0101f, 0.015f));
+                Assert.That(legacySeat.SupportError, Is.InRange(-0.0101f, 0.015f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(polygon);
+                if (legacy != null) Object.DestroyImmediate(legacy);
+            }
+        }
+
         [Test]
         public void FiveHundredTransformedRocksTouchTheirCanonicalSupportPlane()
         {

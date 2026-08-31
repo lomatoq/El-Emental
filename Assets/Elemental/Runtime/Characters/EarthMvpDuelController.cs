@@ -1,4 +1,5 @@
 using Elemental.Runtime.Physics;
+using Elemental.Runtime.World;
 using Elemental.Simulation.Characters;
 using Elemental.Simulation.Combat;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace Elemental.Runtime.Characters
         [SerializeField] private HumanoidRagdollRig botHumanoidRagdoll;
         [SerializeField] private EarthCharacterImpactTarget botCharacterImpactTarget;
         [SerializeField, Range(3f, 4f)] private float respawnSeconds = 3.5f;
+        [SerializeField, Range(0f, 4f)] private float initialPlayerProtectionSeconds = 2.5f;
 
         private EarthDuelFighterState _playerState = EarthDuelFighterState.Active;
         private EarthDuelFighterState _botState = EarthDuelFighterState.Active;
@@ -31,6 +33,8 @@ namespace Elemental.Runtime.Characters
         private Quaternion _botSpawnRotation;
         private RigidbodyConstraints _botMotorConstraints;
         private bool _subscribed;
+        private EarthRecoverableKnockdownState _playerKnockdown;
+        private EarthRecoverableKnockdownState _botKnockdown;
 
         public EarthDuelFighterPhase PlayerPhase => _playerState.Phase;
         public EarthDuelFighterPhase BotPhase => _botState.Phase;
@@ -38,6 +42,11 @@ namespace Elemental.Runtime.Characters
         public float BotRespawnRemaining => _botState.RemainingSeconds;
         public int PlayerKnockoutCount { get; private set; }
         public int BotKnockoutCount { get; private set; }
+
+        public bool IsRecoverablyKnockedDown(EarthDuelFighterId fighter) =>
+            fighter == EarthDuelFighterId.Player
+                ? _playerKnockdown.IsActive
+                : _botKnockdown.IsActive;
 
         public void Configure(
             ActiveRagdollPuppet configuredPlayerPuppet,
@@ -71,11 +80,50 @@ namespace Elemental.Runtime.Characters
             botCharacterImpactTarget = configuredBotCharacterImpactTarget;
             playerCharacterImpactTarget?.BindDuel(this);
             botCharacterImpactTarget?.BindDuel(this);
+            MagicExecutor sharedExecutor = playerCharacterImpactTarget != null
+                ? playerCharacterImpactTarget.GetComponent<MagicExecutor>()
+                : null;
+            if (sharedExecutor != null)
+            {
+                var worldFanout = new EarthWorldResponseFanoutAdapter(sharedExecutor.Events);
+                playerCharacterImpactTarget?.BindWorldResponseFanout(worldFanout);
+                botCharacterImpactTarget?.BindWorldResponseFanout(worldFanout);
+            }
             respawnSeconds = Mathf.Clamp(configuredRespawnSeconds, 3f, 4f);
             CaptureSpawnPoses();
             _playerState = EarthDuelFighterState.Active;
             _botState = EarthDuelFighterState.Active;
             Subscribe();
+        }
+
+        public void RequestRecoverableKnockdown(
+            EarthDuelFighterId fighter,
+            in RagdollHandoff handoff,
+            float physicalSeconds = 0.72f,
+            float recoverySeconds = 0.72f)
+        {
+            if (fighter == EarthDuelFighterId.Player)
+            {
+                if (_playerState.Phase != EarthDuelFighterPhase.Active ||
+                    _playerKnockdown.IsActive || playerHumanoidRagdoll == null)
+                    return;
+                _playerKnockdown = EarthRecoverableKnockdownState.Begin(
+                    physicalSeconds,
+                    recoverySeconds);
+                playerHumanoidRagdoll.BeginRagdoll(in handoff);
+                return;
+            }
+
+            if (_botState.Phase != EarthDuelFighterPhase.Active ||
+                _botKnockdown.IsActive || botHumanoidRagdoll == null)
+                return;
+            _botKnockdown = EarthRecoverableKnockdownState.Begin(
+                physicalSeconds,
+                recoverySeconds);
+            if (botController != null) botController.enabled = false;
+            if (botMotor != null) botMotor.enabled = false;
+            botCombatBody?.ForceFullRagdoll(physicalSeconds + recoverySeconds + 0.2f);
+            botHumanoidRagdoll.BeginRagdoll(in handoff);
         }
 
         public void KnockoutPlayer(Vector3 launchVelocityChange)
@@ -97,6 +145,7 @@ namespace Elemental.Runtime.Characters
         private void KnockoutPlayer(in RagdollHandoff handoff)
         {
             if (_playerState.Phase != EarthDuelFighterPhase.Active || playerPuppet == null) return;
+            _playerKnockdown = default;
             _playerState = EarthDuelRespawnSolver.KnockOut(respawnSeconds);
             PlayerKnockoutCount++;
             // The visible rig receives the handoff. Giving the same velocity to the
@@ -116,6 +165,7 @@ namespace Elemental.Runtime.Characters
         private void KnockoutBot(in RagdollHandoff requestedHandoff)
         {
             if (_botState.Phase != EarthDuelFighterPhase.Active || botBody == null) return;
+            _botKnockdown = default;
             _botState = EarthDuelRespawnSolver.KnockOut(respawnSeconds);
             BotKnockoutCount++;
             botCombatBody?.ForceFullRagdoll(respawnSeconds + 0.2f);
@@ -146,6 +196,15 @@ namespace Elemental.Runtime.Characters
         private void Awake()
         {
             CaptureSpawnPoses();
+            float protection = Mathf.Clamp(initialPlayerProtectionSeconds, 0f, 4f);
+            if (protection <= 0f) return;
+
+            // Give the scene-authored player enough time to acquire locomotion and
+            // Earth control before the bot's first projectile can force a ragdoll.
+            // Runtime fixtures configure references after Awake and remain unchanged.
+            playerPuppet?.SuppressImpacts(protection);
+            playerImpactTarget?.SuppressImpacts(protection);
+            playerCharacterImpactTarget?.SuppressImpacts(protection);
         }
 
         private void OnEnable() => Subscribe();
@@ -153,6 +212,17 @@ namespace Elemental.Runtime.Characters
 
         private void FixedUpdate()
         {
+            StepRecoverableKnockdown(
+                EarthDuelFighterId.Player,
+                ref _playerKnockdown,
+                playerBody,
+                playerHumanoidRagdoll);
+            StepRecoverableKnockdown(
+                EarthDuelFighterId.Bot,
+                ref _botKnockdown,
+                botBody,
+                botHumanoidRagdoll);
+
             EarthDuelFighterStep playerStep = EarthDuelRespawnSolver.Step(
                 in _playerState,
                 Time.fixedDeltaTime);
@@ -183,6 +253,7 @@ namespace Elemental.Runtime.Characters
         private void RespawnPlayer()
         {
             if (playerPuppet == null) return;
+            _playerKnockdown = default;
             playerPuppet.ResetPhysicalState(_playerSpawnPosition, _playerSpawnRotation);
             playerHumanoidRagdoll?.ResetToAnimated();
             playerImpactTarget?.SuppressImpacts(0.75f);
@@ -192,6 +263,7 @@ namespace Elemental.Runtime.Characters
         private void RespawnBot()
         {
             if (botBody == null) return;
+            _botKnockdown = default;
             botBody.position = _botSpawnPosition;
             botBody.rotation = _botSpawnRotation;
             if (!botBody.isKinematic)
@@ -217,6 +289,38 @@ namespace Elemental.Runtime.Characters
                 botController.ResetPlanner();
             }
             UnityEngine.Physics.SyncTransforms();
+        }
+
+        private void StepRecoverableKnockdown(
+            EarthDuelFighterId fighter,
+            ref EarthRecoverableKnockdownState state,
+            Rigidbody body,
+            HumanoidRagdollRig rig)
+        {
+            if (!state.IsActive || rig == null) return;
+            EarthRecoverableKnockdownStep step = EarthRecoverableKnockdownSolver.Step(
+                in state,
+                Time.fixedDeltaTime);
+            state = step.State;
+            if (step.BeginAuthoredRecovery)
+            {
+                Vector3 position = body != null ? body.position : rig.transform.position;
+                Vector3 up = position.sqrMagnitude > 0.1f ? position.normalized : rig.transform.up;
+                Vector3 forward = body != null
+                    ? Vector3.ProjectOnPlane(body.rotation * Vector3.forward, up)
+                    : Vector3.ProjectOnPlane(rig.transform.forward, up);
+                rig.RecoverToAnimated(up, forward, false);
+            }
+            if (!step.Completed) return;
+            rig.CompleteRecovery();
+            if (fighter != EarthDuelFighterId.Bot) return;
+            botCombatBody?.ResetCombatState();
+            if (botMotor != null) botMotor.enabled = true;
+            if (botController != null)
+            {
+                botController.enabled = true;
+                botController.ResetPlanner();
+            }
         }
 
         private void CaptureSpawnPoses()

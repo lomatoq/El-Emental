@@ -35,6 +35,7 @@ namespace Elemental.Runtime.Physics
         private int _castPresentationKind;
         private Animator _animator;
         private int _magicLayerIndex = -1;
+        private bool _hasSharedPresentationOwner;
         private bool _liveAimEnabled;
         private readonly RaycastHit[] _aimHits = new RaycastHit[12];
         private LineRenderer _aimPreview;
@@ -92,6 +93,11 @@ namespace Elemental.Runtime.Physics
                     radius,
                     mass);
                 if (_punchStone == null) return false;
+                _punchStone.BeginSurfaceEmergence(
+                    FindSupportCollider(surface, surfaceUp),
+                    surface,
+                    surfaceUp,
+                    radius);
                 _punchStart = surface - surfaceUp * 0.34f;
                 _punchAimScreen = initialAim;
                 _liveAimEnabled = liveAim;
@@ -314,6 +320,10 @@ namespace Elemental.Runtime.Physics
         private void UpdateAimPreview()
         {
             if (_aimPreview == null || _punchStone == null) return;
+            // The generic gesture preview shares this LineRenderer and clears its
+            // position count when a draw ends. Reassert the two-point contract
+            // before the stomp preview writes into it.
+            if (_aimPreview.positionCount != 2) _aimPreview.positionCount = 2;
             Vector3 origin = _punchStone.transform.position;
             Vector3 endpoint = origin + Vector3.ClampMagnitude(_punchAimPoint - origin, 12f);
             _aimPreview.SetPosition(0, origin);
@@ -343,8 +353,53 @@ namespace Elemental.Runtime.Physics
             return true;
         }
 
+        private Collider FindSupportCollider(Vector3 surface, Vector3 up)
+        {
+            if (up.sqrMagnitude < 0.5f) return null;
+            up.Normalize();
+            int count = UnityEngine.Physics.RaycastNonAlloc(
+                new Ray(surface + up * 2f, -up),
+                _aimHits,
+                4f,
+                ~0,
+                QueryTriggerInteraction.Ignore);
+            float nearest = float.PositiveInfinity;
+            Collider selected = null;
+            for (int index = 0; index < count; index++)
+            {
+                RaycastHit hit = _aimHits[index];
+                if (hit.collider == null || hit.distance >= nearest ||
+                    IsCasterCollider(hit.collider)) continue;
+                nearest = hit.distance;
+                selected = hit.collider;
+            }
+            return selected;
+        }
+
+        private bool IsCasterCollider(Collider candidate)
+        {
+            if (candidate == null || casterBody == null) return false;
+            return candidate.attachedRigidbody == casterBody ||
+                   candidate.transform == casterBody.transform ||
+                   candidate.transform.IsChildOf(casterBody.transform);
+        }
+
         private Vector3 ProjectToPlanet(Vector3 candidate, out Vector3 up)
         {
+            up = LocalUp;
+            if (TryFindSupport(
+                    candidate + up * 4f,
+                    -up,
+                    12f,
+                    out Vector3 support,
+                    out Vector3 supportNormal))
+            {
+                up = supportNormal.sqrMagnitude > 0.5f
+                    ? supportNormal.normalized
+                    : up;
+                return support;
+            }
+
             Vector3 center = executor != null && executor.VoxelPlanet != null
                 ? executor.VoxelPlanet.transform.position
                 : Vector3.zero;
@@ -373,6 +428,11 @@ namespace Elemental.Runtime.Physics
         private void SetCastPresentation(bool active, int kind)
         {
             if (_animator == null) return;
+            // HumanoidCharacterPresentation is the continuous owner for ordinary
+            // held/vector/repair casting. This controller may author its bespoke
+            // stomp/crest pose while active, but it must never clear another
+            // technique's upper-body layer every LateUpdate while idle.
+            if (!active && _hasSharedPresentationOwner) return;
             if (active) _castPresentationKind = kind;
             int appliedKind = active ? kind : 0;
             _animator.SetInteger("CastKind", appliedKind);
@@ -395,6 +455,20 @@ namespace Elemental.Runtime.Physics
                 _magicLayerIndex = _animator != null
                     ? _animator.GetLayerIndex("Earth Magic Upper Body")
                     : -1;
+            }
+            if (!_hasSharedPresentationOwner)
+            {
+                MonoBehaviour[] behaviours = GetComponentsInChildren<MonoBehaviour>(true);
+                for (int index = 0; index < behaviours.Length; index++)
+                {
+                    MonoBehaviour behaviour = behaviours[index];
+                    if (behaviour != null &&
+                        behaviour.GetType().Name == "HumanoidCharacterPresentation")
+                    {
+                        _hasSharedPresentationOwner = true;
+                        break;
+                    }
+                }
             }
             if (_aimPreview == null)
             {

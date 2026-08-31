@@ -5,7 +5,7 @@ Status: rebuilt and accepted in focused EditMode, PlayMode, runtime and visual Q
 ## Player outcome
 
 The shipping Earth scene is now a compact repeatable duel on a visibly larger
-36 m-radius planet. The red player and a blue rival use the same Mixamo X Bot
+55.1 m-radius planet. The red player and a blue rival use the same Mixamo X Bot
 Humanoid, Avatar and curated animator controller. The rival has no player-input
 ownership, but approaches, telegraphs and casts a physical Earth-stone projectile.
 
@@ -25,7 +25,7 @@ physical impacts remain the counterplay.
 - Rebuild entrypoint: `Elemental.Authoring.Editor.M3EarthCoreSetup.Configure()`.
 - Generated scenes are not hand-edited; source/profile changes are followed by the
   same editor rebuild command.
-- `PlanetWorldProfile.radius = 36`; runtime transform scaling is not used.
+- `PlanetWorldProfile.radius = 55.1`; runtime transform scaling is not used.
 - NativeHigh and NativeLow are the M11 targets. WebLab retains its documented
   smaller-world limits and is outside this acceptance pass.
 
@@ -45,9 +45,15 @@ physical impacts remain the counterplay.
   uses the shared magic animation set.
 - The player stays red, so identical silhouettes are readable as opponents without
   introducing a second character rig.
-- One persistent directional light drives the scene. Native High uses a 4096 atlas,
-  four cascades, soft shadows and 48 m distance. Low/Web use their own 2048/two-
-  cascade/no-soft URP asset; transient feedback lights remain event-driven.
+- One persistent directional light drives the scene, but Broken Crown disables its
+  realtime shadow map in Game view because the architecture produced travelling
+  cascade bands. Restrained DepthNormals SSAO and analytic recess form provide
+  stable contact depth; transient feedback lights remain event-driven.
+- ADR 0032 makes the existing one-blit depth-aware atmosphere the sole fog authority.
+  NativeHigh Explore and ordinary locomotion use custom dual-subject Bokeh;
+  NativeLow uses Gaussian, while unsafe motion/Web stay sharp. The same atmosphere pass
+  carries a two-sample sky-only cloud cue; sunlit air motes are capped at 64/32/0
+  without noise, collision, trails or lights.
 - The final animation rebuild is the curated Earth motion tree rather than the
   imported clip graph. Runtime capture confirms both characters leave T-pose and
   enter locomotion/cast presentation.
@@ -220,6 +226,19 @@ bounded, and no rescue path reduces planet scale or voxel fidelity.
   is capped to a 2 m ballistic rise and 4 m/s tangent speed, while an individual stone
   can move the character root by at most 0.8 m/s. Stone clusters require three distinct
   source IDs in 0.72 s/0.72 m and at least 5.5 m/s cumulative effective velocity change.
+- A large single stone now resolves to `RecoverableKnockdown`, not KO: the visible
+  humanoid receives one bounded physical handoff, aligns recovery at its settled pelvis,
+  plays the authored Falling-To-Roll recovery, then restores control without incrementing
+  the KO counter or entering respawn. Three distinct concentrated stone sources retain
+  the existing full KO path.
+- Player and rival share the same authored locomotion/landing controller and independent
+  `EarthFootContactController`. Jump/fall flight windows disable contact IK; moving roll,
+  hard-land brace and get-up use explicit authored contact windows. A final critically
+  damped upper-body pass composes acceleration, turn and directional impact without a
+  sinusoidal rebound and never writes hips, knees or feet.
+- Each accepted character impact also emits one canonical `EarthWorldResponseEvent`.
+  Dust, pooled debris, scars, audio and camera consume its shared response ID through the
+  existing Earth-impact stream; this presentation fan-out cannot apply gameplay damage.
 - Local stone response is now a preallocated multi-bone inertial layer: hit bone 1.0,
   parent 0.55 and torso support 0.25, with bounded attack/recovery and no Animator
   ownership handoff. Full-ragdoll escalation inherits the final animated pose without
@@ -263,6 +282,46 @@ bounded, and no rescue path reduces planet scale or voxel fidelity.
 - Final focused gates: `109/109` EditMode and `12/12` PlayMode. Accepted evidence
   reports success, total-frame p95 is `11.3045 ms`, and the Unity Console contains
   zero errors and zero warnings.
+
+## Broken Crown runtime integration — 2026-08-29
+
+- The imported Broken Crown catalog now drives eight runtime structures and 90
+  authored pieces. Intact render/collision proxies remain authoritative until a
+  bounded release; dormant fracture renderers are never treated as gameplay state.
+- Ordinary impacts release only the nearest one to three cells. Vector/pluck releases
+  one selected cell. Counter-clockwise gravity disassembly releases progressively;
+  clockwise repair snaps the same provenance-bearing pieces back to their authored
+  rests and restores the intact proxy only at complete repair.
+- The arena floor retains its meteor-only contract. Ordinary LMB/stone impacts cannot
+  erase the court, while a typed meteor impact may release all 36 floor cells.
+- Released arena cells implement the shared `IEarthPhysicalTarget` path, so hold,
+  vector field, gravity capture, collision damage and radial gravity reuse the same
+  bounded gameplay authority as ordinary Earth matter.
+- The enlarged world is synchronized at `55.1 m` across the voxel planet, point
+  gravity source and planet collision proxy. Both character motors and all 13
+  destructible decor rocks are reseated from collider support points; rock support
+  is `-0.060 m` from the surface. The floor's hidden foundation thickness remains
+  embedded intentionally.
+- Feature-specific PlayMode acceptance passes weak-hit rejection, two-cell ordinary
+  impact, meteor-only floor protection, one-cell vector pluck, progressive gravity
+  disassembly and complete repair. The current aggregate focused snapshot is
+  `139/142` EditMode and `10/17` PlayMode; remaining failures are in the independently
+  edited MiniBokeh expectations, camera-dependent input visibility, enlarged-world
+  movement tuning and cold-start evidence. Unity compilation and Console contain no
+  errors or warnings.
+
+## Approved court placement and lens/gravity follow-up — 2026-08-31
+
+- `EarthCoreSlice` now serializes the approved Broken Crown root at
+  `(0, 54.12, 0)` and the rival spawn at
+  `(-0.26751554, 58, 3.5498571)`. The generator restores both after every rebuild;
+  all imported child transforms remain identical to the source FBX.
+- The arena shell is intentionally embedded into the planet instead of being
+  lifted by a minimum-vertex seating solve, so no empty underside is visible.
+- Native DOF stays active during all camera motion states and keeps one padded
+  sharp envelope around both fighters. Web remains the explicit off fallback.
+- Released wall and platform cells use the shared spherical `GravityBody` path;
+  fracture no longer creates zero-gravity debris.
 
 ## Scope boundary
 
