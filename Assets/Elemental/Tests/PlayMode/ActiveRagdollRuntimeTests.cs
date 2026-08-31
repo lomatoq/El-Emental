@@ -158,10 +158,112 @@ namespace Elemental.Tests.PlayMode
             yield return null;
         }
 
+        [UnityTest]
+        public IEnumerator HumanoidRecoveryPreservesLegacyFallbackAndMarkersOwnPoseMatchedHandoff()
+        {
+            const string scenePath = "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
+            AsyncOperation load = SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
+            Assert.That(load, Is.Not.Null);
+            yield return load;
+            yield return null;
+
+            Scene scene = SceneManager.GetSceneByPath(scenePath);
+            HumanoidRagdollRig rig = FindInScene<HumanoidRagdollRig>(scene);
+            Assert.That(rig, Is.Not.Null);
+            PlanetMotor motor = rig.GetComponentInParent<PlanetMotor>();
+            Vector3 localUp = motor != null ? motor.LocalUp : rig.transform.up;
+            Vector3 preferredForward = motor != null ? motor.transform.forward : rig.transform.forward;
+
+            rig.ConfigurePhysicalAnimation(null, null, null, null);
+            int legacyRecoveryHandoffs = rig.RecoveryOwnershipHandoffCount;
+            rig.BeginRagdoll(Vector3.zero);
+            yield return new WaitForFixedUpdate();
+            rig.RecoverToAnimated(localUp, preferredForward, false);
+            rig.RecoverToAnimated(localUp, preferredForward, false);
+            Assert.That(rig.UsedPoseMatchedRecovery, Is.False);
+            Assert.That(rig.RecoveryOwnershipHandoffCount, Is.EqualTo(legacyRecoveryHandoffs),
+                "A disabled feature must keep the legacy recovery path exact.");
+            rig.CompleteRecovery();
+            rig.ResetToAnimated();
+
+            Light feetOwner = rig.gameObject.AddComponent<Light>();
+            AudioSource controlOwner = rig.gameObject.AddComponent<AudioSource>();
+            Animation proceduralOwner = rig.gameObject.AddComponent<Animation>();
+            var profile = ScriptableObject.CreateInstance<EarthPhysicalAnimationProfile>();
+            EarthRecoveryMarkerAuthoring markers =
+                new EarthRecoveryMarkerAuthoring(0.05f, 0.10f, 0.20f);
+            profile.ConfigureRecovery(
+                true,
+                new[]
+                {
+                    RecoverySample(101u, EarthRecoveryOrientation.Front, in markers),
+                    RecoverySample(102u, EarthRecoveryOrientation.Back, in markers),
+                    RecoverySample(103u, EarthRecoveryOrientation.Left, in markers),
+                    RecoverySample(104u, EarthRecoveryOrientation.Right, in markers)
+                });
+            rig.ConfigurePhysicalAnimation(
+                profile,
+                new Behaviour[] { feetOwner },
+                new Behaviour[] { controlOwner },
+                new Behaviour[] { proceduralOwner });
+
+            rig.BeginRagdoll(Vector3.zero);
+            yield return new WaitForFixedUpdate();
+            Assert.That(feetOwner.enabled, Is.False);
+            Assert.That(controlOwner.enabled, Is.False);
+            Assert.That(proceduralOwner.enabled, Is.False);
+            int recoveryHandoffsBefore = rig.RecoveryOwnershipHandoffCount;
+            rig.RecoverToAnimated(localUp, preferredForward, false);
+            rig.RecoverToAnimated(localUp, preferredForward, false);
+
+            Assert.That(rig.UsedPoseMatchedRecovery, Is.True);
+            Assert.That(rig.LastPoseMatchedRecovery.IsValid, Is.True);
+            Assert.That(rig.RecoveryOwnershipHandoffCount,
+                Is.EqualTo(recoveryHandoffsBefore + 1),
+                "Repeated recovery requests must not hand Animator ownership over twice.");
+            Assert.That(feetOwner.enabled, Is.False,
+                "Feet must remain disabled before their authored marker.");
+
+            int renderedFrames = 0;
+            while (rig.IsRecoveringToAnimation && renderedFrames++ < 180)
+                yield return null;
+
+            Assert.That(rig.IsRecoveringToAnimation, Is.False,
+                "A valid supported recovery must reach its exit marker.");
+            Assert.That(feetOwner.enabled, Is.True);
+            Assert.That(controlOwner.enabled, Is.True);
+            Assert.That(proceduralOwner.enabled, Is.True);
+            Assert.That(rig.PhysicalAnimationMode, Is.EqualTo(EarthPhysicalAnimationMode.Animated));
+            rig.CompleteRecovery();
+            rig.ResetToAnimated();
+
+            Object.Destroy(profile);
+            AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
+            if (unload != null) yield return unload;
+        }
+
         private static bool IsFinite(Vector3 value)
         {
             return float.IsFinite(value.x) && float.IsFinite(value.y) && float.IsFinite(value.z);
         }
+
+        private static EarthRecoveryPoseSampleAuthoring RecoverySample(
+            uint clipId,
+            EarthRecoveryOrientation orientation,
+            in EarthRecoveryMarkerAuthoring markers) =>
+            new EarthRecoveryPoseSampleAuthoring(
+                clipId,
+                "Base Layer.Knockdown Recovery",
+                orientation,
+                0.01f,
+                new Vector3(0f, 0.9f, 0f),
+                new Vector3(0f, 0.4f, 0.1f),
+                new Vector3(-0.45f, 0.1f, 0.15f),
+                new Vector3(0.45f, 0.1f, 0.15f),
+                new Vector3(-0.2f, -0.7f, 0f),
+                new Vector3(0.2f, -0.7f, 0f),
+                Vector3.up,
+                in markers);
 
         private static T FindInScene<T>(Scene scene) where T : Component
         {

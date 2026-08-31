@@ -36,6 +36,8 @@ namespace Elemental.Runtime.Characters
     {
         private static readonly ProfilerMarker HandoffMarker =
             new ProfilerMarker("Elemental.Character.RagdollHandoff");
+        private static readonly ProfilerMarker PoseMatchedRecoveryMarker =
+            new ProfilerMarker("Elemental.Character.PoseMatchedRecovery");
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int LegacyColorId = Shader.PropertyToID("_Color");
         private static readonly HumanBodyBones[] HumanBones =
@@ -72,6 +74,10 @@ namespace Elemental.Runtime.Characters
         [SerializeField] private ParticleSystem stoneFadeDust;
         [SerializeField] private CharacterImpactResponseProfile impactResponseProfile;
         [SerializeField] private EarthEffectsTuningProfile effectsProfile;
+        [SerializeField] private EarthPhysicalAnimationProfile physicalAnimationProfile;
+        [SerializeField] private Behaviour[] recoveryFeetOwners = Array.Empty<Behaviour>();
+        [SerializeField] private Behaviour[] recoveryControlOwners = Array.Empty<Behaviour>();
+        [SerializeField] private Behaviour[] recoveryProceduralOwners = Array.Empty<Behaviour>();
 
         private Transform _originalParent;
         private int _originalSiblingIndex;
@@ -79,6 +85,9 @@ namespace Elemental.Runtime.Characters
         private Quaternion _defaultLocalRotation;
         private Vector3 _defaultLocalScale;
         private bool[] _behaviourEnabled = Array.Empty<bool>();
+        private bool[] _feetOwnerEnabled = Array.Empty<bool>();
+        private bool[] _controlOwnerEnabled = Array.Empty<bool>();
+        private bool[] _proceduralOwnerEnabled = Array.Empty<bool>();
         private bool _rootWasKinematic;
         private bool _rootDetectedCollisions;
         private RigidbodyConstraints _rootConstraints;
@@ -97,7 +106,22 @@ namespace Elemental.Runtime.Characters
         private readonly float[] _localizedHitAngles = new float[HumanBones.Length];
         private readonly bool[] _localizedHitActive = new bool[HumanBones.Length];
         private readonly Collider[] _recoveryOverlaps = new Collider[16];
+        private readonly RaycastHit[] _recoverySupportHits = new RaycastHit[8];
         private EarthRagdollRecoveryGateState _recoveryGate;
+        private readonly EarthPhysicalAnimationCoordinator _physicalAnimationCoordinator =
+            new EarthPhysicalAnimationCoordinator();
+        private EarthRecoveryPoseDatabase _recoveryPoseDatabase;
+        private bool _recoveryPoseDatabaseUsable;
+        private EarthRecoveryResult _lastPoseMatchedRecovery;
+        private uint _handoffSequence;
+        private uint _recoverySequence;
+        private bool _poseMatchedRecoveryActive;
+        private bool _poseMatchedRecoveryPrepared;
+        private bool _recoveryRootAndSupportValid;
+        private bool _feetOwnersRestored;
+        private bool _controlOwnersRestored;
+        private bool _proceduralOwnersRestored;
+        private bool _poseMatchedConfigurationWarningIssued;
 
         public bool IsRagdollActive { get; private set; }
         public bool IsRecoveringToAnimation { get; private set; }
@@ -118,6 +142,14 @@ namespace Elemental.Runtime.Characters
         public float LastRecoveryClearanceLiftMeters { get; private set; }
         public bool LastRecoveryClearanceSucceeded { get; private set; }
         public bool LastRecoveryUsedFacingFallback { get; private set; }
+        public bool UsedPoseMatchedRecovery { get; private set; }
+        public bool RecoveryFeetEnabled => _physicalAnimationCoordinator.Ownership.FeetEnabled;
+        public bool RecoveryControlsEnabled => _physicalAnimationCoordinator.Ownership.ControlsEnabled;
+        public bool RecoveryExitReady => _physicalAnimationCoordinator.Ownership.RecoveryExitReady;
+        public int RagdollOwnershipHandoffCount => _physicalAnimationCoordinator.RagdollHandoffCount;
+        public int RecoveryOwnershipHandoffCount => _physicalAnimationCoordinator.RecoveryHandoffCount;
+        public EarthPhysicalAnimationMode PhysicalAnimationMode => _physicalAnimationCoordinator.Mode;
+        public EarthRecoveryResult LastPoseMatchedRecovery => _lastPoseMatchedRecovery;
         public event Action AuthoredRecoveryBegan;
 
         public void ConfigureLocalizedReactionProfile(CharacterImpactResponseProfile profile) =>
@@ -131,6 +163,21 @@ namespace Elemental.Runtime.Characters
                     stoneFadeDust,
                     effectsProfile.StoneFade.Dust,
                     effectsProfile.Materials.StoneFadeDust);
+        }
+
+        public void ConfigurePhysicalAnimation(
+            EarthPhysicalAnimationProfile profile,
+            Behaviour[] feetOwners,
+            Behaviour[] controlOwners,
+            Behaviour[] proceduralOwners)
+        {
+            physicalAnimationProfile = profile;
+            recoveryFeetOwners = feetOwners ?? Array.Empty<Behaviour>();
+            recoveryControlOwners = controlOwners ?? Array.Empty<Behaviour>();
+            recoveryProceduralOwners = proceduralOwners ?? Array.Empty<Behaviour>();
+            _recoveryPoseDatabase = null;
+            _recoveryPoseDatabaseUsable = false;
+            _poseMatchedConfigurationWarningIssued = false;
         }
 
         public void ApplyLocalizedRagdollImpulse(
@@ -274,14 +321,24 @@ namespace Elemental.Runtime.Characters
                     Debug.LogError("[Elemental] Visible Humanoid ragdoll was not authored for this fighter.", this);
                     return;
                 }
+                if (IsRecoveringToAnimation) return;
                 if (IsRagdollActive)
                 {
+                    // RagdollHandoff has no canonical response identity. Preserve
+                    // legitimate later impacts and the exact legacy behaviour;
+                    // only the Animator/PhysX ownership transition is idempotent.
                     ApplyHandoff(in handoff);
                     return;
                 }
+                uint handoffSequence = NextSequence(ref _handoffSequence);
+                if (!_physicalAnimationCoordinator.TryBeginFullRagdoll(handoffSequence)) return;
 
                 ResetLocalizedReactions();
                 IsRecoveringToAnimation = false;
+                UsedPoseMatchedRecovery = false;
+                _poseMatchedRecoveryActive = false;
+                _poseMatchedRecoveryPrepared = CanUsePoseMatchedRecovery();
+                _recoveryRootAndSupportValid = false;
                 _recoveryGate = default;
 
                 CaptureRuntimeState();
@@ -305,6 +362,8 @@ namespace Elemental.Runtime.Characters
                 physicalStateOwner?.SetExternalRagdollAuthority(true);
                 SuspendMotorRoot();
                 SetControlBehaviours(false);
+                if (_poseMatchedRecoveryPrepared)
+                    SetRecoveryOwnerGroups(false, false, false);
                 if (animator != null) animator.enabled = false;
                 transform.SetParent(null, true);
 
@@ -344,6 +403,19 @@ namespace Elemental.Runtime.Characters
         /// recovery; controls may remain disabled until CompleteRecovery.
         /// </summary>
         public void RecoverToAnimated(
+            Vector3 localUp,
+            Vector3 forward,
+            bool restoreControls)
+        {
+            if (CanUsePoseMatchedRecovery())
+            {
+                using (PoseMatchedRecoveryMarker.Auto())
+                    if (TryRecoverPoseMatched(localUp, forward)) return;
+            }
+            RecoverToAnimatedLegacy(localUp, forward, restoreControls);
+        }
+
+        private void RecoverToAnimatedLegacy(
             Vector3 localUp,
             Vector3 forward,
             bool restoreControls)
@@ -464,8 +536,12 @@ namespace Elemental.Runtime.Characters
                 RestoreMotorRoot();
                 physicalStateOwner?.SetExternalRagdollAuthority(false);
                 SetControlBehaviours(restoreControls);
+                if (_poseMatchedRecoveryPrepared)
+                    SetRecoveryOwnerGroups(restoreControls, restoreControls, restoreControls);
                 IsRagdollActive = false;
                 IsRecoveringToAnimation = !restoreControls;
+                _poseMatchedRecoveryPrepared = _poseMatchedRecoveryPrepared && !restoreControls;
+                _physicalAnimationCoordinator.ResetAnimated();
                 ResetLocalizedReactions();
                 StoneFade01 = 0f;
                 RestoreVisiblePresentation();
@@ -483,11 +559,280 @@ namespace Elemental.Runtime.Characters
             }
         }
 
+        private bool CanUsePoseMatchedRecovery()
+        {
+            if (physicalAnimationProfile == null ||
+                !physicalAnimationProfile.UsePoseMatchedRecovery)
+                return false;
+            if (recoveryFeetOwners == null || recoveryFeetOwners.Length == 0 ||
+                recoveryControlOwners == null || recoveryControlOwners.Length == 0 ||
+                recoveryProceduralOwners == null || recoveryProceduralOwners.Length == 0)
+            {
+                WarnPoseMatchedFallback(
+                    "assign non-empty feet, control and procedural owner groups through " +
+                    "HumanoidRagdollRig.ConfigurePhysicalAnimation");
+                return false;
+            }
+            if (_recoveryPoseDatabase != null) return _recoveryPoseDatabaseUsable;
+            _recoveryPoseDatabaseUsable =
+                physicalAnimationProfile.TryGetRecoveryDatabase(out _recoveryPoseDatabase);
+            if (!_recoveryPoseDatabaseUsable)
+                WarnPoseMatchedFallback(
+                    "author at least one valid recovery sample with a stable clip ID, " +
+                    "Animator state path, orientation, entry phase and ordered markers");
+            return _recoveryPoseDatabaseUsable;
+        }
+
+        private void WarnPoseMatchedFallback(string action)
+        {
+            if (_poseMatchedConfigurationWarningIssued) return;
+            _poseMatchedConfigurationWarningIssued = true;
+            Debug.LogWarning(
+                $"[Elemental] Pose-matched recovery is enabled but incomplete on '{name}'; " +
+                $"legacy live-pelvis recovery remains active. To enable the VNext path, {action}.",
+                this);
+        }
+
+        private bool TryRecoverPoseMatched(Vector3 localUp, Vector3 preferredForward)
+        {
+            if (!IsRagdollActive || _recoveryGate.Consumed || _recoveryPoseDatabase == null)
+                return false;
+
+            Rigidbody pelvisBody = bones != null && bones.Length > 0 && bones[0] != null
+                ? bones[0].Body
+                : null;
+            if (pelvisBody == null) return false;
+            Transform chest = bones.Length > 1 && bones[1] != null
+                ? bones[1].transform
+                : null;
+            if (chest == null) return false;
+
+            Vector3 pelvisPosition = pelvisBody.position;
+            Quaternion pelvisRotation = pelvisBody.rotation;
+            Vector3 up = localUp.sqrMagnitude > 0.25f ? localUp.normalized : transform.up;
+            EarthRecoveryOrientation orientation = EarthRecoveryAlignmentSolver.Classify(
+                ToFloat3(chest.up),
+                ToFloat3(chest.right),
+                ToFloat3(up));
+            EarthRecoveryPoseFeature currentFeature = CaptureRecoveryFeature(
+                pelvisPosition,
+                pelvisRotation,
+                chest);
+            EarthRecoveryPoseMatchWeights weights = physicalAnimationProfile.MatchWeights;
+            if (!EarthRecoveryPoseMatcher.TryMatch(
+                    _recoveryPoseDatabase,
+                    orientation,
+                    in currentFeature,
+                    in weights,
+                    out EarthRecoveryPoseMatch match))
+            {
+                WarnPoseMatchedFallback(
+                    $"author a valid {orientation} recovery sample for the current ragdoll pose");
+                return false;
+            }
+
+            EarthRecoveryPoseCandidate candidate = match.Candidate;
+            var alignmentInput = new EarthRecoveryAlignmentInput(
+                ToFloat3(pelvisPosition),
+                ToFloat3(chest.position),
+                ToFloat3(pelvisRotation * Vector3.forward),
+                ToFloat3(chest.forward),
+                ToFloat3(chest.up),
+                ToFloat3(chest.right),
+                ToFloat3(up),
+                ToFloat3(preferredForward),
+                candidate.PelvisOffsetLocal);
+
+            EarthRecoveryClearanceResult baseClearance = new EarthRecoveryClearanceResult(
+                EarthRecoveryClearanceKind.BasePose,
+                0f,
+                false);
+            EarthRecoveryAlignmentResult baseAlignment = EarthRecoveryAlignmentSolver.Solve(
+                in alignmentInput,
+                in baseClearance);
+            bool baseClear = IsRecoveryCapsuleClear(
+                ToVector3(baseAlignment.RootPosition),
+                ToQuaternion(baseAlignment.RootRotation),
+                up);
+
+            EarthRecoveryClearanceResult firstClearance = new EarthRecoveryClearanceResult(
+                EarthRecoveryClearanceKind.FirstLift,
+                EarthRecoveryAlignmentSolver.FirstClearanceLiftMeters,
+                false);
+            EarthRecoveryAlignmentResult firstAlignment = EarthRecoveryAlignmentSolver.Solve(
+                in alignmentInput,
+                in firstClearance);
+            bool firstClear = baseClear || IsRecoveryCapsuleClear(
+                ToVector3(firstAlignment.RootPosition),
+                ToQuaternion(firstAlignment.RootRotation),
+                up);
+
+            EarthRecoveryClearanceResult maximumClearance = new EarthRecoveryClearanceResult(
+                EarthRecoveryClearanceKind.MaximumLift,
+                EarthRecoveryAlignmentSolver.MaximumClearanceLiftMeters,
+                false);
+            EarthRecoveryAlignmentResult maximumAlignment = EarthRecoveryAlignmentSolver.Solve(
+                in alignmentInput,
+                in maximumClearance);
+            bool maximumClear = firstClear || IsRecoveryCapsuleClear(
+                ToVector3(maximumAlignment.RootPosition),
+                ToQuaternion(maximumAlignment.RootRotation),
+                up);
+
+            EarthRecoveryClearanceResult clearance = EarthRecoveryAlignmentSolver.SelectClearance(
+                baseClear,
+                firstClear,
+                maximumClear);
+            // The feature is experimental and must never make a blocked handoff
+            // authoritative. Preserve the exact legacy path as the fallback.
+            if (!clearance.Succeeded)
+            {
+                WarnPoseMatchedFallback(
+                    "clear the authored recovery capsule at the live pelvis or provide a safe support fallback");
+                return false;
+            }
+            EarthRecoveryAlignmentResult alignment = EarthRecoveryAlignmentSolver.Solve(
+                in alignmentInput,
+                in clearance);
+            EarthRecoveryResult result = EarthRecoveryAlignmentSolver.ComposeResult(
+                in match,
+                in alignment,
+                in clearance);
+            if (!result.IsValid)
+            {
+                WarnPoseMatchedFallback("repair the selected recovery sample and marker data");
+                return false;
+            }
+
+            uint recoverySequence = NextSequence(ref _recoverySequence);
+            if (!_physicalAnimationCoordinator.TryBeginGetUp(recoverySequence, in result))
+                return false;
+            _recoveryGate.Consumed = true;
+            CommitPoseMatchedRecovery(in result, up);
+            return true;
+        }
+
+        private EarthRecoveryPoseFeature CaptureRecoveryFeature(
+            Vector3 pelvisPosition,
+            Quaternion pelvisRotation,
+            Transform chest)
+        {
+            Quaternion inversePelvis = Quaternion.Inverse(pelvisRotation);
+            return new EarthRecoveryPoseFeature(
+                ToFloat3(inversePelvis * (chest.position - pelvisPosition)),
+                ToFloat3(SampleBoneOffset(4, pelvisPosition, inversePelvis)),
+                ToFloat3(SampleBoneOffset(6, pelvisPosition, inversePelvis)),
+                ToFloat3(SampleBoneOffset(8, pelvisPosition, inversePelvis)),
+                ToFloat3(SampleBoneOffset(10, pelvisPosition, inversePelvis)),
+                ToFloat3(inversePelvis * chest.up));
+        }
+
+        private Vector3 SampleBoneOffset(
+            int index,
+            Vector3 pelvisPosition,
+            Quaternion inversePelvis)
+        {
+            Transform sample = index >= 0 && index < bones.Length && bones[index] != null
+                ? bones[index].transform
+                : null;
+            return sample != null
+                ? inversePelvis * (sample.position - pelvisPosition)
+                : Vector3.zero;
+        }
+
+        private void CommitPoseMatchedRecovery(
+            in EarthRecoveryResult result,
+            Vector3 localUp)
+        {
+            if (bones != null)
+                for (int index = 0; index < bones.Length; index++)
+                {
+                    HumanoidRagdollBone bone = bones[index];
+                    if (bone == null || bone.Body == null) continue;
+                    if (!bone.Body.isKinematic)
+                    {
+                        bone.Body.linearVelocity = Vector3.zero;
+                        bone.Body.angularVelocity = Vector3.zero;
+                    }
+                    bone.Body.detectCollisions = false;
+                    bone.Body.isKinematic = true;
+                    bone.Body.interpolation = RigidbodyInterpolation.None;
+                    if (bone.Shape != null) bone.Shape.enabled = false;
+                    if (bone.GravityBody != null) bone.GravityBody.enabled = false;
+                }
+
+            Vector3 rootPosition = ToVector3(result.RootPosition);
+            Quaternion rootRotation = ToQuaternion(result.RootRotation);
+            if (motorRootBody != null)
+            {
+                motorRootBody.position = rootPosition;
+                motorRootBody.rotation = rootRotation;
+            }
+            transform.SetParent(_originalParent, false);
+            transform.SetSiblingIndex(Mathf.Clamp(
+                _originalSiblingIndex,
+                0,
+                _originalParent != null ? _originalParent.childCount - 1 : 0));
+            transform.localPosition = _defaultLocalPosition;
+            transform.localRotation = _defaultLocalRotation;
+            transform.localScale = _defaultLocalScale;
+            RestoreMotorRoot();
+            physicalStateOwner?.SetExternalRagdollAuthority(false);
+            SetControlBehaviours(false);
+            SetRecoveryOwnerGroups(false, false, false);
+            IsRagdollActive = false;
+            IsRecoveringToAnimation = true;
+            _poseMatchedRecoveryActive = true;
+            UsedPoseMatchedRecovery = true;
+            _lastPoseMatchedRecovery = result;
+            LastRecoverySide = ToLegacySide(result.Orientation);
+            LastRecoveryClearanceLiftMeters = result.Clearance.LiftMeters;
+            LastRecoveryClearanceSucceeded = result.Clearance.Succeeded;
+            LastRecoveryUsedFacingFallback = result.UsedFacingFallback;
+            ResetLocalizedReactions();
+            StoneFade01 = 0f;
+            RestoreVisiblePresentation();
+
+            if (animator != null)
+            {
+                animator.enabled = _animatorWasEnabled;
+                if (animator.enabled)
+                {
+                    animator.Rebind();
+                    animator.Update(0f);
+                }
+            }
+            AuthoredRecoveryBegan?.Invoke();
+            if (animator != null && animator.enabled)
+            {
+                animator.Play(result.AnimationStateId, 0, result.EntryPhase);
+                animator.Update(0f);
+            }
+            UnityEngine.Physics.SyncTransforms();
+            _recoveryRootAndSupportValid = result.Clearance.Succeeded &&
+                                           HasRecoverySupport(rootPosition, localUp);
+            ApplyPoseMatchedOwnership(
+                _physicalAnimationCoordinator.AdvanceGetUp(
+                    result.EntryPhase,
+                    _recoveryRootAndSupportValid));
+        }
+
         public void CompleteRecovery()
         {
             if (!IsRecoveringToAnimation) return;
+            if (_poseMatchedRecoveryActive)
+            {
+                UpdatePoseMatchedRecoveryOwnership();
+                return;
+            }
             SetControlBehaviours(true);
+            if (_poseMatchedRecoveryPrepared)
+            {
+                SetRecoveryOwnerGroups(true, true, true);
+                _poseMatchedRecoveryPrepared = false;
+            }
             IsRecoveringToAnimation = false;
+            _physicalAnimationCoordinator.ResetAnimated();
         }
 
         public void SetStoneFade(float fade01)
@@ -566,8 +911,15 @@ namespace Elemental.Runtime.Characters
                 RestoreMotorRoot();
                 physicalStateOwner?.SetExternalRagdollAuthority(false);
                 SetControlBehaviours(true);
+                if (_poseMatchedRecoveryPrepared || _poseMatchedRecoveryActive)
+                    SetRecoveryOwnerGroups(true, true, true);
                 IsRagdollActive = false;
                 IsRecoveringToAnimation = false;
+                UsedPoseMatchedRecovery = false;
+                _poseMatchedRecoveryActive = false;
+                _poseMatchedRecoveryPrepared = false;
+                _recoveryRootAndSupportValid = false;
+                _physicalAnimationCoordinator.ResetAnimated();
                 ResetLocalizedReactions();
                 StoneFade01 = 0f;
                 _dustEmitted = false;
@@ -626,6 +978,8 @@ namespace Elemental.Runtime.Characters
 
         private void LateUpdate()
         {
+            if (_poseMatchedRecoveryActive && IsRecoveringToAnimation)
+                UpdatePoseMatchedRecoveryOwnership();
             if (IsRagdollActive) return;
             for (int index = 0; index < _localizedHitActive.Length; index++)
             {
@@ -757,6 +1111,9 @@ namespace Elemental.Runtime.Characters
             for (int index = 0; index < disabledDuringRagdoll.Length; index++)
                 _behaviourEnabled[index] = disabledDuringRagdoll[index] != null &&
                                            disabledDuringRagdoll[index].enabled;
+            CaptureOwnerGroup(recoveryFeetOwners, ref _feetOwnerEnabled);
+            CaptureOwnerGroup(recoveryControlOwners, ref _controlOwnerEnabled);
+            CaptureOwnerGroup(recoveryProceduralOwners, ref _proceduralOwnerEnabled);
         }
 
         private void SuspendMotorRoot()
@@ -873,6 +1230,130 @@ namespace Elemental.Runtime.Characters
                 return false;
             }
             return true;
+        }
+
+        private bool HasRecoverySupport(Vector3 rootPosition, Vector3 localUp)
+        {
+            if (motorRootBody == null || physicalAnimationProfile == null) return false;
+            Vector3 up = localUp.sqrMagnitude > 0.25f
+                ? localUp.normalized
+                : motorRootBody.rotation * Vector3.up;
+            PlanetMotor motor = motorRootBody.GetComponent<PlanetMotor>();
+            int mask = motor != null ? motor.GroundMask.value : 1;
+            Vector3 origin = rootPosition + up * 0.25f;
+            int count = UnityEngine.Physics.RaycastNonAlloc(
+                origin,
+                -up,
+                _recoverySupportHits,
+                physicalAnimationProfile.SupportProbeDistance,
+                mask,
+                QueryTriggerInteraction.Ignore);
+            for (int index = 0; index < count; index++)
+            {
+                Collider candidate = _recoverySupportHits[index].collider;
+                if (candidate == null || candidate == motorCollider) continue;
+                if (candidate.transform.IsChildOf(transform) ||
+                    candidate.transform.IsChildOf(motorRootBody.transform))
+                    continue;
+                return true;
+            }
+            return false;
+        }
+
+        private void UpdatePoseMatchedRecoveryOwnership()
+        {
+            if (!_poseMatchedRecoveryActive ||
+                !IsRecoveringToAnimation ||
+                animator == null ||
+                !animator.enabled)
+                return;
+
+            if (!_recoveryRootAndSupportValid)
+            {
+                Vector3 root = motorRootBody != null
+                    ? motorRootBody.position
+                    : ToVector3(_lastPoseMatchedRecovery.RootPosition);
+                _recoveryRootAndSupportValid =
+                    _lastPoseMatchedRecovery.Clearance.Succeeded &&
+                    HasRecoverySupport(root, ToVector3(_lastPoseMatchedRecovery.RadialUp));
+            }
+
+            AnimatorStateInfo state = animator.IsInTransition(0)
+                ? animator.GetNextAnimatorStateInfo(0)
+                : animator.GetCurrentAnimatorStateInfo(0);
+            float phase = Mathf.Clamp01(state.normalizedTime);
+            EarthPhysicalAnimationOwnership ownership =
+                _physicalAnimationCoordinator.AdvanceGetUp(
+                    phase,
+                    _recoveryRootAndSupportValid);
+            ApplyPoseMatchedOwnership(ownership);
+        }
+
+        private void ApplyPoseMatchedOwnership(EarthPhysicalAnimationOwnership ownership)
+        {
+            if (ownership.FeetEnabled && !_feetOwnersRestored)
+            {
+                SetOwnerGroup(recoveryFeetOwners, _feetOwnerEnabled, true);
+                _feetOwnersRestored = true;
+            }
+            if (ownership.ControlsEnabled && !_controlOwnersRestored)
+            {
+                SetOwnerGroup(recoveryControlOwners, _controlOwnerEnabled, true);
+                _controlOwnersRestored = true;
+            }
+            if (ownership.ProceduralOwnersEnabled && !_proceduralOwnersRestored)
+            {
+                SetOwnerGroup(recoveryProceduralOwners, _proceduralOwnerEnabled, true);
+                _proceduralOwnersRestored = true;
+            }
+            if (!ownership.RecoveryExitReady) return;
+
+            SetControlBehaviours(true);
+            SetRecoveryOwnerGroups(true, true, true);
+            _physicalAnimationCoordinator.CompleteGetUp();
+            IsRecoveringToAnimation = false;
+            _poseMatchedRecoveryActive = false;
+            _poseMatchedRecoveryPrepared = false;
+        }
+
+        private void SetRecoveryOwnerGroups(
+            bool feetEnabled,
+            bool controlsEnabled,
+            bool proceduralEnabled)
+        {
+            SetOwnerGroup(recoveryFeetOwners, _feetOwnerEnabled, feetEnabled);
+            SetOwnerGroup(recoveryControlOwners, _controlOwnerEnabled, controlsEnabled);
+            SetOwnerGroup(recoveryProceduralOwners, _proceduralOwnerEnabled, proceduralEnabled);
+            _feetOwnersRestored = feetEnabled;
+            _controlOwnersRestored = controlsEnabled;
+            _proceduralOwnersRestored = proceduralEnabled;
+        }
+
+        private static void SetOwnerGroup(
+            Behaviour[] owners,
+            bool[] capturedEnabled,
+            bool restore)
+        {
+            if (owners == null) return;
+            for (int index = 0; index < owners.Length; index++)
+            {
+                Behaviour owner = owners[index];
+                if (owner == null) continue;
+                owner.enabled = restore && index < capturedEnabled.Length
+                    ? capturedEnabled[index]
+                    : false;
+            }
+        }
+
+        private static void CaptureOwnerGroup(
+            Behaviour[] owners,
+            ref bool[] capturedEnabled)
+        {
+            int count = owners?.Length ?? 0;
+            if (capturedEnabled == null || capturedEnabled.Length != count)
+                capturedEnabled = new bool[count];
+            for (int index = 0; index < count; index++)
+                capturedEnabled[index] = owners[index] != null && owners[index].enabled;
         }
 
         private void SetControlBehaviours(bool restore)
@@ -1057,5 +1538,25 @@ namespace Elemental.Runtime.Characters
 
         private static Quaternion ToQuaternion(quaternion value) =>
             new Quaternion(value.value.x, value.value.y, value.value.z, value.value.w);
+
+        private static EarthRagdollRecoverySide ToLegacySide(
+            EarthRecoveryOrientation orientation) => orientation switch
+            {
+                EarthRecoveryOrientation.Front => EarthRagdollRecoverySide.Front,
+                EarthRecoveryOrientation.Back => EarthRagdollRecoverySide.Back,
+                EarthRecoveryOrientation.Left => EarthRagdollRecoverySide.Left,
+                EarthRecoveryOrientation.Right => EarthRagdollRecoverySide.Right,
+                _ => EarthRagdollRecoverySide.Unknown
+            };
+
+        private static uint NextSequence(ref uint sequence)
+        {
+            unchecked
+            {
+                sequence++;
+                if (sequence == 0u) sequence = 1u;
+                return sequence;
+            }
+        }
     }
 }
