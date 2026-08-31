@@ -1,5 +1,34 @@
 namespace Elemental.Presentation.Animation
 {
+    public readonly struct EarthAnimationGraphHotPathEvidence
+    {
+        public EarthAnimationGraphHotPathEvidence(
+            uint activeUpdateCount,
+            uint jobEvaluationCount,
+            uint rigSyncCount,
+            int allocationSampleCount,
+            int allocationFramesOverZero,
+            long totalManagedAllocationBytes,
+            long maximumManagedAllocationBytes)
+        {
+            ActiveUpdateCount = activeUpdateCount;
+            JobEvaluationCount = jobEvaluationCount;
+            RigSyncCount = rigSyncCount;
+            AllocationSampleCount = allocationSampleCount;
+            AllocationFramesOverZero = allocationFramesOverZero;
+            TotalManagedAllocationBytes = totalManagedAllocationBytes;
+            MaximumManagedAllocationBytes = maximumManagedAllocationBytes;
+        }
+
+        public uint ActiveUpdateCount { get; }
+        public uint JobEvaluationCount { get; }
+        public uint RigSyncCount { get; }
+        public int AllocationSampleCount { get; }
+        public int AllocationFramesOverZero { get; }
+        public long TotalManagedAllocationBytes { get; }
+        public long MaximumManagedAllocationBytes { get; }
+    }
+
     /// <summary>
     /// Allocation-free per-frame evidence written by <see cref="EarthAnimationGraph"/>.
     /// Gate-1 capture code can copy the fixed ring into a caller-owned buffer.

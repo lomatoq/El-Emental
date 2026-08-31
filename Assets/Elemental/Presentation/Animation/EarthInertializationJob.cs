@@ -41,6 +41,9 @@ namespace Elemental.Presentation.Animation
 
             EarthAnimationGraphControl control = Control[0];
             EarthAnimationJobDiagnostics diagnostics = Diagnostics[0];
+            diagnostics.EvaluationCount = diagnostics.EvaluationCount == uint.MaxValue
+                ? 1u
+                : diagnostics.EvaluationCount + 1u;
             bool requested = control.RequestSequence != diagnostics.AppliedRequestSequence;
             bool useInertia = control.UsePoseInertialization != 0;
             bool wasActive = diagnostics.InertiaActive != 0;

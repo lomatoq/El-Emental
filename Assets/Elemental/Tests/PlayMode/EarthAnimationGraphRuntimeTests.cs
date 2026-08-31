@@ -3,6 +3,7 @@ using System.Collections;
 using System.Reflection;
 using Elemental.Presentation.Animation;
 using NUnit.Framework;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.SceneManagement;
@@ -14,10 +15,17 @@ namespace Elemental.Tests.PlayMode
     {
         private const string CanonicalScenePath =
             "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
+        private EarthAnimationGraphProfile _testProfile;
 
         [UnityTearDown]
         public IEnumerator UnloadCanonicalScene()
         {
+            if (_testProfile != null)
+            {
+                UnityEngine.Object.Destroy(_testProfile);
+                _testProfile = null;
+                yield return null;
+            }
             Scene scene = SceneManager.GetSceneByPath(CanonicalScenePath);
             if (scene.IsValid() && scene.isLoaded)
                 yield return SceneManager.UnloadSceneAsync(scene);
@@ -88,11 +96,15 @@ namespace Elemental.Tests.PlayMode
                 "The canonical character must exercise a real, non-empty RigBuilder layer.");
             var rigBehaviour = (Behaviour)rigBuilder;
             Animator animator = rigBuilder.GetComponent<Animator>();
-            EarthAnimationGraph graph = rigBuilder.GetComponent<EarthAnimationGraph>();
             Assert.That(animator, Is.Not.Null);
+            EarthAnimationGraph graph = animator.GetComponent<EarthAnimationGraph>();
+            if (graph == null)
+                graph = animator.gameObject.AddComponent<EarthAnimationGraph>();
             Assert.That(graph, Is.Not.Null,
-                "HumanoidCharacterPresentation must install the optional graph owner.");
+                "The test must explicitly install the optional graph on the canonical Animator.");
+            _testProfile = CreateEnabledTestProfile();
 
+            IsolateCanonicalCharacter(scene, animator.transform.root);
             DisableCompetingPresentationBehaviours(animator.gameObject, graph, rigBehaviour);
             animator.speed = 0f;
             StabilizeAnimator(animator);
@@ -109,8 +121,9 @@ namespace Elemental.Tests.PlayMode
             Quaternion legacyHipsRotation = hips != null ? hips.localRotation : Quaternion.identity;
             float[] legacyLayerWeights = CaptureAnimatorLayerWeights(animator);
 
-            var enabledSettings = new EarthAnimationGraphSettings(true, false);
-            Assert.That(graph.Configure(animator, in enabledSettings), Is.True);
+            Assert.That(graph.Configure(animator, _testProfile), Is.True,
+                "The canonical scene intentionally has no enabled production profile; " +
+                "this test profile must opt the graph in explicitly.");
             EarthAnimationGraphDiagnostics active = graph.Diagnostics;
             Assert.That(active.GraphValid, Is.True);
             Assert.That(active.ControllerPlayableValid, Is.True);
@@ -129,6 +142,62 @@ namespace Elemental.Tests.PlayMode
             yield return null;
             AssertStateEquivalent(legacyState, legacyTime, graph.GetCurrentAnimatorStateInfo(0));
             AssertPoseEquivalent(hips, legacyHipsPosition, legacyHipsRotation);
+
+            const int evidenceFrameCount = EarthAnimationGraph.CaptureFrameCapacity;
+            int globalGcFramesOverZero = 0;
+            long globalMaximumGcBytes = 0L;
+            int graphMarkerFrames = 0;
+            var endOfFrame = new WaitForEndOfFrame();
+            ProfilerRecorderOptions recorderOptions =
+                ProfilerRecorderOptions.WrapAroundWhenCapacityReached |
+                ProfilerRecorderOptions.SumAllSamplesInFrame;
+            var graphUpdateRecorder = new ProfilerRecorder(
+                "Elemental.Character.AnimationGraph",
+                1,
+                recorderOptions);
+            Assert.That(graphUpdateRecorder.Valid, Is.True,
+                "The active graph profiler marker must be available to Gate-1 capture.");
+            try
+            {
+                graphUpdateRecorder.Start();
+                yield return endOfFrame;
+                _ = graphUpdateRecorder.LastValue;
+                graph.ResetHotPathEvidence();
+                long gcWindowStart = GC.GetAllocatedBytesForCurrentThread();
+                for (int frame = 0; frame < evidenceFrameCount; frame++)
+                {
+                    yield return endOfFrame;
+                    long gcWindowEnd = GC.GetAllocatedBytesForCurrentThread();
+                    long allocated = Math.Max(0L, gcWindowEnd - gcWindowStart);
+                    if (allocated > 0L) globalGcFramesOverZero++;
+                    globalMaximumGcBytes = Math.Max(globalMaximumGcBytes, allocated);
+                    if (graphUpdateRecorder.LastValue > 0L) graphMarkerFrames++;
+                    gcWindowStart = GC.GetAllocatedBytesForCurrentThread();
+                }
+            }
+            finally
+            {
+                graphUpdateRecorder.Dispose();
+            }
+
+            EarthAnimationGraphHotPathEvidence hotPath = graph.HotPathEvidence;
+            Assert.That(hotPath.ActiveUpdateCount, Is.EqualTo((uint)evidenceFrameCount));
+            Assert.That(hotPath.JobEvaluationCount, Is.EqualTo((uint)evidenceFrameCount),
+                "AnimationScriptPlayable must execute once for every active evidence frame.");
+            Assert.That(hotPath.RigSyncCount, Is.EqualTo((uint)evidenceFrameCount),
+                "The appended RigBuilder layers must synchronize every active evidence frame.");
+            Assert.That(hotPath.AllocationSampleCount, Is.EqualTo(evidenceFrameCount));
+            Assert.That(hotPath.AllocationFramesOverZero, Is.Zero);
+            Assert.That(hotPath.TotalManagedAllocationBytes, Is.Zero);
+            Assert.That(hotPath.MaximumManagedAllocationBytes, Is.Zero);
+            Assert.That(graphMarkerFrames, Is.EqualTo(evidenceFrameCount));
+            Assert.That(globalGcFramesOverZero, Is.Zero,
+                $"The isolated active graph allocated in {globalGcFramesOverZero}/" +
+                $"{evidenceFrameCount} frames; maximum={globalMaximumGcBytes} bytes.");
+            EarthAnimationGraphCaptureSummary activeSummary = graph.GetCaptureSummary();
+            Assert.That(activeSummary.SampleCount, Is.EqualTo(evidenceFrameCount));
+            Assert.That(activeSummary.GraphActiveFrames, Is.EqualTo(evidenceFrameCount));
+            Assert.That(activeSummary.TopologyFailureFrames, Is.Zero);
 
             SetDistinctPlayableParameters(graph, animator);
             SetDistinctPlayableLayerWeights(graph, animator.layerCount);
@@ -150,7 +219,7 @@ namespace Elemental.Tests.PlayMode
             AssertAnimatorLayerWeightsHavePlayableValues(animator);
             AssertPoseEquivalent(hips, legacyHipsPosition, legacyHipsRotation);
 
-            Assert.That(graph.Configure(animator, in enabledSettings), Is.True,
+            Assert.That(graph.Configure(animator, _testProfile), Is.True,
                 "A second OFF-to-ON handoff must not retain a stale graph handle.");
             Assert.That(restoredLegacyGraph.IsValid(), Is.False);
             Assert.That(graph.Diagnostics.TopologyValid, Is.True);
@@ -203,6 +272,31 @@ namespace Elemental.Tests.PlayMode
             return null;
         }
 
+        private static EarthAnimationGraphProfile CreateEnabledTestProfile()
+        {
+            EarthAnimationGraphProfile profile =
+                ScriptableObject.CreateInstance<EarthAnimationGraphProfile>();
+            FieldInfo graphFlag = typeof(EarthAnimationGraphProfile).GetField(
+                "usePlayablesAnimationGraph",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo inertiaFlag = typeof(EarthAnimationGraphProfile).GetField(
+                "usePoseInertialization",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(graphFlag, Is.Not.Null);
+            Assert.That(inertiaFlag, Is.Not.Null);
+            graphFlag.SetValue(profile, true);
+            inertiaFlag.SetValue(profile, false);
+            Assert.That(profile.UsePlayablesAnimationGraph, Is.True);
+            Assert.That(profile.UsePoseInertialization, Is.False);
+            return profile;
+        }
+
+        private static void IsolateCanonicalCharacter(Scene scene, Transform keptRoot)
+        {
+            foreach (GameObject root in scene.GetRootGameObjects())
+                if (root.transform != keptRoot) root.SetActive(false);
+        }
+
         private static PlayableGraph ReadRigGraph(Component rigBuilder)
         {
             PropertyInfo graphProperty = rigBuilder.GetType().GetProperty("graph");
@@ -215,12 +309,18 @@ namespace Elemental.Tests.PlayMode
             EarthAnimationGraph graph,
             Behaviour rigBuilder)
         {
-            MonoBehaviour[] behaviours = owner.GetComponents<MonoBehaviour>();
+            MonoBehaviour[] behaviours =
+                owner.transform.root.GetComponentsInChildren<MonoBehaviour>(true);
             for (int index = 0; index < behaviours.Length; index++)
             {
                 MonoBehaviour behaviour = behaviours[index];
-                if (behaviour != null && behaviour != graph && behaviour != rigBuilder)
-                    behaviour.enabled = false;
+                if (behaviour == null || behaviour == graph || behaviour == rigBuilder) continue;
+                string behaviourNamespace = behaviour.GetType().Namespace;
+                if (behaviourNamespace != null &&
+                    behaviourNamespace.StartsWith("UnityEngine.Animations.Rigging",
+                        StringComparison.Ordinal))
+                    continue;
+                behaviour.enabled = false;
             }
         }
 

@@ -59,6 +59,12 @@ namespace Elemental.Presentation.Animation
             new EarthAnimationGraphCaptureSample[CaptureFrameCapacity];
         private int _captureWriteIndex;
         private int _captureCount;
+        private uint _activeUpdateCount;
+        private uint _rigSyncCount;
+        private int _hotPathAllocationSampleCount;
+        private int _hotPathAllocationFramesOverZero;
+        private long _hotPathTotalManagedAllocationBytes;
+        private long _hotPathMaximumManagedAllocationBytes;
         private EarthAnimationGraphFallbackReason _fallbackReason =
             EarthAnimationGraphFallbackReason.FeatureDisabled;
 
@@ -74,6 +80,24 @@ namespace Elemental.Presentation.Animation
         public EarthAnimationGraphCaptureSample LatestCaptureSample => _captureCount > 0
             ? _captureFrames[(_captureWriteIndex - 1 + CaptureFrameCapacity) % CaptureFrameCapacity]
             : default;
+        public EarthAnimationGraphHotPathEvidence HotPathEvidence
+        {
+            get
+            {
+                uint jobEvaluationCount = _poseHistory != null &&
+                                          _poseHistory.Diagnostics.IsCreated
+                    ? _poseHistory.Diagnostics[0].EvaluationCount
+                    : 0u;
+                return new EarthAnimationGraphHotPathEvidence(
+                    _activeUpdateCount,
+                    jobEvaluationCount,
+                    _rigSyncCount,
+                    _hotPathAllocationSampleCount,
+                    _hotPathAllocationFramesOverZero,
+                    _hotPathTotalManagedAllocationBytes,
+                    _hotPathMaximumManagedAllocationBytes);
+            }
+        }
 
         public EarthAnimationGraphDiagnostics Diagnostics
         {
@@ -239,44 +263,71 @@ namespace Elemental.Presentation.Animation
 
         private void Update()
         {
-            using (UpdateMarker.Auto())
+            bool sampleHotPath = IsActive;
+            long allocationStart = sampleHotPath
+                ? GC.GetAllocatedBytesForCurrentThread()
+                : 0L;
+            try
             {
-                if (profile != null)
+                using (UpdateMarker.Auto())
                 {
-                    EarthAnimationGraphSettings current = profile.Settings;
-                    if (!SettingsEqual(in current, in _settings))
+                    if (profile != null)
                     {
-                        _settings = current;
-                        ApplyRequestedSettings();
+                        EarthAnimationGraphSettings current = profile.Settings;
+                        if (!SettingsEqual(in current, in _settings))
+                        {
+                            _settings = current;
+                            ApplyRequestedSettings();
+                        }
                     }
-                }
 
-                if (_runtimeEnablePending)
-                {
-                    if (!IsLegacyAnimatorTransitioning())
+                    if (_runtimeEnablePending)
                     {
-                        _runtimeEnablePending = false;
-                        TryBuildGraph();
+                        if (!IsLegacyAnimatorTransitioning())
+                        {
+                            _runtimeEnablePending = false;
+                            TryBuildGraph();
+                        }
+                        if (!IsActive) return;
                     }
                     if (!IsActive) return;
+                    _activeUpdateCount++;
+                    MirrorAnimatorControllerInputs();
+                    UpdateOwnershipMask();
+                    if (_rigLayersAppended && _rigBuilder != null)
+                    {
+                        _rigBuilder.SyncLayers();
+                        _rigSyncCount++;
+                    }
+                    if (_poseDisablePending && !IsInertiaActive())
+                    {
+                        _poseDisablePending = false;
+                        _activeSettings = _settings;
+                    }
+                    RefreshControlSettings();
+                    if (_runtimeDisablePending && CanShutdownContinuously())
+                    {
+                        _runtimeDisablePending = false;
+                        ShutdownGraph(
+                            true,
+                            EarthAnimationGraphFallbackReason.FeatureDisabled,
+                            true);
+                    }
                 }
-                if (!IsActive) return;
-                MirrorAnimatorControllerInputs();
-                UpdateOwnershipMask();
-                if (_rigLayersAppended && _rigBuilder != null) _rigBuilder.SyncLayers();
-                if (_poseDisablePending && !IsInertiaActive())
+            }
+            finally
+            {
+                if (sampleHotPath)
                 {
-                    _poseDisablePending = false;
-                    _activeSettings = _settings;
-                }
-                RefreshControlSettings();
-                if (_runtimeDisablePending && CanShutdownContinuously())
-                {
-                    _runtimeDisablePending = false;
-                    ShutdownGraph(
-                        true,
-                        EarthAnimationGraphFallbackReason.FeatureDisabled,
-                        true);
+                    long allocated = Math.Max(
+                        0L,
+                        GC.GetAllocatedBytesForCurrentThread() - allocationStart);
+                    _hotPathAllocationSampleCount++;
+                    if (allocated > 0L) _hotPathAllocationFramesOverZero++;
+                    _hotPathTotalManagedAllocationBytes += allocated;
+                    _hotPathMaximumManagedAllocationBytes = Math.Max(
+                        _hotPathMaximumManagedAllocationBytes,
+                        allocated);
                 }
             }
         }
@@ -357,6 +408,20 @@ namespace Elemental.Presentation.Animation
             for (int index = 0; index < copyCount; index++)
                 destination[index] = _captureFrames[(sourceIndex + index) % CaptureFrameCapacity];
             return copyCount;
+        }
+
+        public void ResetHotPathEvidence()
+        {
+            _activeUpdateCount = 0u;
+            _rigSyncCount = 0u;
+            _hotPathAllocationSampleCount = 0;
+            _hotPathAllocationFramesOverZero = 0;
+            _hotPathTotalManagedAllocationBytes = 0L;
+            _hotPathMaximumManagedAllocationBytes = 0L;
+            if (_poseHistory == null || !_poseHistory.Diagnostics.IsCreated) return;
+            EarthAnimationJobDiagnostics diagnostics = _poseHistory.Diagnostics[0];
+            diagnostics.EvaluationCount = 0u;
+            _poseHistory.Diagnostics[0] = diagnostics;
         }
 
         public EarthAnimationGraphCaptureSummary GetCaptureSummary()

@@ -113,6 +113,7 @@ namespace Elemental.Presentation.Animation
 
     public struct EarthAnimationJobDiagnostics
     {
+        public uint EvaluationCount;
         public uint AppliedRequestSequence;
         public uint TransitionRequestCount;
         public uint InterruptedTransitionCount;
