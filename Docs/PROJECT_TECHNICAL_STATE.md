@@ -4,9 +4,10 @@ Updated: 2026-08-31
 
 Snapshot branch: `codex/foundation-stability-rescue`
 
-Snapshot commit: `e401a22fdc55ba9c8dbee230bf174b1b44d1ee4b`
+Tested implementation commit: `8c2e6245a0e4fe1e169b63998e918ce800477b36`
 
-Working-tree integration evidence: uncommitted, tested 2026-08-31 after the snapshot commit.
+Evidence condition: tested 2026-08-31 from the exact implementation content committed above;
+later documentation-only commits do not invalidate the code/test snapshot.
 
 Companion tracker: [`Docs/PROJECT_EXECUTION_TRACKER.md`](PROJECT_EXECUTION_TRACKER.md)
 
@@ -33,7 +34,7 @@ The live gate and risk state belongs in the [execution tracker](PROJECT_EXECUTIO
 
 When sources disagree, prefer the narrowest current evidence in this order:
 
-1. Current source/serialized assets at the header commit.
+1. Current source/serialized assets at the tested implementation commit.
 2. Fresh test/build/profiler report produced from that same commit and worktree.
 3. Accepted ADR for architectural intent.
 4. Current milestone for product scope and acceptance criteria.
@@ -187,7 +188,7 @@ impact is retained until `FractureReady`.
 ### Characters, support, impact, and duel
 
 `PlanetMotor` owns canonical movement/grounding. Presentation contact IK must follow the motor
-and stable support handles; it may not move gameplay truth. In the current working tree,
+and stable support handles; it may not move gameplay truth. At the tested implementation commit,
 `CharacterSupportRuntimeAdapter` classifies bounded non-alloc SphereCast/Raycast candidates for
 the pure `CharacterSupportAuthority`, and `PlanetMotor` consumes the selected support with a
 small retention bias. Arena and voxel surface providers expose explicit support classification;
@@ -248,7 +249,7 @@ wired shipping socket/relay transport, and the M11 golden path is local.
 
 ## Weaknesses and technical debt
 
-- The current working tree has no complete green acceptance run. A fresh full EditMode run passes
+- The tested implementation has no complete green acceptance run. A fresh full EditMode run passes
   `586/587`; its sole failure is the zero-warning build-evidence gate because the existing Native
   Windows report records 186 warnings. The two new foundation PlayMode regressions pass `2/2`,
   but the complete focused/broad PlayMode suites remain pending. See the tracker for exact scope.
@@ -299,7 +300,7 @@ gates. It is non-authoritative editor evidence but cannot be cited as a pass.
 fails the repository's zero-warning acceptance rule. No current-HEAD performance, warning-free
 build, or complete PlayMode pass is claimed here.
 
-Fresh uncommitted working-tree evidence produced through the connected Unity Test Runner is:
+Fresh evidence produced through the connected Unity Test Runner from the tested implementation is:
 
 - `BuildReports/FoundationWorkingTreeEdit-20260831.xml`: full EditMode `586/587`; only
   `FinalBuildEvidenceAndCapabilityMatrixAreGreen` fails because the older Native Windows report

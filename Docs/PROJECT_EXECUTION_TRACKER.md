@@ -4,18 +4,19 @@ Updated: 2026-08-31
 
 Snapshot branch: `codex/foundation-stability-rescue`
 
-Snapshot commit: `e401a22fdc55ba9c8dbee230bf174b1b44d1ee4b`
+Tested implementation commit: `8c2e6245a0e4fe1e169b63998e918ce800477b36`
 
-Working-tree evidence: uncommitted integration tested 2026-08-31 after the snapshot commit.
+Evidence condition: tested 2026-08-31 from the exact implementation content committed above;
+later documentation-only commits do not invalidate the code/test snapshot.
 
 Technical context: [`Docs/PROJECT_TECHNICAL_STATE.md`](PROJECT_TECHNICAL_STATE.md)
 
 ## Current verdict
 
-**M11 is in foundation stabilization/integration, not acceptance-green in this working tree.**
+**M11 is in foundation stabilization/integration, not acceptance-green at the tested commit.**
 
-The branch is synchronized with `origin/codex/foundation-stability-rescue` at the header commit,
-but the shared worktree contains user-owned modified/untracked evidence and Unity recovery scenes;
+The branch contains remote base `e401a22` plus tested local integration commit `8c2e624`. The shared
+worktree also contains user-owned modified/untracked evidence and Unity recovery scenes;
 preserve them. The generated scene has now been rebuilt after the rig/import changes. A fresh full
 EditMode run passes `586/587`; the only failure is the stale Native Windows evidence containing 186
 warnings. Fresh targeted PlayMode foundation regressions pass `2/2`. These runs validate the new
@@ -43,8 +44,9 @@ is rebuilt and the M11 acceptance chain is fresh and green.
 | `BuildReports/Mvp01ProfilerEditorDiagnosticLatest.json` | 2026-08-31 09:28 | failed | Editor diagnostic p95 `19.1631 ms`; foot-contact and render audit fail. Not authoritative, not green. |
 | `BuildReports/NativeWindows.json` | 2026-08-31 05:05 | build succeeded, 186 warnings | Fails the repository zero-warning acceptance rule. |
 
-All timestamps above are file contents, not filesystem modification times. The header commit was
-created at `2026-08-31T11:13:40Z`, so every listed report predates it.
+All timestamps above are file contents, not filesystem modification times. Historical rows below
+the two `FoundationWorkingTree` artifacts predate remote base `e401a22` (created at
+`2026-08-31T11:13:40Z`); they remain reproduction history, not validation of `8c2e624`.
 
 ## Now / Next / Later
 
@@ -54,7 +56,7 @@ created at `2026-08-31T11:13:40Z`, so every listed report predates it.
    latest reports before starting a new run.
 2. Rebuild `EarthCoreSlice` through `M3EarthCoreSetup.Configure()` after any further source asset,
    importer, profile, or generator change. The current rig/import rebuild is complete.
-3. Run the complete focused PlayMode chain in the current working tree. Full EditMode and the two
+3. Run the complete focused PlayMode chain from the tested implementation. Full EditMode and the two
    new foundation PlayMode regressions are fresh; the broader PlayMode scope is not.
 4. Repair remaining failures one authority seam at a time in this order: physical input/targeting;
    support/landing; visible Humanoid/ragdoll reset; projectile contact; accepted evidence runner.
@@ -102,7 +104,7 @@ passes the full acceptance gate unless the evidence column says so.
 | Finite surf semantic graph | Implemented and targeted-green | ADR 0030 follow-up; `SurfFinitePlay.json` `3/3` | Protect in full focused suite; no broad acceptance implied. |
 | Shared Earth matter mass policy | Pure policy + tests + arena/decor adapters present | `5054d09`, `930b8bd`, `b7d75d3`, `3a33a11`, `3d87414`, `6da1ae9`; `EarthMatterMassPolicyTests.cs` | Current-HEAD runtime/profile evidence is missing; integration is not universal by file search. |
 | Gameplay-locked celestial clock/key | Policy, tests, and presentation wiring present | `5685799`, `e1f7e61`, `8a4dbc4`; `CelestialLightingAuthorityTests.cs`; `CelestialSystemBehaviour.cs` | Fresh rebuilt-scene visual/render audit required. |
-| Classified character support policy | Integrated in the working tree through `CharacterSupportRuntimeAdapter` and `PlanetMotor` | `CharacterSupportAuthorityTests.cs`; `FoundationWorkingTreePlay-20260831.xml` support regression | Complete focused landing/moving-platform PlayMode remains pending. |
+| Classified character support policy | Integrated at `8c2e624` through `CharacterSupportRuntimeAdapter` and `PlanetMotor` | `CharacterSupportAuthorityTests.cs`; `FoundationWorkingTreePlay-20260831.xml` support regression | Complete focused landing/moving-platform PlayMode remains pending. |
 | Linebreaker rig/secondary-motion rescue | Weighted source and runtime FBX integrated; generated scene rebuilt | `LinebreakerRigged_weighted.blend`; four weight/rig reports; `FoundationWorkingTreePlay-20260831.xml` | Full visual gait/ragdoll/KO gate and capture remain pending. |
 | Canonical input boundary cleanup | Rumble lookdev/VFX shortcuts routed through `EarthInputAdapter` | `FoundationWorkingTreeEdit-20260831.xml`; full source-scan test passes | Physical mouse golden-path failures from the older aggregate still require full focused rerun. |
 | Duel-space shadow stabilization | URP/project settings changed | `c606e2a`, `e401a22` | No report or capture after either commit. |
@@ -151,7 +153,7 @@ complete focused suite before deleting, reclassifying, or fixing any item.
 
 | ID | Severity | Evidence / leading indicator | Mitigation | Fallback | Decision date |
 |---|---|---|---|---|---|
-| B-001 Current working tree is only partially validated | Stopper | Full EditMode `586/587` and targeted foundation PlayMode `2/2`; complete focused/broad PlayMode not rerun | Run focused chain and accepted scenario without changing the worktree | Use old reports only to prioritize reproduction, never as current verdict | Next integration session |
+| B-001 Tested implementation is only partially validated | Stopper | Full EditMode `586/587` and targeted foundation PlayMode `2/2`; complete focused/broad PlayMode not rerun | Run focused chain and accepted scenario from `8c2e624` (plus docs-only changes) | Use old reports only to prioritize reproduction, never as current verdict | Next integration session |
 | B-002 Focused PlayMode red | Stopper | `Mvp01FocusedPlay.json`: 10/18 failed | Reproduce, group by authority seam, fix/rerun one seam at a time | Cut non-core presentation only if it preserves input, terrain/matter, support, and duel truth | Before M11 acceptance |
 | B-003 Warning-free build absent | Stopper | `NativeWindows.json`: succeeded with 186 warnings | Classify project vs external warnings and produce a fresh zero-warning build | No release/acceptance claim; warnings may be waived only by an explicit documented owner/removal milestone | Before M11 acceptance |
 | B-004 ADR 0033 still proposed | High | Status says implementation under live verification; latest bot telemetry `hardGatesPassed: false` | Complete the exact same-worktree telemetry, seating, visual, and profiler gate | Restore locomotion contact weight to zero while retaining telemetry and authored motion, per ADR rollback | Before accepting ADR 0033 |
