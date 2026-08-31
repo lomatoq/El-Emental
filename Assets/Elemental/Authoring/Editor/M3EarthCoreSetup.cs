@@ -3531,9 +3531,9 @@ private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
             HumanoidSecondaryMotion secondaryMotion = visual.GetComponent<HumanoidSecondaryMotion>();
             if (secondaryMotion == null) secondaryMotion = visual.AddComponent<HumanoidSecondaryMotion>();
             secondaryMotion.ConfigureFromHierarchy(animator);
-            if (!secondaryMotion.IsConfigured)
+            if (!string.IsNullOrEmpty(secondaryMotion.ConfigurationDiagnostic))
                 throw new UnityEditor.Build.BuildFailedException(
-                    "Linebreaker secondary tail and belt bone chains are incomplete.");
+                    secondaryMotion.ConfigurationDiagnostic);
         }
 
         private static void ApplyPersistentRumbleCharacterMaterials(GameObject visual, bool rivalCharacter)

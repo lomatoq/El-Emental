@@ -43,5 +43,28 @@ namespace Elemental.Tests.EditMode
             Assert.That(float.IsFinite(state.AngleDegrees.y), Is.True);
             Assert.That(state.AngleDegrees.magnitude, Is.LessThanOrEqualTo(14.001f));
         }
+
+        [Test]
+        public void NonFiniteStateAndInputsResetToABoundedFinitePose()
+        {
+            var state = new SecondaryBoneSpringState
+            {
+                AngleDegrees = new Vector2(float.NaN, float.PositiveInfinity),
+                AngularVelocity = new Vector2(float.NegativeInfinity, float.NaN)
+            };
+
+            state = SecondaryBoneSpringSolver.Step(
+                state,
+                new Vector2(float.NaN, float.PositiveInfinity),
+                float.NaN,
+                float.NaN,
+                float.NaN,
+                float.NaN);
+
+            Assert.That(float.IsFinite(state.AngleDegrees.x), Is.True);
+            Assert.That(float.IsFinite(state.AngleDegrees.y), Is.True);
+            Assert.That(state.AngleDegrees, Is.EqualTo(Vector2.zero));
+            Assert.That(state.AngularVelocity, Is.EqualTo(Vector2.zero));
+        }
     }
 }

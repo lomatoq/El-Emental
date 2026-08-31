@@ -1,4 +1,5 @@
 using System;
+using Elemental.Runtime.Characters;
 using UnityEngine;
 
 namespace Elemental.Presentation.Animation
@@ -22,6 +23,17 @@ namespace Elemental.Presentation.Animation
             float maximumAngleDegrees,
             float deltaTime)
         {
+            if (!float.IsFinite(state.AngleDegrees.x) ||
+                !float.IsFinite(state.AngleDegrees.y) ||
+                !float.IsFinite(state.AngularVelocity.x) ||
+                !float.IsFinite(state.AngularVelocity.y))
+                state = default;
+            if (!float.IsFinite(targetDegrees.x) || !float.IsFinite(targetDegrees.y))
+                targetDegrees = Vector2.zero;
+            if (!float.IsFinite(frequencyHz)) frequencyHz = 0f;
+            if (!float.IsFinite(dampingRatio)) dampingRatio = 1f;
+            if (!float.IsFinite(maximumAngleDegrees)) maximumAngleDegrees = 0f;
+            if (!float.IsFinite(deltaTime)) deltaTime = 0f;
             float dt = Mathf.Clamp(deltaTime, 0f, 0.05f);
             float maximum = Mathf.Max(0f, maximumAngleDegrees);
             targetDegrees = Vector2.ClampMagnitude(targetDegrees, maximum);
@@ -92,10 +104,16 @@ namespace Elemental.Presentation.Animation
                     if (bones[index] != null)
                         bones[index].localRotation = BindRotations[index];
             }
+
+            public void ClearDynamics()
+            {
+                Springs = new SecondaryBoneSpringState[BindRotations.Length];
+            }
         }
 
         [SerializeField] private Animator animator;
         [SerializeField] private Rigidbody motionSourceBody;
+        [SerializeField] private HumanoidRagdollRig ragdollRig;
         [SerializeField] private Transform helmetAnchor;
         [SerializeField] private Transform hairLock;
         [SerializeField] private Transform[] tailBones = Array.Empty<Transform>();
@@ -120,6 +138,8 @@ namespace Elemental.Presentation.Animation
         private Quaternion _hairBindLocalRotation = Quaternion.identity;
         private Vector3 _hairBindLocalScale = Vector3.one;
         private bool _hasHairBind;
+        private bool _ragdollWasActive;
+        private bool _configurationDiagnosticIssued;
 
         public int TailBoneCount => tailBones != null ? tailBones.Length : 0;
         public int BeltBoneCount =>
@@ -135,11 +155,31 @@ namespace Elemental.Presentation.Animation
                                                   HasExpectedChain(tailBones, helmetAnchor) &&
                                                   HasExpectedChain(leftBeltBones, null) &&
                                                   HasExpectedChain(rightBeltBones, null);
+        public string ConfigurationDiagnostic
+        {
+            get
+            {
+                if (animator == null || !animator.isHuman)
+                    return "Secondary motion requires a valid Humanoid Animator.";
+                if (helmetAnchor == null)
+                    return "Secondary_HelmetAnchor is missing.";
+                if (hairLock == null || hairLock.parent != helmetAnchor)
+                    return "Secondary_HairLock must be rigidly parented to Secondary_HelmetAnchor.";
+                if (!HasEveryBone(tailBones, 3) || !HasExpectedChain(tailBones, helmetAnchor))
+                    return "Secondary_Tail_01..03 hierarchy is incomplete or mis-parented.";
+                if (!HasEveryBone(leftBeltBones, 2) || !HasExpectedChain(leftBeltBones, null))
+                    return "Secondary_Belt_L_01..02 hierarchy is incomplete or mis-parented.";
+                if (!HasEveryBone(rightBeltBones, 2) || !HasExpectedChain(rightBeltBones, null))
+                    return "Secondary_Belt_R_01..02 hierarchy is incomplete or mis-parented.";
+                return string.Empty;
+            }
+        }
 
         public void ConfigureFromHierarchy(Animator configuredAnimator)
         {
             animator = configuredAnimator;
             Transform searchRoot = animator != null ? animator.transform : transform;
+            if (ragdollRig == null) ragdollRig = GetComponentInParent<HumanoidRagdollRig>(true);
             helmetAnchor = FindBone(searchRoot, "Secondary_HelmetAnchor");
             hairLock = FindBone(searchRoot, "Secondary_HairLock");
             tailBones = FindBones(searchRoot,
@@ -155,6 +195,7 @@ namespace Elemental.Presentation.Animation
         {
             if (animator == null) animator = GetComponentInChildren<Animator>(true);
             if (motionSourceBody == null) motionSourceBody = GetComponentInParent<Rigidbody>();
+            if (ragdollRig == null) ragdollRig = GetComponentInParent<HumanoidRagdollRig>(true);
             if (!IsConfigured) ConfigureFromHierarchy(animator);
             else
             {
@@ -166,6 +207,7 @@ namespace Elemental.Presentation.Animation
                         "Secondary_HairLock");
                 CaptureBindPose();
             }
+            ReportConfigurationFailureOnce();
         }
 
         private void OnEnable()
@@ -178,6 +220,14 @@ namespace Elemental.Presentation.Animation
         private void LateUpdate()
         {
             if (!IsConfigured) return;
+            bool ragdollActive = ragdollRig != null && ragdollRig.IsRagdollActive;
+            if (ragdollActive != _ragdollWasActive)
+            {
+                if (ragdollActive) ClearDynamicsWithoutPoseWrite();
+                else ResetDynamics();
+                _ragdollWasActive = ragdollActive;
+            }
+            if (ragdollActive) return;
             float dt = Time.deltaTime;
             if (dt <= 0.0001f) return;
 
@@ -264,6 +314,26 @@ namespace Elemental.Presentation.Animation
             _filteredLocalAcceleration = Vector3.zero;
             _hasKinematicSample = false;
             EnforceHairLock();
+        }
+
+        public void ResetAfterDiscontinuity() => ResetDynamics();
+
+        private void ClearDynamicsWithoutPoseWrite()
+        {
+            _tail.ClearDynamics();
+            _leftBelt.ClearDynamics();
+            _rightBelt.ClearDynamics();
+            _filteredLocalAcceleration = Vector3.zero;
+            _hasKinematicSample = false;
+        }
+
+        private void ReportConfigurationFailureOnce()
+        {
+            if (_configurationDiagnosticIssued) return;
+            string diagnostic = ConfigurationDiagnostic;
+            if (string.IsNullOrEmpty(diagnostic)) return;
+            _configurationDiagnosticIssued = true;
+            Debug.LogError($"[Elemental] {diagnostic}", this);
         }
 
         private void EnforceHairLock()
