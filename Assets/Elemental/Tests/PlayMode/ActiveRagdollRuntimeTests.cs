@@ -223,6 +223,15 @@ namespace Elemental.Tests.PlayMode
                 new Behaviour[] { controlOwner },
                 new Behaviour[] { proceduralOwner });
 
+            GameObject recoverySupport = CreateIsolatedRecoverySupport(
+                scene,
+                rig,
+                motor,
+                localUp);
+            yield return new WaitForFixedUpdate();
+            Assert.That(motor.HasStableSupport, Is.True,
+                "The isolated fixture must establish stable support before recovery starts.");
+
             rig.BeginRagdoll(Vector3.zero);
             yield return new WaitForFixedUpdate();
             Assert.That(feetOwner.enabled, Is.False);
@@ -264,7 +273,7 @@ namespace Elemental.Tests.PlayMode
                 Is.EqualTo(0.55f).Within(0.005f));
             Assert.That(rig.RecoveryStateVerifiedAfterEvent, Is.True);
             yield return null;
-            yield return new WaitForEndOfFrame();
+            yield return null;
             Assert.That(rig.RecoveryStateHashNextFrame,
                 Is.EqualTo(rig.LastPoseMatchedRecovery.AnimationStateId));
             Assert.That(rig.RecoveryStatePhaseNextFrame,
@@ -288,7 +297,7 @@ namespace Elemental.Tests.PlayMode
             motor.Body.position = supportedRootPosition + localUp * 3f;
             UnityEngine.Physics.SyncTransforms();
             yield return null;
-            yield return new WaitForEndOfFrame();
+            yield return null;
             Assert.That(rig.RecoverySupportSampleCount,
                 Is.GreaterThan(supportSamplesBeforeLoss));
             Assert.That(rig.RecoveryHasLiveSupport, Is.False);
@@ -299,7 +308,7 @@ namespace Elemental.Tests.PlayMode
             motor.Body.rotation = supportedRootRotation;
             UnityEngine.Physics.SyncTransforms();
             yield return null;
-            yield return new WaitForEndOfFrame();
+            yield return null;
             Assert.That(rig.RecoveryHasLiveSupport, Is.True);
             Assert.That(rig.RecoveryFeetEnabled, Is.True,
                 "Live support reacquisition must re-enable marker ownership.");
@@ -390,6 +399,7 @@ namespace Elemental.Tests.PlayMode
             rig.CompleteRecovery();
             rig.ResetToAnimated();
 
+            Object.Destroy(recoverySupport);
             Object.Destroy(profile);
             Object.Destroy(missingStateProfile);
             AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
@@ -399,6 +409,59 @@ namespace Elemental.Tests.PlayMode
         private static bool IsFinite(Vector3 value)
         {
             return float.IsFinite(value.x) && float.IsFinite(value.y) && float.IsFinite(value.z);
+        }
+
+        private static GameObject CreateIsolatedRecoverySupport(
+            Scene scene,
+            HumanoidRagdollRig rig,
+            PlanetMotor motor,
+            Vector3 localUp)
+        {
+            Assert.That(rig, Is.Not.Null);
+            Assert.That(motor, Is.Not.Null);
+            Assert.That(motor.Body, Is.Not.Null);
+            Assert.That(motor.GroundMask.value, Is.Not.EqualTo(0));
+
+            int disabledForeignColliders = 0;
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                Collider[] colliders = root.GetComponentsInChildren<Collider>(true);
+                foreach (Collider collider in colliders)
+                {
+                    if (collider == null || !collider.enabled ||
+                        collider.transform.IsChildOf(motor.transform))
+                        continue;
+
+                    collider.enabled = false;
+                    disabledForeignColliders++;
+                }
+            }
+            Assert.That(disabledForeignColliders, Is.GreaterThan(0),
+                "The recovery fixture must isolate the selected rig from foreign scene colliders.");
+
+            const float supportThickness = 0.25f;
+            Vector3 up = localUp.sqrMagnitude > 0.25f
+                ? localUp.normalized
+                : motor.transform.up;
+            var support = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            support.name = "Pose-Matched Recovery Isolated Stable Support";
+            SceneManager.MoveGameObjectToScene(support, scene);
+            support.layer = FirstLayerInMask(motor.GroundMask.value);
+            support.transform.rotation = Quaternion.FromToRotation(Vector3.up, up);
+            support.transform.localScale = new Vector3(12f, supportThickness, 12f);
+            support.transform.position = motor.SupportFeetPoint(up) -
+                                         up * (supportThickness * 0.5f + 0.01f);
+            UnityEngine.Physics.SyncTransforms();
+            return support;
+        }
+
+        private static int FirstLayerInMask(int mask)
+        {
+            for (int layer = 0; layer < 32; layer++)
+            {
+                if ((mask & (1 << layer)) != 0) return layer;
+            }
+            return 0;
         }
 
         private static EarthRecoveryPoseSampleAuthoring RecoverySample(
