@@ -173,7 +173,8 @@ namespace Elemental.Presentation.Animation
             if (!UsePoseInertialization || _poseHistory == null) return false;
             using (TransitionMarker.Auto())
             {
-                EarthAnimationGraphControl control = _poseHistory.Control[0];
+                var controls = _poseHistory.Control;
+                EarthAnimationGraphControl control = controls[0];
                 control.RequestSequence++;
                 if (control.RequestSequence == 0) control.RequestSequence = 1;
                 float requested = float.IsFinite(requestedDurationSeconds)
@@ -186,7 +187,7 @@ namespace Elemental.Presentation.Animation
                     Mathf.Max(requested, decayWindow),
                     0.05f,
                     _settings.MaximumDurationSeconds);
-                _poseHistory.Control[0] = control;
+                controls[0] = control;
                 return true;
             }
         }
@@ -419,9 +420,10 @@ namespace Elemental.Presentation.Animation
             _hotPathTotalManagedAllocationBytes = 0L;
             _hotPathMaximumManagedAllocationBytes = 0L;
             if (_poseHistory == null || !_poseHistory.Diagnostics.IsCreated) return;
-            EarthAnimationJobDiagnostics diagnostics = _poseHistory.Diagnostics[0];
+            var diagnosticsArray = _poseHistory.Diagnostics;
+            EarthAnimationJobDiagnostics diagnostics = diagnosticsArray[0];
             diagnostics.EvaluationCount = 0u;
-            _poseHistory.Diagnostics[0] = diagnostics;
+            diagnosticsArray[0] = diagnostics;
         }
 
         public EarthAnimationGraphCaptureSummary GetCaptureSummary()
@@ -585,7 +587,8 @@ namespace Elemental.Presentation.Animation
         private void RefreshControlSettings()
         {
             if (_poseHistory == null || !_poseHistory.Control.IsCreated) return;
-            EarthAnimationGraphControl control = _poseHistory.Control[0];
+            var controls = _poseHistory.Control;
+            EarthAnimationGraphControl control = controls[0];
             control.UsePoseInertialization = _activeSettings.UsePoseInertialization ? (byte)1 : (byte)0;
             control.PositionHalfLifeSeconds = _activeSettings.PositionHalfLifeSeconds;
             control.RotationHalfLifeSeconds = _activeSettings.RotationHalfLifeSeconds;
@@ -594,7 +597,7 @@ namespace Elemental.Presentation.Animation
             control.MaximumRotationOffsetRadians = _activeSettings.MaximumRotationOffsetRadians;
             control.MaximumLinearVelocity = _activeSettings.MaximumLinearVelocity;
             control.MaximumAngularVelocity = _activeSettings.MaximumAngularVelocityRadians;
-            _poseHistory.Control[0] = control;
+            controls[0] = control;
         }
 
         private void UpdateOwnershipMask()
@@ -612,9 +615,10 @@ namespace Elemental.Presentation.Animation
             if (_rightHandContact) active |= EarthAnimationBoneOwnership.RightHandContact;
             if (visibleRagdoll != null && visibleRagdoll.IsRagdollActive)
                 active |= EarthAnimationBoneOwnership.FullRagdoll;
-            EarthAnimationGraphControl control = _poseHistory.Control[0];
+            var controls = _poseHistory.Control;
+            EarthAnimationGraphControl control = controls[0];
             control.ActiveOwnership = active;
-            _poseHistory.Control[0] = control;
+            controls[0] = control;
         }
 
         private void MirrorAnimatorControllerInputs()
@@ -817,11 +821,12 @@ namespace Elemental.Presentation.Animation
         private void RequestInitialPoseContinuity()
         {
             if (!_activeSettings.UsePoseInertialization || _poseHistory == null) return;
-            EarthAnimationGraphControl control = _poseHistory.Control[0];
+            var controls = _poseHistory.Control;
+            EarthAnimationGraphControl control = controls[0];
             control.RequestSequence = control.RequestSequence == uint.MaxValue
                 ? 1u
                 : control.RequestSequence + 1u;
-            _poseHistory.Control[0] = control;
+            controls[0] = control;
         }
 
         private static bool SettingsEqual(
@@ -852,15 +857,22 @@ namespace Elemental.Presentation.Animation
         private static void BindBones(Animator targetAnimator, EarthPoseHistory history)
         {
             if (!targetAnimator.isHuman) return;
+            var boneHandles = history.BoneHandles;
+            var boneOwnership = history.BoneOwnership;
+            var initialized = history.Initialized;
+            var previousTargetPositions = history.PreviousTargetPositions;
+            var previousTargetRotations = history.PreviousTargetRotations;
+            var previousOutputPositions = history.PreviousOutputPositions;
+            var previousOutputRotations = history.PreviousOutputRotations;
             int writeIndex = 0;
             for (int index = 0; index < EarthAnimationBoneMask.TrackedBoneCount; index++)
             {
                 HumanBodyBones bone = EarthAnimationBoneMask.BoneAt(index);
                 Transform transform = targetAnimator.GetBoneTransform(bone);
                 if (transform == null) continue;
-                history.BoneHandles[writeIndex] = targetAnimator.BindStreamTransform(transform);
-                history.BoneOwnership[writeIndex] = EarthAnimationBoneMask.OwnershipFor(bone);
-                history.Initialized[writeIndex] = 1;
+                boneHandles[writeIndex] = targetAnimator.BindStreamTransform(transform);
+                boneOwnership[writeIndex] = EarthAnimationBoneMask.OwnershipFor(bone);
+                initialized[writeIndex] = 1;
                 float3 localPosition = new float3(
                     transform.localPosition.x,
                     transform.localPosition.y,
@@ -870,10 +882,10 @@ namespace Elemental.Presentation.Animation
                     transform.localRotation.y,
                     transform.localRotation.z,
                     transform.localRotation.w);
-                history.PreviousTargetPositions[writeIndex] = localPosition;
-                history.PreviousTargetRotations[writeIndex] = localRotation;
-                history.PreviousOutputPositions[writeIndex] = localPosition;
-                history.PreviousOutputRotations[writeIndex] = localRotation;
+                previousTargetPositions[writeIndex] = localPosition;
+                previousTargetRotations[writeIndex] = localRotation;
+                previousOutputPositions[writeIndex] = localPosition;
+                previousOutputRotations[writeIndex] = localRotation;
                 writeIndex++;
             }
         }
