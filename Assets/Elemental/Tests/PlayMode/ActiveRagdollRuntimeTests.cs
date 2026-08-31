@@ -7,6 +7,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.SceneManagement;
+using Object = UnityEngine.Object;
 
 namespace Elemental.Tests.PlayMode
 {
