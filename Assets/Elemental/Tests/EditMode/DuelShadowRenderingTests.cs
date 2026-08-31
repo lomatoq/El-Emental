@@ -1,5 +1,7 @@
+using System.IO;
 using Elemental.Presentation.Rendering;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 namespace Elemental.Tests.EditMode
@@ -151,13 +153,13 @@ namespace Elemental.Tests.EditMode
         {
             DuelShadowCasterRegistry registry = new DuelShadowCasterRegistry(4, 2);
             Assert.That(registry.TryRegister(
-                Record(19, 0), out DuelShadowRegistrationHandle intact), Is.True);
+                Record(19u, 0u), out DuelShadowRegistrationHandle intact), Is.True);
             Assert.That(registry.TryRegister(
-                Record(19, 1), out DuelShadowRegistrationHandle fractured), Is.True);
+                Record(19u, 1u), out DuelShadowRegistrationHandle fractured), Is.True);
             Assert.That(registry.IsGenerationActive(intact), Is.True);
             Assert.That(registry.IsGenerationActive(fractured), Is.False);
 
-            Assert.That(registry.TryCommitGeneration(19, 1), Is.True);
+            Assert.That(registry.TryCommitGeneration(19u, 1u), Is.True);
 
             Assert.That(registry.IsGenerationActive(intact), Is.False);
             Assert.That(registry.IsGenerationActive(fractured), Is.True);
@@ -169,18 +171,18 @@ namespace Elemental.Tests.EditMode
         {
             DuelShadowCasterRegistry registry = new DuelShadowCasterRegistry(4, 2);
             Assert.That(registry.TryRegister(
-                Record(23, 0), out DuelShadowRegistrationHandle initial), Is.True);
+                Record(23u, 0u), out DuelShadowRegistrationHandle initial), Is.True);
             Assert.That(registry.TryRegister(
-                Record(23, 1), out DuelShadowRegistrationHandle next), Is.True);
-            Assert.That(registry.TryCommitGeneration(23, 1), Is.True);
+                Record(23u, 1u), out DuelShadowRegistrationHandle next), Is.True);
+            Assert.That(registry.TryCommitGeneration(23u, 1u), Is.True);
             Assert.That(registry.Unregister(initial), Is.True);
             Assert.That(registry.Unregister(next), Is.True);
 
             Assert.That(registry.TryRegister(
-                Record(23, 0), out DuelShadowRegistrationHandle stale), Is.True);
+                Record(23u, 0u), out DuelShadowRegistrationHandle stale), Is.True);
             Assert.That(registry.IsGenerationActive(stale), Is.False);
             Assert.That(registry.TryRegister(
-                Record(23, 1), out DuelShadowRegistrationHandle current), Is.True);
+                Record(23u, 1u), out DuelShadowRegistrationHandle current), Is.True);
             Assert.That(registry.IsGenerationActive(current), Is.True);
         }
 
@@ -189,22 +191,22 @@ namespace Elemental.Tests.EditMode
         {
             DuelShadowCasterRegistry registry = new DuelShadowCasterRegistry(2, 2);
             Assert.That(registry.TryRegister(
-                Record(27, 0), out DuelShadowRegistrationHandle old), Is.True);
+                Record(27u, 0u), out DuelShadowRegistrationHandle old), Is.True);
             Assert.That(registry.TryRegister(
-                Record(27, 1), out DuelShadowRegistrationHandle current), Is.True);
-            Assert.That(registry.TryCommitGeneration(27, 1), Is.True);
+                Record(27u, 1u), out DuelShadowRegistrationHandle current), Is.True);
+            Assert.That(registry.TryCommitGeneration(27u, 1u), Is.True);
             Assert.That(registry.Unregister(old), Is.True);
             Assert.That(registry.Unregister(current), Is.True);
             Assert.That(registry.TryRegister(
-                Record(28, 0), out DuelShadowRegistrationHandle fillerA), Is.True);
+                Record(28u, 0u), out DuelShadowRegistrationHandle fillerA), Is.True);
             Assert.That(registry.TryRegister(
-                Record(28, 0), out DuelShadowRegistrationHandle fillerB), Is.True);
+                Record(28u, 0u), out DuelShadowRegistrationHandle fillerB), Is.True);
 
             Assert.That(registry.TryRegister(
-                Record(27, 0), out _), Is.False);
+                Record(27u, 0u), out _), Is.False);
             Assert.That(registry.Unregister(fillerA), Is.True);
             Assert.That(registry.TryRegister(
-                Record(27, 0), out DuelShadowRegistrationHandle stale), Is.True);
+                Record(27u, 0u), out DuelShadowRegistrationHandle stale), Is.True);
             Assert.That(registry.IsGenerationActive(stale), Is.False);
             Assert.That(registry.IsRegistrationCurrent(fillerB), Is.True);
         }
@@ -214,17 +216,67 @@ namespace Elemental.Tests.EditMode
         {
             DuelShadowCasterRegistry registry = new DuelShadowCasterRegistry(1, 2);
             Assert.That(registry.TryRegister(
-                Record(31, 0), out DuelShadowRegistrationHandle first), Is.True);
+                Record(31u, 0u), out DuelShadowRegistrationHandle first), Is.True);
             Assert.That(registry.Unregister(first), Is.True);
             Assert.That(registry.TryRegister(
-                Record(32, 0), out DuelShadowRegistrationHandle reused), Is.True);
+                Record(32u, 0u), out DuelShadowRegistrationHandle reused), Is.True);
 
             Assert.That(registry.Unregister(first), Is.False);
             Assert.That(registry.IsRegistrationCurrent(reused), Is.True);
             Assert.That(registry.Count, Is.EqualTo(1));
         }
 
-        private static DuelShadowCasterRecord Record(int groupId, int generation)
+        [Test]
+        public void HighBitGroupAndGenerationRemainCanonicalUnsignedValues()
+        {
+            const uint groupId = 0xF1234567u;
+            const uint generation = 0xE2345678u;
+            DuelShadowCasterRegistry registry = new DuelShadowCasterRegistry(2, 2);
+
+            Assert.That(registry.TryRegister(
+                Record(groupId, generation),
+                out DuelShadowRegistrationHandle handle), Is.True);
+            Assert.That(registry.IsGenerationActive(handle), Is.True);
+            Assert.That(registry.TryCommitGeneration(groupId, generation), Is.True);
+
+            var commands = new DuelShadowDrawCommand[1];
+            Assert.That(registry.CopyActiveDrawCommands(
+                commands,
+                Classification,
+                1,
+                out _,
+                out _), Is.Zero,
+                "A renderer-less pure record is active but intentionally not drawable.");
+        }
+
+        [Test]
+        public void OwnedShadersImportAndDebugReceiverCallsBoundedShadowSampler()
+        {
+            const string casterPath =
+                "Assets/Elemental/Content/GraphicsVNext/Rendering/DuelShadowCaster.shader";
+            const string debugPath =
+                "Assets/Elemental/Content/GraphicsVNext/Rendering/DuelShadowDebug.shader";
+            Assert.That(AssetDatabase.LoadAssetAtPath<Shader>(casterPath), Is.Not.Null);
+            Assert.That(AssetDatabase.LoadAssetAtPath<Shader>(debugPath), Is.Not.Null);
+
+            string renderingPath = Path.Combine(
+                Application.dataPath,
+                "Elemental/Content/GraphicsVNext/Rendering");
+            string debugSource = File.ReadAllText(Path.Combine(
+                renderingPath,
+                "DuelShadowDebug.shader"));
+            string includeSource = File.ReadAllText(Path.Combine(
+                renderingPath,
+                "ElementalDuelShadow.hlsl"));
+            StringAssert.Contains("ElementalDuelShadow.hlsl", debugSource);
+            StringAssert.Contains("ElementalSampleDuelShadow(positionWS)", debugSource);
+            StringAssert.Contains("clamp((int)round(_ElementalDuelShadowParams.w), 1, 3)",
+                includeSource);
+            StringAssert.Contains("for (int y = -3; y <= 3; y++)", includeSource);
+            StringAssert.Contains("for (int x = -3; x <= 3; x++)", includeSource);
+        }
+
+        private static DuelShadowCasterRecord Record(uint groupId, uint generation)
         {
             return new DuelShadowCasterRecord(
                 null,

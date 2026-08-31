@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Elemental.Presentation.Rendering
@@ -5,17 +6,32 @@ namespace Elemental.Presentation.Rendering
     [DisallowMultipleComponent]
     public sealed class DuelShadowCaster : MonoBehaviour
     {
-        [SerializeField, Min(1)] private int stableGroupId = 1;
-        [SerializeField, Min(0)] private int generation = 0;
+        [Header("Static authoring (group 0 is intentionally unbound)")]
+        [SerializeField] private uint stableGroupId = 0u;
+        [SerializeField] private uint generation = 0u;
         [SerializeField] private DuelShadowCasterClass classification =
             DuelShadowCasterClass.Other;
-        [SerializeField] private Renderer[] renderers;
+        [SerializeField] private Renderer[] renderers = Array.Empty<Renderer>();
 
         private DuelShadowRegistrationHandle[] _handles;
+        private uint _runtimeStableGroupId;
+        private uint _runtimeGeneration;
+        private DuelShadowCasterClass _runtimeClassification;
+        private bool _hasRuntimeBinding;
 
-        public int StableGroupId => stableGroupId;
-        public int Generation => generation;
-        public DuelShadowCasterClass Classification => classification;
+        public uint StableGroupId => _hasRuntimeBinding
+            ? _runtimeStableGroupId
+            : stableGroupId;
+        public uint Generation => _hasRuntimeBinding
+            ? _runtimeGeneration
+            : generation;
+        public DuelShadowCasterClass Classification => _hasRuntimeBinding
+            ? _runtimeClassification
+            : classification;
+        public bool HasValidBinding => StableGroupId != 0u;
+        public bool HasRuntimeBinding => _hasRuntimeBinding;
+        public int RegisteredRendererCount => CountRegistrations(false);
+        public int ActiveRegistrationCount => CountRegistrations(true);
 
         private void Awake()
         {
@@ -25,19 +41,71 @@ namespace Elemental.Presentation.Rendering
         private void OnEnable()
         {
             CacheRenderersIfNeeded();
-            RegisterRenderers();
+            if (HasValidBinding)
+                RegisterCurrentBinding();
         }
 
         private void OnDisable()
         {
             UnregisterRenderers();
+            ClearRuntimeBinding();
         }
 
-        public static bool CommitGeneration(int groupId, int nextGeneration)
+        /// <summary>
+        /// Binds a runtime-owned caster identity. Rebinding is idempotent: every
+        /// previous handle is invalidated before the new identity can register.
+        /// Runtime bindings are cleared on disable so a pooled object cannot
+        /// register its prior acquisition before its producer binds it again.
+        /// </summary>
+        public bool Bind(
+            uint groupId,
+            uint currentGeneration,
+            DuelShadowCasterClass currentClassification)
+        {
+            UnregisterRenderers();
+            ClearRuntimeBinding();
+            if (groupId == 0u)
+            {
+                Debug.LogError(
+                    $"{nameof(DuelShadowCaster)} on '{name}' rejected stable group ID 0.",
+                    this);
+                return false;
+            }
+
+            _runtimeStableGroupId = groupId;
+            _runtimeGeneration = currentGeneration;
+            _runtimeClassification = currentClassification;
+            _hasRuntimeBinding = true;
+            CacheRenderersIfNeeded();
+            return !isActiveAndEnabled || RegisterCurrentBinding();
+        }
+
+        public bool Rebind(
+            uint groupId,
+            uint currentGeneration,
+            DuelShadowCasterClass currentClassification)
+        {
+            return Bind(groupId, currentGeneration, currentClassification);
+        }
+
+        public void Unbind()
+        {
+            UnregisterRenderers();
+            ClearRuntimeBinding();
+        }
+
+        public static bool CommitGeneration(uint groupId, uint nextGeneration)
         {
             return DuelShadowCasterRegistry.Shared.TryCommitGeneration(
                 groupId,
                 nextGeneration);
+        }
+
+        public static bool ReleaseGroup(uint groupId, uint committedGeneration)
+        {
+            return DuelShadowCasterRegistry.Shared.TryReleaseGroup(
+                groupId,
+                committedGeneration);
         }
 
         private void CacheRenderersIfNeeded()
@@ -47,59 +115,62 @@ namespace Elemental.Presentation.Rendering
                 Renderer localRenderer = GetComponent<Renderer>();
                 renderers = localRenderer != null
                     ? new[] { localRenderer }
-                    : System.Array.Empty<Renderer>();
+                    : Array.Empty<Renderer>();
             }
             if (_handles == null || _handles.Length != renderers.Length)
                 _handles = new DuelShadowRegistrationHandle[renderers.Length];
         }
 
-        private void RegisterRenderers()
+        private bool RegisterCurrentBinding()
         {
-            if (stableGroupId <= 0)
-            {
-                Debug.LogError(
-                    $"{nameof(DuelShadowCaster)} on '{name}' requires a positive stable group ID.",
-                    this);
-                return;
-            }
-
+            if (!HasValidBinding)
+                return false;
             if (renderers.Length == 0)
             {
                 Debug.LogError(
                     $"{nameof(DuelShadowCaster)} on '{name}' has no explicit opaque renderer.",
                     this);
-                return;
+                return false;
             }
 
             for (int index = 0; index < renderers.Length; index++)
             {
                 Renderer targetRenderer = renderers[index];
-                if (targetRenderer == null)
-                    continue;
-                if (!DuelShadowCasterPolicy.IsSupportedOpaqueRenderer(targetRenderer))
+                if (targetRenderer == null ||
+                    !DuelShadowCasterPolicy.IsSupportedOpaqueRenderer(targetRenderer))
                 {
+                    string rendererName = targetRenderer != null
+                        ? targetRenderer.name
+                        : $"slot {index}";
                     Debug.LogError(
-                        $"Duel-shadow caster '{targetRenderer.name}' is not an opaque " +
+                        $"Duel-shadow caster '{rendererName}' is not an opaque " +
                         "MeshRenderer or SkinnedMeshRenderer and was rejected.",
                         this);
-                    continue;
+                    UnregisterRenderers();
+                    return false;
                 }
-                int submeshCount = ResolveSubmeshCount(targetRenderer);
-                DuelShadowCasterRecord record = new DuelShadowCasterRecord(
+
+                var record = new DuelShadowCasterRecord(
                     targetRenderer,
                     targetRenderer.bounds,
-                    stableGroupId,
-                    generation,
-                    classification,
-                    submeshCount);
-                if (!DuelShadowCasterRegistry.Shared.TryRegister(record, out _handles[index]))
+                    StableGroupId,
+                    Generation,
+                    Classification,
+                    ResolveSubmeshCount(targetRenderer));
+                if (!DuelShadowCasterRegistry.Shared.TryRegister(
+                        record,
+                        out _handles[index]))
                 {
                     Debug.LogError(
                         $"Duel-shadow registry rejected '{targetRenderer.name}'. " +
                         "Check the stable ID/generation and fixed registry capacity.",
                         this);
+                    UnregisterRenderers();
+                    return false;
                 }
             }
+
+            return true;
         }
 
         private void UnregisterRenderers()
@@ -111,6 +182,31 @@ namespace Elemental.Presentation.Rendering
                 DuelShadowCasterRegistry.Shared.Unregister(_handles[index]);
                 _handles[index] = DuelShadowRegistrationHandle.Invalid;
             }
+        }
+
+        private void ClearRuntimeBinding()
+        {
+            _runtimeStableGroupId = 0u;
+            _runtimeGeneration = 0u;
+            _runtimeClassification = DuelShadowCasterClass.Other;
+            _hasRuntimeBinding = false;
+        }
+
+        private int CountRegistrations(bool activeOnly)
+        {
+            if (_handles == null)
+                return 0;
+            int count = 0;
+            for (int index = 0; index < _handles.Length; index++)
+            {
+                DuelShadowRegistrationHandle handle = _handles[index];
+                bool included = activeOnly
+                    ? DuelShadowCasterRegistry.Shared.IsGenerationActive(handle)
+                    : DuelShadowCasterRegistry.Shared.IsRegistrationCurrent(handle);
+                if (included)
+                    count++;
+            }
+            return count;
         }
 
         private static int ResolveSubmeshCount(Renderer targetRenderer)
@@ -125,14 +221,12 @@ namespace Elemental.Presentation.Rendering
 #if UNITY_EDITOR
         private void OnValidate()
         {
-            stableGroupId = Mathf.Max(1, stableGroupId);
-            generation = Mathf.Max(0, generation);
             if (!Application.isPlaying && (renderers == null || renderers.Length == 0))
             {
                 Renderer localRenderer = GetComponent<Renderer>();
                 renderers = localRenderer != null
                     ? new[] { localRenderer }
-                    : System.Array.Empty<Renderer>();
+                    : Array.Empty<Renderer>();
             }
         }
 #endif

@@ -85,16 +85,16 @@ namespace Elemental.Presentation.Rendering
     {
         public readonly Renderer Renderer;
         public readonly Bounds WorldBounds;
-        public readonly int StableGroupId;
-        public readonly int Generation;
+        public readonly uint StableGroupId;
+        public readonly uint Generation;
         public readonly DuelShadowCasterClass Classification;
         public readonly int SubmeshCount;
 
         public DuelShadowCasterRecord(
             Renderer renderer,
             Bounds worldBounds,
-            int stableGroupId,
-            int generation,
+            uint stableGroupId,
+            uint generation,
             DuelShadowCasterClass classification,
             int submeshCount)
         {
@@ -111,8 +111,8 @@ namespace Elemental.Presentation.Rendering
     {
         public Renderer Renderer;
         public Bounds WorldBounds;
-        public int StableGroupId;
-        public int Generation;
+        public uint StableGroupId;
+        public uint Generation;
         public DuelShadowCasterClass Classification;
         public int SubmeshCount;
         internal ulong RegistrationOrder;
@@ -139,8 +139,8 @@ namespace Elemental.Presentation.Rendering
         private struct GenerationState
         {
             public bool Used;
-            public int StableGroupId;
-            public int ActiveGeneration;
+            public uint StableGroupId;
+            public uint ActiveGeneration;
         }
 
         private static DuelShadowCasterRegistry s_Shared =
@@ -185,8 +185,7 @@ namespace Elemental.Presentation.Rendering
             out DuelShadowRegistrationHandle handle)
         {
             handle = DuelShadowRegistrationHandle.Invalid;
-            if (record.StableGroupId <= 0 ||
-                record.Generation < 0 ||
+            if (record.StableGroupId == 0u ||
                 !DuelShadowMath.IsFinite(record.WorldBounds.center) ||
                 !DuelShadowMath.IsFinite(record.WorldBounds.extents))
                 return false;
@@ -251,7 +250,7 @@ namespace Elemental.Presentation.Rendering
         /// committed generation prevents an older pooled representation from
         /// reactivating itself during an empty interval.
         /// </summary>
-        public bool TryReleaseGroup(int stableGroupId, int committedGeneration)
+        public bool TryReleaseGroup(uint stableGroupId, uint committedGeneration)
         {
             int generationIndex = FindGeneration(stableGroupId);
             if (generationIndex < 0 ||
@@ -262,9 +261,9 @@ namespace Elemental.Presentation.Rendering
             return true;
         }
 
-        public bool TryCommitGeneration(int stableGroupId, int generation)
+        public bool TryCommitGeneration(uint stableGroupId, uint generation)
         {
-            if (stableGroupId <= 0 || generation < 0)
+            if (stableGroupId == 0u)
             {
                 _generationRejectCount++;
                 return false;
@@ -434,7 +433,7 @@ namespace Elemental.Presentation.Rendering
             return left.RegistrationOrder.CompareTo(right.RegistrationOrder);
         }
 
-        private bool IsActiveGeneration(int stableGroupId, int generation)
+        private bool IsActiveGeneration(uint stableGroupId, uint generation)
         {
             int index = FindGeneration(stableGroupId);
             return index >= 0 &&
@@ -452,7 +451,7 @@ namespace Elemental.Presentation.Rendering
             return -1;
         }
 
-        private int FindGeneration(int stableGroupId)
+        private int FindGeneration(uint stableGroupId)
         {
             for (int index = 0; index < _generationStates.Length; index++)
             {
@@ -475,7 +474,7 @@ namespace Elemental.Presentation.Rendering
             return -1;
         }
 
-        private bool HasAnyEntry(int stableGroupId)
+        private bool HasAnyEntry(uint stableGroupId)
         {
             for (int index = 0; index < _entries.Length; index++)
             {
@@ -487,7 +486,7 @@ namespace Elemental.Presentation.Rendering
             return false;
         }
 
-        private bool HasGeneration(int stableGroupId, int generation)
+        private bool HasGeneration(uint stableGroupId, uint generation)
         {
             for (int index = 0; index < _entries.Length; index++)
             {
