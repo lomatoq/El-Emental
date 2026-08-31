@@ -80,6 +80,8 @@ namespace Elemental.Presentation.Animation
         [SerializeField] private HumanoidRagdollRig visibleRagdoll;
         [SerializeField] private HumanoidProceduralBodyResponse proceduralBodyResponse;
         [SerializeField] private EarthTransitionDirector transitionDirector;
+        [SerializeField] private EarthAnimationGraphProfile animationGraphProfile;
+        [SerializeField] private EarthAnimationGraph animationGraph;
         [SerializeField] private bool driveMagicPresentation = true;
 
         private float _castWeight;
@@ -106,6 +108,10 @@ namespace Elemental.Presentation.Animation
         private EarthMotionStateId _activeMotionState;
         private float _dodgeUntil;
         private bool _dodgeWasActive;
+        private float _previousInertializationSpeed;
+        private float _previousInertializationTurn;
+        private bool _hasInertializationLocomotionSample;
+        private bool _staggerInertializationPending;
 
         public Animator Animator => animator;
         public CharacterPresentationProfile Profile => profile;
@@ -121,6 +127,7 @@ namespace Elemental.Presentation.Animation
         public EarthFootContactController FootContactController => footContactController;
         public HumanoidProceduralBodyResponse ProceduralBodyResponse => proceduralBodyResponse;
         public EarthTransitionDirector TransitionDirector => transitionDirector;
+        public EarthAnimationGraph AnimationGraph => animationGraph;
         public EarthAuthoredActionId CurrentAuthoredAction { get; private set; }
         public EarthAuthoredFootPolicy CurrentFootPolicy { get; private set; }
         public EarthDirectionalDodgeDecision LastDodgeDecision { get; private set; }
@@ -159,6 +166,7 @@ namespace Elemental.Presentation.Animation
             ConfigureFootContactController();
             ConfigurePoseController();
             ConfigureProceduralBodyResponse();
+            ConfigureAnimationGraph();
             ConfigureTransitionDirector();
             if (isActiveAndEnabled) SubscribeRagdoll();
         }
@@ -175,6 +183,7 @@ namespace Elemental.Presentation.Animation
             ConfigureFootContactController();
             ConfigurePoseController();
             ConfigureProceduralBodyResponse();
+            ConfigureAnimationGraph();
             ConfigureTransitionDirector();
         }
 
@@ -195,6 +204,8 @@ namespace Elemental.Presentation.Animation
             _unsupportedSeconds = 0f;
             _activeBaseStateHash = 0;
             _activeMotionState = EarthMotionStateId.None;
+            _hasInertializationLocomotionSample = false;
+            _staggerInertializationPending = false;
             if (Application.isPlaying && animator.isActiveAndEnabled)
             {
                 _magicLayerIndex = animator.GetLayerIndex(MagicLayerName);
@@ -273,6 +284,29 @@ namespace Elemental.Presentation.Animation
             if (transitionDirector == null)
                 transitionDirector = gameObject.AddComponent<EarthTransitionDirector>();
             transitionDirector.Configure(animator, profile);
+        }
+
+        public void SetAnimationGraphProfile(EarthAnimationGraphProfile configuredProfile)
+        {
+            animationGraphProfile = configuredProfile;
+            ConfigureAnimationGraph();
+            ConfigureTransitionDirector();
+        }
+
+        private void ConfigureAnimationGraph()
+        {
+            if (animator == null) return;
+            if (animationGraph == null) animationGraph = GetComponent<EarthAnimationGraph>();
+            EarthAnimationGraphProfile resolvedProfile = animationGraphProfile != null
+                ? animationGraphProfile
+                : animationGraph != null ? animationGraph.Profile : null;
+            if (resolvedProfile == null) return;
+            if (animationGraph == null) animationGraph = gameObject.AddComponent<EarthAnimationGraph>();
+            animationGraph.Configure(
+                animator,
+                resolvedProfile,
+                footContactController,
+                visibleRagdoll);
         }
 
         private void OnEnable()
@@ -414,6 +448,7 @@ namespace Elemental.Presentation.Animation
                                                     (rescue.Phase == EarthAnimationPhase.PreLanding ||
                                                      rescue.Phase == EarthAnimationPhase.LandingContact ||
                                                      rescue.Phase == EarthAnimationPhase.LandingRecovery));
+            DriveContinuousLocomotionInertialization(presentationSpeed, turn.Value);
             CaptureGaitPhase();
             bool landingStyleChanged = rescue.LandingStyle != previousLandingStyle &&
                                        (rescue.Phase == EarthAnimationPhase.PreLanding ||
@@ -445,6 +480,7 @@ namespace Elemental.Presentation.Animation
             {
                 ResetMagicIK();
                 _wasCasting = false;
+                UpdateAnimationGraphOwnership();
                 return;
             }
             int castKind = ResolveCastKind();
@@ -460,6 +496,10 @@ namespace Elemental.Presentation.Animation
                                                       motor.LastCommand.Move.x * motor.LastCommand.Move.x +
                                                       motor.LastCommand.Move.y * motor.LastCommand.Move.y));
             if (movementInterruptsRecovery) casting = false;
+            if (_wasCasting && !casting)
+                transitionDirector?.RequestPoseInertialization(
+                    EarthAnimationInertializationReason.CastToLocomotion,
+                    profile != null ? profile.AuthoredActionTransitionSeconds : 0.12f);
             UpdateAuthoredAction(in rescue, casting, directionalDodge);
             float targetWeight = casting && _physicalMode != CharacterPhysicalMode.FullRagdoll
                 ? (profile != null ? profile.HandIkWeight : 0.92f)
@@ -500,6 +540,74 @@ namespace Elemental.Presentation.Animation
             animationRigBridge?.SetMagicWeight(_castWeight);
             UpdateHandTargets();
             _wasCasting = casting;
+            UpdateAnimationGraphOwnership();
+        }
+
+        private void UpdateAnimationGraphOwnership()
+        {
+            bool handContact = _handIkState != HandIkState.Inactive && _castWeight > 0.001f;
+            animationGraph?.SetHandContactOwnership(handContact, handContact);
+        }
+
+        private void DriveContinuousLocomotionInertialization(float speed, float turn)
+        {
+            if (!_hasInertializationLocomotionSample)
+            {
+                _previousInertializationSpeed = speed;
+                _previousInertializationTurn = turn;
+                _hasInertializationLocomotionSample = true;
+                return;
+            }
+
+            float duration = profile != null ? profile.LocomotionTransitionSeconds : 0.14f;
+            if (Mathf.Abs(_previousInertializationSpeed) > 0.55f && Mathf.Abs(speed) < 0.12f)
+                transitionDirector?.RequestPoseInertialization(
+                    EarthAnimationInertializationReason.RunToStop,
+                    duration);
+            else if (Mathf.Abs(_previousInertializationSpeed) > 0.25f &&
+                     Mathf.Abs(speed) > 0.25f &&
+                     Mathf.Sign(_previousInertializationSpeed) != Mathf.Sign(speed))
+                transitionDirector?.RequestPoseInertialization(
+                    EarthAnimationInertializationReason.DirectionReverse,
+                    duration);
+            if (Mathf.Abs(_previousInertializationTurn) > 0.28f && Mathf.Abs(turn) < 0.08f)
+                transitionDirector?.RequestPoseInertialization(
+                    EarthAnimationInertializationReason.TurnToSettle,
+                    profile != null ? profile.TurnTransitionSeconds : 0.12f);
+
+            _previousInertializationSpeed = speed;
+            _previousInertializationTurn = turn;
+        }
+
+        private AnimatorStateInfo GetCurrentAnimatorStateInfo(int layer) =>
+            animationGraph != null && animationGraph.IsActive
+                ? animationGraph.GetCurrentAnimatorStateInfo(layer)
+                : animator.GetCurrentAnimatorStateInfo(layer);
+
+        private AnimatorStateInfo GetNextAnimatorStateInfo(int layer) =>
+            animationGraph != null && animationGraph.IsActive
+                ? animationGraph.GetNextAnimatorStateInfo(layer)
+                : animator.GetNextAnimatorStateInfo(layer);
+
+        private bool IsAnimatorInTransition(int layer) =>
+            animationGraph != null && animationGraph.IsActive
+                ? animationGraph.IsInTransition(layer)
+                : animator.IsInTransition(layer);
+
+        private void SetAnimatorTrigger(int parameterHash)
+        {
+            if (animationGraph != null && animationGraph.IsActive)
+                animationGraph.SetTrigger(parameterHash);
+            else
+                animator.SetTrigger(parameterHash);
+        }
+
+        private void ResetAnimatorTrigger(int parameterHash)
+        {
+            if (animationGraph != null && animationGraph.IsActive)
+                animationGraph.ResetTrigger(parameterHash);
+            else
+                animator.ResetTrigger(parameterHash);
         }
 
         private void UpdateAnimationGrounded(float verticalSpeed)
@@ -585,7 +693,7 @@ namespace Elemental.Presentation.Animation
                     break;
             }
             if (stateHash == 0) return;
-            AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+            AnimatorStateInfo current = GetCurrentAnimatorStateInfo(0);
             EarthLandingCandidateSnapshot candidate = LandingCandidate;
             bool canInterrupt = CurrentAuthoredAction == EarthAuthoredActionId.None ||
                                 EarthAuthoredActionCatalog.CanInterrupt(
@@ -609,7 +717,8 @@ namespace Elemental.Presentation.Animation
                 rescue.Phase == EarthAnimationPhase.PreLanding && candidate.IsValid,
                 canInterrupt,
                 false,
-                destinationState == EarthMotionStateId.Locomotion);
+                destinationState == EarthMotionStateId.Locomotion ||
+                destinationCategory == EarthMotionCategory.Landing);
             if (transitionDirector != null &&
                 transitionDirector.RequestTransition(stateHash, in context))
             {
@@ -630,8 +739,8 @@ namespace Elemental.Presentation.Animation
 
         private void CaptureGaitPhase()
         {
-            if (animator == null || animator.IsInTransition(0)) return;
-            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+            if (animator == null || IsAnimatorInTransition(0)) return;
+            AnimatorStateInfo state = GetCurrentAnimatorStateInfo(0);
             if (state.fullPathHash != LocomotionStateHash) return;
             _gaitPhase01 = Mathf.Repeat(state.normalizedTime, 1f);
             _locomotionCycleSeconds = Mathf.Max(0.01f, state.length);
@@ -732,14 +841,14 @@ namespace Elemental.Presentation.Animation
 
             // Prefer the current landing while it blends out. On entry, where
             // the current state is still Fall, use the incoming landing state.
-            AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+            AnimatorStateInfo current = GetCurrentAnimatorStateInfo(0);
             if (TryMapLandingState(current, out action))
             {
                 normalizedTime = Mathf.Clamp01(current.normalizedTime);
                 return true;
             }
-            if (!animator.IsInTransition(0)) return false;
-            AnimatorStateInfo next = animator.GetNextAnimatorStateInfo(0);
+            if (!IsAnimatorInTransition(0)) return false;
+            AnimatorStateInfo next = GetNextAnimatorStateInfo(0);
             if (!TryMapLandingState(next, out action)) return false;
             normalizedTime = Mathf.Clamp01(next.normalizedTime);
             return true;
@@ -775,9 +884,9 @@ namespace Elemental.Presentation.Animation
             // its end while the incoming jump/land/recovery clip is at frame zero.
             // Contact windows must follow the incoming action, otherwise IK can be
             // re-enabled for one frame exactly at take-off or landing contact.
-            AnimatorStateInfo state = animator.IsInTransition(0)
-                ? animator.GetNextAnimatorStateInfo(0)
-                : animator.GetCurrentAnimatorStateInfo(0);
+            AnimatorStateInfo state = IsAnimatorInTransition(0)
+                ? GetNextAnimatorStateInfo(0)
+                : GetCurrentAnimatorStateInfo(0);
             return Mathf.Clamp01(state.normalizedTime);
         }
 
@@ -797,8 +906,13 @@ namespace Elemental.Presentation.Animation
             }
             float duration = response == EarthCharacterImpactResponse.Stagger ? 0.46f : 0.24f;
             _impactUntil = Mathf.Max(_impactUntil, Time.time + duration);
+            transitionDirector?.RequestPoseInertialization(
+                EarthAnimationInertializationReason.LocomotionToFlinch,
+                profile != null ? profile.AuthoredActionTransitionSeconds : 0.12f);
+            if (response == EarthCharacterImpactResponse.Stagger)
+                _staggerInertializationPending = true;
             if (!HasProceduralImpactOwner && animator != null && animator.enabled)
-                animator.SetTrigger(ImpactHash);
+                SetAnimatorTrigger(ImpactHash);
         }
 
         /// <summary>
@@ -831,8 +945,8 @@ namespace Elemental.Presentation.Animation
             _dodgeWasActive = true;
             animator.SetFloat(DodgeXHash, LastDodgeDecision.BlendDirection.x);
             animator.SetFloat(DodgeYHash, LastDodgeDecision.BlendDirection.y);
-            animator.ResetTrigger(DodgeHash);
-            animator.SetTrigger(DodgeHash);
+            ResetAnimatorTrigger(DodgeHash);
+            SetAnimatorTrigger(DodgeHash);
             _activeBaseStateHash = DodgeStateHash;
             _activeMotionState = EarthMotionStateId.DirectionalDodge;
             transitionDirector?.SynchronizeState(
@@ -852,7 +966,7 @@ namespace Elemental.Presentation.Animation
             _dodgeWasActive = false;
             if (animator != null && animator.enabled && transitionDirector != null)
             {
-                AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+                AnimatorStateInfo current = GetCurrentAnimatorStateInfo(0);
                 var context = new EarthAnimationTransitionContext(
                     _activeMotionState,
                     EarthMotionStateId.KnockdownRecovery,
@@ -894,6 +1008,14 @@ namespace Elemental.Presentation.Animation
                 _impactWeight,
                 impactTarget,
                 Time.deltaTime / (impactTarget > 0f ? 0.045f : 0.18f));
+            if (_staggerInertializationPending && Time.time >= _impactUntil &&
+                _impactWeight <= 0.001f)
+            {
+                transitionDirector?.RequestPoseInertialization(
+                    EarthAnimationInertializationReason.StaggerToLocomotion,
+                    profile != null ? profile.AuthoredActionTransitionSeconds : 0.12f);
+                _staggerInertializationPending = false;
+            }
             if (_impactLayerIndex >= 0) animator.SetLayerWeight(_impactLayerIndex, _impactWeight);
         }
 

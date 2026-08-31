@@ -373,6 +373,8 @@ namespace Elemental.Simulation.Characters
             in EarthAnimationTransitionContext context) =>
             context.DestinationCategory == EarthMotionCategory.Locomotion ||
             context.DestinationCategory == EarthMotionCategory.Impact ||
+            (context.SourceCategory == EarthMotionCategory.Airborne &&
+             context.DestinationCategory == EarthMotionCategory.Landing) ||
             context.SourceCategory == EarthMotionCategory.RagdollRecovery;
 
         private static EarthAnimationTransitionDecision Reject(
