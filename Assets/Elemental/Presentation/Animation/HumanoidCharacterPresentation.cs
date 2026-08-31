@@ -850,12 +850,31 @@ namespace Elemental.Presentation.Animation
         {
             _dodgeUntil = 0f;
             _dodgeWasActive = false;
+            if (animator != null && animator.enabled && transitionDirector != null)
+            {
+                AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+                var context = new EarthAnimationTransitionContext(
+                    _activeMotionState,
+                    EarthMotionStateId.KnockdownRecovery,
+                    CategoryFor(_activeMotionState),
+                    EarthMotionCategory.RagdollRecovery,
+                    EarthAnimationTransitionPriority.HeavyImpact,
+                    PriorityFor(_activeMotionState),
+                    Mathf.Repeat(current.normalizedTime, 1f),
+                    _gaitPhase01,
+                    Mathf.Max(0.01f, current.length),
+                    0f,
+                    0f,
+                    false,
+                    true,
+                    false,
+                    false);
+                transitionDirector.RequestTransition(
+                    KnockdownRecoveryStateHash,
+                    in context);
+            }
             _activeBaseStateHash = KnockdownRecoveryStateHash;
             _activeMotionState = EarthMotionStateId.KnockdownRecovery;
-            transitionDirector?.SynchronizeState(
-                _activeMotionState,
-                _activeBaseStateHash,
-                EarthAnimationTransitionPriority.HeavyImpact);
             CurrentAuthoredAction = EarthAuthoredActionId.RecoverableKnockdownRecovery;
             CurrentFootPolicy = EarthAuthoredActionCatalog.Resolve(CurrentAuthoredAction)
                 .FootPolicyAt(0.18f);

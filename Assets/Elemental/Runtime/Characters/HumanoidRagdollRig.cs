@@ -1,6 +1,7 @@
 using System;
 using Elemental.Runtime.Physics;
 using Elemental.Runtime.World;
+using Elemental.Simulation.Characters;
 using Elemental.Simulation.Combat;
 using Unity.Mathematics;
 using Unity.Profiling;
@@ -95,6 +96,8 @@ namespace Elemental.Runtime.Characters
         private readonly float[] _localizedHitDurations = new float[HumanBones.Length];
         private readonly float[] _localizedHitAngles = new float[HumanBones.Length];
         private readonly bool[] _localizedHitActive = new bool[HumanBones.Length];
+        private readonly Collider[] _recoveryOverlaps = new Collider[16];
+        private EarthRagdollRecoveryGateState _recoveryGate;
 
         public bool IsRagdollActive { get; private set; }
         public bool IsRecoveringToAnimation { get; private set; }
@@ -111,6 +114,10 @@ namespace Elemental.Runtime.Characters
             }
         }
         public int LocalizedRagdollHitCount { get; private set; }
+        public EarthRagdollRecoverySide LastRecoverySide { get; private set; }
+        public float LastRecoveryClearanceLiftMeters { get; private set; }
+        public bool LastRecoveryClearanceSucceeded { get; private set; }
+        public bool LastRecoveryUsedFacingFallback { get; private set; }
         public event Action AuthoredRecoveryBegan;
 
         public void ConfigureLocalizedReactionProfile(CharacterImpactResponseProfile profile) =>
@@ -275,6 +282,7 @@ namespace Elemental.Runtime.Characters
 
                 ResetLocalizedReactions();
                 IsRecoveringToAnimation = false;
+                _recoveryGate = default;
 
                 CaptureRuntimeState();
                 CaptureRendererPresentationState();
@@ -342,18 +350,86 @@ namespace Elemental.Runtime.Characters
         {
             using (HandoffMarker.Auto())
             {
-                if (!IsRagdollActive) return;
+                if (!EarthRagdollRecoveryPoseSolver.TryConsumeRecoveryRequest(
+                        ref _recoveryGate,
+                        IsRagdollActive))
+                    return;
                 Rigidbody pelvis = bones != null && bones.Length > 0 && bones[0] != null
                     ? bones[0].Body
                     : null;
                 Vector3 pelvisPosition = pelvis != null ? pelvis.position : transform.position;
+                Quaternion pelvisRotation = pelvis != null ? pelvis.rotation : transform.rotation;
+                Transform chest = bones != null && bones.Length > 1 && bones[1] != null
+                    ? bones[1].transform
+                    : null;
+                Vector3 chestPosition = chest != null ? chest.position : pelvisPosition;
+                Vector3 chestForward = chest != null ? chest.forward : pelvisRotation * Vector3.forward;
+                Vector3 chestOutward = chest != null ? chest.up : transform.up;
                 Vector3 up = localUp.sqrMagnitude > 0.25f ? localUp.normalized : transform.up;
-                Vector3 planarForward = Vector3.ProjectOnPlane(forward, up);
-                if (planarForward.sqrMagnitude < 0.01f)
-                    planarForward = Vector3.ProjectOnPlane(transform.forward, up);
-                if (planarForward.sqrMagnitude < 0.01f)
-                    planarForward = Vector3.Cross(up, Vector3.right);
-                Quaternion rootRotation = Quaternion.LookRotation(planarForward.normalized, up);
+
+                EarthRagdollRecoveryPose basePose = ResolveRecoveryPose(
+                    pelvisPosition,
+                    chestPosition,
+                    pelvisRotation * Vector3.forward,
+                    chestForward,
+                    chestOutward,
+                    up,
+                    forward,
+                    0f,
+                    false);
+                bool baseClear = IsRecoveryCapsuleClear(
+                    ToVector3(basePose.RootPosition),
+                    ToQuaternion(basePose.RootRotation),
+                    up);
+                EarthRagdollRecoveryPose firstLiftPose = ResolveRecoveryPose(
+                    pelvisPosition,
+                    chestPosition,
+                    pelvisRotation * Vector3.forward,
+                    chestForward,
+                    chestOutward,
+                    up,
+                    forward,
+                    EarthRagdollRecoveryPoseSolver.FirstClearanceLiftMeters,
+                    false);
+                bool firstLiftClear = baseClear || IsRecoveryCapsuleClear(
+                    ToVector3(firstLiftPose.RootPosition),
+                    ToQuaternion(firstLiftPose.RootRotation),
+                    up);
+                EarthRagdollRecoveryPose maximumLiftPose = ResolveRecoveryPose(
+                    pelvisPosition,
+                    chestPosition,
+                    pelvisRotation * Vector3.forward,
+                    chestForward,
+                    chestOutward,
+                    up,
+                    forward,
+                    EarthRagdollRecoveryPoseSolver.MaximumClearanceLiftMeters,
+                    false);
+                bool maximumLiftClear = firstLiftClear || IsRecoveryCapsuleClear(
+                    ToVector3(maximumLiftPose.RootPosition),
+                    ToQuaternion(maximumLiftPose.RootRotation),
+                    up);
+                float clearanceLift = EarthRagdollRecoveryPoseSolver.SelectClearanceLift(
+                    baseClear,
+                    firstLiftClear,
+                    maximumLiftClear,
+                    out bool clearanceSucceeded);
+                EarthRagdollRecoveryPose recoveryPose = ResolveRecoveryPose(
+                    pelvisPosition,
+                    chestPosition,
+                    pelvisRotation * Vector3.forward,
+                    chestForward,
+                    chestOutward,
+                    up,
+                    forward,
+                    clearanceLift,
+                    clearanceSucceeded);
+                Vector3 rootPosition = ToVector3(recoveryPose.RootPosition);
+                Quaternion rootRotation = ToQuaternion(recoveryPose.RootRotation);
+                LastRecoverySide = recoveryPose.Side;
+                LastRecoveryClearanceLiftMeters = recoveryPose.ClearanceLiftMeters;
+                LastRecoveryClearanceSucceeded = recoveryPose.ClearanceSucceeded;
+                LastRecoveryUsedFacingFallback = recoveryPose.UsedFacingFallback;
 
                 if (bones != null)
                     for (int index = 0; index < bones.Length; index++)
@@ -374,7 +450,7 @@ namespace Elemental.Runtime.Characters
 
                 if (motorRootBody != null)
                 {
-                    motorRootBody.position = pelvisPosition - rootRotation * _recoveryPelvisOffsetLocal;
+                    motorRootBody.position = rootPosition;
                     motorRootBody.rotation = rootRotation;
                 }
                 transform.SetParent(_originalParent, false);
@@ -393,17 +469,16 @@ namespace Elemental.Runtime.Characters
                 ResetLocalizedReactions();
                 StoneFade01 = 0f;
                 RestoreVisiblePresentation();
-                if (IsRecoveringToAnimation) AuthoredRecoveryBegan?.Invoke();
                 if (animator != null)
                 {
                     animator.enabled = _animatorWasEnabled;
                     if (animator.enabled)
                     {
                         animator.Rebind();
-                        animator.Play("Knockdown Recovery", 0, 0.18f);
                         animator.Update(0f);
                     }
                 }
+                if (IsRecoveringToAnimation) AuthoredRecoveryBegan?.Invoke();
                 UnityEngine.Physics.SyncTransforms();
             }
         }
@@ -710,6 +785,96 @@ namespace Elemental.Runtime.Characters
             if (motorCollider != null) motorCollider.enabled = _motorColliderWasEnabled;
         }
 
+        private EarthRagdollRecoveryPose ResolveRecoveryPose(
+            Vector3 pelvisPosition,
+            Vector3 chestPosition,
+            Vector3 pelvisForward,
+            Vector3 chestForward,
+            Vector3 chestOutward,
+            Vector3 localUp,
+            Vector3 preferredForward,
+            float clearanceLift,
+            bool clearanceSucceeded) =>
+            EarthRagdollRecoveryPoseSolver.Resolve(
+                ToFloat3(pelvisPosition),
+                ToFloat3(chestPosition),
+                ToFloat3(pelvisForward),
+                ToFloat3(chestForward),
+                ToFloat3(chestOutward),
+                ToFloat3(localUp),
+                ToFloat3(preferredForward),
+                ToFloat3(_recoveryPelvisOffsetLocal),
+                clearanceLift,
+                clearanceSucceeded);
+
+        private bool IsRecoveryCapsuleClear(
+            Vector3 rootPosition,
+            Quaternion rootRotation,
+            Vector3 localUp)
+        {
+            if (motorCollider is not CapsuleCollider capsule || motorRootBody == null)
+                return true;
+            Transform rootTransform = motorRootBody.transform;
+            Vector3 centerLocal = rootTransform.InverseTransformPoint(
+                capsule.transform.TransformPoint(capsule.center));
+            Vector3 axis = capsule.direction switch
+            {
+                0 => Vector3.right,
+                2 => Vector3.forward,
+                _ => Vector3.up
+            };
+            Vector3 axisLocal = rootTransform.InverseTransformDirection(
+                capsule.transform.TransformDirection(axis)).normalized;
+            Vector3 worldAxis = (rootRotation * axisLocal).normalized;
+            Vector3 worldCenter = rootPosition + rootRotation * centerLocal;
+            Vector3 scale = capsule.transform.lossyScale;
+            float axialScale = capsule.direction switch
+            {
+                0 => Mathf.Abs(scale.x),
+                2 => Mathf.Abs(scale.z),
+                _ => Mathf.Abs(scale.y)
+            };
+            float radialScale = capsule.direction switch
+            {
+                0 => Mathf.Max(Mathf.Abs(scale.y), Mathf.Abs(scale.z)),
+                2 => Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y)),
+                _ => Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z))
+            };
+            float radius = Mathf.Max(0.01f, capsule.radius * radialScale * 0.92f);
+            float halfSegment = Mathf.Max(
+                0f,
+                capsule.height * axialScale * 0.5f - radius);
+            Vector3 pointA = worldCenter + worldAxis * halfSegment;
+            Vector3 pointB = worldCenter - worldAxis * halfSegment;
+            PlanetMotor motor = motorRootBody.GetComponent<PlanetMotor>();
+            int mask = motor != null ? motor.GroundMask.value : 1;
+            int count = UnityEngine.Physics.OverlapCapsuleNonAlloc(
+                pointA,
+                pointB,
+                radius,
+                _recoveryOverlaps,
+                mask,
+                QueryTriggerInteraction.Ignore);
+            if (count >= _recoveryOverlaps.Length) return false;
+            Vector3 up = localUp.sqrMagnitude > 0.25f ? localUp.normalized : rootRotation * Vector3.up;
+            float supportBand = -Mathf.Max(0.05f, radius * 0.35f);
+            for (int index = 0; index < count; index++)
+            {
+                Collider candidate = _recoveryOverlaps[index];
+                if (candidate == null || candidate == motorCollider) continue;
+                if (candidate.transform.IsChildOf(transform) ||
+                    candidate.transform.IsChildOf(rootTransform))
+                    continue;
+                Vector3 closest = candidate is MeshCollider mesh && !mesh.convex
+                    ? candidate.bounds.ClosestPoint(worldCenter)
+                    : candidate.ClosestPoint(worldCenter);
+                if (Vector3.Dot(closest - worldCenter, up) <= supportBand)
+                    continue;
+                return false;
+            }
+            return true;
+        }
+
         private void SetControlBehaviours(bool restore)
         {
             for (int index = 0; index < disabledDuringRagdoll.Length; index++)
@@ -883,5 +1048,14 @@ namespace Elemental.Runtime.Characters
 
         private static bool IsFinite(Vector3 value) =>
             float.IsFinite(value.x) && float.IsFinite(value.y) && float.IsFinite(value.z);
+
+        private static float3 ToFloat3(Vector3 value) =>
+            new float3(value.x, value.y, value.z);
+
+        private static Vector3 ToVector3(float3 value) =>
+            new Vector3(value.x, value.y, value.z);
+
+        private static Quaternion ToQuaternion(quaternion value) =>
+            new Quaternion(value.value.x, value.value.y, value.value.z, value.value.w);
     }
 }
