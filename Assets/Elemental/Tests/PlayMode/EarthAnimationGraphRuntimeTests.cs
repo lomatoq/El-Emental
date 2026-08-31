@@ -108,6 +108,7 @@ namespace Elemental.Tests.PlayMode
             DisableCompetingPresentationBehaviours(animator.gameObject, graph, rigBehaviour);
             animator.speed = 0f;
             StabilizeAnimator(animator);
+            bool[] writableParameterMask = CaptureWritableParameterMask(animator);
             PlayableGraph firstLegacyGraph = ReadRigGraph(rigBuilder);
             Assert.That(rigBehaviour.enabled, Is.True);
             Assert.That(firstLegacyGraph.IsValid(), Is.True);
@@ -136,7 +137,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(rigBehaviour.enabled, Is.False);
             Assert.That(firstLegacyGraph.IsValid(), Is.False,
                 "Enabling the external graph must destroy the previous RigBuilder-owned graph.");
-            AssertPlayableParametersMatchAnimator(graph, animator);
+            AssertPlayableParametersMatchAnimator(graph, animator, writableParameterMask);
             AssertPlayableLayerWeights(graph, legacyLayerWeights);
 
             yield return null;
@@ -203,7 +204,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(activeSummary.GraphActiveFrames, Is.EqualTo(evidenceFrameCount));
             Assert.That(activeSummary.TopologyFailureFrames, Is.Zero);
 
-            SetDistinctPlayableParameters(graph, animator);
+            SetDistinctPlayableParameters(graph, animator, writableParameterMask);
             SetDistinctPlayableLayerWeights(graph, animator.layerCount);
             AnimatorStateInfo activeState = graph.GetCurrentAnimatorStateInfo(0);
             float activeTime = Mathf.Repeat(activeState.normalizedTime, 1f);
@@ -219,7 +220,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(graph.Diagnostics.GraphValid, Is.False);
             Assert.That(graph.Diagnostics.RigOutputCount, Is.Zero);
             AssertStateEquivalent(activeState, activeTime, animator.GetCurrentAnimatorStateInfo(0));
-            AssertAnimatorParametersHavePlayableValues(animator);
+            AssertAnimatorParametersHavePlayableValues(animator, writableParameterMask);
             AssertAnimatorLayerWeightsHavePlayableValues(animator);
             AssertPoseEquivalent(hips, legacyHipsPosition, legacyHipsRotation);
 
@@ -227,7 +228,10 @@ namespace Elemental.Tests.PlayMode
                 "A second OFF-to-ON handoff must not retain a stale graph handle.");
             Assert.That(restoredLegacyGraph.IsValid(), Is.False);
             Assert.That(graph.Diagnostics.TopologyValid, Is.True);
-            AssertAnimatorParametersHavePlayableValues(graph, animator);
+            AssertAnimatorParametersHavePlayableValues(
+                graph,
+                animator,
+                writableParameterMask);
             AssertPlayableLayerWeightsHavePlayableValues(graph, animator.layerCount);
             Assert.That(graph.Configure(animator, in disabledSettings), Is.False);
             Assert.That(ReadRigGraph(rigBuilder).IsValid(), Is.True);
@@ -354,15 +358,15 @@ namespace Elemental.Tests.PlayMode
 
         private static void AssertPlayableParametersMatchAnimator(
             EarthAnimationGraph graph,
-            Animator animator)
+            Animator animator,
+            bool[] writableParameterMask)
         {
             AnimatorControllerParameter[] parameters = animator.parameters;
-            int testedParameterCount = 0;
+            Assert.That(writableParameterMask.Length, Is.EqualTo(parameters.Length));
             for (int index = 0; index < parameters.Length; index++)
             {
                 AnimatorControllerParameter parameter = parameters[index];
-                if (!IsTestableControllerParameter(animator, parameter)) continue;
-                testedParameterCount++;
+                if (!writableParameterMask[index]) continue;
                 int hash = parameter.nameHash;
                 switch (parameter.type)
                 {
@@ -380,21 +384,19 @@ namespace Elemental.Tests.PlayMode
                         break;
                 }
             }
-            Assert.That(testedParameterCount, Is.GreaterThan(0),
-                "The canonical controller must expose a writable float, int, or bool parameter.");
         }
 
         private static void SetDistinctPlayableParameters(
             EarthAnimationGraph graph,
-            Animator animator)
+            Animator animator,
+            bool[] writableParameterMask)
         {
             AnimatorControllerParameter[] parameters = animator.parameters;
-            int testedParameterCount = 0;
+            Assert.That(writableParameterMask.Length, Is.EqualTo(parameters.Length));
             for (int index = 0; index < parameters.Length; index++)
             {
                 AnimatorControllerParameter parameter = parameters[index];
-                if (!IsTestableControllerParameter(animator, parameter)) continue;
-                testedParameterCount++;
+                if (!writableParameterMask[index]) continue;
                 switch (parameter.type)
                 {
                     case AnimatorControllerParameterType.Float:
@@ -408,19 +410,18 @@ namespace Elemental.Tests.PlayMode
                         break;
                 }
             }
-            Assert.That(testedParameterCount, Is.GreaterThan(0),
-                "The canonical controller must expose a writable float, int, or bool parameter.");
         }
 
-        private static void AssertAnimatorParametersHavePlayableValues(Animator animator)
+        private static void AssertAnimatorParametersHavePlayableValues(
+            Animator animator,
+            bool[] writableParameterMask)
         {
             AnimatorControllerParameter[] parameters = animator.parameters;
-            int testedParameterCount = 0;
+            Assert.That(writableParameterMask.Length, Is.EqualTo(parameters.Length));
             for (int index = 0; index < parameters.Length; index++)
             {
                 AnimatorControllerParameter parameter = parameters[index];
-                if (!IsTestableControllerParameter(animator, parameter)) continue;
-                testedParameterCount++;
+                if (!writableParameterMask[index]) continue;
                 switch (parameter.type)
                 {
                     case AnimatorControllerParameterType.Float:
@@ -435,26 +436,35 @@ namespace Elemental.Tests.PlayMode
                         break;
                 }
             }
-            Assert.That(testedParameterCount, Is.GreaterThan(0),
-                "The canonical controller must expose a writable float, int, or bool parameter.");
         }
 
-        private static bool IsTestableControllerParameter(
-            Animator animator,
-            AnimatorControllerParameter parameter)
+        private static bool[] CaptureWritableParameterMask(Animator animator)
         {
-            bool supported = parameter.type == AnimatorControllerParameterType.Float ||
-                             parameter.type == AnimatorControllerParameterType.Int ||
-                             parameter.type == AnimatorControllerParameterType.Bool;
-            return supported && !animator.IsParameterControlledByCurve(parameter.nameHash);
+            AnimatorControllerParameter[] parameters = animator.parameters;
+            var writable = new bool[parameters.Length];
+            int writableCount = 0;
+            for (int index = 0; index < parameters.Length; index++)
+            {
+                AnimatorControllerParameter parameter = parameters[index];
+                bool supported = parameter.type == AnimatorControllerParameterType.Float ||
+                                 parameter.type == AnimatorControllerParameterType.Int ||
+                                 parameter.type == AnimatorControllerParameterType.Bool;
+                writable[index] = supported &&
+                                  !animator.IsParameterControlledByCurve(parameter.nameHash);
+                if (writable[index]) writableCount++;
+            }
+            Assert.That(writableCount, Is.GreaterThan(0),
+                "The canonical legacy controller must expose a writable float, int, or bool parameter.");
+            return writable;
         }
 
         private static void AssertAnimatorParametersHavePlayableValues(
             EarthAnimationGraph graph,
-            Animator animator)
+            Animator animator,
+            bool[] writableParameterMask)
         {
-            AssertPlayableParametersMatchAnimator(graph, animator);
-            AssertAnimatorParametersHavePlayableValues(animator);
+            AssertPlayableParametersMatchAnimator(graph, animator, writableParameterMask);
+            AssertAnimatorParametersHavePlayableValues(animator, writableParameterMask);
         }
 
         private static void AssertPlayableLayerWeights(
