@@ -47,6 +47,12 @@ namespace Elemental.Runtime.Physics
             shape = configuredShape;
             gravityBody = configuredGravity;
             _hasMagicOwner = false;
+
+            // EarthArenaStructure receives the exact physical mass baked from the
+            // fracture volume. Convert it once into the same gameplay scale used by
+            // loose rocks instead of retaining a separate arena-only density scale.
+            if (body != null)
+                body.mass = EarthMatterMassRuntime.ResolveFromAuthoredPhysicalMass(body.mass);
         }
 
         public void OnEarthMagicGrabbed(EarthMagicGripKind grip)
