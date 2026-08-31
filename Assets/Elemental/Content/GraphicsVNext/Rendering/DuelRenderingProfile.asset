@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee8f47c5b33b46c295fe5805227a86b3, type: 3}
+  m_Name: DuelRenderingProfile
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.Rendering.DuelRenderingProfile
+  useDuelShadowMap: 0
+  duelShadows:
+    qualityTier: 1
+    maximumCasterCount: 160
+    minimumHeroRockDiameter: 0.45
+    minimumActiveFragmentDiameter: 0.8
+    minimumCoverageDiameter: 12
+    maximumCoverageDiameter: 160
+    worldPadding: 1.5
+    depthPadding: 4
+    coverageQuantum: 0.5
+    depthQuantum: 1
+    centerHysteresis: 0.2
+    coverageContractionHysteresis: 1
+    depthContractionHysteresis: 1.5
+    shadowStrength: 0.88
+    constantDepthBias: 0.8
+    slopeDepthBias: 1.8
+    debugView: 0
