@@ -33,6 +33,12 @@ namespace Elemental.Input.Actions
         private InputAction _ability4;
         private InputAction _elementFire;
         private InputAction _elementWater;
+        private InputAction _lookdevCharge;
+        private InputAction _lookdevDay;
+        private InputAction _lookdevSunset;
+        private InputAction _lookdevNight;
+        private InputAction _lookdevSeamDebug;
+        private InputAction _lookdevHeavyImpact;
 
         public event Action JumpStarted;
         public event Action JumpPerformed;
@@ -59,6 +65,12 @@ namespace Elemental.Input.Actions
         public bool ShoulderSwapPressed => _shoulderSwap?.WasPressedThisFrame() == true;
         public bool ElementFirePressed => _elementFire?.WasPressedThisFrame() == true;
         public bool ElementWaterPressed => _elementWater?.WasPressedThisFrame() == true;
+        public bool DebugLookdevChargeHeld => _lookdevCharge?.IsPressed() == true;
+        public bool DebugLookdevDayPressed => _lookdevDay?.WasPressedThisFrame() == true;
+        public bool DebugLookdevSunsetPressed => _lookdevSunset?.WasPressedThisFrame() == true;
+        public bool DebugLookdevNightPressed => _lookdevNight?.WasPressedThisFrame() == true;
+        public bool DebugLookdevSeamPressed => _lookdevSeamDebug?.WasPressedThisFrame() == true;
+        public bool DebugLookdevHeavyImpactPressed => _lookdevHeavyImpact?.WasPressedThisFrame() == true;
 
         public EarthGestureFrame CaptureEarthGestureFrame(
             bool grounded,
@@ -214,6 +226,12 @@ namespace Elemental.Input.Actions
             _ability4 = Find("Ability4", false);
             _elementFire = Find("ElementFire", false);
             _elementWater = Find("ElementWater", false);
+            _lookdevCharge = Find("LookdevCharge", false);
+            _lookdevDay = Find("LookdevDay", false);
+            _lookdevSunset = Find("LookdevSunset", false);
+            _lookdevNight = Find("LookdevNight", false);
+            _lookdevSeamDebug = Find("LookdevSeamDebug", false);
+            _lookdevHeavyImpact = Find("LookdevHeavyImpact", false);
 
             _jumpOrStomp.started += HandleJumpStarted;
             _jumpOrStomp.performed += HandleJumpPerformed;
@@ -266,6 +284,12 @@ namespace Elemental.Input.Actions
             _ability4 = null;
             _elementFire = null;
             _elementWater = null;
+            _lookdevCharge = null;
+            _lookdevDay = null;
+            _lookdevSunset = null;
+            _lookdevNight = null;
+            _lookdevSeamDebug = null;
+            _lookdevHeavyImpact = null;
         }
 
         private void HandleJumpStarted(InputAction.CallbackContext _) => JumpStarted?.Invoke();

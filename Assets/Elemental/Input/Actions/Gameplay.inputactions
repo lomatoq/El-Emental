@@ -148,6 +148,60 @@
           "processors": "",
           "interactions": "Press",
           "initialStateCheck": false
+        },
+        {
+          "name": "LookdevCharge",
+          "type": "Button",
+          "id": "4cc5b1a2-7f54-44d3-9e7b-62ef30df0101",
+          "expectedControlType": "Button",
+          "processors": "",
+          "interactions": "",
+          "initialStateCheck": false
+        },
+        {
+          "name": "LookdevDay",
+          "type": "Button",
+          "id": "4cc5b1a2-7f54-44d3-9e7b-62ef30df0102",
+          "expectedControlType": "Button",
+          "processors": "",
+          "interactions": "Press",
+          "initialStateCheck": false
+        },
+        {
+          "name": "LookdevSunset",
+          "type": "Button",
+          "id": "4cc5b1a2-7f54-44d3-9e7b-62ef30df0103",
+          "expectedControlType": "Button",
+          "processors": "",
+          "interactions": "Press",
+          "initialStateCheck": false
+        },
+        {
+          "name": "LookdevNight",
+          "type": "Button",
+          "id": "4cc5b1a2-7f54-44d3-9e7b-62ef30df0104",
+          "expectedControlType": "Button",
+          "processors": "",
+          "interactions": "Press",
+          "initialStateCheck": false
+        },
+        {
+          "name": "LookdevSeamDebug",
+          "type": "Button",
+          "id": "4cc5b1a2-7f54-44d3-9e7b-62ef30df0105",
+          "expectedControlType": "Button",
+          "processors": "",
+          "interactions": "Press",
+          "initialStateCheck": false
+        },
+        {
+          "name": "LookdevHeavyImpact",
+          "type": "Button",
+          "id": "4cc5b1a2-7f54-44d3-9e7b-62ef30df0106",
+          "expectedControlType": "Button",
+          "processors": "",
+          "interactions": "Press",
+          "initialStateCheck": false
         }
       ],
       "bindings": [
@@ -390,6 +444,72 @@
           "processors": "",
           "groups": "Keyboard&Mouse",
           "action": "ElementWater",
+          "isComposite": false,
+          "isPartOfComposite": false
+        },
+        {
+          "name": "",
+          "id": "6aa6d803-31fb-4a25-99bb-fdb725cc0101",
+          "path": "<Keyboard>/c",
+          "interactions": "",
+          "processors": "",
+          "groups": "Keyboard&Mouse",
+          "action": "LookdevCharge",
+          "isComposite": false,
+          "isPartOfComposite": false
+        },
+        {
+          "name": "",
+          "id": "6aa6d803-31fb-4a25-99bb-fdb725cc0102",
+          "path": "<Keyboard>/f1",
+          "interactions": "",
+          "processors": "",
+          "groups": "Keyboard&Mouse",
+          "action": "LookdevDay",
+          "isComposite": false,
+          "isPartOfComposite": false
+        },
+        {
+          "name": "",
+          "id": "6aa6d803-31fb-4a25-99bb-fdb725cc0103",
+          "path": "<Keyboard>/f2",
+          "interactions": "",
+          "processors": "",
+          "groups": "Keyboard&Mouse",
+          "action": "LookdevSunset",
+          "isComposite": false,
+          "isPartOfComposite": false
+        },
+        {
+          "name": "",
+          "id": "6aa6d803-31fb-4a25-99bb-fdb725cc0104",
+          "path": "<Keyboard>/f3",
+          "interactions": "",
+          "processors": "",
+          "groups": "Keyboard&Mouse",
+          "action": "LookdevNight",
+          "isComposite": false,
+          "isPartOfComposite": false
+        },
+        {
+          "name": "",
+          "id": "6aa6d803-31fb-4a25-99bb-fdb725cc0105",
+          "path": "<Keyboard>/tab",
+          "interactions": "",
+          "processors": "",
+          "groups": "Keyboard&Mouse",
+          "action": "LookdevSeamDebug",
+          "isComposite": false,
+          "isPartOfComposite": false
+        },
+        {
+          "name": "",
+          "id": "6aa6d803-31fb-4a25-99bb-fdb725cc0106",
+          "path": "<Keyboard>/h",
+          "interactions": "",
+          "processors": "",
+          "groups": "Keyboard&Mouse",
+          "action": "LookdevHeavyImpact",
           "isComposite": false,
           "isPartOfComposite": false
         }

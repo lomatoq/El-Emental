@@ -379,6 +379,12 @@ namespace Elemental.Tests.PlayMode
             bool botHasOrderedBodyPass = botSharedPresentation != null &&
                                          botSharedPresentation.ProceduralBodyResponse != null &&
                                          botSharedPresentation.ProceduralBodyResponse.enabled;
+            bool secondaryMotionConfigured = playerSecondary != null && botSecondary != null &&
+                                             playerSecondary.IsConfigured && botSecondary.IsConfigured;
+            int playerTailBoneCount = playerSecondary != null ? playerSecondary.TailBoneCount : 0;
+            int botTailBoneCount = botSecondary != null ? botSecondary.TailBoneCount : 0;
+            int playerBeltBoneCount = playerSecondary != null ? playerSecondary.BeltBoneCount : 0;
+            int botBeltBoneCount = botSecondary != null ? botSecondary.BeltBoneCount : 0;
 
             AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
             if (unload != null) yield return unload;
@@ -403,11 +409,11 @@ namespace Elemental.Tests.PlayMode
                 "The rival must keep the mapped Linebreaker texture under the shared Rumble character shader.");
             Assert.That(playerSecondary, Is.Not.Null);
             Assert.That(botSecondary, Is.Not.Null);
-            Assert.That(playerSecondary.IsConfigured && botSecondary.IsConfigured, Is.True);
-            Assert.That(playerSecondary.TailBoneCount, Is.EqualTo(3));
-            Assert.That(botSecondary.TailBoneCount, Is.EqualTo(3));
-            Assert.That(playerSecondary.BeltBoneCount, Is.EqualTo(4));
-            Assert.That(botSecondary.BeltBoneCount, Is.EqualTo(4));
+            Assert.That(secondaryMotionConfigured, Is.True);
+            Assert.That(playerTailBoneCount, Is.EqualTo(3));
+            Assert.That(botTailBoneCount, Is.EqualTo(3));
+            Assert.That(playerBeltBoneCount, Is.EqualTo(4));
+            Assert.That(botBeltBoneCount, Is.EqualTo(4));
             Assert.That(wavePool, Is.Not.Null);
             Assert.That(wavePool.MotionMode, Is.EqualTo(WaveMotionMode.PremiumVisual));
             Assert.That(playerImpact, Is.Not.Null);
@@ -453,6 +459,47 @@ namespace Elemental.Tests.PlayMode
             Assert.That(liveDirectionalLights, Is.EqualTo(1));
             Assert.That(isolatedFromLookdevDemo, Is.True);
             Assert.That(obsoleteTargetsRemoved, Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator ShippingSceneConfiguresHelmetTailAndBeltsBeforeUnload()
+        {
+            const string scenePath = "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
+            AsyncOperation load = SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
+            Assert.That(load, Is.Not.Null);
+            yield return load;
+
+            Scene scene = SceneManager.GetSceneByPath(scenePath);
+            GameObject player = FindByName(scene, "Planet Character");
+            EarthMvpBotController bot = FindInScene<EarthMvpBotController>(scene);
+            HumanoidSecondaryMotion playerSecondary = player != null
+                ? player.GetComponentInChildren<HumanoidSecondaryMotion>(true)
+                : null;
+            HumanoidSecondaryMotion botSecondary = bot != null
+                ? bot.GetComponentInChildren<HumanoidSecondaryMotion>(true)
+                : null;
+
+            bool playerConfigured = playerSecondary != null && playerSecondary.IsConfigured;
+            bool botConfigured = botSecondary != null && botSecondary.IsConfigured;
+            bool playerHairLocked = playerSecondary != null && playerSecondary.HasHelmetHairLock;
+            bool botHairLocked = botSecondary != null && botSecondary.HasHelmetHairLock;
+            bool playerHierarchy = playerSecondary != null && playerSecondary.HasValidSecondaryHierarchy;
+            bool botHierarchy = botSecondary != null && botSecondary.HasValidSecondaryHierarchy;
+            int playerTailCount = playerSecondary != null ? playerSecondary.TailBoneCount : 0;
+            int botTailCount = botSecondary != null ? botSecondary.TailBoneCount : 0;
+            int playerBeltCount = playerSecondary != null ? playerSecondary.BeltBoneCount : 0;
+            int botBeltCount = botSecondary != null ? botSecondary.BeltBoneCount : 0;
+
+            AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
+            if (unload != null) yield return unload;
+
+            Assert.That(playerConfigured && botConfigured, Is.True);
+            Assert.That(playerHairLocked && botHairLocked, Is.True);
+            Assert.That(playerHierarchy && botHierarchy, Is.True);
+            Assert.That(playerTailCount, Is.EqualTo(3));
+            Assert.That(botTailCount, Is.EqualTo(3));
+            Assert.That(playerBeltCount, Is.EqualTo(4));
+            Assert.That(botBeltCount, Is.EqualTo(4));
         }
 
         [UnityTest]

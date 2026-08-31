@@ -38,6 +38,7 @@ namespace Elemental.Runtime.Characters
         [SerializeField, Range(0f, 89f)] private float maxSlopeAngle = 55f;
         [SerializeField, Min(0f)] private float adhesionSpring = 90f;
         [SerializeField, Min(0f)] private float adhesionDamping = 12f;
+        [SerializeField, Range(0f, 0.10f)] private float supportRetentionDistance = 0.035f;
         [SerializeField] private LayerMask groundMask = ~0;
 
         [Header("Orientation")]
@@ -47,6 +48,9 @@ namespace Elemental.Runtime.Characters
         [SerializeField, Min(30f)] private float maximumOrientationDegreesPerSecond = 540f;
 
         private readonly RaycastHit[] _groundHits = new RaycastHit[GroundHitCapacity];
+        private readonly CharacterSupportCandidate[] _groundCandidates =
+            new CharacterSupportCandidate[GroundHitCapacity];
+        private readonly int[] _groundCandidateHitIndices = new int[GroundHitCapacity];
         private IPlanetMotorInputSource _inputSource;
         private uint _tick;
         private int _ignoreGroundTicks;
@@ -67,6 +71,7 @@ namespace Elemental.Runtime.Characters
         private float _castBrace01;
         private EarthMotionReproRecorder _motionRecorder;
         private MotionFaultKind _pendingMotionFaults;
+        private CharacterSupportSelection _groundSupportSelection;
 
         public bool IsGrounded { get; private set; }
         public Vector3 LocalUp => _localUp;
@@ -83,6 +88,7 @@ namespace Elemental.Runtime.Characters
         public uint MovingSurfaceGeneration => _movingSupportTicks > 0 ? _movingSupport.Generation : 0u;
         public SupportFrameSnapshot CurrentSupportFrame => _movingSupportTicks > 0 ? _movingSupport : default;
         public bool HasStableSupport => IsGrounded || _movingSupportTicks > 0;
+        public CharacterSupportSelection GroundSupport => _groundSupportSelection;
         public bool AcceptsMovingSupport => _ignoreGroundTicks <= 0;
 
         /// <summary>
@@ -414,6 +420,7 @@ namespace Elemental.Runtime.Characters
 
             if (_ignoreGroundTicks > 0)
             {
+                _groundSupportSelection = CharacterSupportSelection.None;
                 return;
             }
 
@@ -432,32 +439,15 @@ namespace Elemental.Runtime.Characters
                 groundMask,
                 QueryTriggerInteraction.Ignore);
 
-            float bestDistance = float.PositiveInfinity;
             float minimumSlopeDot = Mathf.Cos(maxSlopeAngle * Mathf.Deg2Rad);
-
-            for (int index = 0; index < hitCount; index++)
-            {
-                RaycastHit hit = _groundHits[index];
-                if (hit.collider == null || hit.collider == capsule || hit.rigidbody == targetBody ||
-                    (_puppet != null && _puppet.OwnsCollider(hit.collider)))
-                {
-                    continue;
-                }
-
-                float slopeDot = Vector3.Dot(hit.normal, _localUp);
-                if (slopeDot < minimumSlopeDot)
-                {
-                    continue;
-                }
-
-                _groundContactCount++;
-                if (hit.distance >= bestDistance) continue;
-
-                bestDistance = hit.distance;
-                _groundNormal = hit.normal;
-            }
-
-            if (!float.IsFinite(bestDistance))
+            CharacterSupportSelection previous = _groundSupportSelection;
+            if (!TrySelectGroundHit(
+                    hitCount,
+                    in previous,
+                    minimumSlopeDot,
+                    out RaycastHit selected,
+                    out CharacterSupportSelection selectedSupport,
+                    out byte selectedContactCount))
             {
                 // SphereCast does not report a collider that starts in exact contact
                 // with the cast sphere. This happens at the platform's moving-to-
@@ -471,27 +461,84 @@ namespace Elemental.Runtime.Characters
                     halfHeight + groundProbeDistance,
                     groundMask,
                     QueryTriggerInteraction.Ignore);
-                float bestRayDistance = float.PositiveInfinity;
-                for (int index = 0; index < rayCount; index++)
+                if (!TrySelectGroundHit(
+                        rayCount,
+                        in previous,
+                        minimumSlopeDot,
+                        out selected,
+                        out selectedSupport,
+                        out selectedContactCount))
                 {
-                    RaycastHit hit = _groundHits[index];
-                    if (hit.collider == null || hit.collider == capsule || hit.rigidbody == targetBody ||
-                        (_puppet != null && _puppet.OwnsCollider(hit.collider)))
-                        continue;
-                    float slopeDot = Vector3.Dot(hit.normal, _localUp);
-                    if (slopeDot < minimumSlopeDot || hit.distance >= bestRayDistance) continue;
-                    bestRayDistance = hit.distance;
-                    _groundNormal = hit.normal;
+                    _groundSupportSelection = CharacterSupportSelection.None;
+                    return;
                 }
-                if (!float.IsFinite(bestRayDistance)) return;
-                _groundContactCount++;
-                _groundDistance = Mathf.Max(0f, bestRayDistance - halfHeight);
+                _groundSupportSelection = selectedSupport;
+                _groundContactCount = selectedContactCount;
+                _groundNormal = selected.normal;
+                _groundDistance = Mathf.Max(0f, selected.distance - halfHeight);
                 IsGrounded = _groundDistance <= groundProbeDistance;
                 return;
             }
 
-            _groundDistance = Mathf.Max(0f, bestDistance - centerToBottom);
+            _groundSupportSelection = selectedSupport;
+            _groundContactCount = selectedContactCount;
+            _groundNormal = selected.normal;
+            _groundDistance = Mathf.Max(0f, selected.distance - centerToBottom);
             IsGrounded = _groundDistance <= groundProbeDistance;
+        }
+
+        private bool TrySelectGroundHit(
+            int hitCount,
+            in CharacterSupportSelection previous,
+            float minimumSlopeDot,
+            out RaycastHit selectedHit,
+            out CharacterSupportSelection selectedSupport,
+            out byte contactCount)
+        {
+            selectedHit = default;
+            int candidateCount = 0;
+            int safeHitCount = Mathf.Min(hitCount, _groundHits.Length);
+            for (int hitIndex = 0; hitIndex < safeHitCount; hitIndex++)
+            {
+                RaycastHit hit = _groundHits[hitIndex];
+                if (hit.collider == null || hit.collider == capsule || hit.rigidbody == targetBody ||
+                    (_puppet != null && _puppet.OwnsCollider(hit.collider)))
+                    continue;
+
+                float slopeDot = Vector3.Dot(hit.normal, _localUp);
+                _groundCandidates[candidateCount] = CharacterSupportRuntimeAdapter.Classify(
+                    hit.collider,
+                    hit.distance,
+                    slopeDot);
+                _groundCandidateHitIndices[candidateCount] = hitIndex;
+                candidateCount++;
+            }
+
+            contactCount = (byte)Mathf.Min(byte.MaxValue, candidateCount);
+            selectedSupport = CharacterSupportAuthority.Select(
+                _groundCandidates,
+                candidateCount,
+                in previous,
+                minimumSlopeDot,
+                supportRetentionDistance);
+            if (!selectedSupport.HasSupport) return false;
+
+            CharacterSupportCandidate owner = selectedSupport.Candidate;
+            for (int candidateIndex = 0; candidateIndex < candidateCount; candidateIndex++)
+            {
+                CharacterSupportCandidate candidate = _groundCandidates[candidateIndex];
+                if (candidate.SurfaceId != owner.SurfaceId ||
+                    candidate.Generation != owner.Generation ||
+                    candidate.Kind != owner.Kind ||
+                    Mathf.Abs(candidate.Distance - owner.Distance) > 0.0001f ||
+                    Mathf.Abs(candidate.UpDot - owner.UpDot) > 0.0001f)
+                    continue;
+                selectedHit = _groundHits[_groundCandidateHitIndices[candidateIndex]];
+                return selectedHit.collider != null;
+            }
+
+            selectedSupport = CharacterSupportSelection.None;
+            return false;
         }
 
         private void ApplyMovement(PlanetMotorCommand command)

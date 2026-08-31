@@ -2,7 +2,9 @@
 
 ## Required reading
 
-Before a gameplay change, read Docs/architecture.md, the current file in Docs/milestones, and relevant ADRs.
+Before a gameplay change, read Docs/PROJECT_TECHNICAL_STATE.md,
+Docs/PROJECT_EXECUTION_TRACKER.md, Docs/architecture.md, the current file in
+Docs/milestones, and relevant ADRs.
 
 ## Architecture rules
 
@@ -25,6 +27,9 @@ Implement one milestone concern at a time. Each completed task needs:
 4. EditMode and PlayMode evidence.
 5. Relevant profiler marker and measured result.
 6. Updated docs when a public contract changes.
+7. Updated PROJECT_TECHNICAL_STATE.md and PROJECT_EXECUTION_TRACKER.md when a
+   public contract, accepted status, blocker, fallback, or material risk changes;
+   keep facts/evidence separate from assumptions and record branch/commit freshness.
 
 Do not leave TODO stubs or silent fallbacks in a completed task. Unsupported capabilities must fail with an actionable message.
 

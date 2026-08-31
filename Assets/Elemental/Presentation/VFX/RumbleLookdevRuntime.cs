@@ -1,6 +1,6 @@
 using System;
+using Elemental.Input.Actions;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityCamera = global::UnityEngine.Camera;
@@ -38,6 +38,7 @@ namespace Elemental.Presentation.VFX
         [SerializeField] private Transform farFocus;
         [SerializeField] private Light keyLight;
         [SerializeField] private Material[] seamDebugMaterials = Array.Empty<Material>();
+        [SerializeField] private EarthInputAdapter inputAdapter;
         [SerializeField] private RumbleLookdevFocusState focusState = RumbleLookdevFocusState.Explore;
         [SerializeField] private RumbleLookdevLightState lightState = RumbleLookdevLightState.Day;
         [SerializeField] private bool showOverlay = true;
@@ -72,7 +73,8 @@ namespace Elemental.Presentation.VFX
             Transform configuredMid,
             Transform configuredFar,
             Light configuredKey,
-            Material[] configuredDebugMaterials)
+            Material[] configuredDebugMaterials,
+            EarthInputAdapter configuredInput = null)
         {
             volume = configuredVolume;
             nearFocus = configuredNear;
@@ -80,6 +82,7 @@ namespace Elemental.Presentation.VFX
             farFocus = configuredFar;
             keyLight = configuredKey;
             seamDebugMaterials = configuredDebugMaterials ?? Array.Empty<Material>();
+            inputAdapter = configuredInput;
             ResolveVolumeOverrides();
             ApplyLightState(lightState, true);
         }
@@ -87,6 +90,8 @@ namespace Elemental.Presentation.VFX
         private void Awake()
         {
             _camera = GetComponent<UnityCamera>();
+            if (inputAdapter == null)
+                inputAdapter = FindFirstObjectByType<EarthInputAdapter>(FindObjectsInactive.Include);
             _baseFieldOfView = _camera.fieldOfView;
             UniversalAdditionalCameraData cameraData = _camera.GetUniversalAdditionalCameraData();
             cameraData.renderPostProcessing = true;
@@ -121,19 +126,18 @@ namespace Elemental.Presentation.VFX
 
         private void Update()
         {
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard != null)
+            if (inputAdapter != null)
             {
-                if (keyboard.digit1Key.wasPressedThisFrame) SetFocusState(RumbleLookdevFocusState.Explore);
-                if (keyboard.digit2Key.wasPressedThisFrame) SetFocusState(RumbleLookdevFocusState.Near);
-                if (keyboard.digit3Key.wasPressedThisFrame) SetFocusState(RumbleLookdevFocusState.Mid);
-                if (keyboard.digit4Key.wasPressedThisFrame) SetFocusState(RumbleLookdevFocusState.Far);
-                if (keyboard.f1Key.wasPressedThisFrame) SetLightState(RumbleLookdevLightState.Day);
-                if (keyboard.f2Key.wasPressedThisFrame) SetLightState(RumbleLookdevLightState.Sunset);
-                if (keyboard.f3Key.wasPressedThisFrame) SetLightState(RumbleLookdevLightState.Night);
-                if (keyboard.tabKey.wasPressedThisFrame) CycleSeamDebug();
+                if (inputAdapter.DebugAbilityPressed(1)) SetFocusState(RumbleLookdevFocusState.Explore);
+                if (inputAdapter.DebugAbilityPressed(2)) SetFocusState(RumbleLookdevFocusState.Near);
+                if (inputAdapter.DebugAbilityPressed(3)) SetFocusState(RumbleLookdevFocusState.Mid);
+                if (inputAdapter.DebugAbilityPressed(4)) SetFocusState(RumbleLookdevFocusState.Far);
+                if (inputAdapter.DebugLookdevDayPressed) SetLightState(RumbleLookdevLightState.Day);
+                if (inputAdapter.DebugLookdevSunsetPressed) SetLightState(RumbleLookdevLightState.Sunset);
+                if (inputAdapter.DebugLookdevNightPressed) SetLightState(RumbleLookdevLightState.Night);
+                if (inputAdapter.DebugLookdevSeamPressed) CycleSeamDebug();
             }
-            ChargeActive = keyboard != null && keyboard.cKey.isPressed;
+            ChargeActive = inputAdapter != null && inputAdapter.DebugLookdevChargeHeld;
 
             float targetLens = ChargeActive ? 1f : 0f;
             _lensBlend = Mathf.SmoothDamp(

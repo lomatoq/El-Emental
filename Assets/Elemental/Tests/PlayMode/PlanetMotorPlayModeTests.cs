@@ -91,6 +91,32 @@ namespace Elemental.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator Motor_RejectsCloserDynamicDebrisAsSupport()
+        {
+            Fixture fixture = CreateFixture(Vector3.up, new Vector3(420f, 0f, 0f), true);
+            var debris = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            debris.name = "Closer Dynamic Debris";
+            debris.transform.position = fixture.Center + fixture.RadialUp * 10.01f;
+            debris.transform.localScale = new Vector3(0.45f, 0.02f, 0.45f);
+            Rigidbody debrisBody = debris.AddComponent<Rigidbody>();
+            debrisBody.useGravity = false;
+            debrisBody.constraints = RigidbodyConstraints.FreezeAll;
+
+            for (int tick = 0; tick < 50; tick++)
+                yield return new WaitForFixedUpdate();
+
+            Assert.That(fixture.Motor.IsGrounded, Is.True);
+            Assert.That(fixture.Motor.GroundSupport.HasSupport, Is.True);
+            Assert.That(
+                fixture.Motor.GroundSupport.Candidate.Kind,
+                Is.EqualTo(CharacterSupportKind.PlanetGround),
+                "A closer dynamic collider may not steal canonical support from static ground.");
+
+            Object.Destroy(debris);
+            DestroyFixture(fixture);
+        }
+
+        [UnityTest]
         public IEnumerator TankSteering_ADTurnsInPlaceThenWMovesAlongNewHeading()
         {
             Fixture fixture = CreateFixture(Vector3.up);

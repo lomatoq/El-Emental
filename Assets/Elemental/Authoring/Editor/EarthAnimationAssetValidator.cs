@@ -19,6 +19,8 @@ namespace Elemental.Authoring.Editor
     {
         public const string CharacterModelPath =
             "Assets/Elemental/Content/Characters/Linebreaker/Linebreaker.fbx";
+        private const string CanonicalMixamoModelPath =
+            "Assets/ThirdParty/Mixamo/X Bot.fbx";
         public const string ControllerPath = "Assets/Elemental/Content/Animation/KayKitMage.controller";
         public const string PresentationProfilePath = "Assets/Elemental/Content/Profiles/CharacterPresentationProfile.asset";
 
@@ -35,6 +37,18 @@ namespace Elemental.Authoring.Editor
             "Assets/ThirdParty/KayKit/Animations/Rig_Medium_General.fbx",
             "Assets/ThirdParty/KayKit/Animations/Rig_Medium_MovementAdvanced.fbx",
             "Assets/ThirdParty/KayKit/Animations/Rig_Medium_MovementBasic.fbx"
+        };
+
+        private static readonly string[] SecondaryDeformBones =
+        {
+            "Secondary_Tail_01",
+            "Secondary_Tail_02",
+            "Secondary_Tail_03",
+            "Secondary_HairLock",
+            "Secondary_Belt_L_01",
+            "Secondary_Belt_L_02",
+            "Secondary_Belt_R_01",
+            "Secondary_Belt_R_02"
         };
 
         [MenuItem("Elemental Suite/Validation/Validate Earth Animation Assets")]
@@ -61,6 +75,7 @@ namespace Elemental.Authoring.Editor
             for (int index = 0; index < AnimationPaths.Length; index++)
                 ValidatePayload(AnimationPaths[index], true, errors);
             ValidateAvatar(errors);
+            ValidateSecondaryRig(errors);
             ValidateSharedMixamoAvatar(errors);
             ValidateController(errors);
             ValidatePresentationProfile(errors);
@@ -135,9 +150,102 @@ namespace Elemental.Authoring.Editor
             }
         }
 
+        private static void ValidateSecondaryRig(List<string> errors)
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CharacterModelPath);
+            if (prefab == null) return;
+
+            Transform[] hierarchy = prefab.GetComponentsInChildren<Transform>(true);
+            var byName = new Dictionary<string, Transform>(hierarchy.Length, StringComparer.Ordinal);
+            for (int index = 0; index < hierarchy.Length; index++)
+            {
+                Transform item = hierarchy[index];
+                if (!byName.TryAdd(item.name, item))
+                    errors.Add($"Linebreaker secondary rig has duplicate transform name '{item.name}'.");
+            }
+
+            RequireParent(byName, "Secondary_HelmetAnchor", "mixamorig:Head", errors);
+            RequireParent(byName, "Secondary_HairLock", "Secondary_HelmetAnchor", errors);
+            RequireParent(byName, "Secondary_Tail_01", "Secondary_HelmetAnchor", errors);
+            RequireParent(byName, "Secondary_Tail_02", "Secondary_Tail_01", errors);
+            RequireParent(byName, "Secondary_Tail_03", "Secondary_Tail_02", errors);
+            RequireParent(byName, "Secondary_Belt_L_01", "mixamorig:Hips", errors);
+            RequireParent(byName, "Secondary_Belt_L_02", "Secondary_Belt_L_01", errors);
+            RequireParent(byName, "Secondary_Belt_R_01", "mixamorig:Hips", errors);
+            RequireParent(byName, "Secondary_Belt_R_02", "Secondary_Belt_R_01", errors);
+
+            SkinnedMeshRenderer renderer = prefab.GetComponentInChildren<SkinnedMeshRenderer>(true);
+            if (renderer == null || renderer.sharedMesh == null)
+            {
+                errors.Add("Linebreaker secondary rig has no readable SkinnedMeshRenderer asset.");
+                return;
+            }
+
+            var weightedVertexCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+            BoneWeight[] weights = renderer.sharedMesh.boneWeights;
+            for (int vertexIndex = 0; vertexIndex < weights.Length; vertexIndex++)
+            {
+                BoneWeight weight = weights[vertexIndex];
+                CountWeightedVertex(renderer, weightedVertexCounts, weight.boneIndex0, weight.weight0);
+                CountWeightedVertex(renderer, weightedVertexCounts, weight.boneIndex1, weight.weight1);
+                CountWeightedVertex(renderer, weightedVertexCounts, weight.boneIndex2, weight.weight2);
+                CountWeightedVertex(renderer, weightedVertexCounts, weight.boneIndex3, weight.weight3);
+            }
+
+            for (int index = 0; index < SecondaryDeformBones.Length; index++)
+            {
+                string bone = SecondaryDeformBones[index];
+                int minimumVertices = bone.StartsWith("Secondary_Belt_", StringComparison.Ordinal)
+                    ? 24
+                    : 100;
+                weightedVertexCounts.TryGetValue(bone, out int actual);
+                if (actual < minimumVertices)
+                    errors.Add(
+                        $"Linebreaker secondary bone '{bone}' influences {actual} imported vertices; " +
+                        $"expected at least {minimumVertices}. Re-run the Blender secondary-weight gate.");
+            }
+        }
+
+        private static void RequireParent(
+            IReadOnlyDictionary<string, Transform> hierarchy,
+            string childName,
+            string expectedParent,
+            List<string> errors)
+        {
+            if (!hierarchy.TryGetValue(childName, out Transform child))
+            {
+                errors.Add($"Linebreaker secondary rig is missing '{childName}'.");
+                return;
+            }
+            string actualParent = child.parent != null ? child.parent.name : "<root>";
+            if (!string.Equals(actualParent, expectedParent, StringComparison.Ordinal))
+                errors.Add(
+                    $"Linebreaker secondary bone '{childName}' must be parented to " +
+                    $"'{expectedParent}', not '{actualParent}'.");
+        }
+
+        private static void CountWeightedVertex(
+            SkinnedMeshRenderer renderer,
+            IDictionary<string, int> counts,
+            int boneIndex,
+            float weight)
+        {
+            if (weight <= 0.001f || renderer.bones == null ||
+                boneIndex < 0 || boneIndex >= renderer.bones.Length ||
+                renderer.bones[boneIndex] == null)
+                return;
+            string name = renderer.bones[boneIndex].name;
+            counts[name] = counts.TryGetValue(name, out int current) ? current + 1 : 1;
+        }
+
         private static void ValidateSharedMixamoAvatar(List<string> errors)
         {
-            UnityEngine.Object[] modelAssets = AssetDatabase.LoadAllAssetsAtPath(CharacterModelPath);
+            // Motion clips share the source X Bot Avatar, then Mecanim retargets
+            // them onto Linebreaker's separate Humanoid Avatar at runtime. Using
+            // the presentation model here made the validator reject the exact
+            // importer contract configured by EarthHumanoidMotionSetup.
+            UnityEngine.Object[] modelAssets = AssetDatabase.LoadAllAssetsAtPath(
+                CanonicalMixamoModelPath);
             Avatar canonical = null;
             for (int index = 0; index < modelAssets.Length; index++)
                 if (modelAssets[index] is Avatar candidate)

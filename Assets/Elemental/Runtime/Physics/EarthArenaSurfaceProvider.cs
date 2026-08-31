@@ -75,6 +75,22 @@ namespace Elemental.Runtime.Physics
             (handle.Kind == EarthSurfaceKind.Platform || handle.Kind == EarthSurfaceKind.PlatformSide) &&
             handle.StableId == structure.StructureId && handle.Generation == structure.Generation;
 
+        public bool TryGetCharacterSupport(
+            Collider candidate,
+            out uint surfaceId,
+            out uint generation)
+        {
+            surfaceId = 0u;
+            generation = 0u;
+            if (!supportsLocomotion || structure == null || structure.IsFractured ||
+                surfaceCollider == null || candidate != surfaceCollider ||
+                !surfaceCollider.enabled)
+                return false;
+            surfaceId = structure.StructureId;
+            generation = structure.Generation;
+            return surfaceId != 0u && generation != 0u;
+        }
+
         private byte FaceId(Vector3 normal)
         {
             float right = Vector3.Dot(normal, transform.right);

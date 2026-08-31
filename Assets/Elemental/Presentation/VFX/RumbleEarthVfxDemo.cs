@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
+using Elemental.Input.Actions;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Elemental.Presentation.VFX
 {
@@ -16,6 +16,7 @@ namespace Elemental.Presentation.VFX
         [SerializeField] private Mesh[] debrisMeshes = Array.Empty<Mesh>();
         [SerializeField] private Material debrisMaterial;
         [SerializeField] private RumbleLensDirector lensDirector;
+        [SerializeField] private EarthInputAdapter inputAdapter;
         [SerializeField] private float wallTravel = 3.2f;
 
         private Vector3[] _wallTargets = Array.Empty<Vector3>();
@@ -30,7 +31,8 @@ namespace Elemental.Presentation.VFX
             Transform configuredImpactPoint,
             Mesh[] configuredDebrisMeshes,
             Material configuredDebrisMaterial,
-            RumbleLensDirector configuredLens)
+            RumbleLensDirector configuredLens,
+            EarthInputAdapter configuredInput = null)
         {
             wallStones = configuredWall ?? Array.Empty<Transform>();
             pressureDust = configuredPressureDust;
@@ -40,18 +42,23 @@ namespace Elemental.Presentation.VFX
             debrisMeshes = configuredDebrisMeshes ?? Array.Empty<Mesh>();
             debrisMaterial = configuredDebrisMaterial;
             lensDirector = configuredLens;
+            inputAdapter = configuredInput;
             CacheWallTargets(true);
         }
 
-        private void Awake() => CacheWallTargets(true);
+        private void Awake()
+        {
+            CacheWallTargets(true);
+            if (inputAdapter == null)
+                inputAdapter = FindFirstObjectByType<EarthInputAdapter>(FindObjectsInactive.Include);
+        }
 
         private void Update()
         {
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard == null) return;
-            if (keyboard.spaceKey.wasPressedThisFrame) RaiseWall();
-            if (keyboard.hKey.wasPressedThisFrame) HeavyImpact();
-            if (keyboard.rKey.wasPressedThisFrame) ResetWall();
+            if (inputAdapter == null) return;
+            if (inputAdapter.JumpPressed) RaiseWall();
+            if (inputAdapter.DebugLookdevHeavyImpactPressed) HeavyImpact();
+            if (inputAdapter.ElementWaterPressed) ResetWall();
         }
 
         public void RaiseWall()

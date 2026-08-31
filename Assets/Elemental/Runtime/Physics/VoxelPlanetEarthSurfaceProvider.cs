@@ -54,6 +54,18 @@ namespace Elemental.Runtime.Physics
             isActiveAndEnabled && handle.Kind == EarthSurfaceKind.Planet &&
             handle.StableId == PlanetSurfaceId && handle.Generation == PlanetGeneration;
 
+        public bool TryGetCharacterSupport(
+            Collider candidate,
+            out uint surfaceId,
+            out uint generation)
+        {
+            bool valid = isActiveAndEnabled && surfaceCollider != null &&
+                         surfaceCollider.enabled && candidate == surfaceCollider;
+            surfaceId = valid ? PlanetSurfaceId : 0u;
+            generation = valid ? PlanetGeneration : 0u;
+            return valid;
+        }
+
         private void OnEnable()
         {
             if (surfaceCollider == null) surfaceCollider = GetComponent<Collider>();

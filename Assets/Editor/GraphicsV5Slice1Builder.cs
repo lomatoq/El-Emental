@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Elemental.Input.Actions;
 using Elemental.Presentation.Rendering;
 using Elemental.Presentation.VFX;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
@@ -24,6 +26,7 @@ public static class GraphicsV5Slice1Builder
     private const string ProfileFolder = RootFolder + "/Profiles";
     private const string SceneFolder = "Assets/Elemental/Content/Scenes";
     private const string ScenePath = SceneFolder + "/RumbleLookdevLab.unity";
+    private const string GameplayActionsPath = "Assets/Elemental/Input/Actions/Gameplay.inputactions";
     private const string VersionPath = RootFolder + "/Slice1.version.txt";
     private const string VolumeProfilePath = ProfileFolder + "/RumbleLookdevVolume.asset";
     private const string SkyboxMaterialPath = MaterialFolder + "/RumbleDaySky.mat";
@@ -463,6 +466,14 @@ public static class GraphicsV5Slice1Builder
         Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         scene.name = "RumbleLookdevLab";
         GameObject root = new GameObject("GRAPHICS V5 — RUMBLE LOOKDEV LAB");
+        InputActionAsset actions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(GameplayActionsPath);
+        if (actions == null)
+            throw new InvalidOperationException("Gameplay input actions are unavailable: " + GameplayActionsPath);
+        PlayerInput playerInput = root.AddComponent<PlayerInput>();
+        playerInput.actions = actions;
+        playerInput.defaultActionMap = "Gameplay";
+        EarthInputAdapter inputAdapter = root.AddComponent<EarthInputAdapter>();
+        inputAdapter.Configure(playerInput);
 
         Light sun = CreateSun(root.transform);
         RenderSettings.sun = sun;
@@ -496,7 +507,8 @@ public static class GraphicsV5Slice1Builder
             environment.MidFocus,
             environment.FarFocus,
             sun,
-            assets.RockMaterials.Concat(new[] { assets.GroundMaterial }).ToArray());
+            assets.RockMaterials.Concat(new[] { assets.GroundMaterial }).ToArray(),
+            inputAdapter);
         EditorUtility.SetDirty(lens);
 
         CreateVfxCourt(
@@ -504,7 +516,8 @@ public static class GraphicsV5Slice1Builder
             assets,
             environment.WallStones,
             environment.ImpactPoint,
-            lens);
+            lens,
+            inputAdapter);
         RumbleLookdevSceneGuard guard = root.AddComponent<RumbleLookdevSceneGuard>();
         guard.Configure(camera, sun, volume);
         EditorUtility.SetDirty(guard);
@@ -797,7 +810,8 @@ public static class GraphicsV5Slice1Builder
         SliceAssets assets,
         Transform[] wallStones,
         Transform impactPoint,
-        RumbleLensDirector lens)
+        RumbleLensDirector lens,
+        EarthInputAdapter inputAdapter)
     {
         GameObject vfxRoot = new GameObject("V5 Earth VFX Court");
         vfxRoot.transform.SetParent(parent, false);
@@ -831,6 +845,7 @@ public static class GraphicsV5Slice1Builder
             assets.Rocks.Skip(16).Take(4).Cast<Object>().ToArray());
         serialized.FindProperty("debrisMaterial").objectReferenceValue = assets.RockMaterials[0];
         serialized.FindProperty("lensDirector").objectReferenceValue = lens;
+        serialized.FindProperty("inputAdapter").objectReferenceValue = inputAdapter;
         serialized.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(demo);
     }
