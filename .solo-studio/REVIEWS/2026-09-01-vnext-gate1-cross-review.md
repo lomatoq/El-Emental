@@ -2,7 +2,7 @@
 
 Date: 2026-09-01  
 Snapshot: `d2174eded114dd022e4a9c442abadda7a0e44555`  
-Gate status: **blocked pending corrective commits**
+Gate status: **source review approved; Unity integration evidence pending**
 
 ## Reviewed commits
 
@@ -43,3 +43,39 @@ Required correction: canonical-mode-driven ownership adapter, interruptible reco
 ## Merge rule
 
 No Wave 1 implementation commit is cherry-picked into `codex/vnext-integration` until each owner lands a separate corrective commit and the original reviewer returns APPROVE or APPROVE WITH REQUIRED FIXES containing no unresolved Gate 1 blocker. Unity validation starts only after that re-review.
+
+## Corrective commits and final verdicts
+
+| Track | Corrective commits | Original reviewer | Final verdict |
+| --- | --- | --- | --- |
+| R1 duel-shadow foundation | `cf97fe17d1c7795630d50644539b9aeed016931a` | P | APPROVE |
+| A1 Playables inertialization | `6250ef1d4ca7ccadf01c9c66c8adca7986780c1d`, `b900155c5f734527b41e2a337b60a26449b8df1c` | R | APPROVE |
+| P1 pose-matched recovery | `9b8c6fba4c1ac69a611e5cf1de54637115707b6a`, `e87fa7f6cd1cf68f635dfb878c55ed75cb2d5254` | A | APPROVE |
+
+### Closed R1 blockers
+
+- Identity and generation are canonical `uint`, including high-bit identities.
+- Pooled casters use explicit idempotent bind/rebind with unregister-before-register and cannot revive a stale acquisition after disable.
+- Six lifecycle PlayMode tests cover high-bit identity, pool disable/re-enable, idempotent reacquisition, stale generation rejection, renderer eligibility, and atomic representation handoff.
+
+### Closed A1 blockers
+
+- The canonical PlayMode test explicitly installs and configures the graph/profile on the selected EarthCoreSlice Animator, so its non-empty RigBuilder topology assertions are reachable without production scene wiring.
+- Two OFF -> ON -> OFF cycles verify state/time, parameters, layer weights, pose continuity, stale-handle destruction, and restoration of a fresh legacy rig graph.
+- A 720-frame active-graph window requires Update, AnimationScriptPlayable job, RigBuilder synchronization, profiler-marker, topology-capture, and zero managed-allocation evidence.
+
+### Closed P1 blockers
+
+- `CharacterPhysicalMode` remains the sole physical-mode authority; the coordinator is an ownership adapter rather than a second state machine.
+- Recovery can be interrupted by a new accepted hit with the feature both off and on.
+- Invalid markers and missing Animator states fall back before ownership mutation.
+- The selected recovery state and materially nonzero entry phase (`0.55`) pass through the existing transition director as the sole Animator writer and persist into the next frame.
+- Recovery support is freshly sampled by a bounded non-alloc probe while movement is disabled; runtime coverage verifies support loss revokes ownership and reacquisition restores it.
+- Marker thresholds have 30/60/120 FPS and skipped-threshold coverage.
+
+## Remaining Director-owned Gate 1 evidence
+
+- Import and compile the integrated branch in Unity 6000.5.7f1.
+- Run focused EditMode and PlayMode suites on the integrated commit.
+- Execute the canonical 720-frame profiler capture in Unity and archive the report.
+- Capture the default-off and feature-on visual comparisons before any Wave 2 work is accepted.
