@@ -6,6 +6,7 @@ using NUnit.Framework;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Playables;
 
 namespace Elemental.Tests.EditMode
 {
@@ -218,8 +219,11 @@ namespace Elemental.Tests.EditMode
                 Assert.That(legacyRigBuilder.enabled, Is.False,
                     "The external graph must disable the RigBuilder-owned graph.");
 
-                graph.enabled = false;
-                Assert.That(graph.Diagnostics.GraphValid, Is.False);
+                PlayableGraph activeGraph = graph.ControllerPlayable.GetGraph();
+                Assert.That(activeGraph.IsValid(), Is.True);
+                UnityEngine.Object.DestroyImmediate(graph);
+                Assert.That(activeGraph.IsValid(), Is.False,
+                    "Explicit EditMode destruction must invalidate every graph handle.");
                 Assert.That(legacyRigBuilder.enabled, Is.True,
                     "Disposal must restore legacy RigBuilder ownership without stale graph handles.");
             }
