@@ -1139,7 +1139,6 @@ namespace Elemental.Presentation.Animation
                         EarthMotionStateId.Locomotion,
                         LocomotionStateHash,
                         0f);
-                    animator.Update(0f);
                     _animationGrounded = true;
                     _unsupportedSeconds = 0f;
                 }

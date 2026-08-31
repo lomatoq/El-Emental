@@ -32,6 +32,7 @@ namespace Elemental.Presentation.Animation
         public EarthAnimationTransitionKind ActiveTransitionKind => LastDecision.Kind;
         public EarthAnimationTransitionReason LastReason => LastDecision.Reason;
         public EarthAnimationInertializationReason LastInertializationReason { get; private set; }
+        public uint ImmediateEvaluationSequence { get; private set; }
         public float TransitionElapsedSeconds => Mathf.Max(0f, Time.time - _transitionStartedAt);
         public float TransitionWeight => _transitionDuration > 0.0001f
             ? Mathf.Clamp01(TransitionElapsedSeconds / _transitionDuration)
@@ -155,6 +156,13 @@ namespace Elemental.Presentation.Animation
             _activePriority = EarthAnimationTransitionPriority.Idle;
             _transitionStartedAt = Time.time;
             _transitionDuration = 0f;
+            // Animator.Play queues the state change until the graph evaluates.
+            // This method is the sole immediate base-state writer, so complete
+            // that evaluation before returning to ordered handoff observers.
+            animator.Update(0f);
+            ImmediateEvaluationSequence = ImmediateEvaluationSequence == uint.MaxValue
+                ? 1u
+                : ImmediateEvaluationSequence + 1u;
         }
 
         private EarthAnimationTransitionTuning ResolveTuning() => profile != null

@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Elemental.Presentation.Animation;
 using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
 using Elemental.Simulation.Characters;
@@ -240,8 +241,18 @@ namespace Elemental.Tests.PlayMode
             int recoveryHandoffsBefore = rig.RecoveryOwnershipHandoffCount;
             Animator recoveryAnimator = rig.GetComponentInChildren<Animator>(true);
             Assert.That(recoveryAnimator, Is.Not.Null);
+            HumanoidCharacterPresentation recoveryPresentation =
+                rig.GetComponent<HumanoidCharacterPresentation>();
+            Assert.That(recoveryPresentation, Is.Not.Null);
+            EarthTransitionDirector recoveryTransitionOwner =
+                recoveryPresentation.TransitionDirector;
+            Assert.That(recoveryTransitionOwner, Is.Not.Null);
+            uint transitionEvaluationBefore =
+                recoveryTransitionOwner.ImmediateEvaluationSequence;
             bool observedSelectedStateInEvent = false;
             int eventStateHash = 0;
+            int eventTransitionOwnerStateHash = 0;
+            uint eventTransitionEvaluationSequence = 0u;
             float eventStatePhase = 0f;
             Action<AuthoredRecoveryHandoff> observeSelectedState = handoff =>
             {
@@ -249,6 +260,9 @@ namespace Elemental.Tests.PlayMode
                 AnimatorStateInfo state = recoveryAnimator.GetCurrentAnimatorStateInfo(0);
                 observedSelectedStateInEvent = true;
                 eventStateHash = state.fullPathHash;
+                eventTransitionOwnerStateHash = recoveryTransitionOwner.ActiveStateHash;
+                eventTransitionEvaluationSequence =
+                    recoveryTransitionOwner.ImmediateEvaluationSequence;
                 eventStatePhase = Mathf.Repeat(state.normalizedTime, 1f);
             };
             rig.AuthoredRecoveryBegan += observeSelectedState;
@@ -263,6 +277,12 @@ namespace Elemental.Tests.PlayMode
             Assert.That(feetOwner.enabled, Is.False,
                 "Feet must remain disabled before their authored marker.");
             Assert.That(observedSelectedStateInEvent, Is.True);
+            Assert.That(eventTransitionOwnerStateHash,
+                Is.EqualTo(rig.LastPoseMatchedRecovery.AnimationStateId),
+                "The presentation transition owner must commit before later recovery observers run.");
+            Assert.That(eventTransitionEvaluationSequence,
+                Is.EqualTo(transitionEvaluationBefore + 1u),
+                "The selected state must be evaluated by the sole transition owner before later observers run.");
             Assert.That(eventStateHash,
                 Is.EqualTo(rig.LastPoseMatchedRecovery.AnimationStateId));
             Assert.That(eventStatePhase,
