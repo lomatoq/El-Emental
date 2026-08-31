@@ -290,6 +290,7 @@ namespace Elemental.Tests.EditMode
                 TestMode.EditMode,
                 "AnimationTransitionsVNextEdit",
                 "Elemental.Tests.EditMode.EarthAnimationTransitionPolicyTests",
+                "Elemental.Tests.EditMode.EarthAnimationClipMetadataTests",
                 "Elemental.Tests.EditMode.EarthFootSupportAuthorityIntegrationTests",
                 "Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests",
                 "Elemental.Tests.EditMode.EarthRagdollRecoveryPoseSolverTests");

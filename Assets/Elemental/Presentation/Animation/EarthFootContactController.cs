@@ -16,6 +16,14 @@ namespace Elemental.Presentation.Animation
         private const float MaximumKneeHintStepDegreesAt60Hz = 6f;
         private static readonly ProfilerMarker ContactMarker =
             new ProfilerMarker("Elemental.Character.FootContact");
+        private static readonly int LeftFootContactHash = Animator.StringToHash(
+            EarthAnimationClipMetadata.LeftFootContact);
+        private static readonly int RightFootContactHash = Animator.StringToHash(
+            EarthAnimationClipMetadata.RightFootContact);
+        private static readonly int LeftFootPhaseHash = Animator.StringToHash(
+            EarthAnimationClipMetadata.LeftFootPhase);
+        private static readonly int RightFootPhaseHash = Animator.StringToHash(
+            EarthAnimationClipMetadata.RightFootPhase);
 
         [SerializeField] private Animator animator;
         [SerializeField] private PlanetMotor motor;
@@ -87,6 +95,9 @@ namespace Elemental.Presentation.Animation
         private Vector3 _leftActualSupportLocal;
         private Vector3 _rightActualSupportLocal;
         private float _gaitPhase;
+        private float _leftGaitPhase;
+        private float _rightGaitPhase = 0.5f;
+        private bool _hasClipContactMetadata;
         private bool _locomoting;
         private bool _pivotingInPlace;
         private bool _surfing;
@@ -121,8 +132,8 @@ namespace Elemental.Presentation.Animation
         public uint RightSupportGeneration => _rightContactSupport.Generation;
         public float LeftReleaseCooldownSeconds => _leftDecision.ReleaseCooldownSeconds;
         public float RightReleaseCooldownSeconds => _rightDecision.ReleaseCooldownSeconds;
-        public float LeftGaitPhase01 => _gaitPhase;
-        public float RightGaitPhase01 => Mathf.Repeat(_gaitPhase + 0.5f, 1f);
+        public float LeftGaitPhase01 => _leftGaitPhase;
+        public float RightGaitPhase01 => _rightGaitPhase;
         public Vector3 LeftRawContactPointWorld => _leftRawContactWorld;
         public Vector3 RightRawContactPointWorld => _rightRawContactWorld;
         public Vector3 LeftRawContactNormalWorld => _leftRawNormalWorld;
@@ -176,6 +187,7 @@ namespace Elemental.Presentation.Animation
             poseIntentSource = configuredPoseIntentSource;
             if (surfController == null) surfController = GetComponentInParent<EarthSurfController>();
             ResolveBones();
+            ResolveMetadataAvailability();
         }
 
         public void SetPoseIntentSource(EarthCharacterPoseController source) =>
@@ -200,6 +212,7 @@ namespace Elemental.Presentation.Animation
             if (rootBody == null) rootBody = GetComponentInParent<Rigidbody>();
             if (surfController == null) surfController = GetComponentInParent<EarthSurfController>();
             ResolveBones();
+            ResolveMetadataAvailability();
         }
 
         private void OnDisable()
@@ -222,6 +235,8 @@ namespace Elemental.Presentation.Animation
             _hasPreviousAnklePose = false;
             _hasPreviousFinalLocalPose = false;
             _gaitPhase = 0f;
+            _leftGaitPhase = 0f;
+            _rightGaitPhase = 0.5f;
             _locomoting = false;
             _pivotingInPlace = false;
             _surfing = false;
@@ -437,13 +452,23 @@ namespace Elemental.Presentation.Animation
             _previousRightAnimated = rightProbe.AnimatedPosition;
             _hasPreviousAnimatedFeet = true;
 
-            float gaitPhase = ResolveGaitPhase();
-            _gaitPhase = gaitPhase;
+            ResolveClipContactMetadata(
+                out float leftPhase,
+                out float rightPhase,
+                out float leftContact,
+                out float rightContact);
+            _gaitPhase = leftPhase;
+            _leftGaitPhase = leftPhase;
+            _rightGaitPhase = rightPhase;
+            float rightSolverPhase = float.IsFinite(rightContact)
+                ? rightPhase
+                : leftPhase;
             EarthFootContactInput leftInput = BuildInput(
                 true,
                 in leftProbe,
                 leftVerticalVelocity,
-                gaitPhase,
+                leftPhase,
+                leftContact,
                 contactSupported,
                 locomoting,
                 pivotingInPlace,
@@ -455,7 +480,8 @@ namespace Elemental.Presentation.Animation
                 false,
                 in rightProbe,
                 rightVerticalVelocity,
-                gaitPhase,
+                rightSolverPhase,
+                rightContact,
                 contactSupported,
                 locomoting,
                 pivotingInPlace,
@@ -531,6 +557,7 @@ namespace Elemental.Presentation.Animation
             in FootProbe probe,
             float verticalVelocity,
             float gaitPhase,
+            float authoredContact,
             bool supported,
             bool locomoting,
             bool pivotingInPlace,
@@ -551,12 +578,13 @@ namespace Elemental.Presentation.Animation
             float3 upLocal = support.IsValid
                 ? math.rotate(math.inverse(support.Rotation), ToFloat3(up))
                 : ToFloat3(up);
-            float phaseBias = left
-                ? math.cos(gaitPhase * math.PI * 2f)
-                : -math.cos(gaitPhase * math.PI * 2f);
+            float phaseBias = math.cos(gaitPhase * math.PI * 2f);
             float capturePriority = -Mathf.Abs(probe.Clearance) +
                                     Mathf.Max(0f, -verticalVelocity) * 0.02f +
-                                    phaseBias * 0.01f;
+                                    phaseBias * 0.01f +
+                                    (float.IsFinite(authoredContact)
+                                        ? (authoredContact - 0.5f) * 0.035f
+                                        : 0f);
             return new EarthFootContactInput(
                 left,
                 supported,
@@ -574,7 +602,8 @@ namespace Elemental.Presentation.Animation
                 upLocal,
                 support.IsValid ? support.SurfaceId : 0u,
                 support.IsValid ? support.Generation : 0u,
-                deltaTime);
+                deltaTime,
+                authoredContact);
         }
 
         private FootProbe ProbeFoot(
@@ -880,6 +909,47 @@ namespace Elemental.Presentation.Animation
             if (animator == null || !animator.enabled) return 0f;
             AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
             return Mathf.Repeat(state.normalizedTime, 1f);
+        }
+
+        private void ResolveClipContactMetadata(
+            out float leftPhase,
+            out float rightPhase,
+            out float leftContact,
+            out float rightContact)
+        {
+            float fallback = ResolveGaitPhase();
+            if (!_hasClipContactMetadata || animator == null || !animator.enabled)
+            {
+                leftPhase = fallback;
+                rightPhase = Mathf.Repeat(fallback + 0.5f, 1f);
+                leftContact = float.NaN;
+                rightContact = float.NaN;
+                return;
+            }
+            leftPhase = Mathf.Repeat(animator.GetFloat(LeftFootPhaseHash), 1f);
+            rightPhase = Mathf.Repeat(animator.GetFloat(RightFootPhaseHash), 1f);
+            leftContact = Mathf.Clamp01(animator.GetFloat(LeftFootContactHash));
+            rightContact = Mathf.Clamp01(animator.GetFloat(RightFootContactHash));
+        }
+
+        private void ResolveMetadataAvailability()
+        {
+            _hasClipContactMetadata = false;
+            if (animator == null) return;
+            bool leftContact = false;
+            bool rightContact = false;
+            bool leftPhase = false;
+            bool rightPhase = false;
+            AnimatorControllerParameter[] parameters = animator.parameters;
+            for (int index = 0; index < parameters.Length; index++)
+            {
+                int hash = parameters[index].nameHash;
+                leftContact |= hash == LeftFootContactHash;
+                rightContact |= hash == RightFootContactHash;
+                leftPhase |= hash == LeftFootPhaseHash;
+                rightPhase |= hash == RightFootPhaseHash;
+            }
+            _hasClipContactMetadata = leftContact && rightContact && leftPhase && rightPhase;
         }
 
         private static void ResolveWorldTarget(

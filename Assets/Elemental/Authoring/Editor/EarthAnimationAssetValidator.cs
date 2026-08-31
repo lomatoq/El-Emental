@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Elemental.Runtime.Characters;
+using Elemental.Simulation.Characters;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
@@ -78,6 +79,7 @@ namespace Elemental.Authoring.Editor
             ValidateSecondaryRig(errors);
             ValidateSharedMixamoAvatar(errors);
             ValidateController(errors);
+            ValidateControllerMotionMetadata(errors);
             ValidatePresentationProfile(errors);
             return new EarthAnimationValidationReport(errors);
         }
@@ -308,6 +310,14 @@ namespace Elemental.Authoring.Editor
             RequireParameter(controller, "Surfing", AnimatorControllerParameterType.Bool, errors);
             RequireParameter(controller, "HardLanding", AnimatorControllerParameterType.Bool, errors);
             RequireParameter(controller, "EarthMotionTime", AnimatorControllerParameterType.Float, errors);
+            for (int metadataIndex = 0;
+                 metadataIndex < EarthAnimationClipMetadata.CurveCount;
+                 metadataIndex++)
+                RequireParameter(
+                    controller,
+                    EarthAnimationClipMetadata.CurveName(metadataIndex),
+                    AnimatorControllerParameterType.Float,
+                    errors);
             for (int slot = 1; slot <= 11; slot++)
                 RequireParameter(controller, $"EarthPose{slot:00}", AnimatorControllerParameterType.Float, errors);
             if (controller.layers == null || controller.layers.Length < 3)
@@ -464,6 +474,90 @@ namespace Elemental.Authoring.Editor
             if (presentation.AnimatorController == null) errors.Add("CharacterPresentationProfile has no AnimatorController.");
             if (presentation.Avatar == null || !presentation.Avatar.isValid || !presentation.Avatar.isHuman)
                 errors.Add("CharacterPresentationProfile Avatar is not a valid Humanoid.");
+        }
+
+        private static void ValidateControllerMotionMetadata(List<string> errors)
+        {
+            AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+            if (controller == null || controller.layers == null) return;
+            var seen = new HashSet<AnimationClip>();
+            AnimatorControllerLayer[] layers = controller.layers;
+            for (int layerIndex = 0; layerIndex < layers.Length; layerIndex++)
+                ValidateMotionMetadata(
+                    layers[layerIndex].stateMachine,
+                    layers[layerIndex].name,
+                    seen,
+                    errors);
+        }
+
+        private static void ValidateMotionMetadata(
+            AnimatorStateMachine machine,
+            string context,
+            ISet<AnimationClip> seen,
+            List<string> errors)
+        {
+            if (machine == null) return;
+            ChildAnimatorState[] states = machine.states;
+            for (int stateIndex = 0; stateIndex < states.Length; stateIndex++)
+            {
+                AnimatorState state = states[stateIndex].state;
+                if (state == null) continue;
+                ValidateMotionMetadata(state.motion, context + "/" + state.name, seen, errors);
+            }
+            ChildAnimatorStateMachine[] children = machine.stateMachines;
+            for (int childIndex = 0; childIndex < children.Length; childIndex++)
+                ValidateMotionMetadata(
+                    children[childIndex].stateMachine,
+                    context + "/" + children[childIndex].stateMachine.name,
+                    seen,
+                    errors);
+        }
+
+        private static void ValidateMotionMetadata(
+            Motion motion,
+            string context,
+            ISet<AnimationClip> seen,
+            List<string> errors)
+        {
+            if (motion is AnimationClip clip)
+            {
+                if (!seen.Add(clip)) return;
+                EarthAnimationClipMetadataPipeline.ValidateClipMetadata(
+                    clip,
+                    EarthAnimationClipMetadataPipeline.IsLocomotionClip(clip.name),
+                    errors,
+                    context + "/" + clip.name);
+                ValidateClipImporter(clip, errors);
+                return;
+            }
+            if (motion is not BlendTree tree) return;
+            ChildMotion[] children = tree.children;
+            for (int index = 0; index < children.Length; index++)
+                ValidateMotionMetadata(children[index].motion, context, seen, errors);
+        }
+
+        private static void ValidateClipImporter(AnimationClip clip, List<string> errors)
+        {
+            string path = AssetDatabase.GetAssetPath(clip);
+            if (AssetImporter.GetAtPath(path) is not ModelImporter importer) return;
+            if (importer.animationType != ModelImporterAnimationType.Human)
+                errors.Add($"Animation clip '{path}/{clip.name}' does not use a Humanoid importer.");
+            if (importer.avatarSetup == ModelImporterAvatarSetup.NoAvatar)
+                errors.Add($"Animation clip '{path}/{clip.name}' has no valid Humanoid Avatar source.");
+            ModelImporterClipAnimation[] clips = importer.clipAnimations;
+            if (clips == null || clips.Length == 0) clips = importer.defaultClipAnimations;
+            for (int index = 0; index < clips.Length; index++)
+            {
+                ModelImporterClipAnimation imported = clips[index];
+                if (!string.Equals(imported.name, clip.name, StringComparison.Ordinal)) continue;
+                if (imported.lockRootRotation || imported.lockRootHeightY ||
+                    imported.lockRootPositionXZ || !imported.keepOriginalOrientation ||
+                    imported.keepOriginalPositionY || !imported.keepOriginalPositionXZ ||
+                    !imported.heightFromFeet)
+                    errors.Add(
+                        $"Animation clip '{path}/{clip.name}' has inconsistent PlanetMotor root settings.");
+                return;
+            }
         }
     }
 }

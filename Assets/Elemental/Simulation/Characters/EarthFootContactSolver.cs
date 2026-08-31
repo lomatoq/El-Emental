@@ -43,7 +43,8 @@ namespace Elemental.Simulation.Characters
             float3 localUpLocal,
             uint supportId,
             uint supportGeneration,
-            float deltaTime)
+            float deltaTime,
+            float authoredContact01 = float.NaN)
         {
             IsLeft = isLeft;
             Supported = supported;
@@ -64,6 +65,8 @@ namespace Elemental.Simulation.Characters
             SupportId = supportId;
             SupportGeneration = supportGeneration;
             DeltaTime = math.clamp(math.isfinite(deltaTime) ? deltaTime : 0f, 0.0001f, 0.1f);
+            HasAuthoredContact = math.isfinite(authoredContact01);
+            AuthoredContact01 = HasAuthoredContact ? math.saturate(authoredContact01) : 0f;
         }
 
         public bool IsLeft { get; }
@@ -83,6 +86,8 @@ namespace Elemental.Simulation.Characters
         public uint SupportId { get; }
         public uint SupportGeneration { get; }
         public float DeltaTime { get; }
+        public bool HasAuthoredContact { get; }
+        public float AuthoredContact01 { get; }
 
         private static float3 SelectFinite(float3 value, float3 fallback) =>
             math.select(fallback, value, math.isfinite(value));
@@ -290,7 +295,10 @@ namespace Elemental.Simulation.Characters
 
             float stancePhase = (input.IsLeft ? 1f : -1f) *
                                 math.cos(input.GaitPhase01 * math.PI * 2f);
-            bool phaseAllowsStance = input.PivotingInPlace || stancePhase >= -0.15f;
+            bool phaseAllowsStance = input.PivotingInPlace ||
+                                     (input.HasAuthoredContact
+                                         ? input.AuthoredContact01 >= 0.22f
+                                         : stancePhase >= -0.15f);
             float maximumLockReach = input.PivotingInPlace
                 // A 180-degree authored pivot moves the uncorrected Humanoid
                 // foot through a wide local arc even though the support anchor
@@ -339,6 +347,7 @@ namespace Elemental.Simulation.Characters
                 : MaximumCaptureClearance;
             bool capture = state.ReleaseCooldownSeconds <= 0f && armed && descending &&
                            phaseAllowsStance &&
+                           (!input.HasAuthoredContact || input.AuthoredContact01 >= 0.55f) &&
                            input.SoleClearance >= MinimumCaptureClearance &&
                            input.SoleClearance <= maximumCaptureClearance;
             prepared.State.Armed = armed;

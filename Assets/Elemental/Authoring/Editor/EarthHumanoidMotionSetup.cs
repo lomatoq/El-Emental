@@ -15,7 +15,7 @@ namespace Elemental.Authoring.Editor
     {
         public const string ControllerPath = "Assets/Elemental/Content/Animation/KayKitMage.controller";
         private const string Root = "Assets/ThirdParty/Mixamo/";
-        private const string CharacterPath = Root + "X Bot.fbx";
+        public const string CanonicalCharacterPath = Root + "X Bot.fbx";
         public const string NeutralIdleClipName = "XBot Neutral Idle";
         public const string NeutralWalkClipName = "XBot Walk Neutral";
 
@@ -99,6 +99,7 @@ namespace Elemental.Authoring.Editor
             bool hasDodgeTrigger = false;
             bool hasDodgeX = false;
             bool hasDodgeY = false;
+            bool hasContactMetadata = false;
             AnimatorControllerParameter[] parameters = controller.parameters;
             for (int index = 0; index < parameters.Length; index++)
             {
@@ -123,9 +124,13 @@ namespace Elemental.Authoring.Editor
                 if (parameters[index].name == "DodgeY" &&
                     parameters[index].type == AnimatorControllerParameterType.Float)
                     hasDodgeY = true;
+                if (parameters[index].name ==
+                        Elemental.Simulation.Characters.EarthAnimationClipMetadata.LeftFootContact &&
+                    parameters[index].type == AnimatorControllerParameterType.Float)
+                    hasContactMetadata = true;
             }
             if (!hasFinalWeight || !hasMotionTime || !hasGaitRate || !hasImpactTrigger ||
-                !hasDodgeTrigger || !hasDodgeX || !hasDodgeY)
+                !hasDodgeTrigger || !hasDodgeX || !hasDodgeY || !hasContactMetadata)
                 return false;
             if (controller.layers.Length == 0 ||
                 FindState(controller.layers[0].stateMachine, "Moving Land") == null ||
@@ -170,10 +175,10 @@ namespace Elemental.Authoring.Editor
 
         private static bool AreCuratedImportersCurrent()
         {
-            ModelImporter canonical = AssetImporter.GetAtPath(CharacterPath) as ModelImporter;
+            ModelImporter canonical = AssetImporter.GetAtPath(CanonicalCharacterPath) as ModelImporter;
             if (canonical == null || canonical.humanDescription.hasTranslationDoF)
                 return false;
-            Avatar sharedAvatar = LoadAvatar(CharacterPath);
+            Avatar sharedAvatar = LoadAvatar(CanonicalCharacterPath);
             if (sharedAvatar == null || !sharedAvatar.isValid || !sharedAvatar.isHuman) return false;
             for (int pathIndex = 0; pathIndex < CuratedPaths.Length; pathIndex++)
             {
@@ -236,9 +241,10 @@ namespace Elemental.Authoring.Editor
 
         private static void ConfigureCanonicalAvatarImporter()
         {
-            ModelImporter importer = AssetImporter.GetAtPath(CharacterPath) as ModelImporter;
+            ModelImporter importer = AssetImporter.GetAtPath(CanonicalCharacterPath) as ModelImporter;
             if (importer == null)
-                throw new InvalidOperationException($"Canonical Mixamo character is missing: {CharacterPath}");
+                throw new InvalidOperationException(
+                    $"Canonical Mixamo character is missing: {CanonicalCharacterPath}");
             HumanDescription human = importer.humanDescription;
             bool dirty = importer.animationType != ModelImporterAnimationType.Human ||
                          importer.avatarSetup != ModelImporterAvatarSetup.CreateFromThisModel ||
@@ -265,6 +271,13 @@ namespace Elemental.Authoring.Editor
             AddParameterIfMissing(controller, "DodgeY", AnimatorControllerParameterType.Float);
             AddParameterIfMissing(controller, "EarthMotionTime", AnimatorControllerParameterType.Float);
             AddParameterIfMissing(controller, "GaitRate", AnimatorControllerParameterType.Float);
+            for (int metadataIndex = 0;
+                 metadataIndex < Elemental.Simulation.Characters.EarthAnimationClipMetadata.CurveCount;
+                 metadataIndex++)
+                AddParameterIfMissing(
+                    controller,
+                    Elemental.Simulation.Characters.EarthAnimationClipMetadata.CurveName(metadataIndex),
+                    AnimatorControllerParameterType.Float);
             for (int slot = 1; slot <= 11; slot++)
                 AddParameterIfMissing(controller, PoseWeightParameter(slot), AnimatorControllerParameterType.Float);
             ConfigureBaseLayer(controller);
@@ -282,7 +295,7 @@ namespace Elemental.Authoring.Editor
             if (importer == null)
                 throw new InvalidOperationException($"Curated Mixamo motion is missing or not imported: {path}");
 
-            Avatar sharedAvatar = LoadAvatar(CharacterPath);
+            Avatar sharedAvatar = LoadAvatar(CanonicalCharacterPath);
             if (sharedAvatar == null || !sharedAvatar.isValid || !sharedAvatar.isHuman)
                 throw new InvalidOperationException(
                     "The canonical Mixamo X Bot Humanoid Avatar is missing or invalid.");

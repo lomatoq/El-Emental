@@ -103,12 +103,35 @@ namespace Elemental.Tests.EditMode
             Assert.That(CharacterSupportAuthority.Matches(in stale, in selected), Is.False);
         }
 
+        [Test]
+        public void AuthoredContactCurveSuppressesSwingAndSelectsThePlantedFoot()
+        {
+            EarthFootContactState leftState = default;
+            EarthFootContactState rightState = default;
+            EarthFootContactInput left = Contact(
+                true, 20u, 1u, true, authoredContact: 0.08f);
+            EarthFootContactInput right = Contact(
+                false, 20u, 1u, true, authoredContact: 0.92f);
+
+            EarthFootContactPairDecision decision = EarthFootContactSolver.ResolvePair(
+                ref leftState,
+                ref rightState,
+                in left,
+                in right);
+
+            Assert.That(decision.Left.Locked, Is.False);
+            Assert.That(decision.Left.Reason, Is.EqualTo(EarthFootContactReason.Swing));
+            Assert.That(decision.Right.Locked, Is.True);
+            Assert.That(decision.Right.Reason, Is.EqualTo(EarthFootContactReason.Capture));
+        }
+
         private static EarthFootContactInput Contact(
             bool left,
             uint supportId,
             uint generation,
             bool hasContact,
-            bool supported = true) =>
+            bool supported = true,
+            float authoredContact = float.NaN) =>
             new EarthFootContactInput(
                 left,
                 supported,
@@ -126,7 +149,8 @@ namespace Elemental.Tests.EditMode
                 new float3(0f, 1f, 0f),
                 supportId,
                 generation,
-                1f / 60f);
+                1f / 60f,
+                authoredContact);
 
         private static CharacterSupportCandidate Candidate(
             uint id,
