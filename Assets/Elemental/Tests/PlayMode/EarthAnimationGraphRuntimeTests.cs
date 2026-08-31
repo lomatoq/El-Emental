@@ -168,9 +168,11 @@ namespace Elemental.Tests.PlayMode
                 {
                     yield return endOfFrame;
                     long gcWindowEnd = GC.GetAllocatedBytesForCurrentThread();
-                    long allocated = Math.Max(0L, gcWindowEnd - gcWindowStart);
-                    if (allocated > 0L) globalGcFramesOverZero++;
-                    globalMaximumGcBytes = Math.Max(globalMaximumGcBytes, allocated);
+                    long frameAllocatedBytes = Math.Max(0L, gcWindowEnd - gcWindowStart);
+                    if (frameAllocatedBytes > 0L) globalGcFramesOverZero++;
+                    globalMaximumGcBytes = Math.Max(
+                        globalMaximumGcBytes,
+                        frameAllocatedBytes);
                     if (graphUpdateRecorder.LastValue > 0L) graphMarkerFrames++;
                     gcWindowStart = GC.GetAllocatedBytesForCurrentThread();
                 }
