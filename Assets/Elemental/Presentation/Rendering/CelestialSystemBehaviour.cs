@@ -3,6 +3,7 @@ using Elemental.Runtime.Physics;
 using Elemental.Simulation.Time;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Elemental.Presentation.Rendering
 {
@@ -20,15 +21,28 @@ namespace Elemental.Presentation.Rendering
         [SerializeField] private Transform distantPlanet;
         [SerializeField] private Renderer atmosphereShell;
         [SerializeField] private Material starSkybox;
+        [SerializeField] private CelestialLightingAuthorityMode lightingAuthority =
+            CelestialLightingAuthorityMode.GameplayLocked;
 
         private double _elapsed;
         private MaterialPropertyBlock _atmosphereProperties;
         private bool _qaDawnShowcase;
         private bool _qaNightShowcase;
         private EarthSkyController _skyController;
+        private bool _authoredLightingCaptured;
+        private Quaternion _authoredSunRotation;
+        private Color _authoredSunColor;
+        private float _authoredSunIntensity;
+        private AmbientMode _authoredAmbientMode;
+        private Color _authoredAmbientSky;
+        private Color _authoredAmbientEquator;
+        private Color _authoredAmbientGround;
+        private Color _authoredAmbientLight;
+        private float _authoredAmbientIntensity;
 
         public CelestialSnapshot Snapshot { get; private set; }
         public Material StarSkybox => _skyController != null ? _skyController.RuntimeSkybox : starSkybox;
+        public CelestialLightingAuthorityMode LightingAuthority => lightingAuthority;
 
         public void SetTimeOfDayForQa(float timeOfDay01)
         {
@@ -37,6 +51,17 @@ namespace Elemental.Presentation.Rendering
             _elapsed = (target - profile.StartTime01) * profile.DaySeconds;
             _qaDawnShowcase = target < 0.08f;
             _qaNightShowcase = target > 0.55f && target < 0.9f;
+        }
+
+        public void SetLightingAuthorityForQa(CelestialLightingAuthorityMode mode)
+        {
+            if (lightingAuthority == mode) return;
+            lightingAuthority = mode;
+            if (lightingAuthority == CelestialLightingAuthorityMode.GameplayLocked)
+            {
+                CaptureAuthoredLighting(false);
+                ApplyAuthoredGameplayLighting();
+            }
         }
 
         public void Configure(
@@ -63,6 +88,7 @@ namespace Elemental.Presentation.Rendering
             distantPlanet = visibleDistantPlanet;
             atmosphereShell = shell;
             starSkybox = skybox;
+            CaptureAuthoredLighting(true);
             _skyController = GetComponent<EarthSkyController>();
             _skyController?.Configure(skyProfile, targetCamera, starSkybox);
             ApplyStaticAtmosphere();
@@ -71,6 +97,7 @@ namespace Elemental.Presentation.Rendering
         private void Awake()
         {
             if (targetCamera == null) targetCamera = UnityEngine.Camera.main;
+            CaptureAuthoredLighting(false);
             _skyController = GetComponent<EarthSkyController>();
             if (_skyController == null)
                 Debug.LogError("[Elemental] Celestial system requires an authored EarthSkyController.", this);
@@ -79,10 +106,21 @@ namespace Elemental.Presentation.Rendering
             ApplyStaticAtmosphere();
         }
 
+        private void OnEnable()
+        {
+            CaptureAuthoredLighting(false);
+            if (lightingAuthority == CelestialLightingAuthorityMode.GameplayLocked)
+                ApplyAuthoredGameplayLighting();
+        }
+
         private void Update()
         {
             if (profile == null || targetCamera == null) return;
-            _elapsed += Time.deltaTime * profile.TimeScale;
+            _elapsed = CelestialLightingClockPolicy.Step(
+                _elapsed,
+                Time.deltaTime,
+                profile.TimeScale,
+                lightingAuthority);
             Snapshot = CelestialEphemerisSolver.Evaluate(
                 _elapsed,
                 profile.DaySeconds,
@@ -129,52 +167,20 @@ namespace Elemental.Presentation.Rendering
                 distantPlanet.position = center + direction * planetDistance;
                 distantPlanet.localScale = Vector3.one * (planetDistance * Mathf.Tan(profile.DistantPlanetAngularSize * Mathf.Deg2Rad));
             }
-            if (sunLight != null)
-            {
-                float daylight = 1f - Snapshot.Night01;
-                // A sunset sun points below the local horizon. Reusing that direction
-                // for a brighter blue light still left the gameplay hemisphere black.
-                // Blend ownership of the single shadow-casting key to the visible moon.
-                Vector3 keyDirection = Vector3.Lerp(moonDirection, sunDirection, daylight);
-                if (keyDirection.sqrMagnitude < 0.001f)
-                    keyDirection = daylight >= 0.5f ? sunDirection : moonDirection;
-                sunLight.transform.rotation = Quaternion.LookRotation(
-                    -keyDirection.normalized,
-                    targetCamera.transform.up);
-                float horizon = Mathf.Clamp01(
-                    1f - Mathf.Abs(Vector3.Dot(sunDirection, localUp)) * 5f);
-                Color solarColor = Color.Lerp(profile.DayColor, profile.DuskColor, horizon);
-                // The same directional owner becomes a restrained moon key at night.
-                // Keeping the warm dusk tint after sunset made every earth family
-                // collapse into near-black brown even though the sky remained blue.
-                sunLight.color = Color.Lerp(profile.MoonColor, solarColor, daylight);
-                sunLight.intensity = Mathf.Lerp(profile.MoonlightIntensity, profile.DaylightIntensity, daylight);
-            }
-            float ambientDaylight = 1f - Snapshot.Night01;
-            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = Color.Lerp(
-                profile.NightAmbient * 1.15f,
-                profile.DayAmbientSky,
-                ambientDaylight);
-            RenderSettings.ambientEquatorColor = Color.Lerp(
-                profile.NightAmbient * 0.72f,
-                profile.DayAmbientEquator,
-                ambientDaylight);
-            RenderSettings.ambientGroundColor = Color.Lerp(
-                profile.NightAmbient * 0.34f,
-                profile.DayAmbientGround,
-                ambientDaylight);
-            RenderSettings.ambientIntensity = Mathf.Lerp(0.58f, 0.82f, ambientDaylight);
-            RenderSettings.ambientLight = Color.Lerp(
-                profile.NightAmbient,
-                profile.DayAmbientSky,
-                ambientDaylight);
+
+            Vector3 keyDirection = ApplyLightingAuthority(
+                sunDirection,
+                moonDirection,
+                localUp);
+
             Shader.SetGlobalFloat("_ElementalNight01", Snapshot.Night01);
             _skyController?.Apply(Snapshot, sunDirection);
-            Shader.SetGlobalVector("_ElementalSunDirection", new Vector4(sunDirection.x, sunDirection.y, sunDirection.z, 0f));
+            Shader.SetGlobalVector("_ElementalSunDirection",
+                new Vector4(keyDirection.x, keyDirection.y, keyDirection.z, 0f));
             float radius = ResolvePlanetRadius();
+            Vector3 planetCenter = planet != null ? planet.position : Vector3.zero;
             Shader.SetGlobalVector("_ElementalPlanetCenterRadius", new Vector4(
-                planet.position.x, planet.position.y, planet.position.z, radius));
+                planetCenter.x, planetCenter.y, planetCenter.z, radius));
             if (atmosphereProfile != null)
             {
                 Shader.SetGlobalVector("_ElementalAtmosphereParams", new Vector4(
@@ -197,6 +203,103 @@ namespace Elemental.Presentation.Rendering
                 Shader.SetGlobalColor("_ElementalMieColor", atmosphereProfile.MieColor);
             }
             UpdateAtmosphereProperties();
+        }
+
+        private Vector3 ApplyLightingAuthority(
+            Vector3 sunDirection,
+            Vector3 moonDirection,
+            Vector3 localUp)
+        {
+            if (lightingAuthority == CelestialLightingAuthorityMode.GameplayLocked)
+            {
+                ApplyAuthoredGameplayLighting();
+                if (sunLight != null)
+                {
+                    Vector3 authoredDirection = -sunLight.transform.forward;
+                    if (authoredDirection.sqrMagnitude > 0.001f)
+                        return authoredDirection.normalized;
+                }
+                return sunDirection.sqrMagnitude > 0.001f
+                    ? sunDirection.normalized
+                    : localUp;
+            }
+
+            float daylight = 1f - Snapshot.Night01;
+            Vector3 keyDirection = Vector3.Lerp(moonDirection, sunDirection, daylight);
+            if (keyDirection.sqrMagnitude < 0.001f)
+                keyDirection = daylight >= 0.5f ? sunDirection : moonDirection;
+            if (keyDirection.sqrMagnitude < 0.001f)
+                keyDirection = localUp;
+
+            if (sunLight != null)
+            {
+                sunLight.transform.rotation = Quaternion.LookRotation(
+                    -keyDirection.normalized,
+                    targetCamera.transform.up);
+                float horizon = Mathf.Clamp01(
+                    1f - Mathf.Abs(Vector3.Dot(sunDirection, localUp)) * 5f);
+                Color solarColor = Color.Lerp(profile.DayColor, profile.DuskColor, horizon);
+                sunLight.color = Color.Lerp(profile.MoonColor, solarColor, daylight);
+                sunLight.intensity = Mathf.Lerp(
+                    profile.MoonlightIntensity,
+                    profile.DaylightIntensity,
+                    daylight);
+            }
+
+            RenderSettings.ambientMode = AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = Color.Lerp(
+                profile.NightAmbient * 1.15f,
+                profile.DayAmbientSky,
+                daylight);
+            RenderSettings.ambientEquatorColor = Color.Lerp(
+                profile.NightAmbient * 0.72f,
+                profile.DayAmbientEquator,
+                daylight);
+            RenderSettings.ambientGroundColor = Color.Lerp(
+                profile.NightAmbient * 0.34f,
+                profile.DayAmbientGround,
+                daylight);
+            RenderSettings.ambientIntensity = Mathf.Lerp(0.58f, 0.82f, daylight);
+            RenderSettings.ambientLight = Color.Lerp(
+                profile.NightAmbient,
+                profile.DayAmbientSky,
+                daylight);
+            return keyDirection.normalized;
+        }
+
+        private void CaptureAuthoredLighting(bool force)
+        {
+            if (_authoredLightingCaptured && !force) return;
+            if (sunLight != null)
+            {
+                _authoredSunRotation = sunLight.transform.rotation;
+                _authoredSunColor = sunLight.color;
+                _authoredSunIntensity = sunLight.intensity;
+            }
+            _authoredAmbientMode = RenderSettings.ambientMode;
+            _authoredAmbientSky = RenderSettings.ambientSkyColor;
+            _authoredAmbientEquator = RenderSettings.ambientEquatorColor;
+            _authoredAmbientGround = RenderSettings.ambientGroundColor;
+            _authoredAmbientLight = RenderSettings.ambientLight;
+            _authoredAmbientIntensity = RenderSettings.ambientIntensity;
+            _authoredLightingCaptured = true;
+        }
+
+        private void ApplyAuthoredGameplayLighting()
+        {
+            if (!_authoredLightingCaptured) CaptureAuthoredLighting(false);
+            if (sunLight != null)
+            {
+                sunLight.transform.rotation = _authoredSunRotation;
+                sunLight.color = _authoredSunColor;
+                sunLight.intensity = _authoredSunIntensity;
+            }
+            RenderSettings.ambientMode = _authoredAmbientMode;
+            RenderSettings.ambientSkyColor = _authoredAmbientSky;
+            RenderSettings.ambientEquatorColor = _authoredAmbientEquator;
+            RenderSettings.ambientGroundColor = _authoredAmbientGround;
+            RenderSettings.ambientLight = _authoredAmbientLight;
+            RenderSettings.ambientIntensity = _authoredAmbientIntensity;
         }
 
         private void ApplyStaticAtmosphere()
