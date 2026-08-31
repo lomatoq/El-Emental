@@ -53,6 +53,7 @@ namespace Elemental.Runtime.Physics
             debrisPool = configuredDebrisPool;
             visualRadius = Mathf.Max(0.05f, configuredRadius);
             integrity = Mathf.Max(1f, configuredIntegrity);
+            ApplyUnifiedMass();
             Anchor();
         }
 
@@ -100,8 +101,15 @@ namespace Elemental.Runtime.Physics
             if (body == null) body = GetComponent<Rigidbody>();
             if (shape == null) shape = GetComponent<Collider>();
             if (gravityBody == null) gravityBody = GetComponent<GravityBody>();
+            ApplyUnifiedMass();
             if (debrisPool == null && Application.isPlaying)
                 Debug.LogError("[Elemental] Destructible decor rock requires an authored debris pool.", this);
+        }
+
+        private void ApplyUnifiedMass()
+        {
+            if (body == null) return;
+            body.mass = EarthMatterMassRuntime.ResolveFromCollider(shape, visualRadius);
         }
 
         private void OnCollisionEnter(Collision collision)
