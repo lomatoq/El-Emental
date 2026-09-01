@@ -5,6 +5,7 @@ using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
 using Elemental.Simulation.Characters;
 using NUnit.Framework;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.SceneManagement;
@@ -211,12 +212,21 @@ namespace Elemental.Tests.PlayMode
                 new EarthRecoveryMarkerAuthoring(0.56f, 0.80f, 0.95f);
             Animator recoveryAnimator = rig.GetComponentInChildren<Animator>(true);
             Assert.That(recoveryAnimator, Is.Not.Null);
-            Transform authoredPelvis = recoveryAnimator.GetBoneTransform(HumanBodyBones.Hips);
-            Assert.That(authoredPelvis, Is.Not.Null);
-            Vector3 authoredPelvisOffsetLocal = Quaternion.Inverse(motor.Body.rotation) *
-                                                (authoredPelvis.position - motor.Body.position);
-            Assert.That(IsFinite(authoredPelvisOffsetLocal), Is.True,
-                "Recovery samples require a finite pelvis offset in motor-root space.");
+            HumanoidCharacterPresentation recoveryPresentation =
+                rig.GetComponent<HumanoidCharacterPresentation>();
+            Assert.That(recoveryPresentation, Is.Not.Null);
+            EarthTransitionDirector recoveryTransitionOwner =
+                recoveryPresentation.TransitionDirector;
+            Assert.That(recoveryTransitionOwner, Is.Not.Null);
+            const float authoredRecoveryEntryPhase = 0.55f;
+            int authoredRecoveryStateHash =
+                Animator.StringToHash("Base Layer.Knockdown Recovery");
+            Vector3 authoredPelvisOffsetLocal = SampleAuthoredRecoveryPelvisOffset(
+                recoveryAnimator,
+                recoveryTransitionOwner,
+                motor.Body,
+                authoredRecoveryStateHash,
+                authoredRecoveryEntryPhase);
             profile.ConfigureRecovery(
                 true,
                 new[]
@@ -251,12 +261,6 @@ namespace Elemental.Tests.PlayMode
             Assert.That(controlOwner.enabled, Is.False);
             Assert.That(proceduralOwner.enabled, Is.False);
             int recoveryHandoffsBefore = rig.RecoveryOwnershipHandoffCount;
-            HumanoidCharacterPresentation recoveryPresentation =
-                rig.GetComponent<HumanoidCharacterPresentation>();
-            Assert.That(recoveryPresentation, Is.Not.Null);
-            EarthTransitionDirector recoveryTransitionOwner =
-                recoveryPresentation.TransitionDirector;
-            Assert.That(recoveryTransitionOwner, Is.Not.Null);
             uint transitionEvaluationBefore =
                 recoveryTransitionOwner.ImmediateEvaluationSequence;
             bool observedSelectedStateInEvent = false;
@@ -281,6 +285,22 @@ namespace Elemental.Tests.PlayMode
 
             Assert.That(rig.UsedPoseMatchedRecovery, Is.True);
             Assert.That(rig.LastPoseMatchedRecovery.IsValid, Is.True);
+            float3 authoredPelvisOffset = new float3(
+                authoredPelvisOffsetLocal.x,
+                authoredPelvisOffsetLocal.y,
+                authoredPelvisOffsetLocal.z);
+            float3 reconstructedLivePelvis = rig.LastPoseMatchedRecovery.RootPosition +
+                                             math.rotate(
+                                                 rig.LastPoseMatchedRecovery.RootRotation,
+                                                 authoredPelvisOffset);
+            Assert.That(rig.LastPoseMatchedRecovery.Clearance.LiftMeters,
+                Is.EqualTo(0f).Within(0.0001f),
+                "The isolated authored pose must be clear without moving its live pelvis.");
+            Assert.That(math.distance(
+                    reconstructedLivePelvis,
+                    rig.LastPoseMatchedRecovery.LivePelvisPosition),
+                Is.LessThan(0.001f),
+                "The selected authored pelvis offset must preserve live-pelvis continuity.");
             Assert.That(rig.RecoveryOwnershipHandoffCount,
                 Is.EqualTo(recoveryHandoffsBefore + 1),
                 "Repeated recovery requests must not hand Animator ownership over twice.");
@@ -650,6 +670,80 @@ namespace Elemental.Tests.PlayMode
                 Is.LessThan(0.001f));
             Assert.That(Quaternion.Angle(body.rotation, rotation),
                 Is.LessThan(0.01f));
+        }
+
+        private static Vector3 SampleAuthoredRecoveryPelvisOffset(
+            Animator animator,
+            EarthTransitionDirector transitionOwner,
+            Rigidbody motorBody,
+            int recoveryStateHash,
+            float entryPhase)
+        {
+            Assert.That(animator, Is.Not.Null);
+            Assert.That(transitionOwner, Is.Not.Null);
+            Assert.That(motorBody, Is.Not.Null);
+            Assert.That(animator.IsInTransition(0), Is.False,
+                "Authored recovery sampling requires a stable prior base state.");
+
+            AnimatorStateInfo priorAnimatorState = animator.GetCurrentAnimatorStateInfo(0);
+            EarthMotionStateId priorSemanticState = transitionOwner.ActiveState;
+            int priorActiveStateHash = transitionOwner.ActiveStateHash;
+            CharacterPhysicalMode priorOwnerMode = transitionOwner.BaseStateOwnerMode;
+            int priorOwnedStateHash = transitionOwner.OwnedBaseStateHash;
+            float priorPhase = Mathf.Repeat(priorAnimatorState.normalizedTime, 1f);
+            uint evaluationBefore = transitionOwner.ImmediateEvaluationSequence;
+            Transform authoredPelvis = animator.GetBoneTransform(HumanBodyBones.Hips);
+            Assert.That(authoredPelvis, Is.Not.Null);
+            Assert.That(priorAnimatorState.fullPathHash, Is.Not.EqualTo(0));
+            Assert.That(priorOwnerMode, Is.EqualTo(CharacterPhysicalMode.AnimatedMotor));
+            Assert.That(priorOwnedStateHash, Is.EqualTo(0));
+
+            AnimatorStateInfo sampledState = default;
+            Vector3 pelvisOffsetLocal = default;
+            try
+            {
+                transitionOwner.ForcePlayImmediate(
+                    EarthMotionStateId.KnockdownRecovery,
+                    recoveryStateHash,
+                    entryPhase);
+                sampledState = animator.GetCurrentAnimatorStateInfo(0);
+                pelvisOffsetLocal = Quaternion.Inverse(motorBody.rotation) *
+                                    (authoredPelvis.position - motorBody.position);
+            }
+            finally
+            {
+                transitionOwner.ForcePlayImmediate(
+                    priorSemanticState,
+                    priorAnimatorState.fullPathHash,
+                    priorPhase);
+                transitionOwner.SynchronizeState(
+                    priorSemanticState,
+                    priorActiveStateHash,
+                    EarthAnimationTransitionPriority.Idle);
+                transitionOwner.SynchronizeBaseStateOwnership(
+                    priorOwnerMode,
+                    priorOwnedStateHash);
+            }
+
+            Assert.That(sampledState.fullPathHash, Is.EqualTo(recoveryStateHash));
+            Assert.That(Mathf.Repeat(sampledState.normalizedTime, 1f),
+                Is.EqualTo(entryPhase).Within(0.001f));
+            Assert.That(transitionOwner.ImmediateEvaluationSequence,
+                Is.EqualTo(evaluationBefore + 2u),
+                "Sampling and restoration must each evaluate through the sole owner.");
+            Assert.That(IsFinite(pelvisOffsetLocal), Is.True,
+                "Recovery samples require a finite pelvis offset in motor-root space.");
+
+            AnimatorStateInfo restoredState = animator.GetCurrentAnimatorStateInfo(0);
+            Assert.That(restoredState.fullPathHash,
+                Is.EqualTo(priorAnimatorState.fullPathHash));
+            Assert.That(Mathf.Repeat(restoredState.normalizedTime, 1f),
+                Is.EqualTo(priorPhase).Within(0.001f));
+            Assert.That(transitionOwner.ActiveState, Is.EqualTo(priorSemanticState));
+            Assert.That(transitionOwner.ActiveStateHash, Is.EqualTo(priorActiveStateHash));
+            Assert.That(transitionOwner.BaseStateOwnerMode, Is.EqualTo(priorOwnerMode));
+            Assert.That(transitionOwner.OwnedBaseStateHash, Is.EqualTo(priorOwnedStateHash));
+            return pelvisOffsetLocal;
         }
 
         private static EarthRecoveryPoseSampleAuthoring RecoverySample(
