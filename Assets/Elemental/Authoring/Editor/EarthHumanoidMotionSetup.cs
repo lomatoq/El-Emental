@@ -132,9 +132,13 @@ namespace Elemental.Authoring.Editor
             if (!hasFinalWeight || !hasMotionTime || !hasGaitRate || !hasImpactTrigger ||
                 !hasDodgeTrigger || !hasDodgeX || !hasDodgeY || !hasContactMetadata)
                 return false;
+            AnimatorState knockdownRecovery = controller.layers.Length > 0
+                ? FindState(controller.layers[0].stateMachine, "Knockdown Recovery")
+                : null;
             if (controller.layers.Length == 0 ||
                 FindState(controller.layers[0].stateMachine, "Moving Land") == null ||
-                FindState(controller.layers[0].stateMachine, "Knockdown Recovery") == null ||
+                knockdownRecovery == null ||
+                knockdownRecovery.transitions.Length != 0 ||
                 FindState(controller.layers[0].stateMachine, "Dodge") == null ||
                 FindState(controller.layers[0].stateMachine, "Turn In Place") == null)
                 return false;
@@ -499,10 +503,9 @@ namespace Elemental.Authoring.Editor
             movingLand.motion = LoadClip(FallingRollPath) ?? LoadClip(HardLandingPath) ?? idle;
             hardLand.motion = LoadClip(HardLandingPath) ?? land.motion;
             knockdownRecovery.motion = LoadClip(FallingRollPath) ?? hardLand.motion;
-            // Falling-To-Roll is 64 authored frames. Starting at normalized 0.18
-            // and playing at 1.9x reaches the 0.82 exit in ~0.72 s, matching the
-            // deterministic recoverable-knockdown recovery stage instead of
-            // returning controls halfway through the get-up.
+            // Falling-To-Roll is 64 authored frames. The physical recovery
+            // coordinator owns its feet/control/exit markers; this controller
+            // state must not independently transition back to locomotion.
             knockdownRecovery.speed = 1.9f;
             BlendTree dodgeTree = FindOrCreateBlendTree(controller, "Earth Directional Dodge");
             dodgeTree.blendType = BlendTreeType.FreeformDirectional2D;
@@ -557,7 +560,10 @@ namespace Elemental.Authoring.Editor
             AddExitTransition(land, locomotion, 0.70f, 0.10f);
             AddExitTransition(movingLand, locomotion, 0.58f, 0.08f);
             AddExitTransition(hardLand, locomotion, 0.82f, 0.12f);
-            AddExitTransition(knockdownRecovery, locomotion, 0.82f, 0.12f);
+            // No controller-owned exit here. HumanoidCharacterPresentation keeps
+            // the selected pose-matched state authoritative until the supported
+            // authored recovery-exit marker, then EarthTransitionDirector resumes
+            // ordinary locomotion as the sole base-state writer.
             AnimatorStateTransition dodgeTransition = machine.AddAnyStateTransition(dodge);
             dodgeTransition.hasExitTime = false;
             dodgeTransition.duration = 0.045f;

@@ -88,6 +88,11 @@ namespace Elemental.Tests.EditMode
             Assert.That(controller.layers, Is.Not.Empty);
             Assert.That(controller.layers[0].stateMachine.states.Any(child =>
                 child.state != null && child.state.name == "Knockdown Recovery"), Is.True);
+            AnimatorState recovery = controller.layers[0].stateMachine.states
+                .Select(child => child.state)
+                .First(state => state != null && state.name == "Knockdown Recovery");
+            Assert.That(recovery.transitions, Is.Empty,
+                "Recovery markers and EarthTransitionDirector own the exit; the Animator Controller must not leave recovery at an earlier fixed exit time.");
             Assert.That(controller.layers, Has.Length.GreaterThanOrEqualTo(3));
             Assert.That(controller.layers[2].stateMachine.states.Any(child =>
                 child.state != null && child.state.name == "Recoil" &&
