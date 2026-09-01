@@ -28,6 +28,14 @@ namespace Elemental.Tests.EditMode
             Assert.That(
                 EarthMotionCatalogBuilder.CollectCuratedClipCount(),
                 Is.EqualTo(EarthMotionCatalog.ExpectedCuratedClipCount));
+            string inventory = EarthMotionCatalogBuilder.DescribeCuratedInventory();
+            Assert.That(
+                inventory,
+                Does.Contain(EarthHumanoidMotionSetup.KayKitDirectionalDodgePath));
+            Assert.That(
+                inventory,
+                Does.Contain(EarthHumanoidMotionSetup.KayKitMovementBasicPath));
+            Assert.That(inventory, Does.Contain("unique GUID+localFileId total=51"));
             EarthMotionCatalogBuildSummary summary =
                 EarthMotionCatalogBuilder.Rebuild(_catalog);
 
@@ -57,10 +65,24 @@ namespace Elemental.Tests.EditMode
                 for (int curveIndex = 0;
                      curveIndex < EarthAnimationClipMetadata.CurveCount;
                      curveIndex++)
-                    Assert.That(
-                        profile.Curve(curveIndex)?.length ?? 0,
-                        Is.GreaterThan(0),
-                        $"{profile.Clip.name}/{EarthAnimationClipMetadata.CurveName(curveIndex)}");
+                {
+                    AnimationCurve curve = profile.Curve(curveIndex);
+                    string curveLabel =
+                        $"{profile.Clip.name}/{EarthAnimationClipMetadata.CurveName(curveIndex)}";
+                    Assert.That(curve?.length ?? 0, Is.GreaterThan(0), curveLabel);
+                    Keyframe[] keys = curve.keys;
+                    for (int keyIndex = 0; keyIndex < keys.Length; keyIndex++)
+                    {
+                        Assert.That(
+                            float.IsFinite(keys[keyIndex].time),
+                            Is.True,
+                            $"{curveLabel} key {keyIndex} time");
+                        Assert.That(
+                            float.IsFinite(keys[keyIndex].value),
+                            Is.True,
+                            $"{curveLabel} key {keyIndex} value");
+                    }
+                }
             }
 
             var errors = new List<string>();

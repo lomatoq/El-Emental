@@ -36,18 +36,23 @@ namespace Elemental.Tests.EditMode
         [Test]
         public void DuplicateReplacementRetainsOrderAndRejectsLowerPriority()
         {
-            EarthTransitionQueue queue = new EarthTransitionQueue(2);
+            EarthTransitionQueue queue = new EarthTransitionQueue(4);
             EarthAnimationTransitionContext context = Context(EarthMotionStateId.Locomotion);
+            EarthAnimationTransitionContext second = Context(EarthMotionStateId.HardLanding);
             EarthTransitionRule high = Rule(EarthAnimationTransitionPriority.HeavyImpact);
             EarthTransitionRule low = Rule(EarthAnimationTransitionPriority.Locomotion);
 
-            Assert.That(queue.Enqueue(7, in context, in high, 1f),
+            Assert.That(queue.Enqueue(7, in context, in high, 1f, 2),
                 Is.EqualTo(EarthTransitionQueueResult.Enqueued));
-            Assert.That(queue.Enqueue(7, in context, in low, 2f),
+            Assert.That(queue.Enqueue(8, in second, in low, 1.5f, 2),
+                Is.EqualTo(EarthTransitionQueueResult.Enqueued));
+            Assert.That(queue.Enqueue(7, in context, in low, 2f, 2),
                 Is.EqualTo(EarthTransitionQueueResult.RejectedDuplicateLowerPriority));
-            Assert.That(queue.Enqueue(7, in context, in high, 3f),
+            Assert.That(queue.Enqueue(7, in context, in high, 3f, 2),
                 Is.EqualTo(EarthTransitionQueueResult.ReplacedDuplicate));
-            Assert.That(queue.Count, Is.EqualTo(1));
+            Assert.That(queue.Enqueue(9, in context, in high, 4f, 2),
+                Is.EqualTo(EarthTransitionQueueResult.RejectedCapacity));
+            Assert.That(queue.Count, Is.EqualTo(2));
 
             EarthTransitionQueueGate gate = Gate(0.8f);
             Assert.That(queue.TryPeekEligible(in gate, out EarthQueuedTransition queued), Is.True);

@@ -83,7 +83,8 @@ namespace Elemental.Simulation.Characters
             int destinationHash,
             in EarthAnimationTransitionContext context,
             in EarthTransitionRule rule,
-            float requestedAtSeconds)
+            float requestedAtSeconds,
+            int capacityLimit = MaximumCapacity)
         {
             if (destinationHash == 0 || !rule.Configured ||
                 context.DestinationState == EarthMotionStateId.None)
@@ -109,7 +110,12 @@ namespace Elemental.Simulation.Characters
                 return EarthTransitionQueueResult.ReplacedDuplicate;
             }
 
-            if (_count >= _entries.Length)
+            int boundedCapacity = capacityLimit < 1
+                ? 1
+                : capacityLimit > _entries.Length
+                    ? _entries.Length
+                    : capacityLimit;
+            if (_count >= boundedCapacity)
                 return EarthTransitionQueueResult.RejectedCapacity;
 
             _nextSequence = _nextSequence == uint.MaxValue ? 1u : _nextSequence + 1u;

@@ -305,9 +305,7 @@ namespace Elemental.Presentation.Animation
             if (profileResolved && _footContactController != null)
             {
                 EarthTransitionFootReleasePolicy releasePolicy =
-                    rule.ContactPolicy == EarthTransitionContactPolicy.ReleaseBeforeBlend
-                        ? EarthTransitionFootReleasePolicy.ReleaseImmediately
-                        : rule.FootReleasePolicy;
+                    EarthTransitionRulePolicy.ResolveFootReleasePolicy(in rule);
                 _footContactController.BeginTransitionFootRelease(
                     releasePolicy,
                     rule.FootReleaseSeconds);
@@ -404,8 +402,7 @@ namespace Elemental.Presentation.Animation
             in EarthAnimationTransitionContext context,
             in EarthTransitionRule rule)
         {
-            if (transitionProfile == null ||
-                _transitionQueue.Count >= transitionProfile.QueueCapacity)
+            if (transitionProfile == null)
             {
                 _queueRejectionCount = Increment(_queueRejectionCount);
                 _lastProfileResolution = EarthTransitionProfileResolution.QueueRejected;
@@ -416,7 +413,8 @@ namespace Elemental.Presentation.Animation
                 destinationHash,
                 in context,
                 in rule,
-                Time.time);
+                Time.time,
+                transitionProfile.QueueCapacity);
             if (result == EarthTransitionQueueResult.Enqueued ||
                 result == EarthTransitionQueueResult.ReplacedDuplicate)
             {

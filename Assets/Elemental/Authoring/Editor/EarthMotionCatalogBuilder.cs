@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Elemental.Presentation.Animation;
 using Elemental.Simulation.Characters;
 using UnityEditor;
@@ -37,6 +38,11 @@ namespace Elemental.Authoring.Editor
         public const string DefaultCatalogPath =
             "Assets/Elemental/Content/Animation/EarthMotionCatalog.asset";
         private const int CatalogCurveKeyCount = 17;
+        private static readonly string[] CatalogLibraryPaths =
+        {
+            EarthHumanoidMotionSetup.KayKitDirectionalDodgePath,
+            EarthHumanoidMotionSetup.KayKitMovementBasicPath
+        };
 
         [MenuItem("Elemental Suite/Character/Rebuild Earth Motion Catalog")]
         public static void BuildOrUpdateDefaultCatalog()
@@ -64,14 +70,14 @@ namespace Elemental.Authoring.Editor
         public static EarthMotionCatalogBuildSummary Rebuild(EarthMotionCatalog catalog)
         {
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
-            List<ClipCandidate> candidates = CollectCandidates();
+            List<ClipCandidate> candidates = CollectCandidates(out string inventory);
             if (candidates.Count != EarthMotionCatalog.ExpectedCuratedClipCount)
             {
                 throw new InvalidOperationException(
                     $"Earth motion catalog expected exactly " +
                     $"{EarthMotionCatalog.ExpectedCuratedClipCount} existing clips from the " +
                     $"controller/curated GUID+localFileId union, but observed {candidates.Count}. " +
-                    "Do not invent or download replacement clips.");
+                    "Do not invent or download replacement clips.\n" + inventory);
             }
 
             var previous = new Dictionary<ClipIdentity, EarthMotionClipProfile>(
@@ -116,9 +122,15 @@ namespace Elemental.Authoring.Editor
                 identityHash);
         }
 
-        public static int CollectCuratedClipCount() => CollectCandidates().Count;
+        public static int CollectCuratedClipCount() => CollectCandidates(out _).Count;
 
-        private static List<ClipCandidate> CollectCandidates()
+        public static string DescribeCuratedInventory()
+        {
+            CollectCandidates(out string inventory);
+            return inventory;
+        }
+
+        private static List<ClipCandidate> CollectCandidates(out string inventory)
         {
             AnimatorController controller =
                 AssetDatabase.LoadAssetAtPath<AnimatorController>(
@@ -128,33 +140,97 @@ namespace Elemental.Authoring.Editor
                     $"AnimatorController is missing: {EarthHumanoidMotionSetup.ControllerPath}");
 
             var byIdentity = new Dictionary<ClipIdentity, ClipCandidate>(64);
+            var inventoryBuilder = new StringBuilder(2048);
+            inventoryBuilder.AppendLine("Earth motion source inventory:");
             AnimationClip[] controllerClips = controller.animationClips;
             for (int index = 0; index < controllerClips.Length; index++)
                 AddCandidate(controllerClips[index], byIdentity, "controller");
+            AppendInventorySource(
+                inventoryBuilder,
+                "controller reachable clips",
+                controllerClips,
+                controllerClips.Length,
+                byIdentity.Count);
 
+            var visitedPaths = new HashSet<string>(StringComparer.Ordinal);
+            var missingPaths = new List<string>();
             for (int pathIndex = 0;
                  pathIndex < EarthHumanoidMotionSetup.CuratedPaths.Length;
                  pathIndex++)
             {
-                string path = EarthHumanoidMotionSetup.CuratedPaths[pathIndex];
-                UnityEngine.Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
-                int pathClipCount = 0;
-                for (int assetIndex = 0; assetIndex < assets.Length; assetIndex++)
-                {
-                    if (assets[assetIndex] is not AnimationClip clip ||
-                        IsPreviewClip(clip))
-                        continue;
-                    AddCandidate(clip, byIdentity, path);
-                    pathClipCount++;
-                }
-                if (pathClipCount == 0)
-                    throw new InvalidOperationException(
-                        $"Curated motion path has no AnimationClip subasset: {path}");
+                CollectPath(
+                    EarthHumanoidMotionSetup.CuratedPaths[pathIndex],
+                    byIdentity,
+                    visitedPaths,
+                    missingPaths,
+                    inventoryBuilder);
             }
+            for (int pathIndex = 0; pathIndex < CatalogLibraryPaths.Length; pathIndex++)
+                CollectPath(
+                    CatalogLibraryPaths[pathIndex],
+                    byIdentity,
+                    visitedPaths,
+                    missingPaths,
+                    inventoryBuilder);
+
+            inventoryBuilder.Append("unique GUID+localFileId total=")
+                .Append(byIdentity.Count);
+            inventory = inventoryBuilder.ToString();
+            if (missingPaths.Count > 0)
+                throw new InvalidOperationException(
+                    "Earth motion catalog source paths have no imported AnimationClip " +
+                    "subassets: " + string.Join(", ", missingPaths) + "\n" + inventory);
 
             var candidates = new List<ClipCandidate>(byIdentity.Values);
             candidates.Sort(CompareCandidates);
             return candidates;
+        }
+
+        private static void CollectPath(
+            string path,
+            IDictionary<ClipIdentity, ClipCandidate> candidates,
+            ISet<string> visitedPaths,
+            ICollection<string> missingPaths,
+            StringBuilder inventory)
+        {
+            if (!visitedPaths.Add(path)) return;
+            UnityEngine.Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
+            var clips = new List<AnimationClip>(assets.Length);
+            int uniqueBefore = candidates.Count;
+            for (int assetIndex = 0; assetIndex < assets.Length; assetIndex++)
+            {
+                if (assets[assetIndex] is not AnimationClip clip || IsPreviewClip(clip))
+                    continue;
+                clips.Add(clip);
+                AddCandidate(clip, candidates, path);
+            }
+
+            AppendInventorySource(
+                inventory,
+                path,
+                clips,
+                clips.Count,
+                candidates.Count - uniqueBefore);
+            if (clips.Count == 0) missingPaths.Add(path);
+        }
+
+        private static void AppendInventorySource(
+            StringBuilder inventory,
+            string source,
+            IReadOnlyList<AnimationClip> clips,
+            int importedCount,
+            int uniqueAdded)
+        {
+            inventory.Append("- ").Append(source)
+                .Append(": imported=").Append(importedCount)
+                .Append(", unique-added=").Append(uniqueAdded)
+                .Append(", subassets=[");
+            for (int index = 0; index < clips.Count; index++)
+            {
+                if (index > 0) inventory.Append(", ");
+                inventory.Append(clips[index] != null ? clips[index].name : "<null>");
+            }
+            inventory.AppendLine("]");
         }
 
         private static void AddCandidate(
@@ -265,7 +341,7 @@ namespace Elemental.Authoring.Editor
                         continue;
                     counts[curveIndex]++;
                     AnimationCurve source = AnimationUtility.GetEditorCurve(clip, binding);
-                    curves[curveIndex] = CloneCurve(source);
+                    curves[curveIndex] = CloneFiniteCurve(source);
                 }
             }
 
@@ -310,19 +386,34 @@ namespace Elemental.Authoring.Editor
                             keyIndex * (samples.Count - 1f) / (keyCount - 1f))
                         : 0;
                     EarthAnimationMetadataSample sample = samples[sampleIndex];
+                    float time = sample.Time01;
+                    float value = sample.CurveValue(curveIndex);
+                    if (!float.IsFinite(time) || !float.IsFinite(value))
+                        throw new InvalidOperationException(
+                            $"Catalog-local metadata analysis produced a non-finite key " +
+                            $"for '{EarthAnimationClipMetadata.CurveName(curveIndex)}' " +
+                            $"at sample {sampleIndex}.");
                     keys[keyIndex] = new Keyframe(
-                        Mathf.Clamp01(sample.Time01),
-                        Mathf.Clamp01(sample.CurveValue(curveIndex)));
+                        Mathf.Clamp01(time),
+                        Mathf.Clamp01(value));
                 }
                 curves[curveIndex] = new AnimationCurve(keys);
             }
             return curves;
         }
 
-        private static AnimationCurve CloneCurve(AnimationCurve source)
+        private static AnimationCurve CloneFiniteCurve(AnimationCurve source)
         {
             if (source == null) return null;
-            var clone = new AnimationCurve(source.keys)
+            Keyframe[] keys = source.keys;
+            if (keys.Length == 0) return null;
+            for (int index = 0; index < keys.Length; index++)
+            {
+                Keyframe key = keys[index];
+                if (!float.IsFinite(key.time) || !float.IsFinite(key.value))
+                    return null;
+            }
+            var clone = new AnimationCurve(keys)
             {
                 preWrapMode = source.preWrapMode,
                 postWrapMode = source.postWrapMode

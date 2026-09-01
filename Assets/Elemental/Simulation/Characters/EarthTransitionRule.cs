@@ -301,8 +301,10 @@ namespace Elemental.Simulation.Characters
         public static bool ShouldReleaseFeet(
             in EarthTransitionRule rule,
             float elapsedSeconds,
-            bool destinationContactReached) =>
-            rule.FootReleasePolicy switch
+            bool destinationContactReached)
+        {
+            EarthTransitionFootReleasePolicy policy = ResolveFootReleasePolicy(in rule);
+            return policy switch
             {
                 EarthTransitionFootReleasePolicy.PreservePlanted => false,
                 EarthTransitionFootReleasePolicy.ReleaseAfterDelay =>
@@ -312,6 +314,33 @@ namespace Elemental.Simulation.Characters
                     destinationContactReached,
                 EarthTransitionFootReleasePolicy.ReleaseImmediately => true,
                 _ => false
+            };
+        }
+
+        /// <summary>
+        /// Maps semantic contact ownership to the command consumed by the sole
+        /// foot-lock owner. Pair-authored release timing remains effective unless
+        /// the contact contract requires a stronger release boundary.
+        /// </summary>
+        public static EarthTransitionFootReleasePolicy ResolveFootReleasePolicy(
+            in EarthTransitionRule rule) =>
+            rule.ContactPolicy switch
+            {
+                EarthTransitionContactPolicy.PreserveCurrentPlants =>
+                    rule.FootReleasePolicy,
+                EarthTransitionContactPolicy.MatchDestinationContacts =>
+                    rule.FootReleasePolicy == EarthTransitionFootReleasePolicy.PreservePlanted
+                        ? EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact
+                        : rule.FootReleasePolicy,
+                EarthTransitionContactPolicy.AuthoredLandingContact =>
+                    rule.FootReleasePolicy == EarthTransitionFootReleasePolicy.PreservePlanted
+                        ? EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact
+                        : rule.FootReleasePolicy,
+                EarthTransitionContactPolicy.ReleaseBeforeBlend =>
+                    EarthTransitionFootReleasePolicy.ReleaseImmediately,
+                EarthTransitionContactPolicy.IgnoreContacts =>
+                    EarthTransitionFootReleasePolicy.ReleaseImmediately,
+                _ => EarthTransitionFootReleasePolicy.PreservePlanted
             };
 
         private static float ResolveDestinationStartSeconds(

@@ -126,6 +126,59 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void ContactPolicyMapsExplicitlyToSoleFootLockOwner()
+        {
+            EarthTransitionRule preserve = Rule(
+                EarthTransitionFamily.PhaseSynchronized,
+                contactPolicy: EarthTransitionContactPolicy.PreserveCurrentPlants,
+                footRelease: EarthTransitionFootReleasePolicy.ReleaseAfterDelay);
+            EarthTransitionRule match = Rule(
+                EarthTransitionFamily.ContactAligned,
+                contactPolicy: EarthTransitionContactPolicy.MatchDestinationContacts);
+            EarthTransitionRule authored = Rule(
+                EarthTransitionFamily.ContactAligned,
+                contactPolicy: EarthTransitionContactPolicy.AuthoredLandingContact);
+            EarthTransitionRule authoredOverride = Rule(
+                EarthTransitionFamily.ContactAligned,
+                contactPolicy: EarthTransitionContactPolicy.AuthoredLandingContact,
+                footRelease: EarthTransitionFootReleasePolicy.ReleaseAfterDelay);
+            EarthTransitionRule preRelease = Rule(
+                EarthTransitionFamily.PoseInertialized,
+                contactPolicy: EarthTransitionContactPolicy.ReleaseBeforeBlend);
+            EarthTransitionRule ignore = Rule(
+                EarthTransitionFamily.AdditiveOverlay,
+                contactPolicy: EarthTransitionContactPolicy.IgnoreContacts);
+
+            Assert.That(
+                EarthTransitionRulePolicy.ResolveFootReleasePolicy(in preserve),
+                Is.EqualTo(EarthTransitionFootReleasePolicy.ReleaseAfterDelay));
+            Assert.That(
+                EarthTransitionRulePolicy.ResolveFootReleasePolicy(in match),
+                Is.EqualTo(EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact));
+            Assert.That(
+                EarthTransitionRulePolicy.ResolveFootReleasePolicy(in authored),
+                Is.EqualTo(EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact));
+            Assert.That(
+                EarthTransitionRulePolicy.ResolveFootReleasePolicy(in authoredOverride),
+                Is.EqualTo(EarthTransitionFootReleasePolicy.ReleaseAfterDelay));
+            Assert.That(
+                EarthTransitionRulePolicy.ResolveFootReleasePolicy(in preRelease),
+                Is.EqualTo(EarthTransitionFootReleasePolicy.ReleaseImmediately));
+            Assert.That(
+                EarthTransitionRulePolicy.ResolveFootReleasePolicy(in ignore),
+                Is.EqualTo(EarthTransitionFootReleasePolicy.ReleaseImmediately));
+            Assert.That(
+                EarthTransitionRulePolicy.ShouldReleaseFeet(in match, 0f, false),
+                Is.False);
+            Assert.That(
+                EarthTransitionRulePolicy.ShouldReleaseFeet(in match, 0f, true),
+                Is.True);
+            Assert.That(
+                EarthTransitionRulePolicy.ShouldReleaseFeet(in ignore, 0f, false),
+                Is.True);
+        }
+
+        [Test]
         public void MalformedRuleProducesFiniteBoundedFallback()
         {
             EarthNormalizedAnimationWindow window =
