@@ -538,46 +538,59 @@ namespace Elemental.Authoring.Editor
                                LoadClip(CrouchIdlePath) ?? idle;
             surf.motion = LoadClip(CrouchIdlePath) ?? idle;
 
-            locomotion.transitions = Array.Empty<AnimatorStateTransition>();
-            jump.transitions = Array.Empty<AnimatorStateTransition>();
-            fall.transitions = Array.Empty<AnimatorStateTransition>();
-            land.transitions = Array.Empty<AnimatorStateTransition>();
-            movingLand.transitions = Array.Empty<AnimatorStateTransition>();
-            hardLand.transitions = Array.Empty<AnimatorStateTransition>();
-            knockdownRecovery.transitions = Array.Empty<AnimatorStateTransition>();
-            dodge.transitions = Array.Empty<AnimatorStateTransition>();
-            turnInPlace.transitions = Array.Empty<AnimatorStateTransition>();
-            surfEnter.transitions = Array.Empty<AnimatorStateTransition>();
-            surf.transitions = Array.Empty<AnimatorStateTransition>();
-            machine.anyStateTransitions = Array.Empty<AnimatorStateTransition>();
+            var locomotionTransitions = new GeneratedStateTransitionWriter(locomotion);
+            var jumpTransitions = new GeneratedStateTransitionWriter(jump);
+            var fallTransitions = new GeneratedStateTransitionWriter(fall);
+            var landTransitions = new GeneratedStateTransitionWriter(land);
+            var movingLandTransitions = new GeneratedStateTransitionWriter(movingLand);
+            var hardLandTransitions = new GeneratedStateTransitionWriter(hardLand);
+            var knockdownRecoveryTransitions = new GeneratedStateTransitionWriter(knockdownRecovery);
+            var dodgeTransitions = new GeneratedStateTransitionWriter(dodge);
+            var turnInPlaceTransitions = new GeneratedStateTransitionWriter(turnInPlace);
+            var surfEnterTransitions = new GeneratedStateTransitionWriter(surfEnter);
+            var surfTransitions = new GeneratedStateTransitionWriter(surf);
+            var anyStateTransitions = new GeneratedAnyStateTransitionWriter(machine);
 
-            AddConditionTransition(locomotion, jump, "Grounded", AnimatorConditionMode.IfNot, 0f, 0.07f);
-            AddConditionTransition(jump, fall, "VerticalSpeed", AnimatorConditionMode.Less, 0f, 0.07f);
-            AddConditionTransition(fall, hardLand, "Grounded", AnimatorConditionMode.If, 0f, 0.06f,
+            AddConditionTransition(locomotionTransitions, jump, "Grounded", AnimatorConditionMode.IfNot, 0f, 0.07f);
+            AddConditionTransition(jumpTransitions, fall, "VerticalSpeed", AnimatorConditionMode.Less, 0f, 0.07f);
+            AddConditionTransition(fallTransitions, hardLand, "Grounded", AnimatorConditionMode.If, 0f, 0.06f,
                 "HardLanding", AnimatorConditionMode.If, 0f);
-            AddConditionTransition(fall, land, "Grounded", AnimatorConditionMode.If, 0f, 0.06f,
+            AddConditionTransition(fallTransitions, land, "Grounded", AnimatorConditionMode.If, 0f, 0.06f,
                 "HardLanding", AnimatorConditionMode.IfNot, 0f);
-            AddExitTransition(land, locomotion, 0.70f, 0.10f);
-            AddExitTransition(movingLand, locomotion, 0.58f, 0.08f);
-            AddExitTransition(hardLand, locomotion, 0.82f, 0.12f);
+            AddExitTransition(landTransitions, locomotion, 0.70f, 0.10f);
+            AddExitTransition(movingLandTransitions, locomotion, 0.58f, 0.08f);
+            AddExitTransition(hardLandTransitions, locomotion, 0.82f, 0.12f);
             // No controller-owned exit here. HumanoidCharacterPresentation keeps
             // the selected pose-matched state authoritative until the supported
             // authored recovery-exit marker, then EarthTransitionDirector resumes
             // ordinary locomotion as the sole base-state writer.
-            AnimatorStateTransition dodgeTransition = machine.AddAnyStateTransition(dodge);
+            AnimatorStateTransition dodgeTransition = anyStateTransitions.Next(dodge);
+            ResetTransition(dodgeTransition, dodge);
             dodgeTransition.hasExitTime = false;
+            dodgeTransition.exitTime = 0.75f;
             dodgeTransition.duration = 0.045f;
-            dodgeTransition.canTransitionToSelf = false;
-            dodgeTransition.interruptionSource = TransitionInterruptionSource.SourceThenDestination;
             dodgeTransition.AddCondition(AnimatorConditionMode.If, 0f, "Dodge");
-            AddExitTransition(dodge, locomotion, 0.90f, 0.07f);
-            AddConditionTransition(locomotion, surfEnter, "Surfing", AnimatorConditionMode.If, 0f, 0.10f);
-            AddConditionTransition(land, surfEnter, "Surfing", AnimatorConditionMode.If, 0f, 0.10f);
-            AddConditionTransition(movingLand, surfEnter, "Surfing", AnimatorConditionMode.If, 0f, 0.10f);
-            AddConditionTransition(hardLand, surfEnter, "Surfing", AnimatorConditionMode.If, 0f, 0.10f);
-            AddExitTransition(surfEnter, surf, 0.72f, 0.08f, "Surfing");
-            AddConditionTransition(surfEnter, locomotion, "Surfing", AnimatorConditionMode.IfNot, 0f, 0.09f);
-            AddConditionTransition(surf, locomotion, "Surfing", AnimatorConditionMode.IfNot, 0f, 0.14f);
+            AddExitTransition(dodgeTransitions, locomotion, 0.90f, 0.07f);
+            AddConditionTransition(locomotionTransitions, surfEnter, "Surfing", AnimatorConditionMode.If, 0f, 0.10f);
+            AddConditionTransition(landTransitions, surfEnter, "Surfing", AnimatorConditionMode.If, 0f, 0.10f);
+            AddConditionTransition(movingLandTransitions, surfEnter, "Surfing", AnimatorConditionMode.If, 0f, 0.10f);
+            AddConditionTransition(hardLandTransitions, surfEnter, "Surfing", AnimatorConditionMode.If, 0f, 0.10f);
+            AddExitTransition(surfEnterTransitions, surf, 0.72f, 0.08f, "Surfing");
+            AddConditionTransition(surfEnterTransitions, locomotion, "Surfing", AnimatorConditionMode.IfNot, 0f, 0.09f);
+            AddConditionTransition(surfTransitions, locomotion, "Surfing", AnimatorConditionMode.IfNot, 0f, 0.14f);
+
+            locomotionTransitions.Complete();
+            jumpTransitions.Complete();
+            fallTransitions.Complete();
+            landTransitions.Complete();
+            movingLandTransitions.Complete();
+            hardLandTransitions.Complete();
+            knockdownRecoveryTransitions.Complete();
+            dodgeTransitions.Complete();
+            turnInPlaceTransitions.Complete();
+            surfEnterTransitions.Complete();
+            surfTransitions.Complete();
+            anyStateTransitions.Complete();
         }
 
         private static void ConfigureMagicLayer(AnimatorController controller)
@@ -607,12 +620,16 @@ namespace Elemental.Authoring.Editor
             ready.motion = LoadClip(StandToCrouchPath, NeutralIdleClipName) ?? ready.motion;
             cast.timeParameterActive = true;
             cast.timeParameter = "EarthMotionTime";
-            ready.transitions = Array.Empty<AnimatorStateTransition>();
-            cast.transitions = Array.Empty<AnimatorStateTransition>();
-            machine.anyStateTransitions = Array.Empty<AnimatorStateTransition>();
+            var readyTransitions = new GeneratedStateTransitionWriter(ready);
+            var castTransitions = new GeneratedStateTransitionWriter(cast);
+            var anyStateTransitions = new GeneratedAnyStateTransitionWriter(machine);
             machine.defaultState = ready;
-            AddConditionTransition(ready, cast, "Cast", AnimatorConditionMode.If, 0f, 0.10f);
-            AddConditionTransition(cast, ready, "Cast", AnimatorConditionMode.IfNot, 0f, 0.14f);
+            AddConditionTransition(readyTransitions, cast, "Cast", AnimatorConditionMode.If, 0f, 0.10f);
+            AddConditionTransition(castTransitions, ready, "Cast", AnimatorConditionMode.IfNot, 0f, 0.14f);
+
+            readyTransitions.Complete();
+            castTransitions.Complete();
+            anyStateTransitions.Complete();
         }
 
         private static void ConfigureImpactLayer(AnimatorController controller)
@@ -622,12 +639,16 @@ namespace Elemental.Authoring.Editor
             AnimatorState recoil = FindOrCreateState(machine, "Recoil");
             recoil.motion = LoadClip(SideHitPath) ?? LoadClip(UppercutHitPath) ?? recoil.motion;
             ready.motion = LoadClip(StandToCrouchPath, NeutralIdleClipName) ?? ready.motion;
-            ready.transitions = Array.Empty<AnimatorStateTransition>();
-            recoil.transitions = Array.Empty<AnimatorStateTransition>();
-            machine.anyStateTransitions = Array.Empty<AnimatorStateTransition>();
+            var readyTransitions = new GeneratedStateTransitionWriter(ready);
+            var recoilTransitions = new GeneratedStateTransitionWriter(recoil);
+            var anyStateTransitions = new GeneratedAnyStateTransitionWriter(machine);
             machine.defaultState = ready;
-            AddConditionTransition(ready, recoil, "Impact", AnimatorConditionMode.If, 0f, 0.035f);
-            AddExitTransition(recoil, ready, 0.72f, 0.16f);
+            AddConditionTransition(readyTransitions, recoil, "Impact", AnimatorConditionMode.If, 0f, 0.035f);
+            AddExitTransition(recoilTransitions, ready, 0.72f, 0.16f);
+
+            readyTransitions.Complete();
+            recoilTransitions.Complete();
+            anyStateTransitions.Complete();
             AnimatorControllerLayer[] layers = controller.layers;
             layers[2].blendingMode = AnimatorLayerBlendingMode.Override;
             layers[2].defaultWeight = 0f;
@@ -671,7 +692,8 @@ namespace Elemental.Authoring.Editor
 
         private static BlendTree FindOrCreateBlendTree(AnimatorController controller, string name)
         {
-            UnityEngine.Object[] assets = AssetDatabase.LoadAllAssetsAtPath(ControllerPath);
+            string controllerPath = AssetDatabase.GetAssetPath(controller);
+            UnityEngine.Object[] assets = AssetDatabase.LoadAllAssetsAtPath(controllerPath);
             for (int index = 0; index < assets.Length; index++)
                 if (assets[index] is BlendTree tree && tree.name == name) return tree;
             var created = new BlendTree { name = name, hideFlags = HideFlags.HideInHierarchy };
@@ -688,7 +710,7 @@ namespace Elemental.Authoring.Editor
         }
 
         private static void AddConditionTransition(
-            AnimatorState from,
+            GeneratedStateTransitionWriter from,
             AnimatorState to,
             string parameter,
             AnimatorConditionMode mode,
@@ -698,31 +720,122 @@ namespace Elemental.Authoring.Editor
             AnimatorConditionMode secondMode = AnimatorConditionMode.If,
             float secondThreshold = 0f)
         {
-            AnimatorStateTransition transition = from.AddTransition(to);
+            AnimatorStateTransition transition = from.Next(to);
+            ResetTransition(transition, to);
             transition.hasExitTime = false;
+            transition.exitTime = 0.9f;
             transition.duration = duration;
-            transition.canTransitionToSelf = false;
-            transition.interruptionSource = TransitionInterruptionSource.SourceThenDestination;
             transition.AddCondition(mode, threshold, parameter);
             if (!string.IsNullOrEmpty(secondParameter))
                 transition.AddCondition(secondMode, secondThreshold, secondParameter);
         }
 
         private static void AddExitTransition(
-            AnimatorState from,
+            GeneratedStateTransitionWriter from,
             AnimatorState to,
             float exitTime,
             float duration,
             string requiredBool = null)
         {
-            AnimatorStateTransition transition = from.AddTransition(to);
+            AnimatorStateTransition transition = from.Next(to);
+            ResetTransition(transition, to);
             transition.hasExitTime = true;
             transition.exitTime = exitTime;
             transition.duration = duration;
-            transition.canTransitionToSelf = false;
-            transition.interruptionSource = TransitionInterruptionSource.SourceThenDestination;
             if (!string.IsNullOrEmpty(requiredBool))
                 transition.AddCondition(AnimatorConditionMode.If, 0f, requiredBool);
+        }
+
+        private static void ResetTransition(
+            AnimatorStateTransition transition,
+            AnimatorState destination)
+        {
+            transition.name = string.Empty;
+            transition.conditions = Array.Empty<AnimatorCondition>();
+            transition.destinationStateMachine = null;
+            transition.destinationState = destination;
+            transition.isExit = false;
+            transition.solo = false;
+            transition.mute = false;
+            transition.offset = 0f;
+            transition.hasFixedDuration = true;
+            transition.orderedInterruption = true;
+            transition.canTransitionToSelf = false;
+            transition.interruptionSource = TransitionInterruptionSource.SourceThenDestination;
+        }
+
+        // Animator transitions are persistent controller subassets. Replacing the
+        // transition arrays only detaches them and makes every rebuild append new
+        // orphan subassets. Reuse the generated slots in order and use Unity's
+        // removal APIs for excess slots so the persistent asset is deleted too.
+        private sealed class GeneratedStateTransitionWriter
+        {
+            private readonly AnimatorState _state;
+            private readonly AnimatorStateTransition[] _existing;
+            private int _nextIndex;
+
+            public GeneratedStateTransitionWriter(AnimatorState state)
+            {
+                _state = state ?? throw new ArgumentNullException(nameof(state));
+                _existing = state.transitions ?? Array.Empty<AnimatorStateTransition>();
+            }
+
+            public AnimatorStateTransition Next(AnimatorState destination)
+            {
+                AnimatorStateTransition transition = _nextIndex < _existing.Length
+                    ? _existing[_nextIndex]
+                    : null;
+                _nextIndex++;
+                return transition != null ? transition : _state.AddTransition(destination);
+            }
+
+            public void Complete()
+            {
+                for (int index = _existing.Length - 1; index >= _nextIndex; index--)
+                    if (_existing[index] != null)
+                        _state.RemoveTransition(_existing[index]);
+                if (_state.transitions.Length != _nextIndex)
+                    throw new InvalidOperationException(
+                        $"Failed to reconcile generated transitions for state '{_state.name}'.");
+            }
+        }
+
+        private sealed class GeneratedAnyStateTransitionWriter
+        {
+            private readonly AnimatorStateMachine _stateMachine;
+            private readonly AnimatorStateTransition[] _existing;
+            private int _nextIndex;
+
+            public GeneratedAnyStateTransitionWriter(AnimatorStateMachine stateMachine)
+            {
+                _stateMachine = stateMachine ?? throw new ArgumentNullException(nameof(stateMachine));
+                _existing = stateMachine.anyStateTransitions ?? Array.Empty<AnimatorStateTransition>();
+            }
+
+            public AnimatorStateTransition Next(AnimatorState destination)
+            {
+                AnimatorStateTransition transition = _nextIndex < _existing.Length
+                    ? _existing[_nextIndex]
+                    : null;
+                _nextIndex++;
+                return transition != null
+                    ? transition
+                    : _stateMachine.AddAnyStateTransition(destination);
+            }
+
+            public void Complete()
+            {
+                for (int index = _existing.Length - 1; index >= _nextIndex; index--)
+                    if (_existing[index] != null)
+                    {
+                        if (!_stateMachine.RemoveAnyStateTransition(_existing[index]))
+                            throw new InvalidOperationException(
+                                $"Failed to remove generated AnyState transition from '{_stateMachine.name}'.");
+                    }
+                if (_stateMachine.anyStateTransitions.Length != _nextIndex)
+                    throw new InvalidOperationException(
+                        $"Failed to reconcile generated AnyState transitions for '{_stateMachine.name}'.");
+            }
         }
 
         private static void AddParameterIfMissing(
