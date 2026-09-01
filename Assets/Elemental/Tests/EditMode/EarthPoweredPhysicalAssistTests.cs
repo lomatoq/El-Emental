@@ -6,6 +6,7 @@ using Elemental.Simulation.Combat;
 using NUnit.Framework;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
 namespace Elemental.Tests.EditMode
@@ -17,11 +18,11 @@ namespace Elemental.Tests.EditMode
         {
             var assist = new EarthPoweredPhysicalAssist();
 
-            EarthPoweredImpactDecision light = assist.RouteAcceptedResponse(
+            EarthPoweredImpactDecision light = Claim(assist,
                 1u, EarthCharacterImpactResponse.Flinch, 0.2f, new float3(1f, 0f, 0f));
-            EarthPoweredImpactDecision medium = assist.RouteAcceptedResponse(
+            EarthPoweredImpactDecision medium = Claim(assist,
                 2u, EarthCharacterImpactResponse.Stagger, 0.6f, new float3(1f, 0f, 0f));
-            EarthPoweredImpactDecision heavy = assist.RouteAcceptedResponse(
+            EarthPoweredImpactDecision heavy = Claim(assist,
                 3u, EarthCharacterImpactResponse.Knockout, 1f, new float3(1f, 0f, 0f));
 
             Assert.That(light.Owner, Is.EqualTo(EarthPoweredImpactOwner.AgentAInertialResponse));
@@ -40,7 +41,7 @@ namespace Elemental.Tests.EditMode
             Assert.That(canonical.Mode, Is.EqualTo(CharacterPhysicalMode.PhysicalAssist));
 
             var assist = new EarthPoweredPhysicalAssist();
-            assist.RouteAcceptedResponse(
+            Claim(assist,
                 7u, EarthCharacterImpactResponse.Stagger, 0.65f, new float3(1f, 0f, 0f));
             EarthPoweredAssistInput input = SupportedInput(
                 CharacterPhysicalMode.PhysicalAssist,
@@ -57,10 +58,104 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void EveryCanonicalProfileLeavesLegDriveFullyUnowned()
+        {
+            foreach (EarthMuscleProfileId id in Enum.GetValues(typeof(EarthMuscleProfileId)))
+            {
+                EarthMuscleRegionTuning leg = EarthMuscleProfiles.Resolve(id).Leg;
+                Assert.That(leg.Frequency, Is.Zero, $"{id} frequency");
+                Assert.That(leg.Damping, Is.Zero, $"{id} damping");
+                Assert.That(leg.TorqueCap, Is.Zero, $"{id} torque");
+                Assert.That(leg.DriveWeight, Is.Zero, $"{id} drive");
+                Assert.That(leg.TransferWeight, Is.Zero, $"{id} transfer");
+            }
+        }
+
+        [Test]
+        public void JointDefaultsUnassignedAndFailsLoudWithDriveDisabled()
+        {
+            var root = new GameObject("Unassigned Powered Joint");
+            var target = new GameObject("Joint Target");
+            try
+            {
+                Rigidbody body = root.AddComponent<Rigidbody>();
+                ConfigurableJoint configurable = root.AddComponent<ConfigurableJoint>();
+                ActiveRagdollJoint joint = root.AddComponent<ActiveRagdollJoint>();
+                joint.Configure(body, configurable, target.transform, 100f, 10f, 50f, 30f);
+                Assert.That(joint.HasConfiguredBodyRegion, Is.False);
+                Assert.That(joint.BodyRegion, Is.EqualTo(EarthBodyRegion.Unassigned));
+
+                EarthMuscleRegionTuning chest = EarthMuscleProfiles.Resolve(
+                    EarthMuscleProfileId.Reactive).Chest;
+                LogAssert.Expect(
+                    LogType.Error,
+                    "ActiveRagdollJoint on 'Unassigned Powered Joint' disabled powered assist because its body region is unassigned.");
+                joint.ApplyPoweredPose(in chest, 1f, 1f / 60f);
+                Assert.That(configurable.slerpDrive.maximumForce, Is.Zero);
+            }
+            finally
+            {
+                Object.DestroyImmediate(target);
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void OffsetStanceHullIncludesLongitudinalAndLateralFootExtent()
+        {
+            EarthSupportPolygon polygon = EarthSupportPolygon.FromPlantedFeet(
+                new float3(-0.32f, 0f, -0.38f),
+                new float3(0.28f, 0f, 0.42f),
+                true,
+                true,
+                new float3(0f, 1f, 0f),
+                new float3(0f, 0f, 1f),
+                0.18f,
+                0.08f);
+
+            Assert.That(polygon.IsValid, Is.True);
+            Assert.That(polygon.Count, Is.GreaterThanOrEqualTo(4));
+            EarthBalanceDecision insideLongitudinalReach = EarthSupportPolygonSolver.Evaluate(
+                new float3(0.20f, 1f, 0.36f),
+                new float3(0f, 1f, 0f),
+                in polygon);
+            Assert.That(insideLongitudinalReach.IsOutside, Is.False,
+                "The stance hull must retain the planted feet's longitudinal offset.");
+        }
+
+        [Test]
+        public void SinglePlantedFootExcludesSwingFootFromSupportHull()
+        {
+            float3 left = new float3(-0.25f, 0f, -0.1f);
+            float3 swingRight = new float3(0.8f, 0f, 0.5f);
+            EarthSupportPolygon polygon = EarthSupportPolygon.FromPlantedFeet(
+                left,
+                swingRight,
+                true,
+                false,
+                new float3(0f, 1f, 0f),
+                new float3(0f, 0f, 1f),
+                0.18f,
+                0.08f);
+
+            Assert.That(polygon.IsValid, Is.True);
+            Assert.That(polygon.Count, Is.EqualTo(4));
+            Assert.That(EarthSupportPolygonSolver.Evaluate(
+                left + new float3(0f, 1f, 0f),
+                new float3(0f, 1f, 0f),
+                in polygon).IsOutside, Is.False);
+            Assert.That(EarthSupportPolygonSolver.Evaluate(
+                swingRight + new float3(0f, 1f, 0f),
+                new float3(0f, 1f, 0f),
+                in polygon).IsOutside, Is.True,
+                "A swing foot must never enlarge the support polygon.");
+        }
+
+        [Test]
         public void CenterOfMassOutsideSupportPolygon_RequestsOneAuthoredStep()
         {
             var assist = new EarthPoweredPhysicalAssist();
-            assist.RouteAcceptedResponse(
+            Claim(assist,
                 11u, EarthCharacterImpactResponse.Stagger, 0.7f, new float3(1f, 0f, 0f));
             EarthPoweredAssistInput input = SupportedInput(
                 CharacterPhysicalMode.Stagger,
@@ -83,7 +178,7 @@ namespace Elemental.Tests.EditMode
         public void UnreachableBrace_IsRejectedWithoutPelvisForceCommand()
         {
             var assist = new EarthPoweredPhysicalAssist();
-            assist.RouteAcceptedResponse(
+            Claim(assist,
                 21u, EarthCharacterImpactResponse.Stagger, 0.6f, new float3(0f, 0f, 1f));
             EarthSupportPolygon polygon = Polygon();
             var unreachable = new EarthPhysicalSurfaceProbe(
@@ -118,7 +213,7 @@ namespace Elemental.Tests.EditMode
         public void FallProtect_UsesBoundedSemanticProbeAndNeverEmitsImpulse()
         {
             var assist = new EarthPoweredPhysicalAssist();
-            EarthPoweredImpactDecision decision = assist.RouteAcceptedResponse(
+            EarthPoweredImpactDecision decision = Claim(assist,
                 29u, EarthCharacterImpactResponse.Stagger, 0.9f, new float3(0f, -1f, 0f));
             EarthSupportPolygon polygon = default;
             EarthPhysicalSurfaceProbe none = default;
@@ -155,7 +250,7 @@ namespace Elemental.Tests.EditMode
         public void ReachableBraceAndSupport_EmitOnlySemanticRequests()
         {
             var braceAssist = new EarthPoweredPhysicalAssist();
-            braceAssist.RouteAcceptedResponse(
+            Claim(braceAssist,
                 30u, EarthCharacterImpactResponse.Stagger, 0.7f, new float3(0f, 0f, 1f));
             EarthSupportPolygon polygon = Polygon();
             EarthPhysicalSurfaceProbe none = default;
@@ -185,7 +280,7 @@ namespace Elemental.Tests.EditMode
                 Is.EqualTo(EarthPhysicalActionKind.BraceAgainstSurface));
 
             var reachAssist = new EarthPoweredPhysicalAssist();
-            reachAssist.RouteAcceptedResponse(
+            Claim(reachAssist,
                 31u, EarthCharacterImpactResponse.Stagger, 0.7f, new float3(1f, 0f, 0f));
             var reach = new EarthPhysicalSurfaceProbe(
                 EarthSemanticSurfaceKind.ReachableSupport,
@@ -219,24 +314,24 @@ namespace Elemental.Tests.EditMode
         {
             var assist = new EarthPoweredPhysicalAssist();
             for (uint id = 1u; id <= EarthPoweredPhysicalAssist.ResponseHistoryCapacity; id++)
-                Assert.That(assist.RouteAcceptedResponse(
+                Assert.That(Claim(assist,
                     id,
                     EarthCharacterImpactResponse.Stagger,
                     0.5f,
                     new float3(1f, 0f, 0f)).Accepted, Is.True);
 
-            EarthPoweredImpactDecision duplicate = assist.RouteAcceptedResponse(
+            EarthPoweredImpactDecision duplicate = Claim(assist,
                 1u, EarthCharacterImpactResponse.Stagger, 0.5f, new float3(1f, 0f, 0f));
             Assert.That(duplicate.Duplicate, Is.True);
             Assert.That(assist.AcceptedResponseCount,
                 Is.EqualTo(EarthPoweredPhysicalAssist.ResponseHistoryCapacity));
 
-            Assert.That(assist.RouteAcceptedResponse(
+            Assert.That(Claim(assist,
                 17u,
                 EarthCharacterImpactResponse.Stagger,
                 0.5f,
                 new float3(1f, 0f, 0f)).Accepted, Is.True);
-            Assert.That(assist.RouteAcceptedResponse(
+            Assert.That(Claim(assist,
                 1u,
                 EarthCharacterImpactResponse.Stagger,
                 0.5f,
@@ -245,12 +340,75 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void MediumClaimRequiresLiveEligibilityAndControllerAcceptance()
+        {
+            Assert.That(EarthPoweredAssistEligibility.Evaluate(
+                CharacterPhysicalMode.AnimatedMotor,
+                false,
+                true,
+                true,
+                true,
+                true), Is.EqualTo(EarthPoweredAssistRejection.UnstableSupport));
+            Assert.That(EarthPoweredAssistEligibility.Evaluate(
+                CharacterPhysicalMode.AnimatedMotor,
+                true,
+                false,
+                true,
+                true,
+                true), Is.EqualTo(EarthPoweredAssistRejection.MissingFeet));
+            Assert.That(EarthPoweredAssistEligibility.Evaluate(
+                CharacterPhysicalMode.AnimatedMotor,
+                true,
+                true,
+                false,
+                false,
+                false), Is.EqualTo(EarthPoweredAssistRejection.NoPlantedFoot));
+            Assert.That(EarthPoweredAssistEligibility.Evaluate(
+                CharacterPhysicalMode.FullRagdoll,
+                true,
+                true,
+                true,
+                true,
+                true), Is.EqualTo(EarthPoweredAssistRejection.CanonicalModeRejected));
+            Assert.That(EarthPoweredAssistEligibility.Evaluate(
+                CharacterPhysicalMode.Recovery,
+                true,
+                true,
+                true,
+                true,
+                true), Is.EqualTo(EarthPoweredAssistRejection.CanonicalModeRejected));
+
+            var assist = new EarthPoweredPhysicalAssist();
+            AssertRejectedClaimDoesNotConsume(
+                assist, 0xD001u, EarthPoweredAssistRejection.UnstableSupport);
+            AssertRejectedClaimDoesNotConsume(
+                assist, 0xD002u, EarthPoweredAssistRejection.MissingFeet);
+            AssertRejectedClaimDoesNotConsume(
+                assist, 0xD003u, EarthPoweredAssistRejection.NoPlantedFoot);
+            AssertRejectedClaimDoesNotConsume(
+                assist, 0xD004u, EarthPoweredAssistRejection.CanonicalModeRejected);
+            AssertRejectedClaimDoesNotConsume(
+                assist, 0xD005u, EarthPoweredAssistRejection.ControllerRejected);
+
+            EarthPoweredImpactDecision accepted = Claim(
+                assist,
+                0xD001u,
+                EarthCharacterImpactResponse.Stagger,
+                0.7f,
+                new float3(1f, 0f, 0f));
+            Assert.That(accepted.Accepted, Is.True);
+            Assert.That(accepted.Owner,
+                Is.EqualTo(EarthPoweredImpactOwner.PoweredPhysicalAssist));
+            Assert.That(assist.IsResponseKnown(0xD001u), Is.True);
+        }
+
+        [Test]
         public void DistinctHeavyHitHasOneExistingRagdollOwnerAndDuplicateHasNone()
         {
             var assist = new EarthPoweredPhysicalAssist();
-            EarthPoweredImpactDecision first = assist.RouteAcceptedResponse(
+            EarthPoweredImpactDecision first = Claim(assist,
                 40u, EarthCharacterImpactResponse.Knockout, 1f, new float3(0f, 1f, 0f));
-            EarthPoweredImpactDecision duplicate = assist.RouteAcceptedResponse(
+            EarthPoweredImpactDecision duplicate = Claim(assist,
                 40u, EarthCharacterImpactResponse.Knockout, 1f, new float3(0f, 1f, 0f));
 
             Assert.That(first.Owner, Is.EqualTo(EarthPoweredImpactOwner.ExistingFullRagdoll));
@@ -266,7 +424,7 @@ namespace Elemental.Tests.EditMode
         public void ResponseRecovery_IsTimeNormalizedAcrossFixedRates(int rate)
         {
             var assist = new EarthPoweredPhysicalAssist();
-            assist.RouteAcceptedResponse(
+            Claim(assist,
                 51u, EarthCharacterImpactResponse.Stagger, 0.8f, new float3(1f, 0f, 0f));
             float dt = 1f / rate;
             EarthPoweredAssistOutput output = default;
@@ -367,7 +525,7 @@ namespace Elemental.Tests.EditMode
         public void HotLoopStep_AllocatesZeroManagedBytes()
         {
             var assist = new EarthPoweredPhysicalAssist();
-            assist.RouteAcceptedResponse(
+            Claim(assist,
                 63u, EarthCharacterImpactResponse.Stagger, 0.7f, new float3(1f, 0f, 0f));
             EarthPoweredAssistInput input = SupportedInput(
                 CharacterPhysicalMode.Stagger,
@@ -411,6 +569,38 @@ namespace Elemental.Tests.EditMode
             new float3(0f, 0f, 1f),
             0.18f,
             0.08f);
+
+        private static EarthPoweredImpactDecision Claim(
+            EarthPoweredPhysicalAssist assist,
+            uint responseId,
+            EarthCharacterImpactResponse response,
+            float intensity,
+            float3 direction) => assist.RouteAcceptedResponse(
+                responseId,
+                response,
+                intensity,
+                direction,
+                true,
+                EarthPoweredAssistRejection.None);
+
+        private static void AssertRejectedClaimDoesNotConsume(
+            EarthPoweredPhysicalAssist assist,
+            uint responseId,
+            EarthPoweredAssistRejection rejection)
+        {
+            EarthPoweredImpactDecision fallback = assist.RouteAcceptedResponse(
+                responseId,
+                EarthCharacterImpactResponse.Stagger,
+                0.7f,
+                new float3(1f, 0f, 0f),
+                false,
+                rejection);
+            Assert.That(fallback.Accepted, Is.False);
+            Assert.That(fallback.FallsBackToAgentA, Is.True);
+            Assert.That(fallback.Rejection, Is.EqualTo(rejection));
+            Assert.That(assist.IsResponseKnown(responseId), Is.False,
+                "Rejected ownership must not consume the canonical response ID.");
+        }
 
         private static float SimulateDriveRecovery(int rate)
         {

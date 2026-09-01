@@ -6,12 +6,13 @@ namespace Elemental.Simulation.Characters
 {
     public enum EarthBodyRegion : byte
     {
-        Pelvis = 0,
-        Spine = 1,
-        Chest = 2,
-        Head = 3,
-        Arm = 4,
-        Leg = 5
+        Unassigned = 0,
+        Pelvis = 1,
+        Spine = 2,
+        Chest = 3,
+        Head = 4,
+        Arm = 5,
+        Leg = 6
     }
 
     public enum EarthMuscleProfileId : byte
@@ -37,6 +38,19 @@ namespace Elemental.Simulation.Characters
         AgentAInertialResponse = 1,
         PoweredPhysicalAssist = 2,
         ExistingFullRagdoll = 3
+    }
+
+    public enum EarthPoweredAssistRejection : byte
+    {
+        None = 0,
+        FeatureDisabled = 1,
+        InvalidBodyRegionBinding = 2,
+        CanonicalModeRejected = 3,
+        UnstableSupport = 4,
+        MissingFeet = 5,
+        NoPlantedFoot = 6,
+        InvalidSupportPolygon = 7,
+        ControllerRejected = 8
     }
 
     [Flags]
@@ -120,7 +134,14 @@ namespace Elemental.Simulation.Characters
             Chest = chest;
             Head = head;
             Arm = arm;
-            Leg = leg;
+            Leg = new EarthMuscleRegionTuning(
+                0f,
+                0f,
+                0f,
+                leg.AngularLimitDegrees,
+                0f,
+                0f,
+                leg.RecoveryRate);
         }
 
         public EarthMuscleProfileId Id { get; }
@@ -173,7 +194,7 @@ namespace Elemental.Simulation.Characters
                     T(3.5f, 0.88f, 165f, 52f, 0.52f, 0.85f, 7f),
                     T(6.2f, 1f, 130f, 18f, 1f, 0.82f, 14f),
                     T(5.5f, 0.92f, 180f, 70f, 0.92f, 1f, 12f),
-                    T(1.4f, 1f, 80f, 65f, 0.12f, 0.18f, 6f)),
+                    off),
                 EarthMuscleProfileId.Ragdoll => new EarthMuscleProfile(
                     id, off, off, off, off, off, off),
                 EarthMuscleProfileId.Recovery => new EarthMuscleProfile(
@@ -183,7 +204,7 @@ namespace Elemental.Simulation.Characters
                     T(4.2f, 0.9f, 190f, 32f, 0.65f, 0.65f, 4f),
                     T(5.0f, 1f, 100f, 20f, 0.75f, 0.50f, 5f),
                     T(3.5f, 0.9f, 105f, 48f, 0.50f, 0.55f, 4f),
-                    T(2.5f, 1f, 130f, 32f, 0.35f, 0.30f, 3f)),
+                    off),
                 _ => new EarthMuscleProfile(
                     EarthMuscleProfileId.Stable,
                     T(5.0f, 1f, 230f, 14f, 0.90f, 0.45f, 10f),
@@ -191,7 +212,7 @@ namespace Elemental.Simulation.Characters
                     T(5.8f, 0.92f, 250f, 24f, 0.94f, 0.72f, 11f),
                     T(6.0f, 1f, 110f, 18f, 0.96f, 0.42f, 13f),
                     T(4.5f, 0.9f, 130f, 42f, 0.82f, 0.62f, 9f),
-                    T(4.8f, 1f, 210f, 28f, 0.88f, 0.38f, 10f))
+                    off)
             };
         }
 
@@ -242,30 +263,71 @@ namespace Elemental.Simulation.Characters
             float3 point2,
             float3 point3,
             int count)
+            : this(
+                point0,
+                point1,
+                point2,
+                point3,
+                float3.zero,
+                float3.zero,
+                float3.zero,
+                float3.zero,
+                count)
+        {
+        }
+
+        private EarthSupportPolygon(
+            float3 point0,
+            float3 point1,
+            float3 point2,
+            float3 point3,
+            float3 point4,
+            float3 point5,
+            float3 point6,
+            float3 point7,
+            int count)
         {
             Point0 = point0;
             Point1 = point1;
             Point2 = point2;
             Point3 = point3;
-            Count = math.clamp(count, 0, 4);
+            Point4 = point4;
+            Point5 = point5;
+            Point6 = point6;
+            Point7 = point7;
+            Count = math.clamp(count, 0, 8);
         }
 
         public float3 Point0 { get; }
         public float3 Point1 { get; }
         public float3 Point2 { get; }
         public float3 Point3 { get; }
+        public float3 Point4 { get; }
+        public float3 Point5 { get; }
+        public float3 Point6 { get; }
+        public float3 Point7 { get; }
         public int Count { get; }
-        public bool IsValid => Count >= 3 &&
-                               math.all(math.isfinite(Point0)) &&
-                               math.all(math.isfinite(Point1)) &&
-                               math.all(math.isfinite(Point2));
+        public bool IsValid
+        {
+            get
+            {
+                if (Count < 3) return false;
+                for (int index = 0; index < Count; index++)
+                    if (!math.all(math.isfinite(GetPoint(index)))) return false;
+                return true;
+            }
+        }
 
         public float3 GetPoint(int index) => index switch
         {
             0 => Point0,
             1 => Point1,
             2 => Point2,
-            _ => Point3
+            3 => Point3,
+            4 => Point4,
+            5 => Point5,
+            6 => Point6,
+            _ => Point7
         };
 
         public static EarthSupportPolygon FromFeet(
@@ -276,20 +338,231 @@ namespace Elemental.Simulation.Characters
             float footHalfLength,
             float footHalfWidth)
         {
+            return FromPlantedFeet(
+                leftFoot,
+                rightFoot,
+                true,
+                true,
+                gravityUp,
+                facing,
+                footHalfLength,
+                footHalfWidth);
+        }
+
+        public static EarthSupportPolygon FromPlantedFeet(
+            float3 leftFoot,
+            float3 rightFoot,
+            bool leftPlanted,
+            bool rightPlanted,
+            float3 gravityUp,
+            float3 facing,
+            float footHalfLength,
+            float footHalfWidth)
+        {
+            if ((!leftPlanted && !rightPlanted) ||
+                (leftPlanted && !math.all(math.isfinite(leftFoot))) ||
+                (rightPlanted && !math.all(math.isfinite(rightFoot))))
+                return default;
+
             float3 up = math.normalizesafe(gravityUp, new float3(0f, 1f, 0f));
             float3 forward = math.normalizesafe(ProjectOnPlane(facing, up),
                 math.normalizesafe(math.cross(new float3(1f, 0f, 0f), up), new float3(0f, 0f, 1f)));
             float3 right = math.normalizesafe(math.cross(up, forward), new float3(1f, 0f, 0f));
-            float3 center = (leftFoot + rightFoot) * 0.5f;
-            float halfWidth = math.max(footHalfWidth,
-                math.abs(math.dot(rightFoot - leftFoot, right)) * 0.5f + footHalfWidth);
             float halfLength = math.max(0.02f, footHalfLength);
+            float halfWidth = math.max(0.02f, footHalfWidth);
+            int candidateCount = (leftPlanted ? 4 : 0) + (rightPlanted ? 4 : 0);
+            int first = FindHullStart(
+                leftFoot,
+                rightFoot,
+                leftPlanted,
+                rightPlanted,
+                right,
+                forward,
+                halfLength,
+                halfWidth,
+                candidateCount);
+            if (first < 0) return default;
+
+            float3 point0 = float3.zero;
+            float3 point1 = float3.zero;
+            float3 point2 = float3.zero;
+            float3 point3 = float3.zero;
+            float3 point4 = float3.zero;
+            float3 point5 = float3.zero;
+            float3 point6 = float3.zero;
+            float3 point7 = float3.zero;
+            int hullCount = 0;
+            int current = first;
+            float3 firstPoint = GetCandidate(
+                first,
+                leftFoot,
+                rightFoot,
+                leftPlanted,
+                rightPlanted,
+                right,
+                forward,
+                halfLength,
+                halfWidth);
+            do
+            {
+                float3 currentPoint = GetCandidate(
+                    current,
+                    leftFoot,
+                    rightFoot,
+                    leftPlanted,
+                    rightPlanted,
+                    right,
+                    forward,
+                    halfLength,
+                    halfWidth);
+                SetHullPoint(
+                    hullCount++,
+                    currentPoint,
+                    ref point0,
+                    ref point1,
+                    ref point2,
+                    ref point3,
+                    ref point4,
+                    ref point5,
+                    ref point6,
+                    ref point7);
+
+                int next = -1;
+                float3 nextPoint = float3.zero;
+                for (int candidate = 0; candidate < candidateCount; candidate++)
+                {
+                    float3 candidatePoint = GetCandidate(
+                        candidate,
+                        leftFoot,
+                        rightFoot,
+                        leftPlanted,
+                        rightPlanted,
+                        right,
+                        forward,
+                        halfLength,
+                        halfWidth);
+                    float candidateDistance = math.lengthsq(candidatePoint - currentPoint);
+                    if (candidateDistance <= 0.00000001f) continue;
+                    if (next < 0)
+                    {
+                        next = candidate;
+                        nextPoint = candidatePoint;
+                        continue;
+                    }
+
+                    float turn = math.dot(
+                        math.cross(nextPoint - currentPoint, candidatePoint - currentPoint),
+                        up);
+                    if (turn < -0.000001f ||
+                        (math.abs(turn) <= 0.000001f &&
+                         candidateDistance > math.lengthsq(nextPoint - currentPoint)))
+                    {
+                        next = candidate;
+                        nextPoint = candidatePoint;
+                    }
+                }
+
+                if (next < 0 || math.lengthsq(nextPoint - firstPoint) <= 0.00000001f)
+                    break;
+                current = next;
+            }
+            while (hullCount < 8);
+
             return new EarthSupportPolygon(
-                center - right * halfWidth - forward * halfLength,
-                center + right * halfWidth - forward * halfLength,
-                center + right * halfWidth + forward * halfLength,
-                center - right * halfWidth + forward * halfLength,
-                4);
+                point0,
+                point1,
+                point2,
+                point3,
+                point4,
+                point5,
+                point6,
+                point7,
+                hullCount);
+        }
+
+        private static int FindHullStart(
+            float3 leftFoot,
+            float3 rightFoot,
+            bool leftPlanted,
+            bool rightPlanted,
+            float3 right,
+            float3 forward,
+            float halfLength,
+            float halfWidth,
+            int candidateCount)
+        {
+            int first = -1;
+            float firstRight = float.PositiveInfinity;
+            float firstForward = float.PositiveInfinity;
+            for (int index = 0; index < candidateCount; index++)
+            {
+                float3 point = GetCandidate(
+                    index,
+                    leftFoot,
+                    rightFoot,
+                    leftPlanted,
+                    rightPlanted,
+                    right,
+                    forward,
+                    halfLength,
+                    halfWidth);
+                float rightCoordinate = math.dot(point, right);
+                float forwardCoordinate = math.dot(point, forward);
+                if (rightCoordinate < firstRight - 0.000001f ||
+                    (math.abs(rightCoordinate - firstRight) <= 0.000001f &&
+                     forwardCoordinate < firstForward))
+                {
+                    first = index;
+                    firstRight = rightCoordinate;
+                    firstForward = forwardCoordinate;
+                }
+            }
+            return first;
+        }
+
+        private static float3 GetCandidate(
+            int index,
+            float3 leftFoot,
+            float3 rightFoot,
+            bool leftPlanted,
+            bool rightPlanted,
+            float3 right,
+            float3 forward,
+            float halfLength,
+            float halfWidth)
+        {
+            bool useLeft = leftPlanted && (!rightPlanted || index < 4);
+            int corner = useLeft ? index : index - (leftPlanted ? 4 : 0);
+            float3 center = useLeft ? leftFoot : rightFoot;
+            float rightSign = corner == 1 || corner == 2 ? 1f : -1f;
+            float forwardSign = corner >= 2 ? 1f : -1f;
+            return center + right * (rightSign * halfWidth) +
+                   forward * (forwardSign * halfLength);
+        }
+
+        private static void SetHullPoint(
+            int index,
+            float3 value,
+            ref float3 point0,
+            ref float3 point1,
+            ref float3 point2,
+            ref float3 point3,
+            ref float3 point4,
+            ref float3 point5,
+            ref float3 point6,
+            ref float3 point7)
+        {
+            switch (index)
+            {
+                case 0: point0 = value; break;
+                case 1: point1 = value; break;
+                case 2: point2 = value; break;
+                case 3: point3 = value; break;
+                case 4: point4 = value; break;
+                case 5: point5 = value; break;
+                case 6: point6 = value; break;
+                default: point7 = value; break;
+            }
         }
 
         internal static float3 ProjectOnPlane(float3 value, float3 normal) =>
@@ -321,10 +594,11 @@ namespace Elemental.Simulation.Characters
 
             float3 up = math.normalizesafe(gravityUp, new float3(0f, 1f, 0f));
             float winding = 0f;
+            float3 origin = polygon.Point0;
             for (int index = 0; index < polygon.Count; index++)
             {
-                float3 a = polygon.GetPoint(index);
-                float3 b = polygon.GetPoint((index + 1) % polygon.Count);
+                float3 a = polygon.GetPoint(index) - origin;
+                float3 b = polygon.GetPoint((index + 1) % polygon.Count) - origin;
                 winding += math.dot(math.cross(a, b), up);
             }
             float orientation = winding >= 0f ? 1f : -1f;
@@ -385,20 +659,51 @@ namespace Elemental.Simulation.Characters
             uint responseId,
             EarthPoweredImpactOwner owner,
             bool accepted,
-            bool duplicate)
+            bool duplicate,
+            EarthPoweredAssistRejection rejection = EarthPoweredAssistRejection.None)
         {
             ResponseId = responseId;
             Owner = owner;
             Accepted = accepted;
             Duplicate = duplicate;
+            Rejection = rejection;
         }
 
         public uint ResponseId { get; }
         public EarthPoweredImpactOwner Owner { get; }
         public bool Accepted { get; }
         public bool Duplicate { get; }
+        public EarthPoweredAssistRejection Rejection { get; }
+        public bool FallsBackToAgentA =>
+            !Accepted && !Duplicate && Owner == EarthPoweredImpactOwner.AgentAInertialResponse;
         public bool EmitsImpulse => false;
         public bool RequestsRagdoll => false;
+    }
+
+    public static class EarthPoweredAssistEligibility
+    {
+        public static EarthPoweredAssistRejection Evaluate(
+            CharacterPhysicalMode canonicalMode,
+            bool stableSupport,
+            bool feetConfigured,
+            bool leftPlanted,
+            bool rightPlanted,
+            bool supportPolygonValid)
+        {
+            if (canonicalMode != CharacterPhysicalMode.AnimatedMotor &&
+                canonicalMode != CharacterPhysicalMode.PhysicalAssist &&
+                canonicalMode != CharacterPhysicalMode.Stagger)
+                return EarthPoweredAssistRejection.CanonicalModeRejected;
+            if (!stableSupport)
+                return EarthPoweredAssistRejection.UnstableSupport;
+            if (!feetConfigured)
+                return EarthPoweredAssistRejection.MissingFeet;
+            if (!leftPlanted && !rightPlanted)
+                return EarthPoweredAssistRejection.NoPlantedFoot;
+            if (!supportPolygonValid)
+                return EarthPoweredAssistRejection.InvalidSupportPolygon;
+            return EarthPoweredAssistRejection.None;
+        }
     }
 
     public readonly struct EarthPhysicalActionRequest
@@ -522,15 +827,15 @@ namespace Elemental.Simulation.Characters
             uint responseId,
             EarthCharacterImpactResponse response,
             float intensity01,
-            float3 direction)
+            float3 direction,
+            bool poweredAssistAccepted,
+            EarthPoweredAssistRejection rejection)
         {
             if (responseId == 0u || response == EarthCharacterImpactResponse.Ignore)
                 return default;
             if (ContainsResponse(responseId))
                 return new EarthPoweredImpactDecision(responseId, EarthPoweredImpactOwner.None, false, true);
 
-            RememberResponse(responseId);
-            AcceptedResponseCount++;
             EarthPoweredImpactOwner owner = response switch
             {
                 EarthCharacterImpactResponse.Flinch => EarthPoweredImpactOwner.AgentAInertialResponse,
@@ -539,6 +844,25 @@ namespace Elemental.Simulation.Characters
                     EarthCharacterImpactResponse.Knockout => EarthPoweredImpactOwner.ExistingFullRagdoll,
                 _ => EarthPoweredImpactOwner.None
             };
+            if (owner == EarthPoweredImpactOwner.PoweredPhysicalAssist &&
+                !poweredAssistAccepted)
+            {
+                EarthPoweredAssistRejection reason = rejection ==
+                    EarthPoweredAssistRejection.None
+                    ? EarthPoweredAssistRejection.ControllerRejected
+                    : rejection;
+                return new EarthPoweredImpactDecision(
+                    responseId,
+                    EarthPoweredImpactOwner.AgentAInertialResponse,
+                    false,
+                    false,
+                    reason);
+            }
+            if (owner == EarthPoweredImpactOwner.None)
+                return default;
+
+            RememberResponse(responseId);
+            AcceptedResponseCount++;
             if (owner == EarthPoweredImpactOwner.PoweredPhysicalAssist)
             {
                 _activeResponseId = responseId;
@@ -556,6 +880,9 @@ namespace Elemental.Simulation.Characters
             }
             return new EarthPoweredImpactDecision(responseId, owner, true, false);
         }
+
+        public bool IsResponseKnown(uint responseId) =>
+            responseId != 0u && ContainsResponse(responseId);
 
         public EarthPoweredAssistOutput Step(in EarthPoweredAssistInput input)
         {

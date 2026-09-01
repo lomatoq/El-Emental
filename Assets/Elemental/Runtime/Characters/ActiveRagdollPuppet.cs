@@ -72,6 +72,11 @@ namespace Elemental.Runtime.Characters
         private bool[] _externalBodyDetectedCollisions = Array.Empty<bool>();
         private bool[] _externalColliderWasEnabled = Array.Empty<bool>();
         private Vector3 _lastPoweredImpactDirection;
+        private bool _leftFootPlanted;
+        private bool _rightFootPlanted;
+        private int _poweredFootContactFrame = -1;
+        private bool _poweredAssistOperationalThisTick;
+        private bool _reportedInvalidPoweredJointBinding;
 
         public CharacterPhysicalState CurrentState { get; private set; }
         public CharacterPhysicalMode CanonicalMode =>
@@ -83,6 +88,8 @@ namespace Elemental.Runtime.Characters
         public bool UsePoweredPhysicalAssist =>
             physicalAnimationProfile != null &&
             physicalAnimationProfile.UsePoweredPhysicalAssist;
+        public bool PoweredAssistConfigurationValid =>
+            HasValidPoweredJointBindings();
         public EarthPoweredImpactDecision LastPoweredImpactDecision { get; private set; }
         public EarthPoweredAssistOutput LastPoweredAssistOutput { get; private set; }
         public int PoweredActionRequestCount { get; private set; }
@@ -263,6 +270,10 @@ namespace Elemental.Runtime.Characters
             _forcedRagdollUntil = 0f;
             _poweredAssist.ResetTemporalState();
             _lastPoweredImpactDirection = Vector3.zero;
+            _leftFootPlanted = false;
+            _rightFootPlanted = false;
+            _poweredFootContactFrame = -1;
+            _poweredAssistOperationalThisTick = false;
             LastPoweredImpactDecision = default;
             LastPoweredAssistOutput = default;
             _controller.Reset();
@@ -335,6 +346,22 @@ namespace Elemental.Runtime.Characters
             LastPoweredImpactDecision = default;
             LastPoweredAssistOutput = default;
             PoweredActionRequestCount = 0;
+            _leftFootPlanted = false;
+            _rightFootPlanted = false;
+            _poweredFootContactFrame = -1;
+            _poweredAssistOperationalThisTick = false;
+            _reportedInvalidPoweredJointBinding = false;
+        }
+
+        /// <summary>
+        /// Consumes the presentation contact owner's current semantic planted
+        /// state. This does not capture anchors or write IK; stale samples expire.
+        /// </summary>
+        public void SetPoweredFootContactState(bool leftPlanted, bool rightPlanted)
+        {
+            _leftFootPlanted = leftPlanted;
+            _rightFootPlanted = rightPlanted;
+            _poweredFootContactFrame = Time.frameCount;
         }
 
         /// <summary>
@@ -347,23 +374,69 @@ namespace Elemental.Runtime.Characters
         {
             if (!UsePoweredPhysicalAssist || response.Response == EarthCharacterImpactResponse.Ignore)
                 return default;
+            if (response.ResponseId == 0u)
+                return default;
 
             EnsureController();
+            if (response.Response != EarthCharacterImpactResponse.Stagger)
+            {
+                LastPoweredImpactDecision = _poweredAssist.RouteAcceptedResponse(
+                    response.ResponseId,
+                    response.Response,
+                    response.Intensity01,
+                    response.Direction,
+                    true,
+                    EarthPoweredAssistRejection.None);
+                return LastPoweredImpactDecision;
+            }
+
+            if (_poweredAssist.IsResponseKnown(response.ResponseId))
+            {
+                LastPoweredImpactDecision = _poweredAssist.RouteAcceptedResponse(
+                    response.ResponseId,
+                    response.Response,
+                    response.Intensity01,
+                    response.Direction,
+                    false,
+                    EarthPoweredAssistRejection.None);
+                return LastPoweredImpactDecision;
+            }
+
+            EarthPoweredAssistRejection rejection;
+            if (!ValidatePoweredJointBindings(true))
+            {
+                rejection = EarthPoweredAssistRejection.InvalidBodyRegionBinding;
+            }
+            else
+            {
+                EarthSupportPolygon polygon = BuildPoweredSupportPolygon(
+                    out bool feetConfigured,
+                    out bool leftPlanted,
+                    out bool rightPlanted);
+                rejection = EarthPoweredAssistEligibility.Evaluate(
+                    _controller.Mode,
+                    motor != null && motor.HasStableSupport,
+                    feetConfigured,
+                    leftPlanted,
+                    rightPlanted,
+                    polygon.IsValid);
+            }
+
+            bool controllerAccepted = rejection == EarthPoweredAssistRejection.None &&
+                                      _controller.TryRequestPoweredAssist(true);
+            if (rejection == EarthPoweredAssistRejection.None && !controllerAccepted)
+                rejection = EarthPoweredAssistRejection.ControllerRejected;
             LastPoweredImpactDecision = _poweredAssist.RouteAcceptedResponse(
                 response.ResponseId,
                 response.Response,
                 response.Intensity01,
-                response.Direction);
-            if (LastPoweredImpactDecision.Owner !=
-                EarthPoweredImpactOwner.PoweredPhysicalAssist)
+                response.Direction,
+                controllerAccepted,
+                rejection);
+            if (!controllerAccepted)
                 return LastPoweredImpactDecision;
 
             _lastPoweredImpactDirection = ToVector3(response.Direction);
-            bool supportAndFeetValid = motor != null && motor.HasStableSupport &&
-                                       leftFoot != null && rightFoot != null;
-            if (supportAndFeetValid)
-                _controller.TryRequestPoweredAssist(
-                    response.Response == EarthCharacterImpactResponse.Stagger);
             return LastPoweredImpactDecision;
         }
 
@@ -421,7 +494,9 @@ namespace Elemental.Runtime.Characters
                 EnsureController();
                 if (Time.time < _forcedRagdollUntil) _controller.ForceFullRagdoll();
                 SampleGravity();
-                bool poweredSupportAuthority = UsePoweredPhysicalAssist &&
+                _poweredAssistOperationalThisTick = UsePoweredPhysicalAssist &&
+                                                    ValidatePoweredJointBindings(true);
+                bool poweredSupportAuthority = _poweredAssistOperationalThisTick &&
                                                _controller.Mode != CharacterPhysicalMode.FullRagdoll &&
                                                _controller.Mode != CharacterPhysicalMode.Recovery;
                 if (poweredSupportAuthority) UpdatePoweredSupport();
@@ -439,7 +514,7 @@ namespace Elemental.Runtime.Characters
                     ToFloat3(chestTransform.right));
                 CurrentState = _controller.Step(in frame);
                 PublishStateIfChanged();
-                if (UsePoweredPhysicalAssist)
+                if (_poweredAssistOperationalThisTick)
                 {
                     using (PoweredAssistMarker.Auto())
                         UpdatePoweredAssist();
@@ -473,7 +548,7 @@ namespace Elemental.Runtime.Characters
             }
 
             MaximumJointError = 0f;
-            bool poweredJointOwnership = UsePoweredPhysicalAssist &&
+            bool poweredJointOwnership = _poweredAssistOperationalThisTick &&
                                          !IsExternalRagdollAuthority &&
                                          !IsExternalRecoveryAuthority;
             EarthMuscleProfile poweredProfile = poweredJointOwnership
@@ -592,32 +667,40 @@ namespace Elemental.Runtime.Characters
         private void UpdatePoweredSupport()
         {
             bool stable = motor != null && motor.HasStableSupport;
-            _contactCount = stable ? 2 : 0;
-            if (!stable)
+            bool freshContacts = HasFreshPoweredFootContacts();
+            bool leftPlanted = freshContacts && _leftFootPlanted && leftFoot != null;
+            bool rightPlanted = freshContacts && _rightFootPlanted && rightFoot != null;
+            _contactCount = stable ? (leftPlanted ? 1 : 0) + (rightPlanted ? 1 : 0) : 0;
+            if (!stable || _contactCount == 0)
             {
                 _supportCenter = rootBody.worldCenterOfMass - _gravityUp * 0.9f;
                 return;
             }
 
-            if (leftFoot != null && rightFoot != null)
+            if (leftPlanted && rightPlanted)
                 _supportCenter = (leftFoot.position + rightFoot.position) * 0.5f;
+            else if (leftPlanted)
+                _supportCenter = leftFoot.position;
+            else if (rightPlanted)
+                _supportCenter = rightFoot.position;
             else
                 _supportCenter = motor.SupportFeetPoint(_gravityUp);
         }
 
         private void UpdatePoweredAssist()
         {
-            bool supportAndFeetValid = motor != null && motor.HasStableSupport &&
-                                       leftFoot != null && rightFoot != null;
-            EarthSupportPolygon polygon = supportAndFeetValid
-                ? EarthSupportPolygon.FromFeet(
-                    ToFloat3(leftFoot.position),
-                    ToFloat3(rightFoot.position),
-                    ToFloat3(_gravityUp),
-                    ToFloat3(motor.FacingForward),
-                    supportFootHalfLength,
-                    supportFootHalfWidth)
-                : default;
+            EarthSupportPolygon polygon = BuildPoweredSupportPolygon(
+                out bool feetConfigured,
+                out bool leftPlanted,
+                out bool rightPlanted);
+            EarthPoweredAssistRejection eligibility = EarthPoweredAssistEligibility.Evaluate(
+                CurrentState.Mode,
+                motor != null && motor.HasStableSupport,
+                feetConfigured,
+                leftPlanted,
+                rightPlanted,
+                polygon.IsValid);
+            bool livePlantedSupport = eligibility == EarthPoweredAssistRejection.None;
             bool probeSurfaces = CurrentState.Mode == CharacterPhysicalMode.PhysicalAssist ||
                                  CurrentState.Mode == CharacterPhysicalMode.Stagger;
             EarthPhysicalSurfaceProbe braceProbe = default;
@@ -654,8 +737,8 @@ namespace Elemental.Runtime.Characters
                 ToFloat3(motor != null ? motor.FacingForward : transform.forward),
                 ToFloat3(rootBody.worldCenterOfMass),
                 ToFloat3(rootBody.linearVelocity),
-                supportAndFeetValid,
-                supportAndFeetValid,
+                livePlantedSupport,
+                feetConfigured && (leftPlanted || rightPlanted),
                 in polygon,
                 in braceProbe,
                 in reachProbe,
@@ -664,6 +747,67 @@ namespace Elemental.Runtime.Characters
             if (!LastPoweredAssistOutput.EmitAction) return;
             PoweredActionRequestCount++;
             PhysicalActionRequested?.Invoke(LastPoweredAssistOutput.Action);
+        }
+
+        private EarthSupportPolygon BuildPoweredSupportPolygon(
+            out bool feetConfigured,
+            out bool leftPlanted,
+            out bool rightPlanted)
+        {
+            feetConfigured = leftFoot != null && rightFoot != null;
+            bool freshContacts = HasFreshPoweredFootContacts();
+            leftPlanted = freshContacts && _leftFootPlanted;
+            rightPlanted = freshContacts && _rightFootPlanted;
+            if (!feetConfigured || (!leftPlanted && !rightPlanted))
+                return default;
+
+            Vector3 facing = motor != null ? motor.FacingForward : transform.forward;
+            return EarthSupportPolygon.FromPlantedFeet(
+                ToFloat3(leftFoot.position),
+                ToFloat3(rightFoot.position),
+                leftPlanted,
+                rightPlanted,
+                ToFloat3(_gravityUp),
+                ToFloat3(facing),
+                supportFootHalfLength,
+                supportFootHalfWidth);
+        }
+
+        private bool HasFreshPoweredFootContacts()
+        {
+            if (_poweredFootContactFrame < 0) return false;
+            int age = Time.frameCount - _poweredFootContactFrame;
+            return age >= 0 && age <= 1;
+        }
+
+        private bool ValidatePoweredJointBindings(bool reportFailure)
+        {
+            bool valid = HasValidPoweredJointBindings();
+            if (valid)
+            {
+                _reportedInvalidPoweredJointBinding = false;
+                return true;
+            }
+            if (reportFailure && !_reportedInvalidPoweredJointBinding)
+            {
+                _reportedInvalidPoweredJointBinding = true;
+                Debug.LogError(
+                    $"{nameof(ActiveRagdollPuppet)} on '{name}' disabled powered assist. " +
+                    "Every configured active-ragdoll joint requires an explicit body-region binding.",
+                    this);
+            }
+            return false;
+        }
+
+        private bool HasValidPoweredJointBindings()
+        {
+            if (joints == null || joints.Length == 0) return false;
+            for (int index = 0; index < joints.Length; index++)
+            {
+                ActiveRagdollJoint joint = joints[index];
+                if (joint == null || !joint.HasConfiguredBodyRegion) return false;
+            }
+            return true;
         }
 
         private EarthPhysicalSurfaceProbe ProbeSemanticSurface(

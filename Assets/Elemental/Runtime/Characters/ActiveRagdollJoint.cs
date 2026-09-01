@@ -10,7 +10,7 @@ namespace Elemental.Runtime.Characters
         [SerializeField] private Rigidbody targetBody;
         [SerializeField] private ConfigurableJoint targetJoint;
         [SerializeField] private Transform targetPose;
-        [SerializeField] private EarthBodyRegion bodyRegion = EarthBodyRegion.Chest;
+        [SerializeField] private EarthBodyRegion bodyRegion = EarthBodyRegion.Unassigned;
         [SerializeField, Min(0f)] private float spring = 900f;
         [SerializeField, Min(0f)] private float damping = 65f;
         [SerializeField, Min(0f)] private float maximumForce = 1400f;
@@ -20,12 +20,16 @@ namespace Elemental.Runtime.Characters
         private bool _initialized;
         private float _poweredDriveWeight;
         private float _lastAppliedAngularLimit = -1f;
+        private bool _reportedMissingBodyRegion;
 
         public float JointErrorDegrees { get; private set; }
         public float LastAppliedTorqueEstimate { get; private set; }
         public Rigidbody Body => targetBody;
         public Transform TargetPose => targetPose;
         public EarthBodyRegion BodyRegion => bodyRegion;
+        public bool HasConfiguredBodyRegion =>
+            (int)bodyRegion >= (int)EarthBodyRegion.Pelvis &&
+            (int)bodyRegion <= (int)EarthBodyRegion.Leg;
 
         public void Configure(
             Rigidbody body,
@@ -46,8 +50,24 @@ namespace Elemental.Runtime.Characters
             InitializeJoint();
         }
 
-        public void ConfigureBodyRegion(EarthBodyRegion configuredRegion) =>
+        public bool ConfigureBodyRegion(EarthBodyRegion configuredRegion)
+        {
+            int regionValue = (int)configuredRegion;
+            if (regionValue < (int)EarthBodyRegion.Pelvis ||
+                regionValue > (int)EarthBodyRegion.Leg)
+            {
+                bodyRegion = EarthBodyRegion.Unassigned;
+                Debug.LogError(
+                    $"{nameof(ActiveRagdollJoint)} on '{name}' requires an explicit " +
+                    "Pelvis/Spine/Chest/Head/Arm/Leg binding.",
+                    this);
+                return false;
+            }
+
             bodyRegion = configuredRegion;
+            _reportedMissingBodyRegion = false;
+            return true;
+        }
 
         private void Awake()
         {
@@ -82,6 +102,19 @@ namespace Elemental.Runtime.Characters
             float deltaTime)
         {
             if (!_initialized || targetPose == null) return;
+            if (!HasConfiguredBodyRegion)
+            {
+                DisablePoweredPose();
+                if (!_reportedMissingBodyRegion)
+                {
+                    _reportedMissingBodyRegion = true;
+                    Debug.LogError(
+                        $"{nameof(ActiveRagdollJoint)} on '{name}' disabled powered assist " +
+                        "because its body region is unassigned.",
+                        this);
+                }
+                return;
+            }
 
             float targetWeight = tuning.DriveWeight * Mathf.Lerp(
                 0.65f,
@@ -113,6 +146,18 @@ namespace Elemental.Runtime.Characters
                 drive.maximumForce,
                 omega * omega * JointErrorDegrees * Mathf.Deg2Rad *
                 _poweredDriveWeight * tuning.TransferWeight);
+        }
+
+        public void DisablePoweredPose()
+        {
+            if (!_initialized) return;
+            _poweredDriveWeight = 0f;
+            JointDrive drive = targetJoint.slerpDrive;
+            drive.positionSpring = 0f;
+            drive.positionDamper = 0f;
+            drive.maximumForce = 0f;
+            targetJoint.slerpDrive = drive;
+            LastAppliedTorqueEstimate = 0f;
         }
 
         private void InitializeJoint()

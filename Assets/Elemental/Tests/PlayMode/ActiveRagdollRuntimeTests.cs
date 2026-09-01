@@ -53,6 +53,18 @@ namespace Elemental.Tests.PlayMode
             Assert.That(disabled.Accepted, Is.False);
             Assert.That(puppet.CanonicalMode, Is.EqualTo(legacyMode));
 
+            ActiveRagdollJoint[] joints = puppet.GetComponentsInChildren<ActiveRagdollJoint>(true);
+            Assert.That(joints.Length, Is.GreaterThan(0));
+            int legJointCount = 0;
+            for (int index = 0; index < joints.Length; index++)
+            {
+                EarthBodyRegion region = RegionForAuthoredTarget(joints[index].TargetPose);
+                Assert.That(joints[index].ConfigureBodyRegion(region), Is.True,
+                    joints[index].name);
+                if (region == EarthBodyRegion.Leg) legJointCount++;
+            }
+            Assert.That(legJointCount, Is.GreaterThan(0));
+
             var profile = ScriptableObject.CreateInstance<EarthPhysicalAnimationProfile>();
             profile.ConfigurePoweredPhysicalAssist(true);
             puppet.ConfigurePoweredPhysicalAssist(
@@ -63,17 +75,23 @@ namespace Elemental.Tests.PlayMode
             Assert.That(motor.HasStableSupport, Is.True,
                 "The accepted medium path requires PlanetMotor stable support.");
 
-            ActiveRagdollJoint[] joints = puppet.GetComponentsInChildren<ActiveRagdollJoint>(true);
-            Assert.That(joints.Length, Is.GreaterThan(0));
-            ActiveRagdollJoint legProofJoint = joints[joints.Length - 1];
-            legProofJoint.ConfigureBodyRegion(EarthBodyRegion.Leg);
-            Vector3 velocityBefore = body.linearVelocity;
-            EarthWorldResponseEvent mediumResponse = Response(
+            Assert.That(puppet.PoweredAssistConfigurationValid, Is.True);
+
+            EarthWorldResponseEvent noPlantedContact = Response(
                 0xA002u, EarthCharacterImpactResponse.Stagger, body.worldCenterOfMass);
+            EarthPoweredImpactDecision fallback = puppet.ReceiveAcceptedWorldResponse(
+                in noPlantedContact);
+            Assert.That(fallback.FallsBackToAgentA, Is.True);
+            Assert.That(fallback.Rejection,
+                Is.EqualTo(EarthPoweredAssistRejection.NoPlantedFoot));
+
+            puppet.SetPoweredFootContactState(true, true);
+            Vector3 velocityBefore = body.linearVelocity;
             EarthPoweredImpactDecision first = puppet.ReceiveAcceptedWorldResponse(
-                in mediumResponse);
+                in noPlantedContact);
             EarthPoweredImpactDecision duplicate = puppet.ReceiveAcceptedWorldResponse(
-                in mediumResponse);
+                in noPlantedContact);
+            puppet.SetPoweredFootContactState(true, true);
 
             Assert.That(first.Owner, Is.EqualTo(EarthPoweredImpactOwner.PoweredPhysicalAssist));
             Assert.That(first.EmitsImpulse || first.RequestsRagdoll, Is.False);
@@ -88,13 +106,34 @@ namespace Elemental.Tests.PlayMode
                 "A medium response must preserve PlanetMotor and support authority.");
             Assert.That(puppet.LastBalanceTorque, Is.EqualTo(Vector3.zero),
                 "Powered balance may shape joints and request an authored step, not torque the pelvis.");
-            Assert.That(legProofJoint.GetComponent<ConfigurableJoint>().slerpDrive.maximumForce,
-                Is.Zero.Within(0.001f),
-                "Medium powered assist must leave final leg/contact ownership to animation and foot IK.");
+            for (int index = 0; index < joints.Length; index++)
+            {
+                if (joints[index].BodyRegion != EarthBodyRegion.Leg) continue;
+                Assert.That(
+                    joints[index].GetComponent<ConfigurableJoint>().slerpDrive.maximumForce,
+                    Is.Zero.Within(0.001f),
+                    $"{joints[index].name} must leave final leg/contact ownership to animation and foot IK.");
+            }
 
             Object.Destroy(profile);
             AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
             if (unload != null) yield return unload;
+        }
+
+        private static EarthBodyRegion RegionForAuthoredTarget(Transform target)
+        {
+            Assert.That(target, Is.Not.Null);
+            string targetName = target.name;
+            if (targetName.IndexOf("Leg", StringComparison.OrdinalIgnoreCase) >= 0)
+                return EarthBodyRegion.Leg;
+            if (targetName.IndexOf("Arm", StringComparison.OrdinalIgnoreCase) >= 0)
+                return EarthBodyRegion.Arm;
+            if (targetName.IndexOf("Head", StringComparison.OrdinalIgnoreCase) >= 0)
+                return EarthBodyRegion.Head;
+            if (targetName.IndexOf("Chest", StringComparison.OrdinalIgnoreCase) >= 0)
+                return EarthBodyRegion.Chest;
+            Assert.Fail($"No explicit Wave P2 body-region binding for '{targetName}'.");
+            return EarthBodyRegion.Unassigned;
         }
 
         [UnityTest]
