@@ -152,8 +152,13 @@ namespace Elemental.Runtime.Characters
         private bool _poseMatchedConfigurationWarningIssued;
         private bool _recoveryStateValidationPending;
         private int _recoveryStateSelectionFrame;
+        private float _recoveryStateSelectionTime;
         private int _expectedRecoveryStateHash;
         private float _expectedRecoveryEntryPhase;
+        private float _expectedRecoveryStateLengthSeconds;
+        private float _expectedRecoveryStateSpeed;
+        private float _expectedRecoveryStateSpeedMultiplier;
+        private bool _expectedRecoveryStateLoops;
 
         public bool IsRagdollActive { get; private set; }
         public bool IsRecoveringToAnimation { get; private set; }
@@ -189,6 +194,14 @@ namespace Elemental.Runtime.Characters
         public int RecoveryStateHashNextFrame { get; private set; }
         public float RecoveryStatePhaseAfterEvent { get; private set; }
         public float RecoveryStatePhaseNextFrame { get; private set; }
+        public float RecoveryStateElapsedSecondsNextFrame { get; private set; }
+        public float RecoveryStateMeasuredPhaseAdvance { get; private set; }
+        public float RecoveryStateAllowedPhaseAdvance { get; private set; }
+        public float RecoveryStateNormalizedRate { get; private set; }
+        public float RecoveryStateLengthSeconds => _expectedRecoveryStateLengthSeconds;
+        public float RecoveryStateSpeed => _expectedRecoveryStateSpeed;
+        public float RecoveryStateSpeedMultiplier => _expectedRecoveryStateSpeedMultiplier;
+        public bool RecoveryStateLoops => _expectedRecoveryStateLoops;
         public bool RecoveryAnimatorWasTransitioning { get; private set; }
         public bool RecoveryAnimatorSampledNextState { get; private set; }
         public int RecoveryAnimatorCurrentStateHash { get; private set; }
@@ -923,12 +936,18 @@ namespace Elemental.Runtime.Characters
             _expectedRecoveryStateHash = result.AnimationStateId;
             _expectedRecoveryEntryPhase = result.EntryPhase;
             _recoveryStateSelectionFrame = Time.frameCount;
+            _recoveryStateSelectionTime = Time.time;
             AuthoredRecoveryBegan.Invoke(AuthoredRecoveryHandoff.PoseMatched(
                 result.AnimationStateId,
                 result.EntryPhase));
             CaptureRecoveryAnimatorState(
                 out int stateHash,
-                out float statePhase);
+                out float statePhase,
+                out AnimatorStateInfo selectedState);
+            _expectedRecoveryStateLengthSeconds = selectedState.length;
+            _expectedRecoveryStateSpeed = selectedState.speed;
+            _expectedRecoveryStateSpeedMultiplier = selectedState.speedMultiplier;
+            _expectedRecoveryStateLoops = selectedState.loop;
             RecoveryStateHashAfterEvent = stateHash;
             RecoveryStatePhaseAfterEvent = statePhase;
             RecoveryStateVerifiedAfterEvent = IsExpectedRecoveryState(
@@ -1561,17 +1580,34 @@ namespace Elemental.Runtime.Characters
                 return;
 
             _recoveryStateValidationPending = false;
-            CaptureRecoveryAnimatorState(out int stateHash, out float statePhase);
+            CaptureRecoveryAnimatorState(
+                out int stateHash,
+                out float statePhase,
+                out _);
             RecoveryStateHashNextFrame = stateHash;
             RecoveryStatePhaseNextFrame = statePhase;
-            RecoveryStateVerifiedNextFrame = IsExpectedRecoveryState(
-                stateHash,
-                statePhase,
-                0.08f);
+            RecoveryStateElapsedSecondsNextFrame = Mathf.Max(
+                0f,
+                Time.time - _recoveryStateSelectionTime);
+            EarthRecoveryAnimatorContinuityResult continuity =
+                EarthRecoveryAnimatorContinuityGate.Evaluate(
+                    _expectedRecoveryStateHash,
+                    stateHash,
+                    _expectedRecoveryEntryPhase,
+                    statePhase,
+                    RecoveryStateElapsedSecondsNextFrame,
+                    _expectedRecoveryStateLengthSeconds,
+                    _expectedRecoveryStateSpeed,
+                    _expectedRecoveryStateSpeedMultiplier,
+                    _expectedRecoveryStateLoops);
+            RecoveryStateMeasuredPhaseAdvance = continuity.MeasuredAdvance;
+            RecoveryStateAllowedPhaseAdvance = continuity.AllowedAdvance;
+            RecoveryStateNormalizedRate = continuity.NormalizedRate;
+            RecoveryStateVerifiedNextFrame = continuity.IsValid;
             if (!RecoveryStateVerifiedNextFrame)
                 Debug.LogError(
                     $"[Elemental] Recovery state {_expectedRecoveryStateHash} at phase " +
-                    $"{_expectedRecoveryEntryPhase:F3} did not persist through the next frame. " +
+                    $"{_expectedRecoveryEntryPhase:F3} was not continuous through the next frame. " +
                     $"Observed {stateHash} at {statePhase:F3}; current=" +
                     $"{RecoveryAnimatorCurrentStateHash}@" +
                     $"{RecoveryAnimatorCurrentStatePhase:F3}, next=" +
@@ -1580,20 +1616,31 @@ namespace Elemental.Runtime.Characters
                     $"{RecoveryAnimatorWasTransitioning}, sampledNext=" +
                     $"{RecoveryAnimatorSampledNextState}, physicalMode=" +
                     $"{CanonicalPhysicalMode}, ownershipConsistent=" +
-                    $"{PhysicalOwnershipConsistent}, poseMatched={UsedPoseMatchedRecovery}.",
+                    $"{PhysicalOwnershipConsistent}, poseMatched={UsedPoseMatchedRecovery}, " +
+                    $"elapsed={RecoveryStateElapsedSecondsNextFrame:F4}s, measuredAdvance=" +
+                    $"{RecoveryStateMeasuredPhaseAdvance:F4}, allowedAdvance=" +
+                    $"{RecoveryStateAllowedPhaseAdvance:F4}, length=" +
+                    $"{_expectedRecoveryStateLengthSeconds:F4}s, speed=" +
+                    $"{_expectedRecoveryStateSpeed:F4}, speedMultiplier=" +
+                    $"{_expectedRecoveryStateSpeedMultiplier:F4}, loops=" +
+                    $"{_expectedRecoveryStateLoops}.",
                     this);
         }
 
-        private void CaptureRecoveryAnimatorState(out int stateHash, out float phase)
+        private void CaptureRecoveryAnimatorState(
+            out int stateHash,
+            out float phase,
+            out AnimatorStateInfo state)
         {
             if (animator == null || !animator.enabled)
             {
                 stateHash = 0;
                 phase = 0f;
+                state = default;
                 return;
             }
 
-            AnimatorStateInfo state = ResolveRecoveryAnimatorState();
+            state = ResolveRecoveryAnimatorState();
             stateHash = state.fullPathHash;
             phase = Mathf.Repeat(state.normalizedTime, 1f);
         }

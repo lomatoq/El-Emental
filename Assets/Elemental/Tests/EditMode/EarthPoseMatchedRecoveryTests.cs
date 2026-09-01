@@ -26,6 +26,102 @@ namespace Elemental.Tests.EditMode
             Assert.That(result, Is.EqualTo(expected));
         }
 
+        [TestCase(0.033333333f)]
+        [TestCase(0.016666667f)]
+        [TestCase(0.008333333f)]
+        public void AnimatorContinuityBudgetAcceptsTimeNormalizedAdvance(float elapsedSeconds)
+        {
+            const int stateHash = 175079391;
+            const float entryPhase = 0.55f;
+            const float stateLength = 1.2f;
+            const float stateSpeed = 1.9f;
+            const float speedMultiplier = 1f;
+            float normalizedRate = stateSpeed * speedMultiplier / stateLength;
+            float observedPhase = entryPhase + elapsedSeconds * normalizedRate;
+
+            EarthRecoveryAnimatorContinuityResult result =
+                EarthRecoveryAnimatorContinuityGate.Evaluate(
+                    stateHash,
+                    stateHash,
+                    entryPhase,
+                    observedPhase,
+                    elapsedSeconds,
+                    stateLength,
+                    stateSpeed,
+                    speedMultiplier,
+                    false);
+
+            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.MeasuredAdvance,
+                Is.EqualTo(elapsedSeconds * normalizedRate).Within(0.00001f));
+            Assert.That(result.AllowedAdvance,
+                Is.EqualTo(
+                    elapsedSeconds * normalizedRate +
+                    EarthRecoveryAnimatorContinuityGate.DefaultPhaseSlack)
+                    .Within(0.00001f));
+        }
+
+        [Test]
+        public void AnimatorContinuityBudgetRejectsWrongStateHash()
+        {
+            EarthRecoveryAnimatorContinuityResult result =
+                EarthRecoveryAnimatorContinuityGate.Evaluate(
+                    175079391,
+                    -1269438207,
+                    0.55f,
+                    0.60f,
+                    0.05f,
+                    1.2f,
+                    1.9f,
+                    1f,
+                    false);
+
+            Assert.That(result.HashMatches, Is.False);
+            Assert.That(result.IsValid, Is.False);
+        }
+
+        [Test]
+        public void AnimatorContinuityBudgetAcceptsMeasuredBatchFrameAdvance()
+        {
+            EarthRecoveryAnimatorContinuityResult result =
+                EarthRecoveryAnimatorContinuityGate.Evaluate(
+                    175079391,
+                    175079391,
+                    0.55f,
+                    0.673f,
+                    0.08f,
+                    1.2f,
+                    1.9f,
+                    1f,
+                    false);
+
+            Assert.That(result.MeasuredAdvance, Is.EqualTo(0.123f).Within(0.00001f));
+            Assert.That(result.AllowedAdvance, Is.EqualTo(0.14166667f).Within(0.00001f));
+            Assert.That(result.IsValid, Is.True);
+        }
+
+        [TestCase(0.50f, 0.10f, TestName = "AnimatorContinuityRejectsBackwardJump")]
+        [TestCase(0.95f, 0.016666667f, TestName = "AnimatorContinuityRejectsForwardTeleport")]
+        public void AnimatorContinuityBudgetRejectsDiscontinuity(
+            float observedPhase,
+            float elapsedSeconds)
+        {
+            EarthRecoveryAnimatorContinuityResult result =
+                EarthRecoveryAnimatorContinuityGate.Evaluate(
+                    175079391,
+                    175079391,
+                    0.55f,
+                    observedPhase,
+                    elapsedSeconds,
+                    1.2f,
+                    1.9f,
+                    1f,
+                    false);
+
+            Assert.That(result.TimingIsValid, Is.False);
+            Assert.That(result.IsValid, Is.False);
+        }
+
         [Test]
         public void MatcherChoosesClosestValidPoseAndEntryPhase()
         {

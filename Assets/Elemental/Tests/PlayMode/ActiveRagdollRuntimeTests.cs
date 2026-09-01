@@ -327,9 +327,23 @@ namespace Elemental.Tests.PlayMode
             yield return null;
             Assert.That(rig.RecoveryStateHashNextFrame,
                 Is.EqualTo(rig.LastPoseMatchedRecovery.AnimationStateId));
-            Assert.That(rig.RecoveryStatePhaseNextFrame,
-                Is.EqualTo(0.55f).Within(0.08f));
             Assert.That(rig.RecoveryStateVerifiedNextFrame, Is.True);
+            Assert.That(rig.RecoveryStateLengthSeconds, Is.GreaterThan(0f));
+            Assert.That(rig.RecoveryStateSpeed, Is.GreaterThanOrEqualTo(0f));
+            Assert.That(rig.RecoveryStateSpeedMultiplier, Is.GreaterThanOrEqualTo(0f));
+            Assert.That(rig.RecoveryStateLoops, Is.False,
+                "The authored get-up must remain a non-looping recovery state.");
+            Assert.That(rig.RecoveryStateElapsedSecondsNextFrame, Is.GreaterThanOrEqualTo(0f));
+            Assert.That(rig.RecoveryStateMeasuredPhaseAdvance,
+                Is.GreaterThanOrEqualTo(-EarthRecoveryAnimatorContinuityGate.DefaultPhaseSlack));
+            Assert.That(rig.RecoveryStateMeasuredPhaseAdvance,
+                Is.LessThanOrEqualTo(rig.RecoveryStateAllowedPhaseAdvance));
+            Assert.That(rig.RecoveryStateAllowedPhaseAdvance,
+                Is.EqualTo(
+                    rig.RecoveryStateElapsedSecondsNextFrame *
+                    rig.RecoveryStateNormalizedRate +
+                    EarthRecoveryAnimatorContinuityGate.DefaultPhaseSlack)
+                    .Within(0.0001f));
             Assert.That(rig.RecoveryAnimatorCurrentStateHash,
                 Is.EqualTo(rig.LastPoseMatchedRecovery.AnimationStateId),
                 "An outgoing controller transition must not replace the current recovery owner.");
