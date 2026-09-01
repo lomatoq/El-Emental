@@ -376,13 +376,43 @@ namespace Elemental.Tests.PlayMode
             Assert.That(rig.RecoveryFeetEnabled, Is.True);
             Assert.That(motor, Is.Not.Null);
             Assert.That(motor.Body, Is.Not.Null);
+            Assert.That(motor.Capsule, Is.Not.Null);
             int supportSamplesBeforeLoss = rig.RecoverySupportSampleCount;
             bool motorWasEnabled = motor.enabled;
             motor.enabled = false;
-            Vector3 supportedRootPosition = motor.Body.position;
-            Quaternion supportedRootRotation = motor.Body.rotation;
-            motor.Body.position = supportedRootPosition + localUp * 3f;
-            UnityEngine.Physics.SyncTransforms();
+            Rigidbody motorBody = motor.Body;
+            bool bodyWasKinematic = motorBody.isKinematic;
+            bool bodyDetectedCollisions = motorBody.detectCollisions;
+            RigidbodyConstraints bodyConstraints = motorBody.constraints;
+            RigidbodyInterpolation bodyInterpolation = motorBody.interpolation;
+            Vector3 bodyLinearVelocity = motorBody.linearVelocity;
+            Vector3 bodyAngularVelocity = motorBody.angularVelocity;
+            if (!bodyWasKinematic)
+            {
+                motorBody.linearVelocity = Vector3.zero;
+                motorBody.angularVelocity = Vector3.zero;
+            }
+            motorBody.interpolation = RigidbodyInterpolation.None;
+            motorBody.isKinematic = true;
+
+            Vector3 supportedRootPosition = motorBody.position;
+            Quaternion supportedRootRotation = motorBody.rotation;
+            Vector3 supportedProbeOrigin = motor.Capsule.transform.TransformPoint(
+                motor.Capsule.center);
+            Vector3 unsupportedRootPosition = supportedRootPosition + localUp * 3f;
+            TeleportKinematicBody(
+                motorBody,
+                unsupportedRootPosition,
+                supportedRootRotation);
+            Vector3 unsupportedProbeOrigin = motor.Capsule.transform.TransformPoint(
+                motor.Capsule.center);
+            Assert.That(Vector3.Dot(
+                    unsupportedProbeOrigin - supportedProbeOrigin,
+                    localUp),
+                Is.GreaterThan(2.9f),
+                $"Recovery probe did not follow the frozen Rigidbody teleport. " +
+                $"body={motorBody.position}, capsule={unsupportedProbeOrigin}, " +
+                $"supportedCapsule={supportedProbeOrigin}.");
             yield return null;
             yield return null;
             Assert.That(rig.RecoverySupportSampleCount,
@@ -391,14 +421,32 @@ namespace Elemental.Tests.PlayMode
             Assert.That(rig.RecoveryFeetEnabled, Is.False,
                 "Live support loss must revoke feet while movement control is disabled.");
 
-            motor.Body.position = supportedRootPosition;
-            motor.Body.rotation = supportedRootRotation;
-            UnityEngine.Physics.SyncTransforms();
+            TeleportKinematicBody(
+                motorBody,
+                supportedRootPosition,
+                supportedRootRotation);
+            Vector3 reacquiredProbeOrigin = motor.Capsule.transform.TransformPoint(
+                motor.Capsule.center);
+            Assert.That(Vector3.Distance(reacquiredProbeOrigin, supportedProbeOrigin),
+                Is.LessThan(0.001f),
+                $"Recovery probe did not return to its supported pose. " +
+                $"body={motorBody.position}, capsule={reacquiredProbeOrigin}, " +
+                $"expectedCapsule={supportedProbeOrigin}.");
             yield return null;
             yield return null;
             Assert.That(rig.RecoveryHasLiveSupport, Is.True);
             Assert.That(rig.RecoveryFeetEnabled, Is.True,
                 "Live support reacquisition must re-enable marker ownership.");
+            motorBody.detectCollisions = bodyDetectedCollisions;
+            motorBody.constraints = bodyConstraints;
+            motorBody.isKinematic = bodyWasKinematic;
+            motorBody.interpolation = bodyInterpolation;
+            if (!bodyWasKinematic)
+            {
+                motorBody.linearVelocity = bodyLinearVelocity;
+                motorBody.angularVelocity = bodyAngularVelocity;
+                motorBody.WakeUp();
+            }
             motor.enabled = motorWasEnabled;
 
             int poseInterruptHandoffs = rig.RagdollOwnershipHandoffCount;
@@ -559,6 +607,24 @@ namespace Elemental.Tests.PlayMode
                 if ((mask & (1 << layer)) != 0) return layer;
             }
             return 0;
+        }
+
+        private static void TeleportKinematicBody(
+            Rigidbody body,
+            Vector3 position,
+            Quaternion rotation)
+        {
+            Assert.That(body, Is.Not.Null);
+            Assert.That(body.isKinematic, Is.True,
+                "Recovery support probe teleports require a frozen Rigidbody.");
+            body.position = position;
+            body.rotation = rotation;
+            body.transform.SetPositionAndRotation(position, rotation);
+            UnityEngine.Physics.SyncTransforms();
+            Assert.That(Vector3.Distance(body.position, position),
+                Is.LessThan(0.001f));
+            Assert.That(Quaternion.Angle(body.rotation, rotation),
+                Is.LessThan(0.01f));
         }
 
         private static EarthRecoveryPoseSampleAuthoring RecoverySample(
