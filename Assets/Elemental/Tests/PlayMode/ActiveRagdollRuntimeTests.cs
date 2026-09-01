@@ -394,6 +394,10 @@ namespace Elemental.Tests.PlayMode
             }
             motorBody.interpolation = RigidbodyInterpolation.None;
             motorBody.isKinematic = true;
+            TeleportKinematicBody(
+                motorBody,
+                motorBody.position,
+                motorBody.rotation);
 
             Vector3 supportedRootPosition = motorBody.position;
             Quaternion supportedRootRotation = motorBody.rotation;
