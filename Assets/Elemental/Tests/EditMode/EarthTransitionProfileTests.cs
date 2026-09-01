@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Elemental.Authoring.Editor;
 using Elemental.Presentation.Animation;
 using Elemental.Simulation.Characters;
 using NUnit.Framework;
@@ -205,6 +207,30 @@ namespace Elemental.Tests.EditMode
                 Assert.That(mask & EarthTransitionBodyMask.Root,
                     Is.EqualTo(EarthTransitionBodyMask.None));
             }
+        }
+
+        [Test]
+        public void ValidatorAcceptsUniquePairAndRejectsDuplicateSelector()
+        {
+            EarthTransitionRule rule = Rule(
+                EarthTransitionFamily.PoseInertialized,
+                EarthAnimationTransitionPriority.Locomotion);
+            var pair = new EarthTransitionPairOverride(
+                EarthMotionStateId.TurnInPlace,
+                EarthMotionStateId.Locomotion,
+                in rule);
+            _profile = EnabledProfile(new[] { pair });
+            var errors = new List<string>();
+
+            Assert.That(EarthTransitionProfileValidator.Validate(_profile, errors), Is.True);
+            Assert.That(errors, Is.Empty);
+
+            _profile.Configure(true, false, 4, 0.08f, new[] { pair, pair });
+            errors.Clear();
+            Assert.That(EarthTransitionProfileValidator.Validate(_profile, errors), Is.False);
+            Assert.That(
+                errors.Exists(error => error.Contains("duplicates selector")),
+                Is.True);
         }
 
         private EarthTransitionProfile EnabledProfile(

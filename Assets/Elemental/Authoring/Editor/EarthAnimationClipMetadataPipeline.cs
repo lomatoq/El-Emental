@@ -65,6 +65,10 @@ namespace Elemental.Authoring.Editor
             return true;
         }
 
+        public static EarthAnimationMetadataSample[] AnalyzeClipForCatalog(
+            AnimationClip clip) =>
+            AnalyzeClip(clip);
+
         public static EarthAnimationMetadataIssue ValidateClipMetadata(
             AnimationClip clip,
             bool locomotion,
