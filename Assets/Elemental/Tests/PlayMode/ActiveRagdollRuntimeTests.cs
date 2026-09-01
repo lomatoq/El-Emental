@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using Elemental.Presentation.Animation;
 using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
@@ -16,6 +17,26 @@ namespace Elemental.Tests.PlayMode
 {
     public sealed class ActiveRagdollRuntimeTests
     {
+        private static readonly string[] OwnedAdditiveScenePaths =
+        {
+            "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity",
+            "Assets/Elemental/Content/Scenes/CharacterFeelLab.unity"
+        };
+
+        [UnityTearDown]
+        public IEnumerator EnsureOwnedAdditiveScenesFinishUnloading()
+        {
+            yield return null;
+            for (int index = 0; index < OwnedAdditiveScenePaths.Length; index++)
+            {
+                Scene scene = SceneManager.GetSceneByPath(OwnedAdditiveScenePaths[index]);
+                if (!scene.IsValid() || !scene.isLoaded) continue;
+                DestroySceneRoots(scene);
+                AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
+                if (unload != null) yield return unload;
+            }
+        }
+
         [UnityTest]
         public IEnumerator PoweredAssist_DefaultOffAndAcceptedMediumOwnsNoKickOrLegDrive()
         {
@@ -138,15 +159,12 @@ namespace Elemental.Tests.PlayMode
             Scene scene,
             ActiveRagdollPuppet puppet)
         {
-            ActiveRagdollJoint[] candidates = Object.FindObjectsByType<ActiveRagdollJoint>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None);
+            ActiveRagdollJoint[] candidates = FindInSceneAll<ActiveRagdollJoint>(scene);
             int ownedCount = 0;
             for (int index = 0; index < candidates.Length; index++)
             {
                 ActiveRagdollJoint candidate = candidates[index];
-                if (candidate.gameObject.scene == scene &&
-                    candidate.TargetPose != null &&
+                if (candidate.TargetPose != null &&
                     candidate.TargetPose.IsChildOf(puppet.transform))
                     ownedCount++;
             }
@@ -156,8 +174,7 @@ namespace Elemental.Tests.PlayMode
             for (int index = 0; index < candidates.Length; index++)
             {
                 ActiveRagdollJoint candidate = candidates[index];
-                if (candidate.gameObject.scene != scene ||
-                    candidate.TargetPose == null ||
+                if (candidate.TargetPose == null ||
                     !candidate.TargetPose.IsChildOf(puppet.transform))
                     continue;
                 owned[writeIndex++] = candidate;
@@ -168,10 +185,15 @@ namespace Elemental.Tests.PlayMode
         private static void DestroyAndUnloadScene(Scene scene)
         {
             if (!scene.IsValid() || !scene.isLoaded) return;
+            DestroySceneRoots(scene);
+            SceneManager.UnloadSceneAsync(scene);
+        }
+
+        private static void DestroySceneRoots(Scene scene)
+        {
             GameObject[] roots = scene.GetRootGameObjects();
             for (int index = 0; index < roots.Length; index++)
                 Object.DestroyImmediate(roots[index]);
-            SceneManager.UnloadSceneAsync(scene);
         }
 
         private static EarthBodyRegion RegionForAuthoredTarget(Transform target)
@@ -260,160 +282,189 @@ namespace Elemental.Tests.PlayMode
         public IEnumerator EarthCorePuppetRemainsGroundedWhenPlayerProvidesNoInput()
         {
             const string scenePath = "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
-            AsyncOperation load = SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
-            Assert.That(load, Is.Not.Null);
-            yield return load;
-            yield return null;
-
-            Scene scene = SceneManager.GetSceneByPath(scenePath);
-            ActiveRagdollPuppet puppet = FindInScene<ActiveRagdollPuppet>(scene);
-            Assert.That(puppet, Is.Not.Null);
-            Rigidbody body = puppet.GetComponent<Rigidbody>();
-            float startRadius = body.position.magnitude;
-            float peakSpeed = 0f;
-            float peakRadius = startRadius;
-            for (int tick = 0; tick < 180; tick++)
+            Scene scene = default;
+            try
             {
-                yield return new WaitForFixedUpdate();
-                peakSpeed = Mathf.Max(peakSpeed, body.linearVelocity.magnitude);
-                peakRadius = Mathf.Max(peakRadius, body.position.magnitude);
+                AsyncOperation load = SceneManager.LoadSceneAsync(
+                    scenePath, LoadSceneMode.Additive);
+                Assert.That(load, Is.Not.Null);
+                yield return load;
+                yield return null;
+
+                scene = SceneManager.GetSceneByPath(scenePath);
+                ActiveRagdollPuppet puppet = FindInScene<ActiveRagdollPuppet>(scene);
+                Assert.That(puppet, Is.Not.Null);
+                Rigidbody body = puppet.GetComponent<Rigidbody>();
+                float startRadius = body.position.magnitude;
+                float peakSpeed = 0f;
+                float peakRadius = startRadius;
+                for (int tick = 0; tick < 180; tick++)
+                {
+                    yield return new WaitForFixedUpdate();
+                    peakSpeed = Mathf.Max(peakSpeed, body.linearVelocity.magnitude);
+                    peakRadius = Mathf.Max(peakRadius, body.position.magnitude);
+                }
+
+                Assert.That(peakRadius, Is.LessThan(startRadius + 1.5f),
+                    $"Idle active ragdoll escaped the planet; peak speed was {peakSpeed:0.00} m/s.");
+                Assert.That(body.position.magnitude, Is.LessThan(26.5f));
+                Assert.That(body.linearVelocity.magnitude, Is.LessThan(2f));
             }
-
-            Assert.That(peakRadius, Is.LessThan(startRadius + 1.5f),
-                $"Idle active ragdoll escaped the planet; peak speed was {peakSpeed:0.00} m/s.");
-            Assert.That(body.position.magnitude, Is.LessThan(26.5f));
-            Assert.That(body.linearVelocity.magnitude, Is.LessThan(2f));
-
-            AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
-            if (unload != null) yield return unload;
+            finally
+            {
+                DestroyAndUnloadScene(scene);
+            }
         }
 
         [UnityTest]
         public IEnumerator CharacterFeelLab_RepeatedImpactsRemainFinite()
         {
-            AsyncOperation load = SceneManager.LoadSceneAsync(
-                "Assets/Elemental/Content/Scenes/CharacterFeelLab.unity",
-                LoadSceneMode.Additive);
-            Assert.That(load, Is.Not.Null);
-            yield return load;
-
-            ActiveRagdollPuppet puppet = Object.FindAnyObjectByType<ActiveRagdollPuppet>();
-            CharacterFeelLabDriver driver = Object.FindAnyObjectByType<CharacterFeelLabDriver>();
-            Assert.That(puppet, Is.Not.Null);
-            Assert.That(driver, Is.Not.Null);
-
-            for (int tick = 0; tick < 300; tick++)
+            const string scenePath =
+                "Assets/Elemental/Content/Scenes/CharacterFeelLab.unity";
+            Scene scene = default;
+            try
             {
-                yield return new WaitForFixedUpdate();
+                AsyncOperation load = SceneManager.LoadSceneAsync(
+                    scenePath,
+                    LoadSceneMode.Additive);
+                Assert.That(load, Is.Not.Null);
+                yield return load;
+
+                scene = SceneManager.GetSceneByPath(scenePath);
+                ActiveRagdollPuppet puppet = FindInScene<ActiveRagdollPuppet>(scene);
+                CharacterFeelLabDriver driver = FindInScene<CharacterFeelLabDriver>(scene);
+                Assert.That(puppet, Is.Not.Null);
+                Assert.That(driver, Is.Not.Null);
+
+                for (int tick = 0; tick < 300; tick++)
+                    yield return new WaitForFixedUpdate();
+
+                Rigidbody rootBody = puppet.GetComponent<Rigidbody>();
+                Assert.That(driver.PulseCount, Is.GreaterThanOrEqualTo(2));
+                Assert.That(IsFinite(rootBody.position), Is.True);
+                Assert.That(IsFinite(rootBody.linearVelocity), Is.True);
+                Assert.That(IsFinite(rootBody.angularVelocity), Is.True);
+                Assert.That(float.IsFinite(puppet.CurrentState.StaggerDebt), Is.True);
+                Assert.That(float.IsFinite(puppet.MaximumJointError), Is.True);
+
+                ActiveRagdollJoint[] joints = FindInSceneAll<ActiveRagdollJoint>(scene);
+                Assert.That(joints.Length, Is.GreaterThanOrEqualTo(6));
+                for (int index = 0; index < joints.Length; index++)
+                {
+                    Assert.That(IsFinite(joints[index].Body.linearVelocity), Is.True);
+                    Assert.That(IsFinite(joints[index].Body.angularVelocity), Is.True);
+                    Assert.That(joints[index].Body.angularVelocity.magnitude, Is.LessThan(100f));
+                }
             }
-
-            Rigidbody rootBody = puppet.GetComponent<Rigidbody>();
-            Assert.That(driver.PulseCount, Is.GreaterThanOrEqualTo(2));
-            Assert.That(IsFinite(rootBody.position), Is.True);
-            Assert.That(IsFinite(rootBody.linearVelocity), Is.True);
-            Assert.That(IsFinite(rootBody.angularVelocity), Is.True);
-            Assert.That(float.IsFinite(puppet.CurrentState.StaggerDebt), Is.True);
-            Assert.That(float.IsFinite(puppet.MaximumJointError), Is.True);
-
-            ActiveRagdollJoint[] joints = Object.FindObjectsByType<ActiveRagdollJoint>();
-            Assert.That(joints.Length, Is.GreaterThanOrEqualTo(6));
-            for (int index = 0; index < joints.Length; index++)
+            finally
             {
-                Assert.That(IsFinite(joints[index].Body.linearVelocity), Is.True);
-                Assert.That(IsFinite(joints[index].Body.angularVelocity), Is.True);
-                Assert.That(joints[index].Body.angularVelocity.magnitude, Is.LessThan(100f));
-            }
-
-            AsyncOperation unload = SceneManager.UnloadSceneAsync(
-                SceneManager.GetSceneByPath("Assets/Elemental/Content/Scenes/CharacterFeelLab.unity"));
-            if (unload != null)
-            {
-                yield return unload;
+                DestroyAndUnloadScene(scene);
             }
         }
 
         [UnityTest]
         public IEnumerator PuppetDisablesMotorDrivesOnRagdollAndRecoversWithoutExplosion()
         {
-            GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            floor.name = "Ragdoll Test Floor";
-            floor.transform.position = new Vector3(0f, -0.5f, 0f);
-            floor.transform.localScale = new Vector3(10f, 1f, 10f);
-
-            GameObject root = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            root.name = "Ragdoll Runtime Test Root";
-            root.SetActive(false);
-            root.transform.position = new Vector3(0f, 1f, 0f);
-            Rigidbody rootBody = root.AddComponent<Rigidbody>();
-            rootBody.isKinematic = true;
-            PhysicalImpactTarget impact = root.AddComponent<PhysicalImpactTarget>();
-            impact.Configure(rootBody);
-
-            GameObject targetObject = new GameObject("Chest Pose Target");
-            targetObject.transform.SetParent(root.transform, false);
-            targetObject.transform.localPosition = new Vector3(0f, 0.8f, 0f);
-
-            GameObject chestObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            chestObject.name = "Physical Chest";
-            chestObject.transform.SetParent(root.transform, false);
-            chestObject.transform.localPosition = targetObject.transform.localPosition;
-            Rigidbody chestBody = chestObject.AddComponent<Rigidbody>();
-            chestBody.mass = 5f;
-            chestBody.useGravity = false;
-            ConfigurableJoint configurableJoint = chestObject.AddComponent<ConfigurableJoint>();
-            configurableJoint.connectedBody = rootBody;
-            ActiveRagdollJoint joint = chestObject.AddComponent<ActiveRagdollJoint>();
-            joint.Configure(chestBody, configurableJoint, targetObject.transform, 500f, 50f, 800f, 45f);
-
-            ActiveRagdollPuppet puppet = root.AddComponent<ActiveRagdollPuppet>();
-            puppet.Configure(
-                1u,
-                null,
-                rootBody,
-                null,
-                impact,
-                chestObject.transform,
-                new[] { joint },
-                new[] { root.GetComponent<Collider>(), chestObject.GetComponent<Collider>() });
-            root.SetActive(true);
-
-            for (int index = 0; index < 200; index++)
+            GameObject floor = null;
+            GameObject root = null;
+            try
             {
-                puppet.InjectImpact(20f);
-            }
+                floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                floor.name = "Ragdoll Test Floor";
+                floor.transform.position = new Vector3(0f, -0.5f, 0f);
+                floor.transform.localScale = new Vector3(10f, 1f, 10f);
 
-            yield return new WaitForFixedUpdate();
-            Assert.That(puppet.CurrentState.Mode, Is.EqualTo(CharacterPhysicalMode.FullRagdoll));
-            Assert.That(configurableJoint.slerpDrive.maximumForce, Is.EqualTo(0f).Within(0.001f));
+                root = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                root.name = "Ragdoll Runtime Test Root";
+                root.SetActive(false);
+                root.transform.position = new Vector3(0f, 1f, 0f);
+                Rigidbody rootBody = root.AddComponent<Rigidbody>();
+                rootBody.isKinematic = true;
+                PhysicalImpactTarget impact = root.AddComponent<PhysicalImpactTarget>();
+                impact.Configure(rootBody);
 
-            for (int index = 0; index < 70; index++)
-            {
+                GameObject targetObject = new GameObject("Chest Pose Target");
+                targetObject.transform.SetParent(root.transform, false);
+                targetObject.transform.localPosition = new Vector3(0f, 0.8f, 0f);
+
+                GameObject chestObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                chestObject.name = "Physical Chest";
+                chestObject.transform.SetParent(root.transform, false);
+                chestObject.transform.localPosition = targetObject.transform.localPosition;
+                Rigidbody chestBody = chestObject.AddComponent<Rigidbody>();
+                chestBody.mass = 5f;
+                chestBody.useGravity = false;
+                ConfigurableJoint configurableJoint =
+                    chestObject.AddComponent<ConfigurableJoint>();
+                configurableJoint.connectedBody = rootBody;
+                ActiveRagdollJoint joint = chestObject.AddComponent<ActiveRagdollJoint>();
+                joint.Configure(
+                    chestBody,
+                    configurableJoint,
+                    targetObject.transform,
+                    500f,
+                    50f,
+                    800f,
+                    45f);
+
+                ActiveRagdollPuppet puppet = root.AddComponent<ActiveRagdollPuppet>();
+                puppet.Configure(
+                    1u,
+                    null,
+                    rootBody,
+                    null,
+                    impact,
+                    chestObject.transform,
+                    new[] { joint },
+                    new[] { root.GetComponent<Collider>(), chestObject.GetComponent<Collider>() });
+                root.SetActive(true);
+
+                for (int index = 0; index < 200; index++)
+                    puppet.InjectImpact(20f);
+
                 yield return new WaitForFixedUpdate();
+                Assert.That(puppet.CurrentState.Mode,
+                    Is.EqualTo(CharacterPhysicalMode.FullRagdoll));
+                Assert.That(configurableJoint.slerpDrive.maximumForce,
+                    Is.EqualTo(0f).Within(0.001f));
+
+                for (int index = 0; index < 70; index++)
+                    yield return new WaitForFixedUpdate();
+
+                Assert.That(puppet.CurrentState.Mode,
+                    Is.EqualTo(CharacterPhysicalMode.AnimatedMotor));
+                Assert.That(puppet.CurrentState.MuscleStrength,
+                    Is.EqualTo(1f).Within(0.001f));
+                Assert.That(configurableJoint.slerpDrive.maximumForce, Is.GreaterThan(0f));
+                Assert.That(float.IsFinite(puppet.MaximumJointError), Is.True);
+                Assert.That(float.IsFinite(chestBody.angularVelocity.x), Is.True);
+                Assert.That(chestBody.angularVelocity.magnitude, Is.LessThan(50f));
             }
-
-            Assert.That(puppet.CurrentState.Mode, Is.EqualTo(CharacterPhysicalMode.AnimatedMotor));
-            Assert.That(puppet.CurrentState.MuscleStrength, Is.EqualTo(1f).Within(0.001f));
-            Assert.That(configurableJoint.slerpDrive.maximumForce, Is.GreaterThan(0f));
-            Assert.That(float.IsFinite(puppet.MaximumJointError), Is.True);
-            Assert.That(float.IsFinite(chestBody.angularVelocity.x), Is.True);
-            Assert.That(chestBody.angularVelocity.magnitude, Is.LessThan(50f));
-
-            Object.Destroy(root);
-            Object.Destroy(floor);
-            yield return null;
+            finally
+            {
+                if (root != null) Object.DestroyImmediate(root);
+                if (floor != null) Object.DestroyImmediate(floor);
+            }
         }
 
         [UnityTest]
         public IEnumerator HumanoidRecoveryPreservesLegacyFallbackAndMarkersOwnPoseMatchedHandoff()
         {
             const string scenePath = "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
+            Scene scene = default;
+            HumanoidRagdollRig rig = null;
+            EarthPhysicalAnimationProfile profile = null;
+            EarthPhysicalAnimationProfile missingStateProfile = null;
+            Action<AuthoredRecoveryHandoff> observeSelectedState = null;
+            try
+            {
             AsyncOperation load = SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
             Assert.That(load, Is.Not.Null);
             yield return load;
             yield return null;
 
-            Scene scene = SceneManager.GetSceneByPath(scenePath);
-            HumanoidRagdollRig rig = FindInScene<HumanoidRagdollRig>(scene);
+            scene = SceneManager.GetSceneByPath(scenePath);
+            rig = FindInScene<HumanoidRagdollRig>(scene);
             Assert.That(rig, Is.Not.Null);
             PlanetMotor motor = rig.GetComponentInParent<PlanetMotor>();
             Vector3 localUp = motor != null ? motor.LocalUp : rig.transform.up;
@@ -461,7 +512,7 @@ namespace Elemental.Tests.PlayMode
             Light feetOwner = rig.gameObject.AddComponent<Light>();
             AudioSource controlOwner = rig.gameObject.AddComponent<AudioSource>();
             Animation proceduralOwner = rig.gameObject.AddComponent<Animation>();
-            var profile = ScriptableObject.CreateInstance<EarthPhysicalAnimationProfile>();
+            profile = ScriptableObject.CreateInstance<EarthPhysicalAnimationProfile>();
             EarthRecoveryMarkerAuthoring markers =
                 new EarthRecoveryMarkerAuthoring(0.56f, 0.80f, 0.95f);
             Animator recoveryAnimator = rig.GetComponentInChildren<Animator>(true);
@@ -494,7 +545,7 @@ namespace Elemental.Tests.PlayMode
                 new Behaviour[] { controlOwner },
                 new Behaviour[] { proceduralOwner });
 
-            GameObject recoverySupport = CreateIsolatedRecoverySupport(
+            CreateIsolatedRecoverySupport(
                 scene,
                 rig,
                 motor,
@@ -516,7 +567,7 @@ namespace Elemental.Tests.PlayMode
             int eventTransitionOwnerStateHash = 0;
             uint eventTransitionEvaluationSequence = 0u;
             float eventStatePhase = 0f;
-            Action<AuthoredRecoveryHandoff> observeSelectedState = handoff =>
+            observeSelectedState = handoff =>
             {
                 if (!handoff.HasSelectedState) return;
                 AnimatorStateInfo state = recoveryAnimator.GetCurrentAnimatorStateInfo(0);
@@ -782,7 +833,7 @@ namespace Elemental.Tests.PlayMode
             rig.CompleteRecovery();
             rig.ResetToAnimated();
 
-            var missingStateProfile =
+            missingStateProfile =
                 ScriptableObject.CreateInstance<EarthPhysicalAnimationProfile>();
             EarthRecoveryMarkerAuthoring fallbackMarkers =
                 new EarthRecoveryMarkerAuthoring(0.20f, 0.60f, 0.90f);
@@ -837,11 +888,16 @@ namespace Elemental.Tests.PlayMode
             rig.CompleteRecovery();
             rig.ResetToAnimated();
 
-            Object.Destroy(recoverySupport);
-            Object.Destroy(profile);
-            Object.Destroy(missingStateProfile);
-            AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
-            if (unload != null) yield return unload;
+            }
+            finally
+            {
+                if (rig != null && observeSelectedState != null)
+                    rig.AuthoredRecoveryBegan -= observeSelectedState;
+                if (profile != null) Object.DestroyImmediate(profile);
+                if (missingStateProfile != null)
+                    Object.DestroyImmediate(missingStateProfile);
+                DestroyAndUnloadScene(scene);
+            }
         }
 
         private static bool IsFinite(Vector3 value)
@@ -1043,6 +1099,14 @@ namespace Elemental.Tests.PlayMode
                 if (found != null) return found;
             }
             return null;
+        }
+
+        private static T[] FindInSceneAll<T>(Scene scene) where T : Component
+        {
+            var found = new List<T>();
+            foreach (GameObject root in scene.GetRootGameObjects())
+                found.AddRange(root.GetComponentsInChildren<T>(true));
+            return found.ToArray();
         }
     }
 }
