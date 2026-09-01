@@ -2,7 +2,8 @@
 
 Date: 2026-09-01  
 Snapshot: `d2174eded114dd022e4a9c442abadda7a0e44555`  
-Gate status: **source review approved; Unity integration evidence pending**
+Gate status: **APPROVE — source review and Unity integration evidence complete**
+Accepted integration: `6543585fcd9cf3ed02c23d1a4fd0e1e56e30f536`
 
 ## Reviewed commits
 
@@ -73,9 +74,28 @@ No Wave 1 implementation commit is cherry-picked into `codex/vnext-integration` 
 - Recovery support is freshly sampled by a bounded non-alloc probe while movement is disabled; runtime coverage verifies support loss revokes ownership and reacquisition restores it.
 - Marker thresholds have 30/60/120 FPS and skipped-threshold coverage.
 
-## Remaining Director-owned Gate 1 evidence
+## Final corrective review ring
 
-- Import and compile the integrated branch in Unity 6000.5.7f1.
-- Run focused EditMode and PlayMode suites on the integrated commit.
-- Execute the canonical 720-frame profiler capture in Unity and archive the report.
-- Capture the default-off and feature-on visual comparisons before any Wave 2 work is accepted.
+| Track | Final corrective commit | Integrated as | Reviewer | Verdict |
+| --- | --- | --- | --- | --- |
+| R1 capture/recovery evidence | `eef4e697598907b88de19d7e5e746ea82cac99ec` | `6543585` | P | APPROVE |
+| A1 curve-owned handoff | `eea20b6b5a9ebfbcad06398e0c6a3495c22299bf` | `9786635` | R | APPROVE |
+| P1 deterministic recovery fixture | `bfef253f149dd618870f6c0860c9f678ad0325d6` | `185d6bb` | A | APPROVE |
+
+No final reviewer reported an unresolved blocker.
+
+## Director-owned Gate 1 evidence
+
+- Unity 6000.5.7f1 imported and compiled the integrated branch.
+- Focused EditMode: `VNext-Gate1-EditMode-Final4.xml`, 75/75 passed.
+- Exact focused PlayMode: `VNext-Gate1-PlayMode-Final12.xml`, 12/12 passed.
+- Isolation audit: recovery plus canonical animation graph passed 2/2. A prior broad fixture run exposed pre-existing `ActiveRagdollRuntimeTests` cleanup pollution, not an A1 runtime failure.
+- The canonical animation graph test recorded 720 active frames with 720 Update/job/rig/marker samples, zero topology failures, and zero managed-allocation frames/bytes. The archived interpretation is `.solo-studio/PERFORMANCE_CAPTURES/2026-09-01-vnext-gate1-animation-720.md`.
+- `BuildReports/Gate1AB-Final1/manifest.json` is complete and `success=true`; all six 1920x1080 captures are nonempty. Pose-matched recovery has live support and a pelvis continuity error of `3.7252903e-8 m` against a `0.002 m` limit.
+- Restoration is complete: runtime override, bounds provider, caster registry, animation owner, physical owner, scene cleanliness, registry count `0 -> 0`, and zero transient components.
+- Fresh EditMode, exact PlayMode, and capture logs contain no project compiler warning and no curve-owned Animator warning. The capture process still logs a UnityEditor.Search startup `ArgumentOutOfRangeException`; its stack contains only Unity editor search code and the capture subsequently succeeds.
+- All three production feature flags remain serialized off. Gate 1 proves safe foundations and fallbacks; it does not enable Wave 2 or final-profile behavior by default.
+
+## Final verdict
+
+**APPROVE.** Gate 1 Foundations is closed at `6543585`; Wave 2 may start. Final product acceptance, 30/60/120 evidence, full soak, and High-profile enablement remain later gates.
