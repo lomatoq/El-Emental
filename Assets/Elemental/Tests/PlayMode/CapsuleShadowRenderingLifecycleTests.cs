@@ -1,0 +1,287 @@
+using System.Collections;
+using Elemental.Presentation.Rendering;
+using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
+
+namespace Elemental.Tests.PlayMode
+{
+    public sealed class CapsuleShadowRenderingLifecycleTests
+    {
+        [UnityTest]
+        public IEnumerator BindDisableAndReacquireRequireCurrentExplicitIdentity()
+        {
+            const uint groupId = 0xF1000041u;
+            const uint generation = 0xE2000002u;
+            CasterFixture fixture = CreateCaster("Capsule Pooled Character");
+            CapsuleShadowCasterBinder binder = CreateBinder();
+            try
+            {
+                yield return null;
+                Assert.That(fixture.Caster.HasValidBinding, Is.False);
+                Assert.That(fixture.Caster.IsRegistered, Is.False);
+                Assert.That(Bind(
+                    binder,
+                    fixture.Caster,
+                    groupId,
+                    generation,
+                    CapsuleShadowCasterClass.Character), Is.True);
+                Assert.That(fixture.Caster.IsRegistered, Is.True);
+                Assert.That(fixture.Caster.IsActiveGeneration, Is.True);
+
+                fixture.Root.SetActive(false);
+                Assert.That(fixture.Caster.IsRegistered, Is.False);
+                Assert.That(fixture.Caster.HasRuntimeBinding, Is.False);
+                fixture.Root.SetActive(true);
+                yield return null;
+                Assert.That(fixture.Caster.IsRegistered, Is.False,
+                    "Pool re-enable must not restore the previous acquisition.");
+                Assert.That(Bind(
+                    binder,
+                    fixture.Caster,
+                    groupId,
+                    generation,
+                    CapsuleShadowCasterClass.Character), Is.True);
+                Assert.That(fixture.Caster.IsRegistered, Is.True);
+            }
+            finally
+            {
+                Cleanup(fixture, binder, groupId, generation);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator StaleGenerationStaysInactiveAfterEmptyPoolInterval()
+        {
+            const uint groupId = 0xF1000051u;
+            const uint staleGeneration = 0xE2000010u;
+            const uint currentGeneration = 0xE2000011u;
+            CasterFixture stale = CreateCaster("Capsule Stale");
+            CasterFixture current = CreateCaster("Capsule Current");
+            CapsuleShadowCasterBinder binder = CreateBinder();
+            try
+            {
+                Assert.That(Bind(
+                    binder,
+                    stale.Caster,
+                    groupId,
+                    staleGeneration,
+                    CapsuleShadowCasterClass.HeroRock), Is.True);
+                Assert.That(Bind(
+                    binder,
+                    current.Caster,
+                    groupId,
+                    currentGeneration,
+                    CapsuleShadowCasterClass.HeroRock), Is.True);
+                Assert.That(binder.CommitGeneration(groupId, currentGeneration), Is.True);
+                stale.Caster.Unbind();
+                current.Caster.Unbind();
+                yield return null;
+
+                Assert.That(Bind(
+                    binder,
+                    stale.Caster,
+                    groupId,
+                    staleGeneration,
+                    CapsuleShadowCasterClass.HeroRock), Is.True);
+                Assert.That(stale.Caster.IsActiveGeneration, Is.False);
+                Assert.That(Bind(
+                    binder,
+                    current.Caster,
+                    groupId,
+                    currentGeneration,
+                    CapsuleShadowCasterClass.HeroRock), Is.True);
+                Assert.That(current.Caster.IsActiveGeneration, Is.True);
+            }
+            finally
+            {
+                Cleanup(stale, null, 0u, 0u);
+                Cleanup(current, binder, groupId, currentGeneration);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator AtomicGenerationHandoffSwitchesCompleteProxySetTogether()
+        {
+            const uint groupId = 0xF1000061u;
+            const uint intactGeneration = 0xFFFFFFFEu;
+            const uint fractureGeneration = uint.MaxValue;
+            CasterFixture intact = CreateCaster("Capsule Intact");
+            CasterFixture fragmentA = CreateCaster("Capsule Fragment A");
+            CasterFixture fragmentB = CreateCaster("Capsule Fragment B");
+            CapsuleShadowCasterBinder binder = CreateBinder();
+            try
+            {
+                Assert.That(Bind(
+                    binder,
+                    intact.Caster,
+                    groupId,
+                    intactGeneration,
+                    CapsuleShadowCasterClass.HeroRock), Is.True);
+                Assert.That(Bind(
+                    binder,
+                    fragmentA.Caster,
+                    groupId,
+                    fractureGeneration,
+                    CapsuleShadowCasterClass.ActiveFragment), Is.True);
+                Assert.That(Bind(
+                    binder,
+                    fragmentB.Caster,
+                    groupId,
+                    fractureGeneration,
+                    CapsuleShadowCasterClass.ActiveFragment), Is.True);
+                Assert.That(intact.Caster.IsActiveGeneration, Is.True);
+                Assert.That(fragmentA.Caster.IsActiveGeneration, Is.False);
+                Assert.That(fragmentB.Caster.IsActiveGeneration, Is.False);
+
+                Assert.That(binder.CommitGeneration(groupId, fractureGeneration), Is.True);
+                yield return null;
+                Assert.That(intact.Caster.IsActiveGeneration, Is.False);
+                Assert.That(fragmentA.Caster.IsActiveGeneration, Is.True);
+                Assert.That(fragmentB.Caster.IsActiveGeneration, Is.True);
+                Assert.That(CountActiveProxies(), Is.EqualTo(2));
+            }
+            finally
+            {
+                Cleanup(intact, null, 0u, 0u);
+                Cleanup(fragmentA, null, 0u, 0u);
+                Cleanup(fragmentB, binder, groupId, fractureGeneration);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator ActiveEligibilityTracksCasterComponentAndRebindIsIdempotent()
+        {
+            const uint oldGroup = 0xF1000071u;
+            const uint nextGroup = 0xF1000072u;
+            const uint generation = 7u;
+            CasterFixture fixture = CreateCaster("Capsule Eligibility");
+            CapsuleShadowCasterBinder binder = CreateBinder();
+            try
+            {
+                Assert.That(Bind(
+                    binder,
+                    fixture.Caster,
+                    oldGroup,
+                    generation,
+                    CapsuleShadowCasterClass.Character), Is.True);
+                Assert.That(Bind(
+                    binder,
+                    fixture.Caster,
+                    nextGroup,
+                    generation,
+                    CapsuleShadowCasterClass.Character), Is.True);
+                Assert.That(Bind(
+                    binder,
+                    fixture.Caster,
+                    nextGroup,
+                    generation,
+                    CapsuleShadowCasterClass.Character), Is.True);
+                Assert.That(CapsuleShadowBuffer.Shared.Count, Is.GreaterThanOrEqualTo(1));
+                Assert.That(CountActiveProxies(), Is.EqualTo(1));
+                Assert.That(binder.ReleaseGroup(oldGroup, generation), Is.True);
+
+                fixture.Caster.enabled = false;
+                yield return null;
+                Assert.That(fixture.Caster.IsRegistered, Is.False);
+                Assert.That(CountActiveProxies(), Is.Zero);
+            }
+            finally
+            {
+                Cleanup(fixture, binder, nextGroup, generation);
+            }
+        }
+
+        private static bool Bind(
+            CapsuleShadowCasterBinder binder,
+            CapsuleShadowCaster caster,
+            uint groupId,
+            uint generation,
+            CapsuleShadowCasterClass classification)
+        {
+            var identity = new CapsuleShadowCasterIdentity(
+                groupId,
+                generation,
+                classification);
+            return binder.Bind(caster, identity);
+        }
+
+        private static int CountActiveProxies()
+        {
+            var startRadius = new Vector4[CapsuleShadowBuffer.MaximumProxyCount];
+            var endSoftness = new Vector4[CapsuleShadowBuffer.MaximumProxyCount];
+            return CapsuleShadowBuffer.Shared.CopyActiveProxies(
+                startRadius,
+                endSoftness,
+                Settings(),
+                out _,
+                out _,
+                out _);
+        }
+
+        private static CapsuleContactShadowRuntimeSettings Settings()
+        {
+            return new CapsuleContactShadowRuntimeSettings(
+                new CapsuleContactShadowQuality(32),
+                CapsuleShadowBuffer.MaximumCasterCount,
+                0.58f,
+                1.25f,
+                0.025f,
+                0.02f,
+                0.1f,
+                0.1f,
+                CapsuleContactShadowDebugView.None);
+        }
+
+        private static CapsuleShadowCasterBinder CreateBinder()
+        {
+            return new GameObject("Capsule Shadow Binder")
+                .AddComponent<CapsuleShadowCasterBinder>();
+        }
+
+        private static CasterFixture CreateCaster(string name)
+        {
+            var root = new GameObject(name);
+            CapsuleShadowCaster caster = root.AddComponent<CapsuleShadowCaster>();
+            Assert.That(caster.ConfigureProxies(new[]
+            {
+                new CapsuleShadowProxyBinding(
+                    root.transform,
+                    root.transform,
+                    Vector3.zero,
+                    Vector3.zero,
+                    0.5f,
+                    0.08f)
+            }), Is.True);
+            return new CasterFixture(root, caster);
+        }
+
+        private static void Cleanup(
+            CasterFixture fixture,
+            CapsuleShadowCasterBinder binder,
+            uint groupId,
+            uint generation)
+        {
+            if (fixture.Caster != null)
+                fixture.Caster.Unbind();
+            if (binder != null && groupId != 0u)
+                binder.ReleaseGroup(groupId, generation);
+            if (fixture.Root != null)
+                Object.Destroy(fixture.Root);
+            if (binder != null)
+                Object.Destroy(binder.gameObject);
+        }
+
+        private readonly struct CasterFixture
+        {
+            public CasterFixture(GameObject root, CapsuleShadowCaster caster)
+            {
+                Root = root;
+                Caster = caster;
+            }
+
+            public GameObject Root { get; }
+            public CapsuleShadowCaster Caster { get; }
+        }
+    }
+}

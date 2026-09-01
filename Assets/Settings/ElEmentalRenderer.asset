@@ -65,6 +65,21 @@ MonoBehaviour:
   profile: {fileID: 11400000, guid: 7ca6e93132d74491ab4e2888285090bf, type: 2}
   casterShader: {fileID: 4800000, guid: 8426e1dcc8304496b253e2d3f821792b, type: 3}
   debugShader: {fileID: 4800000, guid: c242e027b9274668bf52b9addd54f6fe, type: 3}
+--- !u!114 &7213409643801711024
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ad79d74a6104739bf3facdb8ff7d883, type: 3}
+  m_Name: Elemental Capsule Contact Shadows
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.Rendering.CapsuleContactShadowFeature
+  m_Active: 1
+  profile: {fileID: 11400000, guid: 7ca6e93132d74491ab4e2888285090bf, type: 2}
+  debugShader: {fileID: 4800000, guid: b78f83d28a3743d7a3ae737859f86afc, type: 3}
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -96,6 +111,7 @@ MonoBehaviour:
   - {fileID: -4159853085265101775}
   - {fileID: -4992813354828537069}
   - {fileID: 2634890530101234567}
+  - {fileID: 7213409643801711024}
   m_RendererFeatureMap: 
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
