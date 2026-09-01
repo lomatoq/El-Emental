@@ -49,9 +49,9 @@ namespace Elemental.Presentation.Rendering
                 case CapsuleShadowCasterClass.Character:
                     return 0;
                 case CapsuleShadowCasterClass.HeroRock:
-                    return 1;
-                case CapsuleShadowCasterClass.ActiveFragment:
                     return 2;
+                case CapsuleShadowCasterClass.ActiveFragment:
+                    return 1;
                 default:
                     return int.MaxValue;
             }
@@ -101,7 +101,7 @@ namespace Elemental.Presentation.Rendering
     /// </summary>
     public sealed class CapsuleShadowBuffer
     {
-        public const int MaximumCasterCount = 16;
+        public const int MaximumCasterCount = 24;
         public const int MaximumProxyCount = 32;
         public const int MaximumGenerationGroups = 16;
 

@@ -70,13 +70,21 @@ The exact director-owned integration hooks are:
 - `EarthFragmentPool.NotifyReleased`, reintegration, and shatter return: call
   producer `Release` before deactivation. `OnDisable` is the idempotent safety net,
   not the primary pool-return signal.
-- `EarthArenaStructure` fracture staging: acquire only exterior large active
-  pieces under the structure group/new representation generation, then commit
-  once after every admitted piece is staged. Do not add this producer to
-  `EarthRockDebrisPool` or any dust/VFX pool.
+- `EarthArenaStructure` publishes its canonical released-piece set through
+  `PresentationStateChanged`. The transient
+  `EarthArenaLargeFragmentCapsuleShadowPresenter` installs without scene YAML,
+  selects at most the four largest released pieces across eight structures,
+  rejects pieces below 0.75 m, and atomically commits one reserved cohort group.
+  Repair, disable, and later reacquire release the prior handles and advance the
+  cohort generation. Do not duplicate this owner in setup code and do not route
+  `EarthRockDebrisPool`, dust, particles, or VFX into this event path.
 
 This analytic contact path does not enable URP cascades or arena-wide realtime
 shadows; the existing no-realtime-shadow fallback remains unchanged.
+The shared registry holds at most 24 typed casters while the profile still uploads
+at most its configured 12 casters/20 balanced proxies; active fragments sort after
+fighters but before intact loose rocks so the bounded Broken Crown cohort remains
+observable under load.
 
 The pure admission policy rejects character kinds, tiny/sub-threshold fragments,
 debris, dust, particles, VFX, invalid IDs, and non-finite proxy bounds before they

@@ -72,6 +72,13 @@ namespace Elemental.Runtime.Physics
         private uint _lastImpactSourceId;
         private float _lastImpactTime = float.NegativeInfinity;
 
+        /// <summary>
+        /// Presentation-only notification emitted after a structure's canonical
+        /// released-piece set changes. The runtime owns fracture state; subscribers
+        /// may observe it but cannot alter simulation authority through this event.
+        /// </summary>
+        public static event Action<EarthArenaStructure> PresentationStateChanged;
+
         public event Action<IEarthFractureSource> TargetsActivated;
         public event Action<EarthArenaFracturePulse> FracturePresented;
 
@@ -83,6 +90,12 @@ namespace Elemental.Runtime.Physics
         public bool Repairable => repairable;
         public int PieceCount => pieces?.Length ?? 0;
         public int ReleasedPieceCount => _releasedCount;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetPresentationStateChanged()
+        {
+            PresentationStateChanged = null;
+        }
 
         public void SetCameraSuppressed(bool suppressed) => CameraSuppressed = suppressed;
 
@@ -144,6 +157,7 @@ namespace Elemental.Runtime.Physics
             if (index < 0 || !ReleasePiece(index, point, Vector3.zero, 0f)) return false;
             target = _pieceTargets[index];
             TargetsActivated?.Invoke(this);
+            PublishPresentationStateChanged();
             return target != null && target.IsEarthTargetValid;
         }
 
@@ -161,6 +175,7 @@ namespace Elemental.Runtime.Physics
         public bool SetMagicRepairProgress(float phase01)
         {
             if (!repairable || !_fractured || _releasedCount <= 0) return false;
+            int releasedBeforeRepair = _releasedCount;
             if (_repairStartReleased <= 0) _repairStartReleased = _releasedCount;
             int targetRepaired = Mathf.Clamp(
                 Mathf.FloorToInt(Mathf.Clamp01(phase01) * _repairStartReleased),
@@ -179,6 +194,8 @@ namespace Elemental.Runtime.Physics
                 ResetToIntact();
                 _repairStartReleased = 0;
             }
+            else if (_releasedCount != releasedBeforeRepair)
+                PublishPresentationStateChanged();
             return true;
         }
 
@@ -209,14 +226,26 @@ namespace Elemental.Runtime.Physics
         public bool IsPieceReleased(int index) =>
             index >= 0 && index < _released.Length && _released[index];
 
+        public bool TryGetPiece(int index, out EarthArenaPiece piece)
+        {
+            piece = index >= 0 && index < _pieceTargets.Length
+                ? _pieceTargets[index]
+                : null;
+            return piece != null;
+        }
+
         public bool TryAcquirePiece(int index)
         {
             if (index < 0 || index >= PieceCount) return false;
-            if (!_released[index] && !ReleasePiece(
-                    index,
-                    pieces[index] != null ? pieces[index].position : transform.position,
-                    Vector3.zero,
-                    0f)) return false;
+            if (!_released[index])
+            {
+                if (!ReleasePiece(
+                        index,
+                        pieces[index] != null ? pieces[index].position : transform.position,
+                        Vector3.zero,
+                        0f)) return false;
+                PublishPresentationStateChanged();
+            }
             return _pieceTargets[index] != null && _pieceTargets[index].IsEarthTargetValid;
         }
 
@@ -243,6 +272,18 @@ namespace Elemental.Runtime.Physics
         {
             if (!InitializeRuntime(false))
                 Debug.LogError("[Elemental] Broken Crown structure has invalid fracture wiring.", this);
+        }
+
+        private void OnEnable()
+        {
+            if (_configured)
+                PublishPresentationStateChanged();
+        }
+
+        private void OnDisable()
+        {
+            if (_configured)
+                PublishPresentationStateChanged();
         }
 
         private bool InitializeRuntime(bool resetProxy)
@@ -338,7 +379,11 @@ namespace Elemental.Runtime.Physics
 
             _configured = true;
             if (resetProxy) ResetToIntact();
-            else ResetCanonicalState();
+            else
+            {
+                ResetCanonicalState();
+                PublishPresentationStateChanged();
+            }
             return true;
         }
 
@@ -356,6 +401,7 @@ namespace Elemental.Runtime.Physics
         {
             _generation = _generation == uint.MaxValue ? 1u : _generation + 1u;
             ResetCanonicalState();
+            PublishPresentationStateChanged();
         }
 
         private void ResetCanonicalState()
@@ -407,7 +453,11 @@ namespace Elemental.Runtime.Physics
                     releasedAny = true;
                     point += SafeDirection(direction) * 0.08f;
                 }
-                if (releasedAny) TargetsActivated?.Invoke(this);
+                if (releasedAny)
+                {
+                    TargetsActivated?.Invoke(this);
+                    PublishPresentationStateChanged();
+                }
                 return releasedAny;
             }
         }
@@ -576,5 +626,10 @@ namespace Elemental.Runtime.Physics
 
         private static Vector3 SafeDirection(Vector3 direction) =>
             direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector3.up;
+
+        private void PublishPresentationStateChanged()
+        {
+            PresentationStateChanged?.Invoke(this);
+        }
     }
 }
