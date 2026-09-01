@@ -3,6 +3,14 @@ using UnityEngine;
 
 namespace Elemental.Presentation.Rendering
 {
+    public enum UnifiedLightingBindDisposition : byte
+    {
+        None = 0,
+        Applied = 1,
+        SkippedNonRenderable = 2,
+        Rejected = 3
+    }
+
     /// <summary>
     /// Thin, explicit presentation binder. The caller assigns a material from the
     /// migration profile first; this component validates the slot and merges only
@@ -32,6 +40,9 @@ namespace Elemental.Presentation.Rendering
 
         private MaterialPropertyBlock _properties;
 
+        public UnifiedLightingBindDisposition LastBindDisposition { get; private set; }
+        public uint NonRenderableSkipCount { get; private set; }
+
         public void Configure(UnifiedLightingMigrationProfile profile)
         {
             migrationProfile = profile;
@@ -45,14 +56,29 @@ namespace Elemental.Presentation.Rendering
         {
             using (BindMarker.Auto())
             {
+                LastBindDisposition = UnifiedLightingBindDisposition.None;
                 if (renderer == null || migrationProfile == null ||
                     !migrationProfile.IsComplete() || !frame.IsValid)
                 {
+                    LastBindDisposition = UnifiedLightingBindDisposition.Rejected;
                     Debug.LogError(
                         "Unified-lighting binding requires a renderer, complete migration " +
                         "profile, and finite projection frame.",
                         this);
                     return false;
+                }
+                // Imported collider helpers may retain a MeshRenderer solely
+                // because they share source FBX geometry. A disabled renderer is
+                // explicitly outside the lighting contract; dormant visual
+                // fracture pieces remain renderer-enabled on inactive objects and
+                // therefore still pass through full validation and binding.
+                if (!renderer.enabled || renderer.forceRenderingOff)
+                {
+                    LastBindDisposition =
+                        UnifiedLightingBindDisposition.SkippedNonRenderable;
+                    if (NonRenderableSkipCount < uint.MaxValue)
+                        NonRenderableSkipCount++;
+                    return true;
                 }
                 if (!migrationProfile.TryResolve(
                         role,
@@ -60,6 +86,7 @@ namespace Elemental.Presentation.Rendering
                         out UnifiedLightingRoleContract contract) ||
                     contract.ProjectionMode != frame.Mode)
                 {
+                    LastBindDisposition = UnifiedLightingBindDisposition.Rejected;
                     Debug.LogError(
                         $"Unified-lighting role '{role}' rejected projection mode '{frame.Mode}'.",
                         this);
@@ -72,6 +99,7 @@ namespace Elemental.Presentation.Rendering
                         assignedMaterials[materialIndex],
                         contract.Family))
                 {
+                    LastBindDisposition = UnifiedLightingBindDisposition.Rejected;
                     Debug.LogError(
                         $"Renderer '{renderer.name}' slot {materialIndex} is not assigned " +
                         $"the unified {contract.Family} material family.",
@@ -109,6 +137,7 @@ namespace Elemental.Presentation.Rendering
                         break;
                 }
                 renderer.SetPropertyBlock(_properties, materialIndex);
+                LastBindDisposition = UnifiedLightingBindDisposition.Applied;
                 return true;
             }
         }

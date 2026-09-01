@@ -134,6 +134,72 @@ namespace Elemental.Tests.PlayMode
             }
         }
 
+        [UnityTest]
+        public IEnumerator DisabledCollisionHelperSkipsBindingWithoutHidingVisualValidation()
+        {
+            Shader shader = Shader.Find(UnifiedLightingMigrationProfile.UnifiedShaderName);
+            Assert.That(shader, Is.Not.Null);
+            Material character = CreateMaterial(
+                shader, UnifiedLightingMaterialFamily.Character);
+            Material exterior = CreateMaterial(
+                shader, UnifiedLightingMaterialFamily.SandstoneExterior);
+            Material interior = CreateMaterial(
+                shader, UnifiedLightingMaterialFamily.SandstoneInterior);
+            Material ground = CreateMaterial(
+                shader, UnifiedLightingMaterialFamily.PlanetGround);
+            Material magic = CreateMaterial(
+                shader, UnifiedLightingMaterialFamily.MagicConstruct);
+            UnifiedLightingMigrationProfile profile =
+                ScriptableObject.CreateInstance<UnifiedLightingMigrationProfile>();
+            GameObject collisionHelper = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Renderer renderer = collisionHelper.GetComponent<Renderer>();
+            try
+            {
+                Assert.That(profile.TryConfigureRuntime(new[]
+                {
+                    new UnifiedLightingMigrationEntry(UnifiedLightingMaterialRole.Character, character),
+                    new UnifiedLightingMigrationEntry(UnifiedLightingMaterialRole.IntactSandstone, exterior),
+                    new UnifiedLightingMigrationEntry(UnifiedLightingMaterialRole.LooseRock, exterior),
+                    new UnifiedLightingMigrationEntry(UnifiedLightingMaterialRole.FractureExterior, exterior),
+                    new UnifiedLightingMigrationEntry(UnifiedLightingMaterialRole.FractureInterior, interior),
+                    new UnifiedLightingMigrationEntry(UnifiedLightingMaterialRole.PlanetGround, ground),
+                    new UnifiedLightingMigrationEntry(UnifiedLightingMaterialRole.MagicConstruct, magic)
+                }, out string failure), Is.True, failure);
+                renderer.sharedMaterial = character;
+                renderer.enabled = false;
+                UnifiedLightingMaterialBinder binder =
+                    collisionHelper.AddComponent<UnifiedLightingMaterialBinder>();
+                binder.Configure(profile);
+                var frame = new UnifiedLightingProjectionFrame(
+                    UnifiedLightingProjectionMode.CapturedStructureLocal,
+                    Vector3.zero,
+                    Matrix4x4.identity);
+
+                Assert.That(binder.Bind(
+                    renderer,
+                    0,
+                    UnifiedLightingMaterialRole.FractureExterior,
+                    frame), Is.True);
+                Assert.That(binder.LastBindDisposition,
+                    Is.EqualTo(UnifiedLightingBindDisposition.SkippedNonRenderable));
+                Assert.That(binder.NonRenderableSkipCount, Is.EqualTo(1u));
+                var result = new MaterialPropertyBlock();
+                renderer.GetPropertyBlock(result, 0);
+                Assert.That(result.isEmpty, Is.True);
+                yield return null;
+            }
+            finally
+            {
+                Object.Destroy(collisionHelper);
+                Object.Destroy(profile);
+                Object.Destroy(character);
+                Object.Destroy(exterior);
+                Object.Destroy(interior);
+                Object.Destroy(ground);
+                Object.Destroy(magic);
+            }
+        }
+
         private static Material CreateMaterial(
             Shader shader,
             UnifiedLightingMaterialFamily family)
