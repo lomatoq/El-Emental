@@ -20,110 +20,158 @@ namespace Elemental.Tests.PlayMode
         public IEnumerator PoweredAssist_DefaultOffAndAcceptedMediumOwnsNoKickOrLegDrive()
         {
             const string scenePath = "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
-            AsyncOperation load = SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
-            Assert.That(load, Is.Not.Null);
-            yield return load;
-            yield return null;
-
-            Scene scene = SceneManager.GetSceneByPath(scenePath);
-            ActiveRagdollPuppet puppet = FindInScene<ActiveRagdollPuppet>(scene);
-            Assert.That(puppet, Is.Not.Null);
-            PlanetMotor motor = puppet.GetComponent<PlanetMotor>();
-            Rigidbody body = puppet.GetComponent<Rigidbody>();
-            Animator animator = puppet.GetComponentInChildren<Animator>(true);
-            Assert.That(motor, Is.Not.Null);
-            Assert.That(body, Is.Not.Null);
-            Assert.That(animator, Is.Not.Null);
-
-            Transform leftFoot = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
-            Transform rightFoot = animator.GetBoneTransform(HumanBodyBones.RightFoot);
-            Transform head = animator.GetBoneTransform(HumanBodyBones.Head);
-            Transform leftHand = animator.GetBoneTransform(HumanBodyBones.LeftHand);
-            Transform rightHand = animator.GetBoneTransform(HumanBodyBones.RightHand);
-            Assert.That(leftFoot, Is.Not.Null);
-            Assert.That(rightFoot, Is.Not.Null);
-
-            puppet.ConfigurePoweredPhysicalAssist(
-                null, leftFoot, rightFoot, head, leftHand, rightHand);
-            CharacterPhysicalMode legacyMode = puppet.CanonicalMode;
-            EarthWorldResponseEvent disabledResponse = Response(
-                0xA001u, EarthCharacterImpactResponse.Stagger, body.worldCenterOfMass);
-            EarthPoweredImpactDecision disabled = puppet.ReceiveAcceptedWorldResponse(
-                in disabledResponse);
-            Assert.That(disabled.Accepted, Is.False);
-            Assert.That(puppet.CanonicalMode, Is.EqualTo(legacyMode));
-
-            ActiveRagdollJoint[] joints = puppet.GetComponentsInChildren<ActiveRagdollJoint>(true);
-            Assert.That(joints.Length, Is.GreaterThan(0));
-            int legJointCount = 0;
-            for (int index = 0; index < joints.Length; index++)
+            Scene scene = default;
+            EarthPhysicalAnimationProfile profile = null;
+            try
             {
-                EarthBodyRegion region = RegionForAuthoredTarget(joints[index].TargetPose);
-                Assert.That(joints[index].ConfigureBodyRegion(region), Is.True,
-                    joints[index].name);
-                if (region == EarthBodyRegion.Leg) legJointCount++;
-            }
-            Assert.That(legJointCount, Is.GreaterThan(0));
+                AsyncOperation load = SceneManager.LoadSceneAsync(
+                    scenePath, LoadSceneMode.Additive);
+                Assert.That(load, Is.Not.Null);
+                yield return load;
+                yield return null;
 
-            var profile = ScriptableObject.CreateInstance<EarthPhysicalAnimationProfile>();
-            profile.ConfigurePoweredPhysicalAssist(true);
-            puppet.ConfigurePoweredPhysicalAssist(
-                profile, leftFoot, rightFoot, head, leftHand, rightHand);
-            puppet.ResetPhysicalState(body.position, body.rotation);
-            for (int tick = 0; tick < 30 && !motor.HasStableSupport; tick++)
+                scene = SceneManager.GetSceneByPath(scenePath);
+                ActiveRagdollPuppet puppet = FindInScene<ActiveRagdollPuppet>(scene);
+                Assert.That(puppet, Is.Not.Null);
+                PlanetMotor motor = puppet.GetComponent<PlanetMotor>();
+                Rigidbody body = puppet.GetComponent<Rigidbody>();
+                Animator animator = puppet.GetComponentInChildren<Animator>(true);
+                Assert.That(motor, Is.Not.Null);
+                Assert.That(body, Is.Not.Null);
+                Assert.That(animator, Is.Not.Null);
+
+                Transform leftFoot = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
+                Transform rightFoot = animator.GetBoneTransform(HumanBodyBones.RightFoot);
+                Transform head = animator.GetBoneTransform(HumanBodyBones.Head);
+                Transform leftHand = animator.GetBoneTransform(HumanBodyBones.LeftHand);
+                Transform rightHand = animator.GetBoneTransform(HumanBodyBones.RightHand);
+                Assert.That(leftFoot, Is.Not.Null);
+                Assert.That(rightFoot, Is.Not.Null);
+
+                puppet.ConfigurePoweredPhysicalAssist(
+                    null, leftFoot, rightFoot, head, leftHand, rightHand);
+                CharacterPhysicalMode legacyMode = puppet.CanonicalMode;
+                EarthWorldResponseEvent disabledResponse = Response(
+                    0xA001u, EarthCharacterImpactResponse.Stagger, body.worldCenterOfMass);
+                EarthPoweredImpactDecision disabled = puppet.ReceiveAcceptedWorldResponse(
+                    in disabledResponse);
+                Assert.That(disabled.Accepted, Is.False);
+                Assert.That(puppet.CanonicalMode, Is.EqualTo(legacyMode));
+
+                ActiveRagdollJoint[] joints = FindOwnedActiveRagdollJoints(scene, puppet);
+                Assert.That(joints.Length, Is.GreaterThan(0));
+                int legJointCount = 0;
+                for (int index = 0; index < joints.Length; index++)
+                {
+                    EarthBodyRegion region = RegionForAuthoredTarget(joints[index].TargetPose);
+                    Assert.That(joints[index].ConfigureBodyRegion(region), Is.True,
+                        joints[index].name);
+                    if (region == EarthBodyRegion.Leg) legJointCount++;
+                }
+                Assert.That(legJointCount, Is.GreaterThan(0));
+
+                profile = ScriptableObject.CreateInstance<EarthPhysicalAnimationProfile>();
+                profile.ConfigurePoweredPhysicalAssist(true);
+                puppet.ConfigurePoweredPhysicalAssist(
+                    profile, leftFoot, rightFoot, head, leftHand, rightHand);
+                puppet.ResetPhysicalState(body.position, body.rotation);
+                for (int tick = 0; tick < 30 && !motor.HasStableSupport; tick++)
+                    yield return new WaitForFixedUpdate();
+                Assert.That(motor.HasStableSupport, Is.True,
+                    "The accepted medium path requires PlanetMotor stable support.");
+
+                Assert.That(puppet.PoweredAssistConfigurationValid, Is.True);
+
+                EarthWorldResponseEvent noPlantedContact = Response(
+                    0xA002u, EarthCharacterImpactResponse.Stagger, body.worldCenterOfMass);
+                EarthPoweredImpactDecision fallback = puppet.ReceiveAcceptedWorldResponse(
+                    in noPlantedContact);
+                Assert.That(fallback.FallsBackToAgentA, Is.True);
+                Assert.That(fallback.Rejection,
+                    Is.EqualTo(EarthPoweredAssistRejection.NoPlantedFoot));
+
+                puppet.SetPoweredFootContactState(true, true);
+                for (int index = 0; index < joints.Length; index++)
+                {
+                    if (joints[index].BodyRegion != EarthBodyRegion.Leg) continue;
+                    ConfigurableJoint legJoint = joints[index].GetComponent<ConfigurableJoint>();
+                    SeedEveryDriveChannel(legJoint);
+                    AssertEveryDriveChannelIsNonZero(legJoint, joints[index].name);
+                }
+                Vector3 velocityBefore = body.linearVelocity;
+                EarthPoweredImpactDecision first = puppet.ReceiveAcceptedWorldResponse(
+                    in noPlantedContact);
+                EarthPoweredImpactDecision duplicate = puppet.ReceiveAcceptedWorldResponse(
+                    in noPlantedContact);
+                puppet.SetPoweredFootContactState(true, true);
+
+                Assert.That(first.Owner, Is.EqualTo(EarthPoweredImpactOwner.PoweredPhysicalAssist));
+                Assert.That(first.EmitsImpulse || first.RequestsRagdoll, Is.False);
+                Assert.That(duplicate.Duplicate, Is.True);
+                Assert.That(puppet.CanonicalMode, Is.EqualTo(CharacterPhysicalMode.Stagger));
+                Assert.That(body.linearVelocity, Is.EqualTo(velocityBefore),
+                    "Accepted medium ownership must not add a second impulse.");
+
                 yield return new WaitForFixedUpdate();
-            Assert.That(motor.HasStableSupport, Is.True,
-                "The accepted medium path requires PlanetMotor stable support.");
-
-            Assert.That(puppet.PoweredAssistConfigurationValid, Is.True);
-
-            EarthWorldResponseEvent noPlantedContact = Response(
-                0xA002u, EarthCharacterImpactResponse.Stagger, body.worldCenterOfMass);
-            EarthPoweredImpactDecision fallback = puppet.ReceiveAcceptedWorldResponse(
-                in noPlantedContact);
-            Assert.That(fallback.FallsBackToAgentA, Is.True);
-            Assert.That(fallback.Rejection,
-                Is.EqualTo(EarthPoweredAssistRejection.NoPlantedFoot));
-
-            puppet.SetPoweredFootContactState(true, true);
-            for (int index = 0; index < joints.Length; index++)
-            {
-                if (joints[index].BodyRegion != EarthBodyRegion.Leg) continue;
-                ConfigurableJoint legJoint = joints[index].GetComponent<ConfigurableJoint>();
-                SeedEveryDriveChannel(legJoint);
-                AssertEveryDriveChannelIsNonZero(legJoint, joints[index].name);
+                Assert.That(puppet.LastPoweredAssistOutput.PreservesFeet, Is.True);
+                Assert.That(motor.enabled, Is.True,
+                    "A medium response must preserve PlanetMotor and support authority.");
+                Assert.That(puppet.LastBalanceTorque, Is.EqualTo(Vector3.zero),
+                    "Powered balance may shape joints and request an authored step, not torque the pelvis.");
+                for (int index = 0; index < joints.Length; index++)
+                {
+                    if (joints[index].BodyRegion != EarthBodyRegion.Leg) continue;
+                    AssertEveryDriveChannelIsZero(
+                        joints[index].GetComponent<ConfigurableJoint>(),
+                        joints[index].name);
+                }
             }
-            Vector3 velocityBefore = body.linearVelocity;
-            EarthPoweredImpactDecision first = puppet.ReceiveAcceptedWorldResponse(
-                in noPlantedContact);
-            EarthPoweredImpactDecision duplicate = puppet.ReceiveAcceptedWorldResponse(
-                in noPlantedContact);
-            puppet.SetPoweredFootContactState(true, true);
-
-            Assert.That(first.Owner, Is.EqualTo(EarthPoweredImpactOwner.PoweredPhysicalAssist));
-            Assert.That(first.EmitsImpulse || first.RequestsRagdoll, Is.False);
-            Assert.That(duplicate.Duplicate, Is.True);
-            Assert.That(puppet.CanonicalMode, Is.EqualTo(CharacterPhysicalMode.Stagger));
-            Assert.That(body.linearVelocity, Is.EqualTo(velocityBefore),
-                "Accepted medium ownership must not add a second impulse.");
-
-            yield return new WaitForFixedUpdate();
-            Assert.That(puppet.LastPoweredAssistOutput.PreservesFeet, Is.True);
-            Assert.That(motor.enabled, Is.True,
-                "A medium response must preserve PlanetMotor and support authority.");
-            Assert.That(puppet.LastBalanceTorque, Is.EqualTo(Vector3.zero),
-                "Powered balance may shape joints and request an authored step, not torque the pelvis.");
-            for (int index = 0; index < joints.Length; index++)
+            finally
             {
-                if (joints[index].BodyRegion != EarthBodyRegion.Leg) continue;
-                AssertEveryDriveChannelIsZero(
-                    joints[index].GetComponent<ConfigurableJoint>(),
-                    joints[index].name);
+                if (profile != null)
+                    Object.DestroyImmediate(profile);
+                DestroyAndUnloadScene(scene);
+            }
+        }
+
+        private static ActiveRagdollJoint[] FindOwnedActiveRagdollJoints(
+            Scene scene,
+            ActiveRagdollPuppet puppet)
+        {
+            ActiveRagdollJoint[] candidates = Object.FindObjectsByType<ActiveRagdollJoint>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+            int ownedCount = 0;
+            for (int index = 0; index < candidates.Length; index++)
+            {
+                ActiveRagdollJoint candidate = candidates[index];
+                if (candidate.gameObject.scene == scene &&
+                    candidate.TargetPose != null &&
+                    candidate.TargetPose.IsChildOf(puppet.transform))
+                    ownedCount++;
             }
 
-            Object.Destroy(profile);
-            AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
-            if (unload != null) yield return unload;
+            var owned = new ActiveRagdollJoint[ownedCount];
+            int writeIndex = 0;
+            for (int index = 0; index < candidates.Length; index++)
+            {
+                ActiveRagdollJoint candidate = candidates[index];
+                if (candidate.gameObject.scene != scene ||
+                    candidate.TargetPose == null ||
+                    !candidate.TargetPose.IsChildOf(puppet.transform))
+                    continue;
+                owned[writeIndex++] = candidate;
+            }
+            return owned;
+        }
+
+        private static void DestroyAndUnloadScene(Scene scene)
+        {
+            if (!scene.IsValid() || !scene.isLoaded) return;
+            GameObject[] roots = scene.GetRootGameObjects();
+            for (int index = 0; index < roots.Length; index++)
+                Object.DestroyImmediate(roots[index]);
+            SceneManager.UnloadSceneAsync(scene);
         }
 
         private static EarthBodyRegion RegionForAuthoredTarget(Transform target)
