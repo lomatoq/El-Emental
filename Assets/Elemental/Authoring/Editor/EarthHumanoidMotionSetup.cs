@@ -368,6 +368,25 @@ namespace Elemental.Authoring.Editor
         {
             if (sourceClips == null || sourceClips.Length == 0)
                 return sourceClips;
+            bool hasNeutral = false;
+            bool hasCrouchTransition = false;
+            for (int index = 0; index < sourceClips.Length; index++)
+            {
+                hasNeutral |= string.Equals(
+                    sourceClips[index].name,
+                    NeutralIdleClipName,
+                    StringComparison.Ordinal);
+                hasCrouchTransition |= string.Equals(
+                    sourceClips[index].name,
+                    "Standing Idle To Crouch",
+                    StringComparison.Ordinal);
+            }
+            // Replacing existing ModelImporterClipAnimation instances discards
+            // their custom contact/phase/safe-exit curves. Once both authored
+            // subclips exist, retain the importer objects and normalize only the
+            // root/loop fields in ConfigureImporter below.
+            if (hasNeutral && hasCrouchTransition)
+                return sourceClips;
             ModelImporterClipAnimation source = sourceClips[0];
             for (int index = 0; index < sourceClips.Length; index++)
                 if (!string.Equals(sourceClips[index].name, NeutralIdleClipName, StringComparison.Ordinal))
