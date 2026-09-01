@@ -53,6 +53,11 @@ group retains a bounded generation tombstone, so an equal/older epoch cannot be
 committed again; exhausted group capacity fails closed. Never bind tiny debris,
 dust, particles, or VFX; typed acquisition rejects them. Player/bot/ragdoll,
 intact hero rock, and large fracture classifications therefore cannot drift.
+`Unknown`/default and undefined producer values fail closed. The caster has no
+serialized identity and never registers from `OnEnable`; acquisition must occur
+explicitly after every enable/pool checkout.
+The raw buffer record, constructor, and registration method are assembly-internal;
+only the dedicated EditMode/PlayMode friend assemblies can exercise them directly.
 
 For player/opponent and ragdoll presentations, bind a stable fighter `uint` and a
 small body set (pelvis, chest, and at most two limb capsules). Rebind on every pool

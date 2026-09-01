@@ -22,6 +22,16 @@ namespace Elemental.Tests.PlayMode
                 Assert.That(fixture.Caster.IsRegistered, Is.False);
                 Assert.That(binder.TryAcquire(
                     fixture.Caster,
+                    default,
+                    groupId,
+                    generation), Is.False);
+                Assert.That(binder.TryAcquire(
+                    fixture.Caster,
+                    (CapsuleShadowProducerKind)255,
+                    groupId,
+                    generation), Is.False);
+                Assert.That(binder.TryAcquire(
+                    fixture.Caster,
                     CapsuleShadowProducerKind.Player,
                     0u,
                     generation), Is.False);
@@ -69,6 +79,8 @@ namespace Elemental.Tests.PlayMode
                 yield return null;
                 Assert.That(fixture.Caster.IsRegistered, Is.False,
                     "Pool re-enable must not restore the previous acquisition.");
+                Assert.That(fixture.Caster.HasValidBinding, Is.False,
+                    "No serialized or cached identity may survive OnDisable.");
                 Assert.That(binder.TryAcquire(
                     fixture.Caster,
                     CapsuleShadowProducerKind.Player,

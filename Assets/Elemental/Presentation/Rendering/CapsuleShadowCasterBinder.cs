@@ -4,13 +4,14 @@ namespace Elemental.Presentation.Rendering
 {
     public enum CapsuleShadowProducerKind
     {
-        Player = 0,
-        OpponentBot = 1,
-        Ragdoll = 2,
-        IntactHeroRock = 3,
-        LargeActiveFracture = 4,
-        Debris = 5,
-        Vfx = 6
+        Unknown = 0,
+        Player = 1,
+        OpponentBot = 2,
+        Ragdoll = 3,
+        IntactHeroRock = 4,
+        LargeActiveFracture = 5,
+        Debris = 6,
+        Vfx = 7
     }
 
     public static class CapsuleShadowOwnershipPolicy

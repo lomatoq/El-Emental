@@ -74,9 +74,9 @@ namespace Elemental.Presentation.Rendering
         public bool IsValid => Slot >= 0 && Revision != 0u;
     }
 
-    public readonly struct CapsuleShadowCasterRecord
+    internal readonly struct CapsuleShadowCasterRecord
     {
-        public CapsuleShadowCasterRecord(
+        internal CapsuleShadowCasterRecord(
             CapsuleShadowCaster caster,
             uint stableGroupId,
             uint generation,
@@ -163,7 +163,7 @@ namespace Elemental.Presentation.Rendering
             s_Shared = new CapsuleShadowBuffer();
         }
 
-        public bool TryRegister(
+        internal bool TryRegister(
             in CapsuleShadowCasterRecord record,
             out CapsuleShadowRegistrationHandle handle)
         {

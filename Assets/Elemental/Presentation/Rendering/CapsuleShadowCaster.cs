@@ -59,11 +59,6 @@ namespace Elemental.Presentation.Rendering
     {
         public const int MaximumProxiesPerCaster = 4;
 
-        [Header("Static authoring (group 0 is intentionally unbound)")]
-        [SerializeField] private uint stableGroupId = 0u;
-        [SerializeField] private uint generation = 0u;
-        [SerializeField] private CapsuleShadowCasterClass classification =
-            CapsuleShadowCasterClass.Other;
         [SerializeField] private CapsuleShadowProxyBinding[] proxies =
             Array.Empty<CapsuleShadowProxyBinding>();
 
@@ -74,16 +69,10 @@ namespace Elemental.Presentation.Rendering
         private CapsuleShadowCasterClass _runtimeClassification;
         private bool _hasRuntimeBinding;
 
-        public uint StableGroupId => _hasRuntimeBinding
-            ? _runtimeStableGroupId
-            : stableGroupId;
-        public uint Generation => _hasRuntimeBinding
-            ? _runtimeGeneration
-            : generation;
-        public CapsuleShadowCasterClass Classification => _hasRuntimeBinding
-            ? _runtimeClassification
-            : classification;
-        public bool HasValidBinding => StableGroupId != 0u &&
+        public uint StableGroupId => _runtimeStableGroupId;
+        public uint Generation => _runtimeGeneration;
+        public CapsuleShadowCasterClass Classification => _runtimeClassification;
+        public bool HasValidBinding => _hasRuntimeBinding && StableGroupId != 0u &&
             CapsuleShadowCasterPolicy.IsAdmittedClassification(Classification);
         public bool HasRuntimeBinding => _hasRuntimeBinding;
         public int ProxyCount => proxies != null
@@ -91,12 +80,6 @@ namespace Elemental.Presentation.Rendering
             : 0;
         public bool IsRegistered => CapsuleShadowBuffer.Shared.IsRegistrationCurrent(_handle);
         public bool IsActiveGeneration => CapsuleShadowBuffer.Shared.IsGenerationActive(_handle);
-
-        private void OnEnable()
-        {
-            if (HasValidBinding)
-                RegisterCurrentBinding();
-        }
 
         private void OnDisable()
         {

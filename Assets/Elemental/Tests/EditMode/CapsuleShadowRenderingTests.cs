@@ -246,6 +246,12 @@ namespace Elemental.Tests.EditMode
         [Test]
         public void OwnershipClassificationIsTypedAndFailsClosed()
         {
+            Assert.That(CapsuleShadowOwnershipPolicy.TryResolveClassification(
+                CapsuleShadowProducerKind.Unknown, out _), Is.False);
+            Assert.That(CapsuleShadowOwnershipPolicy.TryResolveClassification(
+                default, out _), Is.False);
+            Assert.That(CapsuleShadowOwnershipPolicy.TryResolveClassification(
+                (CapsuleShadowProducerKind)255, out _), Is.False);
             AssertClassification(CapsuleShadowProducerKind.Player, CapsuleShadowCasterClass.Character);
             AssertClassification(CapsuleShadowProducerKind.OpponentBot, CapsuleShadowCasterClass.Character);
             AssertClassification(CapsuleShadowProducerKind.Ragdoll, CapsuleShadowCasterClass.Character);
@@ -265,6 +271,28 @@ namespace Elemental.Tests.EditMode
                 "Bind",
                 System.Reflection.BindingFlags.Instance |
                 System.Reflection.BindingFlags.Public), Is.Null);
+            Assert.That(typeof(CapsuleShadowCasterRecord).IsNotPublic, Is.True);
+            Assert.That(typeof(CapsuleShadowCasterRecord).GetConstructors(), Is.Empty);
+            Assert.That(typeof(CapsuleShadowBuffer).GetMethod(
+                "TryRegister",
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.Public), Is.Null);
+            Assert.That(typeof(CapsuleShadowCaster).GetField(
+                "stableGroupId",
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.NonPublic), Is.Null);
+            Assert.That(typeof(CapsuleShadowCaster).GetField(
+                "generation",
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.NonPublic), Is.Null);
+            Assert.That(typeof(CapsuleShadowCaster).GetField(
+                "classification",
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.NonPublic), Is.Null);
+            Assert.That(typeof(CapsuleShadowCaster).GetMethod(
+                "OnEnable",
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.NonPublic), Is.Null);
         }
 
         private static void AssertClassification(
