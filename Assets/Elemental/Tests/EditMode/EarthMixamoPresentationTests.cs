@@ -139,14 +139,14 @@ namespace Elemental.Tests.EditMode
                 EarthHumanoidMotionSetup.UpgradeController(controller);
                 AssetDatabase.SaveAssets();
                 string firstGraph = CaptureTransitionGraph(controller);
-                int[] firstTransitionIds = CaptureReferencedTransitionIds(controller);
+                long[] firstTransitionIds = CaptureReferencedTransitionIds(controller);
                 int firstSubAssetCount = CountTransitionSubAssets(temporaryPath);
                 AssertNoOrphanTransitionSubAssets(controller, temporaryPath);
 
                 EarthHumanoidMotionSetup.UpgradeController(controller);
                 AssetDatabase.SaveAssets();
                 string secondGraph = CaptureTransitionGraph(controller);
-                int[] secondTransitionIds = CaptureReferencedTransitionIds(controller);
+                long[] secondTransitionIds = CaptureReferencedTransitionIds(controller);
                 int secondSubAssetCount = CountTransitionSubAssets(temporaryPath);
 
                 Assert.That(secondGraph, Is.EqualTo(firstGraph),
@@ -233,13 +233,24 @@ namespace Elemental.Tests.EditMode
                 .OfType<AnimatorStateTransition>()
                 .Count();
 
-        private static int[] CaptureReferencedTransitionIds(AnimatorController controller)
+        private static long[] CaptureReferencedTransitionIds(AnimatorController controller)
         {
             HashSet<AnimatorStateTransition> referenced = CaptureReferencedTransitions(controller);
             return referenced
-                .Select(transition => transition.GetInstanceID())
-                .OrderBy(instanceId => instanceId)
+                .Select(GetPersistentLocalId)
+                .OrderBy(localId => localId)
                 .ToArray();
+        }
+
+        private static long GetPersistentLocalId(AnimatorStateTransition transition)
+        {
+            if (AssetDatabase.TryGetGUIDAndLocalFileIdentifier(
+                    transition,
+                    out string _,
+                    out long localId))
+                return localId;
+            throw new InvalidOperationException(
+                $"Transition '{transition.name}' is not a persistent controller subasset.");
         }
 
         private static void AssertNoOrphanTransitionSubAssets(
