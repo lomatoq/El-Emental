@@ -158,6 +158,8 @@ namespace Elemental.Simulation.Characters
             switch (canonicalMode)
             {
                 case CharacterPhysicalMode.AnimatedMotor:
+                case CharacterPhysicalMode.PhysicalAssist:
+                case CharacterPhysicalMode.Stagger:
                     return !_ragdollOwnershipActive &&
                            !_recoveryOwnershipActive &&
                            _ownership.AnimationOwnerEnabled &&

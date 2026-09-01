@@ -1,3 +1,4 @@
+using Elemental.Simulation.Characters;
 using UnityEngine;
 
 namespace Elemental.Runtime.Characters
@@ -9,6 +10,7 @@ namespace Elemental.Runtime.Characters
         [SerializeField] private Rigidbody targetBody;
         [SerializeField] private ConfigurableJoint targetJoint;
         [SerializeField] private Transform targetPose;
+        [SerializeField] private EarthBodyRegion bodyRegion = EarthBodyRegion.Chest;
         [SerializeField, Min(0f)] private float spring = 900f;
         [SerializeField, Min(0f)] private float damping = 65f;
         [SerializeField, Min(0f)] private float maximumForce = 1400f;
@@ -16,11 +18,14 @@ namespace Elemental.Runtime.Characters
 
         private Quaternion _initialLocalRotation;
         private bool _initialized;
+        private float _poweredDriveWeight;
+        private float _lastAppliedAngularLimit = -1f;
 
         public float JointErrorDegrees { get; private set; }
         public float LastAppliedTorqueEstimate { get; private set; }
         public Rigidbody Body => targetBody;
         public Transform TargetPose => targetPose;
+        public EarthBodyRegion BodyRegion => bodyRegion;
 
         public void Configure(
             Rigidbody body,
@@ -41,6 +46,9 @@ namespace Elemental.Runtime.Characters
             InitializeJoint();
         }
 
+        public void ConfigureBodyRegion(EarthBodyRegion configuredRegion) =>
+            bodyRegion = configuredRegion;
+
         private void Awake()
         {
             InitializeJoint();
@@ -54,6 +62,7 @@ namespace Elemental.Runtime.Characters
             }
 
             float muscle = Mathf.Clamp01(muscleStrength);
+            ApplyAngularLimits(angularLimit);
             JointDrive drive = targetJoint.slerpDrive;
             drive.positionSpring = spring * muscle;
             drive.positionDamper = damping * Mathf.Lerp(0.35f, 1f, muscle);
@@ -65,6 +74,45 @@ namespace Elemental.Runtime.Characters
             LastAppliedTorqueEstimate = Mathf.Min(
                 maximumForce * muscle,
                 JointErrorDegrees * Mathf.Deg2Rad * spring * muscle);
+        }
+
+        public void ApplyPoweredPose(
+            in EarthMuscleRegionTuning tuning,
+            float responseWeight,
+            float deltaTime)
+        {
+            if (!_initialized || targetPose == null) return;
+
+            float targetWeight = tuning.DriveWeight * Mathf.Lerp(
+                0.65f,
+                1f,
+                Mathf.Clamp01(responseWeight));
+            _poweredDriveWeight = targetWeight <= 0f
+                ? 0f
+                : EarthMuscleProfiles.StepDriveWeight(
+                    _poweredDriveWeight,
+                    targetWeight,
+                    tuning.RecoveryRate,
+                    deltaTime);
+            float omega = 2f * Mathf.PI * tuning.Frequency;
+            JointDrive drive = targetJoint.slerpDrive;
+            drive.positionSpring = omega * omega * _poweredDriveWeight;
+            drive.positionDamper = 2f * tuning.Damping * omega * _poweredDriveWeight;
+            drive.maximumForce = tuning.TorqueCap * _poweredDriveWeight;
+            targetJoint.slerpDrive = drive;
+            ApplyAngularLimits(tuning.AngularLimitDegrees);
+            Quaternion desired = Quaternion.Inverse(targetPose.localRotation) *
+                                 _initialLocalRotation;
+            targetJoint.targetRotation = Quaternion.Slerp(
+                Quaternion.identity,
+                desired,
+                tuning.TransferWeight);
+
+            JointErrorDegrees = Quaternion.Angle(targetBody.rotation, targetPose.rotation);
+            LastAppliedTorqueEstimate = Mathf.Min(
+                drive.maximumForce,
+                omega * omega * JointErrorDegrees * Mathf.Deg2Rad *
+                _poweredDriveWeight * tuning.TransferWeight);
         }
 
         private void InitializeJoint()
@@ -90,10 +138,7 @@ namespace Elemental.Runtime.Characters
             targetJoint.angularXMotion = ConfigurableJointMotion.Limited;
             targetJoint.angularYMotion = ConfigurableJointMotion.Limited;
             targetJoint.angularZMotion = ConfigurableJointMotion.Limited;
-            targetJoint.lowAngularXLimit = new SoftJointLimit { limit = -angularLimit };
-            targetJoint.highAngularXLimit = new SoftJointLimit { limit = angularLimit };
-            targetJoint.angularYLimit = new SoftJointLimit { limit = angularLimit };
-            targetJoint.angularZLimit = new SoftJointLimit { limit = angularLimit };
+            ApplyAngularLimits(angularLimit);
             targetJoint.rotationDriveMode = RotationDriveMode.Slerp;
             targetJoint.projectionMode = JointProjectionMode.PositionAndRotation;
             targetJoint.projectionDistance = 0.08f;
@@ -101,6 +146,17 @@ namespace Elemental.Runtime.Characters
             targetJoint.enablePreprocessing = true;
             _initialLocalRotation = transform.localRotation;
             _initialized = true;
+        }
+
+        private void ApplyAngularLimits(float requestedLimit)
+        {
+            float limit = Mathf.Clamp(requestedLimit, 1f, 90f);
+            if (Mathf.Abs(limit - _lastAppliedAngularLimit) <= 0.001f) return;
+            targetJoint.lowAngularXLimit = new SoftJointLimit { limit = -limit };
+            targetJoint.highAngularXLimit = new SoftJointLimit { limit = limit };
+            targetJoint.angularYLimit = new SoftJointLimit { limit = limit };
+            targetJoint.angularZLimit = new SoftJointLimit { limit = limit };
+            _lastAppliedAngularLimit = limit;
         }
     }
 }

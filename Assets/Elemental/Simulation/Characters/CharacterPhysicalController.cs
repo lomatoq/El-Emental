@@ -74,6 +74,29 @@ namespace Elemental.Simulation.Characters
 
         public CharacterPhysicalMode Mode => _mode;
 
+        /// <summary>
+        /// Accepts a powered-assist request without creating a second physical
+        /// mode machine. The caller owns accepted-hit identity and support
+        /// validation; this controller remains the sole mode authority.
+        /// </summary>
+        public bool TryRequestPoweredAssist(bool authoredRecoveryStepRequired)
+        {
+            if (_mode == CharacterPhysicalMode.FullRagdoll ||
+                _mode == CharacterPhysicalMode.Recovery)
+                return false;
+
+            if (authoredRecoveryStepRequired)
+            {
+                _staggerDebt = math.max(_staggerDebt, _tuning.StaggerDebtThreshold);
+                Enter(CharacterPhysicalMode.Stagger);
+            }
+            else if (_mode == CharacterPhysicalMode.AnimatedMotor)
+            {
+                Enter(CharacterPhysicalMode.PhysicalAssist);
+            }
+            return true;
+        }
+
         public void ForceFullRagdoll()
         {
             _mode = CharacterPhysicalMode.FullRagdoll;

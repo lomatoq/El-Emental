@@ -4,6 +4,7 @@ using Elemental.Presentation.Animation;
 using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
 using Elemental.Simulation.Characters;
+using Elemental.Simulation.Combat;
 using NUnit.Framework;
 using Unity.Mathematics;
 using UnityEngine;
@@ -15,6 +16,87 @@ namespace Elemental.Tests.PlayMode
 {
     public sealed class ActiveRagdollRuntimeTests
     {
+        [UnityTest]
+        public IEnumerator PoweredAssist_DefaultOffAndAcceptedMediumOwnsNoKickOrLegDrive()
+        {
+            const string scenePath = "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
+            AsyncOperation load = SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
+            Assert.That(load, Is.Not.Null);
+            yield return load;
+            yield return null;
+
+            Scene scene = SceneManager.GetSceneByPath(scenePath);
+            ActiveRagdollPuppet puppet = FindInScene<ActiveRagdollPuppet>(scene);
+            Assert.That(puppet, Is.Not.Null);
+            PlanetMotor motor = puppet.GetComponent<PlanetMotor>();
+            Rigidbody body = puppet.GetComponent<Rigidbody>();
+            Animator animator = puppet.GetComponentInChildren<Animator>(true);
+            Assert.That(motor, Is.Not.Null);
+            Assert.That(body, Is.Not.Null);
+            Assert.That(animator, Is.Not.Null);
+
+            Transform leftFoot = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
+            Transform rightFoot = animator.GetBoneTransform(HumanBodyBones.RightFoot);
+            Transform head = animator.GetBoneTransform(HumanBodyBones.Head);
+            Transform leftHand = animator.GetBoneTransform(HumanBodyBones.LeftHand);
+            Transform rightHand = animator.GetBoneTransform(HumanBodyBones.RightHand);
+            Assert.That(leftFoot, Is.Not.Null);
+            Assert.That(rightFoot, Is.Not.Null);
+
+            puppet.ConfigurePoweredPhysicalAssist(
+                null, leftFoot, rightFoot, head, leftHand, rightHand);
+            CharacterPhysicalMode legacyMode = puppet.CanonicalMode;
+            EarthWorldResponseEvent disabledResponse = Response(
+                0xA001u, EarthCharacterImpactResponse.Stagger, body.worldCenterOfMass);
+            EarthPoweredImpactDecision disabled = puppet.ReceiveAcceptedWorldResponse(
+                in disabledResponse);
+            Assert.That(disabled.Accepted, Is.False);
+            Assert.That(puppet.CanonicalMode, Is.EqualTo(legacyMode));
+
+            var profile = ScriptableObject.CreateInstance<EarthPhysicalAnimationProfile>();
+            profile.ConfigurePoweredPhysicalAssist(true);
+            puppet.ConfigurePoweredPhysicalAssist(
+                profile, leftFoot, rightFoot, head, leftHand, rightHand);
+            puppet.ResetPhysicalState(body.position, body.rotation);
+            for (int tick = 0; tick < 30 && !motor.HasStableSupport; tick++)
+                yield return new WaitForFixedUpdate();
+            Assert.That(motor.HasStableSupport, Is.True,
+                "The accepted medium path requires PlanetMotor stable support.");
+
+            ActiveRagdollJoint[] joints = puppet.GetComponentsInChildren<ActiveRagdollJoint>(true);
+            Assert.That(joints.Length, Is.GreaterThan(0));
+            ActiveRagdollJoint legProofJoint = joints[joints.Length - 1];
+            legProofJoint.ConfigureBodyRegion(EarthBodyRegion.Leg);
+            Vector3 velocityBefore = body.linearVelocity;
+            EarthWorldResponseEvent mediumResponse = Response(
+                0xA002u, EarthCharacterImpactResponse.Stagger, body.worldCenterOfMass);
+            EarthPoweredImpactDecision first = puppet.ReceiveAcceptedWorldResponse(
+                in mediumResponse);
+            EarthPoweredImpactDecision duplicate = puppet.ReceiveAcceptedWorldResponse(
+                in mediumResponse);
+
+            Assert.That(first.Owner, Is.EqualTo(EarthPoweredImpactOwner.PoweredPhysicalAssist));
+            Assert.That(first.EmitsImpulse || first.RequestsRagdoll, Is.False);
+            Assert.That(duplicate.Duplicate, Is.True);
+            Assert.That(puppet.CanonicalMode, Is.EqualTo(CharacterPhysicalMode.Stagger));
+            Assert.That(body.linearVelocity, Is.EqualTo(velocityBefore),
+                "Accepted medium ownership must not add a second impulse.");
+
+            yield return new WaitForFixedUpdate();
+            Assert.That(puppet.LastPoweredAssistOutput.PreservesFeet, Is.True);
+            Assert.That(motor.enabled, Is.True,
+                "A medium response must preserve PlanetMotor and support authority.");
+            Assert.That(puppet.LastBalanceTorque, Is.EqualTo(Vector3.zero),
+                "Powered balance may shape joints and request an authored step, not torque the pelvis.");
+            Assert.That(legProofJoint.GetComponent<ConfigurableJoint>().slerpDrive.maximumForce,
+                Is.Zero.Within(0.001f),
+                "Medium powered assist must leave final leg/contact ownership to animation and foot IK.");
+
+            Object.Destroy(profile);
+            AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
+            if (unload != null) yield return unload;
+        }
+
         [UnityTest]
         public IEnumerator EarthCorePuppetRemainsGroundedWhenPlayerProvidesNoInput()
         {
@@ -772,6 +854,27 @@ namespace Elemental.Tests.PlayMode
                 new Vector3(0.2f, -0.7f, 0f),
                 Vector3.up,
                 in markers);
+
+        private static EarthWorldResponseEvent Response(
+            uint responseId,
+            EarthCharacterImpactResponse response,
+            Vector3 point) => new EarthWorldResponseEvent(
+            responseId,
+            100u,
+            200u,
+            1u,
+            response is EarthCharacterImpactResponse.Knockout or
+                EarthCharacterImpactResponse.RecoverableKnockdown
+                ? EarthWorldResponseKind.Knockdown
+                : EarthWorldResponseKind.CharacterImpact,
+            EarthCharacterImpactSourceKind.Physics,
+            response,
+            new float3(point.x, point.y, point.z),
+            new float3(0f, 1f, 0f),
+            new float3(1f, 0f, 0f),
+            10f,
+            50f,
+            0.65f);
 
         private static T FindInScene<T>(Scene scene) where T : Component
         {

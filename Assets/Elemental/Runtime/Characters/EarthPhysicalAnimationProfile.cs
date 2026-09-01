@@ -6,6 +6,80 @@ using UnityEngine;
 namespace Elemental.Runtime.Characters
 {
     [Serializable]
+    public struct EarthMuscleRegionAuthoring
+    {
+        [SerializeField, Min(0f)] private float frequency;
+        [SerializeField, Min(0f)] private float damping;
+        [SerializeField, Min(0f)] private float torqueCap;
+        [SerializeField, Range(1f, 90f)] private float angularLimit;
+        [SerializeField, Range(0f, 1f)] private float driveWeight;
+        [SerializeField, Range(0f, 1f)] private float transferWeight;
+        [SerializeField, Min(0f)] private float recoveryRate;
+
+        public EarthMuscleRegionAuthoring(in EarthMuscleRegionTuning tuning)
+        {
+            frequency = tuning.Frequency;
+            damping = tuning.Damping;
+            torqueCap = tuning.TorqueCap;
+            angularLimit = tuning.AngularLimitDegrees;
+            driveWeight = tuning.DriveWeight;
+            transferWeight = tuning.TransferWeight;
+            recoveryRate = tuning.RecoveryRate;
+        }
+
+        public EarthMuscleRegionTuning Bake() => new EarthMuscleRegionTuning(
+            frequency,
+            damping,
+            torqueCap,
+            angularLimit,
+            driveWeight,
+            transferWeight,
+            recoveryRate);
+    }
+
+    [Serializable]
+    public struct EarthMuscleProfileAuthoring
+    {
+        [SerializeField] private EarthMuscleProfileId id;
+        [SerializeField] private EarthMuscleRegionAuthoring pelvis;
+        [SerializeField] private EarthMuscleRegionAuthoring spine;
+        [SerializeField] private EarthMuscleRegionAuthoring chest;
+        [SerializeField] private EarthMuscleRegionAuthoring head;
+        [SerializeField] private EarthMuscleRegionAuthoring arm;
+        [SerializeField] private EarthMuscleRegionAuthoring leg;
+
+        public EarthMuscleProfileAuthoring(in EarthMuscleProfile profile)
+        {
+            id = profile.Id;
+            pelvis = new EarthMuscleRegionAuthoring(profile.Pelvis);
+            spine = new EarthMuscleRegionAuthoring(profile.Spine);
+            chest = new EarthMuscleRegionAuthoring(profile.Chest);
+            head = new EarthMuscleRegionAuthoring(profile.Head);
+            arm = new EarthMuscleRegionAuthoring(profile.Arm);
+            leg = new EarthMuscleRegionAuthoring(profile.Leg);
+        }
+
+        public EarthMuscleProfileId Id => id;
+        public EarthMuscleProfile Bake()
+        {
+            EarthMuscleRegionTuning bakedPelvis = pelvis.Bake();
+            EarthMuscleRegionTuning bakedSpine = spine.Bake();
+            EarthMuscleRegionTuning bakedChest = chest.Bake();
+            EarthMuscleRegionTuning bakedHead = head.Bake();
+            EarthMuscleRegionTuning bakedArm = arm.Bake();
+            EarthMuscleRegionTuning bakedLeg = leg.Bake();
+            return new EarthMuscleProfile(
+                id,
+                in bakedPelvis,
+                in bakedSpine,
+                in bakedChest,
+                in bakedHead,
+                in bakedArm,
+                in bakedLeg);
+        }
+    }
+
+    [Serializable]
     public struct EarthRecoveryMarkerAuthoring
     {
         [SerializeField, Range(0f, 1f)] private float feetEnablePhase;
@@ -114,6 +188,12 @@ namespace Elemental.Runtime.Characters
     {
         [Header("Feature Gates")]
         [SerializeField] private bool usePoseMatchedRecovery;
+        [SerializeField] private bool usePoweredPhysicalAssist;
+
+        [Header("Powered Physical Assist")]
+        [SerializeField] private bool useCustomMuscleProfiles;
+        [SerializeField] private EarthMuscleProfileAuthoring[] muscleProfiles =
+            Array.Empty<EarthMuscleProfileAuthoring>();
 
         [Header("Pose Matching")]
         [SerializeField, Min(0f)] private float chestWeight = 1.4f;
@@ -130,6 +210,7 @@ namespace Elemental.Runtime.Characters
         private bool _databaseUsable;
 
         public bool UsePoseMatchedRecovery => usePoseMatchedRecovery;
+        public bool UsePoweredPhysicalAssist => usePoweredPhysicalAssist;
         public float SupportProbeDistance => Mathf.Max(0.1f, supportProbeDistance);
         public EarthRecoveryPoseMatchWeights MatchWeights =>
             new EarthRecoveryPoseMatchWeights(
@@ -148,6 +229,36 @@ namespace Elemental.Runtime.Characters
             supportProbeDistance = Mathf.Max(0.1f, configuredSupportProbeDistance);
             _database = null;
             _databaseUsable = false;
+        }
+
+        public void ConfigurePoweredPhysicalAssist(
+            bool enabled,
+            EarthMuscleProfileAuthoring[] configuredProfiles = null)
+        {
+            usePoweredPhysicalAssist = enabled;
+            useCustomMuscleProfiles = configuredProfiles != null && configuredProfiles.Length > 0;
+            muscleProfiles = configuredProfiles ?? Array.Empty<EarthMuscleProfileAuthoring>();
+        }
+
+        public EarthMuscleProfile ResolveMuscleProfile(EarthMuscleProfileId id)
+        {
+            if (useCustomMuscleProfiles && muscleProfiles != null)
+            {
+                int matchIndex = -1;
+                for (int index = 0; index < muscleProfiles.Length; index++)
+                    if (muscleProfiles[index].Id == id)
+                    {
+                        if (matchIndex >= 0)
+                            throw new InvalidOperationException(
+                                $"Earth physical animation profile has duplicate {id} muscle profiles.");
+                        matchIndex = index;
+                    }
+                if (matchIndex < 0)
+                    throw new InvalidOperationException(
+                        $"Earth physical animation profile is missing the required {id} muscle profile.");
+                return muscleProfiles[matchIndex].Bake();
+            }
+            return EarthMuscleProfiles.Resolve(id);
         }
 
         public bool TryGetRecoveryDatabase(out EarthRecoveryPoseDatabase database)

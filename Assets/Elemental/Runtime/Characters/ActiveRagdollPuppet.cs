@@ -2,6 +2,7 @@ using System;
 using Elemental.Core.IDs;
 using Elemental.Runtime.Physics;
 using Elemental.Simulation.Characters;
+using Elemental.Simulation.Combat;
 using Elemental.Simulation.Gravity;
 using Elemental.Simulation.Magic;
 using Unity.Mathematics;
@@ -15,7 +16,10 @@ namespace Elemental.Runtime.Characters
     public sealed class ActiveRagdollPuppet : MonoBehaviour
     {
         private static readonly ProfilerMarker FixedTickMarker = new ProfilerMarker("Elemental.ActiveRagdoll.FixedTick");
+        private static readonly ProfilerMarker PoweredAssistMarker =
+            new ProfilerMarker("Elemental.ActiveRagdoll.PoweredAssist");
         private const int GroundHitCapacity = 8;
+        private const int SemanticProbeCapacity = 8;
 
         [Header("Authority")]
         [SerializeField, Min(1)] private uint actorId = 1u;
@@ -37,7 +41,22 @@ namespace Elemental.Runtime.Characters
         [SerializeField, Min(0f)] private float startupImpactGraceSeconds = 0.8f;
         [SerializeField] private LayerMask groundMask = ~0;
 
+        [Header("Powered Physical Assist")]
+        [SerializeField] private EarthPhysicalAnimationProfile physicalAnimationProfile;
+        [SerializeField] private Transform leftFoot;
+        [SerializeField] private Transform rightFoot;
+        [SerializeField] private Transform head;
+        [SerializeField] private Transform leftHand;
+        [SerializeField] private Transform rightHand;
+        [SerializeField, Min(0.02f)] private float supportFootHalfLength = 0.16f;
+        [SerializeField, Min(0.02f)] private float supportFootHalfWidth = 0.09f;
+        [SerializeField, Min(0.01f)] private float semanticProbeRadius = 0.08f;
+        [SerializeField] private LayerMask semanticProbeMask = ~0;
+
         private readonly RaycastHit[] _groundHits = new RaycastHit[GroundHitCapacity];
+        private readonly RaycastHit[] _semanticHits = new RaycastHit[SemanticProbeCapacity];
+        private readonly EarthPoweredPhysicalAssist _poweredAssist =
+            new EarthPoweredPhysicalAssist();
         private CharacterPhysicalController _controller;
         private Vector3 _gravityUp = Vector3.up;
         private Vector3 _supportCenter;
@@ -52,6 +71,7 @@ namespace Elemental.Runtime.Characters
         private bool[] _externalBodyWasKinematic = Array.Empty<bool>();
         private bool[] _externalBodyDetectedCollisions = Array.Empty<bool>();
         private bool[] _externalColliderWasEnabled = Array.Empty<bool>();
+        private Vector3 _lastPoweredImpactDirection;
 
         public CharacterPhysicalState CurrentState { get; private set; }
         public CharacterPhysicalMode CanonicalMode =>
@@ -60,8 +80,15 @@ namespace Elemental.Runtime.Characters
         public float MaximumJointError { get; private set; }
         public PhysicalCollisionImpact LastCollisionImpact { get; private set; }
         public bool LastCollisionWasSupport { get; private set; }
+        public bool UsePoweredPhysicalAssist =>
+            physicalAnimationProfile != null &&
+            physicalAnimationProfile.UsePoweredPhysicalAssist;
+        public EarthPoweredImpactDecision LastPoweredImpactDecision { get; private set; }
+        public EarthPoweredAssistOutput LastPoweredAssistOutput { get; private set; }
+        public int PoweredActionRequestCount { get; private set; }
         public event Action<CharacterPhysicalState> StateChanged;
         public event Action<Vector3, float> ImpactObserved;
+        public event Action<EarthPhysicalActionRequest> PhysicalActionRequested;
         public bool IsExternalRagdollAuthority { get; private set; }
         public bool IsExternalRecoveryAuthority { get; private set; }
 
@@ -234,6 +261,10 @@ namespace Elemental.Runtime.Characters
                 rootBody.angularVelocity = Vector3.zero;
             }
             _forcedRagdollUntil = 0f;
+            _poweredAssist.ResetTemporalState();
+            _lastPoweredImpactDirection = Vector3.zero;
+            LastPoweredImpactDecision = default;
+            LastPoweredAssistOutput = default;
             _controller.Reset();
             _supportCenter = worldPosition - worldRotation * Vector3.up * 0.9f;
             _contactCount = 0;
@@ -279,6 +310,61 @@ namespace Elemental.Runtime.Characters
         public void ConfigureControlBehaviours(params Behaviour[] behaviours)
         {
             disabledDuringRagdoll = behaviours ?? Array.Empty<Behaviour>();
+        }
+
+        /// <summary>
+        /// Wires the default-off powered-assist adapter. The supplied limb
+        /// transforms are read-only support/probe inputs; Animator and foot IK
+        /// remain owned by Presentation.
+        /// </summary>
+        public void ConfigurePoweredPhysicalAssist(
+            EarthPhysicalAnimationProfile profile,
+            Transform configuredLeftFoot,
+            Transform configuredRightFoot,
+            Transform configuredHead,
+            Transform configuredLeftHand,
+            Transform configuredRightHand)
+        {
+            physicalAnimationProfile = profile;
+            leftFoot = configuredLeftFoot;
+            rightFoot = configuredRightFoot;
+            head = configuredHead;
+            leftHand = configuredLeftHand;
+            rightHand = configuredRightHand;
+            _poweredAssist.ResetTemporalState();
+            LastPoweredImpactDecision = default;
+            LastPoweredAssistOutput = default;
+            PoweredActionRequestCount = 0;
+        }
+
+        /// <summary>
+        /// Accepted-hit ingress for the Director-owned response fanout. This
+        /// method never writes Animator/IK, never applies impulse, and never
+        /// requests full ragdoll; heavy ownership stays on HumanoidRagdollRig.
+        /// </summary>
+        public EarthPoweredImpactDecision ReceiveAcceptedWorldResponse(
+            in EarthWorldResponseEvent response)
+        {
+            if (!UsePoweredPhysicalAssist || response.Response == EarthCharacterImpactResponse.Ignore)
+                return default;
+
+            EnsureController();
+            LastPoweredImpactDecision = _poweredAssist.RouteAcceptedResponse(
+                response.ResponseId,
+                response.Response,
+                response.Intensity01,
+                response.Direction);
+            if (LastPoweredImpactDecision.Owner !=
+                EarthPoweredImpactOwner.PoweredPhysicalAssist)
+                return LastPoweredImpactDecision;
+
+            _lastPoweredImpactDirection = ToVector3(response.Direction);
+            bool supportAndFeetValid = motor != null && motor.HasStableSupport &&
+                                       leftFoot != null && rightFoot != null;
+            if (supportAndFeetValid)
+                _controller.TryRequestPoweredAssist(
+                    response.Response == EarthCharacterImpactResponse.Stagger);
+            return LastPoweredImpactDecision;
         }
 
         private void Awake()
@@ -335,7 +421,11 @@ namespace Elemental.Runtime.Characters
                 EnsureController();
                 if (Time.time < _forcedRagdollUntil) _controller.ForceFullRagdoll();
                 SampleGravity();
-                UpdateSupport();
+                bool poweredSupportAuthority = UsePoweredPhysicalAssist &&
+                                               _controller.Mode != CharacterPhysicalMode.FullRagdoll &&
+                                               _controller.Mode != CharacterPhysicalMode.Recovery;
+                if (poweredSupportAuthority) UpdatePoweredSupport();
+                else UpdateSupport();
                 Transform chestTransform = chest != null ? chest : transform;
                 var frame = new CharacterPhysicalFrame(
                     Time.fixedDeltaTime,
@@ -349,6 +439,11 @@ namespace Elemental.Runtime.Characters
                     ToFloat3(chestTransform.right));
                 CurrentState = _controller.Step(in frame);
                 PublishStateIfChanged();
+                if (UsePoweredPhysicalAssist)
+                {
+                    using (PoweredAssistMarker.Auto())
+                        UpdatePoweredAssist();
+                }
                 ApplyControl(CurrentState);
             }
         }
@@ -378,6 +473,13 @@ namespace Elemental.Runtime.Characters
             }
 
             MaximumJointError = 0f;
+            bool poweredJointOwnership = UsePoweredPhysicalAssist &&
+                                         !IsExternalRagdollAuthority &&
+                                         !IsExternalRecoveryAuthority;
+            EarthMuscleProfile poweredProfile = poweredJointOwnership
+                ? physicalAnimationProfile.ResolveMuscleProfile(
+                    LastPoweredAssistOutput.Profile)
+                : default;
             for (int index = 0; index < joints.Length; index++)
             {
                 ActiveRagdollJoint joint = joints[index];
@@ -386,11 +488,23 @@ namespace Elemental.Runtime.Characters
                     continue;
                 }
 
-                joint.ApplyPose(state.MuscleStrength);
+                if (poweredJointOwnership)
+                {
+                    EarthMuscleRegionTuning tuning = poweredProfile.For(joint.BodyRegion);
+                    joint.ApplyPoweredPose(
+                        in tuning,
+                        LastPoweredAssistOutput.ResponseWeight,
+                        Time.fixedDeltaTime);
+                }
+                else
+                {
+                    joint.ApplyPose(state.MuscleStrength);
+                }
                 MaximumJointError = Mathf.Max(MaximumJointError, joint.JointErrorDegrees);
             }
 
             LastBalanceTorque = Vector3.zero;
+            if (poweredJointOwnership) return;
             if (_contactCount <= 0 ||
                 (state.Mode != CharacterPhysicalMode.PhysicalAssist && state.Mode != CharacterPhysicalMode.Stagger))
             {
@@ -475,6 +589,129 @@ namespace Elemental.Runtime.Characters
             }
         }
 
+        private void UpdatePoweredSupport()
+        {
+            bool stable = motor != null && motor.HasStableSupport;
+            _contactCount = stable ? 2 : 0;
+            if (!stable)
+            {
+                _supportCenter = rootBody.worldCenterOfMass - _gravityUp * 0.9f;
+                return;
+            }
+
+            if (leftFoot != null && rightFoot != null)
+                _supportCenter = (leftFoot.position + rightFoot.position) * 0.5f;
+            else
+                _supportCenter = motor.SupportFeetPoint(_gravityUp);
+        }
+
+        private void UpdatePoweredAssist()
+        {
+            bool supportAndFeetValid = motor != null && motor.HasStableSupport &&
+                                       leftFoot != null && rightFoot != null;
+            EarthSupportPolygon polygon = supportAndFeetValid
+                ? EarthSupportPolygon.FromFeet(
+                    ToFloat3(leftFoot.position),
+                    ToFloat3(rightFoot.position),
+                    ToFloat3(_gravityUp),
+                    ToFloat3(motor.FacingForward),
+                    supportFootHalfLength,
+                    supportFootHalfWidth)
+                : default;
+            bool probeSurfaces = CurrentState.Mode == CharacterPhysicalMode.PhysicalAssist ||
+                                 CurrentState.Mode == CharacterPhysicalMode.Stagger;
+            EarthPhysicalSurfaceProbe braceProbe = default;
+            EarthPhysicalSurfaceProbe reachProbe = default;
+            EarthPhysicalSurfaceProbe fallArrestProbe = default;
+            if (probeSurfaces)
+            {
+                Vector3 probeDirection = _lastPoweredImpactDirection.sqrMagnitude > 0.0001f
+                    ? -_lastPoweredImpactDirection.normalized
+                    : -transform.forward;
+                braceProbe = ProbeSemanticSurface(
+                    chest != null ? chest.position : rootBody.worldCenterOfMass,
+                    probeDirection,
+                    EarthSemanticSurfaceKind.Braceable);
+                Vector3 reachOrigin = leftHand != null && rightHand != null
+                    ? (leftHand.position + rightHand.position) * 0.5f
+                    : rootBody.worldCenterOfMass;
+                Vector3 reachDirection = rootBody.linearVelocity.sqrMagnitude > 0.01f
+                    ? rootBody.linearVelocity.normalized
+                    : motor != null ? motor.FacingForward : transform.forward;
+                reachProbe = ProbeSemanticSurface(
+                    reachOrigin,
+                    reachDirection,
+                    EarthSemanticSurfaceKind.ReachableSupport);
+                fallArrestProbe = ProbeSemanticSurface(
+                    head != null ? head.position : rootBody.worldCenterOfMass,
+                    -_gravityUp,
+                    EarthSemanticSurfaceKind.FallArrest);
+            }
+            var input = new EarthPoweredAssistInput(
+                Time.fixedDeltaTime,
+                CurrentState.Mode,
+                ToFloat3(_gravityUp),
+                ToFloat3(motor != null ? motor.FacingForward : transform.forward),
+                ToFloat3(rootBody.worldCenterOfMass),
+                ToFloat3(rootBody.linearVelocity),
+                supportAndFeetValid,
+                supportAndFeetValid,
+                in polygon,
+                in braceProbe,
+                in reachProbe,
+                in fallArrestProbe);
+            LastPoweredAssistOutput = _poweredAssist.Step(in input);
+            if (!LastPoweredAssistOutput.EmitAction) return;
+            PoweredActionRequestCount++;
+            PhysicalActionRequested?.Invoke(LastPoweredAssistOutput.Action);
+        }
+
+        private EarthPhysicalSurfaceProbe ProbeSemanticSurface(
+            Vector3 origin,
+            Vector3 direction,
+            EarthSemanticSurfaceKind kind)
+        {
+            if (direction.sqrMagnitude <= 0.0001f) return default;
+            float maximumReach = EarthPoweredPhysicalAssist.MaximumSemanticReach;
+            int hitCount = UnityEngine.Physics.SphereCastNonAlloc(
+                origin,
+                semanticProbeRadius,
+                direction.normalized,
+                _semanticHits,
+                maximumReach,
+                semanticProbeMask,
+                QueryTriggerInteraction.Ignore);
+            int bestIndex = -1;
+            float bestDistance = float.PositiveInfinity;
+            for (int index = 0; index < hitCount && index < _semanticHits.Length; index++)
+            {
+                RaycastHit hit = _semanticHits[index];
+                if (hit.collider == null || hit.rigidbody == rootBody ||
+                    IsSelfCollider(hit.collider) || hit.distance >= bestDistance)
+                    continue;
+                CharacterSupportCandidate candidate = CharacterSupportRuntimeAdapter.Classify(
+                    hit.collider,
+                    hit.distance,
+                    Vector3.Dot(hit.normal, _gravityUp));
+                bool semanticMatch = kind == EarthSemanticSurfaceKind.Braceable
+                    ? candidate.IsValid &&
+                      candidate.Kind != CharacterSupportKind.DynamicDebris &&
+                      candidate.Kind != CharacterSupportKind.ReleasedFracture
+                    : candidate.IsValid && candidate.IsWalkable;
+                if (!semanticMatch) continue;
+                bestDistance = hit.distance;
+                bestIndex = index;
+            }
+            if (bestIndex < 0) return default;
+            RaycastHit selected = _semanticHits[bestIndex];
+            return new EarthPhysicalSurfaceProbe(
+                kind,
+                ToFloat3(selected.point),
+                ToFloat3(selected.normal),
+                selected.distance,
+                true);
+        }
+
         private bool IsSelfCollider(Collider candidate)
         {
             for (int index = 0; index < selfColliders.Length; index++)
@@ -539,6 +776,10 @@ namespace Elemental.Runtime.Characters
             }
 
             EnsureController();
+            _poweredAssist.ResetTemporalState();
+            _lastPoweredImpactDirection = Vector3.zero;
+            LastPoweredImpactDecision = default;
+            LastPoweredAssistOutput = default;
             CaptureRootConstraints();
             ConfigureSelfCollisionFiltering();
             // Scene rebuilds and domain reloads must always start with gameplay
