@@ -84,6 +84,8 @@ namespace Elemental.Tests.EditMode
                 joint.Configure(body, configurable, target.transform, 100f, 10f, 50f, 30f);
                 Assert.That(joint.HasConfiguredBodyRegion, Is.False);
                 Assert.That(joint.BodyRegion, Is.EqualTo(EarthBodyRegion.Unassigned));
+                SeedEveryDriveChannel(configurable);
+                AssertEveryDriveChannelIsNonZero(configurable);
 
                 EarthMuscleRegionTuning chest = EarthMuscleProfiles.Resolve(
                     EarthMuscleProfileId.Reactive).Chest;
@@ -91,7 +93,7 @@ namespace Elemental.Tests.EditMode
                     LogType.Error,
                     "ActiveRagdollJoint on 'Unassigned Powered Joint' disabled powered assist because its body region is unassigned.");
                 joint.ApplyPoweredPose(in chest, 1f, 1f / 60f);
-                Assert.That(configurable.slerpDrive.maximumForce, Is.Zero);
+                AssertEveryDriveChannelIsZero(configurable);
             }
             finally
             {
@@ -600,6 +602,56 @@ namespace Elemental.Tests.EditMode
             Assert.That(fallback.Rejection, Is.EqualTo(rejection));
             Assert.That(assist.IsResponseKnown(responseId), Is.False,
                 "Rejected ownership must not consume the canonical response ID.");
+        }
+
+        private static void SeedEveryDriveChannel(ConfigurableJoint joint)
+        {
+            var drive = new JointDrive
+            {
+                positionSpring = 123f,
+                positionDamper = 45f,
+                maximumForce = 678f
+            };
+            joint.xDrive = drive;
+            joint.yDrive = drive;
+            joint.zDrive = drive;
+            joint.angularXDrive = drive;
+            joint.angularYZDrive = drive;
+            joint.slerpDrive = drive;
+        }
+
+        private static void AssertEveryDriveChannelIsZero(ConfigurableJoint joint)
+        {
+            AssertDriveIsZero(joint.xDrive, "xDrive");
+            AssertDriveIsZero(joint.yDrive, "yDrive");
+            AssertDriveIsZero(joint.zDrive, "zDrive");
+            AssertDriveIsZero(joint.angularXDrive, "angularXDrive");
+            AssertDriveIsZero(joint.angularYZDrive, "angularYZDrive");
+            AssertDriveIsZero(joint.slerpDrive, "slerpDrive");
+        }
+
+        private static void AssertEveryDriveChannelIsNonZero(ConfigurableJoint joint)
+        {
+            AssertDriveIsNonZero(joint.xDrive, "xDrive");
+            AssertDriveIsNonZero(joint.yDrive, "yDrive");
+            AssertDriveIsNonZero(joint.zDrive, "zDrive");
+            AssertDriveIsNonZero(joint.angularXDrive, "angularXDrive");
+            AssertDriveIsNonZero(joint.angularYZDrive, "angularYZDrive");
+            AssertDriveIsNonZero(joint.slerpDrive, "slerpDrive");
+        }
+
+        private static void AssertDriveIsZero(JointDrive drive, string channel)
+        {
+            Assert.That(drive.positionSpring, Is.Zero, $"{channel} spring");
+            Assert.That(drive.positionDamper, Is.Zero, $"{channel} damper");
+            Assert.That(drive.maximumForce, Is.Zero, $"{channel} force");
+        }
+
+        private static void AssertDriveIsNonZero(JointDrive drive, string channel)
+        {
+            Assert.That(drive.positionSpring, Is.GreaterThan(0f), $"{channel} spring seed");
+            Assert.That(drive.positionDamper, Is.GreaterThan(0f), $"{channel} damper seed");
+            Assert.That(drive.maximumForce, Is.GreaterThan(0f), $"{channel} force seed");
         }
 
         private static float SimulateDriveRecovery(int rate)

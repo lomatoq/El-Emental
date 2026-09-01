@@ -115,6 +115,13 @@ namespace Elemental.Runtime.Characters
                 }
                 return;
             }
+            if (tuning.Frequency <= 0f ||
+                tuning.TorqueCap <= 0f ||
+                tuning.DriveWeight <= 0f)
+            {
+                DisablePoweredPose();
+                return;
+            }
 
             float targetWeight = tuning.DriveWeight * Mathf.Lerp(
                 0.65f,
@@ -152,12 +159,19 @@ namespace Elemental.Runtime.Characters
         {
             if (!_initialized) return;
             _poweredDriveWeight = 0f;
-            JointDrive drive = targetJoint.slerpDrive;
-            drive.positionSpring = 0f;
-            drive.positionDamper = 0f;
-            drive.maximumForce = 0f;
-            targetJoint.slerpDrive = drive;
+            ZeroAllDriveChannels(targetJoint);
             LastAppliedTorqueEstimate = 0f;
+        }
+
+        private static void ZeroAllDriveChannels(ConfigurableJoint joint)
+        {
+            JointDrive disabledDrive = default;
+            joint.xDrive = disabledDrive;
+            joint.yDrive = disabledDrive;
+            joint.zDrive = disabledDrive;
+            joint.angularXDrive = disabledDrive;
+            joint.angularYZDrive = disabledDrive;
+            joint.slerpDrive = disabledDrive;
         }
 
         private void InitializeJoint()

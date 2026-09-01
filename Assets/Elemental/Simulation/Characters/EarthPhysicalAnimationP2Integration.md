@@ -60,6 +60,10 @@ therefore cannot fight authored leg animation or foot IK in any mode. The
 energy estimator clamps work to the authored torque cap and angular limit.
 `Ragdoll` has zero drive in every region.
 
+The zero-leg and unassigned fail-closed paths clear spring, damping, and maximum
+force on all six `ConfigurableJoint` drive properties (`x`, `y`, `z`, angular X,
+angular YZ, and slerp); switching drive mode cannot expose a stale powered drive.
+
 Every `ActiveRagdollJoint` serializes as `EarthBodyRegion.Unassigned`. Powered
 assist is disabled with one actionable error until every joint has an explicit
 validated Pelvis/Spine/Chest/Head/Arm/Leg binding. The feature-off legacy drive

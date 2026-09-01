@@ -86,6 +86,13 @@ namespace Elemental.Tests.PlayMode
                 Is.EqualTo(EarthPoweredAssistRejection.NoPlantedFoot));
 
             puppet.SetPoweredFootContactState(true, true);
+            for (int index = 0; index < joints.Length; index++)
+            {
+                if (joints[index].BodyRegion != EarthBodyRegion.Leg) continue;
+                ConfigurableJoint legJoint = joints[index].GetComponent<ConfigurableJoint>();
+                SeedEveryDriveChannel(legJoint);
+                AssertEveryDriveChannelIsNonZero(legJoint, joints[index].name);
+            }
             Vector3 velocityBefore = body.linearVelocity;
             EarthPoweredImpactDecision first = puppet.ReceiveAcceptedWorldResponse(
                 in noPlantedContact);
@@ -109,10 +116,9 @@ namespace Elemental.Tests.PlayMode
             for (int index = 0; index < joints.Length; index++)
             {
                 if (joints[index].BodyRegion != EarthBodyRegion.Leg) continue;
-                Assert.That(
-                    joints[index].GetComponent<ConfigurableJoint>().slerpDrive.maximumForce,
-                    Is.Zero.Within(0.001f),
-                    $"{joints[index].name} must leave final leg/contact ownership to animation and foot IK.");
+                AssertEveryDriveChannelIsZero(
+                    joints[index].GetComponent<ConfigurableJoint>(),
+                    joints[index].name);
             }
 
             Object.Destroy(profile);
@@ -134,6 +140,72 @@ namespace Elemental.Tests.PlayMode
                 return EarthBodyRegion.Chest;
             Assert.Fail($"No explicit Wave P2 body-region binding for '{targetName}'.");
             return EarthBodyRegion.Unassigned;
+        }
+
+        private static void SeedEveryDriveChannel(ConfigurableJoint joint)
+        {
+            var drive = new JointDrive
+            {
+                positionSpring = 123f,
+                positionDamper = 45f,
+                maximumForce = 678f
+            };
+            joint.xDrive = drive;
+            joint.yDrive = drive;
+            joint.zDrive = drive;
+            joint.angularXDrive = drive;
+            joint.angularYZDrive = drive;
+            joint.slerpDrive = drive;
+        }
+
+        private static void AssertEveryDriveChannelIsZero(
+            ConfigurableJoint joint,
+            string jointName)
+        {
+            AssertDriveIsZero(joint.xDrive, jointName, "xDrive");
+            AssertDriveIsZero(joint.yDrive, jointName, "yDrive");
+            AssertDriveIsZero(joint.zDrive, jointName, "zDrive");
+            AssertDriveIsZero(joint.angularXDrive, jointName, "angularXDrive");
+            AssertDriveIsZero(joint.angularYZDrive, jointName, "angularYZDrive");
+            AssertDriveIsZero(joint.slerpDrive, jointName, "slerpDrive");
+        }
+
+        private static void AssertEveryDriveChannelIsNonZero(
+            ConfigurableJoint joint,
+            string jointName)
+        {
+            AssertDriveIsNonZero(joint.xDrive, jointName, "xDrive");
+            AssertDriveIsNonZero(joint.yDrive, jointName, "yDrive");
+            AssertDriveIsNonZero(joint.zDrive, jointName, "zDrive");
+            AssertDriveIsNonZero(joint.angularXDrive, jointName, "angularXDrive");
+            AssertDriveIsNonZero(joint.angularYZDrive, jointName, "angularYZDrive");
+            AssertDriveIsNonZero(joint.slerpDrive, jointName, "slerpDrive");
+        }
+
+        private static void AssertDriveIsZero(
+            JointDrive drive,
+            string jointName,
+            string channel)
+        {
+            Assert.That(drive.positionSpring, Is.Zero,
+                $"{jointName}/{channel} spring must not fight leg/contact ownership.");
+            Assert.That(drive.positionDamper, Is.Zero,
+                $"{jointName}/{channel} damper must not fight leg/contact ownership.");
+            Assert.That(drive.maximumForce, Is.Zero,
+                $"{jointName}/{channel} force must not fight leg/contact ownership.");
+        }
+
+        private static void AssertDriveIsNonZero(
+            JointDrive drive,
+            string jointName,
+            string channel)
+        {
+            Assert.That(drive.positionSpring, Is.GreaterThan(0f),
+                $"{jointName}/{channel} spring seed");
+            Assert.That(drive.positionDamper, Is.GreaterThan(0f),
+                $"{jointName}/{channel} damper seed");
+            Assert.That(drive.maximumForce, Is.GreaterThan(0f),
+                $"{jointName}/{channel} force seed");
         }
 
         [UnityTest]
