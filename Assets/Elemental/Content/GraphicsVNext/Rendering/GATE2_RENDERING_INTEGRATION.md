@@ -45,14 +45,45 @@ each provide atomic generation changes; their combined cross-registry transactio
 must remain owned by the fracture director.
 
 On `EarthFragment` or hero-rock pool acquire, configure at most four large-form
-capsule/sphere proxies, then call `CapsuleShadowCasterBinder.TryAcquire` with the
-typed producer kind plus current stable matter/structure `uint` and generation.
-No public raw identity/classification bind exists. Call `ReleaseAcquisition` on
-pool release and `ReleaseGroup` only on permanent retirement. A released
-group retains a bounded generation tombstone, so an equal/older epoch cannot be
-committed again; exhausted group capacity fails closed. Never bind tiny debris,
-dust, particles, or VFX; typed acquisition rejects them. Player/bot/ragdoll,
-intact hero rock, and large fracture classifications therefore cannot drift.
+capsule/sphere proxies and route the rock path through
+`HeroRockCapsuleShadowProducer`. Call `HeroRockCapsuleShadowIdentity.TryCreate` with an
+explicit `IntactHeroRock` or `LargeActiveFracture` kind, a stable pool-slot or
+structure group ID, and the current acquisition/representation generation. Do
+not use the ever-increasing logical `EarthFragment.FragmentId` as the fixed pool
+slot group: the bounded generation table is intentionally sized for the prewarmed
+hero pool, while the generation advances on every checkout. Pass the current
+`DuelRenderingProfile.CapsuleContactShadows.CreateRuntimeSettings()` into
+`TryAcquire`, then commit once the complete representation is staged. The adapter
+calls both caster unregister and group-epoch release on explicit `Release` or
+`OnDisable`, so re-enabling a pooled shell cannot resurrect its old epoch.
+
+The exact director-owned integration hooks are:
+
+- `EarthFragmentPool.CreateFragment`: add/configure one caster and producer only
+  on the bounded hero slots. Assign one canonical stable group ID per prewarmed
+  slot; never configure more than `CapsuleShadowBuffer.MaximumGenerationGroups`
+  (16) across all capsule-shadow owners.
+- `EarthFragmentPool.Acquire`: after `EarthFragment.Initialize` and `SetShape`
+  have finalized active state and world scale, create the typed identity using
+  the slot group plus `fragment.TargetHandle.Generation`, acquire, then commit
+  that single-rock generation.
+- `EarthFragmentPool.NotifyReleased`, reintegration, and shatter return: call
+  producer `Release` before deactivation. `OnDisable` is the idempotent safety net,
+  not the primary pool-return signal.
+- `EarthArenaStructure` fracture staging: acquire only exterior large active
+  pieces under the structure group/new representation generation, then commit
+  once after every admitted piece is staged. Do not add this producer to
+  `EarthRockDebrisPool` or any dust/VFX pool.
+
+This analytic contact path does not enable URP cascades or arena-wide realtime
+shadows; the existing no-realtime-shadow fallback remains unchanged.
+
+The pure admission policy rejects character kinds, tiny/sub-threshold fragments,
+debris, dust, particles, VFX, invalid IDs, and non-finite proxy bounds before they
+reach the shared buffer. No public raw identity/classification bind exists. A
+released group retains a bounded generation tombstone, so an equal/older epoch
+cannot be committed again; exhausted group capacity fails closed. Player/bot/
+ragdoll, intact hero rock, and large fracture classifications therefore cannot drift.
 `Unknown`/default and undefined producer values fail closed. The caster has no
 serialized identity and never registers from `OnEnable`; acquisition must occur
 explicitly after every enable/pool checkout.
@@ -79,6 +110,7 @@ or ragdoll acquisition. Component re-enable alone cannot resurrect an old bindin
 4. Cycle a pooled caster through bind, disable, re-enable, and reacquire; the empty
    interval must preserve committed generation authority and reject stale proxies.
 5. Profile `Elemental Capsule Contact Shadows` and
+   `Elemental.Rendering.HeroRockCapsuleLifecycle` plus
    `Elemental.Rendering.UnifiedMaterialBind`. Bind is acquisition-time work; the
    buffer copy/upload hot path must report zero managed allocation after warmup.
 
