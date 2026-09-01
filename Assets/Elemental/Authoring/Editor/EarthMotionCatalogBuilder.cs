@@ -42,7 +42,16 @@ namespace Elemental.Authoring.Editor
             "Assets/Elemental/Content/Animation/EarthMotionCatalog.asset";
         public const string CatalogSemanticClipPath =
             "Assets/ThirdParty/KayKit/Animations/Rig_Medium_CombatRanged.fbx";
-        public const string CatalogSemanticClipName = "Ranged_Magic_Spellcasting";
+        public const string CatalogSemanticClipName =
+            EarthHumanoidMotionSetup.MagicSpellcastingClipName;
+        public static readonly string[] CatalogSemanticClipNames =
+        {
+            EarthHumanoidMotionSetup.MagicRaiseClipName,
+            EarthHumanoidMotionSetup.MagicShootClipName,
+            EarthHumanoidMotionSetup.MagicSpellcastingClipName,
+            EarthHumanoidMotionSetup.MagicSpellcastingLongClipName,
+            EarthHumanoidMotionSetup.MagicSummonClipName
+        };
         private const int CatalogCurveKeyCount = 17;
         private static readonly string[] CatalogLibraryPaths =
         {
@@ -153,7 +162,17 @@ namespace Elemental.Authoring.Editor
             inventoryBuilder.AppendLine("Earth motion source inventory:");
             AnimationClip[] controllerClips = controller.animationClips;
             for (int index = 0; index < controllerClips.Length; index++)
+            {
+                string controllerClipPath = AssetDatabase.GetAssetPath(controllerClips[index]);
+                if (IsExcludedUnusedLibraryClip(
+                        controllerClipPath,
+                        controllerClips[index].name))
+                    throw new InvalidOperationException(
+                        $"Catalog exclusion '{controllerClipPath}#{controllerClips[index].name}' " +
+                        "became controller-reachable. Remove the exclusion instead of hiding " +
+                        "a playable clip from the catalog.");
                 AddCandidate(controllerClips[index], byIdentity, "controller");
+            }
             AppendInventorySource(
                 inventoryBuilder,
                 "controller reachable clips",
@@ -181,11 +200,14 @@ namespace Elemental.Authoring.Editor
                     visitedPaths,
                     missingPaths,
                     inventoryBuilder);
-            CollectExactClip(
-                CatalogSemanticClipPath,
-                CatalogSemanticClipName,
-                byIdentity,
-                inventoryBuilder);
+            for (int clipIndex = 0;
+                 clipIndex < CatalogSemanticClipNames.Length;
+                 clipIndex++)
+                CollectExactClip(
+                    CatalogSemanticClipPath,
+                    CatalogSemanticClipNames[clipIndex],
+                    byIdentity,
+                    inventoryBuilder);
 
             inventoryBuilder.Append("unique GUID+localFileId total=")
                 .Append(byIdentity.Count);
@@ -216,6 +238,7 @@ namespace Elemental.Authoring.Editor
                 if (assets[assetIndex] is not AnimationClip clip || IsPreviewClip(clip))
                     continue;
                 clips.Add(clip);
+                if (IsExcludedUnusedLibraryClip(path, clip.name)) continue;
                 AddCandidate(clip, candidates, path);
             }
 
@@ -226,6 +249,22 @@ namespace Elemental.Authoring.Editor
                 clips.Count,
                 candidates.Count - uniqueBefore);
             if (clips.Count == 0) missingPaths.Add(path);
+        }
+
+        public static bool IsExcludedUnusedLibraryClip(string path, string clipName)
+        {
+            if (string.Equals(
+                    path,
+                    EarthHumanoidMotionSetup.KayKitDirectionalDodgePath,
+                    StringComparison.Ordinal))
+                return string.Equals(clipName, "T-Pose", StringComparison.Ordinal) ||
+                       string.Equals(clipName, "Crawling", StringComparison.Ordinal) ||
+                       string.Equals(clipName, "Crouching", StringComparison.Ordinal);
+            return string.Equals(
+                       path,
+                       EarthHumanoidMotionSetup.KayKitMovementBasicPath,
+                       StringComparison.Ordinal) &&
+                   string.Equals(clipName, "T-Pose", StringComparison.Ordinal);
         }
 
         private static void CollectExactClip(

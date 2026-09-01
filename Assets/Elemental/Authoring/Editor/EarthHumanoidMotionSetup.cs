@@ -45,6 +45,13 @@ namespace Elemental.Authoring.Editor
             "Assets/ThirdParty/KayKit/Animations/Rig_Medium_MovementAdvanced.fbx";
         public const string KayKitMovementBasicPath =
             "Assets/ThirdParty/KayKit/Animations/Rig_Medium_MovementBasic.fbx";
+        public const string KayKitCombatRangedPath =
+            "Assets/ThirdParty/KayKit/Animations/Rig_Medium_CombatRanged.fbx";
+        public const string MagicRaiseClipName = "Ranged_Magic_Raise";
+        public const string MagicShootClipName = "Ranged_Magic_Shoot";
+        public const string MagicSpellcastingClipName = "Ranged_Magic_Spellcasting";
+        public const string MagicSpellcastingLongClipName = "Ranged_Magic_Spellcasting_Long";
+        public const string MagicSummonClipName = "Ranged_Magic_Summon";
 
         public static readonly string[] CuratedPaths =
         {
@@ -172,8 +179,36 @@ namespace Elemental.Authoring.Editor
                 {
                     AnimatorState cast = FindState(controller.layers[1].stateMachine, "Earth Cast");
                     return tree.blendType == BlendTreeType.Direct && tree.children.Length == 11 &&
-                           cast != null && cast.timeParameterActive && cast.timeParameter == "EarthMotionTime";
+                           cast != null && cast.timeParameterActive &&
+                           cast.timeParameter == "EarthMotionTime" &&
+                           HasDirectClip(tree, 1, MagicRaiseClipName) &&
+                           HasDirectClip(tree, 2, MagicSummonClipName) &&
+                           HasDirectClip(tree, 4, MagicShootClipName) &&
+                           HasDirectClip(tree, 5, MagicShootClipName) &&
+                           HasDirectClip(tree, 6, MagicSpellcastingLongClipName) &&
+                           HasDirectClip(tree, 8, MagicRaiseClipName) &&
+                           HasDirectClip(tree, 9, MagicSummonClipName) &&
+                           HasDirectClip(tree, 10, MagicShootClipName) &&
+                           HasDirectClip(tree, 11, MagicSpellcastingClipName);
                 }
+            return false;
+        }
+
+        private static bool HasDirectClip(BlendTree tree, int slot, string expectedName)
+        {
+            ChildMotion[] children = tree.children;
+            string expectedParameter = PoseWeightParameter(slot);
+            for (int index = 0; index < children.Length; index++)
+                if (string.Equals(
+                        children[index].directBlendParameter,
+                        expectedParameter,
+                        StringComparison.Ordinal) &&
+                    children[index].motion != null &&
+                    string.Equals(
+                        children[index].motion.name,
+                        expectedName,
+                        StringComparison.Ordinal))
+                    return true;
             return false;
         }
 
@@ -621,19 +656,34 @@ namespace Elemental.Authoring.Editor
             tree.blendType = BlendTreeType.Direct;
             SetDirectBlendNormalization(tree, true);
             AnimationClip generic = LoadClip(Magic1HCast01Path) ?? LoadFallbackClip("spell", "cast");
+            AnimationClip raise = LoadRequiredClip(
+                KayKitCombatRangedPath,
+                MagicRaiseClipName);
+            AnimationClip shoot = LoadRequiredClip(
+                KayKitCombatRangedPath,
+                MagicShootClipName);
+            AnimationClip spellcasting = LoadRequiredClip(
+                KayKitCombatRangedPath,
+                MagicSpellcastingClipName);
+            AnimationClip sustain = LoadRequiredClip(
+                KayKitCombatRangedPath,
+                MagicSpellcastingLongClipName);
+            AnimationClip summon = LoadRequiredClip(
+                KayKitCombatRangedPath,
+                MagicSummonClipName);
             tree.children = new[]
             {
-                DirectChild(LoadClip(MagicAttack05Path) ?? generic, 1),
-                DirectChild(LoadClip(MagicArea02Path) ?? generic, 2),
+                DirectChild(raise, 1),
+                DirectChild(summon, 2),
                 DirectChild(LoadClip(Magic2HCast01Path) ?? generic, 3),
-                DirectChild(LoadClip(WheelbarrowDumpPath) ?? generic, 4),
-                DirectChild(LoadClip(LeadJabPath) ?? generic, 5),
-                DirectChild(LoadClip(Magic1HCast01Path) ?? generic, 6),
+                DirectChild(shoot, 4),
+                DirectChild(shoot, 5),
+                DirectChild(sustain, 6),
                 DirectChild(LoadClip(Magic2HAttack03Path) ?? generic, 7),
-                DirectChild(LoadClip(MmaKickPath) ?? LoadClip(Magic1HAttack03Path) ?? generic, 8),
-                DirectChild(LoadClip(Magic2HCast01Path) ?? generic, 9),
-                DirectChild(LoadClip(PunchComboPath) ?? LoadClip(MagicAttack05Path) ?? generic, 10),
-                DirectChild(LoadClip(PunchingPath) ?? LoadClip(Magic1HAttack03Path) ?? generic, 11)
+                DirectChild(raise, 8),
+                DirectChild(summon, 9),
+                DirectChild(shoot, 10),
+                DirectChild(spellcasting, 11)
             };
             cast.motion = tree;
             ready.motion = LoadClip(StandToCrouchPath, NeutralIdleClipName) ?? ready.motion;
@@ -882,6 +932,16 @@ namespace Elemental.Authoring.Editor
                         return clip;
                 }
             return fallback;
+        }
+
+        private static AnimationClip LoadRequiredClip(string path, string clipName)
+        {
+            AnimationClip clip = LoadClip(path, clipName);
+            if (clip != null && string.Equals(clip.name, clipName, StringComparison.Ordinal))
+                return clip;
+            throw new InvalidOperationException(
+                $"Required authored animation clip '{clipName}' is missing from '{path}'. " +
+                "Controller rebuild stopped instead of relabeling or substituting content.");
         }
 
         private static Avatar LoadAvatar(string path)

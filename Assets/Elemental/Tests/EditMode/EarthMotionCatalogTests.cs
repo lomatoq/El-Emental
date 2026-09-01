@@ -39,11 +39,14 @@ namespace Elemental.Tests.EditMode
             Assert.That(
                 inventory,
                 Does.Contain(EarthHumanoidMotionSetup.KayKitMovementBasicPath));
-            Assert.That(
-                inventory,
-                Does.Contain(
-                    $"{EarthMotionCatalogBuilder.CatalogSemanticClipPath} exact-name " +
-                    $"'{EarthMotionCatalogBuilder.CatalogSemanticClipName}'"));
+            for (int nameIndex = 0;
+                 nameIndex < EarthMotionCatalogBuilder.CatalogSemanticClipNames.Length;
+                 nameIndex++)
+                Assert.That(
+                    inventory,
+                    Does.Contain(
+                        $"{EarthMotionCatalogBuilder.CatalogSemanticClipPath} exact-name " +
+                        $"'{EarthMotionCatalogBuilder.CatalogSemanticClipNames[nameIndex]}'"));
             Assert.That(inventory, Does.Contain("unique GUID+localFileId total=51"));
             EarthMotionCatalogBuildSummary summary =
                 EarthMotionCatalogBuilder.Rebuild(_catalog);
@@ -77,10 +80,9 @@ namespace Elemental.Tests.EditMode
                         profile.SourceAssetPath,
                         EarthMotionCatalogBuilder.CatalogSemanticClipPath,
                         StringComparison.Ordinal) &&
-                    string.Equals(
-                        profile.Clip.name,
-                        EarthMotionCatalogBuilder.CatalogSemanticClipName,
-                        StringComparison.Ordinal))
+                    Array.IndexOf(
+                        EarthMotionCatalogBuilder.CatalogSemanticClipNames,
+                        profile.Clip.name) >= 0)
                 {
                     selectedSemanticClipCount++;
                     Assert.That(
@@ -120,8 +122,33 @@ namespace Elemental.Tests.EditMode
             }
             Assert.That(
                 selectedSemanticClipCount,
-                Is.EqualTo(1),
-                "The exact pre-existing ranged spellcasting identity is the curated 51st clip.");
+                Is.EqualTo(5),
+                "All five exact pre-existing KayKit magic identities must remain cataloged.");
+
+            Assert.That(
+                FindProfile(
+                    _catalog,
+                    EarthHumanoidMotionSetup.KayKitDirectionalDodgePath,
+                    "T-Pose"),
+                Is.Null);
+            Assert.That(
+                FindProfile(
+                    _catalog,
+                    EarthHumanoidMotionSetup.KayKitDirectionalDodgePath,
+                    "Crawling"),
+                Is.Null);
+            Assert.That(
+                FindProfile(
+                    _catalog,
+                    EarthHumanoidMotionSetup.KayKitDirectionalDodgePath,
+                    "Crouching"),
+                Is.Null);
+            Assert.That(
+                FindProfile(
+                    _catalog,
+                    EarthHumanoidMotionSetup.KayKitMovementBasicPath,
+                    "T-Pose"),
+                Is.Null);
 
             var errors = new List<string>();
             Assert.That(
@@ -547,6 +574,22 @@ namespace Elemental.Tests.EditMode
                         statePath,
                         StringComparison.Ordinal))
                     return binding;
+            }
+            return null;
+        }
+
+        private static EarthMotionClipProfile FindProfile(
+            EarthMotionCatalog catalog,
+            string sourcePath,
+            string clipName)
+        {
+            for (int index = 0; index < catalog.ClipCount; index++)
+            {
+                EarthMotionClipProfile profile = catalog.ClipAt(index);
+                if (profile != null &&
+                    string.Equals(profile.SourceAssetPath, sourcePath, StringComparison.Ordinal) &&
+                    string.Equals(profile.Clip?.name, clipName, StringComparison.Ordinal))
+                    return profile;
             }
             return null;
         }
