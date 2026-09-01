@@ -22,6 +22,29 @@ namespace Elemental.Presentation.Rendering
 
         public static DuelShadowBoundsProvider Active => s_Active;
 
+        public bool ConfigureRuntime(
+            Light keyLight,
+            Transform playerTransform,
+            Transform opponentTransform,
+            Transform arenaTransform,
+            float configuredDuelistRadius,
+            float configuredArenaRadius,
+            float configuredArenaVerticalExtent)
+        {
+            if (keyLight == null || keyLight.type != LightType.Directional ||
+                playerTransform == null || opponentTransform == null ||
+                arenaTransform == null)
+                return false;
+            directionalLight = keyLight;
+            player = playerTransform;
+            opponent = opponentTransform;
+            arenaCenter = arenaTransform;
+            duelistRadius = Mathf.Max(0.1f, configuredDuelistRadius);
+            arenaRadius = Mathf.Max(0.1f, configuredArenaRadius);
+            arenaVerticalExtent = Mathf.Max(0.1f, configuredArenaVerticalExtent);
+            return true;
+        }
+
         private void OnEnable()
         {
             if (s_Active != null && s_Active != this)

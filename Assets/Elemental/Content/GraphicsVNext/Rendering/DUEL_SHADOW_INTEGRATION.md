@@ -82,3 +82,51 @@ legacy shading remains unchanged.
 - Profile the named marker `Elemental Duel Shadow Map` at 1080p for Low/Balanced/Cinematic. The
   R1 code establishes fixed resolutions, a maximum 256-entry registry, a default 160 draws, and
   bounded 3x3/5x5/7x7 PCF; it makes no GPU/CPU timing claim until those captures exist.
+
+## Gate1 transient A/B capture
+
+The evidence harness opens the clean shipping `EarthCoreSlice`, enters Play Mode, and creates
+only `HideFlags.DontSave` runtime profiles, bounds/caster components and owner markers. It never
+saves a scene, prefab, Animator Controller, renderer asset or ScriptableObject. A dirty scene is
+rejected before the shipping scene is opened. The serialized A1, P1 and duel-shadow flags remain
+off; every transient owner is restored before the editor returns to Edit Mode.
+
+Run from the Editor with `Elemental/QA/Capture Gate1 Transient A-B`, or use the deterministic
+batch entry point (replace `<Unity.exe>` and `<project>` with absolute paths):
+
+```text
+<Unity.exe> -batchmode -projectPath <project> -executeMethod Elemental.Presentation.Rendering.Editor.Gate1CaptureEditorBootstrap.RunBatch -elementalGate1Capture BuildReports/Gate1AB -logFile BuildReports/Gate1AB.log
+```
+
+The fixed outputs are:
+
+- `BuildReports/Gate1AB/animation-legacy.png`
+- `BuildReports/Gate1AB/animation-inertialization.png`
+- `BuildReports/Gate1AB/duel-no-shadows.png`
+- `BuildReports/Gate1AB/duel-shadow-map.png`
+- `BuildReports/Gate1AB/recovery-legacy.png`
+- `BuildReports/Gate1AB/recovery-pose-matched.png`
+- `BuildReports/Gate1AB/manifest.json`
+
+Each manifest frame records its exact feature state, Unity frame, PNG byte count and executed
+feature metrics. The enabled animation image is accepted only with a live valid A1 graph and an
+accepted inertialization request. The enabled shadow image is the real fullscreen ShadowOnly
+receiver and is accepted only when the map rendered with at least one drawn opaque caster and
+the sampled image has a non-flat luminance range. P1
+samples are built in memory from `Base Layer.Knockdown Recovery` at phase `0.55` on an isolated,
+non-saving clone whose non-Animator behaviours are removed before activation. The shipping
+Animator and its sole transition owner are never sampled or advanced. The pelvis offset uses the
+rig's actual motor-root body convention rather than a hard-coded model height. The enabled recovery
+image is accepted only when the rig reports pose-matched selection, successful clearance,
+immediate authored-state verification, and reconstruction of the pre-handoff live Hips position
+within 2 mm after removing the authored clearance lift. A legacy fallback or continuity breach
+aborts with its clearance/support/continuity state.
+Missing A1/P1 contracts fail the manifest
+with the exact missing type or method instead of producing a legacy-looking false positive.
+
+The director integration order is unconstrained because the A1/P1 bridge is reflection-confined:
+the rendering branch compiles before those branches are merged, then binds
+`EarthAnimationGraph`, `EarthAnimationGraphProfile`, `EarthPhysicalAnimationProfile`,
+`EarthRecoveryPoseSampleAuthoring` and `HumanoidRagdollRig.ConfigurePhysicalAnimation` by their
+public Gate1 contracts on the integrated branch. Do not rename those public contracts without
+updating this harness and its evidence gate.

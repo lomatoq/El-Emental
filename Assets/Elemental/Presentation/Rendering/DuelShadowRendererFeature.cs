@@ -35,7 +35,10 @@ namespace Elemental.Presentation.Rendering
             ScriptableRenderer renderer,
             ref RenderingData renderingData)
         {
-            bool requested = profile != null && profile.UseDuelShadowMap;
+            bool hasCaptureOverride = DuelShadowCaptureOverride.TryGet(
+                out DuelShadowRuntimeSettings captureSettings);
+            bool requested = hasCaptureOverride ||
+                (profile != null && profile.UseDuelShadowMap);
             bool supportedCamera =
                 renderingData.cameraData.cameraType == CameraType.Game &&
                 renderingData.cameraData.renderType == CameraRenderType.Base;
@@ -62,8 +65,9 @@ namespace Elemental.Presentation.Rendering
                 return;
             }
 
-            DuelShadowRuntimeSettings settings =
-                profile.DuelShadows.CreateRuntimeSettings();
+            DuelShadowRuntimeSettings settings = hasCaptureOverride
+                ? captureSettings
+                : profile.DuelShadows.CreateRuntimeSettings();
             if (_pass.Setup(
                     _casterMaterial,
                     settings,
