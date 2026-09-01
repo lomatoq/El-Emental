@@ -26,18 +26,21 @@ namespace Elemental.Tests.EditMode
             Assert.That(result, Is.EqualTo(expected));
         }
 
-        [TestCase(0.033333333f)]
-        [TestCase(0.016666667f)]
-        [TestCase(0.008333333f)]
-        public void AnimatorContinuityBudgetAcceptsTimeNormalizedAdvance(float elapsedSeconds)
+        [TestCase(0.033333333f, TestName = "AnimatorContinuityAcceptsLeadAt30Hz")]
+        [TestCase(0.016666667f, TestName = "AnimatorContinuityAcceptsLeadAt60Hz")]
+        [TestCase(0.008333333f, TestName = "AnimatorContinuityAcceptsLeadAt120Hz")]
+        public void AnimatorContinuityBudgetAcceptsOnePendingEvaluation(
+            float evaluationLeadSeconds)
         {
             const int stateHash = 175079391;
             const float entryPhase = 0.55f;
             const float stateLength = 1.2f;
             const float stateSpeed = 1.9f;
             const float speedMultiplier = 1f;
+            const float elapsedSeconds = 0.058f;
             float normalizedRate = stateSpeed * speedMultiplier / stateLength;
-            float observedPhase = entryPhase + elapsedSeconds * normalizedRate;
+            float effectiveElapsedSeconds = elapsedSeconds + evaluationLeadSeconds;
+            float observedPhase = entryPhase + effectiveElapsedSeconds * normalizedRate;
 
             EarthRecoveryAnimatorContinuityResult result =
                 EarthRecoveryAnimatorContinuityGate.Evaluate(
@@ -49,14 +52,19 @@ namespace Elemental.Tests.EditMode
                     stateLength,
                     stateSpeed,
                     speedMultiplier,
-                    false);
+                    false,
+                    evaluationLeadSeconds: evaluationLeadSeconds);
 
             Assert.That(result.IsValid, Is.True);
+            Assert.That(result.EvaluationLeadSeconds,
+                Is.EqualTo(evaluationLeadSeconds).Within(0.00001f));
+            Assert.That(result.EffectiveElapsedSeconds,
+                Is.EqualTo(effectiveElapsedSeconds).Within(0.00001f));
             Assert.That(result.MeasuredAdvance,
-                Is.EqualTo(elapsedSeconds * normalizedRate).Within(0.00001f));
+                Is.EqualTo(effectiveElapsedSeconds * normalizedRate).Within(0.00001f));
             Assert.That(result.AllowedAdvance,
                 Is.EqualTo(
-                    elapsedSeconds * normalizedRate +
+                    effectiveElapsedSeconds * normalizedRate +
                     EarthRecoveryAnimatorContinuityGate.DefaultPhaseSlack)
                     .Within(0.00001f));
         }
@@ -81,27 +89,60 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
-        public void AnimatorContinuityBudgetAcceptsMeasuredBatchFrameAdvance()
+        public void AnimatorContinuityBudgetAcceptsMeasuredBatchFrameAdvanceWithLead()
         {
             EarthRecoveryAnimatorContinuityResult result =
                 EarthRecoveryAnimatorContinuityGate.Evaluate(
                     175079391,
                     175079391,
                     0.55f,
-                    0.673f,
-                    0.08f,
+                    0.6673f,
+                    0.058f,
+                    1.1228f,
+                    1.9f,
+                    1f,
+                    false,
+                    evaluationLeadSeconds: 1f / 60f);
+
+            Assert.That(result.MeasuredAdvance, Is.EqualTo(0.1173f).Within(0.00001f));
+            Assert.That(result.EvaluationLeadSeconds,
+                Is.EqualTo(1f / 60f).Within(0.00001f));
+            Assert.That(result.EffectiveElapsedSeconds,
+                Is.EqualTo(0.07466667f).Within(0.00001f));
+            Assert.That(result.AllowedAdvance, Is.GreaterThan(result.MeasuredAdvance));
+            Assert.That(result.IsValid, Is.True);
+        }
+
+        [Test]
+        public void AnimatorContinuityBudgetCapsEvaluationLead()
+        {
+            EarthRecoveryAnimatorContinuityResult result =
+                EarthRecoveryAnimatorContinuityGate.Evaluate(
+                    175079391,
+                    175079391,
+                    0.55f,
+                    0.60f,
+                    0.01f,
                     1.2f,
                     1.9f,
                     1f,
-                    false);
+                    false,
+                    evaluationLeadSeconds: 1f);
 
-            Assert.That(result.MeasuredAdvance, Is.EqualTo(0.123f).Within(0.00001f));
-            Assert.That(result.AllowedAdvance, Is.EqualTo(0.14166667f).Within(0.00001f));
+            Assert.That(result.EvaluationLeadSeconds,
+                Is.EqualTo(EarthRecoveryAnimatorContinuityGate.MaximumEvaluationLeadSeconds)
+                    .Within(0.00001f));
+            Assert.That(result.EffectiveElapsedSeconds,
+                Is.EqualTo(
+                    0.01f +
+                    EarthRecoveryAnimatorContinuityGate.MaximumEvaluationLeadSeconds)
+                    .Within(0.00001f));
             Assert.That(result.IsValid, Is.True);
         }
 
         [TestCase(0.50f, 0.10f, TestName = "AnimatorContinuityRejectsBackwardJump")]
-        [TestCase(0.95f, 0.016666667f, TestName = "AnimatorContinuityRejectsForwardTeleport")]
+        [TestCase(0.95f, 0.016666667f,
+            TestName = "AnimatorContinuityRejectsForwardTeleportBeyondLead")]
         public void AnimatorContinuityBudgetRejectsDiscontinuity(
             float observedPhase,
             float elapsedSeconds)
@@ -116,7 +157,8 @@ namespace Elemental.Tests.EditMode
                     1.2f,
                     1.9f,
                     1f,
-                    false);
+                    false,
+                    evaluationLeadSeconds: 1f / 30f);
 
             Assert.That(result.TimingIsValid, Is.False);
             Assert.That(result.IsValid, Is.False);

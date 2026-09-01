@@ -153,6 +153,7 @@ namespace Elemental.Runtime.Characters
         private bool _recoveryStateValidationPending;
         private int _recoveryStateSelectionFrame;
         private float _recoveryStateSelectionTime;
+        private float _recoveryStateEvaluationLeadSeconds;
         private int _expectedRecoveryStateHash;
         private float _expectedRecoveryEntryPhase;
         private float _expectedRecoveryStateLengthSeconds;
@@ -195,6 +196,10 @@ namespace Elemental.Runtime.Characters
         public float RecoveryStatePhaseAfterEvent { get; private set; }
         public float RecoveryStatePhaseNextFrame { get; private set; }
         public float RecoveryStateElapsedSecondsNextFrame { get; private set; }
+        public float RecoveryStateEvaluationLeadSeconds =>
+            _recoveryStateEvaluationLeadSeconds;
+        public float RecoveryStateAppliedEvaluationLeadSeconds { get; private set; }
+        public float RecoveryStateEffectiveElapsedSeconds { get; private set; }
         public float RecoveryStateMeasuredPhaseAdvance { get; private set; }
         public float RecoveryStateAllowedPhaseAdvance { get; private set; }
         public float RecoveryStateNormalizedRate { get; private set; }
@@ -937,6 +942,7 @@ namespace Elemental.Runtime.Characters
             _expectedRecoveryEntryPhase = result.EntryPhase;
             _recoveryStateSelectionFrame = Time.frameCount;
             _recoveryStateSelectionTime = Time.time;
+            _recoveryStateEvaluationLeadSeconds = CaptureAnimatorClockDelta();
             AuthoredRecoveryBegan.Invoke(AuthoredRecoveryHandoff.PoseMatched(
                 result.AnimationStateId,
                 result.EntryPhase));
@@ -1599,10 +1605,14 @@ namespace Elemental.Runtime.Characters
                     _expectedRecoveryStateLengthSeconds,
                     _expectedRecoveryStateSpeed,
                     _expectedRecoveryStateSpeedMultiplier,
-                    _expectedRecoveryStateLoops);
+                    _expectedRecoveryStateLoops,
+                    evaluationLeadSeconds: _recoveryStateEvaluationLeadSeconds);
             RecoveryStateMeasuredPhaseAdvance = continuity.MeasuredAdvance;
             RecoveryStateAllowedPhaseAdvance = continuity.AllowedAdvance;
             RecoveryStateNormalizedRate = continuity.NormalizedRate;
+            RecoveryStateAppliedEvaluationLeadSeconds =
+                continuity.EvaluationLeadSeconds;
+            RecoveryStateEffectiveElapsedSeconds = continuity.EffectiveElapsedSeconds;
             RecoveryStateVerifiedNextFrame = continuity.IsValid;
             if (!RecoveryStateVerifiedNextFrame)
                 Debug.LogError(
@@ -1619,12 +1629,42 @@ namespace Elemental.Runtime.Characters
                     $"{PhysicalOwnershipConsistent}, poseMatched={UsedPoseMatchedRecovery}, " +
                     $"elapsed={RecoveryStateElapsedSecondsNextFrame:F4}s, measuredAdvance=" +
                     $"{RecoveryStateMeasuredPhaseAdvance:F4}, allowedAdvance=" +
-                    $"{RecoveryStateAllowedPhaseAdvance:F4}, length=" +
+                    $"{RecoveryStateAllowedPhaseAdvance:F4}, evaluationLead=" +
+                    $"{_recoveryStateEvaluationLeadSeconds:F4}s, appliedLead=" +
+                    $"{RecoveryStateAppliedEvaluationLeadSeconds:F4}s, effectiveElapsed=" +
+                    $"{RecoveryStateEffectiveElapsedSeconds:F4}s, length=" +
                     $"{_expectedRecoveryStateLengthSeconds:F4}s, speed=" +
                     $"{_expectedRecoveryStateSpeed:F4}, speedMultiplier=" +
                     $"{_expectedRecoveryStateSpeedMultiplier:F4}, loops=" +
                     $"{_expectedRecoveryStateLoops}.",
                     this);
+        }
+
+        private float CaptureAnimatorClockDelta()
+        {
+            if (animator == null)
+                return 0f;
+
+            float clockDelta;
+            switch (animator.updateMode)
+            {
+                case AnimatorUpdateMode.Normal:
+                    clockDelta = Time.deltaTime;
+                    break;
+                case AnimatorUpdateMode.UnscaledTime:
+                    clockDelta = Time.unscaledDeltaTime;
+                    break;
+                case AnimatorUpdateMode.Fixed:
+                    clockDelta = Time.fixedDeltaTime;
+                    break;
+                default:
+                    clockDelta = 0f;
+                    break;
+            }
+
+            return float.IsNaN(clockDelta) || float.IsInfinity(clockDelta)
+                ? 0f
+                : Mathf.Max(0f, clockDelta);
         }
 
         private void CaptureRecoveryAnimatorState(

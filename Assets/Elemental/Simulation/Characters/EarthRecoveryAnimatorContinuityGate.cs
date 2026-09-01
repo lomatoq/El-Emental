@@ -9,13 +9,17 @@ namespace Elemental.Simulation.Characters
             bool timingIsValid,
             float measuredAdvance,
             float allowedAdvance,
-            float normalizedRate)
+            float normalizedRate,
+            float evaluationLeadSeconds,
+            float effectiveElapsedSeconds)
         {
             HashMatches = hashMatches;
             TimingIsValid = timingIsValid;
             MeasuredAdvance = measuredAdvance;
             AllowedAdvance = allowedAdvance;
             NormalizedRate = normalizedRate;
+            EvaluationLeadSeconds = evaluationLeadSeconds;
+            EffectiveElapsedSeconds = effectiveElapsedSeconds;
         }
 
         public bool HashMatches { get; }
@@ -23,12 +27,15 @@ namespace Elemental.Simulation.Characters
         public float MeasuredAdvance { get; }
         public float AllowedAdvance { get; }
         public float NormalizedRate { get; }
+        public float EvaluationLeadSeconds { get; }
+        public float EffectiveElapsedSeconds { get; }
         public bool IsValid => HashMatches && TimingIsValid;
     }
 
     public static class EarthRecoveryAnimatorContinuityGate
     {
         public const float DefaultPhaseSlack = 0.015f;
+        public const float MaximumEvaluationLeadSeconds = 1f / 15f;
 
         public static EarthRecoveryAnimatorContinuityResult Evaluate(
             int expectedStateHash,
@@ -40,6 +47,7 @@ namespace Elemental.Simulation.Characters
             float stateSpeed,
             float stateSpeedMultiplier,
             bool stateLoops,
+            float evaluationLeadSeconds = 0f,
             float phaseSlack = DefaultPhaseSlack)
         {
             bool finite = math.isfinite(expectedEntryPhase) &&
@@ -48,13 +56,16 @@ namespace Elemental.Simulation.Characters
                           math.isfinite(stateLengthSeconds) &&
                           math.isfinite(stateSpeed) &&
                           math.isfinite(stateSpeedMultiplier) &&
+                          math.isfinite(evaluationLeadSeconds) &&
                           math.isfinite(phaseSlack);
             if (!finite || expectedStateHash == 0 || stateLengthSeconds <= 0.0001f ||
-                elapsedSeconds < 0f || phaseSlack < 0f)
+                elapsedSeconds < 0f || evaluationLeadSeconds < 0f || phaseSlack < 0f)
             {
                 return new EarthRecoveryAnimatorContinuityResult(
                     expectedStateHash == observedStateHash,
                     false,
+                    0f,
+                    0f,
                     0f,
                     0f,
                     0f);
@@ -68,11 +79,17 @@ namespace Elemental.Simulation.Characters
                     false,
                     0f,
                     phaseSlack,
-                    0f);
+                    0f,
+                    0f,
+                    elapsedSeconds);
             }
 
             float normalizedRate = playbackSpeed / stateLengthSeconds;
-            float allowedAdvance = elapsedSeconds * normalizedRate + phaseSlack;
+            float appliedEvaluationLeadSeconds = math.min(
+                evaluationLeadSeconds,
+                MaximumEvaluationLeadSeconds);
+            float effectiveElapsedSeconds = elapsedSeconds + appliedEvaluationLeadSeconds;
+            float allowedAdvance = effectiveElapsedSeconds * normalizedRate + phaseSlack;
             float measuredAdvance = observedPhase - expectedEntryPhase;
             if (stateLoops && measuredAdvance < -phaseSlack)
                 measuredAdvance += 1f;
@@ -84,7 +101,9 @@ namespace Elemental.Simulation.Characters
                 timingIsValid,
                 measuredAdvance,
                 allowedAdvance,
-                normalizedRate);
+                normalizedRate,
+                appliedEvaluationLeadSeconds,
+                effectiveElapsedSeconds);
         }
     }
 }

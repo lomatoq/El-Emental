@@ -334,13 +334,26 @@ namespace Elemental.Tests.PlayMode
             Assert.That(rig.RecoveryStateLoops, Is.False,
                 "The authored get-up must remain a non-looping recovery state.");
             Assert.That(rig.RecoveryStateElapsedSecondsNextFrame, Is.GreaterThanOrEqualTo(0f));
+            Assert.That(rig.RecoveryStateEvaluationLeadSeconds, Is.GreaterThan(0f));
+            Assert.That(rig.RecoveryStateAppliedEvaluationLeadSeconds,
+                Is.GreaterThanOrEqualTo(0f));
+            Assert.That(rig.RecoveryStateAppliedEvaluationLeadSeconds,
+                Is.LessThanOrEqualTo(
+                    EarthRecoveryAnimatorContinuityGate.MaximumEvaluationLeadSeconds));
+            Assert.That(rig.RecoveryStateAppliedEvaluationLeadSeconds,
+                Is.LessThanOrEqualTo(rig.RecoveryStateEvaluationLeadSeconds));
+            Assert.That(rig.RecoveryStateEffectiveElapsedSeconds,
+                Is.EqualTo(
+                    rig.RecoveryStateElapsedSecondsNextFrame +
+                    rig.RecoveryStateAppliedEvaluationLeadSeconds)
+                    .Within(0.0001f));
             Assert.That(rig.RecoveryStateMeasuredPhaseAdvance,
                 Is.GreaterThanOrEqualTo(-EarthRecoveryAnimatorContinuityGate.DefaultPhaseSlack));
             Assert.That(rig.RecoveryStateMeasuredPhaseAdvance,
                 Is.LessThanOrEqualTo(rig.RecoveryStateAllowedPhaseAdvance));
             Assert.That(rig.RecoveryStateAllowedPhaseAdvance,
                 Is.EqualTo(
-                    rig.RecoveryStateElapsedSecondsNextFrame *
+                    rig.RecoveryStateEffectiveElapsedSeconds *
                     rig.RecoveryStateNormalizedRate +
                     EarthRecoveryAnimatorContinuityGate.DefaultPhaseSlack)
                     .Within(0.0001f));
