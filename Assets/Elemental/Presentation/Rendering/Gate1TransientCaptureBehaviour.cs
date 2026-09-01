@@ -86,7 +86,7 @@ namespace Elemental.Presentation.Rendering
                 }
                 for (int frame = 0; frame < SettleFrames; frame++) yield return null;
                 if (!TryResolveScene(
-                        out Camera camera,
+                        out UnityEngine.Camera camera,
                         out Light directionalLight,
                         out List<Component> presentations,
                         out HumanoidRagdollRig recoveryRig,
@@ -321,7 +321,7 @@ namespace Elemental.Presentation.Rendering
         }
 
         private IEnumerator Capture(
-            Camera camera,
+            UnityEngine.Camera camera,
             Gate1CaptureFrameEvidence evidence)
         {
             string path = Path.Combine(
@@ -520,17 +520,17 @@ namespace Elemental.Presentation.Rendering
         }
 
         private static bool TryResolveScene(
-            out Camera camera,
+            out UnityEngine.Camera camera,
             out Light directionalLight,
             out List<Component> presentations,
             out HumanoidRagdollRig recoveryRig,
             out Animator recoveryAnimator,
             out string failure)
         {
-            camera = Camera.main;
+            camera = UnityEngine.Camera.main;
             if (camera == null)
             {
-                Camera[] cameras = FindObjectsByType<Camera>(
+                UnityEngine.Camera[] cameras = FindObjectsByType<UnityEngine.Camera>(
                     FindObjectsInactive.Exclude,
                     FindObjectsSortMode.None);
                 if (cameras.Length > 0) camera = cameras[0];
