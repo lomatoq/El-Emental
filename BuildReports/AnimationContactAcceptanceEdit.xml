@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="7" result="Passed" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-01 07:45:58Z" end-time="2026-09-01 07:45:58Z" duration="0.0037355">
+  <test-suite type="TestSuite" id="1925" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="763" result="Passed" start-time="2026-09-01 07:45:58Z" end-time="2026-09-01 07:45:58Z" duration="0.003736" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1913" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/.codex/visualizations/2026/08/30/01a05200-0818-73a1-973c-259e30542917/ElEmentalVNext/integration/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="763" result="Passed" start-time="2026-09-01 07:45:58Z" end-time="2026-09-01 07:45:58Z" duration="0.003625" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="20592" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1914" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="763" result="Passed" start-time="2026-09-01 07:45:58Z" end-time="2026-09-01 07:45:58Z" duration="0.003567" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1915" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="763" result="Passed" start-time="2026-09-01 07:45:58Z" end-time="2026-09-01 07:45:58Z" duration="0.003518" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1916" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="763" result="Passed" start-time="2026-09-01 07:45:58Z" end-time="2026-09-01 07:45:58Z" duration="0.003441" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1123" name="EarthAnimationContactAcceptanceTests" fullname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests" classname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-01 07:45:58Z" end-time="2026-09-01 07:45:58Z" duration="0.003073" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1128" name="ContactGapGateIncludesOnlyTheDeclaredSoleBand" fullname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests.ContactGapGateIncludesOnlyTheDeclaredSoleBand" methodname="ContactGapGateIncludesOnlyTheDeclaredSoleBand" classname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests" runstate="Runnable" seed="1829197397" result="Passed" start-time="2026-09-01 07:45:58Z" end-time="2026-09-01 07:45:58Z" duration="0.000390" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1129" name="CrossFpsGateRejectsMoreThanTenPercentWithoutDividingByZero" fullname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests.CrossFpsGateRejectsMoreThanTenPercentWithoutDividingByZero" methodname="CrossFpsGateRejectsMoreThanTenPercentWithoutDividingByZero" classname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests" runstate="Runnable" seed="128373095" result="Passed" start-time="2026-09-01 07:45:58Z" end-time="2026-09-01 07:45:58Z" duration="0.000392" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1130" name="ExplicitJumpTransitionDoesNotHideOrdinaryLocomotionDiscontinuity" fullname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests.ExplicitJumpTransitionDoesNotHideOrdinaryLocomotionDiscontinuity" methodname="ExplicitJumpTransitionDoesNotHideOrdinaryLocomotionDiscontinuity" classname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests" runstate="Runnable" seed="1450852604" result="Passed" start-time="2026-09-01 07:45:58Z" end-time="2026-09-01 07:45:58Z" duration="0.000181" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1127" name="MotionStepsNormalizeToTheSame60HzGate" fullname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests.MotionStepsNormalizeToTheSame60HzGate" classname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-01 07:45:58Z" end-time="2026-09-01 07:45:58Z" duration="0.000822" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1124" name="MotionStepsNormalizeToTheSame60HzGate(0.05f,0.03333334f,0.025f)" fullname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests.MotionStepsNormalizeToTheSame60HzGate(0.05f,0.03333334f,0.025f)" methodname="MotionStepsNormalizeToTheSame60HzGate" classname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests" runstate="Runnable" seed="931145472" result="Passed" start-time="2026-09-01 07:45:58Z" end-time="2026-09-01 07:45:58Z" duration="0.000409" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1125" name="MotionStepsNormalizeToTheSame60HzGate(0.025f,0.01666667f,0.025f)" fullname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests.MotionStepsNormalizeToTheSame60HzGate(0.025f,0.01666667f,0.025f)" methodname="MotionStepsNormalizeToTheSame60HzGate" classname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests" runstate="Runnable" seed="1513654663" result="Passed" start-time="2026-09-01 07:45:58Z" end-time="2026-09-01 07:45:58Z" duration="0.000033" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1126" name="MotionStepsNormalizeToTheSame60HzGate(0.0125f,0.008333334f,0.025f)" fullname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests.MotionStepsNormalizeToTheSame60HzGate(0.0125f,0.008333334f,0.025f)" methodname="MotionStepsNormalizeToTheSame60HzGate" classname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests" runstate="Runnable" seed="1153497579" result="Passed" start-time="2026-09-01 07:45:58Z" end-time="2026-09-01 07:45:58Z" duration="0.000026" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1131" name="ReleasedSwingFootCannotRetainAPlantedIkWeight" fullname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests.ReleasedSwingFootCannotRetainAPlantedIkWeight" methodname="ReleasedSwingFootCannotRetainAPlantedIkWeight" classname="Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests" runstate="Runnable" seed="1731499968" result="Passed" start-time="2026-09-01 07:45:58Z" end-time="2026-09-01 07:45:58Z" duration="0.000389" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\.codex\visualizations\2026\08\30\01a05200-0818-73a1-973c-259e30542917\ElEmentalVNext\integration\BuildReports\AnimationContactAcceptanceEdit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

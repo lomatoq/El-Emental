@@ -118,6 +118,10 @@ namespace Elemental.Runtime.World
             new Vector2(0.18f, 0.82f), new Color(0.88f, 0.70f, 0.49f, 0.68f),
             new Color(0.56f, 0.39f, 0.25f, 0.38f), new Vector2(0.05f, 0.18f),
             new Vector2(0.16f, 0.42f));
+        [SerializeField] private EarthParticleLayerTuning rubble = EarthParticleLayerTuning.Create(
+            384, new Vector2(0.55f, 1.25f), new Vector2(1.6f, 5.2f),
+            new Vector2(0.055f, 0.19f), new Color(0.70f, 0.51f, 0.31f, 1f),
+            new Color(0.34f, 0.22f, 0.14f, 1f), Vector2.zero, Vector2.zero);
         [SerializeField, Range(0, 512)] private int baseCount = 105;
         [SerializeField, Range(0, 128)] private int perReleasedPiece = 34;
         [SerializeField, Min(0f)] private float perImpulse = 0.045f;
@@ -127,8 +131,12 @@ namespace Elemental.Runtime.World
         [SerializeField, Range(0f, 0.5f)] private float emitterInset = 0.05f;
         [SerializeField, Min(0f)] private float emitterRadius = 0.42f;
         [SerializeField, Range(0f, 1f)] private float radiusThickness = 0.72f;
+        [SerializeField, Range(0, 96)] private int baseRubbleCount = 12;
+        [SerializeField, Range(0, 32)] private int rubblePerReleasedPiece = 4;
+        [SerializeField, Range(0, 256)] private int maximumRubbleCount = 72;
 
         public EarthParticleLayerTuning Dust => dust;
+        public EarthParticleLayerTuning Rubble => rubble;
         public int BaseCount => Mathf.Max(0, baseCount);
         public int PerReleasedPiece => Mathf.Max(0, perReleasedPiece);
         public float PerImpulse => Mathf.Max(0f, perImpulse);
@@ -138,6 +146,9 @@ namespace Elemental.Runtime.World
         public float EmitterInset => Mathf.Max(0f, emitterInset);
         public float EmitterRadius => Mathf.Max(0f, emitterRadius);
         public float RadiusThickness => Mathf.Clamp01(radiusThickness);
+        public int BaseRubbleCount => Mathf.Max(0, baseRubbleCount);
+        public int RubblePerReleasedPiece => Mathf.Max(0, rubblePerReleasedPiece);
+        public int MaximumRubbleCount => Mathf.Max(0, maximumRubbleCount);
     }
 
     [Serializable]
@@ -155,10 +166,10 @@ namespace Elemental.Runtime.World
             256, new Vector2(0.45f, 0.92f), new Vector2(1.4f, 4.1f), new Vector2(0.10f, 0.24f),
             new Color(0.68f, 0.50f, 0.31f, 1f), new Color(0.35f, 0.24f, 0.16f, 1f),
             Vector2.zero, Vector2.zero);
-        [SerializeField, Range(0, 128)] private int maximumDustCount = 52;
-        [SerializeField, Range(0, 64)] private int maximumRubbleCount = 14;
-        [SerializeField, Range(0, 256)] private int maximumBatchedDustPerFrame = 72;
-        [SerializeField, Range(0, 96)] private int maximumBatchedRubblePerFrame = 20;
+        [SerializeField, Range(0, 128)] private int maximumDustCount = 84;
+        [SerializeField, Range(0, 64)] private int maximumRubbleCount = 26;
+        [SerializeField, Range(0, 256)] private int maximumBatchedDustPerFrame = 144;
+        [SerializeField, Range(0, 96)] private int maximumBatchedRubblePerFrame = 48;
         [SerializeField, Min(1f)] private float impulseNormalization = 2200f;
         [SerializeField, Min(1f)] private float sparkEnergyThreshold = 18000f;
         [SerializeField, Min(1f)] private float heroSparkEnergyThreshold = 65000f;
@@ -355,6 +366,16 @@ namespace Elemental.Runtime.World
             long raw = fracture.BaseCount + (long)Mathf.Max(0, releasedPieces) * fracture.PerReleasedPiece +
                        impulseContribution;
             return Mathf.Clamp((int)Math.Min(int.MaxValue, raw), fracture.MinimumCount, fracture.MaximumCount);
+        }
+
+        public int EvaluateFractureRubbleCount(int releasedPieces, float impulse)
+        {
+            float safeImpulse = float.IsFinite(impulse) ? Mathf.Max(0f, impulse) : 0f;
+            float impulse01 = 1f - Mathf.Exp(-safeImpulse / 900f);
+            int authored = fracture.BaseRubbleCount +
+                           Mathf.Max(0, releasedPieces) * fracture.RubblePerReleasedPiece;
+            int energyBonus = Mathf.RoundToInt(fracture.MaximumRubbleCount * 0.45f * impulse01);
+            return Mathf.Clamp(authored + energyBonus, 0, fracture.MaximumRubbleCount);
         }
 
         public EarthImpactEffectsSample EvaluateImpact(in EarthImpactEvent value)

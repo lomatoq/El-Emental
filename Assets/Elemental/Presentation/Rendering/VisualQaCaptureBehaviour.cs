@@ -604,7 +604,12 @@ namespace Elemental.Presentation.Rendering
                                 presentation.PoseController.FootIkWeight);
                     }
 
-                    AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+                    EarthAnimationGraph animationGraph = presentation != null
+                        ? presentation.AnimationGraph
+                        : null;
+                    AnimatorStateInfo state = animationGraph != null && animationGraph.IsActive
+                        ? animationGraph.GetCurrentAnimatorStateInfo(0)
+                        : animator.GetCurrentAnimatorStateInfo(0);
                     if (state.IsName("Locomotion"))
                     {
                         if (firstLocomotionTime < 0f) firstLocomotionTime = state.normalizedTime;
@@ -618,17 +623,26 @@ namespace Elemental.Presentation.Rendering
                     }
                 }
                 bool activeClipsLoop = true;
-                AnimatorClipInfo[] clips = animator.GetCurrentAnimatorClipInfo(0);
-                for (int index = 0; index < clips.Length; index++)
+                var clips = new List<AnimatorClipInfo>(4);
+                EarthAnimationGraph finalAnimationGraph = presentation != null
+                    ? presentation.AnimationGraph
+                    : null;
+                if (finalAnimationGraph != null && finalAnimationGraph.IsActive)
+                    finalAnimationGraph.GetCurrentAnimatorClipInfo(0, clips);
+                else
+                    animator.GetCurrentAnimatorClipInfo(0, clips);
+                for (int index = 0; index < clips.Count; index++)
                     if (clips[index].weight > 0.01f) activeClipsLoop &= clips[index].clip.isLooping;
-                AnimatorStateInfo finalState = animator.GetCurrentAnimatorStateInfo(0);
+                AnimatorStateInfo finalState = finalAnimationGraph != null && finalAnimationGraph.IsActive
+                    ? finalAnimationGraph.GetCurrentAnimatorStateInfo(0)
+                    : animator.GetCurrentAnimatorStateInfo(0);
                 float locomotionCycles = firstLocomotionTime >= 0f && lastLocomotionTime >= firstLocomotionTime
                     ? lastLocomotionTime - firstLocomotionTime
                     : 0f;
                 float travel = Vector3.Distance(start, body.position);
                 _scenarioSucceeded = travel > 3f && maximumFootTravel > 0.05f &&
                                      lateFootTravel > 0.015f && locomotionCycles > 1.1f &&
-                                     finalState.IsName("Locomotion") && clips.Length > 0 &&
+                                     finalState.IsName("Locomotion") && clips.Count > 0 &&
                                      activeClipsLoop && !animator.stabilizeFeet &&
                                      maximumUncommandedTurn <= 0.025f &&
                                      maximumLocomotionFootIk >= 0.35f &&

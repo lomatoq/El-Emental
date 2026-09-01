@@ -72,5 +72,27 @@ namespace Elemental.Presentation.Animation
             maximumRotationOffsetDegrees,
             maximumLinearVelocity,
             maximumAngularVelocityRadians);
+
+        public void Configure(
+            bool enablePlayableGraph,
+            bool enablePoseInertialization,
+            float positionHalfLife = 0.075f,
+            float rotationHalfLife = 0.065f,
+            float maximumDuration = 0.5f,
+            float maximumPositionOffset = 0.5f,
+            float maximumRotationOffset = 150f,
+            float maximumLinearSpeed = 15f,
+            float maximumAngularSpeed = 30f)
+        {
+            usePlayablesAnimationGraph = enablePlayableGraph;
+            usePoseInertialization = enablePlayableGraph && enablePoseInertialization;
+            positionHalfLifeSeconds = math.clamp(positionHalfLife, 0.01f, 0.25f);
+            rotationHalfLifeSeconds = math.clamp(rotationHalfLife, 0.01f, 0.25f);
+            maximumDurationSeconds = math.clamp(maximumDuration, 0.05f, 1f);
+            maximumPositionOffsetMeters = math.clamp(maximumPositionOffset, 0.01f, 2f);
+            maximumRotationOffsetDegrees = math.clamp(maximumRotationOffset, 1f, 180f);
+            maximumLinearVelocity = math.clamp(maximumLinearSpeed, 0.1f, 50f);
+            maximumAngularVelocityRadians = math.clamp(maximumAngularSpeed, 0.1f, 80f);
+        }
     }
 }

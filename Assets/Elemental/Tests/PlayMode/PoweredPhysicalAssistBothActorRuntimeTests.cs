@@ -82,14 +82,34 @@ namespace Elemental.Tests.PlayMode
                     yield return new WaitForFixedUpdate();
 
                 Assert.That(AllRuntimeEvidenceReady(actors), Is.True,
-                    "Both actors require stable ground, live foot probes and non-zero puppet gravity.");
+                    "Both actors require stable ground, live foot probes and non-zero puppet gravity. " +
+                    DescribeRuntimeEvidence(actors));
 
-                // Resume after a completed rendered frame. This catches any writer
-                // ordered after the bridge instead of sampling Configure-time equality.
-                yield return new WaitForFixedUpdate();
+                int observerInstallFrame = Time.frameCount;
+                var poseObservers = new PoweredPuppetPoseLateObserver[actors.Length];
                 for (int index = 0; index < actors.Length; index++)
                 {
-                    AssertPostWriterPoseEquality(actors[index]);
+                    var sources = (Transform[])BridgeSourcesField.GetValue(actors[index].Bridge);
+                    var targets = (Transform[])BridgeTargetsField.GetValue(actors[index].Bridge);
+                    poseObservers[index] = actors[index].Root.AddComponent<
+                        PoweredPuppetPoseLateObserver>();
+                    poseObservers[index].Configure(sources, targets);
+                }
+
+                // A null yield is batchmode-safe. The observer samples in
+                // LateUpdate at order 1300, after the bridge importer order 1200,
+                // so coroutine resumption order cannot create a false pass.
+                int observerWaitFrames = 0;
+                while (!AllObserversCapturedAfter(poseObservers, observerInstallFrame) &&
+                       observerWaitFrames++ < 4)
+                    yield return null;
+
+                Assert.That(AllObserversCapturedAfter(poseObservers, observerInstallFrame),
+                    Is.True,
+                    "Both pose observers must capture a completed post-bridge LateUpdate.");
+                for (int index = 0; index < actors.Length; index++)
+                {
+                    AssertPostWriterPoseEquality(actors[index], poseObservers[index]);
                     AssertPuppetOwnedCollidersAreExcluded(actors[index]);
                     AssertNonZeroRadialGravity(actors[index]);
                 }
@@ -103,7 +123,19 @@ namespace Elemental.Tests.PlayMode
             }
         }
 
-        private static void AssertPostWriterPoseEquality(ActorHarness actor)
+        private static bool AllObserversCapturedAfter(
+            PoweredPuppetPoseLateObserver[] observers,
+            int frame)
+        {
+            for (int index = 0; index < observers.Length; index++)
+                if (observers[index] == null || observers[index].LastCapturedFrame <= frame)
+                    return false;
+            return true;
+        }
+
+        private static void AssertPostWriterPoseEquality(
+            ActorHarness actor,
+            PoweredPuppetPoseLateObserver observer)
         {
             Assert.That(BridgeSourcesField, Is.Not.Null);
             Assert.That(BridgeTargetsField, Is.Not.Null);
@@ -117,17 +149,26 @@ namespace Elemental.Tests.PlayMode
             Assert.That(targets, Is.Not.Null);
             Assert.That(sources.Length, Is.EqualTo(actor.Bridge.BindingCount));
             Assert.That(targets.Length, Is.EqualTo(actor.Bridge.BindingCount));
-            for (int binding = 0; binding < sources.Length; binding++)
+            Assert.That(observer.BindingCount, Is.EqualTo(actor.Bridge.BindingCount));
+            Assert.That(observer.LastCapturedFrame, Is.GreaterThanOrEqualTo(0));
+            for (int binding = 0; binding < observer.BindingCount; binding++)
             {
-                Assert.That(sources[binding], Is.Not.Null, $"{actor.Label}/source {binding}");
-                Assert.That(targets[binding], Is.Not.Null, $"{actor.Label}/target {binding}");
-                Assert.That(ReferenceEquals(sources[binding], targets[binding]), Is.False);
-                Assert.That(Vector3.Distance(sources[binding].position, targets[binding].position),
+                Assert.That(observer.SourceAt(binding), Is.Not.Null,
+                    $"{actor.Label}/source {binding}");
+                Assert.That(observer.TargetAt(binding), Is.Not.Null,
+                    $"{actor.Label}/target {binding}");
+                Assert.That(ReferenceEquals(
+                        observer.SourceAt(binding),
+                        observer.TargetAt(binding)),
+                    Is.False);
+                Assert.That(observer.PositionErrorAt(binding),
                     Is.LessThan(PosePositionTolerance),
-                    $"{actor.Label}/binding {binding} was overwritten after the bridge.");
-                Assert.That(Quaternion.Angle(sources[binding].rotation, targets[binding].rotation),
+                    $"{actor.Label}/binding {binding} differed after bridge LateUpdate " +
+                    $"on frame {observer.LastCapturedFrame}.");
+                Assert.That(observer.RotationErrorAt(binding),
                     Is.LessThan(PoseRotationToleranceDegrees),
-                    $"{actor.Label}/binding {binding} rotation was overwritten after the bridge.");
+                    $"{actor.Label}/binding {binding} rotation differed after bridge LateUpdate " +
+                    $"on frame {observer.LastCapturedFrame}.");
             }
         }
 
@@ -370,6 +411,55 @@ namespace Elemental.Tests.PlayMode
                 }
             }
             return true;
+        }
+
+        private static string DescribeRuntimeEvidence(ActorHarness[] actors)
+        {
+            var parts = new List<string>(actors.Length);
+            for (int actorIndex = 0; actorIndex < actors.Length; actorIndex++)
+            {
+                ActorHarness actor = actors[actorIndex];
+                int jointsWithoutGravity = 0;
+                for (int jointIndex = 0; jointIndex < actor.Joints.Length; jointIndex++)
+                {
+                    Rigidbody body = actor.Joints[jointIndex].Body;
+                    GravityBody gravity = body != null ? body.GetComponent<GravityBody>() : null;
+                    if (gravity == null || gravity.LastAcceleration.sqrMagnitude <= 0.01f)
+                        jointsWithoutGravity++;
+                }
+                parts.Add(
+                    $"{actor.Label}[pos={actor.Body.position:F3}, " +
+                    $"stable={actor.Motor.HasStableSupport}, " +
+                    $"feet={actor.Feet.LeftHasContact}/{actor.Feet.RightHasContact}, " +
+                    $"motorGravity={actor.Motor.GravityAcceleration.magnitude:F3}, " +
+                    $"joints={actor.Joints.Length}, jointsWithoutGravity={jointsWithoutGravity}, " +
+                    $"supportHits={DescribeSupportHits(actor)}]");
+            }
+            return string.Join("; ", parts);
+        }
+
+        private static string DescribeSupportHits(ActorHarness actor)
+        {
+            Vector3 up = actor.Motor.LocalUp.sqrMagnitude > 0.5f
+                ? actor.Motor.LocalUp.normalized
+                : (actor.Body.worldCenterOfMass - actor.PlanetCenter).normalized;
+            RaycastHit[] hits = UnityEngine.Physics.RaycastAll(
+                actor.Body.worldCenterOfMass + up * 0.25f,
+                -up,
+                4f,
+                ~0,
+                QueryTriggerInteraction.Ignore);
+            Array.Sort(hits, (left, right) => left.distance.CompareTo(right.distance));
+            var values = new List<string>(Mathf.Min(6, hits.Length));
+            for (int index = 0; index < hits.Length && values.Count < 6; index++)
+            {
+                Collider collider = hits[index].collider;
+                if (collider == null || actor.Puppet.OwnsCollider(collider)) continue;
+                values.Add(
+                    $"{collider.name}@{hits[index].distance:F3}/" +
+                    $"n{Vector3.Dot(hits[index].normal, up):F2}");
+            }
+            return values.Count > 0 ? string.Join(",", values) : "none";
         }
 
         private static EarthWorldResponseEvent Response(

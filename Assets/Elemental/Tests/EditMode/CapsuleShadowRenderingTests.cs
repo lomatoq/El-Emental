@@ -151,12 +151,15 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
-        public void ShippingProfileIsOffAndOwnedShadersExposeBoundedDebugReceiver()
+        public void ShippingProfileUsesContactOnlyCapsulesAndOwnedShadersExposeBoundedDebugReceiver()
         {
             DuelRenderingProfile profile =
                 AssetDatabase.LoadAssetAtPath<DuelRenderingProfile>(ProfilePath);
             Assert.That(profile, Is.Not.Null);
-            Assert.That(profile.UseCapsuleContactShadows, Is.False);
+            Assert.That(profile.UseDuelShadowMap, Is.False,
+                "The moving striped arena shadow-map path must remain disabled.");
+            Assert.That(profile.UseCapsuleContactShadows, Is.True,
+                "Production uses bounded contact-only capsules for actors and hero rocks.");
             Assert.That(profile.CapsuleContactShadows.CreateRuntimeSettings()
                 .Quality.MaximumCapsuleCount, Is.EqualTo(20));
 

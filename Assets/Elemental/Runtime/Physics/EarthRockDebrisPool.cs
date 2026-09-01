@@ -68,8 +68,17 @@ namespace Elemental.Runtime.Physics
             float mass,
             uint seed)
         {
-            int count = profile != null ? profile.ShatterPieceCount : 9;
-            float spread = profile != null ? profile.ShatterSpreadSpeed : 3.8f;
+            EarthSecondaryFractureSample fracture = EarthSecondaryFractureSolver.Evaluate(
+                profile != null ? profile.ShatterPieceCount : 9,
+                profile != null ? profile.MaximumShatterPieceCount : 16,
+                profile != null ? profile.ShatterSpreadSpeed : 3.8f,
+                profile != null ? profile.HighEnergySpreadMultiplier : 1.65f,
+                radius,
+                profile != null ? profile.LargeShatterRadius : 0.9f,
+                inheritedVelocity.magnitude,
+                profile != null ? profile.HighSpeedShatterSpeed : 18f);
+            int count = fracture.PieceCount;
+            float spread = fracture.SpreadSpeed;
             for (int index = 0; index < count; index++)
             {
                 float weight = Mathf.Lerp(0.55f, 1.45f, Hash01(seed, index));

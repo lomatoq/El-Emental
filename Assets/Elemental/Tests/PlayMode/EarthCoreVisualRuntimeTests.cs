@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using Elemental.Input.Gestures;
 using Elemental.Input.Actions;
 using Elemental.Runtime.Characters;
@@ -324,12 +325,40 @@ namespace Elemental.Tests.PlayMode
 
             bool primed = input.TryQuickStoneTapAtScreenPoint(pointer);
             EarthFragment reserved = executor.ReservedOrHeldFragment;
+            FieldInfo quickProfileField = typeof(MagicInputController).GetField(
+                "quickCastProfile",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(quickProfileField, Is.Not.Null);
+            EarthQuickCastProfile quickProfile =
+                quickProfileField.GetValue(input) as EarthQuickCastProfile;
+            Assert.That(quickProfile, Is.Not.Null);
+            float authoredMinimum = ReadPrivateFloat(
+                quickProfile,
+                "minimumLaunchSpeed");
+            float authoredMaximum = ReadPrivateFloat(
+                quickProfile,
+                "maximumLaunchSpeed");
+            float authoredMultiplier = quickProfile.LaunchForceMultiplier;
+            FragmentLaunchedEvent measuredLaunch = default;
+            float measuredBodySpeedAtLaunch = 0f;
+            bool capturedLaunch = false;
+            void CaptureQuickStoneLaunch(FragmentLaunchedEvent launched)
+            {
+                if (reserved == null || launched.FragmentId != reserved.FragmentId) return;
+                measuredLaunch = launched;
+                measuredBodySpeedAtLaunch = reserved.Body != null
+                    ? reserved.Body.linearVelocity.magnitude
+                    : 0f;
+                capturedLaunch = true;
+            }
+            executor.Events.FragmentLaunched += CaptureQuickStoneLaunch;
             bool secondClickAccepted = input.TryQuickStoneTapAtScreenPoint(pointer);
             bool wasPending = executor.HasPendingExtraction;
             for (int frame = 0; frame < 300 &&
                  (executor.HasPendingExtraction || input.IsQuickStonePrimed); frame++)
                 yield return null;
             yield return new WaitForFixedUpdate();
+            executor.Events.FragmentLaunched -= CaptureQuickStoneLaunch;
             float launchedSpeed = reserved != null ? reserved.Body.linearVelocity.magnitude : 0f;
             float launchVelocityChange = executor.LastLaunchVelocityChange;
             CollisionDetectionMode launchCollisionMode = reserved != null && reserved.Body != null
@@ -349,12 +378,45 @@ namespace Elemental.Tests.PlayMode
                 "The shipping scene must exercise the budgeted terrain transaction path.");
             Assert.That(launchVelocityChange, Is.InRange(60f, 76f),
                 "The buffered shot must reach the 2x authored launch contract before contact response.");
+            Assert.That(capturedLaunch, Is.True,
+                "Quick Stone must publish the launch sample before contact response can alter velocity.");
+            Assert.That(authoredMultiplier, Is.EqualTo(2f).Within(0.0001f));
+            Assert.That(measuredLaunch.VelocityChange,
+                Is.InRange(authoredMinimum * authoredMultiplier,
+                    authoredMaximum * authoredMultiplier));
+            Assert.That(measuredBodySpeedAtLaunch,
+                Is.EqualTo(measuredLaunch.VelocityChange).Within(0.01f),
+                "The launch event and Rigidbody must measure the same pre-contact velocity change.");
+            float authoredBaseAtMeasuredPhase = Mathf.Lerp(
+                authoredMinimum,
+                authoredMaximum,
+                Mathf.InverseLerp(
+                    authoredMinimum * authoredMultiplier,
+                    authoredMaximum * authoredMultiplier,
+                    measuredLaunch.VelocityChange));
+            float measuredVelocityRatio = measuredBodySpeedAtLaunch / authoredBaseAtMeasuredPhase;
+            float measuredMomentumRatio =
+                (measuredLaunch.Mass * measuredBodySpeedAtLaunch) /
+                (measuredLaunch.Mass * authoredBaseAtMeasuredPhase);
+            Assert.That(measuredVelocityRatio, Is.EqualTo(2f).Within(0.01f),
+                "Quick Stone measured velocity must be 2x its authored base at the same timing phase.");
+            Assert.That(measuredMomentumRatio, Is.EqualTo(2f).Within(0.01f),
+                "For the same stone mass, measured launch momentum must be 2x the authored base.");
             Assert.That(launchCollisionMode,
                 Is.EqualTo(CollisionDetectionMode.ContinuousDynamic),
                 "The 60-76 m/s projectile must retain the pool's continuous collision mode.");
             Assert.That(launchedSpeed, Is.GreaterThan(4f),
                 "The committed stone must remain a live physical projectile after its first physics step.");
             Assert.That(stillOwned, Is.False);
+        }
+
+        private static float ReadPrivateFloat(object owner, string fieldName)
+        {
+            FieldInfo field = owner.GetType().GetField(
+                fieldName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, fieldName);
+            return (float)field.GetValue(owner);
         }
 
         [UnityTest]

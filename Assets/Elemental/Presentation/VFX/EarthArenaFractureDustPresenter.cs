@@ -10,6 +10,7 @@ namespace Elemental.Presentation.VFX
     public sealed class EarthArenaFractureDustPresenter : MonoBehaviour
     {
         [SerializeField] private ParticleSystem dust;
+        [SerializeField] private ParticleSystem rubble;
         [SerializeField] private EarthEffectsTuningProfile effectsProfile;
         private EarthArenaStructure[] _structures;
 
@@ -17,12 +18,14 @@ namespace Elemental.Presentation.VFX
         {
             dust = GetComponent<ParticleSystem>();
             effectsProfile = configuredProfile;
+            EnsureRubbleEmitter();
             ConfigureParticles();
         }
 
         private void Awake()
         {
             if (dust == null) dust = GetComponent<ParticleSystem>();
+            EnsureRubbleEmitter();
             ConfigureParticles();
         }
 
@@ -69,12 +72,17 @@ namespace Elemental.Presentation.VFX
                 ? effectsProfile.EvaluateFractureCount(pulse.ReleasedPieces, pulse.Impulse)
                 : Mathf.Clamp(105 + pulse.ReleasedPieces * 34 + Mathf.RoundToInt(pulse.Impulse * 0.045f), 120, 260);
             dust.Emit(count);
+            int rubbleCount = effectsProfile != null
+                ? effectsProfile.EvaluateFractureRubbleCount(pulse.ReleasedPieces, pulse.Impulse)
+                : Mathf.Clamp(12 + pulse.ReleasedPieces * 4 + Mathf.RoundToInt(pulse.Impulse * 0.008f), 12, 72);
+            rubble?.Emit(rubbleCount);
         }
 
         private void ConfigureParticles()
         {
             if (dust == null) return;
             dust.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            rubble?.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
             EarthFractureEffectsTuning tuning = effectsProfile != null ? effectsProfile.Fracture : null;
             if (tuning != null)
@@ -152,6 +160,58 @@ namespace Elemental.Presentation.VFX
             renderer.receiveShadows = false;
             if (effectsProfile != null && effectsProfile.Materials.FractureDust != null)
                 renderer.sharedMaterial = effectsProfile.Materials.FractureDust;
+
+            ConfigureRubbleParticles(tuning);
+        }
+
+        private void EnsureRubbleEmitter()
+        {
+            if (rubble != null) return;
+            Transform existing = transform.Find("Fracture Rubble");
+            if (existing != null) rubble = existing.GetComponent<ParticleSystem>();
+            if (rubble != null) return;
+            var rubbleObject = new GameObject("Fracture Rubble");
+            rubbleObject.transform.SetParent(transform, false);
+            rubble = rubbleObject.AddComponent<ParticleSystem>();
+        }
+
+        private void ConfigureRubbleParticles(EarthFractureEffectsTuning tuning)
+        {
+            if (rubble == null) return;
+            if (tuning != null)
+                EarthParticleSystemTuningApplier.Apply(
+                    rubble,
+                    tuning.Rubble,
+                    effectsProfile != null ? effectsProfile.Materials.ImpactRubble : null);
+            ParticleSystem.MainModule main = rubble.main;
+            main.loop = false;
+            main.playOnAwake = false;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.gravityModifier = 0f;
+            if (tuning == null)
+            {
+                main.maxParticles = 384;
+                main.startLifetime = new ParticleSystem.MinMaxCurve(0.55f, 1.25f);
+                main.startSpeed = new ParticleSystem.MinMaxCurve(1.6f, 5.2f);
+                main.startSize = new ParticleSystem.MinMaxCurve(0.055f, 0.19f);
+            }
+            ParticleSystem.EmissionModule emission = rubble.emission;
+            emission.enabled = false;
+            ParticleSystem.ShapeModule shape = rubble.shape;
+            shape.enabled = true;
+            shape.shapeType = ParticleSystemShapeType.Hemisphere;
+            shape.radius = tuning != null ? tuning.EmitterRadius : 0.42f;
+            shape.radiusThickness = tuning != null ? tuning.RadiusThickness : 0.72f;
+            ParticleSystem.RotationOverLifetimeModule rotation = rubble.rotationOverLifetime;
+            rotation.enabled = true;
+            rotation.x = new ParticleSystem.MinMaxCurve(-5f, 5f);
+            rotation.y = new ParticleSystem.MinMaxCurve(-7f, 7f);
+            rotation.z = new ParticleSystem.MinMaxCurve(-5f, 5f);
+            ParticleSystemRenderer renderer = rubble.GetComponent<ParticleSystemRenderer>();
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.alignment = ParticleSystemRenderSpace.World;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
         }
     }
 }

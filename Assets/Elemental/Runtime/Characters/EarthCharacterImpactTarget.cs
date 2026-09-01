@@ -330,6 +330,7 @@ namespace Elemental.Runtime.Characters
 
         private static bool IsStoneImpact(EarthCharacterImpactSourceKind source) =>
             source is EarthCharacterImpactSourceKind.LooseStone or
+                EarthCharacterImpactSourceKind.QuickStone or
                 EarthCharacterImpactSourceKind.ArmorProjectile or
                 EarthCharacterImpactSourceKind.BotProjectile or
                 EarthCharacterImpactSourceKind.StonePunch;

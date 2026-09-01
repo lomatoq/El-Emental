@@ -291,6 +291,11 @@ namespace Elemental.Tests.EditMode
                 "AnimationTransitionsVNextEdit",
                 "Elemental.Tests.EditMode.EarthAnimationTransitionPolicyTests",
                 "Elemental.Tests.EditMode.EarthAnimationClipMetadataTests",
+                "Elemental.Tests.EditMode.EarthAnimationAssetValidatorTests",
+                "Elemental.Tests.EditMode.EarthAnimationContentAuditTests",
+                "Elemental.Tests.EditMode.EarthMixamoPresentationTests",
+                "Elemental.Tests.EditMode.EarthMotionCatalogTests",
+                "Elemental.Tests.EditMode.EarthInertializationTests",
                 "Elemental.Tests.EditMode.EarthFootSupportAuthorityIntegrationTests",
                 "Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests",
                 "Elemental.Tests.EditMode.EarthRagdollRecoveryPoseSolverTests");
@@ -303,6 +308,24 @@ namespace Elemental.Tests.EditMode
                 TestMode.PlayMode,
                 "AnimationContactMatrixPlay",
                 "Elemental.Tests.PlayMode.EarthAnimationContactTelemetryRuntimeTests.ProductionActorsEmitRealThirtySixtyOneTwentyMatrix");
+        }
+
+        [MenuItem("Elemental/QA/Run Powered Physical Assist Both Actor Test")]
+        private static void RunPoweredPhysicalAssistBothActorPlayMode()
+        {
+            Run(
+                TestMode.PlayMode,
+                "PoweredPhysicalAssistBothActorPlay",
+                "Elemental.Tests.PlayMode.PoweredPhysicalAssistBothActorRuntimeTests");
+        }
+
+        [MenuItem("Elemental/QA/Run Rendering Gate Lifecycle PlayMode Tests")]
+        private static void RunRenderingGateLifecyclePlayMode()
+        {
+            Run(
+                TestMode.PlayMode,
+                "RenderingGateLifecyclePlay",
+                "Elemental.Tests.PlayMode.RenderingGateLifecycleTests");
         }
 
         [MenuItem("Elemental/QA/Run KayKit Foot Support PlayMode Test")]

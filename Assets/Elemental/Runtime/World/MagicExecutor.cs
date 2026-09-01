@@ -666,6 +666,9 @@ namespace Elemental.Runtime.World
                 targetSpeed,
                 1f,
                 EarthQuickCastProfile.MaximumProjectileSpeed);
+            EarthTypedCombatProjectile typedProjectile =
+                fragment.GetComponent<EarthTypedCombatProjectile>();
+            typedProjectile?.Arm(fragment, EarthCharacterImpactSourceKind.QuickStone);
             fragment.ReleaseControlledProjectile(releaseVelocity);
             LastLaunchVelocityChange = releaseVelocity.magnitude;
             FragmentLaunchedEvent launched = new FragmentLaunchedEvent(

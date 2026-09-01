@@ -824,6 +824,7 @@ namespace Elemental.Authoring.Editor
             EarthMotionSemanticAction[] requiredRoles =
             {
                 EarthMotionSemanticAction.Locomotion,
+                EarthMotionSemanticAction.Jump,
                 EarthMotionSemanticAction.Cast,
                 EarthMotionSemanticAction.Impact,
                 EarthMotionSemanticAction.Recovery
@@ -1044,6 +1045,7 @@ namespace Elemental.Authoring.Editor
 
         private static bool IsRequiredRuntimeRole(EarthMotionSemanticAction role) =>
             role == EarthMotionSemanticAction.Locomotion ||
+            role == EarthMotionSemanticAction.Jump ||
             role == EarthMotionSemanticAction.Cast ||
             role == EarthMotionSemanticAction.Impact ||
             role == EarthMotionSemanticAction.Recovery;

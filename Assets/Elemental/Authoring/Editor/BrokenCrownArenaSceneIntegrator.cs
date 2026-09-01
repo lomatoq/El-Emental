@@ -4,6 +4,7 @@ using Elemental.Authoring.Fracture;
 using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
 using Elemental.Runtime.World;
+using Elemental.Presentation.Rendering;
 using Elemental.Presentation.VFX;
 using Elemental.Runtime.Geometry;
 using UnityEditor;
@@ -26,6 +27,12 @@ namespace Elemental.Authoring.Editor
             "Assets/Elemental/Content/GraphicsV5/Materials/RumbleArenaSandstone.mat";
         private const string FractureInteriorMaterialPath =
             "Assets/Elemental/Content/GraphicsV5/Materials/RumbleSandstoneFractureInterior.mat";
+        private const string UnifiedArenaExteriorMaterialPath =
+            "Assets/Elemental/Content/GraphicsVNext/Rendering/BrokenCrownArenaExterior.mat";
+        private const string UnifiedArenaInteriorMaterialPath =
+            "Assets/Elemental/Content/GraphicsVNext/Rendering/BrokenCrownArenaInterior.mat";
+        private const string DuelRenderingProfilePath =
+            "Assets/Elemental/Content/GraphicsVNext/Rendering/DuelRenderingProfile.asset";
         private const string DustMaterialPath =
             "Assets/Elemental/Content/Materials/LightDustMote.mat";
         // Captured from the user-approved EarthCoreSlice placement. The authored
@@ -59,6 +66,23 @@ namespace Elemental.Authoring.Editor
             EarthRockDebrisPool debrisPool,
             Material rockMaterial)
         {
+            return Integrate(
+                planetCenter,
+                planetRadius,
+                gravityWorld,
+                debrisPool,
+                rockMaterial,
+                null);
+        }
+
+        public static GameObject Integrate(
+            Vector3 planetCenter,
+            float planetRadius,
+            GravityWorldBehaviour gravityWorld,
+            EarthRockDebrisPool debrisPool,
+            Material rockMaterial,
+            UnifiedLightingMigrationProfile unifiedLightingProfile)
+        {
             GameObject oldCourt = GameObject.Find("Rumble Stone Amphitheatre");
             if (oldCourt != null) UnityEngine.Object.DestroyImmediate(oldCourt);
             GameObject oldArena = GameObject.Find("Broken Crown Arena");
@@ -71,10 +95,34 @@ namespace Elemental.Authoring.Editor
                     "Broken Crown catalog/model is missing. Rebuild the import first.");
             if (rockMaterial == null)
                 throw new BuildFailedException("Broken Crown requires the shared rock material.");
-            Material arenaRockMaterial = GetOrCreateArenaExteriorMaterial(
-                rockMaterial,
-                planetCenter);
-            Material fractureInteriorMaterial = GetOrCreateFractureInteriorMaterial(arenaRockMaterial);
+            DuelRenderingProfile renderingProfile =
+                AssetDatabase.LoadAssetAtPath<DuelRenderingProfile>(DuelRenderingProfilePath);
+            Material arenaRockMaterial = renderingProfile != null
+                                         && renderingProfile.ArenaExteriorMaterial != null
+                ? renderingProfile.ArenaExteriorMaterial
+                : GetOrCreateArenaExteriorMaterial(rockMaterial, planetCenter);
+            Material fractureInteriorMaterial = renderingProfile != null
+                                                && renderingProfile.ArenaInteriorMaterial != null
+                ? renderingProfile.ArenaInteriorMaterial
+                : GetOrCreateFractureInteriorMaterial(arenaRockMaterial);
+            if (unifiedLightingProfile != null)
+            {
+                if (!unifiedLightingProfile.IsComplete())
+                    throw new BuildFailedException(
+                        "Broken Crown unified-lighting profile is incomplete.");
+                arenaRockMaterial = CreateOrUpdateUnifiedMaterial(
+                    UnifiedArenaExteriorMaterialPath,
+                    "Broken Crown Arena Exterior",
+                    arenaRockMaterial,
+                    unifiedLightingProfile,
+                    UnifiedLightingMaterialRole.IntactSandstone);
+                fractureInteriorMaterial = CreateOrUpdateUnifiedMaterial(
+                    UnifiedArenaInteriorMaterialPath,
+                    "Broken Crown Arena Interior",
+                    fractureInteriorMaterial,
+                    unifiedLightingProfile,
+                    UnifiedLightingMaterialRole.FractureInterior);
+            }
             EarthSurfaceQueryService surfaceQueries =
                 UnityEngine.Object.FindAnyObjectByType<EarthSurfaceQueryService>();
 
@@ -134,7 +182,7 @@ namespace Elemental.Authoring.Editor
                                                filter.sharedMesh.subMeshCount > 1
                         ? new[] { arenaRockMaterial, fractureInteriorMaterial }
                         : new[] { arenaRockMaterial };
-                    ConfigureArenaRenderer(renderer);
+                    ConfigureArenaRenderer(renderer, renderingProfile);
                 }
                 if (filter == null || filter.sharedMesh == null) continue;
 
@@ -155,7 +203,8 @@ namespace Elemental.Authoring.Editor
                         filter.sharedMesh,
                         gravityWorld,
                         debrisPool,
-                        index);
+                        index,
+                        renderingProfile);
                 else if (rubbleNames.Contains(item.name))
                 {
                     // Cosmetic rubble remains render-only so it cannot snag movement.
@@ -175,7 +224,7 @@ namespace Elemental.Authoring.Editor
             // contract to intact, dormant and later-released geometry.
             Renderer[] finalArenaRenderers = root.GetComponentsInChildren<Renderer>(true);
             for (int index = 0; index < finalArenaRenderers.Length; index++)
-                ConfigureArenaRenderer(finalArenaRenderers[index]);
+                ConfigureArenaRenderer(finalArenaRenderers[index], renderingProfile);
             ConfigureFractureDust(root);
 
             // Component setup (most notably nested rigidbodies and fracture proxies)
@@ -193,6 +242,21 @@ namespace Elemental.Authoring.Editor
             // composition. Per-prop seating rotated and translated loose slabs,
             // including Arena_Rock_SouthWest_Slab, away from their source pose.
             ValidateAuthoredAssembly(root, catalog.ImportedModel);
+            // Repair only objects that have no visible support witness at their
+            // authored pose. This keeps correctly embedded/source-positioned
+            // slabs untouched, while the 22-34 cm floating NorthEast rock and
+            // fully buried outliers are seated by the real mesh probe.
+            RepairUnsupportedArenaProps(
+                root,
+                catalog,
+                planetCenter,
+                planetRadius);
+            if (unifiedLightingProfile != null)
+                ConfigureUnifiedLightingBindings(
+                    root,
+                    finalArenaRenderers,
+                    unifiedLightingProfile,
+                    planetCenter);
             NormalizePlanetMotors(planetCenter, planetRadius);
             UnityEngine.Physics.SyncTransforms();
             ResolveMotorArenaPenetration(root);
@@ -200,6 +264,81 @@ namespace Elemental.Authoring.Editor
             UnityEngine.Physics.SyncTransforms();
 
             return root;
+        }
+
+        private static Material CreateOrUpdateUnifiedMaterial(
+            string path,
+            string displayName,
+            Material source,
+            UnifiedLightingMigrationProfile profile,
+            UnifiedLightingMaterialRole role)
+        {
+            if (!profile.TryResolve(
+                    role,
+                    out Material template,
+                    out UnifiedLightingRoleContract contract))
+                throw new BuildFailedException(
+                    $"Unified-lighting role '{role}' has no compatible template.");
+
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                material = new Material(template) { name = displayName };
+                AssetDatabase.CreateAsset(material, path);
+            }
+            else
+            {
+                material.CopyPropertiesFromMaterial(template);
+                material.shader = template.shader;
+                material.name = displayName;
+            }
+            if (!UnifiedLightingMaterialMigration.CopyPreservedProperties(source, material))
+                throw new BuildFailedException(
+                    $"Unable to preserve '{source?.name}' into unified material '{displayName}'.");
+            material.SetFloat("_MaterialFamily", (float)contract.Family);
+            material.enableInstancing = true;
+            EditorUtility.SetDirty(material);
+            return material;
+        }
+
+        private static void ConfigureUnifiedLightingBindings(
+            GameObject arenaRoot,
+            Renderer[] renderers,
+            UnifiedLightingMigrationProfile profile,
+            Vector3 planetCenter)
+        {
+            if (arenaRoot == null || renderers == null) return;
+            Matrix4x4 worldToStructure = arenaRoot.transform.worldToLocalMatrix;
+            for (int rendererIndex = 0; rendererIndex < renderers.Length; rendererIndex++)
+            {
+                Renderer renderer = renderers[rendererIndex];
+                if (renderer == null || renderer.sharedMaterials.Length == 0) continue;
+                bool fractureRepresentation = renderer.transform.name.StartsWith(
+                    "FR_",
+                    StringComparison.Ordinal);
+                Material[] assigned = renderer.sharedMaterials;
+                var slots = new UnifiedLightingSlotBinding[assigned.Length];
+                for (int materialIndex = 0; materialIndex < assigned.Length; materialIndex++)
+                {
+                    UnifiedLightingMaterialRole role = materialIndex > 0
+                        ? UnifiedLightingMaterialRole.FractureInterior
+                        : fractureRepresentation
+                            ? UnifiedLightingMaterialRole.FractureExterior
+                            : UnifiedLightingMaterialRole.IntactSandstone;
+                    slots[materialIndex] = new UnifiedLightingSlotBinding(materialIndex, role);
+                }
+                UnifiedLightingRendererBinding binding =
+                    renderer.GetComponent<UnifiedLightingRendererBinding>();
+                if (binding == null)
+                    binding = renderer.gameObject.AddComponent<UnifiedLightingRendererBinding>();
+                binding.Configure(
+                    profile,
+                    renderer,
+                    planetCenter,
+                    worldToStructure * renderer.transform.localToWorldMatrix,
+                    slots);
+                EditorUtility.SetDirty(binding);
+            }
         }
 
         private static void RestoreAuthoredAssembly(GameObject root, GameObject authoredModel)
@@ -281,11 +420,16 @@ namespace Elemental.Authoring.Editor
             presenter.Configure(M3EarthCoreSetup.CreateOrLoadEffectsProfile());
         }
 
-        private static void ConfigureArenaRenderer(Renderer renderer)
+        private static void ConfigureArenaRenderer(
+            Renderer renderer,
+            DuelRenderingProfile renderingProfile)
         {
             if (renderer == null) return;
-            renderer.shadowCastingMode = ShadowCastingMode.Off;
-            renderer.receiveShadows = false;
+            renderer.shadowCastingMode = renderingProfile != null
+                ? renderingProfile.ArenaShadowCastingMode
+                : ShadowCastingMode.Off;
+            renderer.receiveShadows = renderingProfile != null
+                && renderingProfile.ArenaReceiveShadows;
             renderer.lightProbeUsage = LightProbeUsage.BlendProbes;
             renderer.reflectionProbeUsage = ReflectionProbeUsage.BlendProbes;
             PrefabUtility.RecordPrefabInstancePropertyModifications(renderer);
@@ -454,6 +598,118 @@ namespace Elemental.Authoring.Editor
             for (int index = 0; index < catalog.CosmeticRubbleObjectNames.Length; index++)
                 SeatPropOnFloor(
                     all, catalog.CosmeticRubbleObjectNames[index], planetCenter, planetRadius, floor);
+        }
+
+        private static void RepairUnsupportedArenaProps(
+            GameObject arenaRoot,
+            EarthArenaFractureCatalog catalog,
+            Vector3 planetCenter,
+            float planetRadius)
+        {
+            Transform[] all = arenaRoot.GetComponentsInChildren<Transform>(true);
+            Transform floorTransform = FindNamed(all, "Arena_FloorBase_INTACT");
+            Collider floor = floorTransform != null
+                ? floorTransform.GetComponent<Collider>()
+                : null;
+            if (floor == null || !floor.enabled) return;
+
+            for (int index = 0; index < catalog.LooseRockObjectNames.Length; index++)
+                RepairUnsupportedArenaProp(
+                    all,
+                    catalog.LooseRockObjectNames[index],
+                    planetCenter,
+                    planetRadius,
+                    floor);
+            for (int index = 0; index < catalog.CosmeticRubbleObjectNames.Length; index++)
+                RepairUnsupportedArenaProp(
+                    all,
+                    catalog.CosmeticRubbleObjectNames[index],
+                    planetCenter,
+                    planetRadius,
+                    floor);
+        }
+
+        private static void RepairUnsupportedArenaProp(
+            Transform[] all,
+            string name,
+            Vector3 planetCenter,
+            float planetRadius,
+            Collider floor)
+        {
+            Transform item = FindNamed(all, name);
+            if (item == null || HasNearSupportWitness(item, floor, planetCenter, planetRadius))
+                return;
+
+            // The full solver is allowed to find a stable support face only for
+            // an object already proven to have no near-contact witness. It can
+            // no longer touch the approved SouthWest slab or other correctly
+            // embedded authored pieces.
+            SeatPropOnFloor(
+                all,
+                name,
+                planetCenter,
+                planetRadius,
+                floor,
+                true);
+        }
+
+        private static bool HasNearSupportWitness(
+            Transform item,
+            Collider floor,
+            Vector3 planetCenter,
+            float planetRadius)
+        {
+            Renderer renderer = item.GetComponent<Renderer>();
+            Collider collider = item.GetComponent<Collider>();
+            Bounds bounds = collider != null && collider.enabled
+                ? collider.bounds
+                : renderer != null
+                    ? renderer.bounds
+                    : default;
+            Vector3 radial = bounds.center - planetCenter;
+            Vector3 up = radial.sqrMagnitude > 0.001f ? radial.normalized : Vector3.up;
+            float probeLift = floor.bounds.extents.magnitude + bounds.extents.magnitude + 1f;
+            if (floor.Raycast(
+                    new Ray(bounds.center + up * probeLift, -up),
+                    out RaycastHit centerSurface,
+                    probeLift * 2f + 1f) &&
+                centerSurface.normal.sqrMagnitude > 0.5f)
+            {
+                Vector3 floorUp = centerSurface.normal.normalized;
+                up = Vector3.Dot(floorUp, up) >= 0f ? floorUp : -floorUp;
+            }
+
+            var points = new Vector3[EarthArenaPropSeatingSolver.MaximumSupportSamples];
+            int count = EarthArenaMeshSupportProbe.CollectSpreadLowPoints(
+                item,
+                planetCenter,
+                up,
+                points);
+            bool sawFloor = false;
+            for (int index = 0; index < count; index++)
+            {
+                if (!floor.Raycast(
+                        new Ray(points[index] + up * probeLift, -up),
+                        out RaycastHit hit,
+                        probeLift * 2f + 1f))
+                    continue;
+                sawFloor = true;
+                float gap = Vector3.Dot(points[index] - hit.point, up);
+                if (gap >= -0.0105f && gap <= 0.015f) return true;
+            }
+            if (sawFloor) return false;
+
+            for (int index = 0; index < count; index++)
+            {
+                Vector3 relative = points[index] - planetCenter;
+                float alongUp = Vector3.Dot(relative, up);
+                Vector3 perpendicular = relative - up * alongUp;
+                float heightSquared = planetRadius * planetRadius - perpendicular.sqrMagnitude;
+                if (heightSquared < 0f) continue;
+                float gap = alongUp - Mathf.Sqrt(heightSquared);
+                if (gap >= -0.0105f && gap <= 0.015f) return true;
+            }
+            return false;
         }
 
         private static void SeatPropOnFloor(
@@ -1226,7 +1482,8 @@ namespace Elemental.Authoring.Editor
             Mesh mesh,
             GravityWorldBehaviour gravityWorld,
             EarthRockDebrisPool debrisPool,
-            int stableIndex)
+            int stableIndex,
+            DuelRenderingProfile renderingProfile)
         {
             BoxCollider collider = target.GetComponent<BoxCollider>();
             if (collider == null) collider = target.AddComponent<BoxCollider>();
@@ -1261,11 +1518,7 @@ namespace Elemental.Authoring.Editor
                 Mathf.Clamp(body.mass * 5.5f, 420f, 2400f));
 
             Renderer renderer = target.GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                renderer.shadowCastingMode = ShadowCastingMode.Off;
-                renderer.receiveShadows = false;
-            }
+            ConfigureArenaRenderer(renderer, renderingProfile);
         }
     }
 }

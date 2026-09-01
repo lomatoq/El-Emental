@@ -10,6 +10,10 @@ namespace Elemental.Runtime.Physics
         [SerializeField, Min(0.1f)] private float shatterSpecificImpulse = 7.5f;
         [SerializeField, Range(3, 16)] private int shatterPieceCount = 9;
         [SerializeField, Min(0f)] private float shatterSpreadSpeed = 3.8f;
+        [SerializeField, Range(4, 24)] private int maximumShatterPieceCount = 16;
+        [SerializeField, Min(0.05f)] private float largeShatterRadius = 0.9f;
+        [SerializeField, Min(0.1f)] private float highSpeedShatterSpeed = 18f;
+        [SerializeField, Range(1f, 3f)] private float highEnergySpreadMultiplier = 1.65f;
         [SerializeField, Min(0f)] private float craterRadiusPerImpulse = 0.0032f;
         [SerializeField, Min(0.05f)] private float minimumCraterRadius = 0.35f;
         [SerializeField, Min(0.1f)] private float maximumCraterRadius = 1.5f;
@@ -31,6 +35,10 @@ namespace Elemental.Runtime.Physics
         public float ShatterSpecificImpulse => shatterSpecificImpulse;
         public int ShatterPieceCount => shatterPieceCount;
         public float ShatterSpreadSpeed => shatterSpreadSpeed;
+        public int MaximumShatterPieceCount => Mathf.Max(shatterPieceCount, maximumShatterPieceCount);
+        public float LargeShatterRadius => Mathf.Max(0.05f, largeShatterRadius);
+        public float HighSpeedShatterSpeed => Mathf.Max(0.1f, highSpeedShatterSpeed);
+        public float HighEnergySpreadMultiplier => Mathf.Max(1f, highEnergySpreadMultiplier);
         public float CraterRadiusPerImpulse => craterRadiusPerImpulse;
         public float MinimumCraterRadius => minimumCraterRadius;
         public float MaximumCraterRadius => Mathf.Max(minimumCraterRadius, maximumCraterRadius);

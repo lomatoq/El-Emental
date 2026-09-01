@@ -293,12 +293,15 @@ namespace Elemental.Simulation.Characters
                 return prepared;
             }
 
-            float stancePhase = (input.IsLeft ? 1f : -1f) *
-                                math.cos(input.GaitPhase01 * math.PI * 2f);
+            // LeftFootPhase/RightFootPhase are already foot-local and their
+            // zero is the measured contact lobe. Applying another right-leg
+            // sign inversion made both legs enter stance together and let the
+            // first maintained lock starve its sibling indefinitely.
+            float stancePhase = math.cos(input.GaitPhase01 * math.PI * 2f);
             bool phaseAllowsStance = input.PivotingInPlace ||
-                                     (input.HasAuthoredContact
-                                         ? input.AuthoredContact01 >= 0.22f
-                                         : stancePhase >= -0.15f);
+                                     (stancePhase >= -0.15f &&
+                                      (!input.HasAuthoredContact ||
+                                       input.AuthoredContact01 >= 0.22f));
             float maximumLockReach = input.PivotingInPlace
                 // A 180-degree authored pivot moves the uncorrected Humanoid
                 // foot through a wide local arc even though the support anchor

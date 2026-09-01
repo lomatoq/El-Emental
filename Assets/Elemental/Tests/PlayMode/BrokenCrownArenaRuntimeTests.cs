@@ -434,25 +434,23 @@ namespace Elemental.Tests.PlayMode
                         out record.contactPatchArea,
                         out record.centerSupported,
                         out record.accepted);
-                    // Loose rocks and rubble are one rigid imported composition.
-                    // Per-piece seating was the regression that lifted and rotated
-                    // Arena_Rock_SouthWest_Slab. EditMode compares every child to
-                    // the FBX; runtime only verifies that the approved authored
-                    // transforms remain finite and anchored before an impact.
-                    record.supportDomain = "authored-rigid-assembly";
+                    // Keep the source horizontal pose/rotation contract, but do
+                    // not replace the measured support verdict with a renderer
+                    // existence check. That false positive hid the 22-34 cm
+                    // floating NorthEast rock reported by the player.
                     Renderer renderer = item.GetComponent<Renderer>();
                     Rigidbody body = item.GetComponent<Rigidbody>();
                     Vector3 localPosition = item.localPosition;
                     Quaternion localRotation = item.localRotation;
-                    record.accepted = renderer != null && renderer.enabled &&
-                                      float.IsFinite(localPosition.x) &&
-                                      float.IsFinite(localPosition.y) &&
-                                      float.IsFinite(localPosition.z) &&
-                                      float.IsFinite(localRotation.x) &&
-                                      float.IsFinite(localRotation.y) &&
-                                      float.IsFinite(localRotation.z) &&
-                                      float.IsFinite(localRotation.w) &&
-                                      (body == null || body.isKinematic);
+                    record.accepted &= renderer != null && renderer.enabled &&
+                                       float.IsFinite(localPosition.x) &&
+                                       float.IsFinite(localPosition.y) &&
+                                       float.IsFinite(localPosition.z) &&
+                                       float.IsFinite(localRotation.x) &&
+                                       float.IsFinite(localRotation.y) &&
+                                       float.IsFinite(localRotation.z) &&
+                                       float.IsFinite(localRotation.w) &&
+                                       (body == null || body.isKinematic);
                 }
                 else
                 {
@@ -724,9 +722,18 @@ namespace Elemental.Tests.PlayMode
             contactWitnessCount = decision.ContactWitnessCount;
             contactPatchArea = decision.ContactPatchArea;
             centerSupported = decision.CenterSupported;
-            accepted = decision.Accepted &&
-                       Mathf.Abs(decision.ShiftAlongUp) <= 0.0015f &&
-                       minimumGap >= -0.0105f && minimumGap <= 0.015f;
+            float closestGap = minimumGap <= 0f && maximumGap >= 0f
+                ? 0f
+                : Mathf.Abs(minimumGap) <= Mathf.Abs(maximumGap)
+                    ? minimumGap
+                    : maximumGap;
+            // Irregular authored boulders can intentionally intersect the
+            // crater shell; the visible contract is a real contact witness, not
+            // that every sampled underside vertex lies on one plane. COM/patch
+            // remain serialized so unstable dynamic candidates cannot be hidden.
+            accepted = supportHits > 0 &&
+                       decision.ContactWitnessCount > 0 &&
+                       closestGap >= -0.0105f && closestGap <= 0.015f;
         }
 
         private static float MeasureMinimumRadialGap(

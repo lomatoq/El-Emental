@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="6" result="Passed" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-01 12:12:56Z" end-time="2026-09-01 12:12:56Z" duration="0.4459113">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="766" result="Passed" start-time="2026-09-01 12:12:56Z" end-time="2026-09-01 12:12:56Z" duration="0.445911" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1916" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/.codex/visualizations/2026/08/30/01a05200-0818-73a1-973c-259e30542917/ElEmentalVNext/integration/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="766" result="Passed" start-time="2026-09-01 12:12:56Z" end-time="2026-09-01 12:12:56Z" duration="0.427681" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="20592" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1917" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="766" result="Passed" start-time="2026-09-01 12:12:56Z" end-time="2026-09-01 12:12:56Z" duration="0.427228" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1918" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="766" result="Passed" start-time="2026-09-01 12:12:56Z" end-time="2026-09-01 12:12:56Z" duration="0.427076" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1919" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="766" result="Passed" start-time="2026-09-01 12:12:56Z" end-time="2026-09-01 12:12:56Z" duration="0.426886" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1160" name="EarthArenaFractureShadingTests" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-01 12:12:56Z" end-time="2026-09-01 12:12:56Z" duration="0.424997" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1166" name="ArenaExteriorAndInteriorShareStableReceiverContract" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.ArenaExteriorAndInteriorShareStableReceiverContract" methodname="ArenaExteriorAndInteriorShareStableReceiverContract" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="1866450493" result="Passed" start-time="2026-09-01 12:12:56Z" end-time="2026-09-01 12:12:56Z" duration="0.030321" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1165" name="BrokenCrownPiecesKeepRestFramesFiniteNormalsAndOptionalValidTangents" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.BrokenCrownPiecesKeepRestFramesFiniteNormalsAndOptionalValidTangents" methodname="BrokenCrownPiecesKeepRestFramesFiniteNormalsAndOptionalValidTangents" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="1398647353" result="Passed" start-time="2026-09-01 12:12:56Z" end-time="2026-09-01 12:12:56Z" duration="0.349648" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1162" name="InvalidOrSingularMappingFrameIsRejected" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.InvalidOrSingularMappingFrameIsRejected" methodname="InvalidOrSingularMappingFrameIsRejected" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="1824028417" result="Passed" start-time="2026-09-01 12:12:56Z" end-time="2026-09-01 12:12:56Z" duration="0.002242" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1163" name="RendererAdapterMergesMappingWithoutClearingExistingOverrides" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.RendererAdapterMergesMappingWithoutClearingExistingOverrides" methodname="RendererAdapterMergesMappingWithoutClearingExistingOverrides" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="933791390" result="Passed" start-time="2026-09-01 12:12:56Z" end-time="2026-09-01 12:12:56Z" duration="0.006315" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1161" name="RestPieceFrameContinuesTheIntactMappingAfterCentroidRecentering" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.RestPieceFrameContinuesTheIntactMappingAfterCentroidRecentering" methodname="RestPieceFrameContinuesTheIntactMappingAfterCentroidRecentering" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="774681832" result="Passed" start-time="2026-09-01 12:12:56Z" end-time="2026-09-01 12:12:56Z" duration="0.006539" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1164" name="RuntimeCapturesRestFramesAndProxyCyclesPreservePropertyBlocks" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.RuntimeCapturesRestFramesAndProxyCyclesPreservePropertyBlocks" methodname="RuntimeCapturesRestFramesAndProxyCyclesPreservePropertyBlocks" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="1621601667" result="Passed" start-time="2026-09-01 12:12:56Z" end-time="2026-09-01 12:12:56Z" duration="0.013920" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\.codex\visualizations\2026\08\30\01a05200-0818-73a1-973c-259e30542917\ElEmentalVNext\integration\BuildReports\ArenaFractureShadingEdit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

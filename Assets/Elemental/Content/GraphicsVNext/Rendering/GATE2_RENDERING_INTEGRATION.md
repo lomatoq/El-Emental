@@ -26,6 +26,10 @@ the existing property block for the exact `materialIndex`; exterior and interior
 submeshes keep independent slot state. Character variants are created explicitly
 with `UnifiedLightingMaterialMigration.CopyPreservedProperties`; the source
 material is never mutated or silently replaced.
+Disabled imported collision-helper renderers are explicitly outside this visual
+contract and return `SkippedNonRenderable` with a counted diagnostic. Dormant
+fracture visuals keep their Renderer enabled while their GameObject is inactive,
+so they still receive full family validation and captured-frame binding.
 
 ## Director wiring hooks
 

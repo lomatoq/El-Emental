@@ -31,6 +31,33 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void Analyzer_RemovesIndependentRigHeightOffsetsAndDerivesOpposedFootPhases()
+        {
+            EarthAnimationKinematicSample[] source = BuildWalkSamples();
+            var offset = new EarthAnimationKinematicSample[source.Length];
+            for (int index = 0; index < source.Length; index++)
+            {
+                EarthAnimationKinematicSample sample = source[index];
+                offset[index] = new EarthAnimationKinematicSample(
+                    sample.Time01,
+                    sample.LeftFootPosition + new float3(0f, 0.18f, 0f),
+                    sample.RightFootPosition,
+                    sample.PelvisPosition,
+                    sample.RootPosition);
+            }
+
+            EarthAnimationMetadataSample[] result = EarthAnimationClipMetadata.Analyze(
+                offset,
+                true,
+                false);
+
+            Assert.That(result[0].LeftFootContact, Is.GreaterThan(result[0].RightFootContact));
+            Assert.That(result[2].RightFootContact, Is.GreaterThan(result[2].LeftFootContact));
+            Assert.That(CircularDistance01(result[0].LeftFootPhase, 0f), Is.LessThan(0.13f));
+            Assert.That(CircularDistance01(result[2].RightFootPhase, 0f), Is.LessThan(0.13f));
+        }
+
+        [Test]
         public void Validator_ReportsMissingCurvesInvalidRangesAndNoExit()
         {
             var samples = new[]
@@ -111,5 +138,11 @@ namespace Elemental.Tests.EditMode
 
         private static bool[] AllCurvesPresent() =>
             new[] { true, true, true, true, true, true, true, true };
+
+        private static float CircularDistance01(float a, float b)
+        {
+            float difference = math.abs(a - b);
+            return math.min(difference, 1f - difference);
+        }
     }
 }

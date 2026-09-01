@@ -203,17 +203,38 @@ namespace Elemental.Authoring.Editor
                     return Array.Empty<EarthAnimationMetadataSample>();
 
                 Transform root = instance.transform;
+                Vector3 initialPosition = root.position;
+                Quaternion initialRotation = root.rotation;
                 var source = new EarthAnimationKinematicSample[AnalysisSampleCount];
-                for (int index = 0; index < source.Length; index++)
+                AnimationMode.StartAnimationMode();
+                AnimationMode.BeginSampling();
+                try
                 {
-                    float time01 = index / (source.Length - 1f);
-                    clip.SampleAnimation(instance, time01 * clip.length);
-                    source[index] = new EarthAnimationKinematicSample(
-                        time01,
-                        ToFloat3(root.InverseTransformPoint(leftFoot.position)),
-                        ToFloat3(root.InverseTransformPoint(rightFoot.position)),
-                        ToFloat3(root.InverseTransformPoint(pelvis.position)),
-                        ToFloat3(root.localPosition));
+                    for (int index = 0; index < source.Length; index++)
+                    {
+                        float time01 = index / (source.Length - 1f);
+                        root.SetPositionAndRotation(initialPosition, initialRotation);
+                        // AnimationClip.SampleAnimation does not evaluate
+                        // Humanoid muscle retargeting in the editor and left the
+                        // X Bot in its bind pose. AnimationMode is Unity's
+                        // Humanoid-aware sampling path used by the Animation
+                        // window, so the measured feet are the actual clip pose.
+                        AnimationMode.SampleAnimationClip(
+                            instance,
+                            clip,
+                            time01 * clip.length);
+                        source[index] = new EarthAnimationKinematicSample(
+                            time01,
+                            ToFloat3(root.InverseTransformPoint(leftFoot.position)),
+                            ToFloat3(root.InverseTransformPoint(rightFoot.position)),
+                            ToFloat3(root.InverseTransformPoint(pelvis.position)),
+                            ToFloat3(root.localPosition));
+                    }
+                }
+                finally
+                {
+                    AnimationMode.EndSampling();
+                    AnimationMode.StopAnimationMode();
                 }
                 return EarthAnimationClipMetadata.Analyze(
                     source,

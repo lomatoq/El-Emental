@@ -36,6 +36,29 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void PlantedContactEvidenceUsesABoundedCoverageOutcomeAcrossFrameRates()
+        {
+            Assert.That(
+                EarthAnimationContactAcceptance.IsPlantedContactEvidenceAccepted(0.499f),
+                Is.False);
+            Assert.That(
+                EarthAnimationContactAcceptance.IsPlantedContactEvidenceAccepted(0.50f),
+                Is.True);
+            Assert.That(
+                EarthAnimationContactAcceptance.NormalizePlantedContactEvidence01(0.25f),
+                Is.EqualTo(0.5f).Within(0.00001f));
+            Assert.That(
+                EarthAnimationContactAcceptance.NormalizePlantedContactEvidence01(0.60f),
+                Is.EqualTo(1f));
+            Assert.That(
+                EarthAnimationContactAcceptance.NormalizePlantedContactEvidence01(0.74f),
+                Is.EqualTo(1f));
+            Assert.That(
+                EarthAnimationContactAcceptance.NormalizePlantedContactEvidence01(float.NaN),
+                Is.EqualTo(0f));
+        }
+
+        [Test]
         public void ExplicitJumpTransitionDoesNotHideOrdinaryLocomotionDiscontinuity()
         {
             Assert.That(EarthAnimationContactAcceptance.IsUnallowedDiscontinuity(

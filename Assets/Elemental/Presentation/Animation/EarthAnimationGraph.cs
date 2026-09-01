@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Elemental.Runtime.Characters;
 using Elemental.Simulation.Characters;
 using Unity.Mathematics;
@@ -18,7 +19,7 @@ namespace Elemental.Presentation.Animation
     /// </summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(1000)]
-    public sealed class EarthAnimationGraph : MonoBehaviour
+    public sealed class EarthAnimationGraph : MonoBehaviour, IAnimatorStateOutputReader
     {
         private static readonly ProfilerMarker UpdateMarker =
             new ProfilerMarker("Elemental.Character.AnimationGraph");
@@ -82,6 +83,7 @@ namespace Elemental.Presentation.Animation
                                               _settings.UsePoseInertialization &&
                                               !_runtimeDisablePending;
         public AnimatorControllerPlayable ControllerPlayable => _controllerPlayable;
+        public bool OwnsAnimatorOutput => IsActive;
         public EarthAnimationGraphProfile Profile => profile;
         public float ActiveTransitionPositionHalfLifeSeconds =>
             _transitionPositionHalfLifeSeconds;
@@ -159,6 +161,24 @@ namespace Elemental.Presentation.Animation
             _settings = profile != null ? profile.Settings : EarthAnimationGraphSettings.Disabled;
             _configured = true;
             return ApplyRequestedSettings();
+        }
+
+        public void ConfigureForAuthoring(
+            Animator configuredAnimator,
+            EarthAnimationGraphProfile configuredProfile,
+            EarthFootContactController configuredFootContacts = null,
+            HumanoidRagdollRig configuredVisibleRagdoll = null)
+        {
+            animator = configuredAnimator;
+            profile = configuredProfile;
+            footContactController = configuredFootContacts;
+            visibleRagdoll = configuredVisibleRagdoll;
+            _settings = profile != null
+                ? profile.Settings
+                : EarthAnimationGraphSettings.Disabled;
+            _activeSettings = _settings;
+            ResetTransitionTuning();
+            _configured = true;
         }
 
         public bool Configure(
@@ -300,6 +320,50 @@ namespace Elemental.Presentation.Animation
         public bool IsInTransition(int layer) => IsActive
             ? _controllerPlayable.IsInTransition(layer)
             : animator != null && animator.IsInTransition(layer);
+
+        public AnimatorTransitionInfo GetAnimatorTransitionInfo(int layer) => IsActive
+            ? _controllerPlayable.GetAnimatorTransitionInfo(layer)
+            : animator != null ? animator.GetAnimatorTransitionInfo(layer) : default;
+
+        public void GetCurrentAnimatorClipInfo(
+            int layer,
+            List<AnimatorClipInfo> results)
+        {
+            if (results == null) return;
+            results.Clear();
+            if (IsActive)
+                _controllerPlayable.GetCurrentAnimatorClipInfo(layer, results);
+            else
+                animator?.GetCurrentAnimatorClipInfo(layer, results);
+        }
+
+        public void GetNextAnimatorClipInfo(
+            int layer,
+            List<AnimatorClipInfo> results)
+        {
+            if (results == null) return;
+            results.Clear();
+            if (IsActive)
+                _controllerPlayable.GetNextAnimatorClipInfo(layer, results);
+            else
+                animator?.GetNextAnimatorClipInfo(layer, results);
+        }
+
+        public float GetFloat(int parameterHash) => IsActive
+            ? _controllerPlayable.GetFloat(parameterHash)
+            : animator != null ? animator.GetFloat(parameterHash) : 0f;
+
+        /// <summary>
+        /// Evaluates an immediate semantic state handoff. This is intentionally
+        /// not used by the per-frame path; it exists for ordered recovery and test
+        /// observers that must see a Play/CrossFade request before returning.
+        /// </summary>
+        public void Evaluate(float deltaTime = 0f)
+        {
+            if (IsActive) _graph.Evaluate(Mathf.Max(0f, deltaTime));
+            else if (animator != null && animator.isActiveAndEnabled)
+                animator.Update(Mathf.Max(0f, deltaTime));
+        }
 
         private void Awake()
         {
@@ -791,12 +855,34 @@ namespace Elemental.Presentation.Animation
             for (int index = 0; index < _controllerParameters.Length; index++)
             {
                 AnimatorControllerParameter parameter = _controllerParameters[index];
-                bool supported = parameter.type == AnimatorControllerParameterType.Float ||
-                                 parameter.type == AnimatorControllerParameterType.Int ||
-                                 parameter.type == AnimatorControllerParameterType.Bool;
-                _externallyWritableControllerParameters[index] = supported &&
-                    !animator.IsParameterControlledByCurve(parameter.nameHash);
+                _externallyWritableControllerParameters[index] =
+                    CanMirrorControllerParameter(
+                        parameter.type,
+                        parameter.nameHash,
+                        animator.IsParameterControlledByCurve(parameter.nameHash));
             }
+        }
+
+        private static bool CanMirrorControllerParameter(
+            AnimatorControllerParameterType type,
+            int parameterHash,
+            bool animatorReportsCurveOwnership)
+        {
+            bool supported = type == AnimatorControllerParameterType.Float ||
+                             type == AnimatorControllerParameterType.Int ||
+                             type == AnimatorControllerParameterType.Bool;
+            if (!supported || animatorReportsCurveOwnership) return false;
+
+            // IsParameterControlledByCurve is state/evaluation dependent. During
+            // production scene activation it can report false before the legacy
+            // Animator has evaluated its first state. These eight hashes are the
+            // stable metadata contract authored into every curated clip, so they
+            // must remain controller-output-only even during that startup window.
+            for (int index = 0; index < EarthAnimationClipMetadata.CurveCount; index++)
+                if (parameterHash == Animator.StringToHash(
+                        EarthAnimationClipMetadata.CurveName(index)))
+                    return false;
+            return true;
         }
 
         private void EnsureHandoffBuffers()
@@ -894,7 +980,12 @@ namespace Elemental.Presentation.Animation
 
         private void ApplyHandoffStateToAnimator()
         {
-            if (animator == null || !animator.enabled) return;
+            // Scene/test teardown disables the GameObject before OnDisable reaches
+            // this graph. Animator.Play/Update emit engine warnings in that state
+            // and cannot preserve a pose that is no longer renderable anyway.
+            if (animator == null || !animator.isActiveAndEnabled ||
+                !animator.gameObject.activeInHierarchy)
+                return;
             for (int layer = 0; layer < _handoffStates.Length; layer++)
             {
                 animator.SetLayerWeight(layer, _handoffLayerWeights[layer]);

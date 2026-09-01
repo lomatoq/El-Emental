@@ -19,7 +19,8 @@ namespace Elemental.Simulation.Combat
         BotProjectile = 5,
         StonePunch = 6,
         PillarCrest = 7,
-        FallLanding = 8
+        FallLanding = 8,
+        QuickStone = 9
     }
 
     public enum EarthCharacterImpactResponse : byte
@@ -158,6 +159,8 @@ namespace Elemental.Simulation.Combat
         {
             EarthCharacterImpactSourceKind.LooseStone =>
                 new EarthCharacterImpactCalibration(1f, 0.8f, 0.9f),
+            EarthCharacterImpactSourceKind.QuickStone =>
+                new EarthCharacterImpactCalibration(1.35f, 0.92f, 2.4f),
             EarthCharacterImpactSourceKind.ArmorProjectile =>
                 new EarthCharacterImpactCalibration(1.1f, 0.85f, 1.35f),
             EarthCharacterImpactSourceKind.PillarWave =>

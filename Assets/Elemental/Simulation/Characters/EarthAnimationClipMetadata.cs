@@ -129,20 +129,31 @@ namespace Elemental.Simulation.Characters
             if (count < 2) return Array.Empty<EarthAnimationMetadataSample>();
 
             var result = new EarthAnimationMetadataSample[count];
-            float minimumFootHeight = float.PositiveInfinity;
+            // Each leg has its own bind/retargeting offset. Using one shared
+            // minimum made the lower foot look planted for the whole clip and
+            // the other foot look airborne for the whole clip on the X Bot
+            // rig. That produced the exact right-leg-only lock seen in the
+            // 30/60/120 production telemetry.
+            float minimumLeftFootHeight = float.PositiveInfinity;
+            float minimumRightFootHeight = float.PositiveInfinity;
             float minimumPelvisHeight = float.PositiveInfinity;
             float maximumPelvisHeight = float.NegativeInfinity;
             for (int index = 0; index < count; index++)
             {
                 EarthAnimationKinematicSample sample = source[index];
-                minimumFootHeight = math.min(
-                    minimumFootHeight,
-                    math.min(sample.LeftFootPosition.y, sample.RightFootPosition.y));
+                minimumLeftFootHeight = math.min(
+                    minimumLeftFootHeight,
+                    sample.LeftFootPosition.y);
+                minimumRightFootHeight = math.min(
+                    minimumRightFootHeight,
+                    sample.RightFootPosition.y);
                 minimumPelvisHeight = math.min(minimumPelvisHeight, sample.PelvisPosition.y);
                 maximumPelvisHeight = math.max(maximumPelvisHeight, sample.PelvisPosition.y);
             }
 
             float pelvisRange = math.max(0.04f, maximumPelvisHeight - minimumPelvisHeight);
+            var leftContacts = new float[count];
+            var rightContacts = new float[count];
             for (int index = 0; index < count; index++)
             {
                 int previousIndex = math.max(0, index - 1);
@@ -156,12 +167,38 @@ namespace Elemental.Simulation.Characters
                 float3 rootVelocity = (next.RootPosition - previous.RootPosition) / timeSpan;
                 float pelvisVelocityY = (next.PelvisPosition.y - previous.PelvisPosition.y) / timeSpan;
 
-                float leftContact = ContactConfidence(
-                    sample.LeftFootPosition.y - minimumFootHeight,
+                leftContacts[index] = ContactConfidence(
+                    sample.LeftFootPosition.y - minimumLeftFootHeight,
                     leftVelocity);
-                float rightContact = ContactConfidence(
-                    sample.RightFootPosition.y - minimumFootHeight,
+                rightContacts[index] = ContactConfidence(
+                    sample.RightFootPosition.y - minimumRightFootHeight,
                     rightVelocity);
+            }
+
+            // A phase belongs to a foot, not to the clip clock. Derive its zero
+            // from that foot's measured contact lobe so clips that begin on the
+            // right stance (Mixamo Walking) do not fight a hard-coded left-first
+            // assumption. Circular averaging keeps a stance that crosses the
+            // loop seam centred at phase zero.
+            float leftPhaseOrigin = looping
+                ? ContactPhaseOrigin(source, leftContacts)
+                : 0f;
+            float rightPhaseOrigin = looping
+                ? ContactPhaseOrigin(source, rightContacts)
+                : 0.5f;
+
+            for (int index = 0; index < count; index++)
+            {
+                EarthAnimationKinematicSample sample = source[index];
+                int previousIndex = math.max(0, index - 1);
+                int nextIndex = math.min(count - 1, index + 1);
+                EarthAnimationKinematicSample previous = source[previousIndex];
+                EarthAnimationKinematicSample next = source[nextIndex];
+                float timeSpan = math.max(0.0001f, next.Time01 - previous.Time01);
+                float3 rootVelocity = (next.RootPosition - previous.RootPosition) / timeSpan;
+                float pelvisVelocityY = (next.PelvisPosition.y - previous.PelvisPosition.y) / timeSpan;
+                float leftContact = leftContacts[index];
+                float rightContact = rightContacts[index];
                 float contactUnion = math.max(leftContact, rightContact);
                 float landingWindow = landing
                     ? math.smoothstep(0.45f, 0.86f, sample.Time01)
@@ -179,14 +216,35 @@ namespace Elemental.Simulation.Characters
                     sample.Time01,
                     leftContact,
                     rightContact,
-                    math.frac(sample.Time01),
-                    math.frac(sample.Time01 + 0.5f),
+                    math.frac(sample.Time01 - leftPhaseOrigin + 1f),
+                    math.frac(sample.Time01 - rightPhaseOrigin + 1f),
                     landContact,
                     canExit,
                     pelvisCompression,
                     rootEffort);
             }
             return result;
+        }
+
+        private static float ContactPhaseOrigin(
+            IReadOnlyList<EarthAnimationKinematicSample> source,
+            IReadOnlyList<float> contacts)
+        {
+            float2 circular = float2.zero;
+            float weightSum = 0f;
+            for (int index = 0; index < source.Count; index++)
+            {
+                float weight = math.saturate((contacts[index] - 0.2f) / 0.8f);
+                if (weight <= 0f) continue;
+                float angle = source[index].Time01 * math.PI * 2f;
+                circular += new float2(math.cos(angle), math.sin(angle)) * weight;
+                weightSum += weight;
+            }
+
+            if (weightSum <= 0.0001f || math.lengthsq(circular) <= 0.000001f)
+                return 0f;
+            float angle01 = math.atan2(circular.y, circular.x) / (math.PI * 2f);
+            return math.frac(angle01 + 1f);
         }
 
         public static EarthAnimationMetadataIssue Validate(
@@ -241,9 +299,13 @@ namespace Elemental.Simulation.Characters
         private static float ContactConfidence(float heightAboveFloor, float3 velocity)
         {
             float height = 1f - math.saturate(heightAboveFloor / 0.095f);
-            float horizontal = 1f - math.saturate(math.length(velocity.xz) / 1.35f);
             float vertical = 1f - math.saturate(math.abs(velocity.y) / 0.95f);
-            return math.saturate(height * math.lerp(0.35f, 1f, horizontal * vertical));
+            // A planted foot moves backwards in character space during an
+            // in-place authored cycle. Penalising horizontal local velocity
+            // capped valid KayKit stance lobes at ~0.31, below the solver's
+            // 0.55 capture threshold. Contact is defined by low height and low
+            // vertical speed; tangential motion is measured later as drift.
+            return math.saturate(height * math.lerp(0.1f, 1f, vertical));
         }
     }
 }

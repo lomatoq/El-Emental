@@ -30,6 +30,7 @@ namespace Elemental.Presentation.Animation
         [SerializeField] private Rigidbody rootBody;
         [SerializeField] private EarthSurfController surfController;
         [SerializeField] private EarthCharacterPoseController poseIntentSource;
+        [SerializeField] private ActiveRagdollPuppet poweredPuppet;
         [SerializeField, Min(0.01f)] private float footProbeLift = 0.42f;
         [SerializeField, Min(0.05f)] private float footProbeDistance = 0.95f;
         [SerializeField, Min(0f)] private float soleOffset = 0.035f;
@@ -194,6 +195,8 @@ namespace Elemental.Presentation.Animation
             rootBody = configuredRootBody;
             poseIntentSource = configuredPoseIntentSource;
             if (surfController == null) surfController = GetComponentInParent<EarthSurfController>();
+            if (poweredPuppet == null)
+                poweredPuppet = GetComponentInParent<ActiveRagdollPuppet>();
             ResolveBones();
             ResolveMetadataAvailability();
         }
@@ -235,6 +238,8 @@ namespace Elemental.Presentation.Animation
             if (motor == null) motor = GetComponentInParent<PlanetMotor>();
             if (rootBody == null) rootBody = GetComponentInParent<Rigidbody>();
             if (surfController == null) surfController = GetComponentInParent<EarthSurfController>();
+            if (poweredPuppet == null)
+                poweredPuppet = GetComponentInParent<ActiveRagdollPuppet>();
             ResolveBones();
             ResolveMetadataAvailability();
         }
@@ -681,6 +686,8 @@ namespace Elemental.Presentation.Animation
                 if (rootBody != null && hit.collider.transform.IsChildOf(rootBody.transform))
                     continue;
                 if (hit.collider.GetComponentInParent<PlanetMotor>() != null) continue;
+                if (poweredPuppet != null && poweredPuppet.OwnsCollider(hit.collider))
+                    continue;
                 float upDot = Vector3.Dot(hit.normal, up);
                 candidates[candidateCount] = CharacterSupportRuntimeAdapter.Classify(
                     hit.collider,

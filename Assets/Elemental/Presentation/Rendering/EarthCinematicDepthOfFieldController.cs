@@ -13,6 +13,33 @@ namespace Elemental.Presentation.Rendering
         Coverage = 4
     }
 
+    public enum EarthCinematicDepthOfFieldGateState : byte
+    {
+        Inactive = 0,
+        Ready = 1,
+        MissingSubject = 2,
+        NonFiniteEvidence = 3,
+        SubjectOutsideSharpEnvelope = 4
+    }
+
+    public static class EarthCinematicDepthOfFieldGate
+    {
+        public static EarthCinematicDepthOfFieldGateState Evaluate(
+            bool requested,
+            in EarthCinematicDepthOfFieldEvidence evidence)
+        {
+            if (!requested)
+                return EarthCinematicDepthOfFieldGateState.Inactive;
+            if (!evidence.IsFinite)
+                return EarthCinematicDepthOfFieldGateState.NonFiniteEvidence;
+            if (!evidence.HasBothSubjects)
+                return EarthCinematicDepthOfFieldGateState.MissingSubject;
+            return evidence.BothSubjectsSharp
+                ? EarthCinematicDepthOfFieldGateState.Ready
+                : EarthCinematicDepthOfFieldGateState.SubjectOutsideSharpEnvelope;
+        }
+    }
+
     public readonly struct EarthCinematicDepthOfFieldSettings
     {
         public EarthCinematicDepthOfFieldSettings(
@@ -168,6 +195,10 @@ namespace Elemental.Presentation.Rendering
         private Vector3 _envelopeCameraPosition;
         private Quaternion _envelopeCameraRotation;
         private EarthCinematicDepthOfFieldEvidence _evidence;
+        private EarthCinematicDepthOfFieldGateState _lastRenderGateState;
+        private EarthCinematicDepthOfFieldGateState _lastReportedGateState;
+        private uint _rejectedRenderFrameCount;
+        private int _lastRejectedUnityFrame = -1;
 
         public bool IsRuntimeActive => _runtimeActive;
         public float FocusDistance => _envelope.Midpoint;
@@ -179,6 +210,9 @@ namespace Elemental.Presentation.Rendering
         public bool HasCaptureOverride => _captureOverride;
         public EarthCinematicDepthOfFieldDebugView CaptureDebugView =>
             _captureDebugView;
+        public EarthCinematicDepthOfFieldGateState LastRenderGateState =>
+            _lastRenderGateState;
+        public uint RejectedRenderFrameCount => _rejectedRenderFrameCount;
 
         public void ConfigureSubjects(
             Transform configuredPrimarySubject,
@@ -225,8 +259,13 @@ namespace Elemental.Presentation.Rendering
             // owners may move the camera after this component's LateUpdate. The
             // subject depths are camera-local, so never submit a stale envelope
             // to the renderer feature for a different view pose.
-            if (HasCameraPoseChangedSinceEnvelope())
-                RefreshEnvelope(0f, true);
+            bool cameraPoseChanged = HasCameraPoseChangedSinceEnvelope();
+            // Actors can be moved by late presentation owners or an explicit
+            // Camera.Render() capture after this component's LateUpdate. A
+            // zero-delta resample expands immediately when either silhouette
+            // moves, while preserving contraction hysteresis and allocating no
+            // managed storage.
+            RefreshEnvelope(0f, cameraPoseChanged);
 
             bool active = _captureOverride ||
                           (Application.isPlaying && _runtimeActive);
@@ -237,16 +276,70 @@ namespace Elemental.Presentation.Rendering
                 Mathf.Max(0.1f, farTransition),
                 Mathf.Clamp(maxRadiusPixels * _lensRadiusScale, 1f, 12f),
                 _captureOverride ? _captureDebugView : debugView);
-            return active && isActiveAndEnabled;
+            bool requested = active && isActiveAndEnabled;
+            EarthCinematicDepthOfFieldGateState gateState =
+                EarthCinematicDepthOfFieldGate.Evaluate(requested, in _evidence);
+            PublishRenderGateState(gateState);
+            return gateState == EarthCinematicDepthOfFieldGateState.Ready;
         }
 
         public bool TryGetSharpEnvelopeEvidence(
             out EarthCinematicDepthOfFieldEvidence evidence)
         {
-            if (HasCameraPoseChangedSinceEnvelope())
-                RefreshEnvelope(0f, true);
+            bool cameraPoseChanged = HasCameraPoseChangedSinceEnvelope();
+            RefreshEnvelope(0f, cameraPoseChanged);
             evidence = _evidence;
             return evidence.IsFinite;
+        }
+
+        private void PublishRenderGateState(
+            EarthCinematicDepthOfFieldGateState gateState)
+        {
+            _lastRenderGateState = gateState;
+            if (gateState == EarthCinematicDepthOfFieldGateState.Ready ||
+                gateState == EarthCinematicDepthOfFieldGateState.Inactive)
+            {
+                _lastReportedGateState = gateState;
+                return;
+            }
+
+            int unityFrame = Time.frameCount;
+            if (_lastRejectedUnityFrame != unityFrame)
+            {
+                _lastRejectedUnityFrame = unityFrame;
+                if (_rejectedRenderFrameCount < uint.MaxValue)
+                    _rejectedRenderFrameCount++;
+            }
+            if (_lastReportedGateState == gateState) return;
+            _lastReportedGateState = gateState;
+            // Shipping rendering is deliberately fail-closed: the renderer
+            // skips DOF and the rejected-frame counter remains authoritative.
+            // Scene loads, test teardown and camera-owner handoffs can expose a
+            // transient incomplete subject set, though, and logging that as a
+            // project error makes unrelated PlayMode gates fail even though no
+            // invalid DOF frame was rendered. Explicit capture/debug sessions
+            // retain the loud diagnostic used by the focused lifecycle test.
+            if (!_captureOverride) return;
+            switch (gateState)
+            {
+                case EarthCinematicDepthOfFieldGateState.MissingSubject:
+                    Debug.LogError(
+                        "Earth cinematic DOF rejected the frame because both fighter subjects " +
+                        "were not configured and sampled. Rebind both duel presentations.",
+                        this);
+                    break;
+                case EarthCinematicDepthOfFieldGateState.NonFiniteEvidence:
+                    Debug.LogError(
+                        "Earth cinematic DOF rejected non-finite camera or sharp-envelope evidence.",
+                        this);
+                    break;
+                case EarthCinematicDepthOfFieldGateState.SubjectOutsideSharpEnvelope:
+                    Debug.LogError(
+                        "Earth cinematic DOF rejected the frame because a fighter silhouette " +
+                        "fell outside the shared sharp envelope.",
+                        this);
+                    break;
+            }
         }
 
         private void OnEnable()
@@ -417,6 +510,9 @@ namespace Elemental.Presentation.Rendering
             _requestedFor = 0f;
             _captureOverride = false;
             _hasEnvelopeCameraPose = false;
+            _lastRenderGateState = EarthCinematicDepthOfFieldGateState.Inactive;
+            _lastReportedGateState = EarthCinematicDepthOfFieldGateState.Inactive;
+            _lastRejectedUnityFrame = -1;
         }
     }
 }

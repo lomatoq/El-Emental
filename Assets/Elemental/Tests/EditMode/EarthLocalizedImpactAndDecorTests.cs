@@ -71,6 +71,19 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void LargeOrFastRockBreaksIntoMoreFasterSecondaryPieces()
+        {
+            EarthSecondaryFractureSample ordinary = EarthSecondaryFractureSolver.Evaluate(
+                9, 16, 3.8f, 1.65f, 0.35f, 0.9f, 4f, 18f);
+            EarthSecondaryFractureSample hero = EarthSecondaryFractureSolver.Evaluate(
+                9, 16, 3.8f, 1.65f, 1.4f, 0.9f, 42f, 18f);
+
+            Assert.That(ordinary.PieceCount, Is.EqualTo(9));
+            Assert.That(hero.PieceCount, Is.EqualTo(16));
+            Assert.That(hero.SpreadSpeed, Is.GreaterThan(ordinary.SpreadSpeed));
+        }
+
+        [Test]
         public void LocalizedHitProfileStaysInsideReadableShortReactionBudget()
         {
             CharacterImpactResponseProfile profile =

@@ -160,6 +160,17 @@ namespace Elemental.Tests.EditMode
                 Assert.That(bot.transform.position.y, Is.EqualTo(58f).Within(0.0005f),
                     "The approved opponent spawn must survive generated-scene rebuilds.");
                 Assert.That(bot.transform.position.z, Is.EqualTo(3.5498571f).Within(0.0005f));
+                GameObject botPuppetRoot = GameObject.Find(
+                    "Rumble Linebreaker Bot Powered Puppet");
+                Assert.That(botPuppetRoot, Is.Not.Null,
+                    "The opponent's powered physical root must survive scene generation.");
+                Assert.That(
+                    Vector3.Distance(botPuppetRoot.transform.position, bot.transform.position),
+                    Is.LessThan(0.001f),
+                    "Moving the approved opponent spawn must move its world-space powered puppet too.");
+                Assert.That(
+                    Quaternion.Angle(botPuppetRoot.transform.rotation, bot.transform.rotation),
+                    Is.LessThan(0.01f));
                 CapsuleCollider botCapsule = bot.GetComponent<CapsuleCollider>();
                 PlanetMotor botMotor = bot.GetComponent<PlanetMotor>();
                 Assert.That(botCapsule, Is.Not.Null);

@@ -242,9 +242,11 @@ namespace Elemental.Presentation.VFX
                     ? effectsProfile.Impact.HeroSparkCount
                     : effectsProfile.Impact.SparkCount);
             }
+            float impactEnergy01 = 1f - Mathf.Exp(
+                -Mathf.Sqrt(Mathf.Max(0f, batch.MaximumKineticEnergy)) / 520f);
             cameraRig?.AddPresentationImpulse(
-                Mathf.Clamp(Mathf.Log10(1f + batch.MaximumKineticEnergy) * 0.022f, 0.025f, 0.19f),
-                0.34f,
+                Mathf.Lerp(0.035f, 0.34f, impactEnergy01),
+                Mathf.Lerp(0.22f, 0.58f, impactEnergy01),
                 batch.Seed ^ 0xEA47F11u);
         }
 

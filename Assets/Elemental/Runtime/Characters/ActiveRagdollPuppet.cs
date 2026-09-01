@@ -90,6 +90,14 @@ namespace Elemental.Runtime.Characters
             physicalAnimationProfile.UsePoweredPhysicalAssist;
         public bool PoweredAssistConfigurationValid =>
             HasValidPoweredJointBindings();
+        public RigidbodyConstraints MotorPositionConstraints
+        {
+            get
+            {
+                CaptureRootConstraints();
+                return _motorRootConstraints & RigidbodyConstraints.FreezePosition;
+            }
+        }
         public EarthPoweredImpactDecision LastPoweredImpactDecision { get; private set; }
         public EarthPoweredAssistOutput LastPoweredAssistOutput { get; private set; }
         public int PoweredActionRequestCount { get; private set; }
@@ -324,6 +332,32 @@ namespace Elemental.Runtime.Characters
         }
 
         /// <summary>
+        /// Configures only the translational constraint bits owned while the
+        /// canonical physical mode is motor-driven. Ragdoll/recovery constraints
+        /// remain unchanged, so a fixture, cutscene, or spawn stabilizer cannot
+        /// accidentally pin a body after physical ownership transfers.
+        /// </summary>
+        public void ConfigureMotorPositionConstraints(
+            RigidbodyConstraints configuredPositionConstraints)
+        {
+            RigidbodyConstraints unsupported = configuredPositionConstraints &
+                                                ~RigidbodyConstraints.FreezePosition;
+            if (unsupported != RigidbodyConstraints.None)
+                throw new ArgumentOutOfRangeException(
+                    nameof(configuredPositionConstraints),
+                    configuredPositionConstraints,
+                    "Only FreezePositionX/Y/Z may be configured for motor ownership.");
+
+            CaptureRootConstraints();
+            _motorRootConstraints =
+                (_motorRootConstraints & ~RigidbodyConstraints.FreezePosition) |
+                configuredPositionConstraints;
+            if (rootBody != null && UsesMotorRootConstraints(CurrentState.Mode) &&
+                rootBody.constraints != _motorRootConstraints)
+                rootBody.constraints = _motorRootConstraints;
+        }
+
+        /// <summary>
         /// Wires the default-off powered-assist adapter. The supplied limb
         /// transforms are read-only support/probe inputs; Animator and foot IK
         /// remain owned by Presentation.
@@ -525,9 +559,7 @@ namespace Elemental.Runtime.Characters
 
         private void ApplyControl(CharacterPhysicalState state)
         {
-            bool motorAllowed = state.Mode == CharacterPhysicalMode.AnimatedMotor ||
-                                state.Mode == CharacterPhysicalMode.PhysicalAssist ||
-                                state.Mode == CharacterPhysicalMode.Stagger;
+            bool motorAllowed = UsesMotorRootConstraints(state.Mode);
             if (rootBody != null)
             {
                 CaptureRootConstraints();
@@ -708,6 +740,11 @@ namespace Elemental.Runtime.Characters
             EarthPhysicalSurfaceProbe fallArrestProbe = default;
             if (probeSurfaces)
             {
+                Vector3 supportVelocity = motor != null &&
+                                          motor.CurrentSupportFrame.IsValid
+                    ? ToVector3(motor.CurrentSupportFrame.ContactPointVelocity)
+                    : Vector3.zero;
+                Vector3 supportRelativeVelocity = rootBody.linearVelocity - supportVelocity;
                 Vector3 probeDirection = _lastPoweredImpactDirection.sqrMagnitude > 0.0001f
                     ? -_lastPoweredImpactDirection.normalized
                     : -transform.forward;
@@ -718,8 +755,8 @@ namespace Elemental.Runtime.Characters
                 Vector3 reachOrigin = leftHand != null && rightHand != null
                     ? (leftHand.position + rightHand.position) * 0.5f
                     : rootBody.worldCenterOfMass;
-                Vector3 reachDirection = rootBody.linearVelocity.sqrMagnitude > 0.01f
-                    ? rootBody.linearVelocity.normalized
+                Vector3 reachDirection = supportRelativeVelocity.sqrMagnitude > 0.01f
+                    ? supportRelativeVelocity.normalized
                     : motor != null ? motor.FacingForward : transform.forward;
                 reachProbe = ProbeSemanticSurface(
                     reachOrigin,
@@ -730,13 +767,18 @@ namespace Elemental.Runtime.Characters
                     -_gravityUp,
                     EarthSemanticSurfaceKind.FallArrest);
             }
+            Vector3 poweredSupportVelocity = motor != null &&
+                                             motor.CurrentSupportFrame.IsValid
+                ? ToVector3(motor.CurrentSupportFrame.ContactPointVelocity)
+                : Vector3.zero;
+            Vector3 poweredRelativeVelocity = rootBody.linearVelocity - poweredSupportVelocity;
             var input = new EarthPoweredAssistInput(
                 Time.fixedDeltaTime,
                 CurrentState.Mode,
                 ToFloat3(_gravityUp),
                 ToFloat3(motor != null ? motor.FacingForward : transform.forward),
                 ToFloat3(rootBody.worldCenterOfMass),
-                ToFloat3(rootBody.linearVelocity),
+                ToFloat3(poweredRelativeVelocity),
                 livePlantedSupport,
                 feetConfigured && (leftPlanted || rightPlanted),
                 in polygon,
@@ -957,6 +999,11 @@ namespace Elemental.Runtime.Characters
             _ragdollRootConstraints = rootBody.constraints & ~RigidbodyConstraints.FreezeRotation;
             _motorRootConstraints = _ragdollRootConstraints | RigidbodyConstraints.FreezeRotation;
         }
+
+        private static bool UsesMotorRootConstraints(CharacterPhysicalMode mode) =>
+            mode == CharacterPhysicalMode.AnimatedMotor ||
+            mode == CharacterPhysicalMode.PhysicalAssist ||
+            mode == CharacterPhysicalMode.Stagger;
 
         private void EnsureController()
         {

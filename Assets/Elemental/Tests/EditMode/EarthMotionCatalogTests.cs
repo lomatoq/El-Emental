@@ -166,6 +166,7 @@ namespace Elemental.Tests.EditMode
             EarthMotionSemanticAction[] requiredRoles =
             {
                 EarthMotionSemanticAction.Locomotion,
+                EarthMotionSemanticAction.Jump,
                 EarthMotionSemanticAction.Cast,
                 EarthMotionSemanticAction.Impact,
                 EarthMotionSemanticAction.Recovery
@@ -173,6 +174,7 @@ namespace Elemental.Tests.EditMode
             string[] requiredPaths =
             {
                 "Base Layer.Locomotion",
+                "Base Layer.Jump",
                 "Earth Magic Upper Body.Earth Cast",
                 "Impact Additive.Recoil",
                 "Base Layer.Knockdown Recovery"
@@ -207,6 +209,25 @@ namespace Elemental.Tests.EditMode
                     Is.Not.Null,
                     requiredPaths[roleIndex]);
             }
+
+            EarthMotionStateBinding jump = FindBinding(_catalog, "Base Layer.Jump");
+            Assert.That(jump, Is.Not.Null);
+            Assert.That(jump.ClipProfileCount, Is.EqualTo(1));
+            EarthMotionClipProfile jumpProfile =
+                _catalog.ClipAt(jump.ClipProfileIndexAt(0));
+            Assert.That(jumpProfile, Is.Not.Null);
+            Assert.That(jumpProfile.Clip, Is.Not.Null);
+            Assert.That(
+                jumpProfile.SourceAssetPath,
+                Is.EqualTo(EarthHumanoidMotionSetup.KayKitMovementBasicPath));
+            Assert.That(
+                jumpProfile.Clip.name,
+                Is.EqualTo(EarthHumanoidMotionSetup.JumpStartClipName));
+            Assert.That(
+                jumpProfile.SemanticAction,
+                Is.EqualTo(EarthMotionSemanticAction.Jump));
+            Assert.That(jumpProfile.AssetGuid, Is.Not.Empty);
+            Assert.That(jumpProfile.LocalFileId, Is.Not.Zero);
 
             EarthMotionStateBinding source = FindBinding(
                 _catalog,

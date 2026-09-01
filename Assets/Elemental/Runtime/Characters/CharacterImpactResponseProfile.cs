@@ -13,6 +13,7 @@ namespace Elemental.Runtime.Characters
         [SerializeField, Min(0.1f)] private float maximumRagdollTangentSpeed = 4f;
         [Header("Calibrated source response")]
         [SerializeField] private SourceCalibration looseStone = new SourceCalibration(1f, 0.8f, 0.9f);
+        [SerializeField] private SourceCalibration quickStone = new SourceCalibration(1.35f, 0.92f, 2.4f);
         [SerializeField] private SourceCalibration armorProjectile = new SourceCalibration(1.1f, 0.85f, 1.35f);
         [SerializeField] private SourceCalibration pillarWave = new SourceCalibration(1.28f, 0.48f, 2.3f);
         [SerializeField] private SourceCalibration pillarCrest = new SourceCalibration(1.32f, 0.58f, 2.4f);
@@ -49,6 +50,7 @@ namespace Elemental.Runtime.Characters
             SourceCalibration calibration = source switch
             {
                 EarthCharacterImpactSourceKind.LooseStone => looseStone,
+                EarthCharacterImpactSourceKind.QuickStone => quickStone,
                 EarthCharacterImpactSourceKind.ArmorProjectile => armorProjectile,
                 EarthCharacterImpactSourceKind.BotProjectile => armorProjectile,
                 EarthCharacterImpactSourceKind.PillarWave => pillarWave,

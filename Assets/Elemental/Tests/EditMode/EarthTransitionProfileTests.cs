@@ -4,6 +4,7 @@ using Elemental.Authoring.Editor;
 using Elemental.Presentation.Animation;
 using Elemental.Simulation.Characters;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 namespace Elemental.Tests.EditMode
@@ -233,6 +234,77 @@ namespace Elemental.Tests.EditMode
                 Is.True);
         }
 
+        [Test]
+        public void ProductionProfileResolvesEveryObservedRescuePairWithoutGenericFallback()
+        {
+            const string path =
+                "Assets/Elemental/Content/Profiles/EarthTransitionProfile.asset";
+            EarthTransitionProfile production =
+                AssetDatabase.LoadAssetAtPath<EarthTransitionProfile>(path);
+            Assert.That(production, Is.Not.Null, path);
+
+            AssertProductionPair(
+                production,
+                EarthMotionStateId.None,
+                EarthMotionStateId.Locomotion,
+                EarthMotionCategory.None,
+                EarthMotionCategory.Locomotion);
+            AssertProductionPair(
+                production,
+                EarthMotionStateId.Jump,
+                EarthMotionStateId.Fall,
+                EarthMotionCategory.Airborne,
+                EarthMotionCategory.Airborne);
+            AssertProductionPair(
+                production,
+                EarthMotionStateId.Fall,
+                EarthMotionStateId.Jump,
+                EarthMotionCategory.Airborne,
+                EarthMotionCategory.Airborne);
+            AssertProductionPair(
+                production,
+                EarthMotionStateId.TurnInPlace,
+                EarthMotionStateId.Jump,
+                EarthMotionCategory.Turn,
+                EarthMotionCategory.Airborne);
+            AssertProductionPair(
+                production,
+                EarthMotionStateId.HardLanding,
+                EarthMotionStateId.Fall,
+                EarthMotionCategory.Landing,
+                EarthMotionCategory.Airborne);
+            AssertProductionPair(
+                production,
+                EarthMotionStateId.Locomotion,
+                EarthMotionStateId.SoftLanding,
+                EarthMotionCategory.Locomotion,
+                EarthMotionCategory.Landing);
+            AssertProductionPair(
+                production,
+                EarthMotionStateId.Locomotion,
+                EarthMotionStateId.MovingLanding,
+                EarthMotionCategory.Locomotion,
+                EarthMotionCategory.Landing);
+            AssertProductionPair(
+                production,
+                EarthMotionStateId.Locomotion,
+                EarthMotionStateId.HardLanding,
+                EarthMotionCategory.Locomotion,
+                EarthMotionCategory.Landing);
+            AssertProductionPair(
+                production,
+                EarthMotionStateId.Locomotion,
+                EarthMotionStateId.KnockdownRecovery,
+                EarthMotionCategory.Locomotion,
+                EarthMotionCategory.RagdollRecovery);
+            AssertProductionPair(
+                production,
+                EarthMotionStateId.SoftLanding,
+                EarthMotionStateId.Fall,
+                EarthMotionCategory.Landing,
+                EarthMotionCategory.Airborne);
+        }
+
         private EarthTransitionProfile EnabledProfile(
             EarthTransitionPairOverride[] pairs)
         {
@@ -240,6 +312,31 @@ namespace Elemental.Tests.EditMode
                 ScriptableObject.CreateInstance<EarthTransitionProfile>();
             profile.Configure(true, true, 8, 0.09f, pairs);
             return profile;
+        }
+
+        private static void AssertProductionPair(
+            EarthTransitionProfile profile,
+            EarthMotionStateId source,
+            EarthMotionStateId destination,
+            EarthMotionCategory sourceCategory,
+            EarthMotionCategory destinationCategory)
+        {
+            EarthAnimationTransitionContext context = Context(
+                source,
+                destination,
+                sourceCategory,
+                destinationCategory);
+            Assert.That(
+                profile.TryResolve(
+                    in context,
+                    out EarthTransitionRule rule,
+                    out int pairIndex,
+                    out bool usedGenericFallback),
+                Is.True,
+                $"{source} -> {destination}");
+            Assert.That(usedGenericFallback, Is.False, $"{source} -> {destination}");
+            Assert.That(pairIndex, Is.GreaterThanOrEqualTo(0), $"{source} -> {destination}");
+            Assert.That(rule.Family, Is.Not.EqualTo(EarthTransitionFamily.FixedDurationFallback));
         }
 
         private static EarthTransitionRule Rule(

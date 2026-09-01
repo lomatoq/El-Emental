@@ -156,6 +156,62 @@ namespace Elemental.Tests.PlayMode
             }
         }
 
+        [UnityTest]
+        public IEnumerator MotorPositionConstraintOwnerPersistsPinAndReleasesForRagdoll()
+        {
+            var root = new GameObject("Motor Constraint Ownership Fixture");
+            Rigidbody body = root.AddComponent<Rigidbody>();
+            body.useGravity = false;
+            body.constraints = RigidbodyConstraints.None;
+            ActiveRagdollPuppet puppet = root.AddComponent<ActiveRagdollPuppet>();
+            puppet.Configure(
+                77u,
+                null,
+                body,
+                null,
+                null,
+                root.transform,
+                Array.Empty<ActiveRagdollJoint>(),
+                Array.Empty<Collider>());
+
+            try
+            {
+                Assert.That(body.constraints,
+                    Is.EqualTo(RigidbodyConstraints.FreezeRotation));
+                puppet.ConfigureMotorPositionConstraints(
+                    RigidbodyConstraints.FreezePosition);
+                Assert.That(puppet.MotorPositionConstraints,
+                    Is.EqualTo(RigidbodyConstraints.FreezePosition));
+                Assert.That(body.constraints,
+                    Is.EqualTo(RigidbodyConstraints.FreezeAll));
+
+                yield return new WaitForFixedUpdate();
+                Assert.That(body.constraints,
+                    Is.EqualTo(RigidbodyConstraints.FreezeAll),
+                    "FixedUpdate must preserve the explicit motor-position owner.");
+
+                Assert.That(puppet.TryBeginExternalFullRagdoll(), Is.True);
+                Assert.That(body.constraints, Is.EqualTo(RigidbodyConstraints.None),
+                    "Motor-only translation pinning must not leak into ragdoll ownership.");
+
+                puppet.ResetPhysicalState(body.position, body.rotation);
+                Assert.That(body.constraints,
+                    Is.EqualTo(RigidbodyConstraints.FreezeAll),
+                    "Returning to motor ownership must restore the configured pin.");
+
+                puppet.ConfigureMotorPositionConstraints(RigidbodyConstraints.None);
+                Assert.That(body.constraints,
+                    Is.EqualTo(RigidbodyConstraints.FreezeRotation));
+                Assert.Throws<ArgumentOutOfRangeException>(() =>
+                    puppet.ConfigureMotorPositionConstraints(
+                        RigidbodyConstraints.FreezeRotationX));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
         private static ActiveRagdollJoint[] FindOwnedActiveRagdollJoints(
             Scene scene,
             ActiveRagdollPuppet puppet)

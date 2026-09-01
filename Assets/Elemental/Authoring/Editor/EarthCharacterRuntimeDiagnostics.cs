@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text;
 using Elemental.Presentation.Animation;
 using Elemental.Runtime.Characters;
@@ -36,8 +37,17 @@ namespace Elemental.Authoring.Editor
                     .Append(" jointError=").Append(puppet.MaximumJointError.ToString("F3"));
             if (animator != null)
             {
-                AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-                AnimatorClipInfo[] clips = animator.GetCurrentAnimatorClipInfo(0);
+                EarthAnimationGraph graph = presentation != null
+                    ? presentation.AnimationGraph
+                    : null;
+                AnimatorStateInfo state = graph != null && graph.IsActive
+                    ? graph.GetCurrentAnimatorStateInfo(0)
+                    : animator.GetCurrentAnimatorStateInfo(0);
+                var clips = new List<AnimatorClipInfo>(4);
+                if (graph != null && graph.IsActive)
+                    graph.GetCurrentAnimatorClipInfo(0, clips);
+                else
+                    animator.GetCurrentAnimatorClipInfo(0, clips);
                 Renderer[] renderers = animator.GetComponentsInChildren<Renderer>(true);
                 int skinned = 0;
                 for (int index = 0; index < renderers.Length; index++)
@@ -50,7 +60,7 @@ namespace Elemental.Authoring.Editor
                         ? animator.runtimeAnimatorController.name : "MISSING")
                     .Append(" stateHash=").Append(state.fullPathHash)
                     .Append(" normalized=").Append(state.normalizedTime.ToString("F3"))
-                    .Append(" clip=").Append(clips.Length > 0 && clips[0].clip != null
+                    .Append(" clip=").Append(clips.Count > 0 && clips[0].clip != null
                         ? clips[0].clip.name : "NONE")
                     .Append(" renderers=").Append(renderers.Length)
                     .Append(" skinned=").Append(skinned);

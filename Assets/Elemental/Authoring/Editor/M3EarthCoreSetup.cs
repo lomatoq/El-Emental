@@ -18,6 +18,7 @@ using Elemental.Runtime.Geometry;
 using Elemental.Simulation.Magic;
 using Elemental.Simulation.Combat;
 using Elemental.Simulation.Bending;
+using Elemental.Simulation.Characters;
 using MiniBokeh;
 using UnityEditor;
 using UnityEditor.Animations;
@@ -59,11 +60,27 @@ namespace Elemental.Authoring.Editor
         private const string SkyProfilePath = "Assets/Elemental/Content/Profiles/EarthSkyProfile.asset";
         private const string MeteorProfilePath = "Assets/Elemental/Content/Profiles/MeteorShowerProfile.asset";
         private const string CharacterProfilePath = "Assets/Elemental/Content/Profiles/CharacterPresentationProfile.asset";
+        private const string TransitionProfilePath =
+            "Assets/Elemental/Content/Profiles/EarthTransitionProfile.asset";
+        private const string AnimationGraphProfilePath =
+            "Assets/Elemental/Content/Profiles/EarthAnimationGraphProfile.asset";
+        private const string UnifiedLightingProfilePath =
+            "Assets/Elemental/Content/GraphicsVNext/Rendering/UnifiedLightingMigrationProfile.asset";
+        private const string DuelRenderingProfilePath =
+            "Assets/Elemental/Content/GraphicsVNext/Rendering/DuelRenderingProfile.asset";
+        private const string UnifiedPlanetGroundMaterialPath =
+            "Assets/Elemental/Content/GraphicsVNext/Rendering/EarthCorePlanetGround.mat";
+        private const string ArenaExteriorMaterialPath =
+            "Assets/Elemental/Content/GraphicsVNext/Rendering/BrokenCrownArenaExterior.mat";
+        private const string ArenaInteriorMaterialPath =
+            "Assets/Elemental/Content/GraphicsVNext/Rendering/BrokenCrownArenaInterior.mat";
         internal const string CharacterImpactProfilePath =
             "Assets/Elemental/Content/Profiles/CharacterImpactResponseProfile.asset";
         private const string PlayerMaterialFolder = "Assets/Elemental/Content/Materials/MvpPlayer";
         private const string RivalMaterialFolder = "Assets/Elemental/Content/Materials/MvpRival";
         private const string PhysicsFeelProfilePath = "Assets/Elemental/Content/Profiles/EarthPhysicsFeelProfile.asset";
+        private const string PhysicalAnimationProfilePath =
+            "Assets/Elemental/Content/Profiles/EarthPhysicalAnimationProfile.asset";
         private const string QuickCastProfilePath = "Assets/Elemental/Content/Profiles/EarthQuickCastProfile.asset";
         private const string ArmorProfilePath = "Assets/Elemental/Content/Profiles/EarthArmorProfile.asset";
         private const string ArmorShellPath = "Assets/Elemental/Content/Profiles/EarthArmorShellDefinition.asset";
@@ -88,6 +105,12 @@ namespace Elemental.Authoring.Editor
             "Assets/Elemental/Content/Characters/Linebreaker/Linebreaker.fbx";
         private const string MixamoWalkPath = "Assets/ThirdParty/Mixamo/X Bot@Walking.fbx";
         private const string MixamoWalkBackPath = "Assets/ThirdParty/Mixamo/X Bot@Walking Backwards.fbx";
+        private const string KayKitMovementBasicPath =
+            "Assets/ThirdParty/KayKit/Animations/Rig_Medium_MovementBasic.fbx";
+        private const string KayKitMovementAdvancedPath =
+            "Assets/ThirdParty/KayKit/Animations/Rig_Medium_MovementAdvanced.fbx";
+        private const string KayKitGeneralPath =
+            "Assets/ThirdParty/KayKit/Animations/Rig_Medium_General.fbx";
         private const string MixamoPunchPath = "Assets/ThirdParty/Mixamo/X Bot@Punching.fbx";
         private const string MageControllerPath = "Assets/Elemental/Content/Animation/KayKitMage.controller";
         private const string MageMaskPath = "Assets/Elemental/Content/Animation/KayKitMageUpperBody.mask";
@@ -110,7 +133,21 @@ namespace Elemental.Authoring.Editor
                 throw new UnityEditor.Build.BuildFailedException("M2 scene dependencies are missing.");
             }
 
-            Material earthMaterial = LoadRumbleMaterial("RumbleGround.mat") ??
+            DuelRenderingProfile duelRenderingProfile =
+                CreateOrLoadProfile<DuelRenderingProfile>(
+                    DuelRenderingProfilePath,
+                    "Duel Rendering Profile");
+            Material artistPlanetMaterial = AssetDatabase.LoadAssetAtPath<Material>(
+                UnifiedPlanetGroundMaterialPath);
+            if (duelRenderingProfile.EnsureAuthoringMaterials(
+                    AssetDatabase.LoadAssetAtPath<Material>(ArenaExteriorMaterialPath),
+                    AssetDatabase.LoadAssetAtPath<Material>(ArenaInteriorMaterialPath),
+                    artistPlanetMaterial))
+                EditorUtility.SetDirty(duelRenderingProfile);
+
+            Material earthMaterial = duelRenderingProfile.PlanetSurfaceMaterial ??
+                                     artistPlanetMaterial ??
+                                     LoadRumbleMaterial("RumbleGround.mat") ??
                                      AssetDatabase.LoadAssetAtPath<Material>(
                                          "Assets/Elemental/Content/Materials/VoxelPlanetSurface.mat");
             EarthCoreVisualStyle style = CreateOrLoadVisualStyle();
@@ -121,7 +158,12 @@ namespace Elemental.Authoring.Editor
             if (!IsRumbleMaterial(earthMaterial))
                 ApplyEarthMaterial(earthMaterial, style, earthMaterialProfile, false);
             earthMaterial.SetFloat("_UsePlanetFrame", 1f);
+            if (earthMaterial.HasProperty("_PlanetCenter"))
+                earthMaterial.SetVector("_PlanetCenter", collisionProxy.transform.position);
             voxelPlanet.Configure(worldProfile, earthMaterial);
+            voxelPlanet.ConfigureRendering(
+                duelRenderingProfile.PlanetShadowCastingMode,
+                duelRenderingProfile.PlanetReceiveShadows);
             Material looseEarthMaterial = LoadRumbleMaterial("RumbleSandstone.mat") ??
                                           CreateOrLoadEarthMaterial(
                                               "EarthLooseStone.mat", style.StoneColor,
@@ -159,6 +201,7 @@ namespace Elemental.Authoring.Editor
             pool.ConfigurePhysicsFeel(physicsFeel);
             EarthHoverProfile hoverProfile = CreateOrLoadHoverProfile();
             pool.ConfigureHover(hoverProfile);
+            pool.PrewarmAll();
             Mesh wallMesh = CreateOrLoadChippedWallMesh();
             Material wallMaterial = LoadRumbleMaterial("RumbleSandstone.mat") ??
                                     CreateOrLoadEarthMaterial(
@@ -340,13 +383,26 @@ namespace Elemental.Authoring.Editor
             feedback.Configure(executor);
             ConfigurePresentation(
                 scene, character, camera, executor, input, pillarMobility, cushion, preview, style, looseEarthMaterial,
-                gravityWorld, debrisPool, wavePool, collisionProxy.transform, worldProfile);
+                gravityWorld, debrisPool, wavePool, collisionProxy.transform, worldProfile,
+                duelRenderingProfile);
             CreateMvpLinebreaker(
                 gravityWorld,
                 worldProfile.Radius,
                 character,
                 collisionProxy.transform,
                 pool);
+            EarthTransitionProfile transitionProfile =
+                CreateOrUpdateTransitionProfile();
+            EarthAnimationGraphProfile animationGraphProfile =
+                CreateOrUpdateAnimationGraphProfile();
+            ConfigureFighterTransitionProfile(character, transitionProfile);
+            ConfigureFighterAnimationGraph(character, animationGraphProfile);
+            GameObject transitionBot = GameObject.Find("Rumble Linebreaker Bot");
+            ConfigureFighterTransitionProfile(transitionBot, transitionProfile);
+            ConfigureFighterAnimationGraph(transitionBot, animationGraphProfile);
+            EarthMotionCatalog motionCatalog = RebuildMotionCatalog();
+            ConfigureFighterMotionCatalog(character, motionCatalog);
+            ConfigureFighterMotionCatalog(transitionBot, motionCatalog);
             // Both fighters must exist before the arena's final collision seating.
             // Creating the bot afterwards left it inside the gate and floor.
             BrokenCrownArenaSceneIntegrator.Integrate(
@@ -354,7 +410,8 @@ namespace Elemental.Authoring.Editor
                 worldProfile.Radius,
                 gravityWorld,
                 debrisPool,
-                looseEarthMaterial);
+                looseEarthMaterial,
+                null);
             RestoreApprovedLinebreakerSpawn(
                 collisionProxy.transform.position,
                 worldProfile.Radius);
@@ -400,6 +457,16 @@ namespace Elemental.Authoring.Editor
                 throw new System.InvalidOperationException("Mixamo presentation AnimatorController could not be created.");
             AssetDatabase.SaveAssets();
             Debug.Log("[Elemental] Mixamo X Bot presentation, locomotion and earth-cast clips refreshed.");
+        }
+
+        [MenuItem("Elemental Suite/Character/Rebuild Transition Profile Only")]
+        public static void RebuildTransitionProfileOnly()
+        {
+            EarthTransitionProfile profile = CreateOrUpdateTransitionProfile();
+            AssetDatabase.SaveAssets();
+            Selection.activeObject = profile;
+            EditorGUIUtility.PingObject(profile);
+            Debug.Log($"[Elemental] Rebuilt transition profile only: {profile.PairCount} explicit rules.");
         }
 
         private static EarthCoreVisualStyle CreateOrLoadVisualStyle()
@@ -590,7 +657,8 @@ namespace Elemental.Authoring.Editor
             EarthRockDebrisPool debrisPool,
             EarthPillarWavePool wavePool,
             Transform planetCenter,
-            PlanetWorldProfile worldProfile)
+            PlanetWorldProfile worldProfile,
+            DuelRenderingProfile renderingProfile)
         {
             RenderSettings.ambientMode = AmbientMode.Trilight;
             // Restore the cooler pre-rescue grade. The hotter key/exposure pass
@@ -618,7 +686,8 @@ namespace Elemental.Authoring.Editor
             // EarthCore uses restrained SSAO plus analytic material form depth.
             // Realtime directional shadows are intentionally disabled because
             // their moving cascade bands were the source of the visible stripes.
-            cameraData.renderShadows = false;
+            cameraData.renderShadows = renderingProfile != null
+                                       && renderingProfile.RenderRealtimeDirectionalShadows;
             cameraData.requiresDepthTexture = true;
             cameraData.stopNaN = true;
             cameraData.dithering = true;
@@ -657,7 +726,7 @@ namespace Elemental.Authoring.Editor
             if (camera.GetComponent<VisualQaCaptureBehaviour>() == null)
                 camera.gameObject.AddComponent<VisualQaCaptureBehaviour>();
 
-            ConfigureLights(style);
+            ConfigureLights(style, renderingProfile);
             ConfigurePreview(preview, style);
             CreateGroundFootprintPreview(input, preview, style);
             CreateAbilityPreview(input, executor, style);
@@ -766,7 +835,9 @@ namespace Elemental.Authoring.Editor
             }
         }
 
-private static void ConfigureLights(EarthCoreVisualStyle style)
+private static void ConfigureLights(
+            EarthCoreVisualStyle style,
+            DuelRenderingProfile renderingProfile)
         {
             Light sun = GameObject.Find("Sun")?.GetComponent<Light>();
             if (sun != null)
@@ -776,8 +847,12 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
                 // Broken Crown's broad planar courses alias as travelling shadow
                 // bands in Game view. Contact depth belongs to the restrained
                 // DepthNormals SSAO path; realtime sun shadows stay disabled.
-                sun.shadows = LightShadows.None;
-                sun.shadowStrength = 0f;
+                sun.shadows = renderingProfile != null
+                    ? renderingProfile.SunShadowType
+                    : LightShadows.None;
+                sun.shadowStrength = renderingProfile != null
+                    ? renderingProfile.SunShadowStrength
+                    : 0f;
                 sun.transform.rotation = Quaternion.Euler(38f, -36f, 0f);
                 RenderSettings.sun = sun;
             }
@@ -1090,6 +1165,8 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
             if (old != null) Object.DestroyImmediate(old.gameObject);
             Transform oldPuppetRoot = character.transform.Find("Earth Shaper Puppet");
             if (oldPuppetRoot != null) Object.DestroyImmediate(oldPuppetRoot.gameObject);
+            GameObject siblingPuppetRoot = GameObject.Find("Earth Shaper Puppet");
+            if (siblingPuppetRoot != null) Object.DestroyImmediate(siblingPuppetRoot);
 
             Material body = CreateOrLoadLitMaterial("EarthShaperBody.mat", style.BodyColor, 0.22f, Color.black);
             Material scarf = CreateOrLoadLitMaterial("EarthShaperScarf.mat", style.ScarfColor, 0.32f, style.ScarfColor * 0.08f);
@@ -1251,6 +1328,8 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
                 pillarMobility,
                 visibleRagdoll,
                 true);
+            ConfigurePlayerPoweredPuppetPoseBridge(character, animator);
+            ConfigurePoweredPhysicalAnimation(puppet, animator);
             HumanoidOrganicIdle organicIdle = presentationObject.GetComponent<HumanoidOrganicIdle>();
             if (organicIdle == null) organicIdle = presentationObject.AddComponent<HumanoidOrganicIdle>();
             organicIdle.Configure(
@@ -1664,10 +1743,14 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
                 controller.layers[0].stateMachine, "Locomotion");
             if (locomotionState?.motion is not BlendTree locomotion) return;
 
-            AnimationClip walk = LoadAnimationClip(MixamoWalkPath);
-            AnimationClip walkBack = LoadAnimationClip(MixamoWalkBackPath);
-            AnimationClip idle = FindClip(fallbackClips, "idle");
-            AnimationClip run = FindClip(fallbackClips, "run");
+            AnimationClip walk = LoadAnimationClip(KayKitMovementBasicPath, "Walking_A");
+            AnimationClip walkBack = LoadAnimationClip(
+                KayKitMovementAdvancedPath,
+                "Walking_Backwards");
+            AnimationClip idle = LoadAnimationClip(KayKitGeneralPath, "Idle_A") ??
+                                 FindClip(fallbackClips, "idle");
+            AnimationClip run = LoadAnimationClip(KayKitMovementBasicPath, "Running_A") ??
+                                FindClip(fallbackClips, "run");
             var motions = new List<ChildMotion>(4);
             if (walkBack != null)
                 motions.Add(new ChildMotion { motion = walkBack, threshold = -2f, timeScale = 1f });
@@ -1693,6 +1776,16 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
             Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
             for (int index = 0; index < assets.Length; index++)
                 if (assets[index] is AnimationClip clip && !clip.name.StartsWith("__preview__"))
+                    return clip;
+            return null;
+        }
+
+        private static AnimationClip LoadAnimationClip(string path, string exactName)
+        {
+            Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
+            for (int index = 0; index < assets.Length; index++)
+                if (assets[index] is AnimationClip clip &&
+                    string.Equals(clip.name, exactName, System.StringComparison.Ordinal))
                     return clip;
             return null;
         }
@@ -1848,6 +1941,14 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
                 chest.Joint, head.Joint, leftArm.Joint, rightArm.Joint,
                 leftUpper.Joint, rightUpper.Joint, leftLower.Joint, rightLower.Joint
             };
+            ConfigurePoweredJointRegion(chest.Joint, EarthBodyRegion.Chest);
+            ConfigurePoweredJointRegion(head.Joint, EarthBodyRegion.Head);
+            ConfigurePoweredJointRegion(leftArm.Joint, EarthBodyRegion.Arm);
+            ConfigurePoweredJointRegion(rightArm.Joint, EarthBodyRegion.Arm);
+            ConfigurePoweredJointRegion(leftUpper.Joint, EarthBodyRegion.Leg);
+            ConfigurePoweredJointRegion(rightUpper.Joint, EarthBodyRegion.Leg);
+            ConfigurePoweredJointRegion(leftLower.Joint, EarthBodyRegion.Leg);
+            ConfigurePoweredJointRegion(rightLower.Joint, EarthBodyRegion.Leg);
             Collider[] selfColliders =
             {
                 character.GetComponent<Collider>(), chest.Collider, head.Collider,
@@ -1870,6 +1971,281 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
                 rightUpperTarget, rightLowerTarget);
         }
 
+        private static ActiveRagdollPuppet CreateBotPoweredPuppet(
+            GameObject bot,
+            Animator animator,
+            GravityWorldBehaviour gravityWorld,
+            PlanetMotor motor,
+            EarthMvpBotController controller)
+        {
+            if (bot == null || animator == null || !animator.isHuman)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "The rival powered puppet requires a valid Humanoid rig.");
+            string puppetRootName = bot.name + " Powered Puppet";
+            GameObject oldPuppet = GameObject.Find(puppetRootName);
+            if (oldPuppet != null) Object.DestroyImmediate(oldPuppet);
+            Transform oldTargets = bot.transform.Find("Powered Puppet Pose Targets");
+            if (oldTargets != null) Object.DestroyImmediate(oldTargets.gameObject);
+
+            HumanBodyBones[] boneIds =
+            {
+                HumanBodyBones.UpperChest,
+                HumanBodyBones.Head,
+                HumanBodyBones.LeftUpperArm,
+                HumanBodyBones.RightUpperArm,
+                HumanBodyBones.LeftUpperLeg,
+                HumanBodyBones.RightUpperLeg,
+                HumanBodyBones.LeftLowerLeg,
+                HumanBodyBones.RightLowerLeg
+            };
+            Transform[] sourceBones = new Transform[boneIds.Length];
+            for (int index = 0; index < boneIds.Length; index++)
+            {
+                sourceBones[index] = animator.GetBoneTransform(boneIds[index]);
+                if (sourceBones[index] == null && boneIds[index] == HumanBodyBones.UpperChest)
+                    sourceBones[index] = animator.GetBoneTransform(HumanBodyBones.Chest);
+                if (sourceBones[index] == null)
+                    throw new UnityEditor.Build.BuildFailedException(
+                        $"Rival powered puppet is missing {boneIds[index]}.");
+            }
+
+            GameObject targetsObject = new GameObject("Powered Puppet Pose Targets");
+            targetsObject.transform.SetParent(bot.transform, false);
+            Transform[] targets = new Transform[sourceBones.Length];
+            for (int index = 0; index < sourceBones.Length; index++)
+            {
+                GameObject target = new GameObject($"Powered {boneIds[index]} Target");
+                target.transform.SetParent(targetsObject.transform, false);
+                target.transform.SetPositionAndRotation(
+                    sourceBones[index].position,
+                    sourceBones[index].rotation);
+                targets[index] = target.transform;
+            }
+
+            GameObject physicalRootObject = new GameObject(puppetRootName);
+            physicalRootObject.transform.SetParent(bot.transform.parent, true);
+            physicalRootObject.transform.SetPositionAndRotation(
+                bot.transform.position,
+                bot.transform.rotation);
+            Material hiddenMaterial = LoadRumbleMaterial("RumbleSandstone.mat");
+            EarthPuppetPart chest = CreateEarthPuppetPartAtTarget(
+                "Rival Puppet Chest", PrimitiveType.Capsule, physicalRootObject.transform,
+                targets[0], new Vector3(0.62f, 0.48f, 0.50f), hiddenMaterial,
+                7f, bot.GetComponent<Rigidbody>(), gravityWorld, 34f);
+            EarthPuppetPart head = CreateEarthPuppetPartAtTarget(
+                "Rival Puppet Head", PrimitiveType.Sphere, physicalRootObject.transform,
+                targets[1], new Vector3(0.48f, 0.48f, 0.48f), hiddenMaterial,
+                3f, chest.Body, gravityWorld, 32f);
+            EarthPuppetPart leftArm = CreateEarthPuppetPartAtTarget(
+                "Rival Puppet Arm L", PrimitiveType.Capsule, physicalRootObject.transform,
+                targets[2], new Vector3(0.20f, 0.42f, 0.20f), hiddenMaterial,
+                2f, chest.Body, gravityWorld, 52f);
+            EarthPuppetPart rightArm = CreateEarthPuppetPartAtTarget(
+                "Rival Puppet Arm R", PrimitiveType.Capsule, physicalRootObject.transform,
+                targets[3], new Vector3(0.20f, 0.42f, 0.20f), hiddenMaterial,
+                2f, chest.Body, gravityWorld, 52f);
+            EarthPuppetPart leftUpper = CreateEarthPuppetPartAtTarget(
+                "Rival Puppet Upper Leg L", PrimitiveType.Capsule,
+                physicalRootObject.transform, targets[4],
+                new Vector3(0.24f, 0.44f, 0.24f), hiddenMaterial,
+                3.5f, bot.GetComponent<Rigidbody>(), gravityWorld, 48f);
+            EarthPuppetPart rightUpper = CreateEarthPuppetPartAtTarget(
+                "Rival Puppet Upper Leg R", PrimitiveType.Capsule,
+                physicalRootObject.transform, targets[5],
+                new Vector3(0.24f, 0.44f, 0.24f), hiddenMaterial,
+                3.5f, bot.GetComponent<Rigidbody>(), gravityWorld, 48f);
+            EarthPuppetPart leftLower = CreateEarthPuppetPartAtTarget(
+                "Rival Puppet Lower Leg L", PrimitiveType.Capsule,
+                physicalRootObject.transform, targets[6],
+                new Vector3(0.22f, 0.40f, 0.22f), hiddenMaterial,
+                2.5f, leftUpper.Body, gravityWorld, 50f);
+            EarthPuppetPart rightLower = CreateEarthPuppetPartAtTarget(
+                "Rival Puppet Lower Leg R", PrimitiveType.Capsule,
+                physicalRootObject.transform, targets[7],
+                new Vector3(0.22f, 0.40f, 0.22f), hiddenMaterial,
+                2.5f, rightUpper.Body, gravityWorld, 50f);
+
+            EarthPuppetPart[] parts =
+            {
+                chest, head, leftArm, rightArm,
+                leftUpper, rightUpper, leftLower, rightLower
+            };
+            EarthBodyRegion[] regions =
+            {
+                EarthBodyRegion.Chest,
+                EarthBodyRegion.Head,
+                EarthBodyRegion.Arm,
+                EarthBodyRegion.Arm,
+                EarthBodyRegion.Leg,
+                EarthBodyRegion.Leg,
+                EarthBodyRegion.Leg,
+                EarthBodyRegion.Leg
+            };
+            var joints = new ActiveRagdollJoint[parts.Length];
+            var selfColliders = new Collider[parts.Length + 1];
+            selfColliders[0] = bot.GetComponent<Collider>();
+            for (int index = 0; index < parts.Length; index++)
+            {
+                ConfigurePoweredJointRegion(parts[index].Joint, regions[index]);
+                joints[index] = parts[index].Joint;
+                selfColliders[index + 1] = parts[index].Collider;
+                Renderer renderer = parts[index].Transform.GetComponent<Renderer>();
+                if (renderer != null) renderer.enabled = false;
+            }
+
+            Rigidbody rootBody = bot.GetComponent<Rigidbody>();
+            PhysicalImpactTarget impactTarget = bot.GetComponent<PhysicalImpactTarget>();
+            if (impactTarget == null) impactTarget = bot.AddComponent<PhysicalImpactTarget>();
+            impactTarget.Configure(rootBody, 0.34f);
+            ActiveRagdollPuppet puppet = bot.GetComponent<ActiveRagdollPuppet>();
+            if (puppet != null) Object.DestroyImmediate(puppet);
+            puppet = bot.AddComponent<ActiveRagdollPuppet>();
+            puppet.Configure(
+                2u,
+                gravityWorld,
+                rootBody,
+                motor,
+                impactTarget,
+                chest.Transform,
+                joints,
+                selfColliders);
+            puppet.ConfigureControlBehaviours(controller);
+
+            EarthPoweredPuppetPoseBridge poseBridge =
+                animator.gameObject.GetComponent<EarthPoweredPuppetPoseBridge>();
+            if (poseBridge == null)
+                poseBridge = animator.gameObject.AddComponent<EarthPoweredPuppetPoseBridge>();
+            poseBridge.Configure(sourceBones, targets);
+            return puppet;
+        }
+
+        private static void ConfigurePlayerPoweredPuppetPoseBridge(
+            GameObject character,
+            Animator animator)
+        {
+            if (character == null || animator == null || !animator.isHuman)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "The player powered puppet requires a valid Humanoid rig.");
+            Transform targetsRoot = character.transform.Find("Earth Shaper Visual");
+            if (targetsRoot == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "The player powered puppet pose-target root is missing.");
+            HumanBodyBones[] boneIds =
+            {
+                HumanBodyBones.UpperChest,
+                HumanBodyBones.Head,
+                HumanBodyBones.LeftUpperArm,
+                HumanBodyBones.RightUpperArm,
+                HumanBodyBones.LeftUpperLeg,
+                HumanBodyBones.LeftLowerLeg,
+                HumanBodyBones.RightUpperLeg,
+                HumanBodyBones.RightLowerLeg
+            };
+            string[] targetNames =
+            {
+                "Chest Target",
+                "Head Target",
+                "Left Arm Target",
+                "Right Arm Target",
+                "Left Upper Leg Target",
+                "Left Lower Leg Target",
+                "Right Upper Leg Target",
+                "Right Lower Leg Target"
+            };
+            var sourceBones = new Transform[boneIds.Length];
+            var targets = new Transform[boneIds.Length];
+            for (int index = 0; index < boneIds.Length; index++)
+            {
+                sourceBones[index] = animator.GetBoneTransform(boneIds[index]);
+                if (sourceBones[index] == null && boneIds[index] == HumanBodyBones.UpperChest)
+                    sourceBones[index] = animator.GetBoneTransform(HumanBodyBones.Chest);
+                targets[index] = targetsRoot.Find(targetNames[index]);
+                if (sourceBones[index] == null || targets[index] == null)
+                    throw new UnityEditor.Build.BuildFailedException(
+                        $"Player powered-puppet binding '{targetNames[index]}' is incomplete.");
+            }
+
+            // Retire the primitive-era target writers before the Humanoid bridge
+            // becomes the sole hidden-target owner. Neither component is allowed
+            // to write the visible rig.
+            EarthShaperLocomotionDriver locomotion =
+                character.GetComponent<EarthShaperLocomotionDriver>();
+            if (locomotion != null) Object.DestroyImmediate(locomotion);
+            EarthMagicPoseDriver magicPose = character.GetComponent<EarthMagicPoseDriver>();
+            if (magicPose != null) Object.DestroyImmediate(magicPose);
+
+            EarthPoweredPuppetPoseBridge bridge =
+                animator.gameObject.GetComponent<EarthPoweredPuppetPoseBridge>();
+            if (bridge == null)
+                bridge = animator.gameObject.AddComponent<EarthPoweredPuppetPoseBridge>();
+            bridge.Configure(sourceBones, targets);
+            EditorUtility.SetDirty(bridge);
+        }
+
+        private static EarthPuppetPart CreateEarthPuppetPartAtTarget(
+            string name,
+            PrimitiveType primitive,
+            Transform physicalRoot,
+            Transform target,
+            Vector3 localScale,
+            Material material,
+            float mass,
+            Rigidbody connectedBody,
+            GravityWorldBehaviour gravityWorld,
+            float angularLimit)
+        {
+            Vector3 localPosition = physicalRoot.InverseTransformPoint(target.position);
+            Quaternion localRotation = Quaternion.Inverse(physicalRoot.rotation) * target.rotation;
+            return CreateEarthPuppetPart(
+                name,
+                primitive,
+                physicalRoot,
+                target,
+                localPosition,
+                localScale,
+                material,
+                mass,
+                connectedBody,
+                gravityWorld,
+                angularLimit,
+                localRotation);
+        }
+
+        private static void ConfigurePoweredJointRegion(
+            ActiveRagdollJoint joint,
+            EarthBodyRegion region)
+        {
+            if (joint == null || !joint.ConfigureBodyRegion(region))
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"Powered physical-animation joint rejected region '{region}'.");
+        }
+
+        private static void ConfigurePoweredPhysicalAnimation(
+            ActiveRagdollPuppet puppet,
+            Animator animator)
+        {
+            if (puppet == null || animator == null || !animator.isHuman)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "Powered physical animation requires both puppet and Humanoid animator.");
+            EarthPhysicalAnimationProfile profile =
+                CreateOrLoadProfile<EarthPhysicalAnimationProfile>(
+                    PhysicalAnimationProfilePath,
+                    "Earth Physical Animation Profile");
+            profile.ConfigurePoweredPhysicalAssist(true);
+            EditorUtility.SetDirty(profile);
+            puppet.ConfigurePoweredPhysicalAssist(
+                profile,
+                animator.GetBoneTransform(HumanBodyBones.LeftFoot),
+                animator.GetBoneTransform(HumanBodyBones.RightFoot),
+                animator.GetBoneTransform(HumanBodyBones.Head),
+                animator.GetBoneTransform(HumanBodyBones.LeftHand),
+                animator.GetBoneTransform(HumanBodyBones.RightHand));
+            if (!puppet.PoweredAssistConfigurationValid)
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"{puppet.name} has incomplete powered-assist joint regions.");
+            EditorUtility.SetDirty(puppet);
+        }
+
         private static Transform CreatePoseTarget(string name, Transform parent, Vector3 localPosition)
         {
             GameObject target = new GameObject(name);
@@ -1890,13 +2266,16 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
             float mass,
             Rigidbody connectedBody,
             GravityWorldBehaviour gravityWorld,
-            float angularLimit)
+            float angularLimit,
+            Quaternion localRotation = default)
         {
             GameObject go = GameObject.CreatePrimitive(primitive);
             go.name = name;
             go.transform.SetParent(parent, false);
             go.transform.localPosition = localPosition;
-            go.transform.localRotation = Quaternion.identity;
+            go.transform.localRotation = Quaternion.Dot(localRotation, localRotation) > 0.5f
+                ? localRotation
+                : Quaternion.identity;
             go.transform.localScale = localScale;
             go.GetComponent<MeshRenderer>().sharedMaterial = material;
             Rigidbody body = go.AddComponent<Rigidbody>();
@@ -2205,6 +2584,500 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
                 ? effectsProfile.Materials.MeteorStreaks
                 : CreateOrLoadUnlitMaterial("MeteorStreak.mat", new Color(1.8f, 0.62f, 0.18f));
             return particles;
+        }
+
+        private static UnifiedLightingMigrationProfile LoadRequiredUnifiedLightingProfile()
+        {
+            UnifiedLightingMigrationProfile profile =
+                AssetDatabase.LoadAssetAtPath<UnifiedLightingMigrationProfile>(
+                    UnifiedLightingProfilePath);
+            if (profile == null || !profile.IsComplete())
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"Unified-lighting migration profile is missing or incomplete: " +
+                    UnifiedLightingProfilePath);
+            return profile;
+        }
+
+        private static Material CreateOrUpdateUnifiedMaterial(
+            string path,
+            string displayName,
+            Material source,
+            UnifiedLightingMigrationProfile profile,
+            UnifiedLightingMaterialRole role)
+        {
+            if (source == null || profile == null ||
+                !profile.TryResolve(
+                    role,
+                    out Material template,
+                    out UnifiedLightingRoleContract contract))
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"Unable to resolve unified-lighting material role '{role}'.");
+
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                material = new Material(template) { name = displayName };
+                AssetDatabase.CreateAsset(material, path);
+            }
+            else
+            {
+                material.CopyPropertiesFromMaterial(template);
+                material.shader = template.shader;
+                material.name = displayName;
+            }
+            if (!UnifiedLightingMaterialMigration.CopyPreservedProperties(source, material))
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"Unable to preserve '{source.name}' into '{displayName}'.");
+            material.SetFloat("_MaterialFamily", (float)contract.Family);
+            material.enableInstancing = true;
+            EditorUtility.SetDirty(material);
+            return material;
+        }
+
+        private static EarthTransitionProfile CreateOrUpdateTransitionProfile()
+        {
+            EarthTransitionProfile profile = CreateOrLoadProfile<EarthTransitionProfile>(
+                TransitionProfilePath,
+                "Earth Transition Profile");
+            EarthTransitionBodyMask torso = EarthTransitionBodyMask.Root |
+                                             EarthTransitionBodyMask.Pelvis |
+                                             EarthTransitionBodyMask.Spine |
+                                             EarthTransitionBodyMask.Head;
+            var pairs = new[]
+            {
+                // Runtime rescue starts from None before the first Animator sample.
+                // Keep that first visible frame on the authored path instead of
+                // allowing the generic fixed-duration fallback.
+                new EarthTransitionPairOverride(
+                    EarthMotionStateId.None,
+                    EarthMotionStateId.Locomotion,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.PoseInertialized,
+                        EarthAnimationTransitionPriority.Locomotion,
+                        0.045f,
+                        0.08f,
+                        EarthTransitionGaitPhaseRule.None,
+                        EarthTransitionContactPolicy.MatchDestinationContacts,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact)),
+                // Rising/falling can change on adjacent samples around the apex or
+                // after a moving support correction. Both directions must stay in
+                // the inertialized airborne family, never the generic fallback.
+                new EarthTransitionPairOverride(
+                    EarthMotionStateId.Jump,
+                    EarthMotionStateId.Fall,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.PoseInertialized,
+                        EarthAnimationTransitionPriority.LandingContact,
+                        0.040f,
+                        0.07f,
+                        EarthTransitionGaitPhaseRule.None,
+                        EarthTransitionContactPolicy.ReleaseBeforeBlend,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseImmediately)),
+                new EarthTransitionPairOverride(
+                    EarthMotionStateId.Fall,
+                    EarthMotionStateId.Jump,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.PoseInertialized,
+                        EarthAnimationTransitionPriority.LandingContact,
+                        0.035f,
+                        0.06f,
+                        EarthTransitionGaitPhaseRule.None,
+                        EarthTransitionContactPolicy.ReleaseBeforeBlend,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseImmediately)),
+                // A sharp pivot can be interrupted by jump on the exact frame
+                // the motor leaves support. This pair was visible in the full
+                // 30/60/120 matrix and must never fall through to the generic
+                // fixed crossfade.
+                new EarthTransitionPairOverride(
+                    EarthMotionStateId.TurnInPlace,
+                    EarthMotionStateId.Jump,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.PoseInertialized,
+                        EarthAnimationTransitionPriority.LandingContact,
+                        0.035f,
+                        0.06f,
+                        EarthTransitionGaitPhaseRule.None,
+                        EarthTransitionContactPolicy.ReleaseBeforeBlend,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseImmediately)),
+                // A landing clip can lose support before its contact marker. Keep
+                // both observed landing-to-fall interrupts explicit so the
+                // destination starts immediately without a generic crossfade.
+                new EarthTransitionPairOverride(
+                    EarthMotionStateId.HardLanding,
+                    EarthMotionStateId.Fall,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.PoseInertialized,
+                        EarthAnimationTransitionPriority.LandingContact,
+                        0.040f,
+                        0.07f,
+                        EarthTransitionGaitPhaseRule.None,
+                        EarthTransitionContactPolicy.ReleaseBeforeBlend,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseImmediately)),
+                new EarthTransitionPairOverride(
+                    EarthMotionStateId.SoftLanding,
+                    EarthMotionStateId.Fall,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.PoseInertialized,
+                        EarthAnimationTransitionPriority.LandingContact,
+                        0.040f,
+                        0.07f,
+                        EarthTransitionGaitPhaseRule.None,
+                        EarthTransitionContactPolicy.ReleaseBeforeBlend,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseImmediately)),
+                // Physics can refine the landing classification on the next
+                // sample. Keep those corrections contact-aware instead of
+                // falling through to a visible generic fixed crossfade.
+                new EarthTransitionPairOverride(
+                    EarthMotionStateId.MovingLanding,
+                    EarthMotionStateId.HardLanding,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.ContactAligned,
+                        EarthAnimationTransitionPriority.LandingContact,
+                        0.035f,
+                        0.06f,
+                        EarthTransitionGaitPhaseRule.ContactAligned,
+                        EarthTransitionContactPolicy.AuthoredLandingContact,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact)),
+                new EarthTransitionPairOverride(
+                    EarthMotionStateId.SoftLanding,
+                    EarthMotionStateId.HardLanding,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.ContactAligned,
+                        EarthAnimationTransitionPriority.LandingContact,
+                        0.035f,
+                        0.06f,
+                        EarthTransitionGaitPhaseRule.ContactAligned,
+                        EarthTransitionContactPolicy.AuthoredLandingContact,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact)),
+                // A jump queued during the final hard-land recovery frame is a
+                // legitimate takeoff, not an animation discontinuity.
+                new EarthTransitionPairOverride(
+                    EarthMotionStateId.HardLanding,
+                    EarthMotionStateId.Jump,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.PoseInertialized,
+                        EarthAnimationTransitionPriority.LandingContact,
+                        0.035f,
+                        0.06f,
+                        EarthTransitionGaitPhaseRule.None,
+                        EarthTransitionContactPolicy.ReleaseBeforeBlend,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseImmediately)),
+                // Exact landing pairs override any stale/incorrect category data
+                // in a generated scene and make each rescue landing auditable.
+                new EarthTransitionPairOverride(
+                    EarthMotionStateId.Locomotion,
+                    EarthMotionStateId.SoftLanding,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.ContactAligned,
+                        EarthAnimationTransitionPriority.LandingContact,
+                        0.040f,
+                        0.07f,
+                        EarthTransitionGaitPhaseRule.ContactAligned,
+                        EarthTransitionContactPolicy.AuthoredLandingContact,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact)),
+                new EarthTransitionPairOverride(
+                    EarthMotionStateId.Locomotion,
+                    EarthMotionStateId.MovingLanding,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.ContactAligned,
+                        EarthAnimationTransitionPriority.LandingContact,
+                        0.040f,
+                        0.07f,
+                        EarthTransitionGaitPhaseRule.ContactAligned,
+                        EarthTransitionContactPolicy.AuthoredLandingContact,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact)),
+                new EarthTransitionPairOverride(
+                    EarthMotionStateId.Locomotion,
+                    EarthMotionStateId.HardLanding,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.ContactAligned,
+                        EarthAnimationTransitionPriority.LandingContact,
+                        0.040f,
+                        0.07f,
+                        EarthTransitionGaitPhaseRule.ContactAligned,
+                        EarthTransitionContactPolicy.AuthoredLandingContact,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact)),
+                // Recoverable knockdown is an accepted physical handoff. It must
+                // release ordinary gait plants immediately, but the transition
+                // director remains the sole Animator writer and recovery owner.
+                new EarthTransitionPairOverride(
+                    EarthMotionStateId.Locomotion,
+                    EarthMotionStateId.KnockdownRecovery,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.PoseInertialized,
+                        EarthAnimationTransitionPriority.HeavyImpact,
+                        0.050f,
+                        0.10f,
+                        EarthTransitionGaitPhaseRule.None,
+                        EarthTransitionContactPolicy.ReleaseBeforeBlend,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseImmediately)),
+                new EarthTransitionPairOverride(
+                    EarthMotionCategory.Turn,
+                    EarthMotionCategory.Locomotion,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.PhaseSynchronized,
+                        EarthAnimationTransitionPriority.Locomotion,
+                        0.045f,
+                        0.09f,
+                        EarthTransitionGaitPhaseRule.PreserveSource,
+                        EarthTransitionContactPolicy.MatchDestinationContacts,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact)),
+                new EarthTransitionPairOverride(
+                    EarthMotionCategory.Locomotion,
+                    EarthMotionCategory.Turn,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.PoseInertialized,
+                        EarthAnimationTransitionPriority.Locomotion,
+                        0.040f,
+                        0.08f,
+                        EarthTransitionGaitPhaseRule.None,
+                        EarthTransitionContactPolicy.PreserveCurrentPlants,
+                        torso,
+                        EarthTransitionFootReleasePolicy.PreservePlanted)),
+                new EarthTransitionPairOverride(
+                    EarthMotionCategory.Locomotion,
+                    EarthMotionCategory.Airborne,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.PoseInertialized,
+                        EarthAnimationTransitionPriority.LandingContact,
+                        0.035f,
+                        0.06f,
+                        EarthTransitionGaitPhaseRule.None,
+                        EarthTransitionContactPolicy.ReleaseBeforeBlend,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseImmediately)),
+                new EarthTransitionPairOverride(
+                    EarthMotionCategory.Airborne,
+                    EarthMotionCategory.Landing,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.ContactAligned,
+                        EarthAnimationTransitionPriority.LandingContact,
+                        0.040f,
+                        0.07f,
+                        EarthTransitionGaitPhaseRule.ContactAligned,
+                        EarthTransitionContactPolicy.AuthoredLandingContact,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact)),
+                new EarthTransitionPairOverride(
+                    EarthMotionCategory.Landing,
+                    EarthMotionCategory.Locomotion,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.PoseInertialized,
+                        EarthAnimationTransitionPriority.Locomotion,
+                        0.045f,
+                        0.09f,
+                        EarthTransitionGaitPhaseRule.OppositeContact,
+                        EarthTransitionContactPolicy.MatchDestinationContacts,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact)),
+                new EarthTransitionPairOverride(
+                    EarthMotionCategory.Locomotion,
+                    EarthMotionCategory.Surf,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.PoseInertialized,
+                        EarthAnimationTransitionPriority.CommittedAction,
+                        0.050f,
+                        0.10f,
+                        EarthTransitionGaitPhaseRule.None,
+                        EarthTransitionContactPolicy.ReleaseBeforeBlend,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseImmediately,
+                        queueWhenBlocked: true)),
+                new EarthTransitionPairOverride(
+                    EarthMotionCategory.Surf,
+                    EarthMotionCategory.Locomotion,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.PoseInertialized,
+                        EarthAnimationTransitionPriority.Locomotion,
+                        0.050f,
+                        0.10f,
+                        EarthTransitionGaitPhaseRule.None,
+                        EarthTransitionContactPolicy.MatchDestinationContacts,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact)),
+                new EarthTransitionPairOverride(
+                    EarthMotionCategory.AuthoredAction,
+                    EarthMotionCategory.Locomotion,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.PoseInertialized,
+                        EarthAnimationTransitionPriority.Locomotion,
+                        0.050f,
+                        0.10f,
+                        EarthTransitionGaitPhaseRule.PreserveSource,
+                        EarthTransitionContactPolicy.MatchDestinationContacts,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact,
+                        queueWhenBlocked: true)),
+                new EarthTransitionPairOverride(
+                    EarthMotionCategory.RagdollRecovery,
+                    EarthMotionCategory.Locomotion,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.PoseInertialized,
+                        EarthAnimationTransitionPriority.HeavyImpact,
+                        0.050f,
+                        0.12f,
+                        EarthTransitionGaitPhaseRule.None,
+                        EarthTransitionContactPolicy.MatchDestinationContacts,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact)),
+                new EarthTransitionPairOverride(
+                    EarthMotionCategory.Locomotion,
+                    EarthMotionCategory.AuthoredAction,
+                    CreateTransitionRule(
+                        EarthTransitionFamily.ProtectedAction,
+                        EarthAnimationTransitionPriority.CommittedAction,
+                        0.055f,
+                        0.10f,
+                        EarthTransitionGaitPhaseRule.None,
+                        EarthTransitionContactPolicy.ReleaseBeforeBlend,
+                        EarthTransitionBodyMask.FullBody,
+                        EarthTransitionFootReleasePolicy.ReleaseImmediately,
+                        queueWhenBlocked: true))
+            };
+            profile.Configure(true, true, 8, 0.08f, pairs);
+            EditorUtility.SetDirty(profile);
+            return profile;
+        }
+
+        private static EarthTransitionRule CreateTransitionRule(
+            EarthTransitionFamily family,
+            EarthAnimationTransitionPriority priority,
+            float halfLifeSeconds,
+            float fallbackDurationSeconds,
+            EarthTransitionGaitPhaseRule gaitPhaseRule,
+            EarthTransitionContactPolicy contactPolicy,
+            EarthTransitionBodyMask bodyMask,
+            EarthTransitionFootReleasePolicy footReleasePolicy,
+            bool queueWhenBlocked = false)
+        {
+            return new EarthTransitionRule(
+                true,
+                family,
+                priority,
+                halfLifeSeconds,
+                fallbackDurationSeconds,
+                gaitPhaseRule,
+                contactPolicy,
+                EarthTransitionCancelPolicy.OutsideProtectedWindow,
+                default,
+                default,
+                0f,
+                bodyMask,
+                footReleasePolicy,
+                0f,
+                queueWhenBlocked);
+        }
+
+        private static EarthAnimationGraphProfile CreateOrUpdateAnimationGraphProfile()
+        {
+            EarthAnimationGraphProfile profile =
+                CreateOrLoadProfile<EarthAnimationGraphProfile>(
+                    AnimationGraphProfilePath,
+                    "Earth Animation Graph Profile");
+            // Production defaults after the isolated Gate-1 rollback proof. The
+            // graph owns controller -> inertialization -> RigBuilder ordering;
+            // PlanetMotor/root translation and planted feet remain excluded by
+            // the animation job ownership mask.
+            profile.Configure(
+                true,
+                true,
+                0.065f,
+                0.055f,
+                0.48f,
+                0.42f,
+                135f,
+                12f,
+                26f);
+            EditorUtility.SetDirty(profile);
+            return profile;
+        }
+
+        private static void ConfigureFighterTransitionProfile(
+            GameObject fighter,
+            EarthTransitionProfile profile)
+        {
+            if (fighter == null || profile == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "Both duel fighters require the authored transition profile.");
+            HumanoidCharacterPresentation presentation =
+                fighter.GetComponentInChildren<HumanoidCharacterPresentation>(true);
+            if (presentation == null || presentation.TransitionDirector == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"{fighter.name} has no configured transition director.");
+            presentation.TransitionDirector.ConfigureTransitionProfile(profile);
+            EditorUtility.SetDirty(presentation.TransitionDirector);
+        }
+
+        private static void ConfigureFighterAnimationGraph(
+            GameObject fighter,
+            EarthAnimationGraphProfile profile)
+        {
+            if (fighter == null || profile == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "Both duel fighters require the enabled animation graph profile.");
+            HumanoidCharacterPresentation presentation =
+                fighter.GetComponentInChildren<HumanoidCharacterPresentation>(true);
+            if (presentation == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"{fighter.name} has no HumanoidCharacterPresentation.");
+            presentation.SetAnimationGraphProfile(profile);
+            if (presentation.AnimationGraph == null ||
+                !presentation.AnimationGraph.Profile.UsePlayablesAnimationGraph ||
+                !presentation.AnimationGraph.Profile.UsePoseInertialization)
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"{fighter.name} did not accept the production inertialization profile.");
+            EditorUtility.SetDirty(presentation);
+            EditorUtility.SetDirty(presentation.AnimationGraph);
+        }
+
+        private static EarthMotionCatalog RebuildMotionCatalog()
+        {
+            EarthMotionCatalog catalog = AssetDatabase.LoadAssetAtPath<EarthMotionCatalog>(
+                EarthMotionCatalogBuilder.DefaultCatalogPath);
+            if (catalog == null)
+            {
+                catalog = ScriptableObject.CreateInstance<EarthMotionCatalog>();
+                AssetDatabase.CreateAsset(
+                    catalog,
+                    EarthMotionCatalogBuilder.DefaultCatalogPath);
+            }
+            EarthMotionCatalogBuildSummary summary = EarthMotionCatalogBuilder.Rebuild(catalog);
+            if (summary.ClipCount != EarthMotionCatalog.ExpectedCuratedClipCount)
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"Earth motion catalog rebuilt {summary.ClipCount} clips; expected " +
+                    EarthMotionCatalog.ExpectedCuratedClipCount + ".");
+            EditorUtility.SetDirty(catalog);
+            return catalog;
+        }
+
+        private static void ConfigureFighterMotionCatalog(
+            GameObject fighter,
+            EarthMotionCatalog catalog)
+        {
+            if (fighter == null || catalog == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "Both duel fighters require the verified motion catalog.");
+            HumanoidCharacterPresentation presentation =
+                fighter.GetComponentInChildren<HumanoidCharacterPresentation>(true);
+            if (presentation == null || presentation.TransitionDirector == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"{fighter.name} has no transition director for motion-catalog binding.");
+            presentation.TransitionDirector.ConfigureMotionCatalog(catalog);
+            EditorUtility.SetDirty(presentation.TransitionDirector);
         }
 
         private static T CreateOrLoadProfile<T>(string path, string displayName) where T : ScriptableObject
@@ -3346,6 +4219,12 @@ private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
             if (botVisualRoot == null)
                 throw new UnityEditor.Build.BuildFailedException(
                     "Linebreaker visible Humanoid root was not created.");
+            ActiveRagdollPuppet botPuppet = CreateBotPoweredPuppet(
+                bot,
+                humanoidAnimator,
+                gravityWorld,
+                motor,
+                controller);
             EarthEffectsTuningProfile botEffectsProfile = CreateOrLoadEffectsProfile();
             ParticleSystem botFadeDust = CreateStoneFadeDust(botVisualRoot, botEffectsProfile);
             HumanoidRagdollRig botVisibleRagdoll = botVisualRoot.gameObject.AddComponent<HumanoidRagdollRig>();
@@ -3354,8 +4233,11 @@ private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
                 body,
                 capsule,
                 gravityWorld,
-                null,
-                botFadeDust);
+                botPuppet,
+                botFadeDust,
+                botPuppet,
+                motor,
+                controller);
             botVisibleRagdoll.ConfigureEffectsProfile(botEffectsProfile);
             CharacterPresentationProfile characterProfile = CreateOrLoadProfile<CharacterPresentationProfile>(
                 CharacterProfilePath,
@@ -3369,13 +4251,14 @@ private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
                 null,
                 motor,
                 body,
-                null,
+                botPuppet,
                 null,
                 null,
                 null,
                 null,
                 botVisibleRagdoll,
                 false);
+            ConfigurePoweredPhysicalAnimation(botPuppet, humanoidAnimator);
             HumanoidOrganicIdle botOrganicIdle = botVisualRoot.gameObject.AddComponent<HumanoidOrganicIdle>();
             botOrganicIdle.Configure(
                 humanoidAnimator,
@@ -3414,6 +4297,8 @@ private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
                 body,
                 null,
                 impactResponseProfile);
+            bot.GetComponent<PhysicalImpactTarget>()?.ConfigureCharacterImpactTarget(
+                botCharacterImpact);
             combat.SetCharacterImpactAuthority(botCharacterImpact);
             EarthMvpDuelController duel = bot.AddComponent<EarthMvpDuelController>();
             duel.Configure(
@@ -3468,12 +4353,28 @@ private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
             // this final pose after arena collision integration prevents the bot
             // from being half-buried or silently shifted back toward the gate on
             // the next generated-scene rebuild.
-            bot.transform.SetPositionAndRotation(
-                planetCenter + new Vector3(
-                    -0.26751554f,
-                    planetRadius + 2.9f,
-                    3.5498571f),
-                new Quaternion(0f, 0.999495f, 0.031776477f, 0f));
+            Vector3 approvedPosition = planetCenter + new Vector3(
+                -0.26751554f,
+                planetRadius + 2.9f,
+                3.5498571f);
+            Quaternion approvedRotation =
+                new Quaternion(0f, 0.999495f, 0.031776477f, 0f);
+            GameObject physicalRoot = GameObject.Find(bot.name + " Powered Puppet");
+
+            bot.transform.SetPositionAndRotation(approvedPosition, approvedRotation);
+            if (physicalRoot != null)
+            {
+                // The rival's powered bodies live under a separate world-space
+                // root. Moving only the gameplay capsule left the old puppet at
+                // the pre-arena spawn, so its joints held the bot almost a metre
+                // above the court while motor and foot probes saw empty space.
+                physicalRoot.transform.SetPositionAndRotation(
+                    approvedPosition,
+                    approvedRotation);
+                EditorUtility.SetDirty(physicalRoot.transform);
+            }
+            ActiveRagdollPuppet puppet = bot.GetComponent<ActiveRagdollPuppet>();
+            puppet?.ResetPhysicalState(approvedPosition, approvedRotation);
             EditorUtility.SetDirty(bot.transform);
         }
 
@@ -3514,7 +4415,7 @@ private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
             animator.runtimeAnimatorController = controller;
             animator.applyRootMotion = false;
             animator.updateMode = AnimatorUpdateMode.Normal;
-            animator.cullingMode = AnimatorCullingMode.CullUpdateTransforms;
+            animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             ConfigureSecondaryCharacterMotion(visual, animator);
 
             foreach (Renderer renderer in visual.GetComponentsInChildren<Renderer>(true))
@@ -3543,7 +4444,8 @@ private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
             EnsureFolder(folder);
             Shader rumbleShader = Shader.Find(RumbleShaderName);
             if (rumbleShader == null)
-                throw new UnityEditor.Build.BuildFailedException($"Missing required character shader '{RumbleShaderName}'.");
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"Missing required character shader '{RumbleShaderName}'.");
             Color characterTint = rivalCharacter
                 ? new Color(0.055f, 0.30f, 0.88f, 1f)
                 : new Color(0.52f, 0.285f, 0.16f, 1f);
@@ -3567,7 +4469,8 @@ private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
                     Material characterMaterial = AssetDatabase.LoadAssetAtPath<Material>(path);
                     if (characterMaterial == null)
                     {
-                        characterMaterial = new Material(rumbleShader) { name = $"{safeName}_{token}" };
+                        characterMaterial = new Material(rumbleShader)
+                            { name = $"{safeName}_{token}" };
                         AssetDatabase.CreateAsset(characterMaterial, path);
                     }
                     else
@@ -3614,6 +4517,78 @@ private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
                 }
                 if (changed) renderer.sharedMaterials = materials;
             }
+        }
+
+        private static void ConfigureCharacterCapsuleContactShadows(
+            GameObject visual,
+            Animator animator,
+            CapsuleShadowProducerKind producerKind,
+            uint stableGroupId)
+        {
+            if (visual == null || animator == null || !animator.isHuman)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "Capsule contact shadows require a valid Humanoid actor.");
+            Transform pelvis = animator.GetBoneTransform(HumanBodyBones.Hips);
+            Transform chest = animator.GetBoneTransform(HumanBodyBones.UpperChest) ??
+                              animator.GetBoneTransform(HumanBodyBones.Chest);
+            Transform head = animator.GetBoneTransform(HumanBodyBones.Head);
+            Transform leftUpperLeg = animator.GetBoneTransform(HumanBodyBones.LeftUpperLeg);
+            Transform leftFoot = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
+            Transform rightUpperLeg = animator.GetBoneTransform(HumanBodyBones.RightUpperLeg);
+            Transform rightFoot = animator.GetBoneTransform(HumanBodyBones.RightFoot);
+            if (pelvis == null || chest == null || head == null ||
+                leftUpperLeg == null || leftFoot == null ||
+                rightUpperLeg == null || rightFoot == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"{visual.name} is missing required capsule-shadow Humanoid bones.");
+
+            CapsuleShadowCaster caster = visual.GetComponent<CapsuleShadowCaster>();
+            if (caster == null) caster = visual.AddComponent<CapsuleShadowCaster>();
+            var proxies = new[]
+            {
+                new CapsuleShadowProxyBinding(
+                    pelvis, chest, Vector3.zero, Vector3.zero, 0.18f, 0.12f),
+                new CapsuleShadowProxyBinding(
+                    chest, head, Vector3.zero, Vector3.zero, 0.14f, 0.10f),
+                new CapsuleShadowProxyBinding(
+                    leftUpperLeg, leftFoot, Vector3.zero, Vector3.zero, 0.10f, 0.08f),
+                new CapsuleShadowProxyBinding(
+                    rightUpperLeg, rightFoot, Vector3.zero, Vector3.zero, 0.10f, 0.08f)
+            };
+            if (!caster.ConfigureProxies(proxies))
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"{visual.name} rejected its capsule-shadow proxies.");
+            DuelCapsuleShadowActorProducer producer =
+                visual.GetComponent<DuelCapsuleShadowActorProducer>();
+            if (producer == null)
+                producer = visual.AddComponent<DuelCapsuleShadowActorProducer>();
+            producer.Configure(caster, producerKind, stableGroupId, 1u);
+            EditorUtility.SetDirty(caster);
+            EditorUtility.SetDirty(producer);
+        }
+
+        private static void ConfigureHeroRockCapsuleContactShadows(
+            EarthFragmentPool pool,
+            DuelRenderingProfile profile)
+        {
+            if (pool == null || profile == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "Hero-rock contact shadows require the pool and rendering profile.");
+            EarthFragment[] fragments =
+                pool.GetComponentsInChildren<EarthFragment>(true);
+            if (fragments.Length == 0)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "Hero-rock pool did not prewarm any fragment slots.");
+            EarthFragmentCapsuleShadowPoolPresenter presenter =
+                pool.GetComponent<EarthFragmentCapsuleShadowPoolPresenter>();
+            if (presenter == null)
+                presenter = pool.gameObject.AddComponent<EarthFragmentCapsuleShadowPoolPresenter>();
+            presenter.Configure(
+                pool,
+                profile,
+                fragments,
+                0xA1000001u);
+            EditorUtility.SetDirty(presenter);
         }
 
         private static string SanitizeAssetFileName(string value)

@@ -37,6 +37,18 @@ MonoBehaviour:
       noiseStrength: {x: 0.16, y: 0.42}
       noiseFrequency: 0.5
       noiseScrollSpeed: 0.15
+    rubble:
+      enabled: 1
+      maxParticles: 384
+      lifetime: {x: 0.55, y: 1.25}
+      speed: {x: 1.6, y: 5.2}
+      size: {x: 0.055, y: 0.19}
+      colorA: {r: 0.7, g: 0.51, b: 0.31, a: 1}
+      colorB: {r: 0.34, g: 0.22, b: 0.14, a: 1}
+      gravity: {x: 0, y: 0}
+      noiseStrength: {x: 0, y: 0}
+      noiseFrequency: 0.5
+      noiseScrollSpeed: 0.15
     baseCount: 105
     perReleasedPiece: 34
     perImpulse: 0.045
@@ -46,6 +58,9 @@ MonoBehaviour:
     emitterInset: 0.05
     emitterRadius: 0.42
     radiusThickness: 0.72
+    baseRubbleCount: 12
+    rubblePerReleasedPiece: 4
+    maximumRubbleCount: 72
   impact:
     dust:
       enabled: 1
@@ -83,10 +98,10 @@ MonoBehaviour:
       noiseStrength: {x: 0, y: 0}
       noiseFrequency: 0.5
       noiseScrollSpeed: 0.15
-    maximumDustCount: 52
-    maximumRubbleCount: 14
-    maximumBatchedDustPerFrame: 72
-    maximumBatchedRubblePerFrame: 20
+    maximumDustCount: 84
+    maximumRubbleCount: 26
+    maximumBatchedDustPerFrame: 144
+    maximumBatchedRubblePerFrame: 48
     impulseNormalization: 2200
     sparkEnergyThreshold: 18000
     heroSparkEnergyThreshold: 65000

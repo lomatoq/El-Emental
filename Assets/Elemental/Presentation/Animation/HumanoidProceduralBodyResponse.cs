@@ -25,6 +25,7 @@ namespace Elemental.Presentation.Animation
         [SerializeField] private HumanoidRagdollRig ragdoll;
         [SerializeField] private HumanoidCharacterPresentation presentation;
         [SerializeField] private EarthCharacterImpactTarget impactTarget;
+        [SerializeField] private ActiveRagdollPuppet poweredPuppet;
         [SerializeField, Range(0.25f, 1f)] private float impactTransferWeight = 0.88f;
         [SerializeField, Range(60f, 200f)] private float impactAngularVelocityCap = 170f;
 
@@ -56,6 +57,7 @@ namespace Elemental.Presentation.Animation
             ragdoll = configuredRagdoll;
             presentation = configuredPresentation;
             impactTarget = GetComponentInParent<EarthCharacterImpactTarget>();
+            poweredPuppet = GetComponentInParent<ActiveRagdollPuppet>();
             CacheBones();
             if (isActiveAndEnabled) Subscribe();
         }
@@ -68,6 +70,7 @@ namespace Elemental.Presentation.Animation
             if (ragdoll == null) ragdoll = GetComponent<HumanoidRagdollRig>();
             if (presentation == null) presentation = GetComponent<HumanoidCharacterPresentation>();
             if (impactTarget == null) impactTarget = GetComponentInParent<EarthCharacterImpactTarget>();
+            if (poweredPuppet == null) poweredPuppet = GetComponentInParent<ActiveRagdollPuppet>();
             CacheBones();
         }
 
@@ -86,9 +89,12 @@ namespace Elemental.Presentation.Animation
 
         private void Subscribe()
         {
-            if (_subscribed || impactTarget == null) return;
-            impactTarget.WorldResponseRequested += OnWorldResponse;
-            _subscribed = true;
+            if (_subscribed) return;
+            if (impactTarget != null)
+                impactTarget.WorldResponseRequested += OnWorldResponse;
+            if (poweredPuppet != null)
+                poweredPuppet.PhysicalActionRequested += OnPhysicalActionRequested;
+            _subscribed = impactTarget != null || poweredPuppet != null;
         }
 
         private void Unsubscribe()
@@ -96,6 +102,8 @@ namespace Elemental.Presentation.Animation
             if (!_subscribed) return;
             if (impactTarget != null)
                 impactTarget.WorldResponseRequested -= OnWorldResponse;
+            if (poweredPuppet != null)
+                poweredPuppet.PhysicalActionRequested -= OnPhysicalActionRequested;
             _subscribed = false;
         }
 
@@ -103,6 +111,16 @@ namespace Elemental.Presentation.Animation
         {
             if (impactTarget == null || response.TargetStableId != impactTarget.StableFighterId)
                 return;
+            if (poweredPuppet != null)
+            {
+                EarthPoweredImpactDecision physicalDecision =
+                    poweredPuppet.ReceiveAcceptedWorldResponse(in response);
+                if (physicalDecision.Duplicate)
+                    return;
+                if (physicalDecision.Accepted &&
+                    physicalDecision.Owner == EarthPoweredImpactOwner.PoweredPhysicalAssist)
+                    return;
+            }
             if (EarthImpactPresentationOwnership.Resolve(response.Response) !=
                 EarthImpactPresentationOwner.ProceduralAngularSpring)
                 return;
@@ -129,8 +147,20 @@ namespace Elemental.Presentation.Animation
             AcceptedProceduralImpactCount++;
         }
 
+        private void OnPhysicalActionRequested(EarthPhysicalActionRequest request)
+        {
+            presentation?.TryHandlePhysicalAction(in request);
+        }
+
         private void LateUpdate()
         {
+            if (poweredPuppet != null && presentation != null)
+            {
+                EarthFootContactController feet = presentation.FootContactController;
+                poweredPuppet.SetPoweredFootContactState(
+                    feet != null && feet.LeftPlantState == EarthFootPlantState.Planted,
+                    feet != null && feet.RightPlantState == EarthFootPlantState.Planted);
+            }
             if (animator == null || motor == null || rootBody == null ||
                 _chest == null || _head == null) return;
             using (BodyMarker.Auto())
@@ -171,12 +201,15 @@ namespace Elemental.Presentation.Animation
                 CurrentAnglesDegrees = sample.AnglesDegrees;
                 CurrentImpactAnglesDegrees = sample.ImpactAnglesDegrees;
                 if (isRagdoll) return;
-                float3 chestAngles = sample.LocomotionAnglesDegrees +
+                float castSuppression = presentation != null
+                    ? math.lerp(1f, 0.45f, math.saturate(presentation.MagicPresentationWeight))
+                    : 1f;
+                float3 chestAngles = sample.LocomotionAnglesDegrees * castSuppression +
                                      sample.ImpactAnglesDegrees * _impactChestTransfer;
                 float3 headAngles = new float3(
                     -sample.LocomotionAnglesDegrees.x * 0.20f,
                     -sample.LocomotionAnglesDegrees.y * 0.28f,
-                    -sample.LocomotionAnglesDegrees.z * 0.32f) +
+                    -sample.LocomotionAnglesDegrees.z * 0.32f) * castSuppression +
                     sample.ImpactAnglesDegrees * _impactHeadTransfer;
                 _chest.localRotation *= Quaternion.Euler(ToVector3(chestAngles));
                 _head.localRotation *= Quaternion.Euler(ToVector3(headAngles));

@@ -52,6 +52,10 @@ namespace Elemental.Runtime.World
         [SerializeField, Min(1)] private int colliderChunksPerFrame = 1;
         [SerializeField] private Material surfaceMaterial;
 
+        [Header("Rendering (normally driven by DuelRenderingProfile)")]
+        [SerializeField] private ShadowCastingMode shadowCastingMode = ShadowCastingMode.On;
+        [SerializeField] private bool receiveShadows = true;
+
         private readonly Queue<ChunkCoord> _renderQueue = new Queue<ChunkCoord>();
         private readonly Queue<ChunkCoord> _colliderQueue = new Queue<ChunkCoord>();
         private readonly HashSet<ChunkCoord> _renderQueued = new HashSet<ChunkCoord>();
@@ -133,6 +137,14 @@ namespace Elemental.Runtime.World
             renderChunksPerFrame = profile.RenderChunksPerFrame;
             colliderChunksPerFrame = profile.ColliderChunksPerFrame;
             surfaceMaterial = configuredMaterial;
+        }
+
+        public void ConfigureRendering(
+            ShadowCastingMode configuredShadowCastingMode,
+            bool configuredReceiveShadows)
+        {
+            shadowCastingMode = configuredShadowCastingMode;
+            receiveShadows = configuredReceiveShadows;
         }
 
         private void Awake()
@@ -473,6 +485,8 @@ namespace Elemental.Runtime.World
             filter.sharedMesh = mesh;
             MeshRenderer renderer = chunkObject.AddComponent<MeshRenderer>();
             renderer.sharedMaterial = _runtimeSurfaceMaterial != null ? _runtimeSurfaceMaterial : surfaceMaterial;
+            renderer.shadowCastingMode = shadowCastingMode;
+            renderer.receiveShadows = receiveShadows;
             MeshCollider collider = chunkObject.AddComponent<MeshCollider>();
             MeshCollider stagingCollider = chunkObject.AddComponent<MeshCollider>();
             stagingCollider.enabled = false;

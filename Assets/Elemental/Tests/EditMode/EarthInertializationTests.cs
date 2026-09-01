@@ -188,6 +188,75 @@ namespace Elemental.Tests.EditMode
             Assert.That(decision.RequestsInertialization, Is.True);
         }
 
+        [TestCase(EarthAnimationClipMetadata.LeftFootContact, 1922814630)]
+        [TestCase(EarthAnimationClipMetadata.RightFootContact, -1497350373)]
+        [TestCase(EarthAnimationClipMetadata.LeftFootPhase, 539081152)]
+        [TestCase(EarthAnimationClipMetadata.RightFootPhase, 681034954)]
+        [TestCase(EarthAnimationClipMetadata.LandContact, 1464049959)]
+        [TestCase(EarthAnimationClipMetadata.CanExit, 408572261)]
+        [TestCase(EarthAnimationClipMetadata.PelvisCompression, -1974395763)]
+        [TestCase(EarthAnimationClipMetadata.RootEffort, -1843550728)]
+        public void CanonicalCurveParameterIsNeverClassifiedAsExternalInput(
+            string parameterName,
+            int warningHash)
+        {
+            Assert.That(Animator.StringToHash(parameterName), Is.EqualTo(warningHash));
+            MethodInfo policy = typeof(EarthAnimationGraph).GetMethod(
+                "CanMirrorControllerParameter",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(policy, Is.Not.Null);
+
+            bool writable = (bool)policy.Invoke(
+                null,
+                new object[]
+                {
+                    AnimatorControllerParameterType.Float,
+                    warningHash,
+                    false
+                });
+
+            Assert.That(writable, Is.False,
+                $"'{parameterName}' must remain read-only even when the unevaluated " +
+                "Animator temporarily fails to report curve ownership.");
+        }
+
+        [Test]
+        public void ExternalInputPolicyStillAllowsOrdinaryWritableParameters()
+        {
+            MethodInfo policy = typeof(EarthAnimationGraph).GetMethod(
+                "CanMirrorControllerParameter",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(policy, Is.Not.Null);
+
+            Assert.That((bool)policy.Invoke(
+                    null,
+                    new object[]
+                    {
+                        AnimatorControllerParameterType.Float,
+                        Animator.StringToHash("Speed"),
+                        false
+                    }),
+                Is.True);
+            Assert.That((bool)policy.Invoke(
+                    null,
+                    new object[]
+                    {
+                        AnimatorControllerParameterType.Float,
+                        Animator.StringToHash("Speed"),
+                        true
+                    }),
+                Is.False);
+            Assert.That((bool)policy.Invoke(
+                    null,
+                    new object[]
+                    {
+                        AnimatorControllerParameterType.Trigger,
+                        Animator.StringToHash("Impact"),
+                        false
+                    }),
+                Is.False);
+        }
+
         [Test]
         public void GraphTopologyContainsControllerThenAnimationScriptPlayable()
         {

@@ -29,7 +29,7 @@ namespace Elemental.Simulation.Bending
         public float MaximumSpeed { get; }
         public float ExtractionSeconds { get; }
         public static EarthQuickCastProfileData Default =>
-            new EarthQuickCastProfileData(0.42f, 60f, 76f, 0.15f);
+            new EarthQuickCastProfileData(0.42f, 75f, 95f, 0.15f);
     }
 
     /// <summary>Pure timing/state contract for the two-click quick stone grammar.</summary>

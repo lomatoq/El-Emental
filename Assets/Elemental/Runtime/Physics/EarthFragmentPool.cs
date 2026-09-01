@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Elemental.Runtime.Geometry;
 using Elemental.Runtime.Characters;
@@ -29,6 +30,8 @@ namespace Elemental.Runtime.Physics
         public EarthFragment LastAcquired { get; private set; }
         public Material SharedMaterial => fragmentMaterial;
         public GravityWorldBehaviour GravityWorld => gravityWorld;
+        public event Action<EarthFragment> FragmentAcquired;
+        public event Action<EarthFragment> FragmentReleased;
 
         public Mesh ResolveShapeVariant(int stableIndex)
         {
@@ -83,6 +86,11 @@ namespace Elemental.Runtime.Physics
         }
 
         private void Awake()
+        {
+            PrewarmAll();
+        }
+
+        public void PrewarmAll()
         {
             _shapeDiversity ??= new EarthShapeDiversityTracker(
                 shapeGrammarProfile != null ? shapeGrammarProfile.LocalHistoryLength : 16);
@@ -144,6 +152,7 @@ namespace Elemental.Runtime.Physics
             // Assign after activation so PhysX cooks the convex collider immediately;
             // assigning while an inactive pooled object is waking can leave sharedMesh null.
             fragment.SetShape(shape);
+            FragmentAcquired?.Invoke(fragment);
             LastAcquired = fragment;
             return fragment;
         }
@@ -189,6 +198,7 @@ namespace Elemental.Runtime.Physics
         internal void NotifyReleased(EarthFragment fragment)
         {
             if (fragment == null) return;
+            FragmentReleased?.Invoke(fragment);
             ActiveCount = Mathf.Max(0, ActiveCount - 1);
         }
 

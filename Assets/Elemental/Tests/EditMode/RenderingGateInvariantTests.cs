@@ -31,6 +31,60 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void CinematicDofGateRequiresTwoFiniteContainedSubjects()
+        {
+            var ready = new EarthCinematicDepthOfFieldEvidence(
+                Vector3.zero,
+                Quaternion.identity,
+                true,
+                true,
+                true,
+                6f,
+                8f,
+                true,
+                11f,
+                13f,
+                5f,
+                14f);
+            var missing = new EarthCinematicDepthOfFieldEvidence(
+                Vector3.zero,
+                Quaternion.identity,
+                true,
+                false,
+                true,
+                6f,
+                8f,
+                false,
+                0f,
+                0f,
+                5f,
+                14f);
+            var outside = new EarthCinematicDepthOfFieldEvidence(
+                Vector3.zero,
+                Quaternion.identity,
+                true,
+                true,
+                true,
+                6f,
+                8f,
+                true,
+                15f,
+                17f,
+                5f,
+                14f);
+
+            Assert.That(EarthCinematicDepthOfFieldGate.Evaluate(true, in ready),
+                Is.EqualTo(EarthCinematicDepthOfFieldGateState.Ready));
+            Assert.That(EarthCinematicDepthOfFieldGate.Evaluate(true, in missing),
+                Is.EqualTo(EarthCinematicDepthOfFieldGateState.MissingSubject));
+            Assert.That(EarthCinematicDepthOfFieldGate.Evaluate(true, in outside),
+                Is.EqualTo(
+                    EarthCinematicDepthOfFieldGateState.SubjectOutsideSharpEnvelope));
+            Assert.That(EarthCinematicDepthOfFieldGate.Evaluate(false, in outside),
+                Is.EqualTo(EarthCinematicDepthOfFieldGateState.Inactive));
+        }
+
+        [Test]
         public void MovingDualSubjectEvidencePathAllocatesNothingAfterWarmup()
         {
             var cameraObject = new GameObject("Gate Camera");

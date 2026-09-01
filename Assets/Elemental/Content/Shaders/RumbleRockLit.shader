@@ -317,7 +317,11 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                 {
                     float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
                     half sampledShadow = MainLightRealtimeShadow(shadowCoord);
-                    receivedShadow = lerp(sampledShadow, 1.0h, sideSmoothing);
+                    // Reception is classified in the shared planet frame above.
+                    // Do not fade the sampled shadow using object-space Y: Broken
+                    // Crown pieces have unrelated import axes, which caused valid
+                    // floor/top receivers to lose arena self/cast shadows.
+                    receivedShadow = sampledShadow;
                 }
                 // Restore a small amount of view-independent form depth without
                 // consulting the shadow atlas. Vertical faces receive ~6.6% and

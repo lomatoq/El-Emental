@@ -45,6 +45,10 @@ namespace Elemental.Authoring.Editor
             "Assets/ThirdParty/KayKit/Animations/Rig_Medium_MovementAdvanced.fbx";
         public const string KayKitMovementBasicPath =
             "Assets/ThirdParty/KayKit/Animations/Rig_Medium_MovementBasic.fbx";
+        public const string KayKitGeneralPath =
+            "Assets/ThirdParty/KayKit/Animations/Rig_Medium_General.fbx";
+        public const string JumpStartClipName = "Jump_Start";
+        public const string JumpLandClipName = "Jump_Land";
         public const string KayKitCombatRangedPath =
             "Assets/ThirdParty/KayKit/Animations/Rig_Medium_CombatRanged.fbx";
         public const string MagicRaiseClipName = "Ranged_Magic_Raise";
@@ -142,8 +146,26 @@ namespace Elemental.Authoring.Editor
             AnimatorState knockdownRecovery = controller.layers.Length > 0
                 ? FindState(controller.layers[0].stateMachine, "Knockdown Recovery")
                 : null;
+            AnimatorState jump = controller.layers.Length > 0
+                ? FindState(controller.layers[0].stateMachine, "Jump")
+                : null;
+            AnimatorState land = controller.layers.Length > 0
+                ? FindState(controller.layers[0].stateMachine, "Land")
+                : null;
             if (controller.layers.Length == 0 ||
                 FindState(controller.layers[0].stateMachine, "Moving Land") == null ||
+                jump?.motion is not AnimationClip jumpClip ||
+                !string.Equals(jumpClip.name, JumpStartClipName, StringComparison.Ordinal) ||
+                !string.Equals(
+                    AssetDatabase.GetAssetPath(jumpClip),
+                    KayKitMovementBasicPath,
+                    StringComparison.Ordinal) ||
+                land?.motion is not AnimationClip landClip ||
+                !string.Equals(landClip.name, JumpLandClipName, StringComparison.Ordinal) ||
+                !string.Equals(
+                    AssetDatabase.GetAssetPath(landClip),
+                    KayKitMovementBasicPath,
+                    StringComparison.Ordinal) ||
                 knockdownRecovery == null ||
                 knockdownRecovery.transitions.Length != 0 ||
                 FindState(controller.layers[0].stateMachine, "Dodge") == null ||
@@ -184,7 +206,7 @@ namespace Elemental.Authoring.Editor
                            HasDirectClip(tree, 1, MagicRaiseClipName) &&
                            HasDirectClip(tree, 2, MagicSummonClipName) &&
                            HasDirectClip(tree, 4, MagicShootClipName) &&
-                           HasDirectClip(tree, 5, MagicShootClipName) &&
+                           HasDirectClip(tree, 5, "Lead Jab") &&
                            HasDirectClip(tree, 6, MagicSpellcastingLongClipName) &&
                            HasDirectClip(tree, 8, MagicRaiseClipName) &&
                            HasDirectClip(tree, 9, MagicSummonClipName) &&
@@ -528,12 +550,15 @@ namespace Elemental.Authoring.Editor
             tree.blendType = BlendTreeType.Simple1D;
             tree.blendParameter = "Speed";
             tree.useAutomaticThresholds = false;
-            // Keep the complete base layer on one shared X Bot Avatar. The first
-            // upright frame of StandToCrouch is a neutral temporary idle; the
-            // provided Injured Idle belongs to the damage lane, not locomotion.
-            AnimationClip idle = LoadClip(WalkPath, NeutralWalkClipName) ?? LoadClip(WalkPath);
-            AnimationClip walkBack = LoadClip(WalkBackPath);
-            AnimationClip walk = LoadClip(WalkPath);
+            // The old Mixamo walking file is a one-step take: one foot never
+            // leaves contact and the loop seam visibly snaps. Use complete,
+            // licensed KayKit cycles for the locomotion lane; Mixamo remains in
+            // the authored action/magic lanes where those clips are complete.
+            AnimationClip idle = LoadRequiredClip(KayKitGeneralPath, "Idle_A");
+            AnimationClip walkBack = LoadRequiredClip(
+                KayKitDirectionalDodgePath,
+                "Walking_Backwards");
+            AnimationClip walk = LoadRequiredClip(KayKitMovementBasicPath, "Walking_A");
             AnimationClip run = LoadClip(KayKitMovementBasicPath, "Running_A") ?? walk;
             tree.children = new[]
             {
@@ -551,16 +576,20 @@ namespace Elemental.Authoring.Editor
             locomotion.speedParameterActive = true;
             machine.defaultState = locomotion;
 
-            jump.motion = LoadClip(FallingPath) ?? idle;
+            // Jump_Start is an exact licensed anticipation/take-off clip already in
+            // the 51-profile catalog. PlanetMotor still owns displacement and the
+            // Animator continues to discard imported root motion.
+            jump.motion = LoadRequiredClip(KayKitMovementBasicPath, JumpStartClipName);
             fall.motion = LoadClip(FallingPath) ?? idle;
-            land.motion = LoadClip(HardLandingPath) ?? idle;
+            land.motion = LoadRequiredClip(KayKitMovementBasicPath, JumpLandClipName);
             movingLand.motion = LoadClip(FallingRollPath) ?? LoadClip(HardLandingPath) ?? idle;
             hardLand.motion = LoadClip(HardLandingPath) ?? land.motion;
-            knockdownRecovery.motion = LoadClip(FallingRollPath) ?? hardLand.motion;
-            // Falling-To-Roll is 64 authored frames. The physical recovery
-            // coordinator owns its feet/control/exit markers; this controller
-            // state must not independently transition back to locomotion.
-            knockdownRecovery.speed = 1.9f;
+            // Ragdoll recovery must read as regaining stance, not as an intentional
+            // acrobatic dodge. Keep Falling-To-Roll exclusively on the moving-land
+            // lane and use the grounded hard-landing recovery here until dedicated
+            // front/back get-up clips are imported.
+            knockdownRecovery.motion = hardLand.motion;
+            knockdownRecovery.speed = 1.15f;
             BlendTree dodgeTree = FindOrCreateBlendTree(controller, "Earth Directional Dodge");
             dodgeTree.blendType = BlendTreeType.FreeformDirectional2D;
             dodgeTree.blendParameter = "DodgeX";
@@ -671,13 +700,17 @@ namespace Elemental.Authoring.Editor
             AnimationClip summon = LoadRequiredClip(
                 KayKitCombatRangedPath,
                 MagicSummonClipName);
+            AnimationClip push = LoadClip(LeadJabPath) ?? generic;
             tree.children = new[]
             {
                 DirectChild(raise, 1),
                 DirectChild(summon, 2),
                 DirectChild(LoadClip(Magic2HCast01Path) ?? generic, 3),
                 DirectChild(shoot, 4),
-                DirectChild(shoot, 5),
+                // Vector push needs a readable authored impulse, not a duplicate
+                // projectile-release pose. Lead Jab is the licensed Mixamo lane
+                // already used by the runtime VectorPush semantic.
+                DirectChild(push, 5),
                 DirectChild(sustain, 6),
                 DirectChild(LoadClip(Magic2HAttack03Path) ?? generic, 7),
                 DirectChild(raise, 8),

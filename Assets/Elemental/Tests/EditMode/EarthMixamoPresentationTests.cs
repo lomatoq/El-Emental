@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Elemental.Authoring.Editor;
+using Elemental.Presentation.Animation;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.Animations;
@@ -72,8 +73,6 @@ namespace Elemental.Tests.EditMode
             Assert.That(dependencies, Does.Contain(PushPath));
             Assert.That(dependencies, Does.Contain(EarthHumanoidMotionSetup.FallingRollPath));
             Assert.That(dependencies, Does.Contain(EarthHumanoidMotionSetup.HardLandingPath));
-            Assert.That(dependencies, Does.Contain(EarthHumanoidMotionSetup.PunchComboPath));
-            Assert.That(dependencies, Does.Contain(EarthHumanoidMotionSetup.MmaKickPath));
             Assert.That(dependencies, Does.Contain(EarthHumanoidMotionSetup.PunchingPath));
             Assert.That(dependencies, Does.Contain(EarthHumanoidMotionSetup.SideHitPath));
             Assert.That(dependencies, Does.Contain(EarthHumanoidMotionSetup.KayKitDirectionalDodgePath));
@@ -81,6 +80,20 @@ namespace Elemental.Tests.EditMode
                 "High-speed locomotion must use the licensed authored Running_A cycle.");
             Assert.That(dependencies, Does.Contain(EarthHumanoidMotionSetup.LeftTurnPath),
                 "Tank steering needs an authored turn-in-place instead of rotating a neutral idle.");
+
+            // Punch Combo and Mma Kick are provenance-safe authored catalog
+            // options, but they are not wired into a magic semantic merely to
+            // manufacture controller dependencies. The runtime catalog keeps
+            // them available for a later combat-family binding.
+            EarthMotionCatalog catalog = AssetDatabase.LoadAssetAtPath<EarthMotionCatalog>(
+                EarthMotionCatalogBuilder.DefaultCatalogPath);
+            Assert.That(catalog, Is.Not.Null);
+            string[] catalogSources = Enumerable.Range(0, catalog.ClipCount)
+                .Select(index => catalog.ClipAt(index)?.SourceAssetPath)
+                .Where(path => !string.IsNullOrEmpty(path))
+                .ToArray();
+            Assert.That(catalogSources, Does.Contain(EarthHumanoidMotionSetup.PunchComboPath));
+            Assert.That(catalogSources, Does.Contain(EarthHumanoidMotionSetup.MmaKickPath));
         }
 
         [Test]
@@ -94,6 +107,9 @@ namespace Elemental.Tests.EditMode
             AnimatorState recovery = controller.layers[0].stateMachine.states
                 .Select(child => child.state)
                 .First(state => state != null && state.name == "Knockdown Recovery");
+            Assert.That(AssetDatabase.GetAssetPath(recovery.motion),
+                Is.EqualTo(EarthHumanoidMotionSetup.HardLandingPath),
+                "Ragdoll recovery must not reuse the acrobatic Falling-To-Roll clip.");
             Assert.That(recovery.transitions, Is.Empty,
                 "Recovery markers and EarthTransitionDirector own the exit; the Animator Controller must not leave recovery at an earlier fixed exit time.");
             Assert.That(controller.layers, Has.Length.GreaterThanOrEqualTo(3));
@@ -121,6 +137,82 @@ namespace Elemental.Tests.EditMode
             Assert.That(controller.parameters.Any(parameter =>
                 parameter.name == "DodgeY" &&
                 parameter.type == AnimatorControllerParameterType.Float), Is.True);
+        }
+
+        [Test]
+        public void ControllerUpgradeBindsJumpToExactLicensedJumpStart()
+        {
+            string temporaryPath = AssetDatabase.GenerateUniqueAssetPath(
+                "Assets/EarthHumanoidJumpStart.controller");
+            try
+            {
+                AnimatorController controller = AnimatorController.CreateAnimatorControllerAtPath(
+                    temporaryPath);
+                Assert.That(controller, Is.Not.Null);
+                controller.AddLayer("Magic");
+                controller.AddLayer("Impact");
+
+                EarthHumanoidMotionSetup.UpgradeController(controller);
+
+                AnimatorState jump = controller.layers[0].stateMachine.states
+                    .Select(child => child.state)
+                    .Single(state => state != null && state.name == "Jump");
+                Assert.That(jump.motion, Is.TypeOf<AnimationClip>());
+                var clip = (AnimationClip)jump.motion;
+                Assert.That(
+                    clip.name,
+                    Is.EqualTo(EarthHumanoidMotionSetup.JumpStartClipName));
+                Assert.That(
+                    AssetDatabase.GetAssetPath(clip),
+                    Is.EqualTo(EarthHumanoidMotionSetup.KayKitMovementBasicPath));
+                Assert.That(clip.isHumanMotion, Is.True);
+                Assert.That(clip.isLooping, Is.False);
+                Assert.That(
+                    AssetDatabase.TryGetGUIDAndLocalFileIdentifier(
+                        clip,
+                        out string guid,
+                        out long localFileId),
+                    Is.True);
+                Assert.That(guid, Is.Not.Empty);
+                Assert.That(localFileId, Is.Not.Zero);
+            }
+            finally
+            {
+                AssetDatabase.DeleteAsset(temporaryPath);
+            }
+        }
+
+        [Test]
+        public void ControllerUpgradeBindsSoftLandingToExactLicensedJumpLand()
+        {
+            string temporaryPath = AssetDatabase.GenerateUniqueAssetPath(
+                "Assets/EarthHumanoidJumpLand.controller");
+            try
+            {
+                AnimatorController controller = AnimatorController.CreateAnimatorControllerAtPath(
+                    temporaryPath);
+                Assert.That(controller, Is.Not.Null);
+                controller.AddLayer("Magic");
+                controller.AddLayer("Impact");
+
+                EarthHumanoidMotionSetup.UpgradeController(controller);
+
+                AnimatorState land = controller.layers[0].stateMachine.states
+                    .Select(child => child.state)
+                    .Single(state => state != null && state.name == "Land");
+                Assert.That(land.motion, Is.TypeOf<AnimationClip>());
+                var clip = (AnimationClip)land.motion;
+                Assert.That(clip.name, Is.EqualTo(EarthHumanoidMotionSetup.JumpLandClipName));
+                Assert.That(
+                    AssetDatabase.GetAssetPath(clip),
+                    Is.EqualTo(EarthHumanoidMotionSetup.KayKitMovementBasicPath));
+                Assert.That(clip.isHumanMotion, Is.True);
+                Assert.That(clip.isLooping, Is.False);
+            }
+            finally
+            {
+                AssetDatabase.DeleteAsset(temporaryPath);
+            }
         }
 
         [Test]

@@ -119,6 +119,7 @@ namespace Elemental.Runtime.Characters
         private RigidbodyConstraints _rootConstraints;
         private bool _motorColliderWasEnabled;
         private bool _animatorWasEnabled;
+        private IAnimatorStateOutputReader _animationStateOutput;
         private bool _dustEmitted;
         private Vector3 _recoveryPelvisOffsetLocal;
         private MaterialPropertyBlock _properties;
@@ -316,6 +317,9 @@ namespace Elemental.Runtime.Characters
             params Behaviour[] configuredDisabledBehaviours)
         {
             animator = configuredAnimator;
+            _animationStateOutput = animator != null
+                ? animator.GetComponent<IAnimatorStateOutputReader>()
+                : null;
             motorRootBody = configuredMotorRoot;
             motorCollider = configuredMotorCollider;
             gravityWorld = configuredGravityWorld;
@@ -435,7 +439,7 @@ namespace Elemental.Runtime.Characters
                 _recoveryStateValidationPending = false;
                 RecoveryStateVerifiedAfterEvent = false;
                 RecoveryStateVerifiedNextFrame = false;
-                if (animator != null && animator.enabled) animator.Update(0f);
+                if (animator != null && animator.enabled) EvaluateAnimationOutput();
                 Vector3 inheritedVelocity = motorRootBody != null
                     ? motorRootBody.linearVelocity
                     : Vector3.zero;
@@ -491,8 +495,8 @@ namespace Elemental.Runtime.Characters
 
         /// <summary>
         /// Returns a recoverable knockdown at the current pelvis instead of the
-        /// spawn pose. Physics hands off once to the authored Falling-To-Roll
-        /// recovery; controls may remain disabled until CompleteRecovery.
+        /// spawn pose. Physics hands off once to the grounded authored recovery;
+        /// controls may remain disabled until CompleteRecovery.
         /// </summary>
         public void RecoverToAnimated(
             Vector3 localUp,
@@ -663,7 +667,7 @@ namespace Elemental.Runtime.Characters
                     if (animator.enabled)
                     {
                         animator.Rebind();
-                        animator.Update(0f);
+                        EvaluateAnimationOutput();
                     }
                 }
                 if (IsRecoveringToAnimation)
@@ -939,7 +943,7 @@ namespace Elemental.Runtime.Characters
                 if (animator.enabled)
                 {
                     animator.Rebind();
-                    animator.Update(0f);
+                    EvaluateAnimationOutput();
                 }
             }
             _expectedRecoveryStateHash = result.AnimationStateId;
@@ -1101,8 +1105,12 @@ namespace Elemental.Runtime.Characters
                     if (animator.enabled)
                     {
                         animator.Rebind();
-                        animator.Play("Locomotion", 0, 0f);
-                        animator.Update(0f);
+                        // Presentation/TransitionDirector remains the sole base
+                        // state writer when a Playables output owner is active.
+                        if (_animationStateOutput == null ||
+                            !_animationStateOutput.OwnsAnimatorOutput)
+                            animator.Play("Locomotion", 0, 0f);
+                        EvaluateAnimationOutput();
                     }
                 }
                 UnityEngine.Physics.SyncTransforms();
@@ -1133,6 +1141,9 @@ namespace Elemental.Runtime.Characters
         private void Awake()
         {
             if (animator == null) animator = GetComponentInChildren<Animator>(true);
+            _animationStateOutput = animator != null
+                ? animator.GetComponent<IAnimatorStateOutputReader>()
+                : null;
             CaptureDefaultRoot();
             CacheRenderers();
             if (bones == null || bones.Length != HumanBones.Length)
@@ -1699,10 +1710,18 @@ namespace Elemental.Runtime.Characters
 
         private AnimatorStateInfo ResolveRecoveryAnimatorState()
         {
-            AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
-            bool transitioning = animator.IsInTransition(0);
+            bool outputOwned = _animationStateOutput != null &&
+                               _animationStateOutput.OwnsAnimatorOutput;
+            AnimatorStateInfo current = outputOwned
+                ? _animationStateOutput.GetCurrentAnimatorStateInfo(0)
+                : animator.GetCurrentAnimatorStateInfo(0);
+            bool transitioning = outputOwned
+                ? _animationStateOutput.IsInTransition(0)
+                : animator.IsInTransition(0);
             AnimatorStateInfo next = transitioning
-                ? animator.GetNextAnimatorStateInfo(0)
+                ? outputOwned
+                    ? _animationStateOutput.GetNextAnimatorStateInfo(0)
+                    : animator.GetNextAnimatorStateInfo(0)
                 : default;
 
             RecoveryAnimatorWasTransitioning = transitioning;
@@ -1730,6 +1749,15 @@ namespace Elemental.Runtime.Characters
 
             RecoveryAnimatorSampledNextState = false;
             return current;
+        }
+
+        private void EvaluateAnimationOutput()
+        {
+            if (_animationStateOutput != null &&
+                _animationStateOutput.OwnsAnimatorOutput)
+                _animationStateOutput.Evaluate(0f);
+            else
+                animator?.Update(0f);
         }
 
         private bool IsExpectedRecoveryState(int stateHash, float phase, float phaseTolerance)

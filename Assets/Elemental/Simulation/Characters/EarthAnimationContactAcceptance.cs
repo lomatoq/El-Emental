@@ -12,6 +12,7 @@ namespace Elemental.Simulation.Characters
         public const float MinimumReleaseRecaptureSeconds = 0.12f;
         public const float MaximumSwingIkWeight = 0.15f;
         public const float MaximumPlantedDriftMeters = 0.015f;
+        public const float MinimumPlantedContactEvidenceSeconds = 0.50f;
         public const float MinimumPlantedGapMeters = -0.010f;
         public const float MaximumPlantedGapMeters = 0.015f;
         public const float MaximumSupportLocalTargetStepAt60Hz = 0.025f;
@@ -33,6 +34,17 @@ namespace Elemental.Simulation.Characters
             math.isfinite(gapMeters) &&
             gapMeters >= MinimumPlantedGapMeters - 0.00001f &&
             gapMeters <= MaximumPlantedGapMeters + 0.00001f;
+
+        public static bool IsPlantedContactEvidenceAccepted(float evidenceSeconds) =>
+            math.isfinite(evidenceSeconds) &&
+            evidenceSeconds + 0.00001f >= MinimumPlantedContactEvidenceSeconds;
+
+        public static float NormalizePlantedContactEvidence01(float evidenceSeconds)
+        {
+            if (!math.isfinite(evidenceSeconds) || evidenceSeconds <= 0f)
+                return 0f;
+            return math.saturate(evidenceSeconds / MinimumPlantedContactEvidenceSeconds);
+        }
 
         public static float RelativeDelta(float baseline, float candidate, float epsilon = 0.001f)
         {

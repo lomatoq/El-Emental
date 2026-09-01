@@ -149,10 +149,11 @@ namespace Elemental.Authoring.Editor
 
             var pieces = new EarthFracturePieceRecord[plan.Cells.Length];
             float volumeScale = 1f / Mathf.Max(0.0001f, plan.SourceVolume);
+            var intactNormalSampler = new IntactSurfaceNormalSampler(intactRenderMesh);
             for (int pieceIndex = 0; pieceIndex < plan.Cells.Length; pieceIndex++)
             {
                 EarthVolumetricFractureCell cell = plan.Cells[pieceIndex];
-                PieceMeshPair meshes = BuildPieceMeshes(cell, pieceIndex);
+                PieceMeshPair meshes = BuildPieceMeshes(cell, pieceIndex, intactNormalSampler);
                 AssetDatabase.AddObjectToAsset(meshes.Render, asset);
                 AssetDatabase.AddObjectToAsset(meshes.Collider, asset);
                 UnityEngine.Physics.BakeMesh(meshes.Collider.GetEntityId(), true);
@@ -257,7 +258,8 @@ namespace Elemental.Authoring.Editor
 
         private static PieceMeshPair BuildPieceMeshes(
             EarthVolumetricFractureCell cell,
-            int pieceIndex)
+            int pieceIndex,
+            IntactSurfaceNormalSampler intactNormalSampler)
         {
             var vertices = new Vector3[cell.Vertices.Length];
             for (int index = 0; index < vertices.Length; index++)
@@ -268,43 +270,144 @@ namespace Elemental.Authoring.Editor
             collider.RecalculateNormals();
             collider.RecalculateBounds();
             var renderVertices = new List<Vector3>(cell.Triangles.Length);
+            var renderNormals = new List<Vector3>(cell.Triangles.Length);
             var colors = new List<Color32>(cell.Triangles.Length);
             var uv = new List<Vector2>(cell.Triangles.Length);
             var renderExterior = new List<int>(cell.Triangles.Length);
             var renderInterior = new List<int>(cell.Triangles.Length);
+            var edgeMap = new Dictionary<PieceEdgeKey, PieceEdgeInset>(cell.Triangles.Length);
+            var cornerCaps = new Dictionary<int, PieceCornerCap>(cell.Vertices.Length);
+            Vector3 restLocalPosition = MapPoint(cell.Centroid);
+            const float requestedBevelWidth = 0.012f;
             for (int faceIndex = 0; faceIndex < cell.Faces.Length; faceIndex++)
             {
                 EarthVolumetricFractureFace face = cell.Faces[faceIndex];
                 if (face.VertexIndices.Length < 3) continue;
-                int start = renderVertices.Count;
-                byte cavity = (byte)Mathf.RoundToInt(Mathf.Lerp(
-                    118f, 186f, Hash01((uint)(pieceIndex + 1), faceIndex)));
+                var points = new Vector3[face.VertexIndices.Length];
+                Vector3 centroid = Vector3.zero;
                 for (int index = 0; index < face.VertexIndices.Length; index++)
                 {
-                    Vector3 vertex = vertices[face.VertexIndices[index]];
-                    renderVertices.Add(vertex);
-                    colors.Add(face.IsExterior
-                        ? new Color32(255, 0, 0, 28)
-                        : new Color32(0, 255, 0, cavity));
-                    uv.Add(new Vector2(vertex.x, vertex.y));
+                    points[index] = vertices[face.VertexIndices[index]];
+                    centroid += points[index];
                 }
-                List<int> destination = face.IsExterior ? renderExterior : renderInterior;
-                for (int triangle = 1; triangle < face.VertexIndices.Length - 1; triangle++)
+                centroid /= face.VertexIndices.Length;
+                Vector3 faceNormal = PolygonNormal(points);
+                if (faceNormal.sqrMagnitude < 0.000001f)
+                    faceNormal = Vector3.up;
+                var inset = new Vector3[points.Length];
+                for (int index = 0; index < points.Length; index++)
                 {
-                    destination.Add(start);
-                    destination.Add(start + triangle);
-                    destination.Add(start + triangle + 1);
+                    Vector3 toCenter = centroid - points[index];
+                    float distance = toCenter.magnitude;
+                    float width = Mathf.Min(requestedBevelWidth, distance * 0.28f);
+                    inset[index] = distance > 0.000001f
+                        ? points[index] + toCenter / distance * width
+                        : points[index];
                 }
+                byte cavity = (byte)Mathf.RoundToInt(Mathf.Lerp(
+                    118f, 186f, Hash01((uint)(pieceIndex + 1), faceIndex)));
+                Color32 faceColor = face.IsExterior
+                    ? new Color32(255, 0, 0, 28)
+                    : new Color32(0, 255, 0, cavity);
+                AppendPiecePolygon(
+                    renderVertices,
+                    renderNormals,
+                    colors,
+                    uv,
+                    face.IsExterior ? renderExterior : renderInterior,
+                    inset,
+                    faceNormal,
+                    faceColor,
+                    face.IsExterior,
+                    restLocalPosition,
+                    intactNormalSampler);
+
+                for (int index = 0; index < inset.Length; index++)
+                {
+                    int next = (index + 1) % inset.Length;
+                    int originalA = face.VertexIndices[index];
+                    int originalB = face.VertexIndices[next];
+                    var key = new PieceEdgeKey(originalA, originalB);
+                    if (!edgeMap.TryGetValue(key, out PieceEdgeInset first))
+                    {
+                        edgeMap.Add(key, new PieceEdgeInset(
+                            originalA,
+                            originalB,
+                            inset[index],
+                            inset[next],
+                            faceNormal,
+                            face.IsExterior,
+                            cavity));
+                    }
+                    else
+                    {
+                        Vector3 secondA = originalA == first.OriginalA ? inset[index] : inset[next];
+                        Vector3 secondB = originalB == first.OriginalB ? inset[next] : inset[index];
+                        Vector3 bevelNormal = (first.FaceNormal + faceNormal).normalized;
+                        if (bevelNormal.sqrMagnitude < 0.000001f) bevelNormal = faceNormal;
+                        bool exteriorBevel = first.IsExterior && face.IsExterior;
+                        byte bevelCavity = (byte)Mathf.Max(first.Cavity, cavity);
+                        AppendPiecePolygon(
+                            renderVertices,
+                            renderNormals,
+                            colors,
+                            uv,
+                            exteriorBevel ? renderExterior : renderInterior,
+                            new[] { first.InsetA, first.InsetB, secondB, secondA },
+                            bevelNormal,
+                            exteriorBevel
+                                ? new Color32(242, 0, 0, 190)
+                                : new Color32(0, 255, 0, bevelCavity),
+                            false,
+                            restLocalPosition,
+                            intactNormalSampler);
+                    }
+
+                    if (!cornerCaps.TryGetValue(originalA, out PieceCornerCap cap))
+                    {
+                        cap = new PieceCornerCap();
+                        cornerCaps.Add(originalA, cap);
+                    }
+                    cap.Points.Add(inset[index]);
+                    cap.NormalSum += faceNormal;
+                    cap.IsExterior &= face.IsExterior;
+                    cap.Cavity = (byte)Mathf.Max(cap.Cavity, cavity);
+                }
+            }
+
+            foreach (KeyValuePair<int, PieceCornerCap> pair in cornerCaps)
+            {
+                PieceCornerCap cap = pair.Value;
+                RemoveDuplicatePoints(cap.Points);
+                if (cap.Points.Count < 3) continue;
+                Vector3 normal = cap.NormalSum.sqrMagnitude > 0.000001f
+                    ? cap.NormalSum.normalized
+                    : vertices[pair.Key].normalized;
+                SortAroundNormal(cap.Points, normal);
+                AppendPiecePolygon(
+                    renderVertices,
+                    renderNormals,
+                    colors,
+                    uv,
+                    cap.IsExterior ? renderExterior : renderInterior,
+                    cap.Points,
+                    normal,
+                    cap.IsExterior
+                        ? new Color32(242, 0, 0, 210)
+                        : new Color32(0, 255, 0, cap.Cavity),
+                    false,
+                    restLocalPosition,
+                    intactNormalSampler);
             }
 
             var render = new Mesh { name = $"Earth Wall Baked Piece {pieceIndex + 1:000}" };
             render.SetVertices(renderVertices);
+            render.SetNormals(renderNormals);
             render.SetColors(colors);
             render.SetUVs(0, uv);
             render.subMeshCount = 2;
             render.SetTriangles(renderExterior, 0, false);
             render.SetTriangles(renderInterior, 1, false);
-            render.RecalculateNormals();
             render.RecalculateTangents();
             render.RecalculateBounds();
             return new PieceMeshPair(render, collider);
@@ -321,8 +424,11 @@ namespace Elemental.Authoring.Editor
             for (int index = 0; index < records.Length; index++)
             {
                 Mesh collider = records[index].colliderMesh;
+                Mesh render = records[index].renderMesh;
                 if (collider == null || collider.vertexCount < 4 ||
-                    collider.triangles.Length / 3 > 255) return false;
+                    collider.triangles.Length / 3 > 255 || render == null ||
+                    render.subMeshCount < 2 || render.normals.Length != render.vertexCount ||
+                    render.vertexCount <= collider.vertexCount) return false;
                 vertexFamilies.Add(collider.vertexCount);
                 minimumVolume = Mathf.Min(minimumVolume, records[index].volume);
                 maximumVolume = Mathf.Max(maximumVolume, records[index].volume);
@@ -338,6 +444,82 @@ namespace Elemental.Authoring.Editor
                    maximumVolume / minimumVolume >= 3f &&
                    aspects[aspects.Length / 2] <= 3.5f &&
                    aspects[aspects.Length - 1] <= 6f;
+        }
+
+        private static void AppendPiecePolygon(
+            List<Vector3> vertices,
+            List<Vector3> normals,
+            List<Color32> colors,
+            List<Vector2> uv,
+            List<int> triangles,
+            IReadOnlyList<Vector3> points,
+            Vector3 desiredNormal,
+            Color32 color,
+            bool preserveIntactNormals,
+            Vector3 restLocalPosition,
+            IntactSurfaceNormalSampler intactNormalSampler)
+        {
+            if (points == null || points.Count < 3) return;
+            bool reverse = Vector3.Dot(PolygonNormal(points), desiredNormal) < 0f;
+            int start = vertices.Count;
+            for (int outputIndex = 0; outputIndex < points.Count; outputIndex++)
+            {
+                int sourceIndex = reverse ? points.Count - 1 - outputIndex : outputIndex;
+                Vector3 point = points[sourceIndex];
+                vertices.Add(point);
+                normals.Add(preserveIntactNormals
+                    ? intactNormalSampler.Sample(point + restLocalPosition, desiredNormal)
+                    : desiredNormal.normalized);
+                colors.Add(color);
+                uv.Add(new Vector2(point.x, point.y));
+            }
+            for (int triangle = 1; triangle < points.Count - 1; triangle++)
+            {
+                triangles.Add(start);
+                triangles.Add(start + triangle);
+                triangles.Add(start + triangle + 1);
+            }
+        }
+
+        private static Vector3 PolygonNormal(IReadOnlyList<Vector3> points)
+        {
+            Vector3 normal = Vector3.zero;
+            for (int index = 0; index < points.Count; index++)
+            {
+                Vector3 current = points[index];
+                Vector3 next = points[(index + 1) % points.Count];
+                normal.x += (current.y - next.y) * (current.z + next.z);
+                normal.y += (current.z - next.z) * (current.x + next.x);
+                normal.z += (current.x - next.x) * (current.y + next.y);
+            }
+            return normal.sqrMagnitude > 0.000001f ? normal.normalized : Vector3.zero;
+        }
+
+        private static void RemoveDuplicatePoints(List<Vector3> points)
+        {
+            const float toleranceSq = 0.00000001f;
+            for (int first = points.Count - 1; first >= 0; first--)
+                for (int second = first - 1; second >= 0; second--)
+                    if ((points[first] - points[second]).sqrMagnitude <= toleranceSq)
+                    {
+                        points.RemoveAt(first);
+                        break;
+                    }
+        }
+
+        private static void SortAroundNormal(List<Vector3> points, Vector3 normal)
+        {
+            Vector3 center = Vector3.zero;
+            for (int index = 0; index < points.Count; index++) center += points[index];
+            center /= points.Count;
+            Vector3 axisX = Vector3.Cross(normal, Mathf.Abs(normal.y) < 0.9f
+                ? Vector3.up
+                : Vector3.right).normalized;
+            Vector3 axisY = Vector3.Cross(normal, axisX).normalized;
+            points.Sort((a, b) => Mathf.Atan2(
+                    Vector3.Dot(a - center, axisY), Vector3.Dot(a - center, axisX))
+                .CompareTo(Mathf.Atan2(
+                    Vector3.Dot(b - center, axisY), Vector3.Dot(b - center, axisX))));
         }
 
         private static EarthVolumetricFracturePlan BuildProductionPlan(float2[] physicalBoundary)
@@ -520,6 +702,166 @@ namespace Elemental.Authoring.Editor
                 if (!AssetDatabase.IsValidFolder(next)) AssetDatabase.CreateFolder(current, parts[index]);
                 current = next;
             }
+        }
+
+        private sealed class IntactSurfaceNormalSampler
+        {
+            private readonly Vector3[] _vertices;
+            private readonly Vector3[] _normals;
+            private readonly int[] _triangles;
+            private readonly Bounds _bounds;
+
+            public IntactSurfaceNormalSampler(Mesh mesh)
+            {
+                _vertices = mesh != null ? mesh.vertices : Array.Empty<Vector3>();
+                _normals = mesh != null ? mesh.normals : Array.Empty<Vector3>();
+                _triangles = mesh != null ? mesh.triangles : Array.Empty<int>();
+                _bounds = mesh != null ? mesh.bounds : new Bounds(Vector3.zero, Vector3.one);
+            }
+
+            public Vector3 Sample(Vector3 normalizedPoint, Vector3 fallback)
+            {
+                if (_vertices.Length == 0 || _triangles.Length < 3)
+                    return fallback.sqrMagnitude > 0.000001f ? fallback.normalized : Vector3.up;
+                Vector3 point = _bounds.center + Vector3.Scale(normalizedPoint, _bounds.size);
+                float bestDistanceSq = float.PositiveInfinity;
+                Vector3 bestNormal = fallback;
+                for (int triangle = 0; triangle <= _triangles.Length - 3; triangle += 3)
+                {
+                    int ia = _triangles[triangle];
+                    int ib = _triangles[triangle + 1];
+                    int ic = _triangles[triangle + 2];
+                    if ((uint)ia >= (uint)_vertices.Length ||
+                        (uint)ib >= (uint)_vertices.Length ||
+                        (uint)ic >= (uint)_vertices.Length) continue;
+                    Vector3 barycentric = ClosestPointBarycentric(
+                        point,
+                        _vertices[ia],
+                        _vertices[ib],
+                        _vertices[ic]);
+                    Vector3 closest = _vertices[ia] * barycentric.x +
+                                      _vertices[ib] * barycentric.y +
+                                      _vertices[ic] * barycentric.z;
+                    float distanceSq = (point - closest).sqrMagnitude;
+                    if (distanceSq >= bestDistanceSq) continue;
+                    bestDistanceSq = distanceSq;
+                    bestNormal = _normals.Length == _vertices.Length
+                        ? _normals[ia] * barycentric.x + _normals[ib] * barycentric.y +
+                          _normals[ic] * barycentric.z
+                        : Vector3.Cross(
+                            _vertices[ib] - _vertices[ia],
+                            _vertices[ic] - _vertices[ia]);
+                }
+                if (bestNormal.sqrMagnitude < 0.000001f) bestNormal = fallback;
+                bestNormal.Normalize();
+                if (fallback.sqrMagnitude > 0.000001f && Vector3.Dot(bestNormal, fallback) < 0f)
+                    bestNormal = -bestNormal;
+                return bestNormal;
+            }
+
+            private static Vector3 ClosestPointBarycentric(
+                Vector3 point,
+                Vector3 a,
+                Vector3 b,
+                Vector3 c)
+            {
+                Vector3 ab = b - a;
+                Vector3 ac = c - a;
+                Vector3 ap = point - a;
+                float d1 = Vector3.Dot(ab, ap);
+                float d2 = Vector3.Dot(ac, ap);
+                if (d1 <= 0f && d2 <= 0f) return new Vector3(1f, 0f, 0f);
+
+                Vector3 bp = point - b;
+                float d3 = Vector3.Dot(ab, bp);
+                float d4 = Vector3.Dot(ac, bp);
+                if (d3 >= 0f && d4 <= d3) return new Vector3(0f, 1f, 0f);
+
+                float vc = d1 * d4 - d3 * d2;
+                if (vc <= 0f && d1 >= 0f && d3 <= 0f)
+                {
+                    float v = d1 / Mathf.Max(0.000001f, d1 - d3);
+                    return new Vector3(1f - v, v, 0f);
+                }
+
+                Vector3 cp = point - c;
+                float d5 = Vector3.Dot(ab, cp);
+                float d6 = Vector3.Dot(ac, cp);
+                if (d6 >= 0f && d5 <= d6) return new Vector3(0f, 0f, 1f);
+
+                float vb = d5 * d2 - d1 * d6;
+                if (vb <= 0f && d2 >= 0f && d6 <= 0f)
+                {
+                    float w = d2 / Mathf.Max(0.000001f, d2 - d6);
+                    return new Vector3(1f - w, 0f, w);
+                }
+
+                float va = d3 * d6 - d5 * d4;
+                if (va <= 0f && d4 - d3 >= 0f && d5 - d6 >= 0f)
+                {
+                    float w = (d4 - d3) /
+                              Mathf.Max(0.000001f, d4 - d3 + d5 - d6);
+                    return new Vector3(0f, 1f - w, w);
+                }
+
+                float inverse = 1f / Mathf.Max(0.000001f, va + vb + vc);
+                float insideV = vb * inverse;
+                float insideW = vc * inverse;
+                return new Vector3(1f - insideV - insideW, insideV, insideW);
+            }
+        }
+
+        private readonly struct PieceEdgeKey : IEquatable<PieceEdgeKey>
+        {
+            public PieceEdgeKey(int a, int b)
+            {
+                Minimum = Mathf.Min(a, b);
+                Maximum = Mathf.Max(a, b);
+            }
+
+            private int Minimum { get; }
+            private int Maximum { get; }
+            public bool Equals(PieceEdgeKey other) =>
+                Minimum == other.Minimum && Maximum == other.Maximum;
+            public override bool Equals(object obj) => obj is PieceEdgeKey other && Equals(other);
+            public override int GetHashCode() => (Minimum * 397) ^ Maximum;
+        }
+
+        private readonly struct PieceEdgeInset
+        {
+            public PieceEdgeInset(
+                int originalA,
+                int originalB,
+                Vector3 insetA,
+                Vector3 insetB,
+                Vector3 faceNormal,
+                bool isExterior,
+                byte cavity)
+            {
+                OriginalA = originalA;
+                OriginalB = originalB;
+                InsetA = insetA;
+                InsetB = insetB;
+                FaceNormal = faceNormal;
+                IsExterior = isExterior;
+                Cavity = cavity;
+            }
+
+            public int OriginalA { get; }
+            public int OriginalB { get; }
+            public Vector3 InsetA { get; }
+            public Vector3 InsetB { get; }
+            public Vector3 FaceNormal { get; }
+            public bool IsExterior { get; }
+            public byte Cavity { get; }
+        }
+
+        private sealed class PieceCornerCap
+        {
+            public readonly List<Vector3> Points = new List<Vector3>(8);
+            public Vector3 NormalSum;
+            public bool IsExterior = true;
+            public byte Cavity;
         }
 
         private readonly struct BakedSlice

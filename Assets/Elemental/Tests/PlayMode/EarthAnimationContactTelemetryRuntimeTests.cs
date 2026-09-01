@@ -42,6 +42,8 @@ namespace Elemental.Tests.PlayMode
                 crossFpsComparison =
                     "30/60/120 compares normalized hard-gate outcome/violation rates. " +
                     "Raw magnitudes and sample counts remain serialized per actor/FPS; " +
+                    "planted-contact duration remains a raw minimum gate while its bounded " +
+                    "coverage outcome is compared across FPS; " +
                     "render-step means are not compared because fixed pose inertializers " +
                     "intentionally apply a per-rendered-pose cap at and below 60 Hz.",
                 fpsRuns = new List<FpsRunReport>(),
@@ -188,11 +190,8 @@ namespace Elemental.Tests.PlayMode
             float deltaTime)
         {
             EarthFootContactController foot = actor.Foot;
-            AnimatorStateInfo state = actor.Animator.GetCurrentAnimatorStateInfo(0);
-            AnimatorClipInfo[] clips = actor.Animator.GetCurrentAnimatorClipInfo(0);
-            string clip = clips.Length > 0 && clips[0].clip != null
-                ? clips[0].clip.name
-                : "none";
+            AnimatorStateInfo state = actor.GetCurrentStateInfo();
+            string clip = actor.GetDominantClipName();
             bool allowedTransition = IsAllowedTransition(scenario, actor, elapsed);
 
             ActorFrameEvaluation evaluation = metrics.Step(
@@ -211,7 +210,7 @@ namespace Elemental.Tests.PlayMode
                 deltaTime = deltaTime,
                 animatorStateHash = state.fullPathHash,
                 animatorNormalizedTime = state.normalizedTime,
-                animatorInTransition = actor.Animator.IsInTransition(0),
+                animatorInTransition = actor.IsInTransition(),
                 animatorPrimaryClip = clip,
                 rootPosition = actor.Root.transform.position,
                 rootUp = actor.Motor.LocalUp,
@@ -376,10 +375,13 @@ namespace Elemental.Tests.PlayMode
                 float rightHeight = 0.02f;
                 if (scenario == "step-up-down")
                     rightHeight += frame < frames / 2 ? 0.12f : -0.08f;
+                // Swap while the first planted lobe is still maintained. At a
+                // half-cycle boundary the old test happened to swap precisely
+                // between feet and therefore never exercised invalidation.
                 if (scenario == "convex-ridge-seam")
-                    supportId = frame < frames / 2 ? 91u : 92u;
+                    supportId = frame < math.max(1, frames / 6) ? 91u : 92u;
                 if (scenario == "support-generation-swap")
-                    generation = frame < frames / 2 ? 1u : 2u;
+                    generation = frame < math.max(1, frames / 6) ? 1u : 2u;
                 float movingOffset = scenario == "moving-rotating-support"
                     ? math.sin(phase * math.PI * 2f) * 0.08f
                     : 0f;
@@ -387,7 +389,8 @@ namespace Elemental.Tests.PlayMode
                     true, phase, new float3(-0.12f, leftHeight, movingOffset), normal,
                     supportId, generation, deltaTime);
                 EarthFootContactInput rightInput = CreateSolverInput(
-                    false, phase, new float3(0.12f, rightHeight, movingOffset), normal,
+                    false, math.frac(phase + 0.5f),
+                    new float3(0.12f, rightHeight, movingOffset), normal,
                     supportId, generation, deltaTime);
                 EarthFootContactPairDecision pair = EarthFootContactSolver.ResolvePair(
                     ref left, ref right, in leftInput, in rightInput);
@@ -476,8 +479,9 @@ namespace Elemental.Tests.PlayMode
                         "hardGatePass01", baseline.hardGatePass01,
                         candidate.hardGatePass01, 0.01f);
                     AddCrossFps(report, actors[actorIndex], candidate.targetFps,
-                        "plantedContactEvidenceSeconds", baseline.plantedContactEvidenceSeconds,
-                        candidate.plantedContactEvidenceSeconds, 0.1f);
+                        "plantedContactEvidenceCoverage01",
+                        baseline.plantedContactEvidenceCoverage01,
+                        candidate.plantedContactEvidenceCoverage01, 0.01f);
                     AddCrossFps(report, actors[actorIndex], candidate.targetFps,
                         "bothLockedLocomotionViolationRate",
                         baseline.bothLockedLocomotionViolationRate,
@@ -699,7 +703,13 @@ namespace Elemental.Tests.PlayMode
                 // different world locations. Input, gait, jump/support state and
                 // the visible rig still run; only fixture translation is pinned.
                 actor.Body.linearVelocity = Vector3.zero;
-                actor.Body.constraints |= RigidbodyConstraints.FreezePosition;
+                Assert.That(actor.Puppet, Is.Not.Null,
+                    $"{actor.ActorId} has no physical constraint owner.");
+                actor.Puppet.ConfigureMotorPositionConstraints(
+                    RigidbodyConstraints.FreezePosition);
+                Assert.That(actor.Body.constraints,
+                    Is.EqualTo(RigidbodyConstraints.FreezeAll),
+                    $"{actor.ActorId} fixture translation pin was not accepted atomically.");
             }
         }
 
@@ -730,14 +740,17 @@ namespace Elemental.Tests.PlayMode
             public GameObject Root;
             public PlanetMotor Motor;
             public Rigidbody Body;
+            public ActiveRagdollPuppet Puppet;
             public HumanoidCharacterPresentation Presentation;
             public EarthFootContactController Foot;
             public Animator Animator;
+            public EarthAnimationGraph AnimationGraph;
             public EarthSurfController Surf;
             public TelemetryMotorInput Input;
             public TelemetryFootPolicyDriver Policy;
             public float2 LocomotionMove;
             private bool _surfAttempted;
+            private readonly List<AnimatorClipInfo> _clipInfoScratch = new(4);
 
             public static ActorHarness Create(Scene scene, string actorId, string objectName)
             {
@@ -761,9 +774,11 @@ namespace Elemental.Tests.PlayMode
                     Root = root,
                     Motor = motor,
                     Body = motor.GetComponent<Rigidbody>(),
+                    Puppet = root.GetComponent<ActiveRagdollPuppet>(),
                     Presentation = presentation,
                     Foot = presentation.FootContactController,
                     Animator = presentation.Animator,
+                    AnimationGraph = presentation.AnimationGraph,
                     Surf = root.GetComponent<EarthSurfController>(),
                     Input = input,
                     Policy = policy,
@@ -775,6 +790,35 @@ namespace Elemental.Tests.PlayMode
                         ? new float2(-0.32f, -1f)
                         : new float2(0.32f, 1f)
                 };
+            }
+
+            public AnimatorStateInfo GetCurrentStateInfo() =>
+                AnimationGraph != null && AnimationGraph.IsActive
+                    ? AnimationGraph.GetCurrentAnimatorStateInfo(0)
+                    : Animator.GetCurrentAnimatorStateInfo(0);
+
+            public bool IsInTransition() =>
+                AnimationGraph != null && AnimationGraph.IsActive
+                    ? AnimationGraph.IsInTransition(0)
+                    : Animator.IsInTransition(0);
+
+            public string GetDominantClipName()
+            {
+                _clipInfoScratch.Clear();
+                if (AnimationGraph != null && AnimationGraph.IsActive)
+                    AnimationGraph.GetCurrentAnimatorClipInfo(0, _clipInfoScratch);
+                else
+                    Animator.GetCurrentAnimatorClipInfo(0, _clipInfoScratch);
+                AnimationClip dominant = null;
+                float weight = float.NegativeInfinity;
+                for (int index = 0; index < _clipInfoScratch.Count; index++)
+                {
+                    AnimatorClipInfo info = _clipInfoScratch[index];
+                    if (info.clip == null || info.weight <= weight) continue;
+                    dominant = info.clip;
+                    weight = info.weight;
+                }
+                return dominant != null ? dominant.name : "none";
             }
 
             public void Drive(string scenario, bool entered)
@@ -894,6 +938,7 @@ namespace Elemental.Tests.PlayMode
             public int jointStepSampleCount;
             public int pelvisStepSampleCount;
             public float plantedContactEvidenceSeconds;
+            public float plantedContactEvidenceCoverage01;
             public float hardGatePass01;
             public float bothLockedLocomotionViolationRate;
             public float prematureRecaptureViolationRate;
@@ -923,6 +968,7 @@ namespace Elemental.Tests.PlayMode
             [NonSerialized] private bool _wasAirborne;
             [NonSerialized] private float _plantedDriftSum;
             [NonSerialized] private int _plantedDriftCount;
+            [NonSerialized] private float _plantedEvidenceSeconds;
             [NonSerialized] private float _targetStepSum;
             [NonSerialized] private int _targetStepCount;
             [NonSerialized] private float _kneeStepSum;
@@ -1121,6 +1167,7 @@ namespace Elemental.Tests.PlayMode
                     maximumPlantedDriftMeters = Mathf.Max(maximumPlantedDriftMeters, drift);
                     _plantedDriftSum += drift;
                     _plantedDriftCount++;
+                    _plantedEvidenceSeconds += deltaTime;
                     gap = Vector3.Dot(actualWorld - targetWorld, targetNormal.normalized);
                     minimumPlantedGapMeters = Mathf.Min(minimumPlantedGapMeters, gap);
                     maximumPlantedGapMeters = Mathf.Max(maximumPlantedGapMeters, gap);
@@ -1225,7 +1272,10 @@ namespace Elemental.Tests.PlayMode
                 supportLocalTargetStepSampleCount = _targetStepCount;
                 jointStepSampleCount = _jointStepCount;
                 pelvisStepSampleCount = _pelvisStepCount;
-                plantedContactEvidenceSeconds = plantedSampleCount / (float)targetFps;
+                plantedContactEvidenceSeconds = _plantedEvidenceSeconds;
+                plantedContactEvidenceCoverage01 =
+                    EarthAnimationContactAcceptance.NormalizePlantedContactEvidence01(
+                        plantedContactEvidenceSeconds);
                 bool recapturePassed = minimumReleaseRecaptureSeconds < 0f ||
                     minimumReleaseRecaptureSeconds + 0.0001f >=
                     EarthAnimationContactAcceptance.MinimumReleaseRecaptureSeconds;
@@ -1235,6 +1285,8 @@ namespace Elemental.Tests.PlayMode
                     EarthAnimationContactAcceptance.MaximumSwingIkWeight + 0.0001f &&
                     maximumPlantedDriftMeters <=
                     EarthAnimationContactAcceptance.MaximumPlantedDriftMeters + 0.0001f &&
+                    EarthAnimationContactAcceptance.IsPlantedContactEvidenceAccepted(
+                        plantedContactEvidenceSeconds) &&
                     EarthAnimationContactAcceptance.IsPlantedGapAccepted(minimumPlantedGapMeters) &&
                     EarthAnimationContactAcceptance.IsPlantedGapAccepted(maximumPlantedGapMeters) &&
                     maximumSupportLocalTargetStepMeters <=

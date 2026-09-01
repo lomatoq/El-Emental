@@ -126,23 +126,23 @@ namespace Elemental.Tests.PlayMode
             scripted.Move = float2.zero;
             CaptureFrame(scene, camera, player, botRoot, playerPresentation,
                 "idle-00", directory, manifest);
-            yield return WaitRenderedFrames(10);
+            yield return WaitNormalizedFrames(10);
             CaptureFrame(scene, camera, player, botRoot, playerPresentation,
                 "idle-01", directory, manifest);
 
             scripted.Move = new float2(0f, 1f);
-            yield return WaitRenderedFrames(1);
+            yield return WaitNormalizedFrames(1);
             CaptureFrame(scene, camera, player, botRoot, playerPresentation,
                 "start-01", directory, manifest);
-            yield return WaitRenderedFrames(4);
+            yield return WaitNormalizedFrames(4);
             CaptureFrame(scene, camera, player, botRoot, playerPresentation,
                 "start-05", directory, manifest);
-            yield return WaitRenderedFrames(8);
+            yield return WaitNormalizedFrames(8);
             CaptureFrame(scene, camera, player, botRoot, playerPresentation,
                 "start-13", directory, manifest);
             for (int stride = 0; stride < 6; stride++)
             {
-                yield return WaitRenderedFrames(4);
+                yield return WaitNormalizedFrames(4);
                 CaptureFrame(scene, camera, player, botRoot, playerPresentation,
                     $"stride-{stride:00}", directory, manifest);
             }
@@ -150,25 +150,25 @@ namespace Elemental.Tests.PlayMode
             scripted.Move = float2.zero;
             CaptureFrame(scene, camera, player, botRoot, playerPresentation,
                 "stop-00", directory, manifest);
-            yield return WaitRenderedFrames(5);
+            yield return WaitNormalizedFrames(5);
             CaptureFrame(scene, camera, player, botRoot, playerPresentation,
                 "stop-05", directory, manifest);
-            yield return WaitRenderedFrames(9);
+            yield return WaitNormalizedFrames(9);
             CaptureFrame(scene, camera, player, botRoot, playerPresentation,
                 "stop-14", directory, manifest);
-            yield return WaitRenderedFrames(12);
+            yield return WaitNormalizedFrames(12);
             CaptureFrame(scene, camera, player, botRoot, playerPresentation,
                 "stop-26", directory, manifest);
 
             scripted.Move = new float2(1f, 0f);
             for (int turn = 0; turn < 6; turn++)
             {
-                yield return WaitRenderedFrames(4);
+                yield return WaitNormalizedFrames(4);
                 CaptureFrame(scene, camera, player, botRoot, playerPresentation,
                     $"sharp-turn-{turn:00}", directory, manifest);
             }
             scripted.Move = float2.zero;
-            yield return WaitRenderedFrames(10);
+            yield return WaitNormalizedFrames(10);
 
             scripted.JumpPressed = true;
             yield return new WaitForFixedUpdate();
@@ -177,9 +177,14 @@ namespace Elemental.Tests.PlayMode
             bool capturedApex = false;
             bool capturedFalling = false;
             bool capturedLanding = false;
-            for (int frame = 0; frame < 240 && !capturedLanding; frame++)
+            // The editor can render hundreds of frames per second while physics
+            // still advances at the configured fixed step. A render-frame budget
+            // therefore observed Rising/Falling but sometimes expired before the
+            // real body could make contact. Sample the jump on physics ticks so
+            // this remains a real motor/arena landing test on every dev machine.
+            for (int fixedTick = 0; fixedTick < 240 && !capturedLanding; fixedTick++)
             {
-                yield return null;
+                yield return new WaitForFixedUpdate();
                 EarthAnimationPhase phase = playerPresentation.MotionPhase;
                 if (!capturedRising && phase == EarthAnimationPhase.Rising)
                 {
@@ -211,7 +216,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(capturedRising, Is.True);
             Assert.That(capturedFalling, Is.True);
             Assert.That(capturedLanding, Is.True);
-            yield return WaitRenderedFrames(28);
+            yield return WaitNormalizedFrames(28);
 
             Vector2[] dodgeDirections =
             {
@@ -228,10 +233,10 @@ namespace Elemental.Tests.PlayMode
                     playerPresentation.LastDodgeDecision.RejectReason);
                 CaptureFrame(scene, camera, player, botRoot, playerPresentation,
                     $"dodge-{dodgeLabels[dodge]}-00", directory, manifest);
-                yield return WaitRenderedFrames(6);
+                yield return WaitNormalizedFrames(6);
                 CaptureFrame(scene, camera, player, botRoot, playerPresentation,
                     $"dodge-{dodgeLabels[dodge]}-06", directory, manifest);
-                yield return WaitRenderedFrames(8);
+                yield return WaitNormalizedFrames(8);
                 CaptureFrame(scene, camera, player, botRoot, playerPresentation,
                     $"dodge-{dodgeLabels[dodge]}-14", directory, manifest);
                 // The authored action gate is time based, while editor render FPS
@@ -251,16 +256,19 @@ namespace Elemental.Tests.PlayMode
                 0xA11D1701u);
             Assert.That(response, Is.EqualTo(EarthCharacterImpactResponse.RecoverableKnockdown));
             yield return new WaitForFixedUpdate();
+            // Let presentation publish the canonical full-ragdoll semantic state
+            // after the physics handoff before capturing its output-owner metadata.
+            yield return null;
             CaptureFrame(scene, camera, player, botRoot, botPresentation,
                 "impact-physical-01", directory, manifest);
-            yield return WaitRenderedFrames(12);
+            yield return WaitNormalizedFrames(12);
             CaptureFrame(scene, camera, player, botRoot, botPresentation,
                 "impact-physical-13", directory, manifest);
             yield return new WaitForSeconds(0.62f);
             yield return null;
             CaptureFrame(scene, camera, player, botRoot, botPresentation,
                 "getup-contact", directory, manifest);
-            yield return WaitRenderedFrames(16);
+            yield return WaitNormalizedFrames(16);
             CaptureFrame(scene, camera, player, botRoot, botPresentation,
                 "getup-recovery", directory, manifest);
             yield return new WaitForSeconds(0.55f);
@@ -304,6 +312,7 @@ namespace Elemental.Tests.PlayMode
                     $"Arena is absent from audit frame {frame.label}.");
                 Assert.That(frame.primaryClip, Does.Not.Contain("T-Pose"),
                     $"Audit frame {frame.label} evaluated a T-pose clip.");
+                AssertExpectedMotion(frame);
             }
             Assert.That(continuity.SwingResidualViolationFrames, Is.Zero,
                 $"Released swing-foot IK exceeded 0.15 after two normalized frames " +
@@ -322,9 +331,48 @@ namespace Elemental.Tests.PlayMode
                 $"A planted pivot foot slid {continuity.MaximumPivotPlantedFootStepMeters:F3} m in one normalized frame.");
         }
 
-        private static IEnumerator WaitRenderedFrames(int count)
+        private static IEnumerator WaitNormalizedFrames(int count)
         {
-            for (int frame = 0; frame < count; frame++) yield return null;
+            // Evidence labels are expressed as 60-Hz-normalized frames. Waiting
+            // for raw Editor renders made clip progression machine-dependent and
+            // could sample only the outgoing state on fast GPUs.
+            yield return new WaitForSeconds(Mathf.Max(0, count) / 60f);
+        }
+
+        private static void AssertExpectedMotion(AnimationVisualAuditFrame frame)
+        {
+            Assert.That(frame.graphActive, Is.True,
+                $"{frame.label} did not sample the production Playables output owner.");
+            string expectedClip = frame.label switch
+            {
+                "idle-00" or "idle-01" => "Idle_A",
+                "start-13" => "Walking_A",
+                "stride-00" or "stride-01" or "stride-02" or "stride-03" or
+                    "stride-04" or "stride-05" => "Walking_A",
+                "stop-26" => "Idle_A",
+                "sharp-turn-01" or "sharp-turn-02" or "sharp-turn-03" or
+                    "sharp-turn-04" or "sharp-turn-05" => "Left Turn",
+                "jump-rising" => "Jump_Start",
+                "jump-apex" or "jump-falling" => "Falling",
+                "jump-landing" => "Jump_Land",
+                "dodge-forward-06" or "dodge-forward-14" => "Dodge_Forward",
+                "dodge-backward-06" or "dodge-backward-14" => "Dodge_Backward",
+                "dodge-left-06" or "dodge-left-14" => "Dodge_Left",
+                "dodge-right-06" or "dodge-right-14" => "Dodge_Right",
+                "impact-physical-01" or "impact-physical-13" => "none",
+                "getup-contact" or "getup-recovery" => "Falling To Roll",
+                _ => string.Empty
+            };
+            if (!string.IsNullOrEmpty(expectedClip))
+                Assert.That(frame.primaryClip, Is.EqualTo(expectedClip),
+                    $"{frame.label} published action {frame.authoredAction} but sampled " +
+                    $"'{frame.primaryClip}' from the output owner.");
+
+            if (frame.label is "impact-physical-01" or "impact-physical-13")
+            {
+                Assert.That(frame.authoredAction, Is.EqualTo(EarthAuthoredActionId.None.ToString()));
+                Assert.That(frame.footPolicy, Is.EqualTo(EarthAuthoredFootPolicy.FlightIkOff.ToString()));
+            }
         }
 
         private static void CaptureFrame(
@@ -373,12 +421,44 @@ namespace Elemental.Tests.PlayMode
             Animator sampledAnimator = sampledPresentation != null
                 ? sampledPresentation.Animator
                 : null;
-            AnimatorClipInfo[] clips = sampledAnimator != null && sampledAnimator.enabled
-                ? sampledAnimator.GetCurrentAnimatorClipInfo(0)
-                : Array.Empty<AnimatorClipInfo>();
+            var clips = new List<AnimatorClipInfo>(4);
+            EarthAnimationGraph sampledGraph = sampledPresentation != null
+                ? sampledPresentation.AnimationGraph
+                : null;
+            if (sampledAnimator != null && sampledAnimator.enabled)
+            {
+                if (sampledGraph != null && sampledGraph.IsActive)
+                    sampledGraph.GetCurrentAnimatorClipInfo(0, clips);
+                else
+                    sampledAnimator.GetCurrentAnimatorClipInfo(0, clips);
+            }
             string primaryClip = ResolveDominantClipName(clips);
+            bool inTransition = sampledAnimator != null && sampledAnimator.enabled &&
+                                (sampledGraph != null && sampledGraph.IsActive
+                                    ? sampledGraph.IsInTransition(0)
+                                    : sampledAnimator.IsInTransition(0));
             AnimatorStateInfo sampledState = sampledAnimator != null && sampledAnimator.enabled
-                ? sampledAnimator.GetCurrentAnimatorStateInfo(0)
+                ? sampledGraph != null && sampledGraph.IsActive
+                    ? sampledGraph.GetCurrentAnimatorStateInfo(0)
+                    : sampledAnimator.GetCurrentAnimatorStateInfo(0)
+                : default;
+            AnimatorStateInfo nextState = inTransition
+                ? sampledGraph != null && sampledGraph.IsActive
+                    ? sampledGraph.GetNextAnimatorStateInfo(0)
+                    : sampledAnimator.GetNextAnimatorStateInfo(0)
+                : default;
+            var nextClips = new List<AnimatorClipInfo>(4);
+            if (inTransition)
+            {
+                if (sampledGraph != null && sampledGraph.IsActive)
+                    sampledGraph.GetNextAnimatorClipInfo(0, nextClips);
+                else
+                    sampledAnimator.GetNextAnimatorClipInfo(0, nextClips);
+            }
+            AnimatorTransitionInfo transitionInfo = inTransition
+                ? sampledGraph != null && sampledGraph.IsActive
+                    ? sampledGraph.GetAnimatorTransitionInfo(0)
+                    : sampledAnimator.GetAnimatorTransitionInfo(0)
                 : default;
             EarthFootContactController feet = sampledPresentation != null
                 ? sampledPresentation.FootContactController
@@ -408,6 +488,12 @@ namespace Elemental.Tests.PlayMode
                 primaryClip = primaryClip,
                 baseStateHash = sampledState.fullPathHash,
                 normalizedTime = sampledState.normalizedTime,
+                graphActive = sampledGraph != null && sampledGraph.IsActive,
+                inTransition = inTransition,
+                nextStateHash = nextState.fullPathHash,
+                nextNormalizedTime = nextState.normalizedTime,
+                nextPrimaryClip = ResolveDominantClipName(nextClips),
+                transitionNormalizedTime = transitionInfo.normalizedTime,
                 filteredTurn = sampledPresentation != null
                     ? sampledPresentation.FilteredTurn
                     : 0f,
@@ -427,11 +513,11 @@ namespace Elemental.Tests.PlayMode
             });
         }
 
-        private static string ResolveDominantClipName(AnimatorClipInfo[] clips)
+        private static string ResolveDominantClipName(IReadOnlyList<AnimatorClipInfo> clips)
         {
             AnimationClip dominant = null;
             float greatestWeight = float.NegativeInfinity;
-            for (int index = 0; index < clips.Length; index++)
+            for (int index = 0; index < clips.Count; index++)
             {
                 AnimationClip candidate = clips[index].clip;
                 if (candidate == null || clips[index].weight <= greatestWeight) continue;
@@ -565,6 +651,8 @@ namespace Elemental.Tests.PlayMode
             private PlanetMotor _motor;
             private HumanoidCharacterPresentation _presentation;
             private Animator _animator;
+            private EarthAnimationGraph _animationGraph;
+            private readonly List<AnimatorClipInfo> _clipInfoScratch = new(4);
             private Rigidbody _rootBody;
             private Transform _leftFoot;
             private Transform _rightFoot;
@@ -591,6 +679,9 @@ namespace Elemental.Tests.PlayMode
                 _presentation = configuredPresentation;
                 _animator = configuredPresentation != null
                     ? configuredPresentation.Animator
+                    : null;
+                _animationGraph = configuredPresentation != null
+                    ? configuredPresentation.AnimationGraph
                     : null;
                 _rootBody = configuredMotor != null
                     ? configuredMotor.GetComponent<Rigidbody>()
@@ -658,9 +749,9 @@ namespace Elemental.Tests.PlayMode
                 if (summary.MaximumAnkleStepDegrees > _maximumAnkleStep + 0.0001f)
                 {
                     _maximumAnkleStep = summary.MaximumAnkleStepDegrees;
-                    AnimatorStateInfo animatorState = _animator.GetCurrentAnimatorStateInfo(0);
-                    AnimatorClipInfo[] clips = _animator.GetCurrentAnimatorClipInfo(0);
-                    string clip = ResolveDominantClipName(clips);
+                    AnimatorStateInfo animatorState = GetCurrentStateInfo();
+                    GetCurrentClipInfo();
+                    string clip = ResolveDominantClipName(_clipInfoScratch);
                     MaximumAnkleDiagnostic =
                         $"time={Time.time:F3}; clip={clip}; state={animatorState.fullPathHash}; " +
                         $"foot={(leftAnkleStep >= rightAnkleStep ? "left" : "right")}; " +
@@ -685,15 +776,29 @@ namespace Elemental.Tests.PlayMode
 
             private string DescribeCurrentState(EarthFootContactController feet)
             {
-                AnimatorStateInfo animatorState = _animator.GetCurrentAnimatorStateInfo(0);
-                AnimatorClipInfo[] clips = _animator.GetCurrentAnimatorClipInfo(0);
-                string clip = ResolveDominantClipName(clips);
+                AnimatorStateInfo animatorState = GetCurrentStateInfo();
+                GetCurrentClipInfo();
+                string clip = ResolveDominantClipName(_clipInfoScratch);
                 return $"time={Time.time:F3}; clip={clip}; state={animatorState.fullPathHash}; " +
                        $"action={_presentation.CurrentAuthoredAction}; " +
                        $"policy={_presentation.CurrentFootPolicy}; " +
                        $"leftWeight={feet.LeftFootIkWeight:F3}; rightWeight={feet.RightFootIkWeight:F3}; " +
                        $"leftLocked={feet.LeftFootLocked}; rightLocked={feet.RightFootLocked}; " +
                        $"leftReason={feet.LeftReason}; rightReason={feet.RightReason}";
+            }
+
+            private AnimatorStateInfo GetCurrentStateInfo() =>
+                _animationGraph != null && _animationGraph.IsActive
+                    ? _animationGraph.GetCurrentAnimatorStateInfo(0)
+                    : _animator.GetCurrentAnimatorStateInfo(0);
+
+            private void GetCurrentClipInfo()
+            {
+                _clipInfoScratch.Clear();
+                if (_animationGraph != null && _animationGraph.IsActive)
+                    _animationGraph.GetCurrentAnimatorClipInfo(0, _clipInfoScratch);
+                else
+                    _animator.GetCurrentAnimatorClipInfo(0, _clipInfoScratch);
             }
 
             private static float3 ToFloat3(Vector3 value) =>
@@ -741,6 +846,12 @@ namespace Elemental.Tests.PlayMode
             public string primaryClip;
             public int baseStateHash;
             public float normalizedTime;
+            public bool graphActive;
+            public bool inTransition;
+            public int nextStateHash;
+            public float nextNormalizedTime;
+            public string nextPrimaryClip;
+            public float transitionNormalizedTime;
             public float filteredTurn;
             public float speed;
             public bool grounded;

@@ -123,6 +123,7 @@ namespace Elemental.Presentation.Animation
         public float FilteredSpeed => _speedFilter.Value;
         public float FilteredTurn => _turnFilter.Value;
         public float MeasuredYawRateDegrees { get; private set; }
+        public float MagicPresentationWeight => _castWeight;
         public EarthCharacterPoseController PoseController => poseController;
         public EarthFootContactController FootContactController => footContactController;
         public HumanoidProceduralBodyResponse ProceduralBodyResponse => proceduralBodyResponse;
@@ -131,6 +132,8 @@ namespace Elemental.Presentation.Animation
         public EarthAuthoredActionId CurrentAuthoredAction { get; private set; }
         public EarthAuthoredFootPolicy CurrentFootPolicy { get; private set; }
         public EarthDirectionalDodgeDecision LastDodgeDecision { get; private set; }
+        public EarthPhysicalActionRequest LastPhysicalActionRequest { get; private set; }
+        public uint AcceptedPhysicalActionCount { get; private set; }
         public bool IsDirectionalDodgeActive => Time.time < _dodgeUntil;
 
         public void Configure(
@@ -289,7 +292,22 @@ namespace Elemental.Presentation.Animation
         public void SetAnimationGraphProfile(EarthAnimationGraphProfile configuredProfile)
         {
             animationGraphProfile = configuredProfile;
-            ConfigureAnimationGraph();
+            if (Application.isPlaying)
+            {
+                ConfigureAnimationGraph();
+            }
+            else if (animator != null)
+            {
+                if (animationGraph == null)
+                    animationGraph = GetComponent<EarthAnimationGraph>();
+                if (animationGraph == null)
+                    animationGraph = gameObject.AddComponent<EarthAnimationGraph>();
+                animationGraph.ConfigureForAuthoring(
+                    animator,
+                    configuredProfile,
+                    footContactController,
+                    visibleRagdoll);
+            }
             ConfigureTransitionDirector();
         }
 
@@ -360,6 +378,19 @@ namespace Elemental.Presentation.Animation
             CharacterPhysicalMode presentationPhysicalMode = visibleRagdoll != null
                 ? visibleRagdoll.PhysicalAnimationMode
                 : _physicalMode;
+            if (presentationPhysicalMode == CharacterPhysicalMode.FullRagdoll)
+            {
+                // Physics is the sole visible pose owner in this mode. Publishing
+                // Locomotion/MagicCast while the controller output is intentionally
+                // inactive makes contact policy and telemetry contradict the pose.
+                CurrentAuthoredAction = EarthAuthoredActionId.None;
+                CurrentFootPolicy = EarthAuthoredFootPolicy.FlightIkOff;
+                footContactController?.SetAuthoredFootPolicy(CurrentFootPolicy);
+                _dodgeUntil = 0f;
+                _dodgeWasActive = false;
+                ResetMagicIK();
+                return;
+            }
             bool poseMatchedRecoveryOwnsBaseState =
                 presentationPhysicalMode == CharacterPhysicalMode.Recovery &&
                 visibleRagdoll != null &&
@@ -519,6 +550,14 @@ namespace Elemental.Presentation.Animation
             float targetWeight = casting && _physicalMode != CharacterPhysicalMode.FullRagdoll
                 ? (profile != null ? profile.HandIkWeight : 0.92f)
                 : 0f;
+            if (targetWeight > 0f)
+            {
+                float move01 = Mathf.InverseLerp(0.65f, 4.8f, tangentVelocity.magnitude);
+                float movingCastFloor = executor != null && executor.HeldBody != null
+                    ? 0.42f
+                    : 0.62f;
+                targetWeight *= Mathf.Lerp(1f, movingCastFloor, move01);
+            }
             float castingResponse = targetWeight > _castWeight
                 ? CastingBlendSeconds
                 : movementInterruptsRecovery
@@ -928,6 +967,41 @@ namespace Elemental.Presentation.Animation
                 _staggerInertializationPending = true;
             if (!HasProceduralImpactOwner && animator != null && animator.enabled)
                 SetAnimatorTrigger(ImpactHash);
+        }
+
+        /// <summary>
+        /// Semantic physical-animation egress. The powered solver never writes
+        /// Animator state; this presentation owner maps its bounded request onto
+        /// an existing authored action/overlay.
+        /// </summary>
+        public bool TryHandlePhysicalAction(in EarthPhysicalActionRequest request)
+        {
+            if (!request.IsValid) return false;
+            bool accepted;
+            if (request.Kind == EarthPhysicalActionKind.AuthoredRecoveryStep)
+            {
+                float side = request.Foot == EarthRecoveryFoot.Left
+                    ? -1f
+                    : request.Foot == EarthRecoveryFoot.Right
+                        ? 1f
+                        : 0f;
+                accepted = TryPlayDirectionalDodge(new Vector2(side, -0.25f));
+            }
+            else
+            {
+                accepted = request.Kind == EarthPhysicalActionKind.BraceAgainstSurface ||
+                           request.Kind == EarthPhysicalActionKind.ProtectHead ||
+                           request.Kind == EarthPhysicalActionKind.FallArrest ||
+                           request.Kind == EarthPhysicalActionKind.ReachForSupport;
+                if (accepted)
+                    NotifyImpactResponse(EarthCharacterImpactResponse.Flinch);
+            }
+            if (!accepted) return false;
+            LastPhysicalActionRequest = request;
+            AcceptedPhysicalActionCount = AcceptedPhysicalActionCount == uint.MaxValue
+                ? 1u
+                : AcceptedPhysicalActionCount + 1u;
+            return true;
         }
 
         /// <summary>

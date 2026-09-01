@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1f0c7e1d56a4f249bc92ea0bcf2a003, type: 3}
   m_Name: EarthAnimationGraphProfile
   m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.Animation.EarthAnimationGraphProfile
-  usePlayablesAnimationGraph: 0
-  usePoseInertialization: 0
-  positionHalfLifeSeconds: 0.075
-  rotationHalfLifeSeconds: 0.065
-  maximumDurationSeconds: 0.5
-  maximumPositionOffsetMeters: 0.5
-  maximumRotationOffsetDegrees: 150
-  maximumLinearVelocity: 15
-  maximumAngularVelocityRadians: 30
+  usePlayablesAnimationGraph: 1
+  usePoseInertialization: 1
+  positionHalfLifeSeconds: 0.065
+  rotationHalfLifeSeconds: 0.055
+  maximumDurationSeconds: 0.48
+  maximumPositionOffsetMeters: 0.42
+  maximumRotationOffsetDegrees: 135
+  maximumLinearVelocity: 12
+  maximumAngularVelocityRadians: 26

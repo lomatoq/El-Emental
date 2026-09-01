@@ -14,10 +14,12 @@ namespace Elemental.Presentation.Rendering
         private Material _debugMaterial;
         private bool _reportedInvalidSetup;
         private bool _reportedMissingDebugShader;
+        private int _invalidSetupFrames;
 
         public override void Create()
         {
             ClearGlobalState();
+            _invalidSetupFrames = 0;
             CoreUtils.Destroy(_debugMaterial);
             _debugMaterial = debugShader != null
                 ? CoreUtils.CreateEngineMaterial(debugShader)
@@ -39,6 +41,7 @@ namespace Elemental.Presentation.Rendering
                 renderingData.cameraData.renderType == CameraRenderType.Base;
             if (!requested)
             {
+                _invalidSetupFrames = 0;
                 ClearGlobalState();
                 return;
             }
@@ -59,6 +62,7 @@ namespace Elemental.Presentation.Rendering
                 return;
             }
 
+            _invalidSetupFrames = 0;
             _reportedInvalidSetup = false;
             renderer.EnqueuePass(_pass);
             if (settings.DebugView != CapsuleContactShadowDebugView.ShadowOnly)
@@ -81,6 +85,13 @@ namespace Elemental.Presentation.Rendering
 
         private void ReportInvalidSetupOnce()
         {
+            // Renderer features can run once before MonoBehaviour.Start admits
+            // the two persistent duel actors. Treat that startup frame as normal
+            // lifecycle ordering, while retaining the hard error for a genuinely
+            // missing producer on subsequent frames.
+            _invalidSetupFrames++;
+            if (_invalidSetupFrames < 30)
+                return;
             if (_reportedInvalidSetup)
                 return;
             _reportedInvalidSetup = true;

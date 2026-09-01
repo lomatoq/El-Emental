@@ -210,6 +210,7 @@ namespace Elemental.Authoring.Editor
             var hashes = new HashSet<int>();
             var paths = new HashSet<string>(StringComparer.Ordinal);
             bool locomotion = false;
+            bool jump = false;
             bool cast = false;
             bool impact = false;
             bool recovery = false;
@@ -261,15 +262,53 @@ namespace Elemental.Authoring.Editor
                 }
 
                 locomotion |= binding.SemanticRole == EarthMotionSemanticAction.Locomotion;
+                if (binding.SemanticRole == EarthMotionSemanticAction.Jump)
+                {
+                    jump = true;
+                    ValidateExactJumpBinding(catalog, binding, errors, ref issues);
+                }
                 cast |= binding.SemanticRole == EarthMotionSemanticAction.Cast;
                 impact |= binding.SemanticRole == EarthMotionSemanticAction.Impact;
                 recovery |= binding.SemanticRole == EarthMotionSemanticAction.Recovery;
             }
 
             RequireRole(locomotion, "locomotion", errors, ref issues);
+            RequireRole(jump, "jump", errors, ref issues);
             RequireRole(cast, "cast", errors, ref issues);
             RequireRole(impact, "hit/impact", errors, ref issues);
             RequireRole(recovery, "recovery", errors, ref issues);
+        }
+
+        private static void ValidateExactJumpBinding(
+            EarthMotionCatalog catalog,
+            EarthMotionStateBinding binding,
+            List<string> errors,
+            ref EarthMotionCatalogValidationIssue issues)
+        {
+            if (binding.ClipProfileCount == 1)
+            {
+                int profileIndex = binding.ClipProfileIndexAt(0);
+                if (profileIndex >= 0 && profileIndex < catalog.ClipCount)
+                {
+                    EarthMotionClipProfile profile = catalog.ClipAt(profileIndex);
+                    if (profile?.Clip != null &&
+                        string.Equals(
+                            profile.SourceAssetPath,
+                            EarthHumanoidMotionSetup.KayKitMovementBasicPath,
+                            StringComparison.Ordinal) &&
+                        string.Equals(
+                            profile.Clip.name,
+                            EarthHumanoidMotionSetup.JumpStartClipName,
+                            StringComparison.Ordinal))
+                        return;
+                }
+            }
+
+            issues |= EarthMotionCatalogValidationIssue.InvalidStateBinding;
+            errors?.Add(
+                $"Controller-state binding '{binding.StatePath}' must resolve only the exact " +
+                $"licensed clip '{EarthHumanoidMotionSetup.JumpStartClipName}' from " +
+                $"'{EarthHumanoidMotionSetup.KayKitMovementBasicPath}'.");
         }
 
         private static void RequireRole(

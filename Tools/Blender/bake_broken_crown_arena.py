@@ -24,6 +24,8 @@ from typing import Iterable
 import bmesh
 import bpy
 from mathutils import Matrix, Vector
+from mathutils.bvhtree import BVHTree
+from mathutils.geometry import barycentric_transform
 
 
 SCHEMA_VERSION = 1
@@ -49,6 +51,7 @@ GENERATED_TAG = "arena_generated"
 SOURCE_NAME_TAG = "arena_source_name"
 SEAM_LAYER_NAME = "earth_seam_id"
 SEAM_SIDE_LAYER_NAME = "earth_seam_side"
+FRACTURE_BEVEL_MODIFIER_NAME = "Earth Fracture Micro Bevel"
 
 
 @dataclass(frozen=True)
@@ -698,28 +701,111 @@ def create_mesh_object(
     centroid = bmesh_centroid(bm)
     for vertex in bm.verts:
         vertex.co -= centroid
+
+    # The cut cap is a separate normal island.  Previously every cap stayed
+    # smooth-connected to the weathered exterior, so a proxy swap changed the
+    # exterior vertex normals and made a moving dark band crawl over the piece.
+    # Keep source smoothing on material 0, but make every fresh-cut face and its
+    # boundary hard before the render mesh is materialized.
+    for face in bm.faces:
+        if face.material_index == 1:
+            face.smooth = False
+    for edge in bm.edges:
+        materials = {face.material_index for face in edge.link_faces}
+        if 1 in materials or len(materials) > 1:
+            edge.smooth = False
+
     mesh = bpy.data.meshes.new(f"{name}_Mesh")
     mesh[GENERATED_TAG] = True
     bm.to_mesh(mesh)
     mesh.materials.append(surface_material)
     mesh.materials.append(interior_material)
+    # Export the fracture mask on POINT rather than CORNER.  The FBX exporter
+    # evaluates the render-only bevel below; a corner-domain layer can be lost
+    # or end up shorter than the evaluated vertex buffer when that modifier
+    # creates chamfer loops.  A point layer is interpolated onto those vertices
+    # and therefore reaches Unity as one Color32 per imported vertex.
     color_layer = mesh.color_attributes.new(
-        name="EarthFaceMask", type="BYTE_COLOR", domain="CORNER"
+        name="EarthFaceMask", type="BYTE_COLOR", domain="POINT"
     )
+    exterior_color = (1.0, 0.0, 0.0, 0.11)
+    interior_color = (0.0, 1.0, 0.0, 0.58)
+    for datum in color_layer.data:
+        if hasattr(datum, "color_srgb"):
+            datum.color_srgb = exterior_color
+        else:
+            datum.color = exterior_color
     for polygon in mesh.polygons:
-        color = (0.0, 1.0, 0.0, 0.58) if polygon.material_index == 1 else (1.0, 0.0, 0.0, 0.11)
-        for loop_index in polygon.loop_indices:
-            datum = color_layer.data[loop_index]
+        if polygon.material_index != 1:
+            continue
+        for vertex_index in polygon.vertices:
+            datum = color_layer.data[vertex_index]
             if hasattr(datum, "color_srgb"):
-                datum.color_srgb = color
+                datum.color_srgb = interior_color
             else:
-                datum.color = color
+                datum.color = interior_color
     mesh.color_attributes.active_color_index = len(mesh.color_attributes) - 1
     mesh.update()
+
+    # Re-project exterior loop normals from the intact authored mesh.  New cut
+    # loops deliberately use their flat cap normal.  This makes the unbroken and
+    # fractured proxies shade identically everywhere except the actual fracture.
+    source_mesh = source.data
+    source_mesh.calc_loop_triangles()
+    source_vertices = [vertex.co.copy() for vertex in source_mesh.vertices]
+    source_triangles = [tuple(triangle.vertices) for triangle in source_mesh.loop_triangles]
+    source_tree = BVHTree.FromPolygons(source_vertices, source_triangles, all_triangles=True)
+    custom_normals = [(0.0, 0.0, 1.0)] * len(mesh.loops)
+    for polygon in mesh.polygons:
+        interior = polygon.material_index == 1
+        polygon.use_smooth = not interior
+        for loop_index in polygon.loop_indices:
+            if interior:
+                custom_normals[loop_index] = tuple(polygon.normal.normalized())
+                continue
+            local_point = mesh.vertices[mesh.loops[loop_index].vertex_index].co + centroid
+            nearest = source_tree.find_nearest(local_point)
+            if nearest is None or nearest[2] is None:
+                custom_normals[loop_index] = tuple(polygon.normal.normalized())
+                continue
+            triangle = source_mesh.loop_triangles[int(nearest[2])]
+            source_polygon = source_mesh.polygons[triangle.polygon_index]
+            if not source_polygon.use_smooth:
+                custom_normals[loop_index] = tuple(source_polygon.normal.normalized())
+                continue
+            a, b, c = (source_mesh.vertices[index] for index in triangle.vertices)
+            sampled = barycentric_transform(
+                nearest[0], a.co, b.co, c.co, a.normal, b.normal, c.normal
+            )
+            if sampled.length_squared <= 1e-10:
+                sampled = source_polygon.normal.copy()
+            else:
+                sampled.normalize()
+            custom_normals[loop_index] = tuple(sampled)
+    if len(custom_normals) == len(mesh.loops):
+        mesh.normals_split_custom_set(custom_normals)
+    mesh.update()
+
     obj = bpy.data.objects.new(name, mesh)
     obj[GENERATED_TAG] = True
     collection.objects.link(obj)
     obj.matrix_world = source.matrix_world @ Matrix.Translation(centroid)
+
+    # A one-segment physical chamfer gives the fracture rim a readable highlight
+    # and keeps wall/column chunks from looking like raw boolean output.  The
+    # collider is built from the unmodified closed mesh below; only the render
+    # export consumes this bounded bevel.
+    _, _, dimensions = bounds_for_mesh(mesh)
+    minimum_dimension = max(0.001, min(abs(value) for value in dimensions))
+    bevel = obj.modifiers.new(FRACTURE_BEVEL_MODIFIER_NAME, "BEVEL")
+    bevel.width = max(0.006, min(0.028, minimum_dimension * 0.035))
+    bevel.segments = 1
+    bevel.limit_method = "ANGLE"
+    bevel.angle_limit = math.radians(24.0)
+    if hasattr(bevel, "affect"):
+        bevel.affect = "EDGES"
+    if hasattr(bevel, "harden_normals"):
+        bevel.harden_normals = True
     obj.hide_render = True
     obj.hide_set(True)
     return obj

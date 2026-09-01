@@ -242,7 +242,7 @@ namespace Elemental.Tests.EditMode
             var session = new EarthQuickStoneSession(in data);
             Assert.That(session.TryPrime(10f, 42u), Is.True);
             Assert.That(session.TryFire(10.18f, out float speed), Is.True);
-            Assert.That(speed, Is.InRange(60f, 76f));
+            Assert.That(speed, Is.InRange(75f, 95f));
             session.Reset();
             session.TryPrime(20f, 43u);
             Assert.That(session.ExpireIfNeeded(20.421f), Is.True);
@@ -262,7 +262,7 @@ namespace Elemental.Tests.EditMode
             Assert.That(session.HasBufferedFire, Is.True);
             Assert.That(session.TryConsumeBufferedFire(2.149f, out _), Is.False);
             Assert.That(session.TryConsumeBufferedFire(2.151f, out float launchSpeed), Is.True);
-            Assert.That(launchSpeed, Is.InRange(60f, 76f));
+            Assert.That(launchSpeed, Is.InRange(75f, 95f));
             Assert.That(session.State, Is.EqualTo(EarthQuickStoneState.Fired));
         }
 
@@ -281,7 +281,7 @@ namespace Elemental.Tests.EditMode
                 "A staged SDF transaction must not consume the double-click window.");
             Assert.That(session.HasBufferedFire, Is.True);
             Assert.That(session.TryConsumeBufferedFire(3.96f, out float speed), Is.True);
-            Assert.That(speed, Is.InRange(60f, 76f));
+            Assert.That(speed, Is.InRange(75f, 95f));
         }
 
         [Test]

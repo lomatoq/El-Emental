@@ -287,7 +287,10 @@ namespace Elemental.Presentation.Animation
             // Animator.Play queues the state change until the graph evaluates.
             // This method is the sole immediate base-state writer, so complete
             // that evaluation before returning to ordered handoff observers.
-            animator.Update(0f);
+            if (animationGraph != null && animationGraph.IsActive)
+                animationGraph.Evaluate(0f);
+            else
+                animator.Update(0f);
             CaptureOwnedBaseStatePhase();
             ImmediateEvaluationSequence = ImmediateEvaluationSequence == uint.MaxValue
                 ? 1u
@@ -304,10 +307,10 @@ namespace Elemental.Presentation.Animation
                 return;
             }
 
-            AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+            AnimatorStateInfo current = GetCurrentStateInfo(0);
             bool currentOwned = current.fullPathHash == _ownedBaseStateHash;
-            bool leavingOwnedState = animator.IsInTransition(0) &&
-                                     animator.GetNextAnimatorStateInfo(0).fullPathHash !=
+            bool leavingOwnedState = IsInTransition(0) &&
+                                     GetNextStateInfo(0).fullPathHash !=
                                      _ownedBaseStateHash;
             if (currentOwned && !leavingOwnedState)
             {
@@ -495,13 +498,11 @@ namespace Elemental.Presentation.Animation
 
             using (QueueMarker.Auto())
             {
-                AnimatorStateInfo state = animationGraph != null
-                    ? animationGraph.GetCurrentAnimatorStateInfo(0)
-                    : animator.GetCurrentAnimatorStateInfo(0);
+                AnimatorStateInfo state = GetCurrentStateInfo(0);
                 EarthMotionStateId sourceState = _activeState;
                 float sourcePhase = Mathf.Repeat(state.normalizedTime, 1f);
                 bool mayInterrupt = !_hasCanExitParameter ||
-                                    animator.GetFloat(CanExitHash) >= 0.5f;
+                                    GetFloat(CanExitHash) >= 0.5f;
                 EarthTransitionQueueGate gate = new EarthTransitionQueueGate(
                     sourceState,
                     sourcePhase,
@@ -586,7 +587,7 @@ namespace Elemental.Presentation.Animation
             if (_baseStateOwnerMode != CharacterPhysicalMode.Recovery ||
                 animator == null || !animator.enabled)
                 return;
-            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+            AnimatorStateInfo state = GetCurrentStateInfo(0);
             if (state.fullPathHash != _ownedBaseStateHash) return;
             _ownedBaseStatePhase = Mathf.Repeat(state.normalizedTime, 1f);
             _hasOwnedBaseStatePhase = true;
@@ -621,9 +622,9 @@ namespace Elemental.Presentation.Animation
                      layerIndex < _runtimeLayerCount;
                      layerIndex++)
                 {
-                    AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(layerIndex);
+                    AnimatorStateInfo state = GetCurrentStateInfo(layerIndex);
                     _clipInfoScratch.Clear();
-                    animator.GetCurrentAnimatorClipInfo(layerIndex, _clipInfoScratch);
+                    GetCurrentClipInfo(layerIndex, _clipInfoScratch);
                     AnimationClip dominantClip = null;
                     float dominantWeight = float.NegativeInfinity;
                     for (int clipIndex = 0;
@@ -722,6 +723,34 @@ namespace Elemental.Presentation.Animation
             _dequeuedExecutionCount = 0u;
             _queueRejectionCount = 0u;
             ResetPairCatalogBinding();
+        }
+
+        private AnimatorStateInfo GetCurrentStateInfo(int layer) =>
+            animationGraph != null && animationGraph.IsActive
+                ? animationGraph.GetCurrentAnimatorStateInfo(layer)
+                : animator != null ? animator.GetCurrentAnimatorStateInfo(layer) : default;
+
+        private AnimatorStateInfo GetNextStateInfo(int layer) =>
+            animationGraph != null && animationGraph.IsActive
+                ? animationGraph.GetNextAnimatorStateInfo(layer)
+                : animator != null ? animator.GetNextAnimatorStateInfo(layer) : default;
+
+        private bool IsInTransition(int layer) =>
+            animationGraph != null && animationGraph.IsActive
+                ? animationGraph.IsInTransition(layer)
+                : animator != null && animator.IsInTransition(layer);
+
+        private float GetFloat(int parameterHash) =>
+            animationGraph != null && animationGraph.IsActive
+                ? animationGraph.GetFloat(parameterHash)
+                : animator != null ? animator.GetFloat(parameterHash) : 0f;
+
+        private void GetCurrentClipInfo(int layer, List<AnimatorClipInfo> results)
+        {
+            if (animationGraph != null && animationGraph.IsActive)
+                animationGraph.GetCurrentAnimatorClipInfo(layer, results);
+            else
+                animator?.GetCurrentAnimatorClipInfo(layer, results);
         }
 
         [System.Diagnostics.Conditional("UNITY_EDITOR")]

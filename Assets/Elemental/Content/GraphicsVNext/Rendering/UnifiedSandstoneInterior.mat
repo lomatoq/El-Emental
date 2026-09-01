@@ -12,14 +12,15 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
-  m_InvalidKeywords: []
+  m_InvalidKeywords:
+  - _RECEIVESSAO_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties:
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -34,6 +35,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _AmbientStrength: 0.78
+    - _Cutoff: 0.5
     - _Fade: 1
     - _FractureMappingEnabled: 0
     - _MagicAmount: 0
@@ -44,13 +46,14 @@ Material:
     - _Roughness: 0.92
     - _ShadowFloor: 0.6
     - _SpecularStrength: 0.022
+    - _Surface: 0
     - _SurfaceMode: 0
     - _TextureScale: 0.22
     - _TextureStrength: 0
     - _TriplanarSharpness: 4
     - _UsePlanetFrame: 0
     m_Colors:
-    - _BaseColor: {r: 0.44, g: 0.36, b: 0.3, a: 1}
+    - _BaseColor: {r: 0.7735849, g: 0.49585658, b: 0.27367392, a: 1}
     - _EdgeColor: {r: 0.52, g: 0.46, b: 0.41, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 0}
     - _FractureColor: {r: 0.44, g: 0.36, b: 0.3, a: 1}

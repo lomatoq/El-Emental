@@ -12,7 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee8f47c5b33b46c295fe5805227a86b3, type: 3}
   m_Name: DuelRenderingProfile
   m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.Rendering.DuelRenderingProfile
-  useDuelShadowMap: 0
+  arenaExteriorMaterial: {fileID: 2100000, guid: 52b5c2afc99c10b4f8ffe479b6825c91, type: 2}
+  arenaInteriorMaterial: {fileID: 2100000, guid: 2fdc298a1879d76499f37135381a7f05, type: 2}
+  planetSurfaceMaterial: {fileID: 2100000, guid: f585b44d427b05141a2ce7f5ba83f9cd, type: 2}
+  renderRealtimeDirectionalShadows: 1
+  sunShadowType: 2
+  sunShadowStrength: 0.417
+  arenaShadowCastingMode: 2
+  arenaReceiveShadows: 1
+  planetShadowCastingMode: 1
+  planetReceiveShadows: 1
+  useDuelShadowMap: 1
   duelShadows:
     qualityTier: 1
     maximumCasterCount: 160
@@ -31,7 +41,7 @@ MonoBehaviour:
     constantDepthBias: 0.8
     slopeDepthBias: 1.8
     debugView: 0
-  useCapsuleContactShadows: 0
+  useCapsuleContactShadows: 1
   capsuleContactShadows:
     qualityTier: 1
     maximumCasterCount: 12
