@@ -113,9 +113,11 @@ namespace Elemental.Tests.EditMode
                 Assert.That(buffer.TryRegister(
                     Record(hero.Caster, 8u, 0u, CapsuleShadowCasterClass.HeroRock),
                     out _), Is.True);
+                Assert.That(buffer.TryCommitGeneration(8u, 0u), Is.True);
                 Assert.That(buffer.TryRegister(
                     Record(character.Caster, 9u, 0u, CapsuleShadowCasterClass.Character),
                     out _), Is.True);
+                Assert.That(buffer.TryCommitGeneration(9u, 0u), Is.True);
                 Assert.That(buffer.CopyActiveProxies(
                     startRadius,
                     endSoftness,
@@ -199,6 +201,81 @@ namespace Elemental.Tests.EditMode
                 token.Dispose();
             }
             Assert.That(CapsuleContactShadowCaptureOverride.IsActive, Is.False);
+        }
+
+        [Test]
+        public void NewAndReleasedGroupsStayInactiveUntilExplicitCommit()
+        {
+            const uint groupId = 0xF9000001u;
+            const uint firstGeneration = 0xE9000001u;
+            const uint nextGeneration = 0xE9000002u;
+            CasterFixture fixture = CreateCaster("Explicit Commit", Vector3.zero);
+            var buffer = new CapsuleShadowBuffer(2, 2);
+            try
+            {
+                Assert.That(buffer.TryRegister(
+                    Record(fixture.Caster, groupId, firstGeneration),
+                    out CapsuleShadowRegistrationHandle first), Is.True);
+                Assert.That(buffer.IsGenerationActive(first), Is.False);
+                Assert.That(buffer.TryCommitGeneration(groupId, firstGeneration), Is.True);
+                Assert.That(buffer.IsGenerationActive(first), Is.True);
+                Assert.That(buffer.Unregister(first), Is.True);
+                Assert.That(buffer.TryReleaseGroup(groupId, firstGeneration), Is.True);
+
+                Assert.That(buffer.TryRegister(
+                    Record(fixture.Caster, groupId, firstGeneration),
+                    out CapsuleShadowRegistrationHandle stale), Is.True);
+                Assert.That(buffer.IsGenerationActive(stale), Is.False,
+                    "A stale pooled bind after group release must not resurrect itself.");
+                Assert.That(buffer.TryCommitGeneration(groupId, firstGeneration), Is.False,
+                    "A released epoch must remain a tombstone for explicit stale commits.");
+                Assert.That(buffer.Unregister(stale), Is.True);
+                Assert.That(buffer.TryRegister(
+                    Record(fixture.Caster, groupId, nextGeneration),
+                    out CapsuleShadowRegistrationHandle next), Is.True);
+                Assert.That(buffer.IsGenerationActive(next), Is.False);
+                Assert.That(buffer.TryCommitGeneration(groupId, nextGeneration), Is.True);
+                Assert.That(buffer.IsGenerationActive(next), Is.True);
+            }
+            finally
+            {
+                fixture.Dispose();
+            }
+        }
+
+        [Test]
+        public void OwnershipClassificationIsTypedAndFailsClosed()
+        {
+            AssertIdentity(CapsuleShadowProducerKind.Player, CapsuleShadowCasterClass.Character);
+            AssertIdentity(CapsuleShadowProducerKind.OpponentBot, CapsuleShadowCasterClass.Character);
+            AssertIdentity(CapsuleShadowProducerKind.Ragdoll, CapsuleShadowCasterClass.Character);
+            AssertIdentity(CapsuleShadowProducerKind.IntactHeroRock, CapsuleShadowCasterClass.HeroRock);
+            AssertIdentity(
+                CapsuleShadowProducerKind.LargeActiveFracture,
+                CapsuleShadowCasterClass.ActiveFragment);
+            Assert.That(CapsuleShadowOwnershipPolicy.TryCreateIdentity(
+                CapsuleShadowProducerKind.Debris, 91u, 7u, out _), Is.False);
+            Assert.That(CapsuleShadowOwnershipPolicy.TryCreateIdentity(
+                CapsuleShadowProducerKind.Vfx, 91u, 7u, out _), Is.False);
+            Assert.That(CapsuleShadowOwnershipPolicy.TryCreateIdentity(
+                CapsuleShadowProducerKind.Player, 0u, 7u, out _), Is.False);
+            Assert.That(new CapsuleShadowCasterIdentity(
+                91u, 7u, CapsuleShadowCasterClass.TinyDebris).IsValid, Is.False);
+            Assert.That(new CapsuleShadowCasterIdentity(
+                91u, 7u, CapsuleShadowCasterClass.Vfx).IsValid, Is.False);
+        }
+
+        private static void AssertIdentity(
+            CapsuleShadowProducerKind producer,
+            CapsuleShadowCasterClass expectedClass)
+        {
+            Assert.That(CapsuleShadowOwnershipPolicy.TryCreateIdentity(
+                producer, 0xF0000091u, 0xE0000007u,
+                out CapsuleShadowCasterIdentity identity), Is.True);
+            Assert.That(identity.IsValid, Is.True);
+            Assert.That(identity.StableGroupId, Is.EqualTo(0xF0000091u));
+            Assert.That(identity.Generation, Is.EqualTo(0xE0000007u));
+            Assert.That(identity.Classification, Is.EqualTo(expectedClass));
         }
 
         private static CapsuleContactShadowRuntimeSettings Settings(int maximumCasters)

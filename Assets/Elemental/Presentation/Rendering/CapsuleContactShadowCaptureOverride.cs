@@ -64,6 +64,7 @@ namespace Elemental.Presentation.Rendering
                 return;
             s_Active = false;
             s_Settings = default;
+            CapsuleContactShadowFeature.ClearGlobalState();
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -72,6 +73,7 @@ namespace Elemental.Presentation.Rendering
             s_Active = false;
             s_Revision = 0u;
             s_Settings = default;
+            CapsuleContactShadowFeature.ClearGlobalState();
         }
     }
 }

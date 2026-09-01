@@ -72,7 +72,8 @@ namespace Elemental.Presentation.Rendering
                     rejectedProxyCount,
                     buffer.CapacityRejectCount,
                     buffer.GenerationRejectCount,
-                    settings.MaximumContactDistance));
+                    settings.MaximumContactDistance,
+                    _proxyCount > 0 ? settings.ShadowStrength : 0f));
             return _proxyCount > 0;
         }
 

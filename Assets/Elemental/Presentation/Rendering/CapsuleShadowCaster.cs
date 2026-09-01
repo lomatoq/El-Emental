@@ -83,7 +83,8 @@ namespace Elemental.Presentation.Rendering
         public CapsuleShadowCasterClass Classification => _hasRuntimeBinding
             ? _runtimeClassification
             : classification;
-        public bool HasValidBinding => StableGroupId != 0u;
+        public bool HasValidBinding => StableGroupId != 0u &&
+            CapsuleShadowCasterPolicy.IsAdmittedClassification(Classification);
         public bool HasRuntimeBinding => _hasRuntimeBinding;
         public int ProxyCount => proxies != null
             ? Mathf.Min(proxies.Length, MaximumProxiesPerCaster)
@@ -110,10 +111,12 @@ namespace Elemental.Presentation.Rendering
         {
             Unregister();
             ClearRuntimeBinding();
-            if (groupId == 0u)
+            if (groupId == 0u ||
+                !CapsuleShadowCasterPolicy.IsAdmittedClassification(currentClassification))
             {
                 Debug.LogError(
-                    $"{nameof(CapsuleShadowCaster)} on '{name}' rejected stable group ID 0.",
+                    $"{nameof(CapsuleShadowCaster)} on '{name}' rejected invalid identity " +
+                    $"or excluded classification '{currentClassification}'.",
                     this);
                 return false;
             }

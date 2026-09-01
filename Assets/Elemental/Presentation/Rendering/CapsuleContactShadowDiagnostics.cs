@@ -16,7 +16,8 @@ namespace Elemental.Presentation.Rendering
             int rejectedProxyCount,
             int capacityRejectCount,
             int generationRejectCount,
-            float maximumContactDistance)
+            float maximumContactDistance,
+            float shadowStrength)
         {
             FeatureRequested = featureRequested;
             BufferUploaded = bufferUploaded;
@@ -30,6 +31,7 @@ namespace Elemental.Presentation.Rendering
             CapacityRejectCount = capacityRejectCount;
             GenerationRejectCount = generationRejectCount;
             MaximumContactDistance = maximumContactDistance;
+            ShadowStrength = shadowStrength;
         }
 
         public bool FeatureRequested { get; }
@@ -44,6 +46,7 @@ namespace Elemental.Presentation.Rendering
         public int CapacityRejectCount { get; }
         public int GenerationRejectCount { get; }
         public float MaximumContactDistance { get; }
+        public float ShadowStrength { get; }
 
         public CapsuleContactShadowDiagnosticsSnapshot WithUploadedBuffer()
         {
@@ -59,7 +62,8 @@ namespace Elemental.Presentation.Rendering
                 RejectedProxyCount,
                 CapacityRejectCount,
                 GenerationRejectCount,
-                MaximumContactDistance);
+                MaximumContactDistance,
+                ShadowStrength);
         }
 
         public CapsuleContactShadowDiagnosticsSnapshot WithRenderedDebugView()
@@ -76,7 +80,8 @@ namespace Elemental.Presentation.Rendering
                 RejectedProxyCount,
                 CapacityRejectCount,
                 GenerationRejectCount,
-                MaximumContactDistance);
+                MaximumContactDistance,
+                ShadowStrength);
         }
     }
 
@@ -117,6 +122,7 @@ namespace Elemental.Presentation.Rendering
                 0,
                 buffer.CapacityRejectCount,
                 buffer.GenerationRejectCount,
+                0f,
                 0f);
         }
     }

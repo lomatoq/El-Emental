@@ -20,13 +20,22 @@ namespace Elemental.Tests.PlayMode
                 yield return null;
                 Assert.That(fixture.Caster.HasValidBinding, Is.False);
                 Assert.That(fixture.Caster.IsRegistered, Is.False);
-                Assert.That(Bind(
-                    binder,
+                Assert.That(binder.TryAcquire(
                     fixture.Caster,
+                    CapsuleShadowProducerKind.Player,
                     groupId,
-                    generation,
-                    CapsuleShadowCasterClass.Character), Is.True);
+                    generation), Is.True);
                 Assert.That(fixture.Caster.IsRegistered, Is.True);
+                Assert.That(fixture.Caster.IsActiveGeneration, Is.False);
+                Assert.That(binder.CommitGeneration(groupId, generation), Is.True);
+                Assert.That(fixture.Caster.IsActiveGeneration, Is.True);
+                binder.ReleaseAcquisition(fixture.Caster);
+                Assert.That(fixture.Caster.IsRegistered, Is.False);
+                Assert.That(binder.TryAcquire(
+                    fixture.Caster,
+                    CapsuleShadowProducerKind.Player,
+                    groupId,
+                    generation), Is.True);
                 Assert.That(fixture.Caster.IsActiveGeneration, Is.True);
 
                 fixture.Root.SetActive(false);
@@ -36,12 +45,11 @@ namespace Elemental.Tests.PlayMode
                 yield return null;
                 Assert.That(fixture.Caster.IsRegistered, Is.False,
                     "Pool re-enable must not restore the previous acquisition.");
-                Assert.That(Bind(
-                    binder,
+                Assert.That(binder.TryAcquire(
                     fixture.Caster,
+                    CapsuleShadowProducerKind.Player,
                     groupId,
-                    generation,
-                    CapsuleShadowCasterClass.Character), Is.True);
+                    generation), Is.True);
                 Assert.That(fixture.Caster.IsRegistered, Is.True);
             }
             finally
@@ -118,6 +126,8 @@ namespace Elemental.Tests.PlayMode
                     groupId,
                     intactGeneration,
                     CapsuleShadowCasterClass.HeroRock), Is.True);
+                Assert.That(intact.Caster.IsActiveGeneration, Is.False);
+                Assert.That(binder.CommitGeneration(groupId, intactGeneration), Is.True);
                 Assert.That(Bind(
                     binder,
                     fragmentA.Caster,
@@ -165,12 +175,14 @@ namespace Elemental.Tests.PlayMode
                     oldGroup,
                     generation,
                     CapsuleShadowCasterClass.Character), Is.True);
+                Assert.That(binder.CommitGeneration(oldGroup, generation), Is.True);
                 Assert.That(Bind(
                     binder,
                     fixture.Caster,
                     nextGroup,
                     generation,
                     CapsuleShadowCasterClass.Character), Is.True);
+                Assert.That(binder.CommitGeneration(nextGroup, generation), Is.True);
                 Assert.That(Bind(
                     binder,
                     fixture.Caster,
@@ -190,6 +202,59 @@ namespace Elemental.Tests.PlayMode
             {
                 Cleanup(fixture, binder, nextGroup, generation);
             }
+        }
+
+        [UnityTest]
+        public IEnumerator FeatureAndCaptureTeardownClearGlobalsWithoutAnotherCameraFrame()
+        {
+            CapsuleContactShadowFeature feature =
+                ScriptableObject.CreateInstance<CapsuleContactShadowFeature>();
+            CapsuleContactShadowCaptureOverride.Token token = default;
+            try
+            {
+                SetNonzeroGlobals();
+                feature.Create();
+                AssertGlobalsCleared();
+
+                Assert.That(CapsuleContactShadowCaptureOverride.TryBegin(
+                    Settings(), out token, out string failure), Is.True, failure);
+                SetNonzeroGlobals();
+                token.Dispose();
+                token = default;
+                AssertGlobalsCleared();
+
+                SetNonzeroGlobals();
+                Object.DestroyImmediate(feature);
+                feature = null;
+                AssertGlobalsCleared();
+                Assert.That(CapsuleContactShadowDiagnostics.Current.ShadowStrength, Is.Zero);
+            }
+            finally
+            {
+                token.Dispose();
+                if (feature != null)
+                    Object.DestroyImmediate(feature);
+                CapsuleContactShadowFeature.ClearGlobalState();
+            }
+            yield return null;
+        }
+
+        private static void SetNonzeroGlobals()
+        {
+            Shader.SetGlobalVector(
+                CapsuleContactShadowRenderPass.ShadowParamsId,
+                new Vector4(1f, 0.7f, 1.25f, 3f));
+            Shader.SetGlobalVector(
+                CapsuleContactShadowRenderPass.BiasDebugParamsId,
+                new Vector4(0.02f, 0.03f, 1f, 0f));
+        }
+
+        private static void AssertGlobalsCleared()
+        {
+            Assert.That(Shader.GetGlobalVector(
+                CapsuleContactShadowRenderPass.ShadowParamsId), Is.EqualTo(Vector4.zero));
+            Assert.That(Shader.GetGlobalVector(
+                CapsuleContactShadowRenderPass.BiasDebugParamsId), Is.EqualTo(Vector4.zero));
         }
 
         private static bool Bind(

@@ -14,6 +14,14 @@ namespace Elemental.Presentation.Rendering
 
     public static class CapsuleShadowCasterPolicy
     {
+        public static bool IsAdmittedClassification(
+            CapsuleShadowCasterClass classification)
+        {
+            return classification == CapsuleShadowCasterClass.Character ||
+                classification == CapsuleShadowCasterClass.HeroRock ||
+                classification == CapsuleShadowCasterClass.ActiveFragment;
+        }
+
         public static bool IsIncluded(
             CapsuleShadowCasterClass classification,
             float worldDiameter,
@@ -108,6 +116,8 @@ namespace Elemental.Presentation.Rendering
         private struct GenerationState
         {
             public bool Used;
+            public bool HasActiveGeneration;
+            public bool HasCommittedGeneration;
             public uint StableGroupId;
             public uint ActiveGeneration;
         }
@@ -158,7 +168,9 @@ namespace Elemental.Presentation.Rendering
             out CapsuleShadowRegistrationHandle handle)
         {
             handle = CapsuleShadowRegistrationHandle.Invalid;
-            if (record.Caster == null || record.StableGroupId == 0u)
+            if (record.Caster == null || record.StableGroupId == 0u ||
+                !CapsuleShadowCasterPolicy.IsAdmittedClassification(
+                    record.Classification))
                 return false;
 
             int generationIndex = FindGeneration(record.StableGroupId);
@@ -175,7 +187,9 @@ namespace Elemental.Presentation.Rendering
                 {
                     Used = true,
                     StableGroupId = record.StableGroupId,
-                    ActiveGeneration = record.Generation
+                    HasActiveGeneration = false,
+                    HasCommittedGeneration = false,
+                    ActiveGeneration = 0u
                 };
                 createdGenerationState = true;
             }
@@ -227,7 +241,16 @@ namespace Elemental.Presentation.Rendering
                 return false;
             }
             GenerationState state = _generationStates[generationIndex];
+            if (state.HasCommittedGeneration &&
+                !(state.HasActiveGeneration && state.ActiveGeneration == generation) &&
+                !IsSerialNewer(generation, state.ActiveGeneration))
+            {
+                _generationRejectCount++;
+                return false;
+            }
             state.ActiveGeneration = generation;
+            state.HasActiveGeneration = true;
+            state.HasCommittedGeneration = true;
             _generationStates[generationIndex] = state;
             return true;
         }
@@ -236,10 +259,13 @@ namespace Elemental.Presentation.Rendering
         {
             int generationIndex = FindGeneration(stableGroupId);
             if (generationIndex < 0 ||
+                !_generationStates[generationIndex].HasActiveGeneration ||
                 _generationStates[generationIndex].ActiveGeneration != committedGeneration ||
                 HasAnyEntry(stableGroupId))
                 return false;
-            _generationStates[generationIndex] = default;
+            GenerationState state = _generationStates[generationIndex];
+            state.HasActiveGeneration = false;
+            _generationStates[generationIndex] = state;
             return true;
         }
 
@@ -372,7 +398,9 @@ namespace Elemental.Presentation.Rendering
         private bool IsActiveGeneration(uint stableGroupId, uint generation)
         {
             int index = FindGeneration(stableGroupId);
-            return index >= 0 && _generationStates[index].ActiveGeneration == generation;
+            return index >= 0 &&
+                _generationStates[index].HasActiveGeneration &&
+                _generationStates[index].ActiveGeneration == generation;
         }
 
         private int FindFreeEntry()
@@ -427,6 +455,12 @@ namespace Elemental.Presentation.Rendering
                     return true;
             }
             return false;
+        }
+
+        private static bool IsSerialNewer(uint candidate, uint baseline)
+        {
+            uint distance = unchecked(candidate - baseline);
+            return distance != 0u && distance < 0x80000000u;
         }
     }
 }

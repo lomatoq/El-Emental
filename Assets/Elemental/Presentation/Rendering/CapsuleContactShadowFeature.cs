@@ -17,6 +17,7 @@ namespace Elemental.Presentation.Rendering
 
         public override void Create()
         {
+            ClearGlobalState();
             CoreUtils.Destroy(_debugMaterial);
             _debugMaterial = debugShader != null
                 ? CoreUtils.CreateEngineMaterial(debugShader)
@@ -36,10 +37,15 @@ namespace Elemental.Presentation.Rendering
             bool supportedCamera =
                 renderingData.cameraData.cameraType == CameraType.Game &&
                 renderingData.cameraData.renderType == CameraRenderType.Base;
-            if (!requested || !supportedCamera || _pass == null)
+            if (!requested)
             {
-                DisableGlobals();
-                CapsuleContactShadowDiagnostics.PublishDisabled(requested);
+                ClearGlobalState();
+                return;
+            }
+            if (!supportedCamera || _pass == null)
+            {
+                DisableGlobalVectors();
+                CapsuleContactShadowDiagnostics.PublishDisabled(true);
                 return;
             }
 
@@ -48,7 +54,7 @@ namespace Elemental.Presentation.Rendering
                 : profile.CapsuleContactShadows.CreateRuntimeSettings();
             if (!_pass.Setup(settings))
             {
-                DisableGlobals();
+                DisableGlobalVectors();
                 ReportInvalidSetupOnce();
                 return;
             }
@@ -83,7 +89,17 @@ namespace Elemental.Presentation.Rendering
                 "Bind a character or hero-rock caster with a current uint generation.");
         }
 
-        private static void DisableGlobals()
+        /// <summary>
+        /// Clears both shader controls and diagnostic strength. Capture and test
+        /// owners may call this when restoring the shipping OFF state.
+        /// </summary>
+        public static void ClearGlobalState()
+        {
+            DisableGlobalVectors();
+            CapsuleContactShadowDiagnostics.PublishDisabled(false);
+        }
+
+        private static void DisableGlobalVectors()
         {
             Shader.SetGlobalVector(
                 CapsuleContactShadowRenderPass.ShadowParamsId,
@@ -93,8 +109,14 @@ namespace Elemental.Presentation.Rendering
                 Vector4.zero);
         }
 
+        private void OnDisable()
+        {
+            ClearGlobalState();
+        }
+
         protected override void Dispose(bool disposing)
         {
+            ClearGlobalState();
             CoreUtils.Destroy(_debugMaterial);
             _debugMaterial = null;
         }
