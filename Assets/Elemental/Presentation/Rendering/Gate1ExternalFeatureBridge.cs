@@ -697,6 +697,7 @@ namespace Elemental.Presentation.Rendering
             ScriptableObject profile = ScriptableObject.CreateInstance(profileType);
             profile.name = "Gate1 Transient Physical Animation Profile";
             profile.hideFlags = HideFlags.DontSave;
+            Vector3 sampledPelvisOffsetLocal;
             try
             {
                 if (!TryConfigureRecoveryProfile(
@@ -706,7 +707,7 @@ namespace Elemental.Presentation.Rendering
                         sampleType,
                         markerType,
                         orientationType,
-                        out Vector3 sampledPelvisOffsetLocal,
+                        out sampledPelvisOffsetLocal,
                         out failure))
                 {
                     UnityEngine.Object.Destroy(profile);
