@@ -215,6 +215,10 @@ namespace Elemental.Runtime.Characters
         public float RecoveryAnimatorNextStatePhase { get; private set; }
         public bool RecoveryHasLiveSupport => _liveRecoverySupport.HasSupport;
         public int RecoverySupportSampleCount { get; private set; }
+        public Collider RecoveryClearanceBlockingCollider { get; private set; }
+        public float RecoveryClearanceBlockingUpOffset { get; private set; }
+        public Vector3 RecoveryClearanceProbeRootPosition { get; private set; }
+        public float RecoveryClearanceProbeRadius { get; private set; }
         public EarthRecoveryResult LastPoseMatchedRecovery => _lastPoseMatchedRecovery;
         public event Action<AuthoredRecoveryHandoff> AuthoredRecoveryBegan;
 
@@ -1332,6 +1336,10 @@ namespace Elemental.Runtime.Characters
             Quaternion rootRotation,
             Vector3 localUp)
         {
+            RecoveryClearanceBlockingCollider = null;
+            RecoveryClearanceBlockingUpOffset = 0f;
+            RecoveryClearanceProbeRootPosition = rootPosition;
+            RecoveryClearanceProbeRadius = 0f;
             if (motorCollider is not CapsuleCollider capsule || motorRootBody == null)
                 return true;
             Transform rootTransform = motorRootBody.transform;
@@ -1361,6 +1369,7 @@ namespace Elemental.Runtime.Characters
                 _ => Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.z))
             };
             float radius = Mathf.Max(0.01f, capsule.radius * radialScale * 0.92f);
+            RecoveryClearanceProbeRadius = radius;
             float halfSegment = Mathf.Max(
                 0f,
                 capsule.height * axialScale * 0.5f - radius);
@@ -1388,8 +1397,11 @@ namespace Elemental.Runtime.Characters
                 Vector3 closest = candidate is MeshCollider mesh && !mesh.convex
                     ? candidate.bounds.ClosestPoint(worldCenter)
                     : candidate.ClosestPoint(worldCenter);
-                if (Vector3.Dot(closest - worldCenter, up) <= supportBand)
+                float upOffset = Vector3.Dot(closest - worldCenter, up);
+                if (upOffset <= supportBand)
                     continue;
+                RecoveryClearanceBlockingCollider = candidate;
+                RecoveryClearanceBlockingUpOffset = upOffset;
                 return false;
             }
             return true;

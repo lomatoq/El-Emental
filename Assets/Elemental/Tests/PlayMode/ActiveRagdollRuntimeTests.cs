@@ -209,14 +209,26 @@ namespace Elemental.Tests.PlayMode
             var profile = ScriptableObject.CreateInstance<EarthPhysicalAnimationProfile>();
             EarthRecoveryMarkerAuthoring markers =
                 new EarthRecoveryMarkerAuthoring(0.56f, 0.80f, 0.95f);
+            Animator recoveryAnimator = rig.GetComponentInChildren<Animator>(true);
+            Assert.That(recoveryAnimator, Is.Not.Null);
+            Transform authoredPelvis = recoveryAnimator.GetBoneTransform(HumanBodyBones.Hips);
+            Assert.That(authoredPelvis, Is.Not.Null);
+            Vector3 authoredPelvisOffsetLocal = Quaternion.Inverse(motor.Body.rotation) *
+                                                (authoredPelvis.position - motor.Body.position);
+            Assert.That(IsFinite(authoredPelvisOffsetLocal), Is.True,
+                "Recovery samples require a finite pelvis offset in motor-root space.");
             profile.ConfigureRecovery(
                 true,
                 new[]
                 {
-                    RecoverySample(101u, EarthRecoveryOrientation.Front, in markers),
-                    RecoverySample(102u, EarthRecoveryOrientation.Back, in markers),
-                    RecoverySample(103u, EarthRecoveryOrientation.Left, in markers),
-                    RecoverySample(104u, EarthRecoveryOrientation.Right, in markers)
+                    RecoverySample(101u, EarthRecoveryOrientation.Front,
+                        authoredPelvisOffsetLocal, in markers),
+                    RecoverySample(102u, EarthRecoveryOrientation.Back,
+                        authoredPelvisOffsetLocal, in markers),
+                    RecoverySample(103u, EarthRecoveryOrientation.Left,
+                        authoredPelvisOffsetLocal, in markers),
+                    RecoverySample(104u, EarthRecoveryOrientation.Right,
+                        authoredPelvisOffsetLocal, in markers)
                 });
             rig.ConfigurePhysicalAnimation(
                 profile,
@@ -239,8 +251,6 @@ namespace Elemental.Tests.PlayMode
             Assert.That(controlOwner.enabled, Is.False);
             Assert.That(proceduralOwner.enabled, Is.False);
             int recoveryHandoffsBefore = rig.RecoveryOwnershipHandoffCount;
-            Animator recoveryAnimator = rig.GetComponentInChildren<Animator>(true);
-            Assert.That(recoveryAnimator, Is.Not.Null);
             HumanoidCharacterPresentation recoveryPresentation =
                 rig.GetComponent<HumanoidCharacterPresentation>();
             Assert.That(recoveryPresentation, Is.Not.Null);
@@ -466,9 +476,16 @@ namespace Elemental.Tests.PlayMode
             Assert.That(controlOwner.enabled, Is.False);
             Assert.That(proceduralOwner.enabled, Is.False);
             Assert.That(rig.PhysicalOwnershipConsistent, Is.True);
-            yield return new WaitForFixedUpdate();
             rig.RecoverToAnimated(localUp, preferredForward, false);
             rig.RecoverToAnimated(localUp, preferredForward, false);
+            Assert.That(rig.UsedPoseMatchedRecovery, Is.True,
+                $"The accepted-hit interrupt must re-enter pose-matched recovery " +
+                $"from the same live pelvis frame. blocker=" +
+                $"{rig.RecoveryClearanceBlockingCollider?.name ?? "<none>"}, " +
+                $"blockerUpOffset={rig.RecoveryClearanceBlockingUpOffset:F4}, " +
+                $"probeRoot={rig.RecoveryClearanceProbeRootPosition}, " +
+                $"probeRadius={rig.RecoveryClearanceProbeRadius:F4}, " +
+                $"body={motorBody.position}, velocity={motorBody.linearVelocity}.");
             Assert.That(rig.RecoveryOwnershipHandoffCount,
                 Is.EqualTo(recoveryHandoffsBefore + 2));
 
@@ -508,21 +525,25 @@ namespace Elemental.Tests.PlayMode
                     RecoverySample(
                         501u,
                         EarthRecoveryOrientation.Front,
+                        authoredPelvisOffsetLocal,
                         in fallbackMarkers,
                         "Base Layer.State That Does Not Exist"),
                     RecoverySample(
                         502u,
                         EarthRecoveryOrientation.Back,
+                        authoredPelvisOffsetLocal,
                         in fallbackMarkers,
                         "Base Layer.State That Does Not Exist"),
                     RecoverySample(
                         503u,
                         EarthRecoveryOrientation.Left,
+                        authoredPelvisOffsetLocal,
                         in fallbackMarkers,
                         "Base Layer.State That Does Not Exist"),
                     RecoverySample(
                         504u,
                         EarthRecoveryOrientation.Right,
+                        authoredPelvisOffsetLocal,
                         in fallbackMarkers,
                         "Base Layer.State That Does Not Exist")
                 });
@@ -634,6 +655,7 @@ namespace Elemental.Tests.PlayMode
         private static EarthRecoveryPoseSampleAuthoring RecoverySample(
             uint clipId,
             EarthRecoveryOrientation orientation,
+            Vector3 pelvisOffsetLocal,
             in EarthRecoveryMarkerAuthoring markers,
             string animationStatePath = "Base Layer.Knockdown Recovery") =>
             new EarthRecoveryPoseSampleAuthoring(
@@ -641,7 +663,7 @@ namespace Elemental.Tests.PlayMode
                 animationStatePath,
                 orientation,
                 0.55f,
-                new Vector3(0f, 0.9f, 0f),
+                pelvisOffsetLocal,
                 new Vector3(0f, 0.4f, 0.1f),
                 new Vector3(-0.45f, 0.1f, 0.15f),
                 new Vector3(0.45f, 0.1f, 0.15f),
