@@ -213,6 +213,46 @@ namespace Elemental.Presentation.Rendering
             return 0;
         }
 
+        public static bool TryConvertVector3(object value, out Vector3 converted)
+        {
+            converted = Vector3.zero;
+            if (!TryGetFiniteSingle(value, "x", out float x) ||
+                !TryGetFiniteSingle(value, "y", out float y) ||
+                !TryGetFiniteSingle(value, "z", out float z))
+                return false;
+            converted = new Vector3(x, y, z);
+            return true;
+        }
+
+        public static bool TryConvertQuaternion(object value, out Quaternion converted)
+        {
+            converted = Quaternion.identity;
+            object packed = GetField(value, "value");
+            if (!TryGetFiniteSingle(packed, "x", out float x) ||
+                !TryGetFiniteSingle(packed, "y", out float y) ||
+                !TryGetFiniteSingle(packed, "z", out float z) ||
+                !TryGetFiniteSingle(packed, "w", out float w))
+                return false;
+            var candidate = new Quaternion(x, y, z, w);
+            if (x * x + y * y + z * z + w * w < 0.0001f) return false;
+            converted = Quaternion.Normalize(candidate);
+            return true;
+        }
+
+        private static bool TryGetFiniteSingle(
+            object target,
+            string fieldName,
+            out float number)
+        {
+            number = 0f;
+            object value = GetField(target, fieldName);
+            if (!(value is float candidate) || float.IsNaN(candidate) ||
+                float.IsInfinity(candidate))
+                return false;
+            number = candidate;
+            return true;
+        }
+
         public static MethodInfo FindMethod(Type type, string name, int parameterCount)
         {
             if (type == null) return null;
@@ -348,6 +388,8 @@ namespace Elemental.Presentation.Rendering
         }
 
         private readonly List<Entry> _entries = new List<Entry>(2);
+        private readonly SortedSet<string> _curveOwnedParameters =
+            new SortedSet<string>(StringComparer.Ordinal);
         private ScriptableObject _captureProfile;
         private Type _graphType;
         private bool _disposed;
@@ -441,6 +483,7 @@ namespace Elemental.Presentation.Rendering
                         candidate.Dispose();
                         return false;
                     }
+                    candidate.RecordCurveOwnedParameters(animator);
                 }
             }
             catch (TargetInvocationException exception)
@@ -518,6 +561,11 @@ namespace Elemental.Presentation.Rendering
         public void AccumulateEvidence(Gate1CaptureFrameEvidence evidence)
         {
             if (evidence == null) return;
+            evidence.animationCurveOwnedParameterCount =
+                _curveOwnedParameters.Count;
+            evidence.animationCurveOwnedParameters = string.Join(
+                ", ",
+                _curveOwnedParameters);
             for (int index = 0; index < _entries.Count; index++)
             {
                 Component graph = _entries[index].CaptureGraph;
@@ -532,6 +580,18 @@ namespace Elemental.Presentation.Rendering
                 evidence.animationTransitionRequests += Gate1Reflection.GetInt32(
                     diagnostics,
                     "TransitionRequestCount");
+            }
+        }
+
+        private void RecordCurveOwnedParameters(Animator animator)
+        {
+            if (animator == null) return;
+            AnimatorControllerParameter[] parameters = animator.parameters;
+            for (int index = 0; index < parameters.Length; index++)
+            {
+                AnimatorControllerParameter parameter = parameters[index];
+                if (!animator.IsParameterControlledByCurve(parameter.nameHash)) continue;
+                _curveOwnedParameters.Add($"{parameter.name}({parameter.nameHash})");
             }
         }
 
@@ -622,13 +682,16 @@ namespace Elemental.Presentation.Rendering
         private readonly Transform _hips;
         private readonly Vector3 _sampledPelvisOffsetLocal;
         private Vector3 _livePelvisBeforeHandoff;
-        private Vector3 _continuityUp;
         private bool _continuityOriginCaptured;
         private bool _pelvisContinuityVerified;
+        private bool _liveSupportVerified;
         private float _pelvisContinuityErrorMeters;
         private bool _disposed;
 
         public bool RestoreSucceeded { get; private set; } = true;
+        public bool RecoveryHasLiveSupport => Gate1Reflection.GetBoolean(
+            _rig,
+            "RecoveryHasLiveSupport");
 
         private Gate1PhysicalAnimationCaptureScope(
             HumanoidRagdollRig rig,
@@ -815,18 +878,19 @@ namespace Elemental.Presentation.Rendering
             if (Gate1Reflection.GetBoolean(_rig, "LastRecoveryClearanceSucceeded"))
                 evidence.recoveryClearanceSucceededFrames++;
             evidence.recoveryIsolatedSamplerFrames++;
+            if (_liveSupportVerified)
+                evidence.recoveryLiveSupportFrames++;
             if (_pelvisContinuityVerified)
                 evidence.recoveryPelvisContinuityVerifiedFrames++;
             evidence.recoveryPelvisContinuityErrorMeters =
                 _pelvisContinuityErrorMeters;
         }
 
-        public bool TryCapturePoseMatchedContinuityOrigin(
-            Vector3 localUp,
-            out string failure)
+        public bool TryCapturePoseMatchedContinuityOrigin(out string failure)
         {
             _continuityOriginCaptured = false;
             _pelvisContinuityVerified = false;
+            _liveSupportVerified = false;
             _pelvisContinuityErrorMeters = float.PositiveInfinity;
             if (!_rig.IsRagdollActive || _hips == null || _motorRootBody == null)
             {
@@ -834,9 +898,6 @@ namespace Elemental.Presentation.Rendering
                 return false;
             }
             _livePelvisBeforeHandoff = _hips.position;
-            _continuityUp = localUp.sqrMagnitude > 0.25f
-                ? localUp.normalized
-                : _rig.transform.up;
             _continuityOriginCaptured = true;
             failure = string.Empty;
             return true;
@@ -853,34 +914,50 @@ namespace Elemental.Presentation.Rendering
             bool clearanceSucceeded = Gate1Reflection.GetBoolean(
                 _rig,
                 "LastRecoveryClearanceSucceeded");
+            bool hasLiveSupport = RecoveryHasLiveSupport;
+            _liveSupportVerified = hasLiveSupport;
             if (_continuityOriginCaptured && usedPoseMatched && clearanceSucceeded)
             {
+                object result = Gate1Reflection.GetProperty(
+                    _rig,
+                    "LastPoseMatchedRecovery");
+                object clearance = Gate1Reflection.GetProperty(result, "Clearance");
                 float clearanceLift = GetSingle(
-                    Gate1Reflection.GetProperty(_rig, "LastRecoveryClearanceLiftMeters"));
-                Vector3 reconstructed = Gate1RecoverySampleMath.ReconstructPreClearancePelvis(
-                    _motorRootBody.position,
-                    _motorRootBody.rotation,
-                    _sampledPelvisOffsetLocal,
-                    _continuityUp,
-                    clearanceLift);
-                _pelvisContinuityErrorMeters = Vector3.Distance(
-                    reconstructed,
-                    _livePelvisBeforeHandoff);
-                _pelvisContinuityVerified =
-                    !float.IsNaN(_pelvisContinuityErrorMeters) &&
-                    !float.IsInfinity(_pelvisContinuityErrorMeters) &&
-                    _pelvisContinuityErrorMeters <=
-                        Gate1RecoverySampleMath.MaximumPelvisContinuityErrorMeters;
+                    Gate1Reflection.GetProperty(clearance, "LiftMeters"));
+                if (Gate1Reflection.TryConvertVector3(
+                        Gate1Reflection.GetProperty(result, "RootPosition"),
+                        out Vector3 immutableRootPosition) &&
+                    Gate1Reflection.TryConvertQuaternion(
+                        Gate1Reflection.GetProperty(result, "RootRotation"),
+                        out Quaternion immutableRootRotation) &&
+                    Gate1Reflection.TryConvertVector3(
+                        Gate1Reflection.GetProperty(result, "RadialUp"),
+                        out Vector3 immutableRadialUp) &&
+                    !float.IsNaN(clearanceLift) &&
+                    !float.IsInfinity(clearanceLift))
+                {
+                    Vector3 reconstructed = Gate1RecoverySampleMath.ReconstructPreClearancePelvis(
+                        immutableRootPosition,
+                        immutableRootRotation,
+                        _sampledPelvisOffsetLocal,
+                        immutableRadialUp,
+                        clearanceLift);
+                    _pelvisContinuityErrorMeters = Vector3.Distance(
+                        reconstructed,
+                        _livePelvisBeforeHandoff);
+                    _pelvisContinuityVerified =
+                        !float.IsNaN(_pelvisContinuityErrorMeters) &&
+                        !float.IsInfinity(_pelvisContinuityErrorMeters) &&
+                        _pelvisContinuityErrorMeters <=
+                            Gate1RecoverySampleMath.MaximumPelvisContinuityErrorMeters;
+                }
             }
             if (usedPoseMatched && stateVerified && clearanceSucceeded &&
-                _pelvisContinuityVerified)
+                hasLiveSupport && _pelvisContinuityVerified)
             {
                 failure = string.Empty;
                 return true;
             }
-            bool hasLiveSupport = Gate1Reflection.GetBoolean(
-                _rig,
-                "RecoveryHasLiveSupport");
             failure =
                 "P1 pose-matched recovery fell back to legacy or rejected its authored state " +
                 $"(usedPoseMatched={usedPoseMatched}, stateVerified={stateVerified}, " +

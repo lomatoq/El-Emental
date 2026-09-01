@@ -50,7 +50,7 @@ namespace Elemental.Presentation.VFX
         {
             CacheWallTargets(true);
             if (inputAdapter == null)
-                inputAdapter = FindFirstObjectByType<EarthInputAdapter>(FindObjectsInactive.Include);
+                inputAdapter = FindAnyObjectByType<EarthInputAdapter>(FindObjectsInactive.Include);
         }
 
         private void Update()

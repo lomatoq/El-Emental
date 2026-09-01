@@ -76,6 +76,31 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void EvidenceValidatorRejectsRecoveryWithoutLiveSupport()
+        {
+            Gate1CaptureManifest manifest = CompleteManifest();
+            manifest.frames[(int)Gate1CaptureVariant.RecoveryPoseMatched]
+                .recoveryLiveSupportFrames = 0;
+
+            Assert.That(Gate1CaptureEvidenceValidator.TryValidate(
+                manifest,
+                out string failure), Is.False);
+            StringAssert.Contains("contradicts", failure);
+        }
+
+        [Test]
+        public void EvidenceValidatorRejectsUnsupportedRecoveryActorSelection()
+        {
+            Gate1CaptureManifest manifest = CompleteManifest();
+            manifest.recoveryActor.motorHasStableSupportAtSelection = false;
+
+            Assert.That(Gate1CaptureEvidenceValidator.TryValidate(
+                manifest,
+                out string failure), Is.False);
+            StringAssert.Contains("actor selection", failure);
+        }
+
+        [Test]
         public void DuelCaptureOverrideIsSingleOwnerAndRestoresDefaultOff()
         {
             DuelShadowRuntimeSettings settings = CaptureSettings();
@@ -154,6 +179,8 @@ namespace Elemental.Tests.EditMode
             frames[1].animationGraphActiveFrames = 1;
             frames[1].animationTopologyValidFrames = 1;
             frames[1].animationTransitionRequests = 1;
+            frames[1].animationCurveOwnedParameterCount = 1;
+            frames[1].animationCurveOwnedParameters = "MotionTime(123456)";
             frames[2] = Frame(Gate1CaptureVariant.DuelNoShadows);
             frames[2].duelDisabledFrames = 1;
             frames[3] = Frame(Gate1CaptureVariant.DuelShadowMap);
@@ -169,9 +196,22 @@ namespace Elemental.Tests.EditMode
             frames[5].recoveryStateVerifiedFrames = 1;
             frames[5].recoveryClearanceSucceededFrames = 1;
             frames[5].recoveryIsolatedSamplerFrames = 1;
+            frames[5].recoveryLiveSupportFrames = 1;
             frames[5].recoveryPelvisContinuityVerifiedFrames = 1;
             frames[5].recoveryPelvisContinuityErrorMeters = 0.0001f;
-            return new Gate1CaptureManifest { frames = frames };
+            return new Gate1CaptureManifest
+            {
+                recoveryActor = new Gate1RecoveryActorEvidence
+                {
+                    actorName = "Player Presentation",
+                    hierarchyPath = "Planet Character/Player Presentation",
+                    animatorIsHuman = true,
+                    hasRagdollRig = true,
+                    hasMotorRootBody = true,
+                    motorHasStableSupportAtSelection = true
+                },
+                frames = frames
+            };
         }
 
         private static Gate1CaptureFrameEvidence Frame(Gate1CaptureVariant variant)

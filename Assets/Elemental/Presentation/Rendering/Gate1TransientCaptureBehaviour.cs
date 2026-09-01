@@ -17,6 +17,7 @@ namespace Elemental.Presentation.Rendering
         private const int EvidenceWidth = 1920;
         private const int EvidenceHeight = 1080;
         private const int SettleFrames = 45;
+        private const int RecoveryLiveSupportWaitFrames = 30;
         private static readonly ProfilerMarker CaptureMarker =
             new ProfilerMarker("Elemental.Gate1Capture.Frame");
 
@@ -91,11 +92,13 @@ namespace Elemental.Presentation.Rendering
                         out List<Component> presentations,
                         out HumanoidRagdollRig recoveryRig,
                         out Animator recoveryAnimator,
+                        out Gate1RecoveryActorEvidence recoveryActor,
                         out string failure))
                 {
                     Complete(false, failure);
                     yield break;
                 }
+                _manifest.recoveryActor = recoveryActor;
 
                 if (!Gate1LegacyAnimationStimulusScope.TryBegin(
                         presentations,
@@ -229,12 +232,12 @@ namespace Elemental.Presentation.Rendering
                         out _physicalScope,
                         out failure))
                 {
-                    Complete(false, failure);
+                    Complete(false, WithRecoveryActor(failure));
                     yield break;
                 }
                 if (!_physicalScope.TryConfigureLegacy(out failure))
                 {
-                    Complete(false, failure);
+                    Complete(false, WithRecoveryActor(failure));
                     yield break;
                 }
                 recoveryRig.BeginRagdoll(Vector3.zero);
@@ -247,7 +250,7 @@ namespace Elemental.Presentation.Rendering
                 yield return null;
                 if (!_physicalScope.TryConfirmLegacyRecovery(out failure))
                 {
-                    Complete(false, failure);
+                    Complete(false, WithRecoveryActor(failure));
                     yield break;
                 }
                 var recoveryLegacy = CreateFrame(
@@ -263,28 +266,30 @@ namespace Elemental.Presentation.Rendering
 
                 if (!_physicalScope.TryConfigurePoseMatched(out failure))
                 {
-                    Complete(false, failure);
+                    Complete(false, WithRecoveryActor(failure));
                     yield break;
                 }
                 recoveryRig.BeginRagdoll(Vector3.zero);
                 yield return new WaitForFixedUpdate();
                 yield return new WaitForFixedUpdate();
                 Vector3 recoveryUp = recoveryRig.transform.up;
-                if (!_physicalScope.TryCapturePoseMatchedContinuityOrigin(
-                        recoveryUp,
-                        out failure))
+                if (!_physicalScope.TryCapturePoseMatchedContinuityOrigin(out failure))
                 {
-                    Complete(false, failure);
+                    Complete(false, WithRecoveryActor(failure));
                     yield break;
                 }
                 recoveryRig.RecoverToAnimated(
                     recoveryUp,
                     recoveryRig.transform.forward,
                     false);
-                yield return null;
+                for (int frame = 0; frame < RecoveryLiveSupportWaitFrames; frame++)
+                {
+                    yield return null;
+                    if (_physicalScope.RecoveryHasLiveSupport) break;
+                }
                 if (!_physicalScope.TryConfirmPoseMatchedRecovery(out failure))
                 {
-                    Complete(false, failure);
+                    Complete(false, WithRecoveryActor(failure));
                     yield break;
                 }
                 var recoveryFeature = CreateFrame(
@@ -299,6 +304,7 @@ namespace Elemental.Presentation.Rendering
                     recoveryFeature.recoveryStateVerifiedFrames > 0 &&
                     recoveryFeature.recoveryClearanceSucceededFrames > 0 &&
                     recoveryFeature.recoveryIsolatedSamplerFrames > 0 &&
+                    recoveryFeature.recoveryLiveSupportFrames > 0 &&
                     recoveryFeature.recoveryPelvisContinuityVerifiedFrames > 0
                         ? 1
                         : 0;
@@ -434,6 +440,17 @@ namespace Elemental.Presentation.Rendering
             };
         }
 
+        private string WithRecoveryActor(string failure)
+        {
+            Gate1RecoveryActorEvidence actor = _manifest?.recoveryActor;
+            return actor == null
+                ? failure
+                : $"{failure} Recovery actor: name='{actor.actorName}', " +
+                  $"hierarchy='{actor.hierarchyPath}', " +
+                  $"motorStableSupportAtSelection=" +
+                  $"{actor.motorHasStableSupportAtSelection}.";
+        }
+
         private void Complete(bool sequenceSucceeded, string sequenceFailure)
         {
             RestoreRuntimeState();
@@ -456,8 +473,7 @@ namespace Elemental.Presentation.Rendering
                 _physicalOwnershipRestored;
             _manifest.restoration.transientComponentCountAfter =
                 FindObjectsByType<Gate1CaptureOwnerMarker>(
-                    FindObjectsInactive.Include,
-                    FindObjectsSortMode.None).Length;
+                    FindObjectsInactive.Include).Length;
 
             bool evidenceValid = Gate1CaptureEvidenceValidator.TryValidate(
                 _manifest,
@@ -525,20 +541,19 @@ namespace Elemental.Presentation.Rendering
             out List<Component> presentations,
             out HumanoidRagdollRig recoveryRig,
             out Animator recoveryAnimator,
+            out Gate1RecoveryActorEvidence recoveryActor,
             out string failure)
         {
             camera = UnityEngine.Camera.main;
             if (camera == null)
             {
                 UnityEngine.Camera[] cameras = FindObjectsByType<UnityEngine.Camera>(
-                    FindObjectsInactive.Exclude,
-                    FindObjectsSortMode.None);
+                    FindObjectsInactive.Exclude);
                 if (cameras.Length > 0) camera = cameras[0];
             }
             directionalLight = null;
             Light[] lights = FindObjectsByType<Light>(
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None);
+                FindObjectsInactive.Exclude);
             for (int index = 0; index < lights.Length; index++)
                 if (lights[index].type == LightType.Directional && lights[index].enabled)
                 {
@@ -548,8 +563,7 @@ namespace Elemental.Presentation.Rendering
 
             presentations = new List<Component>(2);
             MonoBehaviour[] behaviours = FindObjectsByType<MonoBehaviour>(
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None);
+                FindObjectsInactive.Exclude);
             for (int index = 0; index < behaviours.Length; index++)
             {
                 MonoBehaviour behaviour = behaviours[index];
@@ -562,34 +576,95 @@ namespace Elemental.Presentation.Rendering
                 HierarchyPath(right.transform)));
             recoveryRig = null;
             recoveryAnimator = null;
-            if (presentations.Count > 0)
+            recoveryActor = new Gate1RecoveryActorEvidence();
+            int selectedPreference = int.MaxValue;
+            string selectedPath = string.Empty;
+            var actorDiagnostics = new List<string>(presentations.Count);
+            for (int index = 0; index < presentations.Count; index++)
             {
-                Component presentation = presentations[0];
-                recoveryRig = presentation.GetComponent<HumanoidRagdollRig>() ??
+                Component presentation = presentations[index];
+                HumanoidRagdollRig rig = presentation.GetComponent<HumanoidRagdollRig>() ??
                     presentation.GetComponentInChildren<HumanoidRagdollRig>(true) ??
                     presentation.GetComponentInParent<HumanoidRagdollRig>(true);
-                recoveryAnimator = Gate1Reflection.GetProperty(
+                Animator animator = Gate1Reflection.GetProperty(
                     presentation,
                     "Animator") as Animator;
+                PlanetMotor motor = Gate1Reflection.GetField(
+                    presentation,
+                    "motor") as PlanetMotor;
+                if (motor == null)
+                    motor = presentation.GetComponentInParent<PlanetMotor>(true) ??
+                        presentation.GetComponentInChildren<PlanetMotor>(true);
+                bool hasMotorRoot = rig != null && Gate1Reflection.GetField(
+                    rig,
+                    "motorRootBody") is Rigidbody;
+                bool motorStable = motor != null && motor.HasStableSupport;
+                string path = HierarchyPath(presentation.transform);
+                actorDiagnostics.Add(
+                    $"name='{presentation.name}', hierarchy='{path}', rig={rig != null}, " +
+                    $"animator={animator != null}, humanoid={animator != null && animator.isHuman}, " +
+                    $"motor={motor != null}, motorRoot={hasMotorRoot}, stableSupport={motorStable}");
+                if (rig == null || animator == null || !animator.isHuman ||
+                    motor == null || !hasMotorRoot || !motorStable)
+                    continue;
+
+                int preference = RecoveryActorPreference(presentation, path);
+                if (preference > selectedPreference ||
+                    preference == selectedPreference &&
+                    string.CompareOrdinal(path, selectedPath) >= 0)
+                    continue;
+                selectedPreference = preference;
+                selectedPath = path;
+                recoveryRig = rig;
+                recoveryAnimator = animator;
+                recoveryActor = new Gate1RecoveryActorEvidence
+                {
+                    actorName = presentation.name,
+                    hierarchyPath = path,
+                    animatorIsHuman = true,
+                    hasRagdollRig = true,
+                    hasMotorRootBody = true,
+                    motorHasStableSupportAtSelection = true
+                };
             }
 
             if (camera == null || directionalLight == null ||
                 presentations.Count < 2 || recoveryRig == null || recoveryAnimator == null)
             {
                 failure =
-                    "Gate1 requires one game camera, one directional light, two HumanoidCharacterPresentation owners and one visible HumanoidRagdollRig.";
+                    "Gate1 requires one game camera, one directional light, two presentation owners " +
+                    "and one deterministic Humanoid recovery actor with rig, motor root and stable support. " +
+                    $"Actor candidates: {string.Join(" | ", actorDiagnostics)}.";
                 return false;
             }
             failure = string.Empty;
             return true;
         }
 
+        private static int RecoveryActorPreference(
+            Component presentation,
+            string hierarchyPath)
+        {
+            Transform root = presentation != null ? presentation.transform.root : null;
+            if (root != null)
+            {
+                MonoBehaviour[] behaviours = root.GetComponentsInChildren<MonoBehaviour>(true);
+                for (int index = 0; index < behaviours.Length; index++)
+                    if (behaviours[index] != null && behaviours[index].GetType().FullName ==
+                        "Elemental.Input.Gestures.MagicInputController")
+                        return 0;
+            }
+            if (hierarchyPath.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                hierarchyPath.IndexOf("Planet Character", StringComparison.OrdinalIgnoreCase) >= 0)
+                return 0;
+            return hierarchyPath.IndexOf("Bot", StringComparison.OrdinalIgnoreCase) >= 0 ? 2 : 1;
+        }
+
         private static int CountComponentsByTypeName(string fullName)
         {
             int count = 0;
             MonoBehaviour[] behaviours = FindObjectsByType<MonoBehaviour>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None);
+                FindObjectsInactive.Include);
             for (int index = 0; index < behaviours.Length; index++)
                 if (behaviours[index] != null &&
                     behaviours[index].GetType().FullName == fullName)
@@ -665,8 +740,7 @@ namespace Elemental.Presentation.Rendering
             {
                 var scope = new Gate1BehaviourFreezeScope();
                 MonoBehaviour[] behaviours = FindObjectsByType<MonoBehaviour>(
-                    FindObjectsInactive.Exclude,
-                    FindObjectsSortMode.None);
+                    FindObjectsInactive.Exclude);
                 for (int index = 0; index < behaviours.Length; index++)
                 {
                     MonoBehaviour behaviour = behaviours[index];

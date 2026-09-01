@@ -110,17 +110,23 @@ The fixed outputs are:
 
 Each manifest frame records its exact feature state, Unity frame, PNG byte count and executed
 feature metrics. The enabled animation image is accepted only with a live valid A1 graph and an
-accepted inertialization request. The enabled shadow image is the real fullscreen ShadowOnly
+accepted inertialization request. Its manifest record lists every curve-owned Animator parameter
+as an exact `name(hash)` pair; the integrated A1 handoff mask must skip those parameters rather
+than suppressing Unity warnings. The enabled shadow image is the real fullscreen ShadowOnly
 receiver and is accepted only when the map rendered with at least one drawn opaque caster and
 the sampled image has a non-flat luminance range. P1
 samples are built in memory from `Base Layer.Knockdown Recovery` at phase `0.55` on an isolated,
 non-saving clone whose non-Animator behaviours are removed before activation. The shipping
 Animator and its sole transition owner are never sampled or advanced. The pelvis offset uses the
-rig's actual motor-root body convention rather than a hard-coded model height. The enabled recovery
-image is accepted only when the rig reports pose-matched selection, successful clearance,
-immediate authored-state verification, and reconstruction of the pre-handoff live Hips position
-within 2 mm after removing the authored clearance lift. A legacy fallback or continuity breach
-aborts with its clearance/support/continuity state.
+rig's actual motor-root body convention rather than a hard-coded model height. Actor selection is
+deterministic: it requires a Humanoid Animator, ragdoll, motor root and stable `PlanetMotor`
+support, preferring the player over a bot, and records the selected name, hierarchy and support in
+the manifest. The enabled recovery image is accepted only when the rig reports pose-matched
+selection, successful clearance, immediate authored-state verification and reacquired live
+support. Continuity reconstructs the pre-handoff live Hips from the immutable
+`LastPoseMatchedRecovery.RootPosition/RootRotation` result and must remain within 2 mm after
+removing the authored clearance lift. A legacy fallback, missing support or continuity breach
+aborts with its actor/clearance/support/continuity state.
 Missing A1/P1 contracts fail the manifest
 with the exact missing type or method instead of producing a legacy-looking false positive.
 

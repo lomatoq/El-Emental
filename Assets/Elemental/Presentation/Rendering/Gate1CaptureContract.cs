@@ -41,6 +41,8 @@ namespace Elemental.Presentation.Rendering
         public int animationInertiaActiveFrames;
         public int animationTransitionRequests;
         public int animationLegacyFrames;
+        public int animationCurveOwnedParameterCount;
+        public string animationCurveOwnedParameters;
         public int duelDisabledFrames;
         public int duelMapRenderedFrames;
         public int duelDrawnCasterCount;
@@ -49,8 +51,20 @@ namespace Elemental.Presentation.Rendering
         public int recoveryStateVerifiedFrames;
         public int recoveryClearanceSucceededFrames;
         public int recoveryIsolatedSamplerFrames;
+        public int recoveryLiveSupportFrames;
         public int recoveryPelvisContinuityVerifiedFrames;
         public float recoveryPelvisContinuityErrorMeters;
+    }
+
+    [Serializable]
+    public sealed class Gate1RecoveryActorEvidence
+    {
+        public string actorName;
+        public string hierarchyPath;
+        public bool animatorIsHuman;
+        public bool hasRagdollRig;
+        public bool hasMotorRootBody;
+        public bool motorHasStableSupportAtSelection;
     }
 
     [Serializable]
@@ -82,6 +96,8 @@ namespace Elemental.Presentation.Rendering
         public bool complete;
         public bool success;
         public string failure;
+        public Gate1RecoveryActorEvidence recoveryActor =
+            new Gate1RecoveryActorEvidence();
         public Gate1CaptureFrameEvidence[] frames = Array.Empty<Gate1CaptureFrameEvidence>();
         public Gate1CaptureRestorationEvidence restoration =
             new Gate1CaptureRestorationEvidence();
@@ -162,6 +178,14 @@ namespace Elemental.Presentation.Rendering
             if (manifest.frames == null ||
                 manifest.frames.Length != RequiredCaptureCount)
                 return Fail("Gate1 requires exactly six A/B capture frames.", out failure);
+            if (manifest.recoveryActor == null ||
+                string.IsNullOrWhiteSpace(manifest.recoveryActor.actorName) ||
+                string.IsNullOrWhiteSpace(manifest.recoveryActor.hierarchyPath) ||
+                !manifest.recoveryActor.animatorIsHuman ||
+                !manifest.recoveryActor.hasRagdollRig ||
+                !manifest.recoveryActor.hasMotorRootBody ||
+                !manifest.recoveryActor.motorHasStableSupportAtSelection)
+                return Fail("Gate1 recovery actor selection is absent or unsupported.", out failure);
 
             var seen = new bool[RequiredCaptureCount];
             for (int index = 0; index < manifest.frames.Length; index++)
@@ -246,6 +270,7 @@ namespace Elemental.Presentation.Rendering
                         frame.recoveryStateVerifiedFrames > 0 &&
                         frame.recoveryClearanceSucceededFrames > 0 &&
                         frame.recoveryIsolatedSamplerFrames > 0 &&
+                        frame.recoveryLiveSupportFrames > 0 &&
                         frame.recoveryPelvisContinuityVerifiedFrames > 0 &&
                         frame.recoveryPelvisContinuityErrorMeters >= 0f &&
                         frame.recoveryPelvisContinuityErrorMeters <=
