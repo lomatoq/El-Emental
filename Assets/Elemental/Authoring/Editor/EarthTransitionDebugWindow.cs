@@ -192,6 +192,32 @@ namespace Elemental.Authoring.Editor
                 "Queued / dequeued / rejected",
                 $"{diagnostics.QueuedRequestCountTotal} / " +
                 $"{diagnostics.DequeuedExecutionCount} / {diagnostics.QueueRejectionCount}");
+            EditorGUILayout.LabelField(
+                "Catalog configured",
+                diagnostics.MotionCatalogConfigured.ToString());
+            EditorGUILayout.LabelField(
+                "Runtime layers verified / inactive / unresolved",
+                $"{diagnostics.VerifiedRuntimeLayerCount} / " +
+                $"{diagnostics.InactiveRuntimeLayerCount} / " +
+                $"{diagnostics.UnresolvedRuntimeLayerCount} " +
+                $"(of {diagnostics.RuntimeLayerCount})");
+            EditorGUILayout.LabelField(
+                "Catalog resolutions / misses",
+                $"{diagnostics.MotionResolutionCount} / " +
+                $"{diagnostics.MotionResolutionMissCount}");
+            EarthMotionStateResolution baseMotion = diagnostics.BaseLayerMotion;
+            EditorGUILayout.LabelField(
+                "Base motion binding",
+                baseMotion.IsVerified
+                    ? $"state {baseMotion.StateHash}; profile {baseMotion.ProfileIndex}; " +
+                      $"{baseMotion.SemanticRole}; {baseMotion.Kind}"
+                    : "unresolved");
+            EditorGUILayout.LabelField(
+                "Last pair catalog provenance",
+                diagnostics.LastAuthoredPairProfilesVerified
+                    ? $"source {diagnostics.LastPairSourceProfileIndex}; " +
+                      $"destination {diagnostics.LastPairDestinationProfileIndex}"
+                    : "unverified / not authored");
         }
 
         private EarthAnimationTransitionContext BuildContext() =>

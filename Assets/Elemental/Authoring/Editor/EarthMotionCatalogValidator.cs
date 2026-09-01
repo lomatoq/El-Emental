@@ -22,7 +22,10 @@ namespace Elemental.Authoring.Editor
         InvalidKinematics = 1 << 8,
         InvalidWindow = 1 << 9,
         MissingSemanticMetadata = 1 << 10,
-        NonDeterministicOrder = 1 << 11
+        NonDeterministicOrder = 1 << 11,
+        MissingStateBinding = 1 << 12,
+        InvalidStateBinding = 1 << 13,
+        DuplicateStateBinding = 1 << 14
     }
 
     public static class EarthMotionCatalogValidator
@@ -188,7 +191,96 @@ namespace Elemental.Authoring.Editor
                     errors?.Add($"{label} has incomplete semantic/environment/action tags.");
                 }
             }
+            ValidateStateBindings(catalog, errors, ref issues);
             return issues;
+        }
+
+        private static void ValidateStateBindings(
+            EarthMotionCatalog catalog,
+            List<string> errors,
+            ref EarthMotionCatalogValidationIssue issues)
+        {
+            if (catalog.StateBindingCount == 0)
+            {
+                issues |= EarthMotionCatalogValidationIssue.MissingStateBinding;
+                errors?.Add("Catalog has no controller-state bindings.");
+                return;
+            }
+
+            var hashes = new HashSet<int>();
+            var paths = new HashSet<string>(StringComparer.Ordinal);
+            bool locomotion = false;
+            bool cast = false;
+            bool impact = false;
+            bool recovery = false;
+            int previousLayer = -1;
+            string previousPath = null;
+            for (int bindingIndex = 0;
+                 bindingIndex < catalog.StateBindingCount;
+                 bindingIndex++)
+            {
+                EarthMotionStateBinding binding = catalog.StateBindingAt(bindingIndex);
+                if (binding == null || binding.LayerIndex < 0 || binding.StateHash == 0 ||
+                    string.IsNullOrWhiteSpace(binding.StatePath) ||
+                    binding.ClipProfileCount == 0)
+                {
+                    issues |= EarthMotionCatalogValidationIssue.InvalidStateBinding;
+                    errors?.Add($"Controller-state binding {bindingIndex} is incomplete.");
+                    continue;
+                }
+                if (!hashes.Add(binding.StateHash) || !paths.Add(binding.StatePath))
+                {
+                    issues |= EarthMotionCatalogValidationIssue.DuplicateStateBinding;
+                    errors?.Add(
+                        $"Controller-state binding '{binding.StatePath}' duplicates a hash/path.");
+                }
+                if (previousLayer > binding.LayerIndex ||
+                    (previousLayer == binding.LayerIndex && previousPath != null &&
+                     string.CompareOrdinal(previousPath, binding.StatePath) > 0))
+                {
+                    issues |= EarthMotionCatalogValidationIssue.NonDeterministicOrder;
+                    errors?.Add(
+                        $"Controller-state bindings are not layer/path deterministic at " +
+                        $"'{binding.StatePath}'.");
+                }
+                previousLayer = binding.LayerIndex;
+                previousPath = binding.StatePath;
+
+                for (int profileIndex = 0;
+                     profileIndex < binding.ClipProfileCount;
+                     profileIndex++)
+                {
+                    int catalogIndex = binding.ClipProfileIndexAt(profileIndex);
+                    if (catalogIndex >= 0 && catalogIndex < catalog.ClipCount &&
+                        catalog.ClipAt(catalogIndex)?.Clip != null)
+                        continue;
+                    issues |= EarthMotionCatalogValidationIssue.InvalidStateBinding;
+                    errors?.Add(
+                        $"Controller-state binding '{binding.StatePath}' references invalid " +
+                        $"catalog index {catalogIndex}.");
+                }
+
+                locomotion |= binding.SemanticRole == EarthMotionSemanticAction.Locomotion;
+                cast |= binding.SemanticRole == EarthMotionSemanticAction.Cast;
+                impact |= binding.SemanticRole == EarthMotionSemanticAction.Impact;
+                recovery |= binding.SemanticRole == EarthMotionSemanticAction.Recovery;
+            }
+
+            RequireRole(locomotion, "locomotion", errors, ref issues);
+            RequireRole(cast, "cast", errors, ref issues);
+            RequireRole(impact, "hit/impact", errors, ref issues);
+            RequireRole(recovery, "recovery", errors, ref issues);
+        }
+
+        private static void RequireRole(
+            bool present,
+            string role,
+            List<string> errors,
+            ref EarthMotionCatalogValidationIssue issues)
+        {
+            if (present) return;
+            issues |= EarthMotionCatalogValidationIssue.MissingStateBinding;
+            errors?.Add($"Catalog has no verified {role} controller-state binding.");
         }
 
         private static bool ValidateCurve(AnimationCurve curve)

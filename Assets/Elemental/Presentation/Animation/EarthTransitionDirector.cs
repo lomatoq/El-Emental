@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Elemental.Runtime.Characters;
 using Elemental.Simulation.Characters;
 using Unity.Profiling;
@@ -18,6 +19,8 @@ namespace Elemental.Presentation.Animation
             new ProfilerMarker("Elemental.Character.Transition");
         private static readonly ProfilerMarker QueueMarker =
             new ProfilerMarker("Elemental.Character.TransitionQueue");
+        private static readonly ProfilerMarker MotionBindingMarker =
+            new ProfilerMarker("Elemental.Character.MotionCatalogBinding");
         private static readonly int CanExitHash = Animator.StringToHash(
             EarthAnimationClipMetadata.CanExit);
 
@@ -25,10 +28,13 @@ namespace Elemental.Presentation.Animation
         [SerializeField] private CharacterPresentationProfile profile;
         [SerializeField] private EarthAnimationGraph animationGraph;
         [SerializeField] private EarthTransitionProfile transitionProfile;
+        [SerializeField] private EarthMotionCatalog motionCatalog;
 
         private readonly EarthTransitionQueue _transitionQueue =
             new EarthTransitionQueue(EarthTransitionQueue.MaximumCapacity);
         private readonly bool[] _warnedFallbackPairs = new bool[256];
+        private readonly List<AnimatorClipInfo> _clipInfoScratch =
+            new List<AnimatorClipInfo>(32);
         private EarthFootContactController _footContactController;
         private EarthMotionStateId _activeState;
         private int _activeStateHash;
@@ -48,6 +54,16 @@ namespace Elemental.Presentation.Animation
         private uint _queuedRequestCount;
         private uint _dequeuedExecutionCount;
         private uint _queueRejectionCount;
+        private int _runtimeLayerCount;
+        private int _verifiedRuntimeLayerCount;
+        private int _inactiveRuntimeLayerCount;
+        private int _unresolvedRuntimeLayerCount;
+        private EarthMotionStateResolution _baseLayerMotion;
+        private uint _motionResolutionCount;
+        private uint _motionResolutionMissCount;
+        private bool _lastAuthoredPairProfilesVerified;
+        private int _lastPairSourceProfileIndex = -1;
+        private int _lastPairDestinationProfileIndex = -1;
 
         public EarthMotionStateId ActiveState => _activeState;
         public int ActiveStateHash => _activeStateHash;
@@ -62,6 +78,7 @@ namespace Elemental.Presentation.Animation
         public uint RecoveryOwnedStateRestoreCount { get; private set; }
         public int LastRecoveryOwnedRejectedStateHash { get; private set; }
         public EarthTransitionProfile TransitionProfile => transitionProfile;
+        public EarthMotionCatalog MotionCatalog => motionCatalog;
         public EarthTransitionDirectorDiagnostics Diagnostics =>
             new EarthTransitionDirectorDiagnostics(
                 transitionProfile != null && transitionProfile.UseTransitionProfile,
@@ -74,7 +91,18 @@ namespace Elemental.Presentation.Animation
                 _genericFallbackExecutionCount,
                 _queuedRequestCount,
                 _dequeuedExecutionCount,
-                _queueRejectionCount);
+                _queueRejectionCount,
+                motionCatalog != null,
+                _runtimeLayerCount,
+                _verifiedRuntimeLayerCount,
+                _inactiveRuntimeLayerCount,
+                _unresolvedRuntimeLayerCount,
+                in _baseLayerMotion,
+                _motionResolutionCount,
+                _motionResolutionMissCount,
+                _lastAuthoredPairProfilesVerified,
+                _lastPairSourceProfileIndex,
+                _lastPairDestinationProfileIndex);
         public float TransitionElapsedSeconds => Mathf.Max(0f, Time.time - _transitionStartedAt);
         public float TransitionWeight => _transitionDuration > 0.0001f
             ? Mathf.Clamp01(TransitionElapsedSeconds / _transitionDuration)
@@ -90,6 +118,7 @@ namespace Elemental.Presentation.Animation
                 : null;
             CacheCanExitParameter();
             ResetProfileRuntimeState();
+            ResetMotionCatalogDiagnostics();
             _activeState = EarthMotionStateId.None;
             _activeStateHash = 0;
             _activePriority = EarthAnimationTransitionPriority.Idle;
@@ -103,6 +132,26 @@ namespace Elemental.Presentation.Animation
         {
             transitionProfile = configuredProfile;
             ResetProfileRuntimeState();
+        }
+
+        public void ConfigureMotionCatalog(EarthMotionCatalog configuredCatalog)
+        {
+            motionCatalog = configuredCatalog;
+            ResetMotionCatalogDiagnostics();
+        }
+
+        public bool TryResolveMotionState(
+            int stateHash,
+            AnimationClip activeClip,
+            out EarthMotionStateResolution resolution)
+        {
+            if (motionCatalog != null)
+                return motionCatalog.TryResolveControllerState(
+                    stateHash,
+                    activeClip,
+                    out resolution);
+            resolution = default;
+            return false;
         }
 
         private void Awake()
@@ -247,6 +296,7 @@ namespace Elemental.Presentation.Animation
 
         private void LateUpdate()
         {
+            RefreshMotionCatalogDiagnostics();
             if (_baseStateOwnerMode != CharacterPhysicalMode.Recovery ||
                 _ownedBaseStateHash == 0 || animator == null || !animator.enabled)
             {
@@ -293,6 +343,11 @@ namespace Elemental.Presentation.Animation
             in EarthTransitionRule rule,
             bool dequeued)
         {
+            if (profileResolved && !usedGenericFallback)
+                CapturePairCatalogBinding(destinationHash, in context);
+            else
+                ResetPairCatalogBinding();
+
             bool inertialized = decision.RequestsInertialization &&
                                 animationGraph != null &&
                                 (profileResolved
@@ -550,6 +605,109 @@ namespace Elemental.Presentation.Animation
             }
         }
 
+        private void RefreshMotionCatalogDiagnostics()
+        {
+            using (MotionBindingMarker.Auto())
+            {
+                _runtimeLayerCount = animator != null ? animator.layerCount : 0;
+                _verifiedRuntimeLayerCount = 0;
+                _inactiveRuntimeLayerCount = 0;
+                _unresolvedRuntimeLayerCount = 0;
+                _baseLayerMotion = default;
+                if (motionCatalog == null || animator == null || !animator.enabled)
+                    return;
+
+                for (int layerIndex = 0;
+                     layerIndex < _runtimeLayerCount;
+                     layerIndex++)
+                {
+                    AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(layerIndex);
+                    _clipInfoScratch.Clear();
+                    animator.GetCurrentAnimatorClipInfo(layerIndex, _clipInfoScratch);
+                    AnimationClip dominantClip = null;
+                    float dominantWeight = float.NegativeInfinity;
+                    for (int clipIndex = 0;
+                         clipIndex < _clipInfoScratch.Count;
+                         clipIndex++)
+                    {
+                        AnimatorClipInfo clipInfo = _clipInfoScratch[clipIndex];
+                        if (clipInfo.clip == null || clipInfo.weight <= dominantWeight) continue;
+                        dominantClip = clipInfo.clip;
+                        dominantWeight = clipInfo.weight;
+                    }
+
+                    if (motionCatalog.TryResolveControllerState(
+                            state.fullPathHash,
+                            dominantClip,
+                            out EarthMotionStateResolution resolution))
+                    {
+                        _verifiedRuntimeLayerCount++;
+                        _motionResolutionCount = Increment(_motionResolutionCount);
+                        if (layerIndex == 0) _baseLayerMotion = resolution;
+                    }
+                    else
+                    {
+                        if (dominantClip == null)
+                        {
+                            _inactiveRuntimeLayerCount++;
+                            continue;
+                        }
+                        _unresolvedRuntimeLayerCount++;
+                        _motionResolutionMissCount = Increment(_motionResolutionMissCount);
+                    }
+                }
+            }
+        }
+
+        private void CapturePairCatalogBinding(
+            int destinationHash,
+            in EarthAnimationTransitionContext context)
+        {
+            int sourceHash = _baseLayerMotion.IsVerified
+                ? _baseLayerMotion.StateHash
+                : _activeStateHash;
+            AnimationClip sourceClip = _baseLayerMotion.IsVerified &&
+                                       _baseLayerMotion.StateHash == sourceHash
+                ? _baseLayerMotion.Profile?.Clip
+                : null;
+            if (!EarthMotionTransitionCatalogResolver.TryResolveAuthoredPair(
+                    motionCatalog,
+                    transitionProfile,
+                    sourceHash,
+                    sourceClip,
+                    destinationHash,
+                    null,
+                    in context,
+                    out EarthVerifiedTransitionPair pair))
+            {
+                ResetPairCatalogBinding();
+                return;
+            }
+
+            _lastAuthoredPairProfilesVerified = true;
+            _lastPairSourceProfileIndex = pair.Source.ProfileIndex;
+            _lastPairDestinationProfileIndex = pair.Destination.ProfileIndex;
+        }
+
+        private void ResetPairCatalogBinding()
+        {
+            _lastAuthoredPairProfilesVerified = false;
+            _lastPairSourceProfileIndex = -1;
+            _lastPairDestinationProfileIndex = -1;
+        }
+
+        private void ResetMotionCatalogDiagnostics()
+        {
+            _runtimeLayerCount = 0;
+            _verifiedRuntimeLayerCount = 0;
+            _inactiveRuntimeLayerCount = 0;
+            _unresolvedRuntimeLayerCount = 0;
+            _baseLayerMotion = default;
+            _motionResolutionCount = 0u;
+            _motionResolutionMissCount = 0u;
+            ResetPairCatalogBinding();
+        }
+
         private void ResetProfileRuntimeState()
         {
             _transitionQueue.Clear();
@@ -563,6 +721,7 @@ namespace Elemental.Presentation.Animation
             _queuedRequestCount = 0u;
             _dequeuedExecutionCount = 0u;
             _queueRejectionCount = 0u;
+            ResetPairCatalogBinding();
         }
 
         [System.Diagnostics.Conditional("UNITY_EDITOR")]

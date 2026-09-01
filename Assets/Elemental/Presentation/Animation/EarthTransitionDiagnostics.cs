@@ -24,7 +24,18 @@ namespace Elemental.Presentation.Animation
             uint genericFallbackExecutionCount,
             uint queuedRequestCountTotal,
             uint dequeuedExecutionCount,
-            uint queueRejectionCount)
+            uint queueRejectionCount,
+            bool motionCatalogConfigured,
+            int runtimeLayerCount,
+            int verifiedRuntimeLayerCount,
+            int inactiveRuntimeLayerCount,
+            int unresolvedRuntimeLayerCount,
+            in EarthMotionStateResolution baseLayerMotion,
+            uint motionResolutionCount,
+            uint motionResolutionMissCount,
+            bool lastAuthoredPairProfilesVerified,
+            int lastPairSourceProfileIndex,
+            int lastPairDestinationProfileIndex)
         {
             ProfileEnabled = profileEnabled;
             QueueEnabled = queueEnabled;
@@ -37,6 +48,17 @@ namespace Elemental.Presentation.Animation
             QueuedRequestCountTotal = queuedRequestCountTotal;
             DequeuedExecutionCount = dequeuedExecutionCount;
             QueueRejectionCount = queueRejectionCount;
+            MotionCatalogConfigured = motionCatalogConfigured;
+            RuntimeLayerCount = runtimeLayerCount;
+            VerifiedRuntimeLayerCount = verifiedRuntimeLayerCount;
+            InactiveRuntimeLayerCount = inactiveRuntimeLayerCount;
+            UnresolvedRuntimeLayerCount = unresolvedRuntimeLayerCount;
+            BaseLayerMotion = baseLayerMotion;
+            MotionResolutionCount = motionResolutionCount;
+            MotionResolutionMissCount = motionResolutionMissCount;
+            LastAuthoredPairProfilesVerified = lastAuthoredPairProfilesVerified;
+            LastPairSourceProfileIndex = lastPairSourceProfileIndex;
+            LastPairDestinationProfileIndex = lastPairDestinationProfileIndex;
         }
 
         public bool ProfileEnabled { get; }
@@ -50,5 +72,16 @@ namespace Elemental.Presentation.Animation
         public uint QueuedRequestCountTotal { get; }
         public uint DequeuedExecutionCount { get; }
         public uint QueueRejectionCount { get; }
+        public bool MotionCatalogConfigured { get; }
+        public int RuntimeLayerCount { get; }
+        public int VerifiedRuntimeLayerCount { get; }
+        public int InactiveRuntimeLayerCount { get; }
+        public int UnresolvedRuntimeLayerCount { get; }
+        public EarthMotionStateResolution BaseLayerMotion { get; }
+        public uint MotionResolutionCount { get; }
+        public uint MotionResolutionMissCount { get; }
+        public bool LastAuthoredPairProfilesVerified { get; }
+        public int LastPairSourceProfileIndex { get; }
+        public int LastPairDestinationProfileIndex { get; }
     }
 }

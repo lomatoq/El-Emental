@@ -5,6 +5,7 @@ using Elemental.Authoring.Editor;
 using Elemental.Presentation.Animation;
 using Elemental.Simulation.Characters;
 using NUnit.Framework;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
@@ -13,11 +14,14 @@ namespace Elemental.Tests.EditMode
     public sealed class EarthMotionCatalogTests
     {
         private EarthMotionCatalog _catalog;
+        private EarthTransitionProfile _transitionProfile;
 
         [TearDown]
         public void TearDown()
         {
             if (_catalog != null) UnityEngine.Object.DestroyImmediate(_catalog);
+            if (_transitionProfile != null)
+                UnityEngine.Object.DestroyImmediate(_transitionProfile);
         }
 
         [Test]
@@ -45,6 +49,7 @@ namespace Elemental.Tests.EditMode
                 EarthMotionCatalogBuilder.Rebuild(_catalog);
 
             Assert.That(summary.ClipCount, Is.EqualTo(51));
+            Assert.That(summary.StateBindingCount, Is.GreaterThanOrEqualTo(4));
             Assert.That(summary.CopiedCurveClipCount + summary.DerivedCurveClipCount,
                 Is.EqualTo(51));
             Assert.That(summary.IdentityHash, Is.Not.Empty);
@@ -126,12 +131,314 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void RuntimeStatesAndAuthoredTransitionPairResolveVerifiedCatalogProfiles()
+        {
+            _catalog = ScriptableObject.CreateInstance<EarthMotionCatalog>();
+            EarthMotionCatalogBuilder.Rebuild(_catalog);
+
+            EarthMotionSemanticAction[] requiredRoles =
+            {
+                EarthMotionSemanticAction.Locomotion,
+                EarthMotionSemanticAction.Cast,
+                EarthMotionSemanticAction.Impact,
+                EarthMotionSemanticAction.Recovery
+            };
+            string[] requiredPaths =
+            {
+                "Base Layer.Locomotion",
+                "Earth Magic Upper Body.Earth Cast",
+                "Impact Additive.Recoil",
+                "Base Layer.Knockdown Recovery"
+            };
+            for (int roleIndex = 0; roleIndex < requiredRoles.Length; roleIndex++)
+            {
+                int bindingCount = 0;
+                for (int index = 0; index < _catalog.StateBindingCount; index++)
+                {
+                    EarthMotionStateBinding binding = _catalog.StateBindingAt(index);
+                    if (binding.SemanticRole != requiredRoles[roleIndex]) continue;
+                    bindingCount++;
+                    EarthMotionClipProfile exact =
+                        _catalog.ClipAt(binding.ClipProfileIndexAt(0));
+                    Assert.That(
+                        _catalog.TryResolveControllerState(
+                            binding.StateHash,
+                            exact.Clip,
+                            requiredRoles[roleIndex],
+                            out EarthMotionStateResolution resolution),
+                        Is.True,
+                        binding.StatePath);
+                    Assert.That(resolution.IsVerified, Is.True, binding.StatePath);
+                    Assert.That(
+                        resolution.Kind,
+                        Is.EqualTo(EarthMotionStateResolutionKind.ExactActiveClip));
+                    Assert.That(resolution.Profile, Is.SameAs(exact));
+                }
+                Assert.That(bindingCount, Is.GreaterThan(0), requiredRoles[roleIndex].ToString());
+                Assert.That(
+                    FindBinding(_catalog, requiredPaths[roleIndex]),
+                    Is.Not.Null,
+                    requiredPaths[roleIndex]);
+            }
+
+            EarthMotionStateBinding source = FindBinding(
+                _catalog,
+                "Base Layer.Locomotion");
+            EarthMotionStateBinding destination = FindBinding(
+                _catalog,
+                "Base Layer.Knockdown Recovery");
+            EarthNormalizedAnimationWindow disabled = default;
+            var rule = new EarthTransitionRule(
+                true,
+                EarthTransitionFamily.PoseInertialized,
+                EarthAnimationTransitionPriority.HeavyImpact,
+                0.06f,
+                0.1f,
+                EarthTransitionGaitPhaseRule.FixedTarget,
+                EarthTransitionContactPolicy.ReleaseBeforeBlend,
+                EarthTransitionCancelPolicy.Always,
+                in disabled,
+                in disabled,
+                0.55f,
+                EarthTransitionBodyMask.FullBody,
+                EarthTransitionFootReleasePolicy.ReleaseImmediately,
+                0f,
+                false);
+            _transitionProfile = ScriptableObject.CreateInstance<EarthTransitionProfile>();
+            _transitionProfile.Configure(
+                true,
+                false,
+                4,
+                0.08f,
+                new[]
+                {
+                    new EarthTransitionPairOverride(
+                        EarthMotionStateId.Locomotion,
+                        EarthMotionStateId.KnockdownRecovery,
+                        in rule)
+                });
+            EarthAnimationTransitionContext context = TransitionContext();
+
+            Assert.That(
+                EarthMotionTransitionCatalogResolver.TryResolveAuthoredPair(
+                    _catalog,
+                    _transitionProfile,
+                    source.StateHash,
+                    destination.StateHash,
+                    in context,
+                    out EarthVerifiedTransitionPair pair),
+                Is.True);
+            Assert.That(pair.IsVerified, Is.True);
+            Assert.That(pair.PairIndex, Is.Zero);
+            Assert.That(pair.Source.SemanticRole,
+                Is.EqualTo(EarthMotionSemanticAction.Locomotion));
+            Assert.That(pair.Destination.SemanticRole,
+                Is.EqualTo(EarthMotionSemanticAction.Recovery));
+            Assert.That(pair.Rule.Family, Is.EqualTo(EarthTransitionFamily.PoseInertialized));
+        }
+
+        [Test]
+        public void ClosestFrontBackRecoveryKeepsCatalogProvenanceAndAuthoredMarkers()
+        {
+            _catalog = ScriptableObject.CreateInstance<EarthMotionCatalog>();
+            EarthMotionCatalogBuilder.Rebuild(_catalog);
+            EarthMotionStateBinding recovery = FindBinding(
+                _catalog,
+                "Base Layer.Knockdown Recovery");
+            EarthRecoveryMarkerProfile frontMarkers =
+                new EarthRecoveryMarkerProfile(0.31f, 0.67f, 0.92f);
+            EarthRecoveryMarkerProfile backMarkers =
+                new EarthRecoveryMarkerProfile(0.36f, 0.72f, 0.96f);
+            EarthRecoveryPoseFeature farFront = RecoveryFeature(-0.9f);
+            EarthRecoveryPoseFeature closeFront = RecoveryFeature(0.82f);
+            EarthRecoveryPoseFeature closeBack = RecoveryFeature(-0.74f);
+            var database = new EarthRecoveryPoseDatabase(new[]
+            {
+                RecoveryCandidate(
+                    10u,
+                    recovery.StateHash,
+                    EarthRecoveryOrientation.Front,
+                    in farFront,
+                    in frontMarkers),
+                RecoveryCandidate(
+                    20u,
+                    recovery.StateHash,
+                    EarthRecoveryOrientation.Front,
+                    in closeFront,
+                    in frontMarkers),
+                RecoveryCandidate(
+                    30u,
+                    recovery.StateHash,
+                    EarthRecoveryOrientation.Back,
+                    in closeBack,
+                    in backMarkers)
+            });
+            EarthRecoveryPoseMatchWeights weights = EarthRecoveryPoseMatchWeights.Default;
+            EarthRecoveryPoseFeature currentFront = RecoveryFeature(0.8f);
+
+            Assert.That(
+                EarthRecoveryCatalogResolver.TryResolveClosest(
+                    _catalog,
+                    database,
+                    EarthRecoveryOrientation.Front,
+                    in currentFront,
+                    in weights,
+                    out EarthRecoveryCatalogMatch front),
+                Is.True);
+            Assert.That(front.IsVerified, Is.True);
+            Assert.That(front.PoseMatch.Candidate.ClipId, Is.EqualTo(20u));
+            Assert.That(front.Motion.SemanticRole,
+                Is.EqualTo(EarthMotionSemanticAction.Recovery));
+            Assert.That(front.Markers.FeetEnablePhase,
+                Is.EqualTo(frontMarkers.FeetEnablePhase));
+            Assert.That(front.Markers.ControlsEnablePhase,
+                Is.EqualTo(frontMarkers.ControlsEnablePhase));
+            Assert.That(front.Markers.ExitPhase, Is.EqualTo(frontMarkers.ExitPhase));
+
+            EarthRecoveryClearanceResult clearance =
+                new EarthRecoveryClearanceResult(
+                    EarthRecoveryClearanceKind.BasePose,
+                    0f,
+                    true);
+            var recoveryResult = new EarthRecoveryResult(
+                front.PoseMatch.Candidate.Orientation,
+                front.PoseMatch.Candidate.ClipId,
+                front.PoseMatch.Candidate.AnimationStateId,
+                front.PoseMatch.Candidate.EntryPhase,
+                front.PoseMatch.Cost,
+                float3.zero,
+                float3.zero,
+                quaternion.identity,
+                new float3(0f, 1f, 0f),
+                new float3(0f, 0f, 1f),
+                in clearance,
+                in frontMarkers,
+                false);
+            var coordinator = new EarthPhysicalAnimationCoordinator();
+            Assert.That(
+                coordinator.TryBeginFullRagdoll(
+                    CharacterPhysicalMode.FullRagdoll,
+                    1u),
+                Is.True);
+            Assert.That(
+                coordinator.TryBeginPoseMatchedRecovery(
+                    CharacterPhysicalMode.Recovery,
+                    2u,
+                    in recoveryResult),
+                Is.True);
+            Assert.That(
+                coordinator.TryAdvancePoseMatchedRecovery(
+                    CharacterPhysicalMode.Recovery,
+                    frontMarkers.FeetEnablePhase,
+                    true,
+                    out EarthPhysicalAnimationOwnership feetOwnership),
+                Is.True);
+            Assert.That(feetOwnership.FeetEnabled, Is.True);
+            Assert.That(feetOwnership.ControlsEnabled, Is.False);
+            coordinator.TryAdvancePoseMatchedRecovery(
+                CharacterPhysicalMode.Recovery,
+                frontMarkers.ControlsEnablePhase,
+                true,
+                out EarthPhysicalAnimationOwnership controlOwnership);
+            Assert.That(controlOwnership.ControlsEnabled, Is.True);
+            Assert.That(controlOwnership.RecoveryExitReady, Is.False);
+            coordinator.TryAdvancePoseMatchedRecovery(
+                CharacterPhysicalMode.Recovery,
+                frontMarkers.ExitPhase,
+                true,
+                out EarthPhysicalAnimationOwnership exitOwnership);
+            Assert.That(exitOwnership.RecoveryExitReady, Is.True);
+
+            EarthRecoveryPoseFeature currentBack = RecoveryFeature(-0.7f);
+            Assert.That(
+                EarthRecoveryCatalogResolver.TryResolveClosest(
+                    _catalog,
+                    database,
+                    EarthRecoveryOrientation.Back,
+                    in currentBack,
+                    in weights,
+                    out EarthRecoveryCatalogMatch back),
+                Is.True);
+            Assert.That(back.PoseMatch.Candidate.ClipId, Is.EqualTo(30u));
+            Assert.That(back.Markers.ExitPhase, Is.EqualTo(backMarkers.ExitPhase));
+            Assert.That(back.Motion.Profile.AssetGuid, Is.Not.Empty);
+            Assert.That(back.Motion.Profile.LocalFileId, Is.Not.Zero);
+        }
+
+        [Test]
+        public void RuntimeStateAndPairBindingHotPathAllocatesNoManagedMemory()
+        {
+            _catalog = ScriptableObject.CreateInstance<EarthMotionCatalog>();
+            EarthMotionCatalogBuilder.Rebuild(_catalog);
+            EarthMotionStateBinding binding = FindBinding(
+                _catalog,
+                "Base Layer.Locomotion");
+            AnimationClip clip = _catalog.ClipAt(binding.ClipProfileIndexAt(0)).Clip;
+            EarthMotionStateBinding destination = FindBinding(
+                _catalog,
+                "Base Layer.Knockdown Recovery");
+            EarthTransitionRule rule = EarthTransitionRule.FixedFallback(
+                EarthAnimationTransitionPriority.HeavyImpact,
+                0.1f);
+            _transitionProfile = ScriptableObject.CreateInstance<EarthTransitionProfile>();
+            _transitionProfile.Configure(
+                true,
+                false,
+                4,
+                0.08f,
+                new[]
+                {
+                    new EarthTransitionPairOverride(
+                        EarthMotionStateId.Locomotion,
+                        EarthMotionStateId.KnockdownRecovery,
+                        in rule)
+                });
+            EarthAnimationTransitionContext context = TransitionContext();
+            _catalog.TryResolveControllerState(binding.StateHash, clip, out _);
+            EarthMotionTransitionCatalogResolver.TryResolveAuthoredPair(
+                _catalog,
+                _transitionProfile,
+                binding.StateHash,
+                clip,
+                destination.StateHash,
+                null,
+                in context,
+                out _);
+
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int index = 0; index < 10000; index++)
+            {
+                if (!_catalog.TryResolveControllerState(
+                        binding.StateHash,
+                        clip,
+                        out EarthMotionStateResolution resolution) ||
+                    !resolution.IsVerified)
+                    Assert.Fail("runtime state binding changed");
+                if (!EarthMotionTransitionCatalogResolver.TryResolveAuthoredPair(
+                        _catalog,
+                        _transitionProfile,
+                        binding.StateHash,
+                        clip,
+                        destination.StateHash,
+                        null,
+                        in context,
+                        out EarthVerifiedTransitionPair pair) ||
+                    !pair.IsVerified)
+                    Assert.Fail("authored transition pair binding changed");
+            }
+            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+            Assert.That(allocated, Is.Zero);
+        }
+
+        [Test]
         public void ConsecutiveRebuildIsDeterministicAndPreservesManualCorrection()
         {
             _catalog = ScriptableObject.CreateInstance<EarthMotionCatalog>();
             EarthMotionCatalogBuildSummary first =
                 EarthMotionCatalogBuilder.Rebuild(_catalog);
             string[] firstIdentityOrder = IdentityOrder(_catalog);
+            string[] firstStateBindingOrder = StateBindingOrder(_catalog);
             EarthMotionSemanticAction corrected = EarthMotionSemanticAction.Surf;
 
             var serialized = new SerializedObject(_catalog);
@@ -147,6 +454,7 @@ namespace Elemental.Tests.EditMode
 
             Assert.That(second.IdentityHash, Is.EqualTo(first.IdentityHash));
             Assert.That(IdentityOrder(_catalog), Is.EqualTo(firstIdentityOrder));
+            Assert.That(StateBindingOrder(_catalog), Is.EqualTo(firstStateBindingOrder));
             Assert.That(_catalog.ClipAt(0).SemanticAction, Is.EqualTo(corrected));
             Assert.That(
                 _catalog.ClipAt(0).ManualCorrections,
@@ -226,5 +534,82 @@ namespace Elemental.Tests.EditMode
             }
             return identities;
         }
+
+        private static EarthMotionStateBinding FindBinding(
+            EarthMotionCatalog catalog,
+            string statePath)
+        {
+            for (int index = 0; index < catalog.StateBindingCount; index++)
+            {
+                EarthMotionStateBinding binding = catalog.StateBindingAt(index);
+                if (binding != null && string.Equals(
+                        binding.StatePath,
+                        statePath,
+                        StringComparison.Ordinal))
+                    return binding;
+            }
+            return null;
+        }
+
+        private static string[] StateBindingOrder(EarthMotionCatalog catalog)
+        {
+            var order = new string[catalog.StateBindingCount];
+            for (int bindingIndex = 0;
+                 bindingIndex < catalog.StateBindingCount;
+                 bindingIndex++)
+            {
+                EarthMotionStateBinding binding = catalog.StateBindingAt(bindingIndex);
+                string value = binding.LayerIndex + ":" + binding.StatePath + ":" +
+                               binding.StateHash + ":" + binding.SemanticRole;
+                for (int profileIndex = 0;
+                     profileIndex < binding.ClipProfileCount;
+                     profileIndex++)
+                    value += ":" + binding.ClipProfileIndexAt(profileIndex);
+                order[bindingIndex] = value;
+            }
+            return order;
+        }
+
+        private static EarthAnimationTransitionContext TransitionContext() =>
+            new EarthAnimationTransitionContext(
+                EarthMotionStateId.Locomotion,
+                EarthMotionStateId.KnockdownRecovery,
+                EarthMotionCategory.Locomotion,
+                EarthMotionCategory.RagdollRecovery,
+                EarthAnimationTransitionPriority.HeavyImpact,
+                EarthAnimationTransitionPriority.Locomotion,
+                0.25f,
+                0.5f,
+                1f,
+                0f,
+                0f,
+                false,
+                true,
+                false,
+                true);
+
+        private static EarthRecoveryPoseCandidate RecoveryCandidate(
+            uint clipId,
+            int stateHash,
+            EarthRecoveryOrientation orientation,
+            in EarthRecoveryPoseFeature feature,
+            in EarthRecoveryMarkerProfile markers) =>
+            new EarthRecoveryPoseCandidate(
+                clipId,
+                stateHash,
+                orientation,
+                0.55f,
+                in feature,
+                float3.zero,
+                in markers);
+
+        private static EarthRecoveryPoseFeature RecoveryFeature(float x) =>
+            new EarthRecoveryPoseFeature(
+                new float3(x, 0.5f, 0.1f),
+                new float3(x - 0.2f, 0.3f, 0.2f),
+                new float3(x + 0.2f, 0.3f, 0.2f),
+                new float3(x - 0.1f, 0f, 0.3f),
+                new float3(x + 0.1f, 0f, 0.3f),
+                new float3(0f, 0f, 1f));
     }
 }

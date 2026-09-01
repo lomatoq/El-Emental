@@ -13,17 +13,20 @@ namespace Elemental.Authoring.Editor
     {
         public EarthMotionCatalogBuildSummary(
             int clipCount,
+            int stateBindingCount,
             int copiedCurveClipCount,
             int derivedCurveClipCount,
             string identityHash)
         {
             ClipCount = clipCount;
+            StateBindingCount = stateBindingCount;
             CopiedCurveClipCount = copiedCurveClipCount;
             DerivedCurveClipCount = derivedCurveClipCount;
             IdentityHash = identityHash;
         }
 
         public int ClipCount { get; }
+        public int StateBindingCount { get; }
         public int CopiedCurveClipCount { get; }
         public int DerivedCurveClipCount { get; }
         public string IdentityHash { get; }
@@ -64,6 +67,7 @@ namespace Elemental.Authoring.Editor
             Selection.activeObject = catalog;
             Debug.Log(
                 $"[Elemental] Earth motion catalog rebuilt: {summary.ClipCount} clips, " +
+                $"state bindings={summary.StateBindingCount}, " +
                 $"copied curves={summary.CopiedCurveClipCount}, " +
                 $"derived catalog-local curves={summary.DerivedCurveClipCount}, " +
                 $"identity={summary.IdentityHash}.",
@@ -116,10 +120,12 @@ namespace Elemental.Authoring.Editor
                 profiles[index] = profile;
             }
 
-            string identityHash = ComputeIdentityHash(candidates);
-            catalog.ReplaceProfiles(profiles, identityHash);
+            EarthMotionStateBinding[] stateBindings = BuildStateBindings(profiles);
+            string identityHash = ComputeIdentityHash(candidates, stateBindings);
+            catalog.ReplaceProfiles(profiles, stateBindings, identityHash);
             return new EarthMotionCatalogBuildSummary(
                 profiles.Length,
+                stateBindings.Length,
                 copiedCurves,
                 derivedCurves,
                 identityHash);
@@ -703,7 +709,9 @@ namespace Elemental.Authoring.Editor
             label = string.Empty;
         }
 
-        private static string ComputeIdentityHash(IReadOnlyList<ClipCandidate> candidates)
+        private static string ComputeIdentityHash(
+            IReadOnlyList<ClipCandidate> candidates,
+            IReadOnlyList<EarthMotionStateBinding> stateBindings)
         {
             const ulong offset = 14695981039346656037UL;
             const ulong prime = 1099511628211UL;
@@ -720,7 +728,295 @@ namespace Elemental.Authoring.Editor
                     hash *= prime;
                 }
             }
+            for (int bindingIndex = 0; bindingIndex < stateBindings.Count; bindingIndex++)
+            {
+                EarthMotionStateBinding binding = stateBindings[bindingIndex];
+                string identity = binding.StateHash + ":" + binding.LayerIndex + ":" +
+                                  binding.StatePath + ":" + (int)binding.SemanticRole;
+                for (int character = 0; character < identity.Length; character++)
+                {
+                    hash ^= identity[character];
+                    hash *= prime;
+                }
+                for (int profile = 0; profile < binding.ClipProfileCount; profile++)
+                {
+                    hash ^= (uint)binding.ClipProfileIndexAt(profile);
+                    hash *= prime;
+                }
+            }
             return hash.ToString("X16");
+        }
+
+        private static EarthMotionStateBinding[] BuildStateBindings(
+            EarthMotionClipProfile[] profiles)
+        {
+            AnimatorController controller =
+                AssetDatabase.LoadAssetAtPath<AnimatorController>(
+                    EarthHumanoidMotionSetup.ControllerPath);
+            if (controller == null)
+                throw new InvalidOperationException(
+                    $"AnimatorController is missing: {EarthHumanoidMotionSetup.ControllerPath}");
+
+            var profileByClip = new Dictionary<AnimationClip, int>(profiles.Length);
+            for (int index = 0; index < profiles.Length; index++)
+            {
+                EarthMotionClipProfile profile = profiles[index];
+                if (profile?.Clip == null || profileByClip.ContainsKey(profile.Clip)) continue;
+                profileByClip.Add(profile.Clip, index);
+            }
+
+            var bindings = new List<EarthMotionStateBinding>(32);
+            AnimatorControllerLayer[] layers = controller.layers;
+            for (int layerIndex = 0; layerIndex < layers.Length; layerIndex++)
+            {
+                AnimatorControllerLayer layer = layers[layerIndex];
+                if (layer?.stateMachine == null) continue;
+                CollectStateBindings(
+                    layer.stateMachine,
+                    layerIndex,
+                    layer.name,
+                    string.Empty,
+                    profileByClip,
+                    profiles,
+                    bindings);
+            }
+            bindings.Sort(CompareStateBindings);
+
+            EarthMotionSemanticAction[] requiredRoles =
+            {
+                EarthMotionSemanticAction.Locomotion,
+                EarthMotionSemanticAction.Cast,
+                EarthMotionSemanticAction.Impact,
+                EarthMotionSemanticAction.Recovery
+            };
+            for (int roleIndex = 0; roleIndex < requiredRoles.Length; roleIndex++)
+            {
+                EarthMotionSemanticAction required = requiredRoles[roleIndex];
+                bool found = false;
+                for (int bindingIndex = 0; bindingIndex < bindings.Count; bindingIndex++)
+                {
+                    EarthMotionStateBinding binding = bindings[bindingIndex];
+                    if (binding.SemanticRole != required) continue;
+                    if (binding.ClipProfileCount == 0)
+                        throw new InvalidOperationException(
+                            $"Controller state '{binding.StatePath}' has runtime role " +
+                            $"{required} but no verified catalog clip profile.");
+                    found = true;
+                }
+                if (!found)
+                    throw new InvalidOperationException(
+                        $"Controller has no verified runtime state binding for {required}.");
+            }
+            return bindings.ToArray();
+        }
+
+        private static void CollectStateBindings(
+            AnimatorStateMachine machine,
+            int layerIndex,
+            string layerName,
+            string machinePath,
+            IReadOnlyDictionary<AnimationClip, int> profileByClip,
+            IReadOnlyList<EarthMotionClipProfile> profiles,
+            ICollection<EarthMotionStateBinding> bindings)
+        {
+            ChildAnimatorState[] states = machine.states;
+            for (int stateIndex = 0; stateIndex < states.Length; stateIndex++)
+            {
+                AnimatorState state = states[stateIndex].state;
+                if (state == null) continue;
+                string relativePath = machinePath + state.name;
+                string fullPath = layerName + "." + relativePath;
+                ResolveStateRole(
+                    state.name,
+                    out EarthMotionStateId motionState,
+                    out EarthMotionCategory category,
+                    out EarthMotionSemanticAction semanticRole);
+
+                var profileIndices = new List<int>(8);
+                CollectMotionProfileIndices(
+                    state.motion,
+                    profileByClip,
+                    profileIndices,
+                    fullPath);
+                if (profileIndices.Count == 0)
+                {
+                    if (IsRequiredRuntimeRole(semanticRole))
+                        throw new InvalidOperationException(
+                            $"Required controller state '{fullPath}' has no bound motion clips.");
+                    continue;
+                }
+
+                if (semanticRole == EarthMotionSemanticAction.Unknown)
+                {
+                    EarthMotionClipProfile primary = profiles[profileIndices[0]];
+                    semanticRole = primary?.SemanticAction ?? EarthMotionSemanticAction.Utility;
+                    category = CategoryForSemantic(semanticRole);
+                }
+                bindings.Add(new EarthMotionStateBinding(
+                    layerIndex,
+                    fullPath,
+                    Animator.StringToHash(fullPath),
+                    motionState,
+                    category,
+                    semanticRole,
+                    profileIndices.ToArray()));
+            }
+
+            ChildAnimatorStateMachine[] childMachines = machine.stateMachines;
+            for (int childIndex = 0; childIndex < childMachines.Length; childIndex++)
+            {
+                AnimatorStateMachine child = childMachines[childIndex].stateMachine;
+                if (child == null) continue;
+                CollectStateBindings(
+                    child,
+                    layerIndex,
+                    layerName,
+                    machinePath + child.name + ".",
+                    profileByClip,
+                    profiles,
+                    bindings);
+            }
+        }
+
+        private static void CollectMotionProfileIndices(
+            Motion motion,
+            IReadOnlyDictionary<AnimationClip, int> profileByClip,
+            ICollection<int> profileIndices,
+            string statePath)
+        {
+            if (motion == null) return;
+            if (motion is AnimationClip clip)
+            {
+                if (!profileByClip.TryGetValue(clip, out int profileIndex))
+                    throw new InvalidOperationException(
+                        $"Controller state '{statePath}' references clip '{clip.name}' " +
+                        "that is absent from the deterministic catalog union.");
+                if (!Contains(profileIndices, profileIndex)) profileIndices.Add(profileIndex);
+                return;
+            }
+            if (motion is not BlendTree tree) return;
+            ChildMotion[] children = tree.children;
+            for (int childIndex = 0; childIndex < children.Length; childIndex++)
+                CollectMotionProfileIndices(
+                    children[childIndex].motion,
+                    profileByClip,
+                    profileIndices,
+                    statePath);
+        }
+
+        private static bool Contains(ICollection<int> values, int value)
+        {
+            foreach (int candidate in values)
+                if (candidate == value) return true;
+            return false;
+        }
+
+        private static void ResolveStateRole(
+            string stateName,
+            out EarthMotionStateId state,
+            out EarthMotionCategory category,
+            out EarthMotionSemanticAction semantic)
+        {
+            state = EarthMotionStateId.None;
+            category = EarthMotionCategory.None;
+            semantic = EarthMotionSemanticAction.Unknown;
+            switch (stateName)
+            {
+                case "Locomotion":
+                    state = EarthMotionStateId.Locomotion;
+                    category = EarthMotionCategory.Locomotion;
+                    semantic = EarthMotionSemanticAction.Locomotion;
+                    break;
+                case "Turn In Place":
+                    state = EarthMotionStateId.TurnInPlace;
+                    category = EarthMotionCategory.Turn;
+                    semantic = EarthMotionSemanticAction.Turn;
+                    break;
+                case "Jump":
+                    state = EarthMotionStateId.Jump;
+                    category = EarthMotionCategory.Airborne;
+                    semantic = EarthMotionSemanticAction.Jump;
+                    break;
+                case "Fall":
+                    state = EarthMotionStateId.Fall;
+                    category = EarthMotionCategory.Airborne;
+                    semantic = EarthMotionSemanticAction.Fall;
+                    break;
+                case "Land":
+                    state = EarthMotionStateId.SoftLanding;
+                    category = EarthMotionCategory.Landing;
+                    semantic = EarthMotionSemanticAction.Landing;
+                    break;
+                case "Moving Land":
+                    state = EarthMotionStateId.MovingLanding;
+                    category = EarthMotionCategory.Landing;
+                    semantic = EarthMotionSemanticAction.Landing;
+                    break;
+                case "Hard Land":
+                    state = EarthMotionStateId.HardLanding;
+                    category = EarthMotionCategory.Landing;
+                    semantic = EarthMotionSemanticAction.Landing;
+                    break;
+                case "Dodge":
+                    state = EarthMotionStateId.DirectionalDodge;
+                    category = EarthMotionCategory.AuthoredAction;
+                    semantic = EarthMotionSemanticAction.Dodge;
+                    break;
+                case "Knockdown Recovery":
+                    state = EarthMotionStateId.KnockdownRecovery;
+                    category = EarthMotionCategory.RagdollRecovery;
+                    semantic = EarthMotionSemanticAction.Recovery;
+                    break;
+                case "Recoil":
+                    state = EarthMotionStateId.ImpactOverlay;
+                    category = EarthMotionCategory.Impact;
+                    semantic = EarthMotionSemanticAction.Impact;
+                    break;
+                case "Earth Cast":
+                    category = EarthMotionCategory.AuthoredAction;
+                    semantic = EarthMotionSemanticAction.Cast;
+                    break;
+                case "Surf Enter":
+                case "Surf Crouch":
+                case "Surf Exit":
+                    state = EarthMotionStateId.Surf;
+                    category = EarthMotionCategory.Surf;
+                    semantic = EarthMotionSemanticAction.Surf;
+                    break;
+            }
+        }
+
+        private static EarthMotionCategory CategoryForSemantic(
+            EarthMotionSemanticAction semantic) => semantic switch
+            {
+                EarthMotionSemanticAction.Idle => EarthMotionCategory.Idle,
+                EarthMotionSemanticAction.Locomotion => EarthMotionCategory.Locomotion,
+                EarthMotionSemanticAction.Turn => EarthMotionCategory.Turn,
+                EarthMotionSemanticAction.Jump or EarthMotionSemanticAction.Fall =>
+                    EarthMotionCategory.Airborne,
+                EarthMotionSemanticAction.Landing => EarthMotionCategory.Landing,
+                EarthMotionSemanticAction.Impact => EarthMotionCategory.Impact,
+                EarthMotionSemanticAction.Recovery => EarthMotionCategory.RagdollRecovery,
+                EarthMotionSemanticAction.Surf => EarthMotionCategory.Surf,
+                EarthMotionSemanticAction.Cast or EarthMotionSemanticAction.Attack or
+                    EarthMotionSemanticAction.Dodge => EarthMotionCategory.AuthoredAction,
+                _ => EarthMotionCategory.None
+            };
+
+        private static bool IsRequiredRuntimeRole(EarthMotionSemanticAction role) =>
+            role == EarthMotionSemanticAction.Locomotion ||
+            role == EarthMotionSemanticAction.Cast ||
+            role == EarthMotionSemanticAction.Impact ||
+            role == EarthMotionSemanticAction.Recovery;
+
+        private static int CompareStateBindings(
+            EarthMotionStateBinding left,
+            EarthMotionStateBinding right)
+        {
+            int layer = left.LayerIndex.CompareTo(right.LayerIndex);
+            return layer != 0
+                ? layer
+                : string.CompareOrdinal(left.StatePath, right.StatePath);
         }
 
         private static int CompareCandidates(ClipCandidate left, ClipCandidate right)
