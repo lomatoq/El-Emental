@@ -122,12 +122,12 @@ namespace Elemental.Presentation.Rendering
 
         private static void ApplyGlobalQuality(bool shadowFreeArena)
         {
-            QualitySettings.shadows = shadowFreeArena
-                ? UnityEngine.ShadowQuality.Disable
-                : UnityEngine.ShadowQuality.All;
-            QualitySettings.shadowCascades = 4;
-            QualitySettings.shadowDistance = 90f;
-            QualitySettings.shadowResolution = UnityEngine.ShadowResolution.High;
+            EarthArenaShadowQualitySettings shadowSettings =
+                EarthArenaShadowQualityPolicy.Resolve(shadowFreeArena);
+            QualitySettings.shadows = shadowSettings.ShadowQuality;
+            QualitySettings.shadowCascades = shadowSettings.CascadeCount;
+            QualitySettings.shadowDistance = shadowSettings.ShadowDistance;
+            QualitySettings.shadowResolution = shadowSettings.ShadowResolution;
             QualitySettings.softParticles = true;
             QualitySettings.realtimeReflectionProbes = true;
         }

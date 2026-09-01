@@ -1,4 +1,5 @@
 using Elemental.Simulation.Rendering;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace Elemental.Presentation.Rendering
@@ -40,6 +41,92 @@ namespace Elemental.Presentation.Rendering
         public EarthCinematicDepthOfFieldDebugView DebugView { get; }
     }
 
+    public readonly struct EarthCinematicDepthOfFieldEvidence
+    {
+        private const float ContainmentTolerance = 0.001f;
+
+        public EarthCinematicDepthOfFieldEvidence(
+            Vector3 cameraPosition,
+            Quaternion cameraRotation,
+            bool primaryConfigured,
+            bool secondaryConfigured,
+            bool primarySampled,
+            float primaryNearDistance,
+            float primaryFarDistance,
+            bool secondarySampled,
+            float secondaryNearDistance,
+            float secondaryFarDistance,
+            float sharpNearDistance,
+            float sharpFarDistance)
+        {
+            CameraPosition = cameraPosition;
+            CameraRotation = cameraRotation;
+            PrimaryConfigured = primaryConfigured;
+            SecondaryConfigured = secondaryConfigured;
+            PrimarySampled = primarySampled;
+            PrimaryNearDistance = primaryNearDistance;
+            PrimaryFarDistance = primaryFarDistance;
+            SecondarySampled = secondarySampled;
+            SecondaryNearDistance = secondaryNearDistance;
+            SecondaryFarDistance = secondaryFarDistance;
+            SharpNearDistance = sharpNearDistance;
+            SharpFarDistance = sharpFarDistance;
+        }
+
+        public Vector3 CameraPosition { get; }
+        public Quaternion CameraRotation { get; }
+        public bool PrimaryConfigured { get; }
+        public bool SecondaryConfigured { get; }
+        public bool PrimarySampled { get; }
+        public float PrimaryNearDistance { get; }
+        public float PrimaryFarDistance { get; }
+        public bool SecondarySampled { get; }
+        public float SecondaryNearDistance { get; }
+        public float SecondaryFarDistance { get; }
+        public float SharpNearDistance { get; }
+        public float SharpFarDistance { get; }
+        public bool HasBothSubjects =>
+            PrimaryConfigured && SecondaryConfigured &&
+            PrimarySampled && SecondarySampled;
+        public bool BothSubjectsSharp => HasBothSubjects &&
+            Contains(PrimaryNearDistance, PrimaryFarDistance) &&
+            Contains(SecondaryNearDistance, SecondaryFarDistance);
+        public bool IsFinite =>
+            IsFiniteVector(CameraPosition) && IsFiniteQuaternion(CameraRotation) &&
+            float.IsFinite(SharpNearDistance) &&
+            float.IsFinite(SharpFarDistance) &&
+            SharpFarDistance >= SharpNearDistance &&
+            (!PrimarySampled ||
+             float.IsFinite(PrimaryNearDistance) &&
+             float.IsFinite(PrimaryFarDistance) &&
+             PrimaryFarDistance >= PrimaryNearDistance) &&
+            (!SecondarySampled ||
+             float.IsFinite(SecondaryNearDistance) &&
+             float.IsFinite(SecondaryFarDistance) &&
+             SecondaryFarDistance >= SecondaryNearDistance);
+
+        private bool Contains(float subjectNear, float subjectFar)
+        {
+            return subjectNear >= SharpNearDistance - ContainmentTolerance &&
+                subjectFar <= SharpFarDistance + ContainmentTolerance;
+        }
+
+        private static bool IsFiniteVector(Vector3 value)
+        {
+            return float.IsFinite(value.x) &&
+                float.IsFinite(value.y) &&
+                float.IsFinite(value.z);
+        }
+
+        private static bool IsFiniteQuaternion(Quaternion value)
+        {
+            return float.IsFinite(value.x) &&
+                float.IsFinite(value.y) &&
+                float.IsFinite(value.z) &&
+                float.IsFinite(value.w);
+        }
+    }
+
     /// <summary>
     /// Stable, camera-local owner for the custom depth-aware DOF pass. Gameplay
     /// policy is supplied by EarthChargeCameraLookdevV2. This component is the
@@ -52,6 +139,8 @@ namespace Elemental.Presentation.Rendering
     public sealed class EarthCinematicDepthOfFieldController : MonoBehaviour
     {
         private const float ActivationHoldSeconds = 0.08f;
+        private static readonly ProfilerMarker EnvelopeMarker =
+            new ProfilerMarker("Elemental.Rendering.DualSubjectDofEnvelope");
         [SerializeField, Min(0.05f)] private float nearTransition = 1.15f;
         [SerializeField, Min(0.1f)] private float farTransition = 5.5f;
         [SerializeField, Range(1f, 12f)] private float maxRadiusPixels = 7f;
@@ -78,6 +167,7 @@ namespace Elemental.Presentation.Rendering
         private bool _hasEnvelopeCameraPose;
         private Vector3 _envelopeCameraPosition;
         private Quaternion _envelopeCameraRotation;
+        private EarthCinematicDepthOfFieldEvidence _evidence;
 
         public bool IsRuntimeActive => _runtimeActive;
         public float FocusDistance => _envelope.Midpoint;
@@ -150,6 +240,15 @@ namespace Elemental.Presentation.Rendering
             return active && isActiveAndEnabled;
         }
 
+        public bool TryGetSharpEnvelopeEvidence(
+            out EarthCinematicDepthOfFieldEvidence evidence)
+        {
+            if (HasCameraPoseChangedSinceEnvelope())
+                RefreshEnvelope(0f, true);
+            evidence = _evidence;
+            return evidence.IsFinite;
+        }
+
         private void OnEnable()
         {
             _primaryRenderers = ResolveSubjectRenderers(primarySubject);
@@ -176,58 +275,80 @@ namespace Elemental.Presentation.Rendering
 
         private void RefreshEnvelope(float deltaTime, bool forceInitialize)
         {
-            _envelopeCameraPosition = transform.position;
-            _envelopeCameraRotation = transform.rotation;
-            _hasEnvelopeCameraPose = true;
+            using (EnvelopeMarker.Auto())
+            {
+                _envelopeCameraPosition = transform.position;
+                _envelopeCameraRotation = transform.rotation;
+                _hasEnvelopeCameraPose = true;
 
-            bool primaryValid = TryGetSubjectDepthRange(
-                primarySubject,
-                _primaryRenderers,
-                out float primaryNear,
-                out float primaryFar);
-            bool secondaryValid = TryGetSubjectDepthRange(
-                secondarySubject,
-                _secondaryRenderers,
-                out float secondaryNear,
-                out float secondaryFar);
-            if (!primaryValid && !secondaryValid)
-            {
-                primaryNear = _targetFocusDistance;
-                primaryFar = _targetFocusDistance;
-                secondaryNear = _targetFocusDistance;
-                secondaryFar = _targetFocusDistance;
-            }
-            else if (!primaryValid)
-            {
-                primaryNear = secondaryNear;
-                primaryFar = secondaryFar;
-            }
-            else if (!secondaryValid)
-            {
-                secondaryNear = primaryNear;
-                secondaryFar = primaryFar;
-            }
+                bool primaryValid = TryGetSubjectDepthRange(
+                    primarySubject,
+                    _primaryRenderers,
+                    out float primaryNear,
+                    out float primaryFar);
+                bool secondaryValid = TryGetSubjectDepthRange(
+                    secondarySubject,
+                    _secondaryRenderers,
+                    out float secondaryNear,
+                    out float secondaryFar);
+                float sampledPrimaryNear = primaryNear;
+                float sampledPrimaryFar = primaryFar;
+                float sampledSecondaryNear = secondaryNear;
+                float sampledSecondaryFar = secondaryFar;
+                if (!primaryValid && !secondaryValid)
+                {
+                    primaryNear = _targetFocusDistance;
+                    primaryFar = _targetFocusDistance;
+                    secondaryNear = _targetFocusDistance;
+                    secondaryFar = _targetFocusDistance;
+                }
+                else if (!primaryValid)
+                {
+                    primaryNear = secondaryNear;
+                    primaryFar = secondaryFar;
+                }
+                else if (!secondaryValid)
+                {
+                    secondaryNear = primaryNear;
+                    secondaryFar = primaryFar;
+                }
 
-            _targetEnvelope = EarthCinematicDepthOfFieldSolver.ResolveSharpEnvelopeFromRanges(
-                primaryNear,
-                primaryFar,
-                secondaryNear,
-                secondaryFar,
-                Mathf.Max(0.1f, silhouettePadding),
-                1.25f,
-                36f);
-            if (forceInitialize || !_hasEnvelope)
-            {
-                _envelope = _targetEnvelope;
-                _hasEnvelope = true;
-                return;
-            }
+                _targetEnvelope = EarthCinematicDepthOfFieldSolver.ResolveSharpEnvelopeFromRanges(
+                    primaryNear,
+                    primaryFar,
+                    secondaryNear,
+                    secondaryFar,
+                    Mathf.Max(0.1f, silhouettePadding),
+                    1.25f,
+                    36f);
+                if (forceInitialize || !_hasEnvelope)
+                {
+                    _envelope = _targetEnvelope;
+                    _hasEnvelope = true;
+                }
+                else
+                {
+                    _envelope = EarthCinematicDepthOfFieldSolver.StepSharpEnvelope(
+                        in _envelope,
+                        in _targetEnvelope,
+                        Mathf.Max(0.1f, envelopeContractionSpeed),
+                        Mathf.Max(0f, deltaTime));
+                }
 
-            _envelope = EarthCinematicDepthOfFieldSolver.StepSharpEnvelope(
-                in _envelope,
-                in _targetEnvelope,
-                Mathf.Max(0.1f, envelopeContractionSpeed),
-                Mathf.Max(0f, deltaTime));
+                _evidence = new EarthCinematicDepthOfFieldEvidence(
+                    _envelopeCameraPosition,
+                    _envelopeCameraRotation,
+                    primarySubject != null,
+                    secondarySubject != null,
+                    primaryValid,
+                    sampledPrimaryNear,
+                    sampledPrimaryFar,
+                    secondaryValid,
+                    sampledSecondaryNear,
+                    sampledSecondaryFar,
+                    _envelope.Near,
+                    _envelope.Far);
+            }
         }
 
         private bool HasCameraPoseChangedSinceEnvelope()

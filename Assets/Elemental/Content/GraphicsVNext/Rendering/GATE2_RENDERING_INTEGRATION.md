@@ -113,6 +113,16 @@ or ragdoll acquisition. Component re-enable alone cannot resurrect an old bindin
    `Elemental.Rendering.HeroRockCapsuleLifecycle` plus
    `Elemental.Rendering.UnifiedMaterialBind`. Bind is acquisition-time work; the
    buffer copy/upload hot path must report zero managed allocation after warmup.
+6. For the camera-orbit proof, query
+   `EarthCinematicDepthOfFieldController.TryGetSharpEnvelopeEvidence` on every
+   captured pose. Require `BothSubjectsSharp`, preserve the reported fighter
+   near/far ranges in the manifest, and profile
+   `Elemental.Rendering.DualSubjectDofEnvelope`. A missing fighter is explicit
+   failed evidence even though the renderer keeps its safe single-subject fallback.
+
+The EarthCore legacy-shadow runtime guard resolves the arena to zero shadow
+distance and zero cascades in addition to disabling camera/light realtime shadows.
+This does not alter the independent duel-map or capsule-contact renderer features.
 
 Unity shader compilation, visual equivalence, GPU/CPU budgets, and zero-GC profiler
 evidence remain unproven until the director runs the focused EditMode/PlayMode
