@@ -1,4 +1,5 @@
 using System;
+using Elemental.Simulation.Characters;
 using UnityEngine;
 
 namespace Elemental.Presentation.Animation
@@ -79,9 +80,45 @@ namespace Elemental.Presentation.Animation
             return ownership;
         }
 
+        public static EarthTransitionBodyMask BodyMaskFor(HumanBodyBones bone) =>
+            bone switch
+            {
+                HumanBodyBones.Hips => EarthTransitionBodyMask.Pelvis,
+                HumanBodyBones.Spine => EarthTransitionBodyMask.Spine,
+                HumanBodyBones.Chest => EarthTransitionBodyMask.Spine,
+                HumanBodyBones.UpperChest => EarthTransitionBodyMask.Spine,
+                HumanBodyBones.Neck => EarthTransitionBodyMask.Head,
+                HumanBodyBones.Head => EarthTransitionBodyMask.Head,
+                HumanBodyBones.LeftShoulder => EarthTransitionBodyMask.LeftArm,
+                HumanBodyBones.LeftUpperArm => EarthTransitionBodyMask.LeftArm,
+                HumanBodyBones.LeftLowerArm => EarthTransitionBodyMask.LeftArm,
+                HumanBodyBones.LeftHand => EarthTransitionBodyMask.LeftArm,
+                HumanBodyBones.RightShoulder => EarthTransitionBodyMask.RightArm,
+                HumanBodyBones.RightUpperArm => EarthTransitionBodyMask.RightArm,
+                HumanBodyBones.RightLowerArm => EarthTransitionBodyMask.RightArm,
+                HumanBodyBones.RightHand => EarthTransitionBodyMask.RightArm,
+                HumanBodyBones.LeftUpperLeg => EarthTransitionBodyMask.LeftLeg,
+                HumanBodyBones.LeftLowerLeg => EarthTransitionBodyMask.LeftLeg,
+                HumanBodyBones.LeftFoot => EarthTransitionBodyMask.LeftLeg,
+                HumanBodyBones.LeftToes => EarthTransitionBodyMask.LeftLeg,
+                HumanBodyBones.RightUpperLeg => EarthTransitionBodyMask.RightLeg,
+                HumanBodyBones.RightLowerLeg => EarthTransitionBodyMask.RightLeg,
+                HumanBodyBones.RightFoot => EarthTransitionBodyMask.RightLeg,
+                HumanBodyBones.RightToes => EarthTransitionBodyMask.RightLeg,
+                _ => EarthTransitionBodyMask.None
+            };
+
         public static bool ShouldApplyInertialization(
             EarthAnimationBoneOwnership boneOwnership,
             EarthAnimationBoneOwnership activeOwnership) =>
             (boneOwnership & activeOwnership) == 0;
+
+        public static bool ShouldApplyInertialization(
+            EarthTransitionBodyMask boneBodyMask,
+            EarthTransitionBodyMask activeBodyMask,
+            EarthAnimationBoneOwnership boneOwnership,
+            EarthAnimationBoneOwnership activeOwnership) =>
+            (boneBodyMask & activeBodyMask) != 0 &&
+            ShouldApplyInertialization(boneOwnership, activeOwnership);
     }
 }

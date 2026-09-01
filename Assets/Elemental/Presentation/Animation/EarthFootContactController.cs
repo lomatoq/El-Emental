@@ -101,6 +101,10 @@ namespace Elemental.Presentation.Animation
         private bool _locomoting;
         private bool _pivotingInPlace;
         private bool _surfing;
+        private EarthTransitionFootReleasePolicy _transitionFootReleasePolicy =
+            EarthTransitionFootReleasePolicy.PreservePlanted;
+        private float _transitionFootReleaseDelaySeconds;
+        private bool _transitionFootReleasePending;
 
         public float FootIkWeight => (_leftAppliedWeight + _rightAppliedWeight) * 0.5f;
         public float LeftFootIkWeight => _leftAppliedWeight;
@@ -156,6 +160,10 @@ namespace Elemental.Presentation.Animation
         public bool IsPivotingInPlace => _pivotingInPlace;
         public bool IsSurfing => _surfing;
         public EarthAuthoredFootPolicy CurrentFootPolicy => _authoredFootPolicy;
+        public EarthTransitionFootReleasePolicy TransitionFootReleasePolicy =>
+            _transitionFootReleasePolicy;
+        public bool TransitionFootReleasePending => _transitionFootReleasePending;
+        public uint TransitionFootReleaseCount { get; private set; }
         public float LeftKneeAngleDegrees => ResolveJointAngle(
             _leftUpperLeg,
             _leftLowerLeg,
@@ -199,6 +207,22 @@ namespace Elemental.Presentation.Animation
         public void SetTurnIntent(float turn) =>
             _turnIntent = Mathf.Clamp(turn, -1f, 1f);
 
+        public void BeginTransitionFootRelease(
+            EarthTransitionFootReleasePolicy policy,
+            float delaySeconds)
+        {
+            _transitionFootReleasePolicy = policy;
+            _transitionFootReleaseDelaySeconds = Mathf.Clamp(
+                float.IsFinite(delaySeconds) ? delaySeconds : 0f,
+                0f,
+                0.5f);
+            _transitionFootReleasePending =
+                policy == EarthTransitionFootReleasePolicy.ReleaseAfterDelay ||
+                policy == EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact;
+            if (policy == EarthTransitionFootReleasePolicy.ReleaseImmediately)
+                ReleaseTransitionFeet();
+        }
+
         public void ConfigureAnimationRescue(float pelvisResponseSeconds, float pelvisMaximumSpeed)
         {
             _pelvisResponseSeconds = Mathf.Clamp(pelvisResponseSeconds, 0.02f, 0.25f);
@@ -240,6 +264,10 @@ namespace Elemental.Presentation.Animation
             _locomoting = false;
             _pivotingInPlace = false;
             _surfing = false;
+            _transitionFootReleasePolicy =
+                EarthTransitionFootReleasePolicy.PreservePlanted;
+            _transitionFootReleaseDelaySeconds = 0f;
+            _transitionFootReleasePending = false;
         }
 
         private void LateUpdate()
@@ -457,6 +485,7 @@ namespace Elemental.Presentation.Animation
                 out float rightPhase,
                 out float leftContact,
                 out float rightContact);
+            UpdateTransitionFootRelease(deltaTime, leftContact, rightContact);
             _gaitPhase = leftPhase;
             _leftGaitPhase = leftPhase;
             _rightGaitPhase = rightPhase;
@@ -930,6 +959,55 @@ namespace Elemental.Presentation.Animation
             rightPhase = Mathf.Repeat(animator.GetFloat(RightFootPhaseHash), 1f);
             leftContact = Mathf.Clamp01(animator.GetFloat(LeftFootContactHash));
             rightContact = Mathf.Clamp01(animator.GetFloat(RightFootContactHash));
+        }
+
+        private void UpdateTransitionFootRelease(
+            float deltaTime,
+            float leftContact,
+            float rightContact)
+        {
+            if (!_transitionFootReleasePending) return;
+            switch (_transitionFootReleasePolicy)
+            {
+                case EarthTransitionFootReleasePolicy.ReleaseAfterDelay:
+                    _transitionFootReleaseDelaySeconds = Mathf.Max(
+                        0f,
+                        _transitionFootReleaseDelaySeconds - deltaTime);
+                    if (_transitionFootReleaseDelaySeconds <= 0f)
+                        ReleaseTransitionFeet();
+                    break;
+                case EarthTransitionFootReleasePolicy.ReleaseOnDestinationContact:
+                    if (float.IsFinite(leftContact) && float.IsFinite(rightContact) &&
+                        Mathf.Max(leftContact, rightContact) >= 0.5f)
+                        ReleaseTransitionFeet();
+                    break;
+                default:
+                    _transitionFootReleasePending = false;
+                    break;
+            }
+        }
+
+        private void ReleaseTransitionFeet()
+        {
+            ReleaseTransitionFoot(ref _leftState);
+            ReleaseTransitionFoot(ref _rightState);
+            _transitionFootReleasePending = false;
+            TransitionFootReleaseCount = TransitionFootReleaseCount == uint.MaxValue
+                ? 1u
+                : TransitionFootReleaseCount + 1u;
+        }
+
+        private static void ReleaseTransitionFoot(ref EarthFootContactState state)
+        {
+            state.Locked = false;
+            state.PlantState = EarthFootPlantState.Releasing;
+            state.PoseOwned = false;
+            state.Armed = false;
+            state.SupportId = 0u;
+            state.SupportGeneration = 0u;
+            state.ReleaseCooldownSeconds = Mathf.Max(
+                state.ReleaseCooldownSeconds,
+                EarthFootContactSolver.ReleaseHysteresisSeconds);
         }
 
         private void ResolveMetadataAvailability()

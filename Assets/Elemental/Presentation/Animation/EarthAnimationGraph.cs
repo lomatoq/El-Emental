@@ -1,5 +1,6 @@
 using System;
 using Elemental.Runtime.Characters;
+using Elemental.Simulation.Characters;
 using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine;
@@ -40,6 +41,11 @@ namespace Elemental.Presentation.Animation
         private RigBuilder _rigBuilder;
         private EarthAnimationGraphSettings _settings;
         private EarthAnimationGraphSettings _activeSettings;
+        private float _transitionPositionHalfLifeSeconds;
+        private float _transitionRotationHalfLifeSeconds;
+        private float _activeTransitionMaximumDurationSeconds;
+        private EarthTransitionBodyMask _activeTransitionBodyMask =
+            EarthTransitionBodyMask.FullBody;
         private bool _configured;
         private bool _rigLayersAppended;
         private int _rigOutputStartIndex;
@@ -77,6 +83,14 @@ namespace Elemental.Presentation.Animation
                                               !_runtimeDisablePending;
         public AnimatorControllerPlayable ControllerPlayable => _controllerPlayable;
         public EarthAnimationGraphProfile Profile => profile;
+        public float ActiveTransitionPositionHalfLifeSeconds =>
+            _transitionPositionHalfLifeSeconds;
+        public float ActiveTransitionRotationHalfLifeSeconds =>
+            _transitionRotationHalfLifeSeconds;
+        public float ActiveTransitionMaximumDurationSeconds =>
+            _activeTransitionMaximumDurationSeconds;
+        public EarthTransitionBodyMask ActiveTransitionBodyMask =>
+            _activeTransitionBodyMask;
         public int CapturedFrameCount => _captureCount;
         public EarthAnimationGraphCaptureSample LatestCaptureSample => _captureCount > 0
             ? _captureFrames[(_captureWriteIndex - 1 + CaptureFrameCapacity) % CaptureFrameCapacity]
@@ -170,10 +184,47 @@ namespace Elemental.Presentation.Animation
         }
 
         public bool BeginInertialization(float requestedDurationSeconds)
+            => BeginInertializationInternal(
+                requestedDurationSeconds,
+                _settings.PositionHalfLifeSeconds,
+                _settings.RotationHalfLifeSeconds,
+                EarthTransitionBodyMask.FullBody);
+
+        public bool BeginInertialization(
+            float requestedDurationSeconds,
+            float halfLifeSeconds,
+            EarthTransitionBodyMask bodyMask)
+            => BeginInertializationInternal(
+                requestedDurationSeconds,
+                halfLifeSeconds,
+                halfLifeSeconds,
+                bodyMask);
+
+        private bool BeginInertializationInternal(
+            float requestedDurationSeconds,
+            float positionHalfLifeSeconds,
+            float rotationHalfLifeSeconds,
+            EarthTransitionBodyMask bodyMask)
         {
-            if (!UsePoseInertialization || _poseHistory == null) return false;
+            EarthTransitionBodyMask boundedMask = bodyMask & EarthTransitionBodyMask.FullBody;
+            if (!UsePoseInertialization || _poseHistory == null ||
+                boundedMask == EarthTransitionBodyMask.None)
+                return false;
             using (TransitionMarker.Auto())
             {
+                _transitionPositionHalfLifeSeconds = Mathf.Clamp(
+                    float.IsFinite(positionHalfLifeSeconds)
+                        ? positionHalfLifeSeconds
+                        : _settings.PositionHalfLifeSeconds,
+                    0.01f,
+                    0.25f);
+                _transitionRotationHalfLifeSeconds = Mathf.Clamp(
+                    float.IsFinite(rotationHalfLifeSeconds)
+                        ? rotationHalfLifeSeconds
+                        : _settings.RotationHalfLifeSeconds,
+                    0.01f,
+                    0.25f);
+                _activeTransitionBodyMask = boundedMask;
                 var controls = _poseHistory.Control;
                 EarthAnimationGraphControl control = controls[0];
                 control.RequestSequence++;
@@ -182,12 +233,17 @@ namespace Elemental.Presentation.Animation
                     ? requestedDurationSeconds
                     : _settings.MaximumDurationSeconds;
                 float decayWindow = Mathf.Max(
-                    _settings.PositionHalfLifeSeconds * 6f,
-                    _settings.RotationHalfLifeSeconds * 6f);
-                control.MaximumDurationSeconds = Mathf.Clamp(
+                    _transitionPositionHalfLifeSeconds * 6f,
+                    _transitionRotationHalfLifeSeconds * 6f);
+                control.PositionHalfLifeSeconds = _transitionPositionHalfLifeSeconds;
+                control.RotationHalfLifeSeconds = _transitionRotationHalfLifeSeconds;
+                control.ActiveBodyMask = _activeTransitionBodyMask;
+                _activeTransitionMaximumDurationSeconds = Mathf.Clamp(
                     Mathf.Max(requested, decayWindow),
                     0.05f,
                     _settings.MaximumDurationSeconds);
+                control.MaximumDurationSeconds =
+                    _activeTransitionMaximumDurationSeconds;
                 controls[0] = control;
                 return true;
             }
@@ -254,6 +310,8 @@ namespace Elemental.Presentation.Animation
             if (profile != null)
             {
                 _settings = profile.Settings;
+                _activeSettings = _settings;
+                ResetTransitionTuning();
                 _configured = true;
             }
         }
@@ -385,6 +443,7 @@ namespace Elemental.Presentation.Animation
                 {
                     _poseDisablePending = false;
                     _activeSettings = _settings;
+                    if (!IsInertiaActive()) ResetTransitionTuning();
                 }
                 RefreshControlSettings();
                 return true;
@@ -494,6 +553,7 @@ namespace Elemental.Presentation.Animation
                 _poseHistory = new EarthPoseHistory(boneCount);
                 BindBones(animator, _poseHistory);
                 _activeSettings = _settings;
+                ResetTransitionTuning();
                 RefreshControlSettings();
 
                 _graph = PlayableGraph.Create($"{animator.gameObject.name}_EarthAnimationGraph");
@@ -591,14 +651,24 @@ namespace Elemental.Presentation.Animation
             var controls = _poseHistory.Control;
             EarthAnimationGraphControl control = controls[0];
             control.UsePoseInertialization = _activeSettings.UsePoseInertialization ? (byte)1 : (byte)0;
-            control.PositionHalfLifeSeconds = _activeSettings.PositionHalfLifeSeconds;
-            control.RotationHalfLifeSeconds = _activeSettings.RotationHalfLifeSeconds;
-            control.MaximumDurationSeconds = _activeSettings.MaximumDurationSeconds;
+            control.PositionHalfLifeSeconds = _transitionPositionHalfLifeSeconds;
+            control.RotationHalfLifeSeconds = _transitionRotationHalfLifeSeconds;
+            control.ActiveBodyMask = _activeTransitionBodyMask;
+            control.MaximumDurationSeconds = _activeTransitionMaximumDurationSeconds;
             control.MaximumPositionOffset = _activeSettings.MaximumPositionOffsetMeters;
             control.MaximumRotationOffsetRadians = _activeSettings.MaximumRotationOffsetRadians;
             control.MaximumLinearVelocity = _activeSettings.MaximumLinearVelocity;
             control.MaximumAngularVelocity = _activeSettings.MaximumAngularVelocityRadians;
             controls[0] = control;
+        }
+
+        private void ResetTransitionTuning()
+        {
+            _transitionPositionHalfLifeSeconds = _activeSettings.PositionHalfLifeSeconds;
+            _transitionRotationHalfLifeSeconds = _activeSettings.RotationHalfLifeSeconds;
+            _activeTransitionMaximumDurationSeconds =
+                _activeSettings.MaximumDurationSeconds;
+            _activeTransitionBodyMask = EarthTransitionBodyMask.FullBody;
         }
 
         private void UpdateOwnershipMask()
@@ -878,6 +948,7 @@ namespace Elemental.Presentation.Animation
             if (!targetAnimator.isHuman) return;
             var boneHandles = history.BoneHandles;
             var boneOwnership = history.BoneOwnership;
+            var boneBodyMasks = history.BoneBodyMasks;
             var initialized = history.Initialized;
             var previousTargetPositions = history.PreviousTargetPositions;
             var previousTargetRotations = history.PreviousTargetRotations;
@@ -891,6 +962,7 @@ namespace Elemental.Presentation.Animation
                 if (transform == null) continue;
                 boneHandles[writeIndex] = targetAnimator.BindStreamTransform(transform);
                 boneOwnership[writeIndex] = EarthAnimationBoneMask.OwnershipFor(bone);
+                boneBodyMasks[writeIndex] = EarthAnimationBoneMask.BodyMaskFor(bone);
                 initialized[writeIndex] = 1;
                 float3 localPosition = new float3(
                     transform.localPosition.x,

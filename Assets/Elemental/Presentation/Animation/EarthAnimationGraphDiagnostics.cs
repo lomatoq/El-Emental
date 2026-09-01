@@ -1,3 +1,5 @@
+using Elemental.Simulation.Characters;
+
 namespace Elemental.Presentation.Animation
 {
     /// <summary>
@@ -101,6 +103,7 @@ namespace Elemental.Presentation.Animation
     {
         public byte UsePoseInertialization;
         public EarthAnimationBoneOwnership ActiveOwnership;
+        public EarthTransitionBodyMask ActiveBodyMask;
         public uint RequestSequence;
         public float PositionHalfLifeSeconds;
         public float RotationHalfLifeSeconds;

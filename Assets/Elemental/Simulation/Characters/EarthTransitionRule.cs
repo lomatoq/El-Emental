@@ -249,7 +249,7 @@ namespace Elemental.Simulation.Characters
                 true,
                 kind,
                 kind == EarthAnimationTransitionKind.FixedDurationFallback
-                    ? EarthAnimationTransitionReason.LegacyFallback
+                    ? EarthAnimationTransitionReason.ProfileFallback
                     : EarthAnimationTransitionReason.Accepted,
                 duration,
                 destinationStartSeconds,

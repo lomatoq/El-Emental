@@ -1,4 +1,5 @@
 using Unity.Collections;
+using Elemental.Simulation.Characters;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Animations;
@@ -14,6 +15,7 @@ namespace Elemental.Presentation.Animation
     {
         public NativeArray<TransformStreamHandle> BoneHandles;
         public NativeArray<EarthAnimationBoneOwnership> BoneOwnership;
+        public NativeArray<EarthTransitionBodyMask> BoneBodyMasks;
         public NativeArray<byte> Initialized;
         public NativeArray<float3> PreviousTargetPositions;
         public NativeArray<quaternion> PreviousTargetRotations;
@@ -106,6 +108,8 @@ namespace Elemental.Presentation.Animation
                     targetAngularVelocity = float3.zero;
                 }
                 bool excluded = !EarthAnimationBoneMask.ShouldApplyInertialization(
+                    BoneBodyMasks[index],
+                    control.ActiveBodyMask,
                     BoneOwnership[index],
                     control.ActiveOwnership);
 

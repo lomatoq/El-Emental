@@ -190,7 +190,8 @@ namespace Elemental.Simulation.Characters
             for (int index = 0; index < _count; index++)
             {
                 EarthQueuedTransition candidate = _entries[index];
-                if (candidate.Context.SourceState != gate.SourceState)
+                if (gate.SourceState != EarthMotionStateId.None &&
+                    candidate.Context.SourceState != gate.SourceState)
                     continue;
                 EarthTransitionRule candidateRule = candidate.Rule;
                 if (EarthTransitionRulePolicy.ResolveInterruptReason(
@@ -207,6 +208,7 @@ namespace Elemental.Simulation.Characters
 
         private void RemoveStaleSources(EarthMotionStateId sourceState)
         {
+            if (sourceState == EarthMotionStateId.None) return;
             for (int index = _count - 1; index >= 0; index--)
             {
                 if (_entries[index].Context.SourceState == sourceState) continue;

@@ -1,4 +1,5 @@
 using System;
+using Elemental.Simulation.Characters;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine.Animations;
@@ -11,6 +12,7 @@ namespace Elemental.Presentation.Animation
         {
             BoneHandles = new NativeArray<TransformStreamHandle>(boneCount, Allocator.Persistent);
             BoneOwnership = new NativeArray<EarthAnimationBoneOwnership>(boneCount, Allocator.Persistent);
+            BoneBodyMasks = new NativeArray<EarthTransitionBodyMask>(boneCount, Allocator.Persistent);
             Initialized = new NativeArray<byte>(boneCount, Allocator.Persistent);
             PreviousTargetPositions = new NativeArray<float3>(boneCount, Allocator.Persistent);
             PreviousTargetRotations = new NativeArray<quaternion>(boneCount, Allocator.Persistent);
@@ -28,6 +30,7 @@ namespace Elemental.Presentation.Animation
 
         public NativeArray<TransformStreamHandle> BoneHandles { get; }
         public NativeArray<EarthAnimationBoneOwnership> BoneOwnership { get; }
+        public NativeArray<EarthTransitionBodyMask> BoneBodyMasks { get; }
         public NativeArray<byte> Initialized { get; }
         public NativeArray<float3> PreviousTargetPositions { get; }
         public NativeArray<quaternion> PreviousTargetRotations { get; }
@@ -48,6 +51,7 @@ namespace Elemental.Presentation.Animation
         {
             BoneHandles = BoneHandles,
             BoneOwnership = BoneOwnership,
+            BoneBodyMasks = BoneBodyMasks,
             Initialized = Initialized,
             PreviousTargetPositions = PreviousTargetPositions,
             PreviousTargetRotations = PreviousTargetRotations,
@@ -67,6 +71,7 @@ namespace Elemental.Presentation.Animation
         {
             Dispose(BoneHandles);
             Dispose(BoneOwnership);
+            Dispose(BoneBodyMasks);
             Dispose(Initialized);
             Dispose(PreviousTargetPositions);
             Dispose(PreviousTargetRotations);

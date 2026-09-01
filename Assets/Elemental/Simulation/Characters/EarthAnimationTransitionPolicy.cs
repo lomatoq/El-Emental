@@ -52,7 +52,8 @@ namespace Elemental.Simulation.Characters
         ProtectedSource = 2,
         LowerPriority = 3,
         InvalidDestination = 4,
-        LegacyFallback = 5
+        LegacyFallback = 5,
+        ProfileFallback = 6
     }
 
     public enum EarthAnimationTransitionPriority : byte
