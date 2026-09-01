@@ -89,6 +89,7 @@ Shader "Elemental/Graphics VNext/Unified Lit"
                 float4 _PlanetCenter;
                 half _FractureMappingEnabled;
                 float4x4 _FractureLocalToStructure;
+                float4x4 _FractureNormalToStructure;
                 half _ReceiveSsao;
                 half _Fade;
             CBUFFER_END
@@ -189,19 +190,23 @@ Shader "Elemental/Graphics VNext/Unified Lit"
                 }
 
                 float3 objectMappingPosition = input.positionOS;
+                half3 objectMappingNormal = input.normalOS;
                 UNITY_BRANCH
                 if (_FractureMappingEnabled > 0.5h)
                 {
                     objectMappingPosition = mul(
                         _FractureLocalToStructure,
                         float4(input.positionOS, 1.0)).xyz;
+                    objectMappingNormal = SafeNormalize(mul(
+                        (float3x3)_FractureNormalToStructure,
+                        input.normalOS));
                 }
                 float3 mappingPosition = lerp(
                     objectMappingPosition,
                     input.positionWS - _PlanetCenter.xyz,
                     saturate(_UsePlanetFrame));
                 half3 mappingNormal = normalize(lerp(
-                    input.normalOS,
+                    objectMappingNormal,
                     authoredNormalWS,
                     saturate(_UsePlanetFrame)));
                 half3 triplanar = SampleMetricTriplanar(
@@ -282,6 +287,7 @@ Shader "Elemental/Graphics VNext/Unified Lit"
                 float4 _PlanetCenter;
                 half _FractureMappingEnabled;
                 float4x4 _FractureLocalToStructure;
+                float4x4 _FractureNormalToStructure;
                 half _ReceiveSsao;
                 half _Fade;
             CBUFFER_END

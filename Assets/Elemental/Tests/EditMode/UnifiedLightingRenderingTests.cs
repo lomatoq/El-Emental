@@ -55,13 +55,20 @@ namespace Elemental.Tests.EditMode
         [Test]
         public void CapturedFractureFramePreservesWorldProjectionAndExteriorProperties()
         {
-            Vector3 structurePoint = new Vector3(2.8f, -0.55f, 1.3f);
-            Vector3 fragmentOriginInStructure = new Vector3(2.4f, -0.7f, 0.9f);
-            Vector3 fragmentLocalPoint = structurePoint - fragmentOriginInStructure;
+            Vector3 fragmentLocalPoint = new Vector3(0.4f, 0.15f, 0.4f);
+            Vector3 fragmentLocalNormal = new Vector3(0.31f, 0.84f, -0.44f).normalized;
             Matrix4x4 intactLocalToStructure = Matrix4x4.TRS(
                 new Vector3(1.7f, -0.4f, 2.1f),
                 Quaternion.Euler(9.7f, -17.8f, 4.6f),
                 new Vector3(1.2f, 0.85f, 1.05f));
+            Matrix4x4 fragmentLocalToIntact = Matrix4x4.TRS(
+                new Vector3(2.4f, -0.7f, 0.9f),
+                Quaternion.Euler(-21f, 38f, 13f),
+                new Vector3(0.72f, 1.45f, 1.18f));
+            Vector3 intactLocalPoint = fragmentLocalToIntact.MultiplyPoint3x4(
+                fragmentLocalPoint);
+            Vector3 intactLocalNormal = fragmentLocalToIntact.inverse.transpose
+                .MultiplyVector(fragmentLocalNormal).normalized;
             var intactFrame = new UnifiedLightingProjectionFrame(
                 UnifiedLightingProjectionMode.CapturedStructureLocal,
                 Vector3.zero,
@@ -69,14 +76,27 @@ namespace Elemental.Tests.EditMode
             var fractureFrame = new UnifiedLightingProjectionFrame(
                 UnifiedLightingProjectionMode.CapturedStructureLocal,
                 Vector3.zero,
-                intactLocalToStructure * Matrix4x4.Translate(fragmentOriginInStructure));
+                intactLocalToStructure * fragmentLocalToIntact);
 
             Assert.That(intactFrame.TryResolveMappingPosition(
-                structurePoint, Vector3.zero, out Vector3 intactMapping), Is.True);
+                intactLocalPoint, Vector3.zero, out Vector3 intactMapping), Is.True);
             Assert.That(fractureFrame.TryResolveMappingPosition(
                 fragmentLocalPoint, Vector3.zero, out Vector3 fractureMapping), Is.True);
             Assert.That(Vector3.Distance(intactMapping, fractureMapping),
                 Is.LessThan(0.000001f));
+            Assert.That(intactFrame.TryResolveMappingNormal(
+                intactLocalNormal, Vector3.zero, out Vector3 intactMappingNormal), Is.True);
+            Assert.That(fractureFrame.TryResolveMappingNormal(
+                fragmentLocalNormal, Vector3.zero, out Vector3 fractureMappingNormal), Is.True);
+            Assert.That(Vector3.Distance(intactMappingNormal, fractureMappingNormal),
+                Is.LessThan(0.000001f));
+            Vector3 intactWeights = UnifiedLightingMath.EvaluateTriplanarWeights(
+                intactMappingNormal, 4f);
+            Vector3 fractureWeights = UnifiedLightingMath.EvaluateTriplanarWeights(
+                fractureMappingNormal, 4f);
+            Assert.That(Vector3.Distance(intactWeights, fractureWeights),
+                Is.LessThan(0.000001f),
+                "Rotated, nonuniform fragments must retain the intact triplanar blend weights.");
 
             UnifiedLightingMigrationProfile profile =
                 AssetDatabase.LoadAssetAtPath<UnifiedLightingMigrationProfile>(
@@ -137,6 +157,7 @@ namespace Elemental.Tests.EditMode
             StringAssert.DoesNotContain("TransformWorldToShadowCoord", include);
             StringAssert.Contains("float4 tangentOS : TANGENT", shader);
             StringAssert.Contains("GetVertexNormalInputs", shader);
+            StringAssert.Contains("_FractureNormalToStructure", shader);
             StringAssert.Contains("Name \"DepthNormals\"", shader);
             StringAssert.DoesNotContain("ValueNoise", shader);
             StringAssert.DoesNotContain("orange", shader.ToLowerInvariant());

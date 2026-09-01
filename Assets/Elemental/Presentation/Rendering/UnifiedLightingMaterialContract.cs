@@ -106,6 +106,7 @@ namespace Elemental.Presentation.Rendering
         public UnifiedLightingProjectionMode Mode { get; }
         public Vector3 PlanetCenterWorld { get; }
         public Matrix4x4 LocalToStructure { get; }
+        public Matrix4x4 NormalToStructure => LocalToStructure.inverse.transpose;
 
         public bool IsValid
         {
@@ -144,10 +145,56 @@ namespace Elemental.Presentation.Rendering
             }
             return DuelShadowMath.IsFinite(mappingPosition);
         }
+
+        public bool TryResolveMappingNormal(
+            Vector3 normalObject,
+            Vector3 normalWorld,
+            out Vector3 mappingNormal)
+        {
+            mappingNormal = default;
+            if (!IsValid ||
+                !DuelShadowMath.IsFinite(normalObject) ||
+                !DuelShadowMath.IsFinite(normalWorld))
+                return false;
+            switch (Mode)
+            {
+                case UnifiedLightingProjectionMode.PlanetLocal:
+                    mappingNormal = normalWorld;
+                    break;
+                case UnifiedLightingProjectionMode.CapturedStructureLocal:
+                    mappingNormal = NormalToStructure.MultiplyVector(normalObject);
+                    break;
+                default:
+                    mappingNormal = normalObject;
+                    break;
+            }
+            float lengthSquared = mappingNormal.sqrMagnitude;
+            if (!float.IsFinite(lengthSquared) || lengthSquared <= 0.0000001f)
+                return false;
+            mappingNormal /= Mathf.Sqrt(lengthSquared);
+            return DuelShadowMath.IsFinite(mappingNormal);
+        }
     }
 
     public static class UnifiedLightingMath
     {
+        public static Vector3 EvaluateTriplanarWeights(Vector3 normal, float sharpness)
+        {
+            Vector3 absolute = new Vector3(
+                Mathf.Abs(normal.x),
+                Mathf.Abs(normal.y),
+                Mathf.Abs(normal.z));
+            float exponent = Mathf.Max(1f, sharpness);
+            Vector3 weights = new Vector3(
+                Mathf.Pow(absolute.x, exponent),
+                Mathf.Pow(absolute.y, exponent),
+                Mathf.Pow(absolute.z, exponent));
+            float sum = weights.x + weights.y + weights.z;
+            return float.IsFinite(sum) && sum > 0.000001f
+                ? weights / sum
+                : Vector3.zero;
+        }
+
         public static float EvaluateDiffuseRamp(float normalLightDot)
         {
             float wrapped = Mathf.Clamp01((normalLightDot + 0.24f) / 1.24f);

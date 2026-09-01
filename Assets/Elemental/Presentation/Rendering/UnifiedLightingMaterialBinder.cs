@@ -25,6 +25,8 @@ namespace Elemental.Presentation.Rendering
             Shader.PropertyToID("_FractureMappingEnabled");
         private static readonly int FractureLocalToStructureId =
             Shader.PropertyToID("_FractureLocalToStructure");
+        private static readonly int FractureNormalToStructureId =
+            Shader.PropertyToID("_FractureNormalToStructure");
 
         [SerializeField] private UnifiedLightingMigrationProfile migrationProfile;
 
@@ -78,7 +80,8 @@ namespace Elemental.Presentation.Rendering
                 }
 
                 _properties ??= new MaterialPropertyBlock();
-                renderer.GetPropertyBlock(_properties);
+                _properties.Clear();
+                renderer.GetPropertyBlock(_properties, materialIndex);
                 _properties.SetFloat(MaterialFamilyId, (float)contract.Family);
                 _properties.SetFloat(
                     SurfaceModeId,
@@ -96,13 +99,16 @@ namespace Elemental.Presentation.Rendering
                         _properties.SetMatrix(
                             FractureLocalToStructureId,
                             frame.LocalToStructure);
+                        _properties.SetMatrix(
+                            FractureNormalToStructureId,
+                            frame.NormalToStructure);
                         break;
                     default:
                         _properties.SetFloat(UsePlanetFrameId, 0f);
                         _properties.SetFloat(FractureMappingEnabledId, 0f);
                         break;
                 }
-                renderer.SetPropertyBlock(_properties);
+                renderer.SetPropertyBlock(_properties, materialIndex);
                 return true;
             }
         }

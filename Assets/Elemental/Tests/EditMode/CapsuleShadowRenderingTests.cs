@@ -246,36 +246,34 @@ namespace Elemental.Tests.EditMode
         [Test]
         public void OwnershipClassificationIsTypedAndFailsClosed()
         {
-            AssertIdentity(CapsuleShadowProducerKind.Player, CapsuleShadowCasterClass.Character);
-            AssertIdentity(CapsuleShadowProducerKind.OpponentBot, CapsuleShadowCasterClass.Character);
-            AssertIdentity(CapsuleShadowProducerKind.Ragdoll, CapsuleShadowCasterClass.Character);
-            AssertIdentity(CapsuleShadowProducerKind.IntactHeroRock, CapsuleShadowCasterClass.HeroRock);
-            AssertIdentity(
+            AssertClassification(CapsuleShadowProducerKind.Player, CapsuleShadowCasterClass.Character);
+            AssertClassification(CapsuleShadowProducerKind.OpponentBot, CapsuleShadowCasterClass.Character);
+            AssertClassification(CapsuleShadowProducerKind.Ragdoll, CapsuleShadowCasterClass.Character);
+            AssertClassification(CapsuleShadowProducerKind.IntactHeroRock, CapsuleShadowCasterClass.HeroRock);
+            AssertClassification(
                 CapsuleShadowProducerKind.LargeActiveFracture,
                 CapsuleShadowCasterClass.ActiveFragment);
-            Assert.That(CapsuleShadowOwnershipPolicy.TryCreateIdentity(
-                CapsuleShadowProducerKind.Debris, 91u, 7u, out _), Is.False);
-            Assert.That(CapsuleShadowOwnershipPolicy.TryCreateIdentity(
-                CapsuleShadowProducerKind.Vfx, 91u, 7u, out _), Is.False);
-            Assert.That(CapsuleShadowOwnershipPolicy.TryCreateIdentity(
-                CapsuleShadowProducerKind.Player, 0u, 7u, out _), Is.False);
-            Assert.That(new CapsuleShadowCasterIdentity(
-                91u, 7u, CapsuleShadowCasterClass.TinyDebris).IsValid, Is.False);
-            Assert.That(new CapsuleShadowCasterIdentity(
-                91u, 7u, CapsuleShadowCasterClass.Vfx).IsValid, Is.False);
+            Assert.That(CapsuleShadowOwnershipPolicy.TryResolveClassification(
+                CapsuleShadowProducerKind.Debris, out _), Is.False);
+            Assert.That(CapsuleShadowOwnershipPolicy.TryResolveClassification(
+                CapsuleShadowProducerKind.Vfx, out _), Is.False);
+            Assert.That(typeof(CapsuleShadowCaster).GetMethod(
+                "Bind",
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.Public), Is.Null);
+            Assert.That(typeof(CapsuleShadowCasterBinder).GetMethod(
+                "Bind",
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.Public), Is.Null);
         }
 
-        private static void AssertIdentity(
+        private static void AssertClassification(
             CapsuleShadowProducerKind producer,
             CapsuleShadowCasterClass expectedClass)
         {
-            Assert.That(CapsuleShadowOwnershipPolicy.TryCreateIdentity(
-                producer, 0xF0000091u, 0xE0000007u,
-                out CapsuleShadowCasterIdentity identity), Is.True);
-            Assert.That(identity.IsValid, Is.True);
-            Assert.That(identity.StableGroupId, Is.EqualTo(0xF0000091u));
-            Assert.That(identity.Generation, Is.EqualTo(0xE0000007u));
-            Assert.That(identity.Classification, Is.EqualTo(expectedClass));
+            Assert.That(CapsuleShadowOwnershipPolicy.TryResolveClassification(
+                producer, out CapsuleShadowCasterClass classification), Is.True);
+            Assert.That(classification, Is.EqualTo(expectedClass));
         }
 
         private static CapsuleContactShadowRuntimeSettings Settings(int maximumCasters)

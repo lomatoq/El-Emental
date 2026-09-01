@@ -22,9 +22,10 @@ asset was changed.
 requires exactly one compatible entry for every role. `UnifiedLightingMaterialBinder`
 never replaces a material: the director assigns an explicit table material first,
 then calls `Configure(profile)` and `Bind(...)`. The binder reads and merges into
-the renderer's whole existing property block. Character variants are created
-explicitly with `UnifiedLightingMaterialMigration.CopyPreservedProperties`; the
-source material is never mutated or silently replaced.
+the existing property block for the exact `materialIndex`; exterior and interior
+submeshes keep independent slot state. Character variants are created explicitly
+with `UnifiedLightingMaterialMigration.CopyPreservedProperties`; the source
+material is never mutated or silently replaced.
 
 ## Director wiring hooks
 
@@ -33,7 +34,9 @@ renderer according to the table. Do not apply a global shader replacement.
 
 For `EarthArenaStructure` fracture, capture a matrix that maps each future piece's
 object-local coordinates into the intact structure-local projection frame. Stage
-both exterior/interior renderers with this same matrix while they are dormant.
+both exterior/interior renderer slots with this same matrix while they are dormant.
+The binder also publishes its inverse-transpose normal matrix, so rotated and
+nonuniformly scaled pieces retain the intact triplanar blend weights.
 Stage the new `DuelShadowCaster` and `CapsuleShadowCaster` generation under the
 same canonical `uint` group/generation. Commit both registries in one director
 Update immediately before the intact/fracture visibility swap. If either commit
@@ -42,13 +45,14 @@ each provide atomic generation changes; their combined cross-registry transactio
 must remain owned by the fracture director.
 
 On `EarthFragment` or hero-rock pool acquire, configure at most four large-form
-capsule/sphere proxies, then call `CapsuleShadowCasterBinder.Bind` with the current
-stable matter/structure `uint`, generation, and classification. Disable/unbind on
-pool release and call `ReleaseGroup` only on permanent retirement. A released
+capsule/sphere proxies, then call `CapsuleShadowCasterBinder.TryAcquire` with the
+typed producer kind plus current stable matter/structure `uint` and generation.
+No public raw identity/classification bind exists. Call `ReleaseAcquisition` on
+pool release and `ReleaseGroup` only on permanent retirement. A released
 group retains a bounded generation tombstone, so an equal/older epoch cannot be
 committed again; exhausted group capacity fails closed. Never bind tiny debris,
-dust, particles, or VFX. Prefer `TryAcquire` with the typed producer kind so
-player/bot/ragdoll, intact hero rock, and large fracture classification cannot drift.
+dust, particles, or VFX; typed acquisition rejects them. Player/bot/ragdoll,
+intact hero rock, and large fracture classifications therefore cannot drift.
 
 For player/opponent and ragdoll presentations, bind a stable fighter `uint` and a
 small body set (pelvis, chest, and at most two limb capsules). Rebind on every pool

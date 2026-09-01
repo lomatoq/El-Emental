@@ -104,36 +104,23 @@ namespace Elemental.Presentation.Rendering
             ClearRuntimeBinding();
         }
 
-        public bool Bind(
-            uint groupId,
-            uint currentGeneration,
-            CapsuleShadowCasterClass currentClassification)
+        internal bool Bind(in CapsuleShadowCasterIdentity identity)
         {
             Unregister();
             ClearRuntimeBinding();
-            if (groupId == 0u ||
-                !CapsuleShadowCasterPolicy.IsAdmittedClassification(currentClassification))
+            if (!identity.IsValid)
             {
                 Debug.LogError(
-                    $"{nameof(CapsuleShadowCaster)} on '{name}' rejected invalid identity " +
-                    $"or excluded classification '{currentClassification}'.",
+                    $"{nameof(CapsuleShadowCaster)} on '{name}' rejected invalid typed identity.",
                     this);
                 return false;
             }
 
-            _runtimeStableGroupId = groupId;
-            _runtimeGeneration = currentGeneration;
-            _runtimeClassification = currentClassification;
+            _runtimeStableGroupId = identity.StableGroupId;
+            _runtimeGeneration = identity.Generation;
+            _runtimeClassification = identity.Classification;
             _hasRuntimeBinding = true;
             return !isActiveAndEnabled || RegisterCurrentBinding();
-        }
-
-        public bool Rebind(
-            uint groupId,
-            uint currentGeneration,
-            CapsuleShadowCasterClass currentClassification)
-        {
-            return Bind(groupId, currentGeneration, currentClassification);
         }
 
         public void Unbind()

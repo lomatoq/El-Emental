@@ -15,32 +15,39 @@ namespace Elemental.Presentation.Rendering
 
     public static class CapsuleShadowOwnershipPolicy
     {
-        public static bool TryCreateIdentity(
+        public static bool TryResolveClassification(
             CapsuleShadowProducerKind producer,
-            uint stableGroupId,
-            uint generation,
-            out CapsuleShadowCasterIdentity identity)
+            out CapsuleShadowCasterClass classification)
         {
-            identity = default;
-            if (stableGroupId == 0u)
-                return false;
-            CapsuleShadowCasterClass classification;
             switch (producer)
             {
                 case CapsuleShadowProducerKind.Player:
                 case CapsuleShadowProducerKind.OpponentBot:
                 case CapsuleShadowProducerKind.Ragdoll:
                     classification = CapsuleShadowCasterClass.Character;
-                    break;
+                    return true;
                 case CapsuleShadowProducerKind.IntactHeroRock:
                     classification = CapsuleShadowCasterClass.HeroRock;
-                    break;
+                    return true;
                 case CapsuleShadowProducerKind.LargeActiveFracture:
                     classification = CapsuleShadowCasterClass.ActiveFragment;
-                    break;
+                    return true;
                 default:
+                    classification = CapsuleShadowCasterClass.Other;
                     return false;
             }
+        }
+
+        internal static bool TryCreateIdentity(
+            CapsuleShadowProducerKind producer,
+            uint stableGroupId,
+            uint generation,
+            out CapsuleShadowCasterIdentity identity)
+        {
+            identity = default;
+            if (stableGroupId == 0u ||
+                !TryResolveClassification(producer, out CapsuleShadowCasterClass classification))
+                return false;
             identity = new CapsuleShadowCasterIdentity(
                 stableGroupId,
                 generation,
@@ -49,9 +56,9 @@ namespace Elemental.Presentation.Rendering
         }
     }
 
-    public readonly struct CapsuleShadowCasterIdentity
+    internal readonly struct CapsuleShadowCasterIdentity
     {
-        public CapsuleShadowCasterIdentity(
+        internal CapsuleShadowCasterIdentity(
             uint stableGroupId,
             uint generation,
             CapsuleShadowCasterClass classification)
@@ -70,20 +77,18 @@ namespace Elemental.Presentation.Rendering
 
     /// <summary>
     /// Stateless presentation boundary for character, rock, and fracture owners.
-    /// Producers supply canonical identity on every pool acquisition and explicitly
-    /// commit a fully staged generation before changing visible representation.
+    /// Producers supply their typed kind and canonical uint identity on every pool
+    /// acquisition, then explicitly commit a fully staged generation before changing
+    /// visible representation.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CapsuleShadowCasterBinder : MonoBehaviour
     {
-        public bool Bind(
+        private static bool Bind(
             CapsuleShadowCaster caster,
             in CapsuleShadowCasterIdentity identity)
         {
-            return caster != null && identity.IsValid && caster.Bind(
-                identity.StableGroupId,
-                identity.Generation,
-                identity.Classification);
+            return caster != null && identity.IsValid && caster.Bind(in identity);
         }
 
         public bool TryAcquire(
@@ -92,12 +97,18 @@ namespace Elemental.Presentation.Rendering
             uint stableGroupId,
             uint generation)
         {
-            return CapsuleShadowOwnershipPolicy.TryCreateIdentity(
+            if (caster == null)
+                return false;
+            if (!CapsuleShadowOwnershipPolicy.TryCreateIdentity(
                     producer,
                     stableGroupId,
                     generation,
-                    out CapsuleShadowCasterIdentity identity) &&
-                Bind(caster, identity);
+                    out CapsuleShadowCasterIdentity identity))
+            {
+                caster.Unbind();
+                return false;
+            }
+            return Bind(caster, identity);
         }
 
         public void ReleaseAcquisition(CapsuleShadowCaster caster)

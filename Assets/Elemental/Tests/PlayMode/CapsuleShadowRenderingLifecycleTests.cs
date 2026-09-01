@@ -23,12 +23,36 @@ namespace Elemental.Tests.PlayMode
                 Assert.That(binder.TryAcquire(
                     fixture.Caster,
                     CapsuleShadowProducerKind.Player,
+                    0u,
+                    generation), Is.False);
+                Assert.That(binder.TryAcquire(
+                    fixture.Caster,
+                    CapsuleShadowProducerKind.Debris,
+                    groupId,
+                    generation), Is.False);
+                Assert.That(fixture.Caster.HasValidBinding, Is.False);
+                Assert.That(binder.TryAcquire(
+                    fixture.Caster,
+                    CapsuleShadowProducerKind.Player,
                     groupId,
                     generation), Is.True);
                 Assert.That(fixture.Caster.IsRegistered, Is.True);
                 Assert.That(fixture.Caster.IsActiveGeneration, Is.False);
                 Assert.That(binder.CommitGeneration(groupId, generation), Is.True);
                 Assert.That(fixture.Caster.IsActiveGeneration, Is.True);
+                Assert.That(binder.TryAcquire(
+                    fixture.Caster,
+                    CapsuleShadowProducerKind.Vfx,
+                    groupId,
+                    generation), Is.False);
+                Assert.That(fixture.Caster.IsRegistered, Is.False,
+                    "A rejected typed reacquisition must clear the prior pooled handle.");
+                Assert.That(fixture.Caster.HasRuntimeBinding, Is.False);
+                Assert.That(binder.TryAcquire(
+                    fixture.Caster,
+                    CapsuleShadowProducerKind.Player,
+                    groupId,
+                    generation), Is.True);
                 binder.ReleaseAcquisition(fixture.Caster);
                 Assert.That(fixture.Caster.IsRegistered, Is.False);
                 Assert.That(binder.TryAcquire(
@@ -69,36 +93,32 @@ namespace Elemental.Tests.PlayMode
             CapsuleShadowCasterBinder binder = CreateBinder();
             try
             {
-                Assert.That(Bind(
-                    binder,
+                Assert.That(binder.TryAcquire(
                     stale.Caster,
+                    CapsuleShadowProducerKind.IntactHeroRock,
                     groupId,
-                    staleGeneration,
-                    CapsuleShadowCasterClass.HeroRock), Is.True);
-                Assert.That(Bind(
-                    binder,
+                    staleGeneration), Is.True);
+                Assert.That(binder.TryAcquire(
                     current.Caster,
+                    CapsuleShadowProducerKind.IntactHeroRock,
                     groupId,
-                    currentGeneration,
-                    CapsuleShadowCasterClass.HeroRock), Is.True);
+                    currentGeneration), Is.True);
                 Assert.That(binder.CommitGeneration(groupId, currentGeneration), Is.True);
-                stale.Caster.Unbind();
-                current.Caster.Unbind();
+                binder.ReleaseAcquisition(stale.Caster);
+                binder.ReleaseAcquisition(current.Caster);
                 yield return null;
 
-                Assert.That(Bind(
-                    binder,
+                Assert.That(binder.TryAcquire(
                     stale.Caster,
+                    CapsuleShadowProducerKind.IntactHeroRock,
                     groupId,
-                    staleGeneration,
-                    CapsuleShadowCasterClass.HeroRock), Is.True);
+                    staleGeneration), Is.True);
                 Assert.That(stale.Caster.IsActiveGeneration, Is.False);
-                Assert.That(Bind(
-                    binder,
+                Assert.That(binder.TryAcquire(
                     current.Caster,
+                    CapsuleShadowProducerKind.IntactHeroRock,
                     groupId,
-                    currentGeneration,
-                    CapsuleShadowCasterClass.HeroRock), Is.True);
+                    currentGeneration), Is.True);
                 Assert.That(current.Caster.IsActiveGeneration, Is.True);
             }
             finally
@@ -120,26 +140,23 @@ namespace Elemental.Tests.PlayMode
             CapsuleShadowCasterBinder binder = CreateBinder();
             try
             {
-                Assert.That(Bind(
-                    binder,
+                Assert.That(binder.TryAcquire(
                     intact.Caster,
+                    CapsuleShadowProducerKind.IntactHeroRock,
                     groupId,
-                    intactGeneration,
-                    CapsuleShadowCasterClass.HeroRock), Is.True);
+                    intactGeneration), Is.True);
                 Assert.That(intact.Caster.IsActiveGeneration, Is.False);
                 Assert.That(binder.CommitGeneration(groupId, intactGeneration), Is.True);
-                Assert.That(Bind(
-                    binder,
+                Assert.That(binder.TryAcquire(
                     fragmentA.Caster,
+                    CapsuleShadowProducerKind.LargeActiveFracture,
                     groupId,
-                    fractureGeneration,
-                    CapsuleShadowCasterClass.ActiveFragment), Is.True);
-                Assert.That(Bind(
-                    binder,
+                    fractureGeneration), Is.True);
+                Assert.That(binder.TryAcquire(
                     fragmentB.Caster,
+                    CapsuleShadowProducerKind.LargeActiveFracture,
                     groupId,
-                    fractureGeneration,
-                    CapsuleShadowCasterClass.ActiveFragment), Is.True);
+                    fractureGeneration), Is.True);
                 Assert.That(intact.Caster.IsActiveGeneration, Is.True);
                 Assert.That(fragmentA.Caster.IsActiveGeneration, Is.False);
                 Assert.That(fragmentB.Caster.IsActiveGeneration, Is.False);
@@ -169,26 +186,23 @@ namespace Elemental.Tests.PlayMode
             CapsuleShadowCasterBinder binder = CreateBinder();
             try
             {
-                Assert.That(Bind(
-                    binder,
+                Assert.That(binder.TryAcquire(
                     fixture.Caster,
+                    CapsuleShadowProducerKind.Player,
                     oldGroup,
-                    generation,
-                    CapsuleShadowCasterClass.Character), Is.True);
+                    generation), Is.True);
                 Assert.That(binder.CommitGeneration(oldGroup, generation), Is.True);
-                Assert.That(Bind(
-                    binder,
+                Assert.That(binder.TryAcquire(
                     fixture.Caster,
+                    CapsuleShadowProducerKind.Player,
                     nextGroup,
-                    generation,
-                    CapsuleShadowCasterClass.Character), Is.True);
+                    generation), Is.True);
                 Assert.That(binder.CommitGeneration(nextGroup, generation), Is.True);
-                Assert.That(Bind(
-                    binder,
+                Assert.That(binder.TryAcquire(
                     fixture.Caster,
+                    CapsuleShadowProducerKind.Player,
                     nextGroup,
-                    generation,
-                    CapsuleShadowCasterClass.Character), Is.True);
+                    generation), Is.True);
                 Assert.That(CapsuleShadowBuffer.Shared.Count, Is.GreaterThanOrEqualTo(1));
                 Assert.That(CountActiveProxies(), Is.EqualTo(1));
                 Assert.That(binder.ReleaseGroup(oldGroup, generation), Is.True);
@@ -255,20 +269,6 @@ namespace Elemental.Tests.PlayMode
                 CapsuleContactShadowRenderPass.ShadowParamsId), Is.EqualTo(Vector4.zero));
             Assert.That(Shader.GetGlobalVector(
                 CapsuleContactShadowRenderPass.BiasDebugParamsId), Is.EqualTo(Vector4.zero));
-        }
-
-        private static bool Bind(
-            CapsuleShadowCasterBinder binder,
-            CapsuleShadowCaster caster,
-            uint groupId,
-            uint generation,
-            CapsuleShadowCasterClass classification)
-        {
-            var identity = new CapsuleShadowCasterIdentity(
-                groupId,
-                generation,
-                classification);
-            return binder.Bind(caster, identity);
         }
 
         private static int CountActiveProxies()
