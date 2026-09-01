@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Elemental.Presentation.Animation;
 using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
+using Elemental.Runtime.World;
 using Elemental.Simulation.Characters;
 using Elemental.Simulation.Combat;
 using NUnit.Framework;
@@ -293,21 +294,66 @@ namespace Elemental.Tests.PlayMode
 
                 scene = SceneManager.GetSceneByPath(scenePath);
                 ActiveRagdollPuppet puppet = FindInScene<ActiveRagdollPuppet>(scene);
+                VoxelPlanetBehaviour planet = FindInScene<VoxelPlanetBehaviour>(scene);
                 Assert.That(puppet, Is.Not.Null);
+                Assert.That(planet, Is.Not.Null);
+                Assert.That(planet.State, Is.Not.Null);
                 Rigidbody body = puppet.GetComponent<Rigidbody>();
-                float startRadius = body.position.magnitude;
+                CapsuleCollider capsule = puppet.GetComponent<CapsuleCollider>();
+                PlanetMotor motor = puppet.GetComponent<PlanetMotor>();
+                Assert.That(body, Is.Not.Null);
+                Assert.That(capsule, Is.Not.Null);
+                Assert.That(motor, Is.Not.Null);
+
+                Vector3 planetScale = planet.transform.lossyScale;
+                float minimumPlanetScale = Mathf.Min(
+                    Mathf.Abs(planetScale.x),
+                    Mathf.Abs(planetScale.y),
+                    Mathf.Abs(planetScale.z));
+                float maximumPlanetScale = Mathf.Max(
+                    Mathf.Abs(planetScale.x),
+                    Mathf.Abs(planetScale.y),
+                    Mathf.Abs(planetScale.z));
+                Assert.That(maximumPlanetScale - minimumPlanetScale,
+                    Is.LessThan(0.0001f),
+                    "The voxel planet radius is spherical only under uniform world scale.");
+
+                Vector3 planetCenter = planet.transform.position;
+                float planetWorldRadius = planet.Radius * maximumPlanetScale;
+                float terrainShell = planet.State.NoiseAmplitude * maximumPlanetScale;
+                float voxelSurfaceError = planet.State.CellSize * maximumPlanetScale;
+                float maximumSurfaceClearance =
+                    capsule.bounds.extents.magnitude + terrainShell + voxelSurfaceError;
+                float startRadius = Vector3.Distance(body.position, planetCenter);
+                float startSurfaceClearance = startRadius - planetWorldRadius;
                 float peakSpeed = 0f;
-                float peakRadius = startRadius;
+                float peakSurfaceClearance = startSurfaceClearance;
                 for (int tick = 0; tick < 180; tick++)
                 {
                     yield return new WaitForFixedUpdate();
                     peakSpeed = Mathf.Max(peakSpeed, body.linearVelocity.magnitude);
-                    peakRadius = Mathf.Max(peakRadius, body.position.magnitude);
+                    float surfaceClearance =
+                        Vector3.Distance(body.position, planetCenter) - planetWorldRadius;
+                    peakSurfaceClearance = Mathf.Max(
+                        peakSurfaceClearance, surfaceClearance);
                 }
 
-                Assert.That(peakRadius, Is.LessThan(startRadius + 1.5f),
-                    $"Idle active ragdoll escaped the planet; peak speed was {peakSpeed:0.00} m/s.");
-                Assert.That(body.position.magnitude, Is.LessThan(26.5f));
+                float finalSurfaceClearance =
+                    Vector3.Distance(body.position, planetCenter) - planetWorldRadius;
+                Assert.That(peakSurfaceClearance,
+                    Is.InRange(0f, maximumSurfaceClearance),
+                    $"Idle active ragdoll left the planet surface shell; " +
+                    $"start={startSurfaceClearance:0.000} m, " +
+                    $"peak={peakSurfaceClearance:0.000} m, " +
+                    $"bound={maximumSurfaceClearance:0.000} m, " +
+                    $"speed={peakSpeed:0.00} m/s.");
+                Assert.That(finalSurfaceClearance,
+                    Is.InRange(0f, maximumSurfaceClearance));
+                Assert.That(motor.HasStableSupport, Is.True);
+                Assert.That(IsFinite(body.position), Is.True);
+                Assert.That(IsFinite(body.linearVelocity), Is.True);
+                Assert.That(IsFinite(body.angularVelocity), Is.True);
+                Assert.That(float.IsFinite(peakSpeed), Is.True);
                 Assert.That(body.linearVelocity.magnitude, Is.LessThan(2f));
             }
             finally
