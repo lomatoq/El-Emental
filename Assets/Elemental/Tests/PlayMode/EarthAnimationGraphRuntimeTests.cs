@@ -109,6 +109,7 @@ namespace Elemental.Tests.PlayMode
             animator.speed = 0f;
             StabilizeAnimator(animator);
             bool[] writableParameterMask = CaptureWritableParameterMask(animator);
+            AssertCapturedCurveParametersAreExcluded(animator, writableParameterMask);
             PlayableGraph firstLegacyGraph = ReadRigGraph(rigBuilder);
             Assert.That(rigBehaviour.enabled, Is.True);
             Assert.That(firstLegacyGraph.IsValid(), Is.True);
@@ -134,6 +135,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(active.RigOutputCount, Is.GreaterThan(0));
             Assert.That(active.RigOutputsUsePreviousInputs, Is.True,
                 "Every downstream rig output must sort after the base output and consume PreviousInputs.");
+            LogAssert.NoUnexpectedReceived();
             Assert.That(rigBehaviour.enabled, Is.False);
             Assert.That(firstLegacyGraph.IsValid(), Is.False,
                 "Enabling the external graph must destroy the previous RigBuilder-owned graph.");
@@ -219,6 +221,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(restoredLegacyGraph.IsValid(), Is.True);
             Assert.That(graph.Diagnostics.GraphValid, Is.False);
             Assert.That(graph.Diagnostics.RigOutputCount, Is.Zero);
+            LogAssert.NoUnexpectedReceived();
             AssertStateEquivalent(activeState, activeTime, animator.GetCurrentAnimatorStateInfo(0));
             AssertAnimatorParametersHavePlayableValues(animator, writableParameterMask);
             AssertAnimatorLayerWeightsHavePlayableValues(animator);
@@ -234,6 +237,7 @@ namespace Elemental.Tests.PlayMode
                 writableParameterMask);
             AssertPlayableLayerWeightsHavePlayableValues(graph, animator.layerCount);
             Assert.That(graph.Configure(animator, in disabledSettings), Is.False);
+            LogAssert.NoUnexpectedReceived();
             Assert.That(ReadRigGraph(rigBuilder).IsValid(), Is.True);
 
             yield return null;
@@ -456,6 +460,30 @@ namespace Elemental.Tests.PlayMode
             Assert.That(writableCount, Is.GreaterThan(0),
                 "The canonical legacy controller must expose a writable float, int, or bool parameter.");
             return writable;
+        }
+
+        private static void AssertCapturedCurveParametersAreExcluded(
+            Animator animator,
+            bool[] writableParameterMask)
+        {
+            AnimatorControllerParameter[] parameters = animator.parameters;
+            int curveOwnedCount = 0;
+            for (int index = 0; index < parameters.Length; index++)
+            {
+                AnimatorControllerParameter parameter = parameters[index];
+                bool supported = parameter.type == AnimatorControllerParameterType.Float ||
+                                 parameter.type == AnimatorControllerParameterType.Int ||
+                                 parameter.type == AnimatorControllerParameterType.Bool;
+                if (!supported ||
+                    !animator.IsParameterControlledByCurve(parameter.nameHash))
+                    continue;
+
+                curveOwnedCount++;
+                Assert.That(writableParameterMask[index], Is.False,
+                    $"Curve-owned parameter '{parameter.name}' must not be mirrored by the graph.");
+            }
+            Assert.That(curveOwnedCount, Is.GreaterThan(0),
+                "The canonical controller must exercise at least one curve-owned parameter.");
         }
 
         private static void AssertAnimatorParametersHavePlayableValues(

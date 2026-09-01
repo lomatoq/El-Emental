@@ -48,6 +48,7 @@ namespace Elemental.Presentation.Animation
         private bool _leftHandContact;
         private bool _rightHandContact;
         private AnimatorControllerParameter[] _controllerParameters;
+        private bool[] _externallyWritableControllerParameters = Array.Empty<bool>();
         private AnimatorStateInfo[] _handoffStates = Array.Empty<AnimatorStateInfo>();
         private float[] _handoffLayerWeights = Array.Empty<float>();
         private bool[] _handoffStateValid = Array.Empty<bool>();
@@ -626,6 +627,7 @@ namespace Elemental.Presentation.Animation
             if (!IsActive || animator == null || _controllerParameters == null) return;
             for (int index = 0; index < _controllerParameters.Length; index++)
             {
+                if (!_externallyWritableControllerParameters[index]) continue;
                 AnimatorControllerParameter parameter = _controllerParameters[index];
                 int hash = parameter.nameHash;
                 switch (parameter.type)
@@ -708,8 +710,23 @@ namespace Elemental.Presentation.Animation
 
         private void CacheControllerParameters()
         {
-            if (_controllerParameters == null && animator != null)
-                _controllerParameters = animator.parameters;
+            if (_controllerParameters != null || animator == null) return;
+
+            _controllerParameters = animator.parameters;
+            _externallyWritableControllerParameters =
+                new bool[_controllerParameters.Length];
+            // This query must run while the legacy Animator still owns its graph.
+            // Once the external PlayableGraph is active Unity no longer reports
+            // the controller's curve ownership reliably.
+            for (int index = 0; index < _controllerParameters.Length; index++)
+            {
+                AnimatorControllerParameter parameter = _controllerParameters[index];
+                bool supported = parameter.type == AnimatorControllerParameterType.Float ||
+                                 parameter.type == AnimatorControllerParameterType.Int ||
+                                 parameter.type == AnimatorControllerParameterType.Bool;
+                _externallyWritableControllerParameters[index] = supported &&
+                    !animator.IsParameterControlledByCurve(parameter.nameHash);
+            }
         }
 
         private void EnsureHandoffBuffers()
@@ -742,6 +759,7 @@ namespace Elemental.Presentation.Animation
             if (!_controllerPlayable.IsValid() || animator == null) return;
             for (int index = 0; index < _controllerParameters.Length; index++)
             {
+                if (!_externallyWritableControllerParameters[index]) continue;
                 AnimatorControllerParameter parameter = _controllerParameters[index];
                 int hash = parameter.nameHash;
                 switch (parameter.type)
@@ -776,6 +794,7 @@ namespace Elemental.Presentation.Animation
             EnsureHandoffBuffers();
             for (int index = 0; index < _controllerParameters.Length; index++)
             {
+                if (!_externallyWritableControllerParameters[index]) continue;
                 AnimatorControllerParameter parameter = _controllerParameters[index];
                 int hash = parameter.nameHash;
                 switch (parameter.type)
