@@ -203,6 +203,19 @@ namespace Elemental.Tests.PlayMode
             rig.RecoverToAnimated(localUp, preferredForward, false);
             rig.CompleteRecovery();
             rig.ResetToAnimated();
+            yield return null;
+            Assert.That(rig.PhysicalAnimationMode,
+                Is.EqualTo(CharacterPhysicalMode.AnimatedMotor));
+            Assert.That(rig.PhysicalOwnershipConsistent, Is.True);
+            HumanoidCharacterPresentation recoveryPresentation =
+                rig.GetComponent<HumanoidCharacterPresentation>();
+            Assert.That(recoveryPresentation, Is.Not.Null);
+            EarthTransitionDirector recoveryTransitionOwner =
+                recoveryPresentation.TransitionDirector;
+            Assert.That(recoveryTransitionOwner, Is.Not.Null);
+            Assert.That(recoveryTransitionOwner.BaseStateOwnerMode,
+                Is.EqualTo(CharacterPhysicalMode.AnimatedMotor));
+            Assert.That(recoveryTransitionOwner.OwnedBaseStateHash, Is.EqualTo(0));
 
             Light feetOwner = rig.gameObject.AddComponent<Light>();
             AudioSource controlOwner = rig.gameObject.AddComponent<AudioSource>();
@@ -212,12 +225,6 @@ namespace Elemental.Tests.PlayMode
                 new EarthRecoveryMarkerAuthoring(0.56f, 0.80f, 0.95f);
             Animator recoveryAnimator = rig.GetComponentInChildren<Animator>(true);
             Assert.That(recoveryAnimator, Is.Not.Null);
-            HumanoidCharacterPresentation recoveryPresentation =
-                rig.GetComponent<HumanoidCharacterPresentation>();
-            Assert.That(recoveryPresentation, Is.Not.Null);
-            EarthTransitionDirector recoveryTransitionOwner =
-                recoveryPresentation.TransitionDirector;
-            Assert.That(recoveryTransitionOwner, Is.Not.Null);
             const float authoredRecoveryEntryPhase = 0.55f;
             int authoredRecoveryStateHash =
                 Animator.StringToHash("Base Layer.Knockdown Recovery");
