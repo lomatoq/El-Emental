@@ -189,6 +189,12 @@ namespace Elemental.Runtime.Characters
         public int RecoveryStateHashNextFrame { get; private set; }
         public float RecoveryStatePhaseAfterEvent { get; private set; }
         public float RecoveryStatePhaseNextFrame { get; private set; }
+        public bool RecoveryAnimatorWasTransitioning { get; private set; }
+        public bool RecoveryAnimatorSampledNextState { get; private set; }
+        public int RecoveryAnimatorCurrentStateHash { get; private set; }
+        public int RecoveryAnimatorNextStateHash { get; private set; }
+        public float RecoveryAnimatorCurrentStatePhase { get; private set; }
+        public float RecoveryAnimatorNextStatePhase { get; private set; }
         public bool RecoveryHasLiveSupport => _liveRecoverySupport.HasSupport;
         public int RecoverySupportSampleCount { get; private set; }
         public EarthRecoveryResult LastPoseMatchedRecovery => _lastPoseMatchedRecovery;
@@ -1480,9 +1486,8 @@ namespace Elemental.Runtime.Characters
                 IsFinite(motorRootBody.position) &&
                 HasRecoverySupport();
 
-            AnimatorStateInfo state = animator.IsInTransition(0)
-                ? animator.GetNextAnimatorStateInfo(0)
-                : animator.GetCurrentAnimatorStateInfo(0);
+            AnimatorStateInfo state = ResolveRecoveryAnimatorState();
+            if (state.fullPathHash != _expectedRecoveryStateHash) return;
             float phase = Mathf.Clamp01(state.normalizedTime);
             if (!_physicalAnimationCoordinator.TryAdvancePoseMatchedRecovery(
                     CanonicalPhysicalMode,
@@ -1566,7 +1571,16 @@ namespace Elemental.Runtime.Characters
             if (!RecoveryStateVerifiedNextFrame)
                 Debug.LogError(
                     $"[Elemental] Recovery state {_expectedRecoveryStateHash} at phase " +
-                    $"{_expectedRecoveryEntryPhase:F3} did not persist through the next frame.",
+                    $"{_expectedRecoveryEntryPhase:F3} did not persist through the next frame. " +
+                    $"Observed {stateHash} at {statePhase:F3}; current=" +
+                    $"{RecoveryAnimatorCurrentStateHash}@" +
+                    $"{RecoveryAnimatorCurrentStatePhase:F3}, next=" +
+                    $"{RecoveryAnimatorNextStateHash}@" +
+                    $"{RecoveryAnimatorNextStatePhase:F3}, transitioning=" +
+                    $"{RecoveryAnimatorWasTransitioning}, sampledNext=" +
+                    $"{RecoveryAnimatorSampledNextState}, physicalMode=" +
+                    $"{CanonicalPhysicalMode}, ownershipConsistent=" +
+                    $"{PhysicalOwnershipConsistent}, poseMatched={UsedPoseMatchedRecovery}.",
                     this);
         }
 
@@ -1579,11 +1593,44 @@ namespace Elemental.Runtime.Characters
                 return;
             }
 
-            AnimatorStateInfo state = animator.IsInTransition(0)
-                ? animator.GetNextAnimatorStateInfo(0)
-                : animator.GetCurrentAnimatorStateInfo(0);
+            AnimatorStateInfo state = ResolveRecoveryAnimatorState();
             stateHash = state.fullPathHash;
             phase = Mathf.Repeat(state.normalizedTime, 1f);
+        }
+
+        private AnimatorStateInfo ResolveRecoveryAnimatorState()
+        {
+            AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+            bool transitioning = animator.IsInTransition(0);
+            AnimatorStateInfo next = transitioning
+                ? animator.GetNextAnimatorStateInfo(0)
+                : default;
+
+            RecoveryAnimatorWasTransitioning = transitioning;
+            RecoveryAnimatorCurrentStateHash = current.fullPathHash;
+            RecoveryAnimatorCurrentStatePhase = Mathf.Repeat(current.normalizedTime, 1f);
+            RecoveryAnimatorNextStateHash = transitioning ? next.fullPathHash : 0;
+            RecoveryAnimatorNextStatePhase = transitioning
+                ? Mathf.Repeat(next.normalizedTime, 1f)
+                : 0f;
+
+            // A transition can either be entering recovery or be the controller's
+            // unconditional recovery exit. Prefer whichever endpoint owns the
+            // selected recovery hash; never let an outgoing Locomotion phase drive
+            // feet, controls, exit markers, or next-frame validation.
+            if (current.fullPathHash == _expectedRecoveryStateHash)
+            {
+                RecoveryAnimatorSampledNextState = false;
+                return current;
+            }
+            if (transitioning && next.fullPathHash == _expectedRecoveryStateHash)
+            {
+                RecoveryAnimatorSampledNextState = true;
+                return next;
+            }
+
+            RecoveryAnimatorSampledNextState = false;
+            return current;
         }
 
         private bool IsExpectedRecoveryState(int stateHash, float phase, float phaseTolerance)

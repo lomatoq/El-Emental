@@ -330,6 +330,11 @@ namespace Elemental.Tests.PlayMode
             Assert.That(rig.RecoveryStatePhaseNextFrame,
                 Is.EqualTo(0.55f).Within(0.08f));
             Assert.That(rig.RecoveryStateVerifiedNextFrame, Is.True);
+            Assert.That(rig.RecoveryAnimatorCurrentStateHash,
+                Is.EqualTo(rig.LastPoseMatchedRecovery.AnimationStateId),
+                "An outgoing controller transition must not replace the current recovery owner.");
+            Assert.That(rig.RecoveryAnimatorSampledNextState, Is.False,
+                "Recovery validation must prefer the selected current state over an outgoing next state.");
             Assert.That(recoveryTransitionOwner.BaseStateOwnerMode,
                 Is.EqualTo(CharacterPhysicalMode.Recovery));
             Assert.That(recoveryTransitionOwner.ActiveStateHash,
