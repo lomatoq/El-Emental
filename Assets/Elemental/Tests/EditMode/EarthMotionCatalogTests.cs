@@ -35,6 +35,11 @@ namespace Elemental.Tests.EditMode
             Assert.That(
                 inventory,
                 Does.Contain(EarthHumanoidMotionSetup.KayKitMovementBasicPath));
+            Assert.That(
+                inventory,
+                Does.Contain(
+                    $"{EarthMotionCatalogBuilder.CatalogSemanticClipPath} exact-name " +
+                    $"'{EarthMotionCatalogBuilder.CatalogSemanticClipName}'"));
             Assert.That(inventory, Does.Contain("unique GUID+localFileId total=51"));
             EarthMotionCatalogBuildSummary summary =
                 EarthMotionCatalogBuilder.Rebuild(_catalog);
@@ -45,6 +50,7 @@ namespace Elemental.Tests.EditMode
             Assert.That(summary.IdentityHash, Is.Not.Empty);
             Assert.That(_catalog.ClipCount, Is.EqualTo(51));
             var identities = new HashSet<string>(StringComparer.Ordinal);
+            int selectedSemanticClipCount = 0;
             for (int index = 0; index < _catalog.ClipCount; index++)
             {
                 EarthMotionClipProfile profile = _catalog.ClipAt(index);
@@ -62,6 +68,29 @@ namespace Elemental.Tests.EditMode
                     Is.Not.EqualTo(EarthMotionSemanticAction.Unknown));
                 Assert.That(profile.EnvironmentTags,
                     Is.Not.EqualTo(EarthMotionEnvironmentTag.None));
+                if (string.Equals(
+                        profile.SourceAssetPath,
+                        EarthMotionCatalogBuilder.CatalogSemanticClipPath,
+                        StringComparison.Ordinal) &&
+                    string.Equals(
+                        profile.Clip.name,
+                        EarthMotionCatalogBuilder.CatalogSemanticClipName,
+                        StringComparison.Ordinal))
+                {
+                    selectedSemanticClipCount++;
+                    Assert.That(
+                        profile.SemanticAction,
+                        Is.EqualTo(EarthMotionSemanticAction.Cast));
+                    Assert.That(
+                        profile.AuthoredAction,
+                        Is.EqualTo(EarthAuthoredActionId.MagicCast));
+                    Assert.That(
+                        profile.Style & EarthMotionStyle.Magic,
+                        Is.EqualTo(EarthMotionStyle.Magic));
+                    Assert.That(
+                        profile.ActionTags & EarthMotionActionTag.Cast,
+                        Is.EqualTo(EarthMotionActionTag.Cast));
+                }
                 for (int curveIndex = 0;
                      curveIndex < EarthAnimationClipMetadata.CurveCount;
                      curveIndex++)
@@ -84,6 +113,10 @@ namespace Elemental.Tests.EditMode
                     }
                 }
             }
+            Assert.That(
+                selectedSemanticClipCount,
+                Is.EqualTo(1),
+                "The exact pre-existing ranged spellcasting identity is the curated 51st clip.");
 
             var errors = new List<string>();
             Assert.That(

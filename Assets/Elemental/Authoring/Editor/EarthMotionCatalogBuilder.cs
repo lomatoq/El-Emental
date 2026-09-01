@@ -37,6 +37,9 @@ namespace Elemental.Authoring.Editor
     {
         public const string DefaultCatalogPath =
             "Assets/Elemental/Content/Animation/EarthMotionCatalog.asset";
+        public const string CatalogSemanticClipPath =
+            "Assets/ThirdParty/KayKit/Animations/Rig_Medium_CombatRanged.fbx";
+        public const string CatalogSemanticClipName = "Ranged_Magic_Spellcasting";
         private const int CatalogCurveKeyCount = 17;
         private static readonly string[] CatalogLibraryPaths =
         {
@@ -172,6 +175,11 @@ namespace Elemental.Authoring.Editor
                     visitedPaths,
                     missingPaths,
                     inventoryBuilder);
+            CollectExactClip(
+                CatalogSemanticClipPath,
+                CatalogSemanticClipName,
+                byIdentity,
+                inventoryBuilder);
 
             inventoryBuilder.Append("unique GUID+localFileId total=")
                 .Append(byIdentity.Count);
@@ -212,6 +220,50 @@ namespace Elemental.Authoring.Editor
                 clips.Count,
                 candidates.Count - uniqueBefore);
             if (clips.Count == 0) missingPaths.Add(path);
+        }
+
+        private static void CollectExactClip(
+            string path,
+            string clipName,
+            IDictionary<ClipIdentity, ClipCandidate> candidates,
+            StringBuilder inventory)
+        {
+            UnityEngine.Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
+            var availableClips = new List<AnimationClip>(assets.Length);
+            AnimationClip selected = null;
+            int matchCount = 0;
+            for (int assetIndex = 0; assetIndex < assets.Length; assetIndex++)
+            {
+                if (assets[assetIndex] is not AnimationClip clip || IsPreviewClip(clip))
+                    continue;
+                availableClips.Add(clip);
+                if (!string.Equals(clip.name, clipName, StringComparison.Ordinal)) continue;
+                selected = clip;
+                matchCount++;
+            }
+
+            if (matchCount != 1)
+            {
+                AppendInventorySource(
+                    inventory,
+                    $"{path} exact-name '{clipName}'",
+                    availableClips,
+                    availableClips.Count,
+                    0);
+                throw new InvalidOperationException(
+                    $"Earth motion catalog exact selector expected one existing " +
+                    $"AnimationClip named '{clipName}' at '{path}', but observed " +
+                    $"{matchCount}.\n{inventory}");
+            }
+
+            int uniqueBefore = candidates.Count;
+            AddCandidate(selected, candidates, $"{path}#{clipName}");
+            AppendInventorySource(
+                inventory,
+                $"{path} exact-name '{clipName}'",
+                new[] { selected },
+                1,
+                candidates.Count - uniqueBefore);
         }
 
         private static void AppendInventorySource(
