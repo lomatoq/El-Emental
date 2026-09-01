@@ -459,10 +459,11 @@ namespace Elemental.Presentation.Animation
                         out EarthQueuedTransition queued))
                     return;
 
+                EarthAnimationTransitionContext queuedContext = queued.Context;
                 EarthAnimationTransitionContext refreshed = RefreshQueuedContext(
-                    in queued.Context,
+                    in queuedContext,
                     sourceState == EarthMotionStateId.None
-                        ? queued.Context.SourceState
+                        ? queuedContext.SourceState
                         : sourceState,
                     sourcePhase,
                     _activePriority,
