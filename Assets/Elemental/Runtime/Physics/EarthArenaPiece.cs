@@ -5,7 +5,7 @@ namespace Elemental.Runtime.Physics
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody), typeof(Collider))]
-    public sealed class EarthArenaPiece : MonoBehaviour, IEarthPhysicalTarget
+    public sealed class EarthArenaPiece : MonoBehaviour, IEarthPhysicalTarget, IEarthDamageableStructure
     {
         [SerializeField] private EarthArenaStructure owner;
         [SerializeField] private Rigidbody body;
@@ -18,6 +18,9 @@ namespace Elemental.Runtime.Physics
         private EarthMagicGripKind _magicOwner;
 
         public EarthArenaStructure Owner => owner;
+        public uint StructureId => StableEarthId;
+        public bool ApplyEarthImpact(in EarthStructureImpact impact) =>
+            owner != null && owner.ApplyReleasedPieceImpact(pieceIndex, in impact);
         public int PieceIndex => pieceIndex;
         public Rigidbody Body => body;
         public uint StableEarthId => owner != null
@@ -67,6 +70,7 @@ namespace Elemental.Runtime.Physics
         {
             if (!_hasMagicOwner || _magicOwner != grip) return;
             _hasMagicOwner = false;
+            owner?.NotifyPieceMagicReleased(pieceIndex);
             body?.WakeUp();
         }
 
@@ -75,5 +79,7 @@ namespace Elemental.Runtime.Physics
             if (owner != null && IsEarthTargetValid)
                 owner.HandlePieceCollision(pieceIndex, collision);
         }
+
+        private void OnCollisionStay(Collision collision) => owner?.ReportPieceFriction(pieceIndex, collision);
     }
 }

@@ -52,7 +52,7 @@ namespace Elemental.Simulation.Structures
     /// </summary>
     public static class EarthSurfCellGraph
     {
-        public const int CellCount = 15;
+        public const int CellCount = 12;
         public const ushort LeftFootCoreMask = 1 << 0;
         public const ushort RightFootCoreMask = 1 << 1;
         public const ushort FootBridgeMask = 1 << 2;
@@ -64,36 +64,30 @@ namespace Elemental.Simulation.Structures
         {
             return index switch
             {
-                0 => Cell(0, EarthSurfCellRole.LeftFootCore, -0.205f, -0.09f, 0.39f, 0.43f,
+                0 => Cell(0, EarthSurfCellRole.LeftFootCore, -0.205f, -0.09f, 0.43f, 0.46f,
                     (1 << 1) | (1 << 2) | (1 << 8) | (1 << 10)),
-                1 => Cell(1, EarthSurfCellRole.RightFootCore, 0.205f, -0.09f, 0.39f, 0.43f,
-                    (1 << 0) | (1 << 2) | (1 << 9) | (1 << 12)),
+                1 => Cell(1, EarthSurfCellRole.RightFootCore, 0.205f, -0.09f, 0.43f, 0.46f,
+                    (1 << 0) | (1 << 2) | (1 << 9) | (1 << 11)),
                 2 => Cell(2, EarthSurfCellRole.FootBridge, 0f, 0.19f, 0.38f, 0.22f,
                     (1 << 0) | (1 << 1) | (1 << 4) | (1 << 6) | (1 << 7)),
                 3 => Cell(3, EarthSurfCellRole.Nose, -0.31f, 0.43f, 0.34f, 0.25f,
-                    (1 << 4) | (1 << 6) | (1 << 13)),
+                    (1 << 4) | (1 << 6)),
                 4 => Cell(4, EarthSurfCellRole.Nose, 0f, 0.45f, 0.27f, 0.23f,
                     (1 << 2) | (1 << 3) | (1 << 5)),
                 5 => Cell(5, EarthSurfCellRole.Nose, 0.31f, 0.43f, 0.34f, 0.25f,
-                    (1 << 4) | (1 << 7) | (1 << 14)),
+                    (1 << 4) | (1 << 7)),
                 6 => Cell(6, EarthSurfCellRole.OuterRail, -0.43f, 0.16f, 0.18f, 0.28f,
-                    (1 << 2) | (1 << 3) | (1 << 8) | (1 << 13)),
+                    (1 << 2) | (1 << 3) | (1 << 8)),
                 7 => Cell(7, EarthSurfCellRole.OuterRail, 0.43f, 0.16f, 0.18f, 0.28f,
-                    (1 << 2) | (1 << 5) | (1 << 9) | (1 << 14)),
+                    (1 << 2) | (1 << 5) | (1 << 9)),
                 8 => Cell(8, EarthSurfCellRole.OuterRail, -0.45f, -0.14f, 0.17f, 0.25f,
                     (1 << 0) | (1 << 6) | (1 << 10)),
                 9 => Cell(9, EarthSurfCellRole.OuterRail, 0.45f, -0.14f, 0.17f, 0.25f,
-                    (1 << 1) | (1 << 7) | (1 << 12)),
+                    (1 << 1) | (1 << 7) | (1 << 11)),
                 10 => Cell(10, EarthSurfCellRole.Tail, -0.31f, -0.42f, 0.34f, 0.23f,
                     (1 << 0) | (1 << 8) | (1 << 11)),
-                11 => Cell(11, EarthSurfCellRole.Tail, 0f, -0.45f, 0.27f, 0.21f,
-                    (1 << 10) | (1 << 12)),
-                12 => Cell(12, EarthSurfCellRole.Tail, 0.31f, -0.42f, 0.34f, 0.23f,
-                    (1 << 1) | (1 << 9) | (1 << 11)),
-                13 => Cell(13, EarthSurfCellRole.OuterRail, -0.49f, 0.36f, 0.14f, 0.20f,
-                    (1 << 3) | (1 << 6)),
-                14 => Cell(14, EarthSurfCellRole.OuterRail, 0.49f, 0.36f, 0.14f, 0.20f,
-                    (1 << 5) | (1 << 7)),
+                11 => Cell(11, EarthSurfCellRole.Tail, 0.22f, -0.43f, 0.43f, 0.28f,
+                    (1 << 1) | (1 << 9) | (1 << 10)),
                 _ => default
             };
         }

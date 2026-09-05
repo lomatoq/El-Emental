@@ -119,6 +119,7 @@ namespace Elemental.Runtime.Characters
         public bool LastRecoveryClearanceSucceeded { get; private set; }
         public bool LastRecoveryUsedFacingFallback { get; private set; }
         public event Action AuthoredRecoveryBegan;
+        public event Action RagdollBegan;
 
         public void ConfigureLocalizedReactionProfile(CharacterImpactResponseProfile profile) =>
             impactResponseProfile = profile;
@@ -127,7 +128,7 @@ namespace Elemental.Runtime.Characters
         {
             effectsProfile = profile;
             if (stoneFadeDust != null && effectsProfile != null)
-                EarthParticleSystemTuningApplier.Apply(
+                EarthParticleSystemTuningApplier.ApplyDust(
                     stoneFadeDust,
                     effectsProfile.StoneFade.Dust,
                     effectsProfile.Materials.StoneFadeDust);
@@ -196,7 +197,7 @@ namespace Elemental.Runtime.Characters
             physicalStateOwner = configuredPhysicalStateOwner;
             stoneFadeDust = configuredStoneFadeDust;
             if (stoneFadeDust != null && effectsProfile != null)
-                EarthParticleSystemTuningApplier.Apply(
+                EarthParticleSystemTuningApplier.ApplyDust(
                     stoneFadeDust,
                     effectsProfile.StoneFade.Dust,
                     effectsProfile.Materials.StoneFadeDust);
@@ -228,6 +229,12 @@ namespace Elemental.Runtime.Characters
                     throw new InvalidOperationException(
                         $"Humanoid ragdoll is missing required bone {HumanBones[index]}.");
                 HumanoidRagdollBone marker = configured[index];
+                // Partially generated scenes can retain the marker component while
+                // losing its serialized role. In that state every marker reports
+                // the default Pelvis slot and role-based lookup leaves the other
+                // ten entries empty. Reuse the marker already attached to the
+                // canonical Humanoid bone before trying to add another component.
+                if (marker == null) marker = bone.GetComponent<HumanoidRagdollBone>();
                 if (marker == null) marker = bone.gameObject.AddComponent<HumanoidRagdollBone>();
                 Rigidbody body = bone.GetComponent<Rigidbody>();
                 if (body == null) body = bone.gameObject.AddComponent<Rigidbody>();
@@ -323,6 +330,7 @@ namespace Elemental.Runtime.Characters
                 }
                 IgnoreSelfCollisions();
                 IsRagdollActive = true;
+                RagdollBegan?.Invoke();
                 SetStoneFade(0f);
                 ApplyHandoff(in handoff);
                 Rigidbody pelvis = bones[0] != null ? bones[0].Body : null;
@@ -614,6 +622,7 @@ namespace Elemental.Runtime.Characters
 
         private void Awake()
         {
+            ConfigureEffectsProfile(effectsProfile);
             if (animator == null) animator = GetComponentInChildren<Animator>(true);
             CaptureDefaultRoot();
             CacheRenderers();

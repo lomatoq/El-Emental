@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="6" result="Passed" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 10:48:36Z" end-time="2026-09-05 10:48:36Z" duration="0.0914908">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="848" result="Passed" start-time="2026-09-05 10:48:36Z" end-time="2026-09-05 10:48:36Z" duration="0.091491" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2044" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="844" result="Passed" start-time="2026-09-05 10:48:36Z" end-time="2026-09-05 10:48:36Z" duration="0.065119" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2045" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="844" result="Passed" start-time="2026-09-05 10:48:36Z" end-time="2026-09-05 10:48:36Z" duration="0.064182" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2046" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="844" result="Passed" start-time="2026-09-05 10:48:36Z" end-time="2026-09-05 10:48:36Z" duration="0.063692" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2047" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="844" result="Passed" start-time="2026-09-05 10:48:36Z" end-time="2026-09-05 10:48:36Z" duration="0.063163" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="2048" name="MotionMatching" fullname="Elemental.Tests.EditMode.MotionMatching" runstate="Runnable" testcasecount="21" result="Passed" start-time="2026-09-05 10:48:36Z" end-time="2026-09-05 10:48:36Z" duration="0.062381" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestFixture" id="2022" name="EarthRotationInertializationTests" fullname="Elemental.Tests.EditMode.MotionMatching.EarthRotationInertializationTests" classname="Elemental.Tests.EditMode.MotionMatching.EarthRotationInertializationTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-05 10:48:36Z" end-time="2026-09-05 10:48:36Z" duration="0.060362" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2025" name="InterruptedTransitionStartsFromVisibleMotionInsteadOfOldOffset" fullname="Elemental.Tests.EditMode.MotionMatching.EarthRotationInertializationTests.InterruptedTransitionStartsFromVisibleMotionInsteadOfOldOffset" methodname="InterruptedTransitionStartsFromVisibleMotionInsteadOfOldOffset" classname="Elemental.Tests.EditMode.MotionMatching.EarthRotationInertializationTests" runstate="Runnable" seed="519108595" result="Passed" start-time="2026-09-05 10:48:36Z" end-time="2026-09-05 10:48:36Z" duration="0.027402" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2024" name="MovingSwitchPreservesOutgoingPoseAndAngularVelocity" fullname="Elemental.Tests.EditMode.MotionMatching.EarthRotationInertializationTests.MovingSwitchPreservesOutgoingPoseAndAngularVelocity" methodname="MovingSwitchPreservesOutgoingPoseAndAngularVelocity" classname="Elemental.Tests.EditMode.MotionMatching.EarthRotationInertializationTests" runstate="Runnable" seed="1767119633" result="Passed" start-time="2026-09-05 10:48:36Z" end-time="2026-09-05 10:48:36Z" duration="0.001325" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2028" name="NonCommutingAxesComposeInTheSameSpatialVelocityFrame" fullname="Elemental.Tests.EditMode.MotionMatching.EarthRotationInertializationTests.NonCommutingAxesComposeInTheSameSpatialVelocityFrame" methodname="NonCommutingAxesComposeInTheSameSpatialVelocityFrame" classname="Elemental.Tests.EditMode.MotionMatching.EarthRotationInertializationTests" runstate="Runnable" seed="1061347514" result="Passed" start-time="2026-09-05 10:48:36Z" end-time="2026-09-05 10:48:36Z" duration="0.004484" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2027" name="PlantedContactBypassClearsGenericOffsetAndTracksExactTarget" fullname="Elemental.Tests.EditMode.MotionMatching.EarthRotationInertializationTests.PlantedContactBypassClearsGenericOffsetAndTracksExactTarget" methodname="PlantedContactBypassClearsGenericOffsetAndTracksExactTarget" classname="Elemental.Tests.EditMode.MotionMatching.EarthRotationInertializationTests" runstate="Runnable" seed="824300447" result="Passed" start-time="2026-09-05 10:48:36Z" end-time="2026-09-05 10:48:36Z" duration="0.000647" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2023" name="StationarySwitchKeepsTransitionSampleAndSettlesToTarget" fullname="Elemental.Tests.EditMode.MotionMatching.EarthRotationInertializationTests.StationarySwitchKeepsTransitionSampleAndSettlesToTarget" methodname="StationarySwitchKeepsTransitionSampleAndSettlesToTarget" classname="Elemental.Tests.EditMode.MotionMatching.EarthRotationInertializationTests" runstate="Runnable" seed="361563061" result="Passed" start-time="2026-09-05 10:48:36Z" end-time="2026-09-05 10:48:36Z" duration="0.000860" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2026" name="TimeBasedDecayConvergesAcrossThirtySixtyAndOneTwentyHertz" fullname="Elemental.Tests.EditMode.MotionMatching.EarthRotationInertializationTests.TimeBasedDecayConvergesAcrossThirtySixtyAndOneTwentyHertz" methodname="TimeBasedDecayConvergesAcrossThirtySixtyAndOneTwentyHertz" classname="Elemental.Tests.EditMode.MotionMatching.EarthRotationInertializationTests" runstate="Runnable" seed="1803084301" result="Passed" start-time="2026-09-05 10:48:36Z" end-time="2026-09-05 10:48:36Z" duration="0.001945" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\AnimationC1InertializationEdit.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

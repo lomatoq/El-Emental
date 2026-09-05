@@ -199,7 +199,7 @@ namespace Elemental.Authoring.Editor
                 material = new Material(shader) { name = $"{family} Earth" };
                 AssetDatabase.CreateAsset(material, materialPath);
             }
-            else if (material.shader != shader) material.shader = shader;
+            else MaterialShaderStateUtility.RebindShader(material, shader);
             Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(TexturePath);
             if (texture != null) material.SetTexture("_BaseMap", texture);
             profile.Apply(material, false);

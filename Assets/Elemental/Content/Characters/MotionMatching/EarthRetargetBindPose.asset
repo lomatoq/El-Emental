@@ -1,0 +1,86 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea0f2be4579756b45b286abe92811740, type: 3}
+  m_Name: EarthRetargetBindPose
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.MotionMatching.EarthRetargetBindPose
+  schemaVersion: 2
+  sourceAvatarHash: 51A86A871D5F7301
+  sourceSkeletonHash: B081257D93723168
+  sourceForward: {x: 0, y: 0, z: 1}
+  sourceUp: {x: 0, y: 1, z: 0}
+  bones:
+  - bone: 0
+    sourceJointName: mixamorig:Hips
+    sourceRestLocalRotation: {x: -0.35954717, y: 0.34225628, z: -0.15274492, w: 0.8545499}
+  - bone: 7
+    sourceJointName: mixamorig:Spine
+    sourceRestLocalRotation: {x: -0.13850826, y: 0.86122274, z: 0.3507726, w: 0.3406898}
+  - bone: 8
+    sourceJointName: mixamorig:Spine1
+    sourceRestLocalRotation: {x: 0.00000006265874, y: 0.00000028444657, z: 0.000000006092509, w: 1}
+  - bone: 54
+    sourceJointName: mixamorig:Spine2
+    sourceRestLocalRotation: {x: -0.00000006116599, y: 0.000000015649885, z: -0.000000059234274, w: 1}
+  - bone: 9
+    sourceJointName: mixamorig:Neck
+    sourceRestLocalRotation: {x: 7.805794e-10, y: -0.00000008856383, z: 0.00000009291038, w: 1}
+  - bone: 10
+    sourceJointName: mixamorig:Head
+    sourceRestLocalRotation: {x: -0.00000011708134, y: 0.00000003627079, z: -0.00000012121838, w: 1}
+  - bone: 11
+    sourceJointName: mixamorig:LeftShoulder
+    sourceRestLocalRotation: {x: 0.6563444, y: 0.75331527, z: -0.036089085, w: -0.020630736}
+  - bone: 13
+    sourceJointName: mixamorig:LeftArm
+    sourceRestLocalRotation: {x: -0.10390505, y: -0.00067288434, z: 0.15208364, w: 0.98289067}
+  - bone: 15
+    sourceJointName: mixamorig:LeftForeArm
+    sourceRestLocalRotation: {x: -0.01871492, y: 0.0013783945, z: -0.07343959, w: 0.9971231}
+  - bone: 17
+    sourceJointName: mixamorig:LeftHand
+    sourceRestLocalRotation: {x: 0.10338315, y: -0.0000003399178, z: 0.000000118050075, w: 0.9946416}
+  - bone: 12
+    sourceJointName: mixamorig:RightShoulder
+    sourceRestLocalRotation: {x: -0.6394305, y: 0.76749027, z: 0.017514825, w: -0.04219685}
+  - bone: 14
+    sourceJointName: mixamorig:RightArm
+    sourceRestLocalRotation: {x: 0.07828495, y: -0.001060231, z: -0.14428204, w: 0.9864345}
+  - bone: 16
+    sourceJointName: mixamorig:RightForeArm
+    sourceRestLocalRotation: {x: 0.00024246144, y: 0.000018759047, z: 0.06579407, w: 0.9978332}
+  - bone: 18
+    sourceJointName: mixamorig:RightHand
+    sourceRestLocalRotation: {x: -0.1285559, y: -0.0000013567595, z: -0.00000029887352, w: 0.9917023}
+  - bone: 1
+    sourceJointName: mixamorig:LeftUpLeg
+    sourceRestLocalRotation: {x: 0.2999286, y: 0.41637945, z: -0.8540731, w: 0.085030206}
+  - bone: 3
+    sourceJointName: mixamorig:LeftLeg
+    sourceRestLocalRotation: {x: 0.0003611493, y: 0.000043590546, z: 0.06528117, w: 0.9978669}
+  - bone: 5
+    sourceJointName: mixamorig:LeftFoot
+    sourceRestLocalRotation: {x: 0.71372473, y: 0.014219201, z: 0.024302494, w: 0.6998602}
+  - bone: 19
+    sourceJointName: mixamorig:LeftToeBase
+    sourceRestLocalRotation: {x: -7.79839e-10, y: -0.00033035607, z: 0.000000012894174, w: 1}
+  - bone: 2
+    sourceJointName: mixamorig:RightUpLeg
+    sourceRestLocalRotation: {x: 0.3688988, y: 0.3771555, z: -0.8123259, w: 0.24858426}
+  - bone: 4
+    sourceJointName: mixamorig:RightLeg
+    sourceRestLocalRotation: {x: 0.054000262, y: -0.009124486, z: -0.016968729, w: 0.9983551}
+  - bone: 6
+    sourceJointName: mixamorig:RightFoot
+    sourceRestLocalRotation: {x: 0.6834799, y: -0.0665094, z: -0.03880212, w: 0.72589684}
+  - bone: 20
+    sourceJointName: mixamorig:RightToeBase
+    sourceRestLocalRotation: {x: -0.00000031155045, y: -0.0014364468, z: -0.000000250079, w: 0.99999905}

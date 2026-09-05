@@ -25,9 +25,9 @@ namespace Elemental.Tests.EditMode
             {
                 Phase = EarthAnimationPhase.PreLanding,
                 LandingStyle = EarthLandingStyle.Moving,
-                LastPredictedImpactSpeed = 3f,
+                LastPredictedImpactSpeed = 5f,
                 LastPredictedPlanarSpeed = 4f,
-                MinimumAirVerticalSpeed = -3f
+                MinimumAirVerticalSpeed = -5f
             };
             EarthAnimationRescueSample contact = EarthAnimationStateResolver.Step(
                 ref state, in tuning, default, true, false, false, 0f, 4f, 0.016f);
@@ -46,6 +46,34 @@ namespace Elemental.Tests.EditMode
             EarthAnimationRescueTuning tuning = EarthAnimationRescueTuning.Default;
             Assert.That(tuning.AnticipationFor(4.5f), Is.EqualTo(0.06f).Within(0.0001f));
             Assert.That(tuning.AnticipationFor(7.5f), Is.EqualTo(0.18f).Within(0.0001f));
+        }
+
+        [Test]
+        public void FastPlanarMotionWithoutImpactCannotSelectMovingLandingRoll()
+        {
+            EarthAnimationRescueTuning tuning = EarthAnimationRescueTuning.Default;
+            var state = new EarthAnimationRescueState
+            {
+                Phase = EarthAnimationPhase.Falling,
+                MinimumAirVerticalSpeed = -0.2f,
+                LastPredictedPlanarSpeed = 4f
+            };
+
+            EarthAnimationRescueSample contact = EarthAnimationStateResolver.Step(
+                ref state, in tuning, default, true, false, false, 0f, 4f, 0.016f);
+
+            Assert.That(contact.Phase, Is.EqualTo(EarthAnimationPhase.LandingContact));
+            Assert.That(contact.LandingStyle, Is.EqualTo(EarthLandingStyle.Soft),
+                "Startup support acquisition and a compact hop must not become a falling-to-roll clip.");
+        }
+
+        [Test]
+        public void LandingPoseAmplitudeScalesFromStartupToHopToHighDrop()
+        {
+            Assert.That(EarthLandingPoseStrength.Resolve(0f, 3f, 0f), Is.Zero);
+            Assert.That(EarthLandingPoseStrength.Resolve(0.36f, 3.2f, 0.45f),
+                Is.InRange(0.08f, 0.22f));
+            Assert.That(EarthLandingPoseStrength.Resolve(3f, 9f, 0.9f), Is.EqualTo(1f));
         }
 
         [Test]
@@ -105,9 +133,9 @@ namespace Elemental.Tests.EditMode
         {
             var state = new EarthAnimationRescueState { Phase = EarthAnimationPhase.Falling };
             EarthAnimationRescueTuning tuning = EarthAnimationRescueTuning.Default;
-            EarthLandingCandidateSnapshot moving = Candidate(0.05f, 3f, 2.2f);
+            EarthLandingCandidateSnapshot moving = Candidate(0.05f, 5f, 2.2f);
             EarthAnimationStateResolver.Step(
-                ref state, in tuning, in moving, false, false, false, -3f, 2.2f, 0.02f);
+                ref state, in tuning, in moving, false, false, false, -5f, 2.2f, 0.02f);
             EarthLandingCandidateSnapshot slower = Candidate(0.02f, 2f, 0.2f);
             EarthAnimationStateResolver.Step(
                 ref state, in tuning, in slower, false, false, false, -2f, 0.2f, 0.02f);

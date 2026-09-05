@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="4" result="Failed(Child)" total="4" passed="3" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-03 22:15:32Z" end-time="2026-09-03 22:16:03Z" duration="31.0779297">
+  <test-suite type="TestSuite" id="1180" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="132" result="Failed" site="Child" start-time="2026-09-03 22:15:32Z" end-time="2026-09-03 22:16:03Z" duration="31.077930" total="4" passed="3" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1173" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="132" result="Failed" site="Child" start-time="2026-09-03 22:15:32Z" end-time="2026-09-03 22:16:03Z" duration="31.061551" total="4" passed="3" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13600" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1174" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="132" result="Failed" site="Child" start-time="2026-09-03 22:15:32Z" end-time="2026-09-03 22:16:03Z" duration="31.058991" total="4" passed="3" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1175" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="132" result="Failed" site="Child" start-time="2026-09-03 22:15:32Z" end-time="2026-09-03 22:16:03Z" duration="31.056709" total="4" passed="3" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1176" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="132" result="Failed" site="Child" start-time="2026-09-03 22:15:32Z" end-time="2026-09-03 22:16:03Z" duration="31.054673" total="4" passed="3" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1058" name="EarthIdleFootOrientationTests" fullname="Elemental.Tests.PlayMode.EarthIdleFootOrientationTests" classname="Elemental.Tests.PlayMode.EarthIdleFootOrientationTests" runstate="Runnable" testcasecount="4" result="Failed" site="Child" start-time="2026-09-03 22:15:32Z" end-time="2026-09-03 22:16:03Z" duration="31.051246" total="4" passed="3" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1062" name="BothFightersKeepToesForwardWhenIdleContactReachesFullWeight" fullname="Elemental.Tests.PlayMode.EarthIdleFootOrientationTests.BothFightersKeepToesForwardWhenIdleContactReachesFullWeight" methodname="BothFightersKeepToesForwardWhenIdleContactReachesFullWeight" classname="Elemental.Tests.PlayMode.EarthIdleFootOrientationTests" runstate="Runnable" seed="939262052" result="Passed" start-time="2026-09-03 22:15:32Z" end-time="2026-09-03 22:15:43Z" duration="10.483473" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+[Foot orientation] cap=30, samples=60, peakToeUp=-0.0642
+[Foot orientation] cap=60, samples=60, peakToeUp=-0.0640
+[Foot orientation] cap=120, samples=60, peakToeUp=-0.0638
+]]></output>
+              </test-case>
+              <test-case id="1061" name="ForwardAndBackwardStopsDoNotDragOrStretchAnkles" fullname="Elemental.Tests.PlayMode.EarthIdleFootOrientationTests.ForwardAndBackwardStopsDoNotDragOrStretchAnkles" methodname="ForwardAndBackwardStopsDoNotDragOrStretchAnkles" classname="Elemental.Tests.PlayMode.EarthIdleFootOrientationTests" runstate="Runnable" seed="1215948783" result="Passed" start-time="2026-09-03 22:15:43Z" end-time="2026-09-03 22:15:49Z" duration="6.427431" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+[Foot stop] direction=-1, samples=60, peakTargetLag=0.0047
+[Foot stop] direction=1, samples=60, peakTargetLag=0.0050
+]]></output>
+              </test-case>
+              <test-case id="1060" name="LandingRollMovesBothFightersForwardAndSettles" fullname="Elemental.Tests.PlayMode.EarthIdleFootOrientationTests.LandingRollMovesBothFightersForwardAndSettles" methodname="LandingRollMovesBothFightersForwardAndSettles" classname="Elemental.Tests.PlayMode.EarthIdleFootOrientationTests" runstate="Runnable" seed="171112549" result="Failed" start-time="2026-09-03 22:15:49Z" end-time="2026-09-03 22:15:57Z" duration="8.230088" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Rumble Linebreaker Bot
+  Expected: in range (2,4.5)
+  But was:  1.78553462f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.EarthIdleFootOrientationTests+<LandingRollMovesBothFightersForwardAndSettles>d__6.MoveNext () [0x007b4] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\EarthIdleFootOrientationTests.cs:193
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+[Landing roll] actor=Planet Character travel=2.458m finalSpeed=0.000 clip=True completedPhase=0.901 torsoUp=-0.562
+[Landing roll] actor=Rumble Linebreaker Bot travel=1.786m finalSpeed=0.000 clip=True completedPhase=0.895 torsoUp=-0.567
+]]></output>
+              </test-case>
+              <test-case id="1059" name="ProductionMobilityViewsAndWaveStayBoundToTheirSurface" fullname="Elemental.Tests.PlayMode.EarthIdleFootOrientationTests.ProductionMobilityViewsAndWaveStayBoundToTheirSurface" methodname="ProductionMobilityViewsAndWaveStayBoundToTheirSurface" classname="Elemental.Tests.PlayMode.EarthIdleFootOrientationTests" runstate="Runnable" seed="2093066798" result="Passed" start-time="2026-09-03 22:15:57Z" end-time="2026-09-03 22:16:03Z" duration="5.889444" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+[Mobility visuals] gate floor=55.513 wave support=55.513
+[Mobility visuals] pillar chips=18 surf renderers=14
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\IdleFootOrientationPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

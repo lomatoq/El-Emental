@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 10:49:31Z" end-time="2026-09-05 10:49:42Z" duration="10.9401995">
+  <test-suite type="TestSuite" id="1253" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="191" result="Passed" start-time="2026-09-05 10:49:31Z" end-time="2026-09-05 10:49:42Z" duration="10.940200" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1246" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="191" result="Passed" start-time="2026-09-05 10:49:31Z" end-time="2026-09-05 10:49:42Z" duration="10.903831" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1247" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="191" result="Passed" start-time="2026-09-05 10:49:31Z" end-time="2026-09-05 10:49:42Z" duration="10.897907" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1248" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="191" result="Passed" start-time="2026-09-05 10:49:31Z" end-time="2026-09-05 10:49:42Z" duration="10.894117" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1249" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="191" result="Passed" start-time="2026-09-05 10:49:31Z" end-time="2026-09-05 10:49:42Z" duration="10.883357" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1211" name="SeptemberAnimationRescueRuntimeTests" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-09-05 10:49:31Z" end-time="2026-09-05 10:49:42Z" duration="10.875863" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1226" name="ShippingHeldBodyAimActivatesAfterContactAndReleasesWithoutAFlip" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ShippingHeldBodyAimActivatesAfterContactAndReleasesWithoutAFlip" methodname="ShippingHeldBodyAimActivatesAfterContactAndReleasesWithoutAFlip" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1831917618" result="Passed" start-time="2026-09-05 10:49:31Z" end-time="2026-09-05 10:49:42Z" duration="10.835171" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 3807.86ms; ground=exact baked base, cacheLoad=18.64ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=2561.45ms, peakCookingPoll=0.35ms; sync=ArenaInitialize=1165.29ms/15;ArenaBevel=1113.23ms/175;ArenaMeshPicking=5.25ms/175;WallAwake=614.23ms/1;WallPieceVisuals=29.14ms/40;PlatformPoolAwake=17.64ms/1;PlatformRuntimeMeshes=2.34ms/12;PillarPoolAwake=31.56ms/1;PillarMeshLibrary=4.86ms/1;PillarColumns=25.15ms/1;DebrisPoolAwake=116.29ms/1;HeroFragmentPoolAwake=17.92ms/1.
+MAGIC_BONE_STEP stage=LateUpdate frame=174 bone=mixamorig:RightHand step=34.480 delta=0.01226 unscaledDelta=0.01226 sequence=0 technique=GravityGrip phase=Sustain state=2123799777 next=0 transition=False clock=0.2040 clockA=0.2040 clockB=0.0000 layer=0.920 handIk=0.000 previous=(352.52, 357.24, 335.47) current=(331.77, 336.30, 1.43)
+MAGIC_BONE_STEP stage=LateUpdate frame=175 bone=mixamorig:RightHand step=42.652 delta=0.01301 unscaledDelta=0.01301 sequence=0 technique=GravityGrip phase=Sustain state=2123799777 next=0 transition=False clock=0.2300 clockA=0.2300 clockB=0.0000 layer=0.920 handIk=0.000 previous=(331.77, 336.30, 1.43) current=(349.73, 322.49, 42.74)
+MAGIC_BONE_STEP stage=LateUpdate frame=177 bone=mixamorig:RightHand step=30.119 delta=0.02350 unscaledDelta=0.02350 sequence=0 technique=GravityGrip phase=Sustain state=2123799777 next=0 transition=False clock=0.3035 clockA=0.3035 clockB=0.0000 layer=0.920 handIk=0.000 previous=(9.52, 322.00, 55.93) current=(4.75, 307.37, 28.07)
+MAGIC_BONE_STEP stage=LateUpdate frame=223 bone=mixamorig:RightHand step=32.210 delta=0.01062 unscaledDelta=0.01062 sequence=0 technique=GravityGrip phase=Sustain state=-229411403 next=0 transition=False clock=0.2064 clockA=0.9800 clockB=0.2064 layer=0.920 handIk=0.001 previous=(353.67, 321.11, 336.49) current=(336.74, 307.21, 4.15)
+MAGIC_BONE_STEP stage=LateUpdate frame=224 bone=mixamorig:RightHand step=34.726 delta=0.01019 unscaledDelta=0.01019 sequence=0 technique=GravityGrip phase=Sustain state=-229411403 next=0 transition=False clock=0.2268 clockA=0.9800 clockB=0.2268 layer=0.920 handIk=0.001 previous=(336.74, 307.21, 4.15) current=(350.00, 291.11, 37.14)
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+MAGIC_BONE_STEP stage=LateUpdate frame=411 bone=mixamorig:RightForeArm step=33.966 delta=0.01303 unscaledDelta=0.01303 sequence=1 technique=ThrowStone phase=Recover state=-229411403 next=0 transition=False clock=0.9336 clockA=0.5210 clockB=0.9336 layer=0.920 handIk=0.048 previous=(54.57, 334.72, 338.67) current=(24.79, 348.91, 0.73)
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\AnimationHeldAimPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

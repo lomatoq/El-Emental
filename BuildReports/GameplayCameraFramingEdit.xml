@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="7" result="Passed" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 15:15:56Z" end-time="2026-09-05 15:15:57Z" duration="0.1922636">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="898" result="Passed" start-time="2026-09-05 15:15:56Z" end-time="2026-09-05 15:15:57Z" duration="0.192264" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2108" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="887" result="Passed" start-time="2026-09-05 15:15:57Z" end-time="2026-09-05 15:15:57Z" duration="0.091841" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2109" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="887" result="Passed" start-time="2026-09-05 15:15:57Z" end-time="2026-09-05 15:15:57Z" duration="0.091162" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2110" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="887" result="Passed" start-time="2026-09-05 15:15:57Z" end-time="2026-09-05 15:15:57Z" duration="0.090743" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2111" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="887" result="Passed" start-time="2026-09-05 15:15:57Z" end-time="2026-09-05 15:15:57Z" duration="0.090432" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1480" name="EarthGameplayCameraFramingTests" fullname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests" classname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-05 15:15:57Z" end-time="2026-09-05 15:15:57Z" duration="0.089139" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1481" name="ExploreHeightIncludesPitchInducedDistanceLift" fullname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests.ExploreHeightIncludesPitchInducedDistanceLift" methodname="ExploreHeightIncludesPitchInducedDistanceLift" classname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests" runstate="Runnable" seed="1287672925" result="Passed" start-time="2026-09-05 15:15:57Z" end-time="2026-09-05 15:15:57Z" duration="0.066917" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1482" name="OldArmFloorWouldRaiseExploreCameraByMoreThanFortyCentimeters" fullname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests.OldArmFloorWouldRaiseExploreCameraByMoreThanFortyCentimeters" methodname="OldArmFloorWouldRaiseExploreCameraByMoreThanFortyCentimeters" classname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests" runstate="Runnable" seed="1823252522" result="Passed" start-time="2026-09-05 15:15:57Z" end-time="2026-09-05 15:15:57Z" duration="0.002256" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1488" name="StateProfilesRemainFiniteAndCloseToTheirAuthoredHeight" fullname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests.StateProfilesRemainFiniteAndCloseToTheirAuthoredHeight" classname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-05 15:15:57Z" end-time="2026-09-05 15:15:57Z" duration="0.004091" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1483" name="StateProfilesRemainFiniteAndCloseToTheirAuthoredHeight(Explore,7.65f,2.7f,11.0f)" fullname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests.StateProfilesRemainFiniteAndCloseToTheirAuthoredHeight(Explore,7.65f,2.7f,11.0f)" methodname="StateProfilesRemainFiniteAndCloseToTheirAuthoredHeight" classname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests" runstate="Runnable" seed="419372659" result="Passed" start-time="2026-09-05 15:15:57Z" end-time="2026-09-05 15:15:57Z" duration="0.000740" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1484" name="StateProfilesRemainFiniteAndCloseToTheirAuthoredHeight(Aim,7.5f,2.6f,11.0f)" fullname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests.StateProfilesRemainFiniteAndCloseToTheirAuthoredHeight(Aim,7.5f,2.6f,11.0f)" methodname="StateProfilesRemainFiniteAndCloseToTheirAuthoredHeight" classname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests" runstate="Runnable" seed="183471039" result="Passed" start-time="2026-09-05 15:15:57Z" end-time="2026-09-05 15:15:57Z" duration="0.000300" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1485" name="StateProfilesRemainFiniteAndCloseToTheirAuthoredHeight(DrawStructure,8.2f,3.2f,14.0f)" fullname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests.StateProfilesRemainFiniteAndCloseToTheirAuthoredHeight(DrawStructure,8.2f,3.2f,14.0f)" methodname="StateProfilesRemainFiniteAndCloseToTheirAuthoredHeight" classname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests" runstate="Runnable" seed="1264499472" result="Passed" start-time="2026-09-05 15:15:57Z" end-time="2026-09-05 15:15:57Z" duration="0.000181" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1486" name="StateProfilesRemainFiniteAndCloseToTheirAuthoredHeight(HoldMass,7.9f,2.95f,12.5f)" fullname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests.StateProfilesRemainFiniteAndCloseToTheirAuthoredHeight(HoldMass,7.9f,2.95f,12.5f)" methodname="StateProfilesRemainFiniteAndCloseToTheirAuthoredHeight" classname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests" runstate="Runnable" seed="1678851702" result="Passed" start-time="2026-09-05 15:15:57Z" end-time="2026-09-05 15:15:57Z" duration="0.000150" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1487" name="StateProfilesRemainFiniteAndCloseToTheirAuthoredHeight(Airborne,8.05f,3.25f,13.0f)" fullname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests.StateProfilesRemainFiniteAndCloseToTheirAuthoredHeight(Airborne,8.05f,3.25f,13.0f)" methodname="StateProfilesRemainFiniteAndCloseToTheirAuthoredHeight" classname="Elemental.Tests.EditMode.EarthGameplayCameraFramingTests" runstate="Runnable" seed="417839700" result="Passed" start-time="2026-09-05 15:15:57Z" end-time="2026-09-05 15:15:57Z" duration="0.000135" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\GameplayCameraFramingEdit.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -72,6 +72,7 @@ namespace Elemental.Runtime.Physics
         private Vector3 _emergenceUp;
         private float _emergenceClearance;
         private float _emergenceCollisionRestoreAt;
+        private float _emergenceFeedbackUntil, _nextEmergenceFeedback;
         private EarthProjectileSurfaceContactState _surfaceContactState;
         private Vector3 _prePhysicsVelocity;
         private float _radius;
@@ -83,6 +84,11 @@ namespace Elemental.Runtime.Physics
         private float _controllerCollisionRestoreAt;
         private Renderer _visualRenderer;
         private MaterialPropertyBlock _visualProperties;
+        private readonly EarthContactFrictionFeedback _frictionFeedback = new();
+
+        private void OnCollisionStay(Collision collision) =>
+            _frictionFeedback.Emit(_sourcePool != null ? _sourcePool.MaterialFeedback : null,
+                collision, FragmentId, _generation);
 
         public uint FragmentId { get; private set; }
         public Rigidbody Body => targetBody;
@@ -106,11 +112,11 @@ namespace Elemental.Runtime.Physics
 
         public void ConfigureHover(EarthHoverProfile profile) => hoverProfile = profile;
 
-        public void SetShape(Mesh shape)
+        public void SetShape(Mesh shape, Mesh renderShape = null)
         {
             if (_meshFilter == null) _meshFilter = GetComponent<MeshFilter>();
             if (_meshCollider == null) _meshCollider = GetComponent<MeshCollider>();
-            if (_meshFilter != null) _meshFilter.sharedMesh = shape;
+            if (_meshFilter != null) _meshFilter.sharedMesh = renderShape != null ? renderShape : shape;
             if (_meshCollider != null)
             {
                 _meshCollider.sharedMesh = null;
@@ -135,6 +141,10 @@ namespace Elemental.Runtime.Physics
             gameObject.layer = 0;
             _executor = executor;
             _sourcePool = sourcePool;
+            _matterIdentity = GetComponent<EarthMatterIdentity>();
+            // Bot-authored projectiles have no executor/terrain transaction. A new
+            // lifetime may clear an already retired binding, but not live matter.
+            if (executor == null) _matterIdentity?.ReleaseRetiredRepresentation();
             _profile = profile;
             _radius = Mathf.Max(0.05f, radius);
             _surfaceContactState = default;
@@ -312,6 +322,8 @@ namespace Elemental.Runtime.Physics
             _emergenceUp = localUp.sqrMagnitude > 0.0001f ? localUp.normalized : transform.up;
             _emergenceClearance = Mathf.Max(0.05f, radius * 0.92f);
             _emergenceCollisionRestoreAt = Time.fixedTime + 0.65f;
+            _emergenceFeedbackUntil = Time.fixedTime + 1.2f;
+            _nextEmergenceFeedback = Time.fixedTime;
             if (_bodyCollider != null && _ignoredSourceCollider != null)
                 UnityEngine.Physics.IgnoreCollision(_bodyCollider, _ignoredSourceCollider, true);
         }
@@ -477,6 +489,7 @@ namespace Elemental.Runtime.Physics
         {
             if (targetBody != null) _prePhysicsVelocity = targetBody.linearVelocity;
             UpdateEmergenceCollision();
+            EmitEmergenceFeedback();
             UpdateControllerCollision();
             if (!IsHeld) return;
             _executor?.TryAccreteHeldFragment(this);
@@ -543,6 +556,24 @@ namespace Elemental.Runtime.Physics
         {
             RestoreSourceCollision();
             RestoreControllerCollision();
+        }
+
+        private void EmitEmergenceFeedback()
+        {
+            if (_sourcePool?.MaterialFeedback == null || targetBody == null ||
+                Time.fixedTime > _emergenceFeedbackUntil || Time.fixedTime < _nextEmergenceFeedback) return;
+            float height = Vector3.Dot(targetBody.worldCenterOfMass - _emergenceSurface, _emergenceUp);
+            if (height > _radius * 1.15f) return;
+            _nextEmergenceFeedback = Time.fixedTime + .08f;
+            Vector3 right = Vector3.Cross(_emergenceUp, Mathf.Abs(_emergenceUp.y) < .9f ? Vector3.up : Vector3.right).normalized;
+            Vector3 forward = Vector3.Cross(right, _emergenceUp);
+            for (int i = 0; i < 6; i++)
+            {
+                float angle = i * Mathf.PI / 3f + Time.fixedTime * .7f;
+                Vector3 point = _emergenceSurface + (right * Mathf.Cos(angle) + forward * Mathf.Sin(angle)) * (_radius * .7f);
+                _sourcePool.MaterialFeedback.Emit(EarthMaterialFeedbackKind.ExtractionSurfaceContact,
+                    point, _emergenceUp, 1f, .2f, FragmentId, _generation, 12, 3);
+            }
         }
 
         private void UpdateEmergenceCollision()
@@ -629,6 +660,8 @@ namespace Elemental.Runtime.Physics
                 result.ApproachSpeed,
                 false);
             _executor?.HandleFragmentImpact(this, collision, impulse);
+            if (_executor == null && !IsHeld)
+                _sourcePool?.TryShatter(this, contact.point, contact.normal, impulse, true);
         }
 
         internal bool HandleSweptImpact(
@@ -672,6 +705,8 @@ namespace Elemental.Runtime.Physics
                 point,
                 normal,
                 resolvedImpulse);
+            if (_executor == null && !IsHeld)
+                _sourcePool?.TryShatter(this, point, normal, resolvedImpulse, true);
             return true;
         }
 

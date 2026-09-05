@@ -1,5 +1,6 @@
 using Elemental.Simulation.Bending;
 using Elemental.Simulation.Characters;
+using Elemental.Simulation.Magic;
 using NUnit.Framework;
 using Unity.Mathematics;
 
@@ -17,14 +18,46 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
-        public void MovementInterruptsOnlyCastRecovery()
+        public void MaskedUpperBodyRecoveryContinuesWhileLocomotionMoves()
         {
             Assert.That(EarthHumanoidMotionResolver.ShouldInterruptRecovery(EarthCastPhase.Recover, 0.16f),
-                Is.True);
-            Assert.That(EarthHumanoidMotionResolver.ShouldInterruptRecovery(EarthCastPhase.Recover, 0.15f),
+                Is.False);
+            Assert.That(EarthHumanoidMotionResolver.ShouldInterruptRecovery(EarthCastPhase.Recover, 1f),
                 Is.False);
             Assert.That(EarthHumanoidMotionResolver.ShouldInterruptRecovery(EarthCastPhase.Strike, 1f),
                 Is.False);
+        }
+
+        [Test]
+        public void EveryShippingElementAbilityMapsToAVisibleSemanticPose()
+        {
+            (ElementId element, ushort ability, EarthHumanoidPoseSlot slot)[] cases =
+            {
+                (ElementId.Earth, 1, EarthHumanoidPoseSlot.RaiseWall),
+                (ElementId.Earth, 2, EarthHumanoidPoseSlot.PullStone),
+                (ElementId.Earth, 3, EarthHumanoidPoseSlot.HeavyThrow),
+                (ElementId.Earth, 4, EarthHumanoidPoseSlot.RaisePlatform),
+                (ElementId.Earth, 5, EarthHumanoidPoseSlot.VectorPush),
+                (ElementId.Earth, 6, EarthHumanoidPoseSlot.Pillar),
+                (ElementId.Air, 101, EarthHumanoidPoseSlot.VectorPush),
+                (ElementId.Air, 102, EarthHumanoidPoseSlot.GravityRepair),
+                (ElementId.Air, 103, EarthHumanoidPoseSlot.Pillar),
+                (ElementId.Air, 104, EarthHumanoidPoseSlot.GenericCast),
+                (ElementId.Fire, 201, EarthHumanoidPoseSlot.VectorPush),
+                (ElementId.Fire, 202, EarthHumanoidPoseSlot.GravityRepair),
+                (ElementId.Water, 301, EarthHumanoidPoseSlot.PullStone),
+                (ElementId.Water, 302, EarthHumanoidPoseSlot.VectorPush),
+                (ElementId.Water, 303, EarthHumanoidPoseSlot.RaisePlatform),
+                (ElementId.Water, 304, EarthHumanoidPoseSlot.WaveResonance)
+            };
+            foreach ((ElementId element, ushort ability, EarthHumanoidPoseSlot expected) in cases)
+            {
+                EarthTechniqueId technique = MagicPresentationSemanticResolver.ResolveTechnique(
+                    element,
+                    new AbilityId(ability));
+                Assert.That(EarthHumanoidMotionResolver.Resolve(technique), Is.EqualTo(expected),
+                    $"{element}/{ability}");
+            }
         }
 
         [Test]

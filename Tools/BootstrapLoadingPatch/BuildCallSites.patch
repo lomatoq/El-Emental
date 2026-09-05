@@ -1,0 +1,41 @@
+*** Begin Patch
+*** Update File: Assets/Elemental/Authoring/Editor/ElementalBuildPipeline.cs
+@@
+-            return NativeBuildSceneOrder.Create(EnabledScenes(), M3EarthCoreSetup.EarthCoreScenePath);
++            return NativeBuildSceneOrder.Create(
++                EnabledScenes(),
++                M0ProjectSetup.BootstrapScenePath,
++                M3EarthCoreSetup.EarthCoreScenePath);
+@@
++        [MenuItem("Elemental/Build/Build Windows Development From Saved Scenes")]
++        public static void BuildWindowsDevelopmentFromSavedScenes()
++        {
++            Build(
++                BuildTarget.StandaloneWindows64,
++                NativePlayableScenesFromSavedSettings(),
++                Path.Combine(ProjectRoot(), "Builds", "Windows", "ElEmental.exe"),
++                "NativeWindowsSavedScenesDevelopment",
++                cleanBuildCache: false,
++                development: true);
++        }
+@@
++        private static string[] NativePlayableScenesFromSavedSettings()
++        {
++            // This production-safe path is deliberately read-only with respect to
++            // EditorBuildSettings, scenes and PlayerSettings/graphics APIs.
++            return NativeBuildSceneOrder.Create(
++                EnabledScenes(),
++                M0ProjectSetup.BootstrapScenePath,
++                M3EarthCoreSetup.EarthCoreScenePath);
++        }
+*** Update File: Assets/Elemental/Authoring/Editor/M0ProjectSetup.cs
+@@
+             GameObject bootstrapObject = new GameObject("Elemental World Bootstrap");
+             bootstrapObject.AddComponent<WorldBootstrap>();
++            bootstrapObject.AddComponent<EarthBootstrapSceneLoader>().Configure("EarthCoreSlice");
+@@
+                 scenes = NativeBuildSceneOrder.Create(
+                     Array.ConvertAll(EditorBuildSettings.scenes, item => item.path),
++                    BootstrapScenePath,
+                     EarthCoreScenePath),
+*** End Patch

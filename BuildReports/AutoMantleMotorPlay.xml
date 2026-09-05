@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="15" result="Passed" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-04 17:28:04Z" end-time="2026-09-04 17:28:47Z" duration="42.3505997">
+  <test-suite type="TestSuite" id="1232" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="170" result="Passed" start-time="2026-09-04 17:28:04Z" end-time="2026-09-04 17:28:47Z" duration="42.350600" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1225" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="170" result="Passed" start-time="2026-09-04 17:28:05Z" end-time="2026-09-04 17:28:47Z" duration="42.036717" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13600" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1226" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="170" result="Passed" start-time="2026-09-04 17:28:05Z" end-time="2026-09-04 17:28:47Z" duration="41.697746" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1227" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="170" result="Passed" start-time="2026-09-04 17:28:05Z" end-time="2026-09-04 17:28:47Z" duration="41.667291" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1228" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="170" result="Passed" start-time="2026-09-04 17:28:05Z" end-time="2026-09-04 17:28:47Z" duration="41.654363" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1193" name="PlanetMotorPlayModeTests" fullname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests" classname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests" runstate="Runnable" testcasecount="15" result="Passed" start-time="2026-09-04 17:28:05Z" end-time="2026-09-04 17:28:47Z" duration="41.640054" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1196" name="AutoMantle_DestroyedSupportInterruptsTraversal" fullname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests.AutoMantle_DestroyedSupportInterruptsTraversal" methodname="AutoMantle_DestroyedSupportInterruptsTraversal" classname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests" runstate="Runnable" seed="991661382" result="Passed" start-time="2026-09-04 17:28:05Z" end-time="2026-09-04 17:28:06Z" duration="1.327879" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1199" name="AutoMantle_EquatorialForwardIntentClimbsWithRadialUp" fullname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests.AutoMantle_EquatorialForwardIntentClimbsWithRadialUp" methodname="AutoMantle_EquatorialForwardIntentClimbsWithRadialUp" classname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests" runstate="Runnable" seed="730756002" result="Passed" start-time="2026-09-04 17:28:06Z" end-time="2026-09-04 17:28:10Z" duration="4.174505" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1200" name="AutoMantle_FootprintAcceptsThirtyDegreeSlopeAndRejectsSteepSlope" fullname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests.AutoMantle_FootprintAcceptsThirtyDegreeSlopeAndRejectsSteepSlope" methodname="AutoMantle_FootprintAcceptsThirtyDegreeSlopeAndRejectsSteepSlope" classname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests" runstate="Runnable" seed="1481445279" result="Passed" start-time="2026-09-04 17:28:10Z" end-time="2026-09-04 17:28:11Z" duration="0.216549" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1194" name="AutoMantle_ForwardIntentClimbsBroadLedgeAndLands" fullname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests.AutoMantle_ForwardIntentClimbsBroadLedgeAndLands" methodname="AutoMantle_ForwardIntentClimbsBroadLedgeAndLands" classname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests" runstate="Runnable" seed="1495078918" result="Passed" start-time="2026-09-04 17:28:11Z" end-time="2026-09-04 17:28:15Z" duration="4.152270" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1195" name="AutoMantle_RejectsHighLedgeAndBlockedHeadroom" fullname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests.AutoMantle_RejectsHighLedgeAndBlockedHeadroom" methodname="AutoMantle_RejectsHighLedgeAndBlockedHeadroom" classname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests" runstate="Runnable" seed="1313126609" result="Passed" start-time="2026-09-04 17:28:15Z" end-time="2026-09-04 17:28:21Z" duration="6.047756" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1198" name="AutoMantle_ReleasedSupportAndNewReachOverlapAbort" fullname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests.AutoMantle_ReleasedSupportAndNewReachOverlapAbort" methodname="AutoMantle_ReleasedSupportAndNewReachOverlapAbort" classname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests" runstate="Runnable" seed="1425744394" result="Passed" start-time="2026-09-04 17:28:21Z" end-time="2026-09-04 17:28:23Z" duration="2.345939" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1197" name="AutoMantle_SameColliderLosingFootprintStopsGravityCancellation" fullname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests.AutoMantle_SameColliderLosingFootprintStopsGravityCancellation" methodname="AutoMantle_SameColliderLosingFootprintStopsGravityCancellation" classname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests" runstate="Runnable" seed="1259922105" result="Passed" start-time="2026-09-04 17:28:23Z" end-time="2026-09-04 17:28:26Z" duration="2.948511" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1208" name="FixedCommandReplay_CircumnavigatesAndMatchesIsolatedWorld" fullname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests.FixedCommandReplay_CircumnavigatesAndMatchesIsolatedWorld" methodname="FixedCommandReplay_CircumnavigatesAndMatchesIsolatedWorld" classname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests" runstate="Runnable" seed="1188258095" result="Passed" start-time="2026-09-04 17:28:26Z" end-time="2026-09-04 17:28:36Z" duration="10.215494" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1202" name="Motor_GroundsAtAntipodeWithoutNaNOrOrientationFlip" fullname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests.Motor_GroundsAtAntipodeWithoutNaNOrOrientationFlip" methodname="Motor_GroundsAtAntipodeWithoutNaNOrOrientationFlip" classname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests" runstate="Runnable" seed="2081136794" result="Passed" start-time="2026-09-04 17:28:36Z" end-time="2026-09-04 17:28:38Z" duration="1.226180" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1201" name="Motor_GroundsMovesAndJumpsAtNorthPole" fullname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests.Motor_GroundsMovesAndJumpsAtNorthPole" methodname="Motor_GroundsMovesAndJumpsAtNorthPole" classname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests" runstate="Runnable" seed="1642032126" result="Passed" start-time="2026-09-04 17:28:38Z" end-time="2026-09-04 17:28:39Z" duration="1.274372" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1203" name="Motor_RejectsCloserDynamicDebrisAsSupport" fullname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests.Motor_RejectsCloserDynamicDebrisAsSupport" methodname="Motor_RejectsCloserDynamicDebrisAsSupport" classname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests" runstate="Runnable" seed="452091110" result="Passed" start-time="2026-09-04 17:28:39Z" end-time="2026-09-04 17:28:40Z" duration="1.024029" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1206" name="ProfiledJump_UsesShortBallisticArcUnderSurfaceGravity" fullname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests.ProfiledJump_UsesShortBallisticArcUnderSurfaceGravity" methodname="ProfiledJump_UsesShortBallisticArcUnderSurfaceGravity" classname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests" runstate="Runnable" seed="713858027" result="Passed" start-time="2026-09-04 17:28:40Z" end-time="2026-09-04 17:28:41Z" duration="1.498079" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1207" name="SameUpdateJumpTap_LaunchesRadiallyWithoutDestabilizingPuppet" fullname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests.SameUpdateJumpTap_LaunchesRadiallyWithoutDestabilizingPuppet" methodname="SameUpdateJumpTap_LaunchesRadiallyWithoutDestabilizingPuppet" classname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests" runstate="Runnable" seed="934415141" result="Passed" start-time="2026-09-04 17:28:41Z" end-time="2026-09-04 17:28:43Z" duration="1.241000" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1204" name="TankSteering_ADTurnsInPlaceThenWMovesAlongNewHeading" fullname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests.TankSteering_ADTurnsInPlaceThenWMovesAlongNewHeading" methodname="TankSteering_ADTurnsInPlaceThenWMovesAlongNewHeading" classname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests" runstate="Runnable" seed="852657286" result="Passed" start-time="2026-09-04 17:28:43Z" end-time="2026-09-04 17:28:45Z" duration="1.976623" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1205" name="TankSteering_MovesAndTurnsOnSphericalGroundAwayFromArenaPole" fullname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests.TankSteering_MovesAndTurnsOnSphericalGroundAwayFromArenaPole" methodname="TankSteering_MovesAndTurnsOnSphericalGroundAwayFromArenaPole" classname="Elemental.Tests.PlayMode.PlanetMotorPlayModeTests" runstate="Runnable" seed="1773899773" result="Passed" start-time="2026-09-04 17:28:45Z" end-time="2026-09-04 17:28:47Z" duration="1.937527" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\AutoMantleMotorPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

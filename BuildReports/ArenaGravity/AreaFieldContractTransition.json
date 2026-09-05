@@ -1,0 +1,16 @@
+{
+    "unityVersion": "6000.5.7f1",
+    "utc": "2026-09-04T14:10:25.0777054Z",
+    "mode": "PlayMode",
+    "result": "Failed",
+    "total": 9,
+    "passed": 7,
+    "failed": 2,
+    "skipped": 0,
+    "inconclusive": 0,
+    "durationSeconds": 49.55294,
+    "failures": [
+        "Elemental.Tests.PlayMode.EarthArenaGravityTargetRuntimeTests.ProtectedArenaFloorCannotStealScreenPointGrabOfReleasedCell:   Capture the loose arena group without admitting the protected floor.\r\n  Expected: 1\r\n  But was:  2\r\n",
+        "Elemental.Tests.PlayMode.EarthLooseStoneRuntimeTests.FallenStonesSleepStayStillAndWakeForGravityGrip:   Expected: 1\r\n  But was:  3\r\n"
+    ]
+}

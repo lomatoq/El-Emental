@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="12" result="Passed" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.2614957">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="731" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.261496" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1897" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="731" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.153051" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13600" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1898" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="731" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.152717" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1899" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="731" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.152644" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1900" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="731" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.152521" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1168" name="EarthBodyRestStateTests" fullname="Elemental.Tests.EditMode.EarthBodyRestStateTests" classname="Elemental.Tests.EditMode.EarthBodyRestStateTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.024882" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1169" name="SustainedSupportedRestSleepsButAirborneOrMovingBodiesDoNot" fullname="Elemental.Tests.EditMode.EarthBodyRestStateTests.SustainedSupportedRestSleepsButAirborneOrMovingBodiesDoNot" methodname="SustainedSupportedRestSleepsButAirborneOrMovingBodiesDoNot" classname="Elemental.Tests.EditMode.EarthBodyRestStateTests" runstate="Runnable" seed="714055019" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.010842" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1311" name="EarthContainedFractureLayoutTests" fullname="Elemental.Tests.EditMode.EarthContainedFractureLayoutTests" classname="Elemental.Tests.EditMode.EarthContainedFractureLayoutTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.079305" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1314" name="ChildCellsStayBetweenConvexChordEndpointsWithoutOverlap" fullname="Elemental.Tests.EditMode.EarthContainedFractureLayoutTests.ChildCellsStayBetweenConvexChordEndpointsWithoutOverlap" classname="Elemental.Tests.EditMode.EarthContainedFractureLayoutTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.004917" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1312" name="ChildCellsStayBetweenConvexChordEndpointsWithoutOverlap(3)" fullname="Elemental.Tests.EditMode.EarthContainedFractureLayoutTests.ChildCellsStayBetweenConvexChordEndpointsWithoutOverlap(3)" methodname="ChildCellsStayBetweenConvexChordEndpointsWithoutOverlap" classname="Elemental.Tests.EditMode.EarthContainedFractureLayoutTests" runstate="Runnable" seed="1355374144" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.004457" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1313" name="ChildCellsStayBetweenConvexChordEndpointsWithoutOverlap(4)" fullname="Elemental.Tests.EditMode.EarthContainedFractureLayoutTests.ChildCellsStayBetweenConvexChordEndpointsWithoutOverlap(4)" methodname="ChildCellsStayBetweenConvexChordEndpointsWithoutOverlap" classname="Elemental.Tests.EditMode.EarthContainedFractureLayoutTests" runstate="Runnable" seed="1860439662" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.000053" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1315" name="InvalidAndDegenerateInputsAreRejected" fullname="Elemental.Tests.EditMode.EarthContainedFractureLayoutTests.InvalidAndDegenerateInputsAreRejected" methodname="InvalidAndDegenerateInputsAreRejected" classname="Elemental.Tests.EditMode.EarthContainedFractureLayoutTests" runstate="Runnable" seed="132955224" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.000212" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1316" name="NaturalWallStoneFitsTrueTetrahedronInsteadOfItsBoundingBox" fullname="Elemental.Tests.EditMode.EarthContainedFractureLayoutTests.NaturalWallStoneFitsTrueTetrahedronInsteadOfItsBoundingBox" methodname="NaturalWallStoneFitsTrueTetrahedronInsteadOfItsBoundingBox" classname="Elemental.Tests.EditMode.EarthContainedFractureLayoutTests" runstate="Runnable" seed="951933767" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.073351" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1331" name="EarthConvexPartitionTests" fullname="Elemental.Tests.EditMode.EarthConvexPartitionTests" classname="Elemental.Tests.EditMode.EarthConvexPartitionTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.046408" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1336" name="CubeAndRecursivePartitionsKeepAtLeastNinetyFivePercentVolume" fullname="Elemental.Tests.EditMode.EarthConvexPartitionTests.CubeAndRecursivePartitionsKeepAtLeastNinetyFivePercentVolume" methodname="CubeAndRecursivePartitionsKeepAtLeastNinetyFivePercentVolume" classname="Elemental.Tests.EditMode.EarthConvexPartitionTests" runstate="Runnable" seed="84414757" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.022118" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1340" name="RectangularArenaSourcesProduceObliqueRockFaces" fullname="Elemental.Tests.EditMode.EarthConvexPartitionTests.RectangularArenaSourcesProduceObliqueRockFaces" classname="Elemental.Tests.EditMode.EarthConvexPartitionTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.003565" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1337" name="RectangularArenaSourcesProduceObliqueRockFaces(2)" fullname="Elemental.Tests.EditMode.EarthConvexPartitionTests.RectangularArenaSourcesProduceObliqueRockFaces(2)" methodname="RectangularArenaSourcesProduceObliqueRockFaces" classname="Elemental.Tests.EditMode.EarthConvexPartitionTests" runstate="Runnable" seed="2046890213" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.001599" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1338" name="RectangularArenaSourcesProduceObliqueRockFaces(3)" fullname="Elemental.Tests.EditMode.EarthConvexPartitionTests.RectangularArenaSourcesProduceObliqueRockFaces(3)" methodname="RectangularArenaSourcesProduceObliqueRockFaces" classname="Elemental.Tests.EditMode.EarthConvexPartitionTests" runstate="Runnable" seed="773149979" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.000636" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1339" name="RectangularArenaSourcesProduceObliqueRockFaces(4)" fullname="Elemental.Tests.EditMode.EarthConvexPartitionTests.RectangularArenaSourcesProduceObliqueRockFaces(4)" methodname="RectangularArenaSourcesProduceObliqueRockFaces" classname="Elemental.Tests.EditMode.EarthConvexPartitionTests" runstate="Runnable" seed="1104446985" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.000793" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="1335" name="ThinTetrahedronChildrenFillParentAndRemainClosedAndContained" fullname="Elemental.Tests.EditMode.EarthConvexPartitionTests.ThinTetrahedronChildrenFillParentAndRemainClosedAndContained" classname="Elemental.Tests.EditMode.EarthConvexPartitionTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.020047" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1332" name="ThinTetrahedronChildrenFillParentAndRemainClosedAndContained(2)" fullname="Elemental.Tests.EditMode.EarthConvexPartitionTests.ThinTetrahedronChildrenFillParentAndRemainClosedAndContained(2)" methodname="ThinTetrahedronChildrenFillParentAndRemainClosedAndContained" classname="Elemental.Tests.EditMode.EarthConvexPartitionTests" runstate="Runnable" seed="1111881527" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.005832" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1333" name="ThinTetrahedronChildrenFillParentAndRemainClosedAndContained(3)" fullname="Elemental.Tests.EditMode.EarthConvexPartitionTests.ThinTetrahedronChildrenFillParentAndRemainClosedAndContained(3)" methodname="ThinTetrahedronChildrenFillParentAndRemainClosedAndContained" classname="Elemental.Tests.EditMode.EarthConvexPartitionTests" runstate="Runnable" seed="1714106630" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.006166" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1334" name="ThinTetrahedronChildrenFillParentAndRemainClosedAndContained(4)" fullname="Elemental.Tests.EditMode.EarthConvexPartitionTests.ThinTetrahedronChildrenFillParentAndRemainClosedAndContained(4)" methodname="ThinTetrahedronChildrenFillParentAndRemainClosedAndContained" classname="Elemental.Tests.EditMode.EarthConvexPartitionTests" runstate="Runnable" seed="728041158" result="Passed" start-time="2026-09-04 12:43:59Z" end-time="2026-09-04 12:43:59Z" duration="0.007548" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\ContainedFractureEdit.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

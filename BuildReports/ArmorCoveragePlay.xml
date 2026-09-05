@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 15:40:05Z" end-time="2026-09-05 15:40:12Z" duration="6.8967201">
+  <test-suite type="TestSuite" id="1276" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="207" result="Failed" site="Child" start-time="2026-09-05 15:40:05Z" end-time="2026-09-05 15:40:12Z" duration="6.896720" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1269" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="207" result="Failed" site="Child" start-time="2026-09-05 15:40:05Z" end-time="2026-09-05 15:40:12Z" duration="6.766926" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1270" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="207" result="Failed" site="Child" start-time="2026-09-05 15:40:05Z" end-time="2026-09-05 15:40:12Z" duration="6.755045" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1271" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="207" result="Failed" site="Child" start-time="2026-09-05 15:40:05Z" end-time="2026-09-05 15:40:12Z" duration="6.746942" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1272" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="207" result="Failed" site="Child" start-time="2026-09-05 15:40:05Z" end-time="2026-09-05 15:40:12Z" duration="6.744730" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1076" name="EarthArmorCoverageRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthArmorCoverageRuntimeTests" classname="Elemental.Tests.PlayMode.EarthArmorCoverageRuntimeTests" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2026-09-05 15:40:05Z" end-time="2026-09-05 15:40:12Z" duration="6.740746" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1077" name="CompactArmorKeepsNeckShouldersAndTorsoClosedWhileWalkingAndTurning" fullname="Elemental.Tests.PlayMode.EarthArmorCoverageRuntimeTests.CompactArmorKeepsNeckShouldersAndTorsoClosedWhileWalkingAndTurning" methodname="CompactArmorKeepsNeckShouldersAndTorsoClosedWhileWalkingAndTurning" classname="Elemental.Tests.PlayMode.EarthArmorCoverageRuntimeTests" runstate="Runnable" seed="22883001" result="Failed" start-time="2026-09-05 15:40:05Z" end-time="2026-09-05 15:40:12Z" duration="6.722720" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Nearest-any collar diversity was low; compare ExpectedZone in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\EnvironmentAnimationRescue\ArmorCoverageDiagnostics\20260905T154012583Z\CoverageDiagnostics.json
+  Expected: greater than or equal to 4
+  But was:  3
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.EarthArmorCoverageRuntimeTests+<CompactArmorKeepsNeckShouldersAndTorsoClosedWhileWalkingAndTurning>d__9.MoveNext () [0x00534] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\EarthArmorCoverageRuntimeTests.cs:89
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[[StartupCache] Scene ready in 3048.38ms; ground=exact baked base, cacheLoad=12.30ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1484.90ms, peakCookingPoll=0.31ms; sync=ArenaInitialize=373.13ms/15;ArenaBevel=354.59ms/175;ArenaMeshPicking=1.94ms/175;WallAwake=490.94ms/1;WallPieceVisuals=19.72ms/40;PlatformPoolAwake=9.62ms/1;PlatformRuntimeMeshes=1.22ms/12;PillarPoolAwake=23.73ms/1;PillarMeshLibrary=8.32ms/1;PillarColumns=13.91ms/1;DebrisPoolAwake=69.84ms/1;HeroFragmentPoolAwake=13.88ms/1.
+ARMOR_COVERAGE_DIAGNOSTICS path=C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\EnvironmentAnimationRescue\ArmorCoverageDiagnostics\20260905T154012583Z\CoverageDiagnostics.json neckAnyDistinct=3 neckExpectedDistinct=2 neckAnyGap=0.0699 neckExpectedGap=0.0882
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\ArmorCoveragePlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

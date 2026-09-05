@@ -7,11 +7,13 @@ Shader "Elemental/Earth Indirect Debris"
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" "RenderPipeline"="UniversalPipeline" }
+        Tags { "RenderType"="Transparent" "Queue"="Transparent-10" "RenderPipeline"="UniversalPipeline" }
         Pass
         {
             Name "ForwardLit"
             Tags { "LightMode"="UniversalForward" }
+            ZWrite Off
+            ZTest LEqual
             HLSLPROGRAM
             #pragma target 4.5
             #pragma vertex Vert

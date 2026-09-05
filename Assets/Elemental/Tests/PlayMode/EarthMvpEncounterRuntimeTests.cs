@@ -148,6 +148,7 @@ namespace Elemental.Tests.PlayMode
             GameObject arena = FindByName(scene, "Broken Crown Arena");
             bool hasRumbleArenaMaterial = HasShader(arena, "Elemental/Graphics V5/Rumble Rock Lit");
             Animator botAnimator = bot != null ? bot.GetComponentInChildren<Animator>(true) : null;
+            Rigidbody botBody = bot != null ? bot.GetComponent<Rigidbody>() : null;
             GameObject player = FindByName(scene, "Planet Character");
             EarthCharacterImpactTarget playerImpact =
                 player != null ? player.GetComponent<EarthCharacterImpactTarget>() : null;
@@ -228,6 +229,9 @@ namespace Elemental.Tests.PlayMode
             EarthAnimationMotionAuditState botMotionAudit = default;
             var botMotionTrace = new StringBuilder(32768);
             float maximumBotAnimatorSpeed = 0f;
+            float maximumBotMotorSpeed = 0f;
+            float maximumBotDesiredSpeed = 0f;
+            float maximumBotCommand = 0f;
             botMotionTrace.AppendLine(
                 "frame,time,dt,speed,gaitRate,leftIkWeight,rightIkWeight,pelvis," +
                  "leftLocked,rightLocked,supportId,supportGeneration,leftX,leftY,leftZ," +
@@ -240,6 +244,31 @@ namespace Elemental.Tests.PlayMode
                 // encounter smoke test otherwise samples 120 idle/windup frames.
                 // Narrow attack range only inside this disposable test scene to
                 // force a real chase and exercise rival gait/IK hand-offs.
+                // Additive scene loading advances physics while the large arena
+                // finishes loading. The rival can therefore reach the player
+                // before this telemetry phase begins, making a narrowed attack
+                // range sample another idle windup instead of locomotion. Seat it
+                // at a deterministic three-metre tangent offset on the same
+                // spherical shell before forcing the chase.
+                if (botBody != null && player != null && planet != null)
+                {
+                    Vector3 center = planet.transform.position;
+                    Vector3 playerRadial = player.transform.position - center;
+                    Vector3 up = playerRadial.sqrMagnitude > 0.01f
+                        ? playerRadial.normalized
+                        : bot.LocalUp;
+                    Vector3 away = Vector3.ProjectOnPlane(
+                        bot.transform.position - player.transform.position,
+                        up).normalized;
+                    if (away.sqrMagnitude < 0.1f)
+                        away = Vector3.ProjectOnPlane(-bot.transform.forward, up).normalized;
+                    float radius = Mathf.Max(1f, playerRadial.magnitude);
+                    botBody.position = center +
+                                       (playerRadial + away * 3f).normalized * radius;
+                    botBody.linearVelocity = Vector3.zero;
+                    botBody.angularVelocity = Vector3.zero;
+                    Physics.SyncTransforms();
+                }
                 bot.ConfigureTuning(1.25f, 0.82f, 15f, 0.24f, 0.72f, 1f);
                 bot.ResetPlanner();
                 Transform leftFoot = botAnimator.GetBoneTransform(HumanBodyBones.LeftFoot);
@@ -283,6 +312,20 @@ namespace Elemental.Tests.PlayMode
                     maximumBotAnimatorSpeed = Mathf.Max(
                         maximumBotAnimatorSpeed,
                         Mathf.Abs(botAnimator.GetFloat("Speed")));
+                    if (botBody != null)
+                        maximumBotMotorSpeed = Mathf.Max(
+                            maximumBotMotorSpeed,
+                            Vector3.ProjectOnPlane(botBody.linearVelocity, bot.LocalUp).magnitude);
+                    PlanetMotor botMotor = botBody != null ? botBody.GetComponent<PlanetMotor>() : null;
+                    if (botMotor != null)
+                    {
+                        maximumBotDesiredSpeed = Mathf.Max(
+                            maximumBotDesiredSpeed,
+                            botMotor.Telemetry.DesiredSpeed);
+                        maximumBotCommand = Mathf.Max(
+                            maximumBotCommand,
+                            math.length(botMotor.LastCommand.Move));
+                    }
                     float3 bodyAngles = botSharedPresentation != null &&
                                         botSharedPresentation.ProceduralBodyResponse != null
                         ? botSharedPresentation.ProceduralBodyResponse.CurrentAnglesDegrees
@@ -433,7 +476,10 @@ namespace Elemental.Tests.PlayMode
                 "The bot must own the same bounded final upper-body response pass.");
             Assert.That(botMotionSummary.SampleCount, Is.EqualTo(120));
             Assert.That(maximumBotAnimatorSpeed, Is.GreaterThan(0.5f),
-                "The rival telemetry scenario must contain actual locomotion, not 120 idle frames.");
+                $"The rival telemetry scenario must contain actual locomotion, not 120 idle frames. " +
+                $"motorSpeed={maximumBotMotorSpeed:0.###}, desired={maximumBotDesiredSpeed:0.###}, " +
+                $"command={maximumBotCommand:0.###}, phase={bot?.Phase}, guard={bot?.LastGuardReason}, " +
+                $"distance={(bot != null && player != null ? Vector3.Distance(bot.transform.position, player.transform.position) : -1f):0.###}.");
             Assert.That(botMotionSummary.LeftLockTransitions, Is.GreaterThan(0));
             Assert.That(botMotionSummary.RightLockTransitions, Is.GreaterThan(0));
             Assert.That(botMotionSummary.BothLockedFrames, Is.Zero);
@@ -898,6 +944,8 @@ namespace Elemental.Tests.PlayMode
             }
 
             Assert.That(cushion.SuppressesHardLanding, Is.True);
+            Assert.That(motor.LandingRollActive, Is.False, "The receiving pillar absorbs this landing.");
+            Assert.That(motor.LastLandingWasRoll, Is.False, "A cushioned landing must not start the roll animation.");
             Assert.That(duel.PlayerPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
             Assert.That(rig.IsRagdollActive, Is.False);
 

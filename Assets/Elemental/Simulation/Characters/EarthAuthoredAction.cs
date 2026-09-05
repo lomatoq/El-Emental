@@ -15,7 +15,8 @@ namespace Elemental.Simulation.Characters
         HitRecoil = 8,
         MagicCast = 9,
         SurfCrouch = 10,
-        DirectionalDodge = 11
+        DirectionalDodge = 11,
+        Mantle = 12
     }
 
     public enum EarthAuthoredFootPolicy : byte
@@ -75,8 +76,13 @@ namespace Elemental.Simulation.Characters
     /// </summary>
     public static class EarthAuthoredActionCatalog
     {
+        public const float LandingRollExitPhase = 0.92f;
+        public const float LandingRollExitBlendSeconds = 0.18f;
         public static EarthAuthoredActionDefinition Resolve(EarthAuthoredActionId id) => id switch
         {
+            EarthAuthoredActionId.Mantle =>
+                new EarthAuthoredActionDefinition(id, 0f, 0.82f, 0.82f, 1f, 1f,
+                    EarthAuthoredFootPolicy.DefaultContact),
             EarthAuthoredActionId.Jump =>
                 new EarthAuthoredActionDefinition(id, 0.18f, 1f, 1f, 1f, 1f,
                     EarthAuthoredFootPolicy.FlightIkOff),
@@ -84,7 +90,7 @@ namespace Elemental.Simulation.Characters
                 new EarthAuthoredActionDefinition(id, 0.12f, 1f, 1f, 1f, 1f,
                     EarthAuthoredFootPolicy.FlightIkOff),
             EarthAuthoredActionId.MovingLandingRoll =>
-                new EarthAuthoredActionDefinition(id, 0.32f, 0.20f, 0.20f, 0.62f, 0.92f,
+                new EarthAuthoredActionDefinition(id, 0.32f, 0.20f, 0.20f, 0.62f, LandingRollExitPhase,
                     EarthAuthoredFootPolicy.AuthoredContact),
             EarthAuthoredActionId.HardLandingBrace =>
                 new EarthAuthoredActionDefinition(id, 0.22f, 0.20f, 0.20f, 0.62f, 0.94f,

@@ -13,6 +13,7 @@ namespace Elemental.Runtime.Matter
         public EarthMatterId MatterId { get; private set; }
         public EarthMatterKernelBehaviour Kernel => _kernel;
         public Rigidbody Body => targetBody;
+        public bool IsDormantProxyReleased { get; private set; }
         public bool IsRegistered => _kernel != null && MatterId.IsValid && _kernel.TryGet(MatterId, out _);
 
         public bool Configure(EarthMatterKernelBehaviour kernel, in EarthMatterRecord authored, Rigidbody body = null)
@@ -34,6 +35,7 @@ namespace Elemental.Runtime.Matter
         {
             _kernel = kernel;
             MatterId = id;
+            IsDormantProxyReleased = false;
         }
 
         internal void BindBody(Rigidbody body) => targetBody = body;
@@ -53,6 +55,28 @@ namespace Elemental.Runtime.Matter
 
         public bool TryTransferOwner(EarthOwnerId owner) =>
             _kernel != null && MatterId.IsValid && _kernel.Registry.TryTransferOwner(MatterId, owner);
+
+        /// <summary>Releases only the visual proxy of dust whose mass remains in the canonical ledger.</summary>
+        public bool ReleaseDormantRepresentation()
+        {
+            if (!TryRead(out EarthMatterRecord record) ||
+                record.Phase != EarthMatterPhase.Sleeping ||
+                record.Representation != EarthRepresentationTier.DormantRecord) return false;
+            MatterId = default;
+            targetBody = null;
+            IsDormantProxyReleased = true;
+            return true;
+        }
+
+        /// <summary>Called only when an inactive reusable shell begins a new authored lifetime.</summary>
+        public bool ReleaseRetiredRepresentation()
+        {
+            if (!MatterId.IsValid) { IsDormantProxyReleased = false; return true; }
+            if (TryRead(out EarthMatterRecord record) && record.Phase != EarthMatterPhase.Consumed) return false;
+            MatterId = default;
+            IsDormantProxyReleased = false;
+            return true;
+        }
 
         /// <summary>
         /// Detaches this pooled GameObject from a canonical matter record without

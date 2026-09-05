@@ -1,0 +1,16 @@
+{
+    "unityVersion": "6000.5.7f1",
+    "utc": "2026-09-04T12:37:39.5234479Z",
+    "mode": "PlayMode",
+    "result": "Failed",
+    "total": 5,
+    "passed": 3,
+    "failed": 2,
+    "skipped": 0,
+    "inconclusive": 0,
+    "durationSeconds": 6.6782975,
+    "failures": [
+        "Elemental.Tests.PlayMode.EarthLooseStoneRuntimeTests.CameraHiddenParentDoesNotMakeLooseStoneUntargetable:   Camera suppression belongs to the structure, not its visible loose descendants.\r\n  Expected: True\r\n  But was:  False\r\n",
+        "Elemental.Tests.PlayMode.EarthLooseStoneRuntimeTests.FallenStonesSleepStayStillAndWakeForGravityGrip:   Gravity must let settled bodies sleep rather than restarting their contact solver every tick.\r\n  Expected: 3\r\n  But was:  0\r\n"
+    ]
+}

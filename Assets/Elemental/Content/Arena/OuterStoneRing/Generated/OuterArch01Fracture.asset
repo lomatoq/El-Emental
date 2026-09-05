@@ -1,0 +1,453 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8f760538da7e7941aecf49f49ce0579, type: 3}
+  m_Name: OuterArch01Fracture
+  m_EditorClassIdentifier: Elemental.Authoring::Elemental.Authoring.Fracture.EarthFractureAsset
+  schemaVersion: 3
+  intactRenderMesh: {fileID: -8001491121576489538, guid: 702b10277b3fc0b45832c3e7f76e1962, type: 3}
+  intactColliderMesh: {fileID: -8001491121576489538, guid: 702b10277b3fc0b45832c3e7f76e1962, type: 3}
+  pieces:
+  - id: 1
+    parentPieceIndex: -1
+    hierarchyLevel: 0
+    flags: 11
+    restLocalPosition: {x: -0.6555462, y: -0.08053517, z: 6.7840743}
+    restLocalRotation: {x: 0, y: -4.440892e-16, z: 0.000000013425483, w: 1}
+    restLocalScale: {x: 1.0000002, y: 1.0000004, z: 1}
+    mass: 6545.551
+    volume: 2.8458917
+    localCenterOfMass: {x: 0, y: 0, z: 0}
+    materialId: 1
+    renderMesh: {fileID: 4300000, guid: 365b9867d72571042960506b3356f6dd, type: 2}
+    colliderMesh: {fileID: -4879174519724806367, guid: 702b10277b3fc0b45832c3e7f76e1962, type: 3}
+    faceFlags: 7
+    exteriorSubmesh: 0
+    interiorSubmesh: 1
+    magicMaskChannel: 2
+  - id: 2
+    parentPieceIndex: -1
+    hierarchyLevel: 0
+    flags: 11
+    restLocalPosition: {x: -2.4347875, y: -0.06372049, z: 6.762661}
+    restLocalRotation: {x: 0, y: -4.440892e-16, z: 0.000000013425483, w: 1}
+    restLocalScale: {x: 1.0000002, y: 1.0000004, z: 1}
+    mass: 7165.118
+    volume: 3.1152687
+    localCenterOfMass: {x: 0, y: 0, z: 0}
+    materialId: 1
+    renderMesh: {fileID: 4300000, guid: 29a006d476f78db42924fe874ee5958c, type: 2}
+    colliderMesh: {fileID: 5032811852856898840, guid: 702b10277b3fc0b45832c3e7f76e1962, type: 3}
+    faceFlags: 7
+    exteriorSubmesh: 0
+    interiorSubmesh: 1
+    magicMaskChannel: 2
+  - id: 3
+    parentPieceIndex: -1
+    hierarchyLevel: 0
+    flags: 3
+    restLocalPosition: {x: 0.65827554, y: 0.17997551, z: 1.2739055}
+    restLocalRotation: {x: 0, y: -4.440892e-16, z: 0.000000013425483, w: 1}
+    restLocalScale: {x: 1.0000002, y: 1.0000004, z: 1}
+    mass: 3634.7644
+    volume: 1.5803324
+    localCenterOfMass: {x: 0, y: 0, z: 0}
+    materialId: 1
+    renderMesh: {fileID: 4300000, guid: 4cfab85073946594baaca5c8f5e6141c, type: 2}
+    colliderMesh: {fileID: -473410765646176126, guid: 702b10277b3fc0b45832c3e7f76e1962, type: 3}
+    faceFlags: 7
+    exteriorSubmesh: 0
+    interiorSubmesh: 1
+    magicMaskChannel: 2
+  - id: 4
+    parentPieceIndex: -1
+    hierarchyLevel: 0
+    flags: 3
+    restLocalPosition: {x: -0.09168237, y: -0.11511458, z: 2.435082}
+    restLocalRotation: {x: 0, y: -4.440892e-16, z: 0.000000013425483, w: 1}
+    restLocalScale: {x: 1.0000002, y: 1.0000004, z: 1}
+    mass: 5780.764
+    volume: 2.5133758
+    localCenterOfMass: {x: 0, y: 0, z: 0}
+    materialId: 1
+    renderMesh: {fileID: 4300000, guid: fe61a82bbd9dc9843a7ff09f23cefbe3, type: 2}
+    colliderMesh: {fileID: -3991720234311175198, guid: 702b10277b3fc0b45832c3e7f76e1962, type: 3}
+    faceFlags: 7
+    exteriorSubmesh: 0
+    interiorSubmesh: 1
+    magicMaskChannel: 2
+  - id: 5
+    parentPieceIndex: -1
+    hierarchyLevel: 0
+    flags: 3
+    restLocalPosition: {x: 0.2924346, y: 0.026428752, z: 3.5486116}
+    restLocalRotation: {x: 0, y: -4.440892e-16, z: 0.000000013425483, w: 1}
+    restLocalScale: {x: 1.0000002, y: 1.0000004, z: 1}
+    mass: 4995.2676
+    volume: 2.1718554
+    localCenterOfMass: {x: 0, y: 0, z: 0}
+    materialId: 1
+    renderMesh: {fileID: 4300000, guid: 7049919136530b242914bf32a3736f5d, type: 2}
+    colliderMesh: {fileID: -8778724895692554688, guid: 702b10277b3fc0b45832c3e7f76e1962, type: 3}
+    faceFlags: 7
+    exteriorSubmesh: 0
+    interiorSubmesh: 1
+    magicMaskChannel: 2
+  - id: 6
+    parentPieceIndex: -1
+    hierarchyLevel: 0
+    flags: 3
+    restLocalPosition: {x: -0.8193206, y: -0.9409017, z: 0.6716474}
+    restLocalRotation: {x: 0, y: -4.440892e-16, z: 0.000000013425483, w: 1}
+    restLocalScale: {x: 1.0000002, y: 1.0000004, z: 1}
+    mass: 4320.746
+    volume: 1.8785852
+    localCenterOfMass: {x: 0, y: 0, z: 0}
+    materialId: 1
+    renderMesh: {fileID: 4300000, guid: 8d16f8ebb307bad4db4f020ff0d22900, type: 2}
+    colliderMesh: {fileID: -1200819035664501735, guid: 702b10277b3fc0b45832c3e7f76e1962, type: 3}
+    faceFlags: 7
+    exteriorSubmesh: 0
+    interiorSubmesh: 1
+    magicMaskChannel: 2
+  - id: 7
+    parentPieceIndex: -1
+    hierarchyLevel: 0
+    flags: 3
+    restLocalPosition: {x: -0.7902242, y: 0.7165765, z: 0.8139559}
+    restLocalRotation: {x: 0, y: -4.440892e-16, z: 0.000000013425483, w: 1}
+    restLocalScale: {x: 1.0000002, y: 1.0000004, z: 1}
+    mass: 6158.819
+    volume: 2.6777472
+    localCenterOfMass: {x: 0, y: 0, z: 0}
+    materialId: 1
+    renderMesh: {fileID: 4300000, guid: a6925b7280cbead4481f6689441f2c01, type: 2}
+    colliderMesh: {fileID: -365902537154247629, guid: 702b10277b3fc0b45832c3e7f76e1962, type: 3}
+    faceFlags: 7
+    exteriorSubmesh: 0
+    interiorSubmesh: 1
+    magicMaskChannel: 2
+  - id: 8
+    parentPieceIndex: -1
+    hierarchyLevel: 0
+    flags: 3
+    restLocalPosition: {x: 0.2152233, y: -0.052819673, z: 4.473776}
+    restLocalRotation: {x: 0, y: -4.440892e-16, z: 0.000000013425483, w: 1}
+    restLocalScale: {x: 1.0000002, y: 1.0000004, z: 1}
+    mass: 2632.502
+    volume: 1.144566
+    localCenterOfMass: {x: 0, y: 0, z: 0}
+    materialId: 1
+    renderMesh: {fileID: 4300000, guid: 47330a01fb0b2a34393f645c55bb28f3, type: 2}
+    colliderMesh: {fileID: -3819563906370589784, guid: 702b10277b3fc0b45832c3e7f76e1962, type: 3}
+    faceFlags: 7
+    exteriorSubmesh: 0
+    interiorSubmesh: 1
+    magicMaskChannel: 2
+  - id: 9
+    parentPieceIndex: -1
+    hierarchyLevel: 0
+    flags: 11
+    restLocalPosition: {x: -0.1559199, y: 0.027903, z: 5.6084437}
+    restLocalRotation: {x: 0, y: -4.440892e-16, z: 0.000000013425483, w: 1}
+    restLocalScale: {x: 1.0000002, y: 1.0000004, z: 1}
+    mass: 7632.1987
+    volume: 3.3183472
+    localCenterOfMass: {x: 0, y: 0, z: 0}
+    materialId: 1
+    renderMesh: {fileID: 4300000, guid: 2cfef19ad0c67324080dad4b1a122315, type: 2}
+    colliderMesh: {fileID: 1881461734698448974, guid: 702b10277b3fc0b45832c3e7f76e1962, type: 3}
+    faceFlags: 7
+    exteriorSubmesh: 0
+    interiorSubmesh: 1
+    magicMaskChannel: 2
+  - id: 10
+    parentPieceIndex: -1
+    hierarchyLevel: 0
+    flags: 3
+    restLocalPosition: {x: -0.1559199, y: 0.027903, z: 5.6084437}
+    restLocalRotation: {x: 0, y: -4.440892e-16, z: 0.000000013425483, w: 1}
+    restLocalScale: {x: 1.0000002, y: 1.0000004, z: 1}
+    mass: 39.96127
+    volume: 0.017374465
+    localCenterOfMass: {x: 0, y: 0, z: 0}
+    materialId: 1
+    renderMesh: {fileID: 4300000, guid: 9782bd84f497a1943b6e88c21e6c825a, type: 2}
+    colliderMesh: {fileID: -1043135372663497650, guid: 702b10277b3fc0b45832c3e7f76e1962, type: 3}
+    faceFlags: 7
+    exteriorSubmesh: 0
+    interiorSubmesh: 1
+    magicMaskChannel: 2
+  - id: 11
+    parentPieceIndex: -1
+    hierarchyLevel: 0
+    flags: 3
+    restLocalPosition: {x: 0.77143925, y: -0.8478697, z: 0.5545671}
+    restLocalRotation: {x: 0, y: -4.440892e-16, z: 0.000000013425483, w: 1}
+    restLocalScale: {x: 1.0000002, y: 1.0000004, z: 1}
+    mass: 5011.322
+    volume: 2.1788356
+    localCenterOfMass: {x: 0, y: 0, z: 0}
+    materialId: 1
+    renderMesh: {fileID: 4300000, guid: 9a8c66badce82fc45a526b73663490f2, type: 2}
+    colliderMesh: {fileID: 5851688709906433846, guid: 702b10277b3fc0b45832c3e7f76e1962, type: 3}
+    faceFlags: 7
+    exteriorSubmesh: 0
+    interiorSubmesh: 1
+    magicMaskChannel: 2
+  - id: 12
+    parentPieceIndex: -1
+    hierarchyLevel: 0
+    flags: 3
+    restLocalPosition: {x: 0.83539987, y: 0.8449559, z: 0.35899162}
+    restLocalRotation: {x: 0, y: -4.440892e-16, z: 0.000000013425483, w: 1}
+    restLocalScale: {x: 1.0000002, y: 1.0000004, z: 1}
+    mass: 4041.1746
+    volume: 1.7570324
+    localCenterOfMass: {x: 0, y: 0, z: 0}
+    materialId: 1
+    renderMesh: {fileID: 4300000, guid: 2c41bc630a12d5e4d99e8d303b43f661, type: 2}
+    colliderMesh: {fileID: 1670987417015141796, guid: 702b10277b3fc0b45832c3e7f76e1962, type: 3}
+    faceFlags: 7
+    exteriorSubmesh: 0
+    interiorSubmesh: 1
+    magicMaskChannel: 2
+  bonds:
+  - id: 1
+    pieceA: 4
+    pieceB: 7
+    flags: 2
+    localCentroid: {x: 0.18126036, y: -0.062405564, z: 4.1682267}
+    localNormalA: {x: -0.08286637, y: -0.0850527, z: 0.9929246}
+    contactArea: 1.9093803
+    tensileStrength: 13.818033
+    shearStrength: 17.272541
+    compressionStrength: 48.363113
+  - id: 2
+    pieceA: 2
+    pieceB: 3
+    flags: 2
+    localCentroid: {x: 0.55157894, y: -0.17453517, z: 1.9157114}
+    localNormalA: {x: -0.5305862, y: -0.20877267, z: 0.8215183}
+    contactArea: 1.3445017
+    tensileStrength: 11.595264
+    shearStrength: 14.494081
+    compressionStrength: 40.583427
+  - id: 3
+    pieceA: 3
+    pieceB: 5
+    flags: 2
+    localCentroid: {x: -0.58942723, y: -0.6710896, z: 1.8863287}
+    localNormalA: {x: -0.35004124, y: -0.3972572, z: -0.8483265}
+    contactArea: 0.4629361
+    tensileStrength: 6.803941
+    shearStrength: 8.504926
+    compressionStrength: 23.813791
+  - id: 4
+    pieceA: 3
+    pieceB: 6
+    flags: 2
+    localCentroid: {x: -0.6153217, y: 0.33141008, z: 2.0402863}
+    localNormalA: {x: -0.35798094, y: 0.4262158, z: -0.83077663}
+    contactArea: 0.9676206
+    tensileStrength: 9.836771
+    shearStrength: 12.295963
+    compressionStrength: 34.4287
+  - id: 5
+    pieceA: 0
+    pieceB: 8
+    flags: 2
+    localCentroid: {x: -0.37735054, y: -0.02511977, z: 6.267747}
+    localNormalA: {x: 0.38972783, y: 0.08458597, z: -0.91703737}
+    contactArea: 2.641346
+    tensileStrength: 16.252218
+    shearStrength: 20.315273
+    compressionStrength: 56.882763
+  - id: 6
+    pieceA: 1
+    pieceB: 8
+    flags: 2
+    localCentroid: {x: -1.7324406, y: 0.20247462, z: 5.9046707}
+    localNormalA: {x: 0.89152706, y: 0.035844475, z: -0.451547}
+    contactArea: 0.32339153
+    tensileStrength: 5.6867523
+    shearStrength: 7.1084404
+    compressionStrength: 19.903633
+  - id: 7
+    pieceA: 1
+    pieceB: 9
+    flags: 2
+    localCentroid: {x: -2.44134, y: 0.20247512, z: 5.9046707}
+    localNormalA: {x: 0.89152706, y: 0.035844475, z: -0.451547}
+    contactArea: 0.32339153
+    tensileStrength: 5.6867523
+    shearStrength: 7.1084404
+    compressionStrength: 19.903633
+  - id: 8
+    pieceA: 2
+    pieceB: 5
+    flags: 2
+    localCentroid: {x: -0.15930532, y: -0.08974991, z: 1.2588242}
+    localNormalA: {x: -0.7577545, y: -0.5748186, z: -0.30885553}
+    contactArea: 1.4113756
+    tensileStrength: 11.880133
+    shearStrength: 14.850166
+    compressionStrength: 41.580467
+  - id: 9
+    pieceA: 2
+    pieceB: 6
+    flags: 2
+    localCentroid: {x: -0.15930644, y: 0.527185, z: 1.2588241}
+    localNormalA: {x: -0.8987284, y: 0.3329366, z: -0.2853779}
+    contactArea: 1.4113756
+    tensileStrength: 11.880133
+    shearStrength: 14.850166
+    compressionStrength: 41.580467
+  - id: 10
+    pieceA: 5
+    pieceB: 10
+    flags: 2
+    localCentroid: {x: -0.10742858, y: -0.9251394, z: 0.5684719}
+    localNormalA: {x: 0.9956105, y: 0.058226034, z: -0.07327718}
+    contactArea: 1.6337548
+    tensileStrength: 12.781841
+    shearStrength: 15.977303
+    compressionStrength: 44.736446
+  - id: 11
+    pieceA: 6
+    pieceB: 10
+    flags: 2
+    localCentroid: {x: -0.107428655, y: -0.37997064, z: 0.56847185}
+    localNormalA: {x: 0.7016627, y: -0.70291305, z: -0.11654461}
+    contactArea: 1.6337548
+    tensileStrength: 12.781841
+    shearStrength: 15.977303
+    compressionStrength: 44.736446
+  - id: 12
+    pieceA: 6
+    pieceB: 11
+    flags: 2
+    localCentroid: {x: -0.315959, y: 0.970248, z: 0.46180514}
+    localNormalA: {x: 0.9602236, y: 0.075831145, z: -0.2687383}
+    contactArea: 1.122382
+    tensileStrength: 10.594254
+    shearStrength: 13.242817
+    compressionStrength: 37.079887
+  - id: 13
+    pieceA: 0
+    pieceB: 1
+    flags: 2
+    localCentroid: {x: -1.5682645, y: 0.03598118, z: 6.8613176}
+    localNormalA: {x: -0.99988294, y: 0.009449375, z: -0.0120336795}
+    contactArea: 1.7795262
+    tensileStrength: 13.339888
+    shearStrength: 16.67486
+    compressionStrength: 46.689606
+  - id: 14
+    pieceA: 2
+    pieceB: 10
+    flags: 2
+    localCentroid: {x: 0.84297013, y: -0.7002274, z: 1.0654545}
+    localNormalA: {x: 0.08983739, y: -0.8159765, z: -0.5710619}
+    contactArea: 1.1957027
+    tensileStrength: 10.934819
+    shearStrength: 13.668524
+    compressionStrength: 38.271866
+  - id: 15
+    pieceA: 2
+    pieceB: 11
+    flags: 2
+    localCentroid: {x: 0.776618, y: 0.7664879, z: 0.85614514}
+    localNormalA: {x: 0.15471649, y: 0.58085436, z: -0.799169}
+    contactArea: 1.9077055
+    tensileStrength: 13.811971
+    shearStrength: 17.264963
+    compressionStrength: 48.3419
+  - id: 16
+    pieceA: 3
+    pieceB: 4
+    flags: 2
+    localCentroid: {x: 0.101052016, y: 0.039413698, z: 2.9826093}
+    localNormalA: {x: 0.3237687, y: 0.11930559, z: 0.938584}
+    contactArea: 2.0994387
+    tensileStrength: 14.48944
+    shearStrength: 18.1118
+    compressionStrength: 50.71304
+  - id: 17
+    pieceA: 5
+    pieceB: 6
+    flags: 2
+    localCentroid: {x: -0.97975254, y: -0.2334917, z: 0.7255058}
+    localNormalA: {x: 0.017487613, y: 0.9961821, z: 0.08553063}
+    contactArea: 2.1654515
+    tensileStrength: 14.715473
+    shearStrength: 18.394342
+    compressionStrength: 51.504158
+  - id: 18
+    pieceA: 7
+    pieceB: 8
+    flags: 2
+    localCentroid: {x: 0.31966087, y: 0.051249035, z: 4.8091044}
+    localNormalA: {x: -0.31017748, y: 0.06746279, z: 0.948282}
+    contactArea: 1.8479607
+    tensileStrength: 13.593971
+    shearStrength: 16.992464
+    compressionStrength: 47.5789
+  - id: 19
+    pieceA: 10
+    pieceB: 11
+    flags: 2
+    localCentroid: {x: 0.93238735, y: 0.08818272, z: 0.2825284}
+    localNormalA: {x: 0.03750727, y: 0.99269325, z: -0.11468781}
+    contactArea: 1.706737
+    tensileStrength: 13.064215
+    shearStrength: 16.330269
+    compressionStrength: 45.724754
+  - id: 20
+    pieceA: 5
+    pieceB: -1
+    flags: 3
+    localCentroid: {x: -0.91170573, y: -0.9978467, z: 0.098750114}
+    localNormalA: {x: 0, y: 0, z: -1}
+    contactArea: 0.5328709
+    tensileStrength: 10.584711
+    shearStrength: 13.230889
+    compressionStrength: 37.04649
+  - id: 21
+    pieceA: 6
+    pieceB: -1
+    flags: 3
+    localCentroid: {x: -0.8907889, y: 0.79329723, z: 0.060100555}
+    localNormalA: {x: 0, y: 0, z: -1}
+    contactArea: 0.6749129
+    tensileStrength: 11.912197
+    shearStrength: 14.890246
+    compressionStrength: 41.69269
+  - id: 22
+    pieceA: 10
+    pieceB: -1
+    flags: 3
+    localCentroid: {x: 0.84839344, y: -0.7683667, z: 0.07772055}
+    localNormalA: {x: 0, y: 0, z: -1}
+    contactArea: 0.5882352
+    tensileStrength: 11.120992
+    shearStrength: 13.901239
+    compressionStrength: 38.92347
+  - id: 23
+    pieceA: 11
+    pieceB: -1
+    flags: 3
+    localCentroid: {x: 0.90778697, y: 0.8717987, z: 0.07634139}
+    localNormalA: {x: 0, y: 0, z: -1}
+    contactArea: 0.5096295
+    tensileStrength: 10.35131
+    shearStrength: 12.939137
+    compressionStrength: 36.229584

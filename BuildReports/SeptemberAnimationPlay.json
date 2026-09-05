@@ -1,0 +1,16 @@
+{
+    "unityVersion": "6000.5.7f1",
+    "utc": "2026-09-04T22:44:44.6080105Z",
+    "mode": "PlayMode",
+    "result": "Failed",
+    "total": 8,
+    "passed": 6,
+    "failed": 2,
+    "skipped": 0,
+    "inconclusive": 0,
+    "durationSeconds": 188.2115453,
+    "failures": [
+        "Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ProductionMantleNativeHandFallbackUsesBaseLayer:   Ground contact did not resume after mantle.\r\n  Expected: greater than 1.0f\r\n  But was:  1.0f\r\n",
+        "Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ProductionMantleOwnsPoseReleasesFeetAndReturnsToContacts:   The authored/fallback wrist never reached the ledge contact region.\r\n  Expected: less than 0.349999994f\r\n  But was:  0.350485504f\r\n"
+    ]
+}

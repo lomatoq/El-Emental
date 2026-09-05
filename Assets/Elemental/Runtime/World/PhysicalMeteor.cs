@@ -1,4 +1,5 @@
 using UnityEngine;
+using Elemental.Runtime.Matter;
 
 namespace Elemental.Runtime.World
 {
@@ -11,16 +12,23 @@ namespace Elemental.Runtime.World
         public Rigidbody Body { get; private set; }
         public uint MeteorId { get; private set; }
         public float Radius { get; private set; }
+        public bool ImpactSpent { get; set; }
+        public EarthMatterIdentity MatterIdentity { get; private set; }
 
         public void Configure(MeteorShowerBehaviour owner, Rigidbody body)
         {
             _owner = owner;
             Body = body;
+            MatterIdentity = GetComponent<EarthMatterIdentity>();
+            if (MatterIdentity == null) MatterIdentity = gameObject.AddComponent<EarthMatterIdentity>();
         }
 
         public void Activate(uint id, Vector3 position, float radius, float mass, Vector3 velocity)
         {
+            // A new spawn may reuse a consumed shell, never a live canonical stone.
+            if (MatterIdentity != null && !MatterIdentity.ReleaseRetiredRepresentation()) return;
             MeteorId = id;
+            ImpactSpent = false;
             Radius = Mathf.Max(0.05f, radius);
             transform.position = position;
             transform.localScale = Vector3.one * Radius * 2f;

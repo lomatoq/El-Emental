@@ -366,10 +366,10 @@ public static class GraphicsV5Slice1Builder
 
     private static Material CreateDustMaterial(Texture2D texture)
     {
-        Shader shader = Shader.Find("Universal Render Pipeline/Particles/Lit");
-        if (shader == null) shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
-        if (shader == null) shader = Shader.Find("Particles/Standard Unlit");
-        if (shader == null) throw new InvalidOperationException("No compatible particle shader is available.");
+        // Overlapping Lit billboards turn nearly black without direct light.
+        // Dust keeps the authored sand color independently of scene lighting.
+        Shader shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+        if (shader == null) throw new InvalidOperationException("URP Particles/Unlit is required for sand dust.");
 
         Material material = AssetDatabase.LoadAssetAtPath<Material>(DustMaterialPath);
         if (material == null)

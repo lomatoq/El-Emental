@@ -1,0 +1,403 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 782c4cd249c346c0bb652a7f237b3fe2, type: 3}
+  m_Name: EarthMotionLibrary
+  m_EditorClassIdentifier: Elemental.Authoring::Elemental.Authoring.MotionLibraryAsset
+  sourceRig: {fileID: 919132149155446097, guid: 768c61288998aaf42ac2dcbe0e55b8db, type: 3}
+  databaseRate: 30
+  clips:
+  - stableId: idle.guard
+    clip: {fileID: -203655887218126122, guid: 0060e550909a38045aa6a4ecedaf535b, type: 3}
+    role: 0
+    semantic: 1
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 1
+  - stableId: walk.forward.mixamo
+    clip: {fileID: -203655887218126122, guid: c8a08dc7258efb94a96bf23b6e661e2c, type: 3}
+    role: 2
+    semantic: 3
+    nominalSpeed: 2.4
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 1
+  - stableId: walk.backward.mixamo
+    clip: {fileID: -203655887218126122, guid: c176941c479712644b92427776f667b4, type: 3}
+    role: 2
+    semantic: 4
+    nominalSpeed: 1.8
+    nominalYaw: 0
+    nominalDirection: 180
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 1
+  - stableId: pivot.left.mixamo
+    clip: {fileID: -203655887218126122, guid: 0d2edfa516697fa47b510030823461b4, type: 3}
+    role: 4
+    semantic: 8
+    nominalSpeed: 0
+    nominalYaw: -90
+    nominalDirection: -90
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: run.forward.a
+    clip: {fileID: 3543698089625107784, guid: f3ac93fd0c8293d4e8705a58f24c8b09, type: 3}
+    role: 2
+    semantic: 5
+    nominalSpeed: 5
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 1
+  - stableId: run.forward.b
+    clip: {fileID: -1640158340307531623, guid: f3ac93fd0c8293d4e8705a58f24c8b09, type: 3}
+    role: 2
+    semantic: 5
+    nominalSpeed: 4.6
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 1
+  - stableId: run.left
+    clip: {fileID: -1640272175068026219, guid: 39622de824361bc419432198cf839a5f, type: 3}
+    role: 2
+    semantic: 6
+    nominalSpeed: 4
+    nominalYaw: 0
+    nominalDirection: -90
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 1
+  - stableId: run.right
+    clip: {fileID: -6877218540166537120, guid: 39622de824361bc419432198cf839a5f, type: 3}
+    role: 2
+    semantic: 7
+    nominalSpeed: 4
+    nominalYaw: 0
+    nominalDirection: 90
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 1
+  - stableId: jump.start
+    clip: {fileID: -6402709644054655732, guid: f3ac93fd0c8293d4e8705a58f24c8b09, type: 3}
+    role: 5
+    semantic: 10
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: jump.loop
+    clip: {fileID: 5069180758234724613, guid: f3ac93fd0c8293d4e8705a58f24c8b09, type: 3}
+    role: 5
+    semantic: 11
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: land.soft
+    clip: {fileID: 3282281275607961068, guid: f3ac93fd0c8293d4e8705a58f24c8b09, type: 3}
+    role: 5
+    semantic: 12
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: dodge.forward
+    clip: {fileID: -3851722262833059593, guid: 39622de824361bc419432198cf839a5f, type: 3}
+    role: 5
+    semantic: 16
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: dodge.backward
+    clip: {fileID: 650242174318006946, guid: 39622de824361bc419432198cf839a5f, type: 3}
+    role: 5
+    semantic: 17
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 180
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: dodge.left
+    clip: {fileID: -8338831036711338807, guid: 39622de824361bc419432198cf839a5f, type: 3}
+    role: 5
+    semantic: 18
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: -90
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: dodge.right
+    clip: {fileID: 2188323905074769703, guid: 39622de824361bc419432198cf839a5f, type: 3}
+    role: 5
+    semantic: 19
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 90
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: magic.lift
+    clip: {fileID: 7719806121101089419, guid: 72f5a8ffcfcc8564d9b55c824fd0a171, type: 3}
+    role: 6
+    semantic: 23
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: magic.push
+    clip: {fileID: 4467039709948147482, guid: 72f5a8ffcfcc8564d9b55c824fd0a171, type: 3}
+    role: 6
+    semantic: 22
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: magic.sustain
+    clip: {fileID: -4515646335448768399, guid: 72f5a8ffcfcc8564d9b55c824fd0a171, type: 3}
+    role: 6
+    semantic: 25
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: magic.slam
+    clip: {fileID: 3076280148986900518, guid: 72f5a8ffcfcc8564d9b55c824fd0a171, type: 3}
+    role: 6
+    semantic: 24
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: recovery.front
+    clip: {fileID: -203655887218126122, guid: 9866274cc7edb50458d2177d65c62c04, type: 3}
+    role: 5
+    semantic: 14
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: land.hard
+    clip: {fileID: -203655887218126122, guid: 0c0bba4c4f59f5e4b9fb17e99412967f, type: 3}
+    role: 5
+    semantic: 13
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: impact.side
+    clip: {fileID: -203655887218126122, guid: e55107cda942f6849bfb92158487a6af, type: 3}
+    role: 7
+    semantic: 28
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: impact.uppercut
+    clip: {fileID: -203655887218126122, guid: 66564d14493bf2146b016e33f50cdd04, type: 3}
+    role: 7
+    semantic: 28
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: magic.pull.mixamo
+    clip: {fileID: -203655887218126122, guid: 2b0aa9a0abe02ea4da8417781af6cfce, type: 3}
+    role: 6
+    semantic: 21
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: magic.push.mixamo
+    clip: {fileID: -203655887218126122, guid: 5285c05690732a34a80f50adea5ef727, type: 3}
+    role: 6
+    semantic: 22
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: magic.lift.mixamo
+    clip: {fileID: -203655887218126122, guid: c98170dc8a4b8614eb3d8a73390ebbea, type: 3}
+    role: 6
+    semantic: 23
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: magic.slam.mixamo
+    clip: {fileID: -203655887218126122, guid: 90ae74f30e957f541a9a411e7cd2d264, type: 3}
+    role: 6
+    semantic: 24
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: magic.release.mixamo
+    clip: {fileID: -203655887218126122, guid: a995e450151f24543934ec7f13086646, type: 3}
+    role: 6
+    semantic: 26
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: magic.sustain.mixamo
+    clip: {fileID: -203655887218126122, guid: 9c4726b61c54c1e43bc04ddb2a2006d7, type: 3}
+    role: 6
+    semantic: 25
+    nominalSpeed: 0
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 0
+  - stableId: run.backward.mixamo
+    clip: {fileID: -203655887218126122, guid: 4bb129aee2a524f4195deb39be9d37b8, type: 3}
+    role: 2
+    semantic: 29
+    nominalSpeed: 6
+    nominalYaw: 0
+    nominalDirection: 180
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 1
+  transitionOverrides:
+  - from: 5
+    to: 1
+    halfLifeSeconds: 0.085
+    destinationStart01: 0
+    preserveGaitPhase: 0
+  - from: 4
+    to: 3
+    halfLifeSeconds: 0.075
+    destinationStart01: 0
+    preserveGaitPhase: 1
+  - from: 8
+    to: 5
+    halfLifeSeconds: 0.065
+    destinationStart01: 0.08
+    preserveGaitPhase: 0
+  - from: 14
+    to: 3
+    halfLifeSeconds: 0.11
+    destinationStart01: 0
+    preserveGaitPhase: 0
+  - from: 15
+    to: 3
+    halfLifeSeconds: 0.12
+    destinationStart01: 0
+    preserveGaitPhase: 0

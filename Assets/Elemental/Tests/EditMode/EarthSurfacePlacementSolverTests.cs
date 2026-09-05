@@ -9,6 +9,29 @@ namespace Elemental.Tests.EditMode
 {
     public sealed class EarthSurfacePlacementSolverTests
     {
+        [TestCase(0f, 1f, 0f)]
+        [TestCase(0.7f, 0.5f, -0.3f)]
+        [TestCase(0f, -1f, 0f)]
+        public void WaveFoundationLowersTwentyPercentAlongArenaOrPlanetUp(float x, float y, float z)
+        {
+            Mesh mesh = EarthWebWaveCellMeshFactory.Create(4);
+            try
+            {
+                Vector3 up = new Vector3(x, y, z).normalized;
+                Vector3 surface = up * 18f;
+                Quaternion rotation = Quaternion.FromToRotation(Vector3.up, up);
+                Vector3 scale = new Vector3(0.8f, 2f, 0.7f);
+                var original = EarthPillarWaveColumn.ResolveFullRisePlacement(mesh, surface, up, rotation, scale);
+                var buried = EarthPillarWaveColumn.ResolveFullRisePlacement(mesh, surface, up, rotation, scale, 0.20f);
+                float depth = mesh.bounds.size.y * scale.y * 0.20f;
+                Assert.That(buried.IsValid, Is.True);
+                Assert.That(Vector3.Distance(buried.RootPosition, original.RootPosition - up * depth), Is.LessThan(0.0001f));
+                float measured = EarthSurfacePlacementSolver.MeasureSupportError(mesh, buried.RootPosition, surface, up, rotation, scale);
+                Assert.That(measured, Is.EqualTo(-0.01f - depth).Within(0.0001f));
+            }
+            finally { Object.DestroyImmediate(mesh); }
+        }
+
         [Test]
         public void PolygonAndLegacyPillarsUseExactOneCentimetreFullRiseSeat()
         {

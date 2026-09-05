@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="4" result="Passed" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-04 08:49:06Z" end-time="2026-09-04 08:49:26Z" duration="20.7052039">
+  <test-suite type="TestSuite" id="1189" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="137" result="Passed" start-time="2026-09-04 08:49:06Z" end-time="2026-09-04 08:49:26Z" duration="20.705204" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1182" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="137" result="Passed" start-time="2026-09-04 08:49:06Z" end-time="2026-09-04 08:49:26Z" duration="20.662156" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13600" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1183" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="137" result="Passed" start-time="2026-09-04 08:49:06Z" end-time="2026-09-04 08:49:26Z" duration="20.659439" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1184" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="137" result="Passed" start-time="2026-09-04 08:49:06Z" end-time="2026-09-04 08:49:26Z" duration="20.657291" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1185" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="137" result="Passed" start-time="2026-09-04 08:49:06Z" end-time="2026-09-04 08:49:26Z" duration="20.654836" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1036" name="EarthCombatMobilityRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthCombatMobilityRuntimeTests" classname="Elemental.Tests.PlayMode.EarthCombatMobilityRuntimeTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-04 08:49:06Z" end-time="2026-09-04 08:49:10Z" duration="4.274472" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1037" name="ArmorCollisionsAccumulateAndReleasedColumnSplitsWithoutLosingMass" fullname="Elemental.Tests.PlayMode.EarthCombatMobilityRuntimeTests.ArmorCollisionsAccumulateAndReleasedColumnSplitsWithoutLosingMass" methodname="ArmorCollisionsAccumulateAndReleasedColumnSplitsWithoutLosingMass" classname="Elemental.Tests.PlayMode.EarthCombatMobilityRuntimeTests" runstate="Runnable" seed="205237928" result="Passed" start-time="2026-09-04 08:49:06Z" end-time="2026-09-04 08:49:10Z" duration="4.258468" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1085" name="EarthMaterialPassRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthMaterialPassRuntimeTests" classname="Elemental.Tests.PlayMode.EarthMaterialPassRuntimeTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-04 08:49:10Z" end-time="2026-09-04 08:49:22Z" duration="11.829288" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1086" name="ProductionMaterialPassSmoke" fullname="Elemental.Tests.PlayMode.EarthMaterialPassRuntimeTests.ProductionMaterialPassSmoke" methodname="ProductionMaterialPassSmoke" classname="Elemental.Tests.PlayMode.EarthMaterialPassRuntimeTests" runstate="Runnable" seed="1067608932" result="Passed" start-time="2026-09-04 08:49:10Z" end-time="2026-09-04 08:49:22Z" duration="11.792165" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[Earth Material Pass] {"utc":"2026-09-04T08:49:10.4120010Z","stage":"complete","passed":true,"scatterComplete":true,"requestedDust":140,"requestedChips":28,"observedDust":140,"observedChips":28,"dustAged":true,"chipsAged":true,"singleArmorShots":96,"firstArmorSpeed":44.0,"lastArmorSpeed":44.000003814697269,"releasedBoardStones":12,"releasedBoardDisplacement":0.6414230465888977,"gravityLaunched":4,"gravitySpeedsAfterTwoTicks":[30.91303062438965,30.64668846130371,30.909561157226564,30.97118377685547],"gravityDisplacementsAfterTwoTicks":[1.2248704433441163,1.2201811075210572,1.243859887123108,1.245117425918579],"gravityStatus":"Released","spatialStressGroups":8,"spatialStressDust":256,"spatialStressChips":64,"waveColumns":30,"launchPillarRaised":true,"emergenceCues":25,"eammStatus":"Active","eammAppliedWeight":1.0,"eammInitialization":"ready-baked-local-space","eammRejection":"","backwardMoveY":-6.3657307624816898,"backwardWorldDisplacement":3.2858636379241945,"hubMaxObservedMilliseconds":0.0628,"presenterMaxObservedMilliseconds":0.1984,"profilerRecordersValid":true,"limitations":"Focused production smoke, not a full motion corpus. Profiler observations are not zero-GC or p95 certification. Mouse/button routing and every technique still require a hands-on feel review."}
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1090" name="EarthMvpEncounterRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests" classname="Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-04 08:49:22Z" end-time="2026-09-04 08:49:24Z" duration="2.232168" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1097" name="HighFallOntoLandingCushionDoesNotRagdollOrKillPlayer" fullname="Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests.HighFallOntoLandingCushionDoesNotRagdollOrKillPlayer" methodname="HighFallOntoLandingCushionDoesNotRagdollOrKillPlayer" classname="Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests" runstate="Runnable" seed="1609438491" result="Passed" start-time="2026-09-04 08:49:22Z" end-time="2026-09-04 08:49:24Z" duration="2.224281" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1098" name="EarthPersistentBreakRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthPersistentBreakRuntimeTests" classname="Elemental.Tests.PlayMode.EarthPersistentBreakRuntimeTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-04 08:49:24Z" end-time="2026-09-04 08:49:26Z" duration="2.315076" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1099" name="SplitChildrenKeepMassAndTargetabilityBeyondCosmeticLifetime" fullname="Elemental.Tests.PlayMode.EarthPersistentBreakRuntimeTests.SplitChildrenKeepMassAndTargetabilityBeyondCosmeticLifetime" methodname="SplitChildrenKeepMassAndTargetabilityBeyondCosmeticLifetime" classname="Elemental.Tests.PlayMode.EarthPersistentBreakRuntimeTests" runstate="Runnable" seed="38521970" result="Passed" start-time="2026-09-04 08:49:24Z" end-time="2026-09-04 08:49:26Z" duration="2.311423" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\CombatMobilityPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

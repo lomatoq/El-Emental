@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Passed" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 15:28:03Z" end-time="2026-09-05 15:28:20Z" duration="17.2392734">
+  <test-suite type="TestSuite" id="1276" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="207" result="Passed" start-time="2026-09-05 15:28:03Z" end-time="2026-09-05 15:28:20Z" duration="17.239273" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1269" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="207" result="Passed" start-time="2026-09-05 15:28:03Z" end-time="2026-09-05 15:28:20Z" duration="17.113321" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1270" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="207" result="Passed" start-time="2026-09-05 15:28:03Z" end-time="2026-09-05 15:28:20Z" duration="17.092575" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1271" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="207" result="Passed" start-time="2026-09-05 15:28:03Z" end-time="2026-09-05 15:28:20Z" duration="16.933784" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1272" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="207" result="Passed" start-time="2026-09-05 15:28:03Z" end-time="2026-09-05 15:28:20Z" duration="16.906971" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1230" name="OuterStoneRingRuntimeTests" fullname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests" classname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-09-05 15:28:03Z" end-time="2026-09-05 15:28:20Z" duration="16.894119" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1235" name="AuthoredLooseChunksWakeUnderGravityAndCanBeReacquired" fullname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests.AuthoredLooseChunksWakeUnderGravityAndCanBeReacquired" methodname="AuthoredLooseChunksWakeUnderGravityAndCanBeReacquired" classname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests" runstate="Runnable" seed="646956678" result="Passed" start-time="2026-09-05 15:28:03Z" end-time="2026-09-05 15:28:09Z" duration="5.185627" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 3056.68ms; ground=exact baked base, cacheLoad=14.52ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1528.29ms, peakCookingPoll=0.30ms; sync=ArenaInitialize=420.78ms/15;ArenaBevel=398.36ms/175;ArenaMeshPicking=2.40ms/175;WallAwake=526.73ms/1;WallPieceVisuals=22.87ms/40;PlatformPoolAwake=11.65ms/1;PlatformRuntimeMeshes=1.37ms/12;PillarPoolAwake=20.19ms/1;PillarMeshLibrary=3.59ms/1;PillarColumns=15.52ms/1;DebrisPoolAwake=98.09ms/1;HeroFragmentPoolAwake=16.35ms/1.
+[Outer Stone Ring Contact QA] OuterArch_02_Loose_FR_outer_arch_02_013_FALLEN: valid=True, shattered=False, active=True, shapeEnabled=True, initialCaptured=0, initialRemaining=0, collisions=1, protectedCollisions=0, lastCollider=Planet Collision Proxy, lastColliderId=568105584923214918, lastColliderType=SphereCollider, lastBody=static, impulse=0.00000, approach=0.00000, relativeVelocity=(0.00, 0.00, 0.00), normal=(0.23, 0.97, -0.10), separation=0.015038, lastProtected=False, lastHeld=False, mass=965.98550, velocity=(-0.06, -0.27, 0.03), position=(12.29, 54.22, -5.29).
+[Outer Stone Ring QA] Authored-pose release OuterArch_02_Loose_FR_outer_arch_02_013_FALLEN: protected contacts=0, last solver impulse=0.0000, separation=0.00000.
+[Outer Stone Ring Contact QA] OuterArch_03_Loose_FR_outer_arch_03_012_FALLEN: valid=True, shattered=False, active=True, shapeEnabled=True, initialCaptured=0, initialRemaining=0, collisions=3, protectedCollisions=0, lastCollider=OuterArch_03_INTACT, lastColliderId=568105584923224196, lastColliderType=MeshCollider, lastBody=static, impulse=0.00000, approach=0.00000, relativeVelocity=(0.00, 0.00, 0.00), normal=(-0.46, 0.33, 0.83), separation=0.006687, lastProtected=False, lastHeld=False, mass=1800.00000, velocity=(-0.05, -0.22, 0.00), position=(8.13, 54.67, 10.71).
+[Outer Stone Ring QA] Authored-pose release OuterArch_03_Loose_FR_outer_arch_03_012_FALLEN: protected contacts=0, last solver impulse=0.0000, separation=0.00000.
+[Outer Stone Ring Contact QA] OuterArch_05_Loose_FR_outer_arch_05_012_FALLEN: valid=True, shattered=False, active=True, shapeEnabled=True, initialCaptured=0, initialRemaining=0, collisions=1, protectedCollisions=0, lastCollider=Planet Collision Proxy, lastColliderId=568105584923214918, lastColliderType=SphereCollider, lastBody=static, impulse=0.00000, approach=0.00000, relativeVelocity=(0.00, 0.00, 0.00), normal=(-0.20, 0.97, 0.12), separation=0.014999, lastProtected=False, lastHeld=False, mass=1303.66700, velocity=(0.06, -0.27, -0.03), position=(-11.14, 54.42, 5.75).
+[Outer Stone Ring QA] Authored-pose release OuterArch_05_Loose_FR_outer_arch_05_012_FALLEN: protected contacts=0, last solver impulse=0.0000, separation=0.00000.
+[Outer Stone Ring Contact QA] OuterArch_06_Loose_FR_outer_arch_06_001: valid=True, shattered=False, active=True, shapeEnabled=True, initialCaptured=1, initialRemaining=1, collisions=2, protectedCollisions=1, lastCollider=Planet Collision Proxy, lastColliderId=568105584923214918, lastColliderType=SphereCollider, lastBody=static, impulse=0.00000, approach=0.00000, relativeVelocity=(0.00, 0.00, 0.00), normal=(-0.20, 0.97, -0.10), separation=0.015385, lastProtected=False, lastHeld=False, mass=330.27290, velocity=(-0.08, 0.10, 0.21), position=(-10.49, 54.56, -6.64).
+[Outer Stone Ring QA] Authored-pose release OuterArch_06_Loose_FR_outer_arch_06_001: protected contacts=1, last solver impulse=123.1493, separation=-0.18745.
+[Outer Stone Ring Contact QA] OuterArch_06_Loose_FR_outer_arch_06_001_001: valid=True, shattered=False, active=True, shapeEnabled=True, initialCaptured=1, initialRemaining=1, collisions=2, protectedCollisions=1, lastCollider=Planet Collision Proxy, lastColliderId=568105584923214918, lastColliderType=SphereCollider, lastBody=static, impulse=1.57364, approach=0.00000, relativeVelocity=(0.00, 0.00, 0.00), normal=(-0.20, 0.97, -0.13), separation=0.017162, lastProtected=False, lastHeld=False, mass=124.33800, velocity=(-0.48, 0.84, 0.53), position=(-10.48, 54.63, -6.70).
+[Outer Stone Ring QA] Authored-pose release OuterArch_06_Loose_FR_outer_arch_06_001_001: protected contacts=1, last solver impulse=434.0928, separation=-0.02233.
+[Outer Stone Ring Contact QA] OuterArch_06_Loose_FR_outer_arch_06_001_002: valid=True, shattered=False, active=True, shapeEnabled=True, initialCaptured=1, initialRemaining=1, collisions=2, protectedCollisions=1, lastCollider=Voxel Chunk (-1, 3, -1), lastColliderId=568105589209300266, lastColliderType=MeshCollider, lastBody=static, impulse=464.35300, approach=0.00000, relativeVelocity=(0.00, 0.00, 0.00), normal=(-0.14, 0.98, -0.13), separation=-0.187574, lastProtected=True, lastHeld=False, mass=293.98830, velocity=(0.65, 1.45, 0.26), position=(-10.42, 54.33, -6.63).
+[Outer Stone Ring QA] Authored-pose release OuterArch_06_Loose_FR_outer_arch_06_001_002: protected contacts=1, last solver impulse=464.3530, separation=-0.18757.
+[Outer Stone Ring Contact QA] OuterArch_06_Loose_FR_outer_arch_06_010_FALLEN: valid=True, shattered=False, active=True, shapeEnabled=True, initialCaptured=1, initialRemaining=1, collisions=3, protectedCollisions=1, lastCollider=OuterArch_06_INTACT, lastColliderId=568105584923223828, lastColliderType=MeshCollider, lastBody=static, impulse=916.31990, approach=0.00000, relativeVelocity=(0.00, 0.00, 0.00), normal=(-0.31, 0.73, 0.61), separation=0.013339, lastProtected=False, lastHeld=False, mass=1800.00000, velocity=(0.60, 1.26, 0.03), position=(-13.15, 54.62, 0.14).
+[Outer Stone Ring QA] Authored-pose release OuterArch_06_Loose_FR_outer_arch_06_010_FALLEN: protected contacts=1, last solver impulse=2125.6280, separation=-0.23961.
+[Outer Stone Ring Contact QA] OuterArch_07_Loose_FR_outer_arch_07_013_FALLEN: valid=True, shattered=False, active=True, shapeEnabled=True, initialCaptured=1, initialRemaining=1, collisions=2, protectedCollisions=1, lastCollider=Voxel Chunk (-1, 3, -1), lastColliderId=568105589209300266, lastColliderType=MeshCollider, lastBody=static, impulse=587.28370, approach=0.00000, relativeVelocity=(0.00, 0.00, 0.00), normal=(-0.03, 0.98, -0.20), separation=-0.081385, lastProtected=True, lastHeld=False, mass=699.96470, velocity=(-0.03, 0.61, 0.16), position=(-3.35, 54.31, -12.37).
+[Outer Stone Ring QA] Authored-pose release OuterArch_07_Loose_FR_outer_arch_07_013_FALLEN: protected contacts=1, last solver impulse=587.2837, separation=-0.08139.
+]]></output>
+              </test-case>
+              <test-case id="1231" name="EveryColumnSupportsImpactEveryPieceGripAndExactRepair" fullname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests.EveryColumnSupportsImpactEveryPieceGripAndExactRepair" methodname="EveryColumnSupportsImpactEveryPieceGripAndExactRepair" classname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests" runstate="Runnable" seed="92482658" result="Passed" start-time="2026-09-05 15:28:09Z" end-time="2026-09-05 15:28:10Z" duration="1.714391" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 1150.57ms; ground=exact baked base, cacheLoad=7.26ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1067.61ms, peakCookingPoll=0.00ms; sync=ArenaInitialize=420.78ms/15;ArenaBevel=398.36ms/175;ArenaMeshPicking=2.40ms/175;WallAwake=526.73ms/1;WallPieceVisuals=22.87ms/40;PlatformPoolAwake=11.65ms/1;PlatformRuntimeMeshes=1.37ms/12;PillarPoolAwake=20.19ms/1;PillarMeshLibrary=3.59ms/1;PillarColumns=15.52ms/1;DebrisPoolAwake=98.09ms/1;HeroFragmentPoolAwake=16.35ms/1.
+[Outer Stone Ring QA] Seven impact/repair cycles and 85 exact cell grab/release/repair cycles passed; maximum repair 0.2778 ms in Editor, marker Elemental.QA.OuterStoneRing.PieceRepairCycle. Excludes rendering and physics-step cost.
+]]></output>
+              </test-case>
+              <test-case id="1237" name="FastReleasedColumnCellShattersOnItsFirstPostReleaseCollision" fullname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests.FastReleasedColumnCellShattersOnItsFirstPostReleaseCollision" methodname="FastReleasedColumnCellShattersOnItsFirstPostReleaseCollision" classname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests" runstate="Runnable" seed="957148718" result="Passed" start-time="2026-09-05 15:28:10Z" end-time="2026-09-05 15:28:12Z" duration="1.694819" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 1157.68ms; ground=exact baked base, cacheLoad=7.06ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1074.89ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=420.78ms/15;ArenaBevel=398.36ms/175;ArenaMeshPicking=2.40ms/175;WallAwake=526.73ms/1;WallPieceVisuals=22.87ms/40;PlatformPoolAwake=11.65ms/1;PlatformRuntimeMeshes=1.37ms/12;PillarPoolAwake=20.19ms/1;PillarMeshLibrary=3.59ms/1;PillarColumns=15.52ms/1;DebrisPoolAwake=98.09ms/1;HeroFragmentPoolAwake=16.35ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1238" name="FastThrownRockStillShattersAgainstNewNonoverlappingCollider" fullname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests.FastThrownRockStillShattersAgainstNewNonoverlappingCollider" methodname="FastThrownRockStillShattersAgainstNewNonoverlappingCollider" classname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests" runstate="Runnable" seed="2138073349" result="Passed" start-time="2026-09-05 15:28:12Z" end-time="2026-09-05 15:28:14Z" duration="1.923681" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 1063.55ms; ground=exact baked base, cacheLoad=8.39ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=983.54ms, peakCookingPoll=0.00ms; sync=ArenaInitialize=420.78ms/15;ArenaBevel=398.36ms/175;ArenaMeshPicking=2.40ms/175;WallAwake=526.73ms/1;WallPieceVisuals=22.87ms/40;PlatformPoolAwake=11.65ms/1;PlatformRuntimeMeshes=1.37ms/12;PillarPoolAwake=20.19ms/1;PillarMeshLibrary=3.59ms/1;PillarColumns=15.52ms/1;DebrisPoolAwake=98.09ms/1;HeroFragmentPoolAwake=16.35ms/1.
+[Outer Stone Ring Contact QA] Real thrown collision: shattered=True, collisions=1, approach=20.0000, relativeVelocity=(-20.00, 0.00, 0.00), normal=(-1.00, 0.00, 0.00), impulse=7398.2720, protected=False.
+]]></output>
+              </test-case>
+              <test-case id="1236" name="InitialOverlapProtectionExpiresOnSeparationAndAllowsExplicitImpacts" fullname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests.InitialOverlapProtectionExpiresOnSeparationAndAllowsExplicitImpacts" methodname="InitialOverlapProtectionExpiresOnSeparationAndAllowsExplicitImpacts" classname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests" runstate="Runnable" seed="1914988539" result="Passed" start-time="2026-09-05 15:28:14Z" end-time="2026-09-05 15:28:16Z" duration="1.866394" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 990.92ms; ground=exact baked base, cacheLoad=6.17ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=920.50ms, peakCookingPoll=0.00ms; sync=ArenaInitialize=420.78ms/15;ArenaBevel=398.36ms/175;ArenaMeshPicking=2.40ms/175;WallAwake=526.73ms/1;WallPieceVisuals=22.87ms/40;PlatformPoolAwake=11.65ms/1;PlatformRuntimeMeshes=1.37ms/12;PillarPoolAwake=20.19ms/1;PillarMeshLibrary=3.59ms/1;PillarColumns=15.52ms/1;DebrisPoolAwake=98.09ms/1;HeroFragmentPoolAwake=16.35ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1234" name="PartialRepairSeatsOnlyFoundationConnectedCellsAndNeverWeldsLooseBodies" fullname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests.PartialRepairSeatsOnlyFoundationConnectedCellsAndNeverWeldsLooseBodies" methodname="PartialRepairSeatsOnlyFoundationConnectedCellsAndNeverWeldsLooseBodies" classname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests" runstate="Runnable" seed="1771826902" result="Passed" start-time="2026-09-05 15:28:16Z" end-time="2026-09-05 15:28:17Z" duration="1.510034" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 1020.39ms; ground=exact baked base, cacheLoad=6.46ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=948.60ms, peakCookingPoll=0.00ms; sync=ArenaInitialize=420.78ms/15;ArenaBevel=398.36ms/175;ArenaMeshPicking=2.40ms/175;WallAwake=526.73ms/1;WallPieceVisuals=22.87ms/40;PlatformPoolAwake=11.65ms/1;PlatformRuntimeMeshes=1.37ms/12;PillarPoolAwake=20.19ms/1;PillarMeshLibrary=3.59ms/1;PillarColumns=15.52ms/1;DebrisPoolAwake=98.09ms/1;HeroFragmentPoolAwake=16.35ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1232" name="ProductionColumnFracturePresentsAuthoredCloudAndSharedStoneChips" fullname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests.ProductionColumnFracturePresentsAuthoredCloudAndSharedStoneChips" methodname="ProductionColumnFracturePresentsAuthoredCloudAndSharedStoneChips" classname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests" runstate="Runnable" seed="1712699259" result="Passed" start-time="2026-09-05 15:28:17Z" end-time="2026-09-05 15:28:19Z" duration="1.449761" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 992.18ms; ground=exact baked base, cacheLoad=6.44ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=921.66ms, peakCookingPoll=0.00ms; sync=ArenaInitialize=420.78ms/15;ArenaBevel=398.36ms/175;ArenaMeshPicking=2.40ms/175;WallAwake=526.73ms/1;WallPieceVisuals=22.87ms/40;PlatformPoolAwake=11.65ms/1;PlatformRuntimeMeshes=1.37ms/12;PillarPoolAwake=20.19ms/1;PillarMeshLibrary=3.59ms/1;PillarColumns=15.52ms/1;DebrisPoolAwake=98.09ms/1;HeroFragmentPoolAwake=16.35ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1233" name="RemovingFoundationsReleasesEveryUnsupportedCell" fullname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests.RemovingFoundationsReleasesEveryUnsupportedCell" methodname="RemovingFoundationsReleasesEveryUnsupportedCell" classname="Elemental.Tests.PlayMode.OuterStoneRingRuntimeTests" runstate="Runnable" seed="441283802" result="Passed" start-time="2026-09-05 15:28:19Z" end-time="2026-09-05 15:28:20Z" duration="1.445978" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 985.94ms; ground=exact baked base, cacheLoad=6.67ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=915.05ms, peakCookingPoll=0.00ms; sync=ArenaInitialize=420.78ms/15;ArenaBevel=398.36ms/175;ArenaMeshPicking=2.40ms/175;WallAwake=526.73ms/1;WallPieceVisuals=22.87ms/40;PlatformPoolAwake=11.65ms/1;PlatformRuntimeMeshes=1.37ms/12;PillarPoolAwake=20.19ms/1;PillarMeshLibrary=3.59ms/1;PillarColumns=15.52ms/1;DebrisPoolAwake=98.09ms/1;HeroFragmentPoolAwake=16.35ms/1.
+[Outer Stone Ring QA] 55 unsupported cells automatically released; maximum complete foundation removal 0.8090 ms. Marker Elemental.Earth.ArenaFracture.ReleaseUnsupported.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\OuterStoneRingPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

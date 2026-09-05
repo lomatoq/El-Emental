@@ -11,6 +11,7 @@ using UnityEditor.Build;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 using Elemental.Simulation.Structures;
 
 namespace Elemental.Authoring.Editor
@@ -20,6 +21,8 @@ namespace Elemental.Authoring.Editor
         private const int CameraPassthroughLayer = 29;
         public const string CatalogPath =
             "Assets/Elemental/Content/Arena/BrokenCrown/Generated/BrokenCrownArenaCatalog.asset";
+        private const string CanonicalScenePath =
+            "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
         private const string SandstoneMaterialPath =
             "Assets/Elemental/Content/GraphicsV5/Materials/RumbleSandstone.mat";
         private const string ArenaSandstoneMaterialPath =
@@ -50,6 +53,222 @@ namespace Elemental.Authoring.Editor
             Integrate(planet.transform.position, planet.Radius, gravity, debris, sandstone);
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
             EditorSceneManager.SaveOpenScenes();
+        }
+
+        [MenuItem("Elemental/Arena/Repair Broken Crown Runtime Wiring")]
+        public static void RepairCurrentSceneRuntimeWiring()
+        {
+            if (Application.isPlaying)
+                throw new BuildFailedException("Stop Play Mode before repairing Broken Crown wiring.");
+
+            GameObject root = GameObject.Find("Broken Crown Arena");
+            EarthArenaFractureCatalog catalog =
+                AssetDatabase.LoadAssetAtPath<EarthArenaFractureCatalog>(CatalogPath);
+            GravityWorldBehaviour gravity =
+                UnityEngine.Object.FindAnyObjectByType<GravityWorldBehaviour>();
+            EarthRockDebrisPool debris =
+                UnityEngine.Object.FindAnyObjectByType<EarthRockDebrisPool>();
+            VoxelPlanetBehaviour planet =
+                UnityEngine.Object.FindAnyObjectByType<VoxelPlanetBehaviour>();
+            EarthSurfaceQueryService surfaceQueries =
+                UnityEngine.Object.FindAnyObjectByType<EarthSurfaceQueryService>();
+            Material arenaMaterial =
+                AssetDatabase.LoadAssetAtPath<Material>(ArenaSandstoneMaterialPath);
+            Material fractureMaterial =
+                AssetDatabase.LoadAssetAtPath<Material>(FractureInteriorMaterialPath);
+            if (root == null || catalog == null || gravity == null || debris == null ||
+                planet == null || arenaMaterial == null || fractureMaterial == null)
+                throw new BuildFailedException(
+                    "Broken Crown wiring repair requires the existing arena, catalog, planet, gravity, debris and materials.");
+
+            Transform[] all = root.GetComponentsInChildren<Transform>(true);
+            RepairLoadedArenaRendererSettings();
+            for (int index = 0; index < catalog.LooseRockObjectNames.Length; index++)
+            {
+                Transform loose = FindNamed(all, catalog.LooseRockObjectNames[index]);
+                MeshFilter filter = loose != null ? loose.GetComponent<MeshFilter>() : null;
+                if (filter != null && filter.sharedMesh != null)
+                    ConfigureLooseRock(
+                        loose.gameObject,
+                        filter.sharedMesh,
+                        gravity,
+                        debris,
+                        index);
+            }
+
+            Vector3 radial = root.transform.position - planet.transform.position;
+            Vector3 surfaceUp = radial.sqrMagnitude > 0.001f
+                ? radial.normalized
+                : Vector3.up;
+            ConfigureFractureStructures(
+                root,
+                catalog,
+                gravity,
+                arenaMaterial,
+                fractureMaterial,
+                surfaceQueries,
+                surfaceUp);
+
+            // EarthArenaStructure.Configure rebuilds the dormant fracture renderers
+            // and applies its generic runtime shadow defaults. Reassert the arena's
+            // cheaper shadow-free renderer contract after that final structure pass.
+            Renderer[] repairedRenderers = root.GetComponentsInChildren<Renderer>(true);
+            for (int index = 0; index < repairedRenderers.Length; index++)
+                ConfigureArenaRenderer(repairedRenderers[index]);
+
+            EditorUtility.SetDirty(root);
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            EditorSceneManager.SaveOpenScenes();
+            Debug.Log("[Elemental] Broken Crown runtime wiring repaired without rebuilding or moving the arena.");
+        }
+
+        public static void RepairLoadedArenaRendererSettings()
+        {
+            Scene canonicalScene = SceneManager.GetSceneByPath(CanonicalScenePath);
+            bool openedCanonicalScene = !canonicalScene.IsValid() || !canonicalScene.isLoaded;
+            if (openedCanonicalScene &&
+                AssetDatabase.LoadAssetAtPath<SceneAsset>(CanonicalScenePath) != null)
+            {
+                canonicalScene = EditorSceneManager.OpenScene(
+                    CanonicalScenePath,
+                    OpenSceneMode.Additive);
+            }
+
+            try
+            {
+                for (int sceneIndex = 0; sceneIndex < SceneManager.sceneCount; sceneIndex++)
+                {
+                    Scene scene = SceneManager.GetSceneAt(sceneIndex);
+                    if (scene.IsValid() && scene.isLoaded)
+                        RepairArenaRendererSettings(scene);
+                }
+            }
+            finally
+            {
+                if (openedCanonicalScene && canonicalScene.IsValid() && canonicalScene.isLoaded)
+                    EditorSceneManager.CloseScene(canonicalScene, true);
+            }
+        }
+
+        private static void RepairArenaRendererSettings(Scene scene)
+        {
+            GameObject[] roots = scene.GetRootGameObjects();
+            for (int rootIndex = 0; rootIndex < roots.Length; rootIndex++)
+            {
+                GameObject root = roots[rootIndex];
+                if (!string.Equals(root.name, "Broken Crown Arena", StringComparison.Ordinal))
+                    continue;
+                Renderer[] arenaRenderers = root.GetComponentsInChildren<Renderer>(true);
+                for (int rendererIndex = 0; rendererIndex < arenaRenderers.Length; rendererIndex++)
+                    ConfigureArenaRenderer(arenaRenderers[rendererIndex]);
+                EditorUtility.SetDirty(root);
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
+            }
+        }
+
+        /// <summary>
+        /// Seats the existing test fighters on the authored floor without moving,
+        /// rebuilding or re-importing any part of the arena. Existing tangent
+        /// placement is preserved when it actually projects onto the floor; an
+        /// interior fallback is used only for an actor that is outside the court.
+        /// </summary>
+        public static Vector3 RepairCharacterTestSpawns(
+            GameObject player,
+            GameObject bot,
+            Vector3 planetCenter)
+        {
+            GameObject arenaRoot = GameObject.Find("Broken Crown Arena");
+            if (arenaRoot == null || player == null || bot == null)
+                throw new BuildFailedException(
+                    "Character spawn repair requires the existing Broken Crown arena, player and bot.");
+
+            Transform floorTransform = FindNamed(
+                arenaRoot.GetComponentsInChildren<Transform>(true),
+                "Arena_FloorBase_INTACT");
+            Collider floor = floorTransform != null
+                ? floorTransform.GetComponent<Collider>()
+                : null;
+            if (floor == null || !floor.enabled)
+                throw new BuildFailedException(
+                    "Arena_FloorBase_INTACT must have an enabled collider before seating fighters.");
+
+            Vector3 up = floor.bounds.center - planetCenter;
+            up = up.sqrMagnitude > 0.001f ? up.normalized : arenaRoot.transform.up;
+            Vector3 forward = Vector3.ProjectOnPlane(arenaRoot.transform.forward, up).normalized;
+            if (forward.sqrMagnitude < 0.25f)
+                forward = Vector3.ProjectOnPlane(arenaRoot.transform.right, up).normalized;
+            if (forward.sqrMagnitude < 0.25f)
+                forward = Vector3.Cross(up, Vector3.right).normalized;
+
+            if (!TryFloorHit(floor, floor.bounds.center, up, out RaycastHit centerHit))
+                throw new BuildFailedException(
+                    "Arena floor collider could not provide a walkable top-surface hit.");
+
+            // Repair is allowed to move an actor vertically onto support, but it
+            // must also undo tangent drift left by older seating code. This is
+            // the approved Linebreaker test spawn serialized by the generator.
+            Vector3 approvedBotPosition = bot.transform.position;
+            approvedBotPosition.x = planetCenter.x - 0.26751554f;
+            approvedBotPosition.z = planetCenter.z + 3.5498571f;
+            MoveMotor(bot.GetComponent<PlanetMotor>(), approvedBotPosition - bot.transform.position);
+            UnityEngine.Physics.SyncTransforms();
+
+            SeatActorOnFloor(player, floor, centerHit.point - forward * 1.8f, up);
+            SeatActorOnFloor(bot, floor, centerHit.point + forward * 1.8f, up);
+            UnityEngine.Physics.SyncTransforms();
+            return centerHit.point;
+        }
+
+        private static void SeatActorOnFloor(
+            GameObject actor,
+            Collider floor,
+            Vector3 fallbackPoint,
+            Vector3 up)
+        {
+            const float capsuleClearance = 0.055f;
+            CapsuleCollider capsule = actor.GetComponent<CapsuleCollider>();
+            PlanetMotor motor = actor.GetComponent<PlanetMotor>();
+            if (capsule == null || motor == null)
+                throw new BuildFailedException(
+                    $"{actor.name} requires a root CapsuleCollider and PlanetMotor for arena seating.");
+
+            Vector3 probePoint = actor.transform.position;
+            bool usedFallback = false;
+            if (!TryFloorHit(floor, probePoint, up, out RaycastHit hit))
+            {
+                if (!TryFloorHit(floor, fallbackPoint, up, out hit))
+                    throw new BuildFailedException(
+                        $"No valid arena-floor support was found for {actor.name}.");
+                usedFallback = true;
+            }
+
+            // A successful probe already represents the approved authored
+            // tangent placement. Only move laterally when the actor was outside
+            // the court and needed the documented interior fallback.
+            if (usedFallback)
+            {
+                Vector3 tangentDelta = Vector3.ProjectOnPlane(hit.point - capsule.bounds.center, up);
+                MoveMotor(motor, tangentDelta);
+                UnityEngine.Physics.SyncTransforms();
+            }
+
+            float capsuleMinimum = MinimumColliderProjection(capsule, Vector3.zero, up);
+            float floorHeight = Vector3.Dot(hit.point, up);
+            MoveMotor(motor, up * (floorHeight + capsuleClearance - capsuleMinimum));
+            UnityEngine.Physics.SyncTransforms();
+        }
+
+        private static bool TryFloorHit(
+            Collider floor,
+            Vector3 point,
+            Vector3 up,
+            out RaycastHit hit)
+        {
+            float distance = Mathf.Max(8f, floor.bounds.extents.magnitude * 2f + 4f);
+            Ray ray = new Ray(point + up * distance, -up);
+            if (!floor.Raycast(ray, out hit, distance * 2f)) return false;
+            return Vector3.Dot(hit.normal, up) >= 0.2f;
         }
 
         public static GameObject Integrate(
@@ -284,8 +503,8 @@ namespace Elemental.Authoring.Editor
         private static void ConfigureArenaRenderer(Renderer renderer)
         {
             if (renderer == null) return;
-            renderer.shadowCastingMode = ShadowCastingMode.Off;
-            renderer.receiveShadows = false;
+            renderer.shadowCastingMode = ShadowCastingMode.On;
+            renderer.receiveShadows = true;
             renderer.lightProbeUsage = LightProbeUsage.BlendProbes;
             renderer.reflectionProbeUsage = ReflectionProbeUsage.BlendProbes;
             PrefabUtility.RecordPrefabInstancePropertyModifications(renderer);
@@ -301,8 +520,7 @@ namespace Elemental.Authoring.Editor
             if (createAsset) material = new Material(source) { name = "RumbleArenaSandstone" };
             else
             {
-                material.shader = source.shader;
-                material.CopyPropertiesFromMaterial(source);
+                MaterialShaderStateUtility.CopyProperties(material, source);
             }
             // Broken Crown already carries smooth authored normals and sharp rim
             // metadata. The generic rock material's radial side-normal synthesis
@@ -324,7 +542,7 @@ namespace Elemental.Authoring.Editor
             // Architectural side/recess polygons use stable analytic form depth.
             // This is a fail-safe against travelling cascade bands if a quality
             // asset or preview light accidentally enables realtime shadows again.
-            if (material.HasProperty("_SideShadowFade")) material.SetFloat("_SideShadowFade", 1f);
+            if (material.HasProperty("_SideShadowFade")) material.SetFloat("_SideShadowFade", 0f);
             if (material.HasProperty("_StableSideFormOcclusion"))
                 material.SetFloat("_StableSideFormOcclusion", 0.075f);
             if (material.HasProperty("_FractureInteriorDepth"))
@@ -353,8 +571,7 @@ namespace Elemental.Authoring.Editor
             }
             else
             {
-                material.shader = rockMaterial.shader;
-                material.CopyPropertiesFromMaterial(rockMaterial);
+                MaterialShaderStateUtility.CopyProperties(material, rockMaterial);
             }
 
             Color authoredCut = rockMaterial.HasProperty("_FractureColor")
@@ -1263,8 +1480,8 @@ namespace Elemental.Authoring.Editor
             Renderer renderer = target.GetComponent<Renderer>();
             if (renderer != null)
             {
-                renderer.shadowCastingMode = ShadowCastingMode.Off;
-                renderer.receiveShadows = false;
+                renderer.shadowCastingMode = ShadowCastingMode.On;
+                renderer.receiveShadows = true;
             }
         }
     }

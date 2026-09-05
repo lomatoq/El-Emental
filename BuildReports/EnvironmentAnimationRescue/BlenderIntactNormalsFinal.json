@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 3,
+  "recordedUtc": "2026-09-04T17:23:54.691091+00:00",
+  "blenderVersion": "5.2.1 LTS",
+  "sourceBlend": "C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\ArtSource\\Environment\\OuterStoneRing\\OuterStoneRing_Working.blend",
+  "method": "Read-only final BAKED meshes; double-precision geometric triangle winding versus every exported-source corner normal, area-weighted residuals. No copy smoothing applied during this final validation.",
+  "shadingPolicy": "30-degree smoothing after final transform; polygons below1e-6m2 and their incident edges isolated; polygons with zero corner normals selectively isolated. Full authored modifier stacks preserved separately on original FR export copies.",
+  "negativeDotThreshold": -0.01,
+  "significantTriangleAreaThresholdM2": 0.000001,
+  "exportNormalSource": "Installed FBX exporter uses mesh.corner_normals for FACE/CORNER and ByPolygonVertex mapping. This validation did not reimport the FBX binary.",
+  "exporterEvidence": [
+    {
+      "file": "C:\\Program Files\\Blender Foundation\\Blender 5.2\\5.2\\scripts\\addons_core\\io_scene_fbx\\export_fbx_bin.py",
+      "line": 1196,
+      "code": "            case 'CORNER' | 'FACE':\n                # We have a mix of sharp/smooth edges/faces or custom normals, so need to get normals from corners.\n                normal_source = me.corner_normals\n                normal_mapping = b\"ByPolygonVertex\"\n            case _:"
+    }
+  ],
+  "blenderShadingAcceptance": true,
+  "unityAcceptance": "Final smoothed export requires Unity imported-mesh and GameView validation. The earlier flat export numerical pass is superseded.",
+  "sourceObjectsModified": false,
+  "objects": [
+    {
+      "object": "BAKED_outer_arch_01",
+      "normalsDomain": "CORNER",
+      "hasCustomNormals": false,
+      "sourceUnchanged": true,
+      "metrics": {
+        "significantTriangles": 2956,
+        "backwardSignificantTriangles": 0,
+        "backwardSignificantAreaM2": 0,
+        "allBackwardTriangleCount": 364,
+        "allBackwardTriangleAreaM2": 4.6640560499593276e-7,
+        "allBackwardAreaFraction": 6.38092047749722e-9,
+        "maximumBackwardTriangleAreaM2": 6.899102158750046e-8,
+        "totalAreaM2": 73.09378116225488,
+        "minimumSignificantCornerDot": 0.8125027214078011,
+        "zeroNormalSignificantTriangleCorners": 0,
+        "smoothFaces": 2123,
+        "flatFaces": 3255,
+        "sharpEdges": 8597,
+        "curvedSmoothEdges1To30Degrees": 1348,
+        "meanCurvedSmoothEdgeDegrees": 8.310798613578484,
+        "worstTriangles": []
+      }
+    },
+    {
+      "object": "BAKED_outer_arch_02",
+      "normalsDomain": "CORNER",
+      "hasCustomNormals": false,
+      "sourceUnchanged": true,
+      "metrics": {
+        "significantTriangles": 2999,
+        "backwardSignificantTriangles": 0,
+        "backwardSignificantAreaM2": 0,
+        "allBackwardTriangleCount": 213,
+        "allBackwardTriangleAreaM2": 1.4138631889467083e-7,
+        "allBackwardAreaFraction": 2.0290741906906364e-9,
+        "maximumBackwardTriangleAreaM2": 1.4148100769311427e-8,
+        "totalAreaM2": 69.68021156808817,
+        "minimumSignificantCornerDot": 0.8585409685472,
+        "zeroNormalSignificantTriangleCorners": 0,
+        "smoothFaces": 2095,
+        "flatFaces": 3597,
+        "sharpEdges": 9321,
+        "curvedSmoothEdges1To30Degrees": 1189,
+        "meanCurvedSmoothEdgeDegrees": 7.981479069969456,
+        "worstTriangles": []
+      }
+    },
+    {
+      "object": "BAKED_outer_arch_03",
+      "normalsDomain": "CORNER",
+      "hasCustomNormals": false,
+      "sourceUnchanged": true,
+      "metrics": {
+        "significantTriangles": 2579,
+        "backwardSignificantTriangles": 0,
+        "backwardSignificantAreaM2": 0,
+        "allBackwardTriangleCount": 137,
+        "allBackwardTriangleAreaM2": 1.3386980592309415e-7,
+        "allBackwardAreaFraction": 2.442752153776423e-9,
+        "maximumBackwardTriangleAreaM2": 1.5559132565607742e-8,
+        "totalAreaM2": 54.80286066522768,
+        "minimumSignificantCornerDot": 0.8565651547834334,
+        "zeroNormalSignificantTriangleCorners": 0,
+        "smoothFaces": 1739,
+        "flatFaces": 3188,
+        "sharpEdges": 8188,
+        "curvedSmoothEdges1To30Degrees": 985,
+        "meanCurvedSmoothEdgeDegrees": 8.545481637895996,
+        "worstTriangles": []
+      }
+    },
+    {
+      "object": "BAKED_outer_arch_04",
+      "normalsDomain": "CORNER",
+      "hasCustomNormals": false,
+      "sourceUnchanged": true,
+      "metrics": {
+        "significantTriangles": 3485,
+        "backwardSignificantTriangles": 0,
+        "backwardSignificantAreaM2": 0,
+        "allBackwardTriangleCount": 475,
+        "allBackwardTriangleAreaM2": 6.727577246633231e-7,
+        "allBackwardAreaFraction": 9.202871997942738e-9,
+        "maximumBackwardTriangleAreaM2": 3.922787050329215e-8,
+        "totalAreaM2": 73.10301879823116,
+        "minimumSignificantCornerDot": 0.860631012776885,
+        "zeroNormalSignificantTriangleCorners": 0,
+        "smoothFaces": 2326,
+        "flatFaces": 4279,
+        "sharpEdges": 11036,
+        "curvedSmoothEdges1To30Degrees": 1375,
+        "meanCurvedSmoothEdgeDegrees": 8.015122987929223,
+        "worstTriangles": []
+      }
+    },
+    {
+      "object": "BAKED_outer_arch_05",
+      "normalsDomain": "CORNER",
+      "hasCustomNormals": false,
+      "sourceUnchanged": true,
+      "metrics": {
+        "significantTriangles": 2958,
+        "backwardSignificantTriangles": 0,
+        "backwardSignificantAreaM2": 0,
+        "allBackwardTriangleCount": 161,
+        "allBackwardTriangleAreaM2": 1.8497993962124504e-7,
+        "allBackwardAreaFraction": 2.716828448609522e-9,
+        "maximumBackwardTriangleAreaM2": 4.419471087515427e-8,
+        "totalAreaM2": 68.08672064513978,
+        "minimumSignificantCornerDot": 0.8550546577434114,
+        "zeroNormalSignificantTriangleCorners": 0,
+        "smoothFaces": 2027,
+        "flatFaces": 3598,
+        "sharpEdges": 9309,
+        "curvedSmoothEdges1To30Degrees": 1149,
+        "meanCurvedSmoothEdgeDegrees": 7.905440624029365,
+        "worstTriangles": []
+      }
+    },
+    {
+      "object": "BAKED_outer_arch_06",
+      "normalsDomain": "CORNER",
+      "hasCustomNormals": false,
+      "sourceUnchanged": true,
+      "metrics": {
+        "significantTriangles": 2001,
+        "backwardSignificantTriangles": 0,
+        "backwardSignificantAreaM2": 0,
+        "allBackwardTriangleCount": 168,
+        "allBackwardTriangleAreaM2": 2.768216580058996e-7,
+        "allBackwardAreaFraction": 5.419224993938843e-9,
+        "maximumBackwardTriangleAreaM2": 3.935000207039423e-8,
+        "totalAreaM2": 51.081410776543144,
+        "minimumSignificantCornerDot": 0.8610294474737588,
+        "zeroNormalSignificantTriangleCorners": 0,
+        "smoothFaces": 1446,
+        "flatFaces": 2288,
+        "sharpEdges": 5997,
+        "curvedSmoothEdges1To30Degrees": 820,
+        "meanCurvedSmoothEdgeDegrees": 8.394678621271016,
+        "worstTriangles": []
+      }
+    },
+    {
+      "object": "BAKED_outer_arch_07",
+      "normalsDomain": "CORNER",
+      "hasCustomNormals": false,
+      "sourceUnchanged": true,
+      "metrics": {
+        "significantTriangles": 3038,
+        "backwardSignificantTriangles": 0,
+        "backwardSignificantAreaM2": 0,
+        "allBackwardTriangleCount": 291,
+        "allBackwardTriangleAreaM2": 1.8998205311767566e-7,
+        "allBackwardAreaFraction": 2.6679994974103785e-9,
+        "maximumBackwardTriangleAreaM2": 5.740071066976621e-8,
+        "totalAreaM2": 71.20767949996865,
+        "minimumSignificantCornerDot": 0.8612532326897319,
+        "zeroNormalSignificantTriangleCorners": 0,
+        "smoothFaces": 2123,
+        "flatFaces": 3636,
+        "sharpEdges": 9432,
+        "curvedSmoothEdges1To30Degrees": 1222,
+        "meanCurvedSmoothEdgeDegrees": 7.9622399326572735,
+        "worstTriangles": []
+      }
+    }
+  ]
+}

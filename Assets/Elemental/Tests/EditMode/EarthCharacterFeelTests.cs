@@ -110,6 +110,53 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void FullContactBoundsNewSupportDropPerRenderedPoseAndRecoversSmoothly()
+        {
+            float boundedDrop = EarthPelvisCompensation.SelectAppliedOffset(
+                0f, -0.18f, -0.08f, true);
+            float partialCapture = EarthPelvisCompensation.SelectAppliedOffset(
+                0f, -0.18f, -0.08f, false);
+            float smallReachCorrection = EarthPelvisCompensation.SelectAppliedOffset(
+                0f, -0.018f, -0.004f, true);
+            float recovery = EarthPelvisCompensation.SelectAppliedOffset(
+                -0.018f, 0f, -0.012f, true);
+
+            Assert.That(boundedDrop,
+                Is.EqualTo(-EarthPelvisCompensation.MaximumDownwardFrameStep).Within(0.000001f));
+            Assert.That(partialCapture,
+                Is.EqualTo(-EarthPelvisCompensation.MaximumDownwardFrameStep).Within(0.000001f));
+            Assert.That(smallReachCorrection, Is.EqualTo(-0.018f).Within(0.000001f));
+            Assert.That(recovery, Is.EqualTo(-0.012f).Within(0.000001f));
+        }
+
+        [Test]
+        public void PelvisCompensationCanCancelBaseRiseWithoutAWorldSpaceDrop()
+        {
+            const float previousOffset = -0.10f;
+            const float previousBaseHeight = 1.00f;
+            const float nextBaseHeight = 1.11f;
+            float applied = EarthPelvisCompensation.SelectAppliedOffset(
+                previousOffset,
+                -0.18f,
+                -0.12f,
+                true,
+                nextBaseHeight - previousBaseHeight);
+
+            Assert.That(applied, Is.EqualTo(-0.18f).Within(0.0001f));
+            Assert.That(nextBaseHeight + applied,
+                Is.GreaterThanOrEqualTo(previousBaseHeight + previousOffset -
+                                        EarthPelvisCompensation.MaximumDownwardFrameStep));
+            Assert.That(EarthPelvisCompensation.SelectAppliedOffset(
+                    previousOffset,
+                    -0.18f,
+                    -0.12f,
+                    true,
+                    0f),
+                Is.EqualTo(-0.15f).Within(0.0001f),
+                "A stationary walk-stop handoff must retain the five-centimetre safety bound.");
+        }
+
+        [Test]
         public void MovingFootContactFollowsGroundWithoutFreezingStride()
         {
             EarthFootPlantResult contact = EarthFootPlantSolver.SolveContact(
@@ -423,7 +470,7 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
-        public void ContactTargetFilteringBoundsSupportLocalSteps()
+        public void StationaryContactFollowingUsesCurrentSupportLocalTarget()
         {
             EarthFootContactState leftState = default;
             EarthFootContactState rightState = default;
@@ -441,7 +488,8 @@ namespace Elemental.Tests.EditMode
             EarthFootContactPairDecision moved = EarthFootContactSolver.ResolvePair(
                 ref leftState, ref rightState, in movedLeft, in movedRight);
 
-            Assert.That(math.length(moved.Left.TargetLocal), Is.LessThanOrEqualTo(0.0251f));
+            Assert.That(math.distance(moved.Left.TargetLocal, movedLeft.ContactTargetLocal),
+                Is.LessThan(0.0001f));
         }
 
         [TestCase(30)]

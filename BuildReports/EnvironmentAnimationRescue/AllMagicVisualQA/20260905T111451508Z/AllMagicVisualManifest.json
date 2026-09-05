@@ -1,0 +1,83 @@
+{
+    "schema": "all-magic-animation-visual-qa-v1",
+    "status": "Failed",
+    "error": "System.TimeoutException: Magic stage timed out: Contact for slot 1.\r\n  at Elemental.Authoring.Editor.AllMagicVisualQaDriver.Tick () [0x0009c] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\AllMagicVisualQaDriver.cs:171 ",
+    "startedUtc": "2026-09-05T11:14:51.5098472Z",
+    "completedUtc": "2026-09-05T11:14:56.7814899Z",
+    "unityVersion": "6000.5.7f1",
+    "scene": "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity",
+    "actor": "Planet Character",
+    "scope": "Direct semantic presentation of all eleven production magic slots at normal rate. Each slot records anticipation, rendered contact and recovery. Slot 11 repeats to prove same-slot A/B restart. Physical short-LMB quick stone and simultaneous LMB/RMB routing are covered separately by Animation Punch Continuity Runtime Audit. Human review of PNGs remains required.",
+    "targetFrameRate": 60,
+    "productionCameraRigLeftEnabled": true,
+    "completeMatrix": false,
+    "restoredTimeAndInput": true,
+    "restoredCameraAndUi": true,
+    "frames": [
+        {
+            "label": "slot-01-raise-wall-anticipation",
+            "technique": "RaiseWall",
+            "stage": "anticipation",
+            "phase": "Strike",
+            "action": "MagicCast",
+            "footPolicy": "DefaultContact",
+            "dominantClip": "Standing 2H Magic Attack 05",
+            "path": "C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/BuildReports/EnvironmentAnimationRescue/AllMagicVisualQA/20260905T111451508Z/slot-01-raise-wall-anticipation.png",
+            "requestedUtc": "2026-09-05T11:14:51.6511632Z",
+            "completedUtc": "2026-09-05T11:14:51.7749348Z",
+            "slot": 1,
+            "repeat": 0,
+            "frame": 7,
+            "renderFrame": 5,
+            "completedRenderFrame": 9,
+            "screenWidth": 1464,
+            "screenHeight": 650,
+            "targetFrameRate": 60,
+            "currentStateHash": 2123799777,
+            "nextStateHash": 0,
+            "sequence": 2885681153,
+            "pngBytes": 992183,
+            "inTransition": false,
+            "finalPoseFinite": true,
+            "fullBodyVisible": true,
+            "lineOfSight": true,
+            "deltaTime": 0.02041410095989704,
+            "magicClock": 0.05847868323326111,
+            "renderedClock": 0.05847868323326111,
+            "semanticWeight": 1.0,
+            "layerWeight": 0.9200000166893005,
+            "dominantClipWeight": 1.0,
+            "handConstraintWeight": 0.0,
+            "leftFootIkWeight": 0.4211132228374481,
+            "rightFootIkWeight": 0.4211132228374481,
+            "headHeight": 0.6136758923530579,
+            "headPitchDegrees": -5.811100959777832,
+            "neckLength": 0.13242310285568238,
+            "headViewport": {
+                "x": 0.4383505880832672,
+                "y": 0.38366788625717165,
+                "z": 7.614763259887695
+            },
+            "leftFootViewport": {
+                "x": 0.4323355257511139,
+                "y": 0.12706845998764039,
+                "z": 8.066652297973633
+            },
+            "rightFootViewport": {
+                "x": 0.44350701570510867,
+                "y": 0.07837074995040894,
+                "z": 7.461469650268555
+            },
+            "cameraPosition": {
+                "x": 0.48309192061424258,
+                "y": 58.59646224975586,
+                "z": -7.57027530670166
+            },
+            "cameraEuler": {
+                "x": 6.884688377380371,
+                "y": 359.9808654785156,
+                "z": 0.25957319140434267
+            }
+        }
+    ]
+}

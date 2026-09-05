@@ -1,0 +1,42 @@
+{
+    "utc": "2026-09-04T12:48:29.5890113Z",
+    "scope": "Unity Editor main thread; Stopwatch and GC.GetAllocatedBytesForCurrentThread around complete TryEmitBreak, including containment, canonical split, activation and feedback; assertions/report writing and source preparation/cooking excluded; preparation is measured separately. First sample can include first-use binding overhead. Not a player-build performance certification.",
+    "measuredCalls": 4,
+    "minimumCollisionFill": 0.9761914610862732,
+    "minimumRenderFill": 0.8903154134750366,
+    "coldPreparationMilliseconds": 2.1809999999999998,
+    "preparedPlanCount": 11,
+    "preparedNativeMeshCount": 82,
+    "maximumMilliseconds": 0.2482,
+    "maximumManagedBytes": 0,
+    "samples": [
+        {
+            "seed": 1,
+            "depth": 0,
+            "succeeded": true,
+            "milliseconds": 0.2199,
+            "managedBytes": 0
+        },
+        {
+            "seed": 444,
+            "depth": 1,
+            "succeeded": true,
+            "milliseconds": 0.1953,
+            "managedBytes": 0
+        },
+        {
+            "seed": 2,
+            "depth": 0,
+            "succeeded": true,
+            "milliseconds": 0.2482,
+            "managedBytes": 0
+        },
+        {
+            "seed": 3,
+            "depth": 0,
+            "succeeded": true,
+            "milliseconds": 0.1382,
+            "managedBytes": 0
+        }
+    ]
+}

@@ -1,0 +1,19 @@
+{
+    "unityVersion": "6000.5.7f1",
+    "utc": "2026-09-04T12:03:06.9934253Z",
+    "mode": "PlayMode",
+    "result": "Failed",
+    "total": 9,
+    "passed": 4,
+    "failed": 5,
+    "skipped": 0,
+    "inconclusive": 0,
+    "durationSeconds": 26.5733832,
+    "failures": [
+        "Elemental.Tests.PlayMode.EarthArmorHeadRuntimeTests.ProductionArmorCoversHeadAndFollowsItsRotation: Unhandled log message: '[Error] Not allowed to access vertices on mesh 'LinebreakerBody' (isReadable is false; Read/Write must be enabled in import settings)'. Use UnityEngine.TestTools.LogAssert.Expect",
+        "Elemental.Tests.PlayMode.EarthWaveContactRuntimeTests.LongWaveKeepsItsMeshesAndEmitsOnSurfaceThroughRiseAndRetreat: Unhandled log message: '[Error] Not allowed to access vertices on mesh 'LinebreakerBody' (isReadable is false; Read/Write must be enabled in import settings)'. Use UnityEngine.TestTools.LogAssert.Expect",
+        "Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests.ArmorAssemblesAndConfirmedOverscrollReleasesPhysicalPieces:   Formation is a visual shell; colliders and canonical matter are deferred until launch.\r\n  Expected: False\r\n  But was:  True\r\n",
+        "Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests.ArmorConformsToBodyCollidersThenExpandsAsHemisphereWithoutKickingCaster:   Armor stones must follow the actual head/torso/limb surfaces, not a root cylinder.\r\n  Expected: greater than or equal to 90\r\n  But was:  73\r\n",
+        "Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests.FastConvexRockCannotTunnelThroughPlatform:   The sweep must emit exactly one impact without callback duplication.\r\n  Expected: 1\r\n  But was:  2\r\n"
+    ]
+}

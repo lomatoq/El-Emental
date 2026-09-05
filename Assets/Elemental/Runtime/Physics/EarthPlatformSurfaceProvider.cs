@@ -23,12 +23,36 @@ namespace Elemental.Runtime.Physics
             if (platform == null || !platform.IsSurfaceAvailable) return false;
             var ray = new Ray(ToVector3(query.Origin), ToVector3(query.Direction));
             Collider surfaceCollider = platform.SurfaceCollider;
-            if (surfaceCollider == null || !surfaceCollider.Raycast(ray, out RaycastHit hit, query.MaximumDistance))
-                return false;
             Vector3 up = platform.SurfaceUp;
-            float upDot = Vector3.Dot(hit.normal, up);
+            bool requiresWalkableTop = (query.RequiredCapabilities &
+                                        (EarthSurfaceCapabilities.Support |
+                                         EarthSurfaceCapabilities.Pillar |
+                                         EarthSurfaceCapabilities.LandingCushion)) != 0;
+            Vector3 analyticPoint = default;
+            float analyticDistance = 0f;
+            bool hasAnalyticTop = requiresWalkableTop &&
+                                  platform.TrySampleTopSurface(
+                                      ray,
+                                      query.MaximumDistance,
+                                      out analyticPoint,
+                                      out analyticDistance);
+            RaycastHit hit = default;
+            bool hasColliderHit = surfaceCollider != null &&
+                                  surfaceCollider.Raycast(
+                                      ray,
+                                      out hit,
+                                      query.MaximumDistance);
+            if (!hasAnalyticTop && !hasColliderHit) return false;
+
+            // Moving-support queries need a stable semantic top surface even while
+            // the kinematic collider is being restored or PhysX returns a side
+            // triangle first. The same authored polygon used to build the prism is
+            // authoritative here, so this does not invent support outside the mesh.
+            bool top = hasAnalyticTop || Vector3.Dot(hit.normal, up) >= 0.72f;
+            float upDot = top ? 1f : Vector3.Dot(hit.normal, up);
             if (upDot < -0.55f) return false;
-            bool top = upDot >= 0.72f;
+            Vector3 point = hasAnalyticTop ? analyticPoint : hit.point;
+            float distance = hasAnalyticTop ? analyticDistance : hit.distance;
             Vector3 normal = top ? up : hit.normal.normalized;
             EarthSurfaceCapabilities capabilities = EarthSurfaceCapabilities.Draw |
                                                     EarthSurfaceCapabilities.Destructible;
@@ -43,11 +67,11 @@ namespace Elemental.Runtime.Physics
                     platform.PlatformId,
                     platform.Generation,
                     top ? (byte)0 : FaceId(normal)),
-                EarthSurfaceQueryService.ToFloat3(hit.point),
+                EarthSurfaceQueryService.ToFloat3(point),
                 EarthSurfaceQueryService.ToFloat3(normal),
                 EarthSurfaceQueryService.ToFloat3(platform.transform.right),
                 EarthSurfaceQueryService.ToFloat3(platform.SurfaceVelocity),
-                hit.distance,
+                distance,
                 EarthSurfaceMaterial.RaisedEarth,
                 EarthSurfaceProvenance.RaisedPlatform,
                 capabilities);

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="7" result="Passed" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 10:22:30Z" end-time="2026-09-05 10:22:30Z" duration="0.0126252">
+  <test-suite type="TestSuite" id="2039" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="838" result="Passed" start-time="2026-09-05 10:22:30Z" end-time="2026-09-05 10:22:30Z" duration="0.012625" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2025" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="838" result="Passed" start-time="2026-09-05 10:22:30Z" end-time="2026-09-05 10:22:30Z" duration="0.012195" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2026" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="838" result="Passed" start-time="2026-09-05 10:22:30Z" end-time="2026-09-05 10:22:30Z" duration="0.012000" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2027" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="838" result="Passed" start-time="2026-09-05 10:22:30Z" end-time="2026-09-05 10:22:30Z" duration="0.011819" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2028" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="838" result="Passed" start-time="2026-09-05 10:22:30Z" end-time="2026-09-05 10:22:30Z" duration="0.011636" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1681" name="EarthResponsiveHandTargetSolverTests" fullname="Elemental.Tests.EditMode.EarthResponsiveHandTargetSolverTests" classname="Elemental.Tests.EditMode.EarthResponsiveHandTargetSolverTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-05 10:22:30Z" end-time="2026-09-05 10:22:30Z" duration="0.011123" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1687" name="EqualElapsedTime_ProducesEquivalentResponseAtThirtyAndOneTwentyHz" fullname="Elemental.Tests.EditMode.EarthResponsiveHandTargetSolverTests.EqualElapsedTime_ProducesEquivalentResponseAtThirtyAndOneTwentyHz" methodname="EqualElapsedTime_ProducesEquivalentResponseAtThirtyAndOneTwentyHz" classname="Elemental.Tests.EditMode.EarthResponsiveHandTargetSolverTests" runstate="Runnable" seed="111466237" result="Passed" start-time="2026-09-05 10:22:30Z" end-time="2026-09-05 10:22:30Z" duration="0.003470" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1686" name="InvalidInput_AlwaysReturnsFiniteBoundedSample" fullname="Elemental.Tests.EditMode.EarthResponsiveHandTargetSolverTests.InvalidInput_AlwaysReturnsFiniteBoundedSample" methodname="InvalidInput_AlwaysReturnsFiniteBoundedSample" classname="Elemental.Tests.EditMode.EarthResponsiveHandTargetSolverTests" runstate="Runnable" seed="1696084392" result="Passed" start-time="2026-09-05 10:22:30Z" end-time="2026-09-05 10:22:30Z" duration="0.000625" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1683" name="MovingFocus_HasExplicitAngularAndReachSpeedBounds" fullname="Elemental.Tests.EditMode.EarthResponsiveHandTargetSolverTests.MovingFocus_HasExplicitAngularAndReachSpeedBounds" methodname="MovingFocus_HasExplicitAngularAndReachSpeedBounds" classname="Elemental.Tests.EditMode.EarthResponsiveHandTargetSolverTests" runstate="Runnable" seed="668213483" result="Passed" start-time="2026-09-05 10:22:30Z" end-time="2026-09-05 10:22:30Z" duration="0.000565" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1682" name="RearTarget_RemainsInReachableFrontCone" fullname="Elemental.Tests.EditMode.EarthResponsiveHandTargetSolverTests.RearTarget_RemainsInReachableFrontCone" methodname="RearTarget_RemainsInReachableFrontCone" classname="Elemental.Tests.EditMode.EarthResponsiveHandTargetSolverTests" runstate="Runnable" seed="1073682783" result="Passed" start-time="2026-09-05 10:22:30Z" end-time="2026-09-05 10:22:30Z" duration="0.000573" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1685" name="Release_HoldsLastBodyRelativeGoalInsteadOfChasingFallback" fullname="Elemental.Tests.EditMode.EarthResponsiveHandTargetSolverTests.Release_HoldsLastBodyRelativeGoalInsteadOfChasingFallback" methodname="Release_HoldsLastBodyRelativeGoalInsteadOfChasingFallback" classname="Elemental.Tests.EditMode.EarthResponsiveHandTargetSolverTests" runstate="Runnable" seed="1081039862" result="Passed" start-time="2026-09-05 10:22:30Z" end-time="2026-09-05 10:22:30Z" duration="0.001419" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1684" name="RootTurn_DoesNotCreateWorldSpaceTargetLag" fullname="Elemental.Tests.EditMode.EarthResponsiveHandTargetSolverTests.RootTurn_DoesNotCreateWorldSpaceTargetLag" methodname="RootTurn_DoesNotCreateWorldSpaceTargetLag" classname="Elemental.Tests.EditMode.EarthResponsiveHandTargetSolverTests" runstate="Runnable" seed="1733328327" result="Passed" start-time="2026-09-05 10:22:30Z" end-time="2026-09-05 10:22:30Z" duration="0.002022" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1688" name="TorsoAim_IsGentleBoundedAndDisabledBeforeConstraintOwnership" fullname="Elemental.Tests.EditMode.EarthResponsiveHandTargetSolverTests.TorsoAim_IsGentleBoundedAndDisabledBeforeConstraintOwnership" methodname="TorsoAim_IsGentleBoundedAndDisabledBeforeConstraintOwnership" classname="Elemental.Tests.EditMode.EarthResponsiveHandTargetSolverTests" runstate="Runnable" seed="925670686" result="Passed" start-time="2026-09-05 10:22:30Z" end-time="2026-09-05 10:22:30Z" duration="0.000747" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\AnimationResponsiveHandsEdit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

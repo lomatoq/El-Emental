@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 15:35:58Z" end-time="2026-09-05 15:36:04Z" duration="5.8435547">
+  <test-suite type="TestSuite" id="1276" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="207" result="Passed" start-time="2026-09-05 15:35:58Z" end-time="2026-09-05 15:36:04Z" duration="5.843555" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1269" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="207" result="Passed" start-time="2026-09-05 15:35:59Z" end-time="2026-09-05 15:36:04Z" duration="5.704457" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1270" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="207" result="Passed" start-time="2026-09-05 15:35:59Z" end-time="2026-09-05 15:36:04Z" duration="5.674213" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1271" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="207" result="Passed" start-time="2026-09-05 15:35:59Z" end-time="2026-09-05 15:36:04Z" duration="5.518187" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1272" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="207" result="Passed" start-time="2026-09-05 15:35:59Z" end-time="2026-09-05 15:36:04Z" duration="5.491389" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1259" name="SurfPillarJumpVisualQaTests" fullname="Elemental.Tests.PlayMode.SurfPillarJumpVisualQaTests" classname="Elemental.Tests.PlayMode.SurfPillarJumpVisualQaTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-05 15:35:59Z" end-time="2026-09-05 15:36:04Z" duration="5.486602" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1260" name="ProductionSideViewShowsChargedTiltedPillarLongJump" fullname="Elemental.Tests.PlayMode.SurfPillarJumpVisualQaTests.ProductionSideViewShowsChargedTiltedPillarLongJump" methodname="ProductionSideViewShowsChargedTiltedPillarLongJump" classname="Elemental.Tests.PlayMode.SurfPillarJumpVisualQaTests" runstate="Runnable" seed="11530257" result="Passed" start-time="2026-09-05 15:35:59Z" end-time="2026-09-05 15:36:04Z" duration="5.466729" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 2844.68ms; ground=exact baked base, cacheLoad=13.41ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1412.61ms, peakCookingPoll=0.28ms; sync=ArenaInitialize=370.35ms/15;ArenaBevel=353.36ms/175;ArenaMeshPicking=1.81ms/175;WallAwake=479.57ms/1;WallPieceVisuals=18.62ms/40;PlatformPoolAwake=9.54ms/1;PlatformRuntimeMeshes=1.26ms/12;PillarPoolAwake=16.98ms/1;PillarMeshLibrary=3.11ms/1;PillarColumns=12.87ms/1;DebrisPoolAwake=87.01ms/1;HeroFragmentPoolAwake=11.69ms/1.
+[SurfPillarInputDiag] frame=0 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.020 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=1 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.035 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=2 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.049 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=3 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.063 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=4 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.074 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=5 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.087 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=6 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.101 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=7 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.113 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=8 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.128 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=9 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.145 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=10 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.161 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=11 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.176 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=12 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.189 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=13 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.202 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=14 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.215 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=15 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.242 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=16 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.256 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=17 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.268 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=18 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.282 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=19 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.294 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=20 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.307 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=21 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.321 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=22 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.332 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=23 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.343 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=24 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.355 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=25 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.367 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=26 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.380 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=27 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.393 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=28 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.406 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=29 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.431 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=30 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.443 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=31 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.454 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=32 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.466 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=33 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.478 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=34 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.490 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=35 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.501 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=36 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.512 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=37 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.523 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=38 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.534 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=39 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.546 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=40 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.556 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=41 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.571 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=42 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.582 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=43 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.606 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=44 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.616 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=45 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.627 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=46 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.635 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=47 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.642 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=48 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.652 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+[SurfPillarInputDiag] frame=49 owner=Surf route=Surf/Continue/PillarJump active=True charging=True charge=0.660 stable=True grounded=True support=0x5F000001 command=(0.000,0.000) ragdoll=AnimatedMotor
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\SurfPillarJumpVisualQa.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

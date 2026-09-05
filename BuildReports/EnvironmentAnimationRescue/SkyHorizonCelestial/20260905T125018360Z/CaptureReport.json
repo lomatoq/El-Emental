@@ -1,0 +1,159 @@
+{
+    "utc": "2026-09-05T12:50:18.3624655Z",
+    "completedUtc": "2026-09-05T12:50:19.2190971Z",
+    "unityVersion": "6000.5.7f1",
+    "scene": "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity",
+    "status": "Failed",
+    "error": "System.InvalidOperationException: Numeric/viewport capture contract failed for MoonQuarterClose\r\n  at Elemental.Authoring.Editor.SkyHorizonCelestialVisualQa.Tick () [0x00146] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\SkyHorizonCelestialVisualQa.cs:284 ",
+    "scope": "Actual Game-view ScreenCapture through the production Main Camera. Camera pose and celestial QA time are transient. Camera motion owners are suspended and restored; no scene/profile/material/light save. Numeric MPB and viewport checks accompany images, but appearance still requires human review.",
+    "folder": "C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\BuildReports\\EnvironmentAnimationRescue\\SkyHorizonCelestial\\20260905T125018360Z",
+    "restored": true,
+    "applicationPlayingAtStart": true,
+    "allNumericContractsPassed": false,
+    "originalPhase": 0.2113410383462906,
+    "originalCameraPosition": {
+        "x": 0.4741698205471039,
+        "y": 60.581600189208987,
+        "z": -7.411451816558838
+    },
+    "temporarilyDisabled": [
+        "Elemental.Presentation.Camera.EarthCinemachineCameraController @ Gravity Toy Camera",
+        "Elemental.Presentation.Rendering.VisualQaCaptureBehaviour @ Gravity Toy Camera",
+        "Unity.Cinemachine.CinemachineBrain @ Gravity Toy Camera",
+        "UnityEngine.UIElements.UIDocument @ Earth Core HUD",
+        "Elemental.Presentation.Camera.PlanetCameraRig @ Gravity Toy Camera",
+        "Elemental.Presentation.VFX.EarthChargeCameraLookdevV2 @ Gravity Toy Camera",
+        "Elemental.Presentation.Camera.EarthCameraDirector @ Gravity Toy Camera"
+    ],
+    "captures": [
+        {
+            "name": "NoonHorizonYaw0",
+            "path": "C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\BuildReports\\EnvironmentAnimationRescue\\SkyHorizonCelestial\\20260905T125018360Z\\NoonHorizonYaw0.png",
+            "utc": "2026-09-05T12:50:18.6568724Z",
+            "viewMode": "HorizonA",
+            "bodyName": "",
+            "bodyShader": "",
+            "requestedTimePhase": 0.25,
+            "actualTimePhase": 0.25,
+            "targetMoonPhase": 0.0,
+            "actualMoonPhase": 0.3058166205883026,
+            "bodyVisibility": 0.0,
+            "bodyIsMoon": 0.0,
+            "bodyMoonPhaseProperty": 0.0,
+            "bodyAltitude": 0.0,
+            "cameraRadius": 61.03511047363281,
+            "innerRadius": 55.099998474121097,
+            "outerRadius": 58.130496978759769,
+            "revealDistance": 0.3636597990989685,
+            "fov": 62.0,
+            "cameraPosition": {
+                "x": 0.4741698205471039,
+                "y": 60.581600189208987,
+                "z": -7.411451816558838
+            },
+            "cameraEuler": {
+                "x": 351.0218505859375,
+                "y": 0.1601230651140213,
+                "z": 359.53515625
+            },
+            "bodyViewport": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "bodyInFrame": true,
+            "numericContractPassed": true,
+            "screenWidth": 1464,
+            "screenHeight": 650,
+            "renderedSettleFrames": 10,
+            "renderedWriteFrames": 5,
+            "pngBytes": 801724
+        },
+        {
+            "name": "NoonHorizonYaw90",
+            "path": "C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\BuildReports\\EnvironmentAnimationRescue\\SkyHorizonCelestial\\20260905T125018360Z\\NoonHorizonYaw90.png",
+            "utc": "2026-09-05T12:50:18.8462525Z",
+            "viewMode": "HorizonB",
+            "bodyName": "",
+            "bodyShader": "",
+            "requestedTimePhase": 0.25,
+            "actualTimePhase": 0.25,
+            "targetMoonPhase": 0.0,
+            "actualMoonPhase": 0.3058166205883026,
+            "bodyVisibility": 0.0,
+            "bodyIsMoon": 0.0,
+            "bodyMoonPhaseProperty": 0.0,
+            "bodyAltitude": 0.0,
+            "cameraRadius": 61.03511047363281,
+            "innerRadius": 55.099998474121097,
+            "outerRadius": 58.130496978759769,
+            "revealDistance": 0.3636597990989685,
+            "fov": 62.0,
+            "cameraPosition": {
+                "x": 0.4741698205471039,
+                "y": 60.581600189208987,
+                "z": -7.411451816558838
+            },
+            "cameraEuler": {
+                "x": 358.4694519042969,
+                "y": 90.33100128173828,
+                "z": 353.0238037109375
+            },
+            "bodyViewport": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "bodyInFrame": true,
+            "numericContractPassed": true,
+            "screenWidth": 1464,
+            "screenHeight": 650,
+            "renderedSettleFrames": 10,
+            "renderedWriteFrames": 5,
+            "pngBytes": 775867
+        },
+        {
+            "name": "MoonCrescentClose",
+            "path": "C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\BuildReports\\EnvironmentAnimationRescue\\SkyHorizonCelestial\\20260905T125018360Z\\MoonCrescentClose.png",
+            "utc": "2026-09-05T12:50:19.0297776Z",
+            "viewMode": "MoonClose",
+            "bodyName": "Distant Moon",
+            "bodyShader": "Elemental/Scaled Celestial Body",
+            "requestedTimePhase": 0.30000001192092898,
+            "actualTimePhase": 0.30000001192092898,
+            "targetMoonPhase": 0.2199999988079071,
+            "actualMoonPhase": 0.22077295184135438,
+            "bodyVisibility": 1.0,
+            "bodyIsMoon": 1.0,
+            "bodyMoonPhaseProperty": 0.22077295184135438,
+            "bodyAltitude": 0.23762813210487367,
+            "cameraRadius": 61.03511047363281,
+            "innerRadius": 55.099998474121097,
+            "outerRadius": 58.130496978759769,
+            "revealDistance": 0.3636597990989685,
+            "fov": 8.0,
+            "cameraPosition": {
+                "x": 0.4741698205471039,
+                "y": 60.581600189208987,
+                "z": -7.411451816558838
+            },
+            "cameraEuler": {
+                "x": 339.42779541015627,
+                "y": 8.999979972839356,
+                "z": 358.4267272949219
+            },
+            "bodyViewport": {
+                "x": 0.5,
+                "y": 0.4999999403953552,
+                "z": 983.9999389648438
+            },
+            "bodyInFrame": true,
+            "numericContractPassed": true,
+            "screenWidth": 1464,
+            "screenHeight": 650,
+            "renderedSettleFrames": 10,
+            "renderedWriteFrames": 5,
+            "pngBytes": 713409
+        }
+    ]
+}

@@ -1,17 +1,256 @@
 # El-Emental project execution tracker
 
-Updated: 2026-08-31
+Updated: 2026-09-05
 
-Snapshot branch: `codex/foundation-stability-rescue`
+**Publication checkpoint requested by the user, 2026-09-05:** this snapshot is
+intended for `main` and includes the existing local work, source art, assets,
+reproducible tools and evidence. It is not an assertion that all checks pass.
+Airborne acquisition now physically starts (15:48 Play), but moving-lip hand
+contact still fails at 0.925 m versus the 0.35 m gate. Armor coverage still fails
+its unchanged distinct-collar-plate gate (3 versus 4); further geometry review is
+open. The final native build/strict loading-cover recapture has not yet run.
+Camera, outer-ring destruction, charged surf and isolated SONIC acceptances above
+remain valid. Large startup cache assets and profiler/cubemap data use Git LFS;
+SONIC weights remain reproducibly downloadable under the existing ignore rule.
 
-Tested implementation commit: `8c2e6245a0e4fe1e169b63998e918ce800477b36`
 
-Evidence condition: tested 2026-08-31 from the exact implementation content committed above;
-later documentation-only commits do not invalidate the code/test snapshot.
+**Latest verified follow-up, 2026-09-05 15:23 UTC (supersedes older pending notes):**
+Gameplay camera fixed in the permanent Cinemachine owner and saved scene: perspective
+lens ownership removes physical-gate crop; pitch-distance lift is included in the
+arm-height solve. Framing math 7/7 and real neutral/magic/return Play proof 1/1 pass.
+Root reviewed the neutral image; both feet have >23% lower-frame margin in this run.
+Evidence: `BuildReports/GameplayCameraFraming/20260905T151846308Z`.
+
+SONIC isolated CPU production-actor preview passes at 15:23:30: 252 rendered boxing
+samples / 2.554 s, four rolling plans, bilateral hand motion and zero root drift,
+with final foot owner retained and camera/UI/bridge/rival state restored. Walk and
+boxing PNGs visually inspected. No SONIC component is enabled in saved gameplay.
+
+New user issues under final acceptance: shared interior palette on the heavily cut
+sixth outer arch, restored dense fracture cloud, airborne moving-platform catch,
+and denser live-bone neck/shoulder/torso armor coverage. These are not accepted
+solely from source compilation; focused physical and visual checks are running.
+
+
+**Latest user corrections, 13:31 UTC:** equipped armor now retains ordinary
+locomotion with a separate continuous speed multiplier (~83% compact, ~75%
+expanded), without cast stance or disabling automatic mantle. Short Space no
+longer selects a premature PillarJump upper-body pose; centered aim removes the
+late side bias. New policy **5/5 Edit**, physical input **1/1 Play**, visual proof
+**1/1 / four frames**, including 19 rendered jump frames with zero magic layer.
+The existing semantic magic regression was rerun: **8/8 at 13:20 UTC**.
+
+Sky final **9/9 captures at 13:31**, envelope math **3/3**: no shell chord or
+direction-noise pole, system planet hidden inside the 63.1 m outer atmosphere,
+Moon phase/detail and warm horizon color visually reviewed. See DAY_NIGHT_RESCUE.
+The initial Surf+Space physical input proof passed (one pillar, 12 stones), but
+the user subsequently requested hold-to-charge/release and a physically tilted
+column for a forward long jump; that refinement is in progress and supersedes
+the instant-launch acceptance. Fresh Player build/cache validation is running.
+SONIC anatomical collapse is fixed by retaining Humanoid hips ownership, but
+the experimental boxing playback cadence and final framing are still being
+reviewed; it remains absent from saved gameplay scenes.
+
+**Current verification, September 5, 11:30 UTC (dirty `d2174ed`):** semantic
+magic passes **21/21 EditMode and 8/8 PlayMode**. Real dual-mouse quick stones pass
+**30/60/120 Hz, 3/3**. Angular-velocity inertialization passes **6/6**, including
+three-axis spatial derivative continuity; the old 176-degree held-arm failure is
+fixed and actual held/gravity/vector now passes. Body-relative multi-object carry
+passes **1/1**, responsive hand math **7/7**. A real ground-wave commit now emits
+its missing presentation event and passes **1/1**. There are eleven shared pose
+slots, not eleven total gameplay abilities.
+
+All-eleven current visual matrix **36/36 frames captured at 11:23**, with readable
+anticipation/contact/recovery and repeated quick-punch buffers. Head pitch spans
+**-21.46 to +28.00 degrees**, valid neck length >=0.1324 m. The excessive source
+head tilt is bounded in the existing final body owner; pure head checks **10/10**.
+Root reviewed platform, armor and repeated punch contacts. This is scoped visual
+and continuity evidence, not a promise of perfect animation in every combination.
+The final protected-pose/paused-pose/sonar regression and full movement visual
+matrix are still being checked.
+
+Windows Development from saved scenes **builds successfully, zero errors** at
+11:26:40 (186 warnings, mainly inference compute variants). Fresh process reports
+world ready at **5.589 s** and cover at **2.848 s**; both screenshots were black in
+the hidden run, so those files do not establish visual loading acceptance. The
+Player also exposes **26 fracture-cache misses**, under investigation. Editor cache
+comparison remains **12.75 s cached / 43.74 s uncached**; post-cleanup scene is 6.07 MB.
+
+SONIC remains isolated in `Assets/Experimental/SonicPrototype`, absent from the
+saved scene. Unity CPU inference p50/p95 is **79.4/82.3 ms walk**, **75.9/79.3 ms
+boxing**. Full Unity/ORT output parity passes (max error ~2.2e-5), G1 math **4/4**.
+Humanoid preview is being rechecked after preserving the production PlayableGraph;
+inference alone is not visual integration acceptance.
+
+**Environment visual follow-up, 11:00 UTC:** lit dust passes **2/2** focused GPU
+Play with day/night delta **0.39619595**, night visibility **0.1160493** and
+neutral-reference footprint error **0.001231**. The exact same production particle
+layout was captured and visually inspected at Day/Dusk/Night; night is dimmer.
+Seismic vision passes **1/1** production lifecycle and **5/5** temporal GPU checks
+at 30/60/120 Hz, including byte-exact inactive day/night output. These are scoped
+material/effect results, not an all-technique visual acceptance upgrade.
+
+**Outer column content, 2026-09-04 (dirty `d2174ed`):** seven independent damaged
+columns placed with 2.5 m arena clearance, buried caps and existing arena materials.
+85 structural cells and eight loose stones use the existing physical magic paths.
+**2/2 EditMode and fresh 7/7 PlayMode passed**, latest UTC 10:42:17 on September 5;
+every cell was grabbed and repaired, loose stones were reacquired, unsupported
+islands released and foundation-connected cells stayed seated during partial repair.
+[Evidence](OUTER_STONE_RING.md).
+This scoped content result does not upgrade broader M11 acceptance.
+
+Current branch: `codex/environment-aware-motion-matching-spike`
+
+Current implementation: dirty working tree on `d2174eded114dd022e4a9c442abadda7a0e44555`.
+
+Historical foundation evidence below belongs to `8c2e6245a0e4fe1e169b63998e918ce800477b36`,
+not the current dirty tree. Current scoped evidence is tracked separately.
 
 Technical context: [`Docs/PROJECT_TECHNICAL_STATE.md`](PROJECT_TECHNICAL_STATE.md)
 
 ## Current verdict
+
+**MMB field + contact packing, UTC 14:14:** completed the user-clarified group
+interaction. Fixed armor-release input latch; restored radius collection while
+MMB is held; removed artificial orbit-slot spacing. **9/9 Edit + 9/9 focused Play
+passed** on dirty `d2174ed`, including real button input for three arena cells
+after armor, arrivals, contact packing, repeated group capture and rest/wake.
+This supersedes the single-target assumption below; wider M11 acceptance is
+unchanged. [Evidence](ARENA_GRAVITY_ACQUISITION_FIX.md).
+
+**Middle-button clarification, UTC 13:31:** Input System MMB press/hold/move/release
+and repeated presses pass through the shipping adapter/router; **8/8 focused Play**.
+The user's remaining gravity-grip failure is still unconfirmed in this scenario;
+no additional gameplay change or acceptance upgrade is claimed.
+[Raw-button evidence](ARENA_GRAVITY_ACQUISITION_FIX.md).
+
+**Arena gravity acquisition, 2026-09-04 (dirty `d2174ed`, UTC 13:25):** fixed an
+additional user-reproduced failure: Surface-only arena floor intercepted MMB rays
+and produced empty successful sessions. Focus now requires Gravity/Repair; start
+requires captured matter or a controllable structure. New shipping-geometry
+screen-point regression passes lift and repeated grabs; circle disassembly/repair
+is retained. **4/4 EditMode + 7/7 focused PlayMode passed.** User wave/shadow settings
+retained. The broader legacy shadow assertion failed and is documented separately;
+M11/global acceptance remains unchanged. [Details](ARENA_GRAVITY_ACQUISITION_FIX.md).
+
+**Loose stone fixes, 2026-09-04 (dirty `d2174ed`, UTC 12:48):** camera-hidden arena
+parents no longer block valid loose targets; supported stones sleep without drift,
+wake for grip and fall on support removal; wall/platform shards have one gravity
+authority. Oblique cuts and broad bevels replace rectangular secondary fractures,
+while primary arena detachment remains exact. **12/12 Edit, 5/5 loose stone Play,
+3/3 production fracture Play passed**. Current saved wave settings retained by
+matching backup/profile SHA256. [Evidence and baseline](LOOSE_STONE_FIX.md),
+[geometry/Editor measurements](CONTAINED_FRACTURE_FIX.md). This scoped result does
+not change wider-suite or M11 acceptance.
+
+**Wave overlap and head seam stones, 2026-09-04 (dirty `d2174ed`, UTC 12:21):**
+the previous automatic propagation slowdown is superseded. Each row samples one
+travelling pulse at distance/speed; a new top Inspector length field scales the
+visible phase times. The user's saved profile has not been retuned. Head armor
+uses measured skinned geometry, final-pose attachment and 16 independent small
+gap stones included in orbit and projectiles. Base body layout/profile preserved.
+**23/23 EditMode and 5/5 focused PlayMode passed.** All 93 wave cells can rise
+together without penetration; all 16 fillers expand and launch; head-follow
+error < .000004 m. Evidence: `WaveContactEdit.json`, `WaveHeadArmorPlay.json`,
+`HeadArmor/Latest.json` and `WaveContact/Latest.json` under BuildReports.
+Three wider exploratory-suite failures are recorded in [HEAD_ARMOR_FIX.md](HEAD_ARMOR_FIX.md)
+and remain outside this scoped result. M11/global acceptance is not upgraded.
+
+**Wave placement and moving crest, 2026-09-04 (dirty `d2174ed`, UTC 11:43):** fixed
+lowest-vertex recentering that snapped pieces sideways and caused neighbour overlap.
+Shared cast frame, contained bevels and whole-wave reservation keep the partition
+stable; crest height travels outward and older rows retreat. Long saved timings
+limit effective speed, now labelled as a maximum in the Inspector. Dust preserves
+its authored tint without lighting-driven black smoke. **21/21 Edit + 2/2 Play**:
+21,646 collision pairs with zero penetration; 1.25 million projected vertices with
+zero drift; advancing crest and descending rows verified; dense dust lighting delta
+zero. Saved user profile unchanged. [Scope, baselines and captures](WAVE_CONTACT_FIX.md).
+
+**Filled fracture, stable wave and contact FX, 2026-09-04 (dirty `d2174ed`):**
+children now partition the original convex volume (97.62% collision / 96.39% render
+fill in the rotated/recursive fixture). Live wave geometry cannot be stolen by
+another cast; its ground cross-section stays fixed. Added contour dust/chip streams,
+stronger extraction cues, matching small wall collider hulls and geometry-based
+gravity packing. User scene, shadows and updated long wave timings are retained.
+Contained fracture **8/8 Edit + 3/3 Play** (latest UTC `10:17:57`); production wave/
+contact/grip **4/4 Play** (`10:22:37`), with the focused Edit report in
+`BuildReports/WaveContactEdit.json`. Cached split maximum 0.248 ms / 0 managed bytes;
+wave contact marker maximum 5.9642 ms in Editor. Cold preparation/whole-frame costs
+remain distinct. [Details](WAVE_CONTACT_FIX.md); [fill evidence](CONTAINED_FRACTURE_FIX.md).
+
+**Wave/arena fracture follow-up, 2026-09-04 (dirty `d2174ed`):** exact arena
+detachment restored; secondary stones and wall visuals fit the real parent convex.
+Repeated splitting of thin rotated sources preserves containment and mass. Wave
+cells are bounded, pool mesh reuse is corrected, and authoring is reduced to six
+curves, five durations and five main controls. Saved user values remain intact.
+Scoped checks: **28/28 EditMode + 4/4 PlayMode** (latest UTC `09:32:31`). Physical
+split measurement: maximum **0.6496 ms**, zero managed bytes across four calls.
+Wave preparation maximum **168.865 ms** in the Editor remains a startup performance
+risk. [Wave evidence](WAVE_REPAIR.md); [arena/stone evidence](CONTAINED_FRACTURE_FIX.md).
+
+**Wall material correction:** replaced the entire natural-fracture material array,
+removing the retained clay overlay. Saved wall interior and setup defaults now
+reference sandstone; the runtime check covers every material slot.
+
+**Combat/mobility follow-up, 2026-09-04 (dirty `d2174ed`):** cumulative armor and
+structure damage, persistent secondary column breakup, natural wall stone
+visuals, 3D chip rotation, surf/pillar dust, no roll on cushioned landing, and
+exposed continuous wave animation are implemented with preserved user scene and
+shadow settings. Current scoped evidence: [combat/mobility notes](COMBAT_MOBILITY_FIXES.md).
+Final focused checks: **9/9 EditMode + 4/4 PlayMode**, UTC `08:49:26`.
+
+**Dust/shadow follow-up, 2026-09-04 (dirty `d2174ed`):** user Sun settings saved;
+cosmetic-shard/dust compositing corrected across the shared effects paths. Fresh
+authoring **5/5** and pixel/production PlayMode **2/2** pass (UTC `07:37:29`).
+Physical stone depth remains intact; prior orphan armor warnings remain.
+See [settings and scoped evidence](EARTH_MATERIAL_PASS_CHECKLIST.md#dust-and-shard-authoring-follow-up--september-4).
+
+**Earth material pass, 2026-09-04:** the approved 11-part implementation is integrated
+through a scene-preserving menu. Production measurements confirm 96 armor shots at
+44 m/s, actual charged wall-piece movement after physics, persistent medium/huge
+split mass and active backward EAMM. Final category-wide bevel and effects validation
+is recorded in the [material-pass checklist](EARTH_MATERIAL_PASS_CHECKLIST.md).
+Do not interpret scoped smoke checks as completion of previous animation milestones.
+
+**Mobility follow-up, 2026-09-04 (dirty working tree on `d2174ed`):** wave
+foundations are lowered 20% along surface up, configurable in EarthPillarWaveProfile;
+arena/planet placement and bindings tests pass (21/21 EditMode, UTC 22:15:02 Sep 3).
+Narrow saved-scene repair restores the launch pillar and surf material. Combined
+production regression at UTC 22:16:03 is **3/4**, not accepted as fully green:
+player roll travels 2.458 m and bot 1.786 m; bot misses the 2 m distance gate.
+Both now actually tumble and retain the outgoing blend. Idle/stop/mobility pass.
+See technical-state follow-up for exact evidence and remaining performance/visual
+limits. This supersedes the earlier incomplete roll acceptance below.
+
+**Landing-roll travel, 2026-09-03 (working tree on `d2174ed`):** fixed-clock motor
+roll motion now accompanies the authored landing roll with bounded forward decay.
+11/11 pure tests and 1/1 dual-fighter production drop test passed; the subsequent
+combined foot/stop/roll regression passes 3/3 at `2026-09-03T21:32:59.3335687Z`. Exact timestamps
+and distances are recorded in the technical state. Re-run via `Elemental/QA/Run
+Landing Roll Motion EditMode Tests` and `Elemental/QA/Run Landing Roll Motion
+PlayMode Test`. Existing user clips, Blend Tree, scene and visual profiles were not
+regenerated. Broad animation/obstacle/performance acceptance remains open.
+
+**Stop/support-release follow-up, 2026-09-03 (working tree on `d2174ed`):** free
+foot targets now filter only the contact correction relative to authored motion;
+invalid support and lock hand-offs discard stale filter history. LateUpdate no
+longer repositions/rotates ankles after the Humanoid knee solve. Seven added pure
+tests reproduced 4.3–4.47 m run/stop target backlog before the fix; the updated
+`AnimationTransitionsVNextEdit.json` passes 50/50 at `2026-09-03T21:16:41.3800060Z`.
+`IdleFootOrientationPlay.json` passes 2/2 at `2026-09-03T21:20:53.3573992Z`, including
+actual forward/back movement and stop on both actors (free-target lag <=5 mm),
+Avatar-bounded shin length, and the prior idle-inversion regression. EditMode
+emitted pre-existing `EarthArmorPiece` required-component warnings. Platform-edge
+visual QA, EAMM pose rejection, and broad performance acceptance remain separate.
+
+**Narrow runtime fix, 2026-09-03 (working tree on `d2174ed`):** idle feet no longer
+receive the skeleton-bone orientation as their Humanoid IK goal. The live
+on/off/on reproduction isolated the inversion to `EarthFootContactController`.
+`BuildReports/IdleFootOrientationPlay.json` at `2026-09-03T21:09:52.6993029Z`
+passes 1/1, exercising both fighters and repeated contact ramps at 30/60/120
+frame-rate caps. User clips/Blend Tree/material settings are preserved. Re-run via
+`Elemental/QA/Run Idle Foot Orientation Regression`. This does not close the
+remaining EAMM pose rejection or the broad animation/performance gates.
 
 **M11 is in foundation stabilization/integration, not acceptance-green at the tested commit.**
 
@@ -108,6 +347,7 @@ passes the full acceptance gate unless the evidence column says so.
 | Linebreaker rig/secondary-motion rescue | Weighted source and runtime FBX integrated; generated scene rebuilt | `LinebreakerRigged_weighted.blend`; four weight/rig reports; `FoundationWorkingTreePlay-20260831.xml` | Full visual gait/ragdoll/KO gate and capture remain pending. |
 | Canonical input boundary cleanup | Rumble lookdev/VFX shortcuts routed through `EarthInputAdapter` | `FoundationWorkingTreeEdit-20260831.xml`; full source-scan test passes | Physical mouse golden-path failures from the older aggregate still require full focused rerun. |
 | Duel-space shadow stabilization | URP/project settings changed | `c606e2a`, `e401a22` | No report or capture after either commit. |
+| EAMM production animation graph and catalog | Implemented in dirty working tree | `EarthAnimationGraph`, `EarthInertializationJob`, semantic catalog, 2D locomotion, front/back recovery, bounded magic reach | No PlayMode/capture/profile run by explicit request; final Unity import after catalog bootstrap and visual acceptance remain pending. |
 
 ## Latest focused PlayMode failures to reproduce
 
@@ -166,6 +406,55 @@ complete focused suite before deleting, reclassifying, or fixing any item.
 | R-008 Save/network/release gaps | Medium now, release blocker later | Codec/harness exist but no runtime disk save or production transport | Keep outside M11; create separate gated milestones with recovery/failure tests | Ship local sandbox only if product scope explicitly accepts it | Before Alpha/online commitment |
 
 ## Pending M11 acceptance gates
+
+Landing follow-up (2026-09-03, dirty worktree on
+`codex/environment-aware-motion-matching-spike`, HEAD `d2174eded114dd022e4a9c442abadda7a0e44555`):
+the earlier user report was a collapsing short hop after style/input fixes. Ordinary
+`Land` shares the full-strength hard-landing clip. The current patch adds height/impact-scaled
+pose blending and excludes initial support acquisition, without changing jump physics or camera.
+This is implementation evidence, not visual acceptance. Test suites and automatic Play/Stop
+cycles are intentionally omitted at the user's request; short-hop and startup appearance remain
+open until checked in the user's live scene.
+Connected Unity MCP refresh completed with compilation/import idle and zero Console
+errors/warnings; no Play mode cycle or test runner was started for this verification.
+The user subsequently confirmed short jumping fixed, but reported startup falling and
+unwanted low-height rolls. The follow-up seeds classified motor support before first render
+and prevents initial/ordinary landing from forcing the physical knockdown/get-up path;
+catastrophic fall KO and combat knockdowns remain. New startup/roll behavior is not yet
+visually accepted.
+The earlier roll revision admitted a fast forward/backward jump (`6.5 m/s`) or a strong
+external airborne velocity change (`4 m/s`, gravity excluded), in addition to a drop `>2 m`.
+That revision selected reverse roll playback for backward travel. Motor-only capsule rotation is protected during
+animated control and released on motor disable; camera, jump impulse and gravity are unchanged.
+Follow-up verification: new code compiles; generated backward clip is Humanoid, has `138`
+curves and duration `0.7043334 s`, and is assigned to `Moving Land Back` at positive speed `1`.
+The user stopped Play after a script-reload session produced motion-matching cache exceptions;
+the agent baked the asset in Edit mode and did not start another Play run. Fresh runtime/visual
+acceptance remains pending; old Console exceptions were not cleared or presented as a pass.
+
+Latest correction (same date, supersedes the reverse-roll revision): the user's renewed report
+was reproduced by a read-only, explicitly armed Editor startup recorder, not Test Runner.
+`CharacterStartupProbe-Before.log` shows folded EAMM output at startup and after the bot's first
+cast despite grounded motors, zero impacts and no ragdoll. Candidate hierarchy validation now
+rejects that pose before graph output; authored locomotion remains the safe fallback.
+The fresh `BuildReports/RuntimeRescue/CharacterStartupProbe.log` contains 87 samples over
+5.064 seconds: hips-up projection stays 0.61–0.82, with neither original negative startup pose
+nor bot's second collapse. The player receives two actual impacts at 4.438 seconds; that combat
+recovery is deliberately retained, not mislabeled as startup instability. Both diagnostic Play
+sessions were stopped; zero Console errors after the new run. No test suite was run.
+The roll speed threshold is now 9 m/s (normal authored run speed is 7.2, above the old 6.5 gate),
+and takeoff itself is excluded from external-impulse evidence. Backward landings temporarily use
+ordinary landing/brace; the visually rejected synthetic reverse clip is no longer referenced by
+`Moving Land Back`. The typed impact adapter also excludes classified static support contacts
+from the combat impulse path. Jump/landing appearance still requires the user's in-game check;
+EAMM retarget calibration itself remains unresolved, not accepted as working.
+Existing source clips and download settings: `Docs/ANIMATION_INVENTORY.md`.
+
+Runtime rescue update (2026-09-03): baked local-space EAMM, unified animation parameter routing,
+camera wiring, dual-fighter DOF, and radial-gravity audits are live and visually captured in
+`BuildReports/RuntimeRescue/GameView_RuntimeRescue_Final.png`. EditMode animation contracts pass
+`43/43`; Earth Magic Expansion PlayMode is `16/17`, blocked only by the first-tick pillar launch
+speed gate (`0.416 m/s`, required `>0.5 m/s`).
 
 | Gate | Required proof at one commit/worktree | Current status |
 |---|---|---|

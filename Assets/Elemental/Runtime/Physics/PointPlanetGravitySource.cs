@@ -17,6 +17,7 @@ namespace Elemental.Runtime.Physics
         [SerializeField, Min(0.01f)] private float maxAcceleration = 40f;
 
         public float Radius => radius;
+        public float SurfaceAcceleration => surfaceAcceleration;
 
         public void Configure(
             GravityFieldId id,
@@ -48,6 +49,9 @@ namespace Elemental.Runtime.Physics
                 2f,
                 Mathf.Max(40f, profile.SurfaceGravity * 3f));
         }
+
+        public void Configure(PlanetWorldProfile profile) =>
+            Configure(new GravityFieldId(fieldId != 0u ? fieldId : 1u), profile);
 
         public PointPlanetGravity BuildField()
         {

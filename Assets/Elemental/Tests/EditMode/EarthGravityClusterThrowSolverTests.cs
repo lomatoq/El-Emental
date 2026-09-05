@@ -7,6 +7,36 @@ namespace Elemental.Tests.EditMode
     public sealed class EarthGravityClusterThrowSolverTests
     {
         [Test]
+        public void RadialBlastUsesActualOppositeOffsetsInsteadOfForwardFan()
+        {
+            EarthGravityClusterThrowTuning tuning = EarthGravityClusterThrowTuning.Default;
+            float3 up = new float3(0f, 1f, 0f);
+            float3 aim = new float3(0f, 0f, 1f);
+            var left = EarthGravityClusterThrowSolver.SolveRadial(1u, 0, 2, 10f,
+                new float3(-1f, 0f, 0f), aim, up, 1f, in tuning);
+            var right = EarthGravityClusterThrowSolver.SolveRadial(2u, 1, 2, 200f,
+                new float3(1f, 0f, 0f), aim, up, 1f, in tuning);
+            Assert.That(left.Velocity.x, Is.LessThan(-30f));
+            Assert.That(right.Velocity.x, Is.GreaterThan(30f));
+            Assert.That(left.Speed, Is.EqualTo(31f));
+            Assert.That(right.Speed, Is.EqualTo(31f));
+            Assert.That(left.Velocity.y, Is.GreaterThan(0f));
+        }
+
+        [Test]
+        public void CoincidentRadialBlastIsFiniteAndDeterministic()
+        {
+            EarthGravityClusterThrowTuning tuning = EarthGravityClusterThrowTuning.Default;
+            var first = EarthGravityClusterThrowSolver.SolveRadial(31u, 0, 1, 10f,
+                float3.zero, float3.zero, float3.zero, 0f, in tuning);
+            var repeated = EarthGravityClusterThrowSolver.SolveRadial(31u, 0, 1, 10f,
+                float3.zero, float3.zero, float3.zero, 0f, in tuning);
+            Assert.That(math.all(math.isfinite(first.Velocity)), Is.True);
+            Assert.That(first.Velocity, Is.EqualTo(repeated.Velocity));
+            Assert.That(first.Speed, Is.EqualTo(19f));
+        }
+
+        [Test]
         public void DirectThrow_IsCoherentAndHeavyPiecesStayNearCentre()
         {
             EarthGravityClusterThrowTuning tuning = EarthGravityClusterThrowTuning.Default;

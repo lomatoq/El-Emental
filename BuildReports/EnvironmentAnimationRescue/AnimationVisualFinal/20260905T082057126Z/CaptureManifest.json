@@ -1,0 +1,35 @@
+{
+    "schema": "animation-actual-game-capture-v1",
+    "startedUtc": "2026-09-05T08:20:57.1388544Z",
+    "completedUtc": "2026-09-05T08:21:02.1617898Z",
+    "unityVersion": "6000.5.7f1",
+    "scene": "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity",
+    "status": "Failed",
+    "error": "System.Exception: idle framing failed: Planet Character: full body is outside Game View (head=(0.44, 0.14, 7.87), leftFoot=(0.44, -0.09, 8.36), rightFoot=(0.44, -0.15, 7.83)).\r\n  at Elemental.Authoring.Editor.AnimationVisualQaDriver.Cap (System.String n) [0x0004a] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\AnimationVisualQaDriver.cs:37 \r\n  at Elemental.Authoring.Editor.AnimationVisualQaDriver.Step () [0x0005d] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\AnimationVisualQaDriver.cs:28 \r\n  at Elemental.Authoring.Editor.AnimationVisualQaDriver.Tick () [0x000af] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\AnimationVisualQaDriver.cs:25 ",
+    "scope": "Actual Game-view ScreenCapture using the live production Main Camera and camera rig. The recorder changes no camera pose, lens, actor input, body, animation state, fixture, clock, light, material or scene asset. Its caller owns deterministic production input/temporary fixtures and must restore them in finally. Every frame records both actors; images and manifest still require human visual inspection.",
+    "actualGameScreenCapture": true,
+    "productionCameraRigLeftEnabled": true,
+    "debugUiRestored": true,
+    "probesRestored": true,
+    "completeRequiredMatrix": false,
+    "missingRequiredLabels": [
+        "idle",
+        "walk",
+        "stop",
+        "turn",
+        "uneven-pit",
+        "uneven-slope",
+        "mantle-reach",
+        "mantle-raise",
+        "mantle-transfer",
+        "mantle-settle",
+        "magic-start",
+        "magic-sample",
+        "magic-recovery"
+    ],
+    "temporarilyHiddenUi": [
+        "UnityEngine.UIElements.UIDocument @ Earth Core HUD",
+        "Elemental.Presentation.UI.BendingDebugOverlay @ Earth Core HUD"
+    ],
+    "frames": []
+}

@@ -55,5 +55,7 @@ namespace Elemental.Runtime.Physics
 
         private void OnCollisionEnter(Collision collision) =>
             Owner?.ReportPieceImpact(PieceIndex, collision);
+
+        private void OnCollisionStay(Collision collision) => Owner?.ReportPieceFriction(PieceIndex, collision);
     }
 }

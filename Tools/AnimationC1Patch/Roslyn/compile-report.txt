@@ -1,0 +1,26 @@
+2026-09-05T09:36Z
+Unity: 6000.5.7f1
+Compiler: Unity Data/DotNetSdk/sdk/8.0.318/Roslyn/bincore/csc.dll
+
+Elemental.Presentation staged full-source compile: PASS, zero diagnostics
+Elemental.Tests.EditMode staged full-source compile: PASS, zero diagnostics
+
+2026-09-05T09:50Z C1 derivative correction:
+- rendered transition poses now advance by the measured outgoing angular
+  velocity instead of freezing for one frame while only reporting velocity;
+- moving and interrupted tests compare quaternion finite differences against
+  reported/outgoing velocity;
+- 30/60/120 test also compares the finite-difference derivative of the returned
+  boundary poses, rather than only final pose or velocity metadata;
+- focused launcher added;
+- full Presentation + EditMode test Roslyn compile: PASS, zero diagnostics.
+
+2026-09-05T10:02Z Unity test failure correction staged:
+- replaced small-angle acos velocity measurement with normalized atan2 log;
+- cleared AwaitingIncomingDerivative on every planted bypass;
+- transition-frame planted authority reports zero authored velocity;
+- full staged Presentation + EditMode Roslyn compile: PASS, zero diagnostics.
+
+The response files redirect outputs into Tools/AnimationC1Patch/Roslyn and replace
+only EarthAnimationGraph.cs, EarthInertializationJob.cs and the added helper/test.
+No Unity refresh or test runner operation was invoked.

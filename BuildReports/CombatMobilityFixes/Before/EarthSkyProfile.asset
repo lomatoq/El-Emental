@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d15a34058db45f8a32884cead499f4a, type: 3}
+  m_Name: EarthSkyProfile
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.Rendering.EarthSkyProfile
+  dayZenith: {r: 0.075, g: 0.31, b: 0.72, a: 1}
+  dayHorizon: {r: 0.56, g: 0.79, b: 0.98, a: 1}
+  duskZenith: {r: 0.12, g: 0.16, b: 0.38, a: 1}
+  duskHorizon: {r: 1, g: 0.42, b: 0.19, a: 1}
+  nightZenith: {r: 0.0025, g: 0.006, b: 0.026, a: 1}
+  nightHorizon: {r: 0.015, g: 0.03, b: 0.075, a: 1}
+  starExposure: 1.15
+  sunColor: {r: 1, g: 0.88, b: 0.62, a: 1}
+  sunDiscDegrees: 0.44
+  sunGlow: 0.72

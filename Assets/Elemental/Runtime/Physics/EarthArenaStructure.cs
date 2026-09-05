@@ -1,5 +1,10 @@
 using System;
 using Elemental.Simulation.Structures;
+using Elemental.Simulation.Bending;
+using Elemental.Runtime.World;
+using Elemental.Runtime.Geometry;
+using Elemental.Runtime.Matter;
+using Elemental.Runtime.Diagnostics;
 using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine;
@@ -34,6 +39,8 @@ namespace Elemental.Runtime.Physics
             new ProfilerMarker("Elemental.Earth.ArenaFracture.Impact");
         private static readonly ProfilerMarker ProxyMarker =
             new ProfilerMarker("Elemental.Earth.ArenaFracture.ProxySwap");
+        private static readonly ProfilerMarker SupportMarker =
+            new ProfilerMarker("Elemental.Earth.ArenaFracture.ReleaseUnsupported");
 
         [SerializeField] private ScriptableObject fractureAssetObject;
         [SerializeField] private Transform coordinateRoot;
@@ -47,8 +54,32 @@ namespace Elemental.Runtime.Physics
         [SerializeField] private uint structureId;
         [SerializeField] private bool ordinaryDamageEnabled = true;
         [SerializeField] private bool repairable = true;
+        [SerializeField] private EarthMaterialFeedbackHub materialFeedback;
+        [SerializeField] private EarthStoneBevelProfile stoneBevelProfile;
+        [SerializeField] private EarthRockDebrisPool rockDebrisPool;
+        [SerializeField, Min(1f)] private float cumulativeFractureImpulse = 95f;
+        public void ConfigureRockBreakup(EarthRockDebrisPool pool) => rockDebrisPool = pool;
+        private EarthImpactDamage _impactDamage;
+        private EarthImpactDamage[] _pieceImpactDamage;
+        private bool[] _shattered;
+        private EarthMatterIdentity[] _pieceIdentities;
+        private uint[] _pieceLastSource;
+        private float[] _pieceLastHitAt, _pieceArmedAt;
+        public float AccumulatedImpactImpulse => _impactDamage.Impulse;
+        public int ShatteredPieceCount { get; private set; }
+        public bool HasMaterialFeedback => materialFeedback != null;
+        private readonly EarthContactFrictionFeedback _frictionFeedback = new();
+        public void ReportPieceFriction(int pieceIndex, Collision collision) =>
+            _frictionFeedback.Emit(materialFeedback, collision,
+                pieceIndex >= 0 && pieceIndex < _pieceTargets.Length && _pieceTargets[pieceIndex] != null
+                    ? _pieceTargets[pieceIndex].StableEarthId : structureId, _generation);
+        public void ConfigureMaterialFeedback(EarthMaterialFeedbackHub hub) => materialFeedback = hub;
 
         private IEarthFractureAssetRuntimeData _asset;
+        private Mesh[] _beveledRenderMeshes;
+        private MeshFilter[] _pieceFilters;
+        private Renderer[] _pieceRenderers;
+        private Material[][] _restMaterials;
         private EarthPieceDefinition[] _pieceDefinitions = Array.Empty<EarthPieceDefinition>();
         private EarthBondDefinition[] _bondDefinitions = Array.Empty<EarthBondDefinition>();
         private EarthPieceState[] _pieceStates = Array.Empty<EarthPieceState>();
@@ -61,6 +92,7 @@ namespace Elemental.Runtime.Physics
         private EarthArenaPiece[] _pieceTargets = Array.Empty<EarthArenaPiece>();
         private Rigidbody[] _pieceBodies = Array.Empty<Rigidbody>();
         private Collider[] _pieceColliders = Array.Empty<Collider>();
+        private EarthArenaMeshPicking[] _piecePicking = Array.Empty<EarthArenaMeshPicking>();
         private GravityBody[] _pieceGravity = Array.Empty<GravityBody>();
         private bool[] _released = Array.Empty<bool>();
         private MaterialPropertyBlock _fractureShadingProperties;
@@ -117,18 +149,24 @@ namespace Elemental.Runtime.Physics
 
         public bool ApplyEarthImpact(in EarthStructureImpact impact)
         {
+            if (!ordinaryDamageEnabled || !_configured || PieceCount <= _releasedCount) return false;
             if (impact.SourceId != 0u && impact.SourceId == _lastImpactSourceId &&
                 Time.time - _lastImpactTime < 0.35f) return false;
+            if (!_impactDamage.Add(impact.Impulse)) return false;
+            _lastImpactSourceId = impact.SourceId;
+            _lastImpactTime = Time.time;
+            float threshold = Mathf.Max(1f, cumulativeFractureImpulse);
+            if (_impactDamage.Impulse < threshold) return false;
+            float combined = _impactDamage.Impulse;
             EarthArenaFractureDecision decision = EarthArenaFractureGate.Resolve(
                 ordinaryDamageEnabled,
                 EarthArenaFractureTrigger.OrdinaryImpact,
-                impact.Impulse,
+                combined * (EarthArenaFractureGate.MinimumOrdinaryImpulse / threshold),
                 PieceCount - _releasedCount);
             if (!decision.Accepted) return false;
-            _lastImpactSourceId = impact.SourceId;
-            _lastImpactTime = Time.time;
-            return ReleaseNearestPieces(
-                impact.Point, impact.Direction, impact.Impulse, decision.ReleaseCount);
+            bool released = ReleaseNearestPieces(impact.Point, impact.Direction, combined, decision.ReleaseCount);
+            if (released) _impactDamage.Consume(combined);
+            return released;
         }
 
         public bool TryPluckCell(Vector3 point, out IEarthPhysicalTarget target)
@@ -172,10 +210,15 @@ namespace Elemental.Runtime.Physics
                 int index = FindReleasedPiece();
                 if (index < 0) break;
                 ReattachPiece(index);
+                materialFeedback?.Emit(EarthMaterialFeedbackKind.RepairSeat, pieces[index].position,
+                    coordinateRoot.up, 0.7f, 0.4f, structureId, _generation);
                 alreadyRepaired++;
             }
             if (_releasedCount == 0)
             {
+                materialFeedback?.Emit(EarthMaterialFeedbackKind.RepairComplete,
+                    intactRenderer.bounds.center, coordinateRoot.up, 1f,
+                    Mathf.Min(3f, intactRenderer.bounds.extents.magnitude), structureId, _generation);
                 ResetToIntact();
                 _repairStartReleased = 0;
             }
@@ -207,25 +250,51 @@ namespace Elemental.Runtime.Physics
         }
 
         public bool IsPieceReleased(int index) =>
-            index >= 0 && index < _released.Length && _released[index];
+            index >= 0 && index < _released.Length && _released[index] && !_shattered[index];
 
         public bool TryAcquirePiece(int index)
         {
             if (index < 0 || index >= PieceCount) return false;
-            if (!_released[index] && !ReleasePiece(
+            bool newlyReleased = !_released[index];
+            if (newlyReleased && !ReleasePiece(
                     index,
                     pieces[index] != null ? pieces[index].position : transform.position,
                     Vector3.zero,
                     0f)) return false;
+            if (newlyReleased) TargetsActivated?.Invoke(this);
             return _pieceTargets[index] != null && _pieceTargets[index].IsEarthTargetValid;
+        }
+
+        public void NotifyPieceMagicReleased(int index)
+        {
+            if (!IsPieceReleased(index)) return;
+            // The detachment grace period prevents newly exposed neighbouring cells
+            // from breaking each other while PhysX resolves the fractured proxy. A
+            // deliberate magic release is a different ownership boundary: the next
+            // contact is the thrown piece's gameplay impact and must not be discarded.
+            _pieceArmedAt[index] = Mathf.Min(_pieceArmedAt[index], Time.time);
         }
 
         public void HandlePieceCollision(int pieceIndex, Collision collision)
         {
             if (collision == null || collision.contactCount == 0 || collision.collider == null) return;
-            EarthArenaStructure other = collision.collider.GetComponentInParent<EarthArenaStructure>();
-            if (other == null || other == this) return;
+            ContactPoint effectContact = collision.GetContact(0);
+            if (collision.relativeVelocity.sqrMagnitude >= 0.5625f)
+                materialFeedback?.Emit(EarthMaterialFeedbackKind.Impact, effectContact.point,
+                    effectContact.normal, Mathf.Clamp(collision.relativeVelocity.magnitude / 8f, 0.3f, 2f),
+                    0.5f, _pieceTargets[pieceIndex].StableEarthId, _generation);
             ContactPoint contact = collision.GetContact(0);
+            if (collision.relativeVelocity.magnitude < .75f) return;
+            var incomingArmor = collision.collider.GetComponentInParent<EarthArmorPiece>();
+            var incomingFragment = collision.collider.GetComponentInParent<EarthFragment>();
+            uint incomingId = incomingArmor != null ? incomingArmor.ImpactSourceId :
+                incomingFragment != null ? incomingFragment.FragmentId :
+                collision.collider.GetComponentInParent<IEarthPhysicalTarget>()?.StableEarthId ?? 0u;
+            float collisionImpulse = Mathf.Max(collision.impulse.magnitude,
+                collision.relativeVelocity.magnitude * Mathf.Min(_pieceBodies[pieceIndex].mass,
+                    collision.rigidbody != null ? collision.rigidbody.mass : _pieceBodies[pieceIndex].mass));
+            var ownImpact = new EarthStructureImpact(contact.point, -contact.normal, collisionImpulse,
+                EarthStructureImpactKind.Projectile, incomingId);
             Vector3 direction = _pieceBodies[pieceIndex] != null &&
                                 _pieceBodies[pieceIndex].linearVelocity.sqrMagnitude > 0.01f
                 ? _pieceBodies[pieceIndex].linearVelocity.normalized
@@ -233,16 +302,58 @@ namespace Elemental.Runtime.Physics
             var impact = new EarthStructureImpact(
                 contact.point,
                 direction,
-                collision.impulse.magnitude,
+                collisionImpulse,
                 EarthStructureImpactKind.Projectile,
                 _pieceTargets[pieceIndex] != null ? _pieceTargets[pieceIndex].StableEarthId : 0u);
-            other.ApplyEarthImpact(in impact);
+            EarthArenaPiece otherPiece = collision.collider.GetComponentInParent<EarthArenaPiece>();
+            EarthArenaStructure other = otherPiece != null ? otherPiece.Owner : collision.collider.GetComponentInParent<EarthArenaStructure>();
+            if (other != this) EarthStructureImpactRouter.Apply(collision.collider, in impact);
+            ApplyReleasedPieceImpact(pieceIndex, in ownImpact);
+        }
+
+        public bool ApplyReleasedPieceImpact(int index, in EarthStructureImpact impact)
+        {
+            if (!IsPieceReleased(index) || rockDebrisPool == null || Time.time < _pieceArmedAt[index]) return false;
+            if (impact.SourceId != 0 && impact.SourceId == _pieceLastSource[index] &&
+                Time.time - _pieceLastHitAt[index] < .20f) return false;
+            if (!_pieceImpactDamage[index].Add(impact.Impulse)) return false;
+            _pieceLastSource[index] = impact.SourceId;
+            _pieceLastHitAt[index] = Time.time;
+            Rigidbody body = _pieceBodies[index];
+            Vector3 size = _pieceColliders[index].bounds.size;
+            float radius = Mathf.Max(.1f, Mathf.Pow(size.x * size.y * size.z * .2387324f, 1f / 3f));
+            var decision = rockDebrisPool.ResolveBreak(radius, body.mass, _pieceImpactDamage[index].Impulse);
+            if (!decision.Breaks || !rockDebrisPool.TryEmitBreak(impact.Point, -impact.Direction,
+                    body.linearVelocity, radius, body.mass, _pieceTargets[index].StableEarthId,
+                    decision, 0, _pieceIdentities[index])) return false;
+            _shattered[index] = true;
+            ShatteredPieceCount++;
+            var state = _pieceStates[index];
+            state.Phase = EarthPiecePhase.Missing;
+            _pieceStates[index] = state;
+            pieces[index].gameObject.SetActive(false);
+            SolveIslands();
+            return true;
         }
 
         private void Awake()
         {
-            if (!InitializeRuntime(false))
-                Debug.LogError("[Elemental] Broken Crown structure has invalid fracture wiring.", this);
+            using (EarthStartupTiming.Measure(EarthStartupTiming.Category.ArenaInitialize))
+                InitializeRuntime(false);
+        }
+
+        private void Start()
+        {
+            // Runtime builders assign fracture data immediately after AddComponent;
+            // validate after that construction window instead of reporting a false
+            // wiring error from Awake.
+            if (!_configured && !InitializeRuntime(false))
+                Debug.LogError(
+                    $"[Elemental] Broken Crown structure '{name}' has invalid fracture wiring: " +
+                    $"asset={fractureAssetObject != null}, coordinateRoot={coordinateRoot != null}, " +
+                    $"fractureRoot={fractureRoot != null}, renderer={intactRenderer != null}, " +
+                    $"collider={intactCollider != null}, pieces={pieces?.Length ?? 0}.",
+                    this);
         }
 
         private bool InitializeRuntime(bool resetProxy)
@@ -277,10 +388,22 @@ namespace Elemental.Runtime.Physics
             _pieceTargets = new EarthArenaPiece[pieceCount];
             _pieceBodies = new Rigidbody[pieceCount];
             _pieceColliders = new Collider[pieceCount];
+            _piecePicking = new EarthArenaMeshPicking[pieceCount];
             _pieceGravity = new GravityBody[pieceCount];
             _released = new bool[pieceCount];
+            _shattered = new bool[pieceCount];
+            _pieceImpactDamage = new EarthImpactDamage[pieceCount];
+            _pieceIdentities = new EarthMatterIdentity[pieceCount];
+            _pieceLastSource = new uint[pieceCount];
+            _pieceLastHitAt = new float[pieceCount];
+            _pieceArmedAt = new float[pieceCount];
+            _pieceFilters = new MeshFilter[pieceCount];
+            _pieceRenderers = new Renderer[pieceCount];
+            _restMaterials = new Material[pieceCount][];
 
             _fractureShadingProperties ??= new MaterialPropertyBlock();
+            if (_beveledRenderMeshes == null || _beveledRenderMeshes.Length != pieceCount)
+                _beveledRenderMeshes = new Mesh[pieceCount];
             float4x4 intactLocalToStructure = EarthArenaFractureShading.ToFloat4x4(
                 coordinateRoot.worldToLocalMatrix * intactRenderer.transform.localToWorldMatrix);
             if (!ApplyFractureShadingFrame(intactRenderer, intactLocalToStructure)) return false;
@@ -290,9 +413,30 @@ namespace Elemental.Runtime.Physics
                 Transform piece = pieces[index];
                 if (piece == null) return false;
                 Renderer renderer = piece.GetComponent<Renderer>();
+                MeshFilter filter = piece.GetComponent<MeshFilter>();
+                Mesh bakedRenderMesh = _asset.GetPieceRenderMesh(index);
+                if (filter != null && bakedRenderMesh != null)
+                {
+                    // Editor-time Configure validates and persists the dormant fracture
+                    // hierarchy. Saving a generated bevel here embeds tens of megabytes
+                    // into the scene even though Awake replaces every one at runtime.
+                    // Persist the authored fracture-asset mesh; construct the identical
+                    // presentation mesh only for the live runtime.
+                    if (Application.isPlaying)
+                    {
+                        if (_beveledRenderMeshes[index] == null)
+                            using (EarthStartupTiming.Measure(EarthStartupTiming.Category.ArenaBevel))
+                                _beveledRenderMeshes[index] = EarthFractureBevelMeshBuilder.Create(
+                                    bakedRenderMesh, stoneBevelProfile);
+                        filter.sharedMesh = _beveledRenderMeshes[index];
+                    }
+                    else
+                    {
+                        filter.sharedMesh = bakedRenderMesh;
+                    }
+                }
                 if (renderer != null && pieceMaterial != null)
                 {
-                    MeshFilter filter = piece.GetComponent<MeshFilter>();
                     bool hasInteriorSlot = filter != null && filter.sharedMesh != null &&
                                            filter.sharedMesh.subMeshCount > 1 &&
                                            pieceInteriorMaterial != null;
@@ -311,10 +455,16 @@ namespace Elemental.Runtime.Physics
                     definition.RestLocalRotation,
                     definition.RestLocalScale);
                 if (!ApplyFractureShadingFrame(renderer, restLocalToStructure)) return false;
+                _pieceFilters[index] = filter;
+                _pieceRenderers[index] = renderer;
+                _restMaterials[index] = renderer != null ? renderer.sharedMaterials : System.Array.Empty<Material>();
                 MeshCollider collider = piece.GetComponent<MeshCollider>();
                 if (collider == null) collider = piece.gameObject.AddComponent<MeshCollider>();
                 collider.sharedMesh = _asset.GetPieceColliderMesh(index);
+                using (EarthStartupTiming.Measure(EarthStartupTiming.Category.ArenaMeshPicking))
+                    _piecePicking[index] = new EarthArenaMeshPicking(collider.sharedMesh);
                 collider.convex = true;
+                if (Application.isPlaying) rockDebrisPool?.PrepareFracture(collider);
                 collider.enabled = false;
                 Rigidbody body = piece.GetComponent<Rigidbody>();
                 if (body == null) body = piece.gameObject.AddComponent<Rigidbody>();
@@ -330,6 +480,8 @@ namespace Elemental.Runtime.Physics
                 EarthArenaPiece target = piece.GetComponent<EarthArenaPiece>();
                 if (target == null) target = piece.gameObject.AddComponent<EarthArenaPiece>();
                 target.Configure(this, index, _pieceDefinitions[index].Id, body, collider, gravity);
+                _pieceIdentities[index] = piece.GetComponent<EarthMatterIdentity>();
+                if (_pieceIdentities[index] == null) _pieceIdentities[index] = piece.gameObject.AddComponent<EarthMatterIdentity>();
                 _pieceBodies[index] = body;
                 _pieceColliders[index] = collider;
                 _pieceGravity[index] = gravity;
@@ -340,6 +492,18 @@ namespace Elemental.Runtime.Physics
             if (resetProxy) ResetToIntact();
             else ResetCanonicalState();
             return true;
+        }
+
+        private void OnDestroy()
+        {
+            if (_beveledRenderMeshes == null) return;
+            for (int i = 0; i < _beveledRenderMeshes.Length; i++)
+                if (_beveledRenderMeshes[i] != null &&
+                    (_asset == null || _beveledRenderMeshes[i] != _asset.GetPieceRenderMesh(i)))
+                {
+                    if (Application.isPlaying) Destroy(_beveledRenderMeshes[i]);
+                    else DestroyImmediate(_beveledRenderMeshes[i]);
+                }
         }
 
         private bool ApplyFractureShadingFrame(Renderer renderer, float4x4 localToStructure)
@@ -363,10 +527,14 @@ namespace Elemental.Runtime.Physics
             _fractured = false;
             _releasedCount = 0;
             _repairStartReleased = 0;
+            _impactDamage = default;
+            ShatteredPieceCount = 0;
             for (int index = 0; index < _pieceStates.Length; index++)
             {
                 _pieceStates[index] = EarthPieceState.Intact;
                 _released[index] = false;
+                _shattered[index] = false;
+                _pieceImpactDamage[index] = default;
                 Rigidbody body = _pieceBodies[index];
                 if (body != null)
                 {
@@ -416,7 +584,8 @@ namespace Elemental.Runtime.Physics
             int pieceIndex,
             Vector3 point,
             Vector3 direction,
-            float impulse)
+            float impulse,
+            bool releaseUnsupported = true)
         {
             if (pieceIndex < 0 || pieceIndex >= PieceCount || _released[pieceIndex]) return false;
             EnsureFracturedProxy();
@@ -437,6 +606,9 @@ namespace Elemental.Runtime.Physics
             _pieceStates[pieceIndex] = pieceState;
             _released[pieceIndex] = true;
             _releasedCount++;
+            _pieceArmedAt[pieceIndex] = Time.time + .20f;
+            // Detachment preserves the authored cell, its bevel and its fracture mapping.
+            // Only a subsequent physical split may replace it with smaller contained stones.
 
             Rigidbody body = _pieceBodies[pieceIndex];
             Collider collider = _pieceColliders[pieceIndex];
@@ -456,13 +628,34 @@ namespace Elemental.Runtime.Physics
                 }
             }
             if (gravity != null) gravity.enabled = true;
-            SolveIslands();
+            if (releaseUnsupported) ReleaseUnsupportedPieces();
+            materialFeedback?.Emit(EarthMaterialFeedbackKind.Fracture, point,
+                coordinateRoot != null ? coordinateRoot.up : transform.up, 1f, 0.65f,
+                structureId ^ (uint)(pieceIndex + 1), _generation, 80, 18);
             FracturePresented?.Invoke(new EarthArenaFracturePulse(
                 point,
                 direction,
                 impulse,
                 1));
             return true;
+        }
+
+        private void ReleaseUnsupportedPieces()
+        {
+            using (SupportMarker.Auto())
+            {
+                SolveIslands();
+                // The solved graph is a snapshot. Releasing an unsupported island
+                // cannot remove a path to a supported one, so one bounded pass is enough.
+                bool changed = false;
+                for (int i = 0; i < _pieceStates.Length; i++)
+                {
+                    int island = _islandByPiece[i];
+                    if (_released[i] || island < 0 || _islandSupported[island]) continue;
+                    changed |= ReleasePiece(i, pieces[i].position, Vector3.zero, 0f, false);
+                }
+                if (changed) SolveIslands();
+            }
         }
 
         private void EnsureFracturedProxy()
@@ -494,12 +687,18 @@ namespace Elemental.Runtime.Physics
         {
             int best = -1;
             float bestDistance = float.PositiveInfinity;
+            float bestCenterDistance = float.PositiveInfinity;
             for (int index = 0; index < pieces.Length; index++)
             {
                 if (_released[index] || pieces[index] == null) continue;
-                float distance = Vector3.SqrMagnitude(pieces[index].position - point);
-                if (distance >= bestDistance) continue;
+                // Separated cells can share Blender origins. Use cached authored
+                // triangles, independent of dormant collider activation/cooking.
+                Transform piece = pieces[index];
+                float distance = _piecePicking[index].SquaredDistance(point,
+                    piece.localToWorldMatrix, piece.worldToLocalMatrix, out float centerDistance);
+                if (distance > bestDistance || distance == bestDistance && centerDistance >= bestCenterDistance) continue;
                 bestDistance = distance;
+                bestCenterDistance = centerDistance;
                 best = index;
             }
             return best;
@@ -508,24 +707,49 @@ namespace Elemental.Runtime.Physics
         private int FindReleasedPiece()
         {
             for (int index = _released.Length - 1; index >= 0; index--)
-                if (_released[index]) return index;
+                if (_released[index] && !_shattered[index] && CanSeatOnAttachedSupport(index)) return index;
             return -1;
+        }
+
+        private bool CanSeatOnAttachedSupport(int index)
+        {
+            // Repair grows from world foundations through cells that are already seated.
+            // A free foundation cell retains its authoring flag but cannot support a
+            // different kinematic cell until it has itself been reattached.
+            if ((_pieceDefinitions[index].Flags & EarthPieceFlags.Foundation) != 0) return true;
+            for (int bondIndex = 0; bondIndex < _bondDefinitions.Length; bondIndex++)
+            {
+                EarthBondDefinition bond = _bondDefinitions[bondIndex];
+                int neighbor = bond.PieceA == index ? bond.PieceB : bond.PieceB == index ? bond.PieceA : -2;
+                if (neighbor == EarthBondGraph.WorldPieceIndex) return true;
+                if (neighbor < 0 || _released[neighbor] || _shattered[neighbor]) continue;
+                int island = _islandByPiece[neighbor];
+                if (island >= 0 && _islandSupported[island]) return true;
+            }
+            return false;
         }
 
         private void ReattachPiece(int index)
         {
-            if (index < 0 || index >= PieceCount || !_released[index]) return;
+            if (index < 0 || index >= PieceCount || !_released[index] || _shattered[index]) return;
+            if (_pieceFilters[index] != null) _pieceFilters[index].sharedMesh = _beveledRenderMeshes[index];
+            if (_pieceRenderers[index] != null) _pieceRenderers[index].sharedMaterials = _restMaterials[index];
             Rigidbody body = _pieceBodies[index];
             if (body != null)
             {
-                body.linearVelocity = Vector3.zero;
-                body.angularVelocity = Vector3.zero;
+                if (!body.isKinematic)
+                {
+                    body.linearVelocity = Vector3.zero;
+                    body.angularVelocity = Vector3.zero;
+                }
                 body.isKinematic = true;
                 body.detectCollisions = true;
             }
             if (_pieceGravity[index] != null) _pieceGravity[index].enabled = false;
             EarthPieceDefinition definition = _pieceDefinitions[index];
             Transform piece = pieces[index];
+            ApplyFractureShadingFrame(_pieceRenderers[index], float4x4.TRS(
+                definition.RestLocalPosition, definition.RestLocalRotation, definition.RestLocalScale));
             piece.localPosition = new Vector3(
                 definition.RestLocalPosition.x,
                 definition.RestLocalPosition.y,
@@ -550,6 +774,9 @@ namespace Elemental.Runtime.Physics
             {
                 EarthBondDefinition bond = _bondDefinitions[bondIndex];
                 if (bond.PieceA != index && bond.PieceB != index) continue;
+                int neighbor = bond.PieceA == index ? bond.PieceB : bond.PieceA;
+                // Never manufacture graph connections to still-free/missing bodies.
+                if (neighbor >= 0 && (_released[neighbor] || _shattered[neighbor])) continue;
                 EarthBondState bondState = _bondStates[bondIndex];
                 bondState.Phase = EarthBondPhase.Repaired;
                 bondState.AccumulatedDamage = 0f;

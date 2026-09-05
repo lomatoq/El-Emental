@@ -2,6 +2,7 @@ using System;
 using Elemental.Runtime.Matter;
 using Elemental.Runtime.Physics;
 using Elemental.Runtime.World;
+using Elemental.Simulation.Characters;
 using Elemental.Simulation.Combat;
 using Unity.Mathematics;
 using Unity.Profiling;
@@ -33,6 +34,7 @@ namespace Elemental.Runtime.Characters
         private EarthCharacterImpactTuning _tuning = EarthCharacterImpactTuning.Default;
         private EarthRecoverableKnockdownState _localKnockdown;
         private EarthWorldResponseFanoutAdapter _worldResponseFanout;
+        private PlanetMotor _motor;
 
         public EarthDuelFighterId FighterId => fighterId;
         public uint StableFighterId => stableFighterId;
@@ -44,6 +46,7 @@ namespace Elemental.Runtime.Characters
         public float LastReactionVelocityChange { get; private set; }
         public float LastEffectiveVelocityChange { get; private set; }
         public int AcceptedImpactCount { get; private set; }
+        public int FilteredSupportContactCount { get; private set; }
         public bool IsRecoverablyKnockedDown =>
             _localKnockdown.IsActive ||
             (duelController != null && duelController.IsRecoverablyKnockedDown(fighterId));
@@ -253,39 +256,47 @@ namespace Elemental.Runtime.Characters
 
         public EarthCharacterImpactResponse ReceiveCollision(Collision collision)
         {
-            if (collision == null || collision.contactCount == 0)
-                return EarthCharacterImpactResponse.Ignore;
-            ContactPoint contact = collision.GetContact(0);
-            Collider other = contact.otherCollider;
-            if (other != null && other.transform.IsChildOf(transform))
-                other = contact.thisCollider;
-            Rigidbody otherBody = other != null ? other.attachedRigidbody : collision.rigidbody;
-            EarthFragment controlledFragment = otherBody != null
-                ? otherBody.GetComponent<EarthFragment>()
-                : null;
-            // Controlled matter is still in the player's hand, not a projectile.
-            // Ignoring contact here prevents the emergence/hover controller from
-            // knocking out its own caster (or an opponent brushed during handling).
-            if (controlledFragment != null && controlledFragment.IsHeld)
+            if (collision == null || collision.contactCount == 0 || targetBody == null)
                 return EarthCharacterImpactResponse.Ignore;
             float impulse = collision.impulse.magnitude;
             if (impulse <= 0.01f) return EarthCharacterImpactResponse.Ignore;
-            ResolveSource(other, out EarthCharacterImpactSourceKind sourceKind, out uint sourceId);
-            float closingSpeed = otherBody != null
-                ? (otherBody.linearVelocity - targetBody.linearVelocity).magnitude
-                : collision.relativeVelocity.magnitude;
-            return ApplyImpact(
-                contact.point,
-                -contact.normal,
-                impulse,
-                sourceKind,
-                sourceId,
-                closingSpeed);
+            for (int index = 0; index < collision.contactCount; index++)
+            {
+                ContactPoint contact = collision.GetContact(index);
+                Collider other = contact.otherCollider;
+                if (other != null && other.transform.IsChildOf(transform)) other = contact.thisCollider;
+                if (other == null || other.transform.IsChildOf(transform)) continue;
+                Rigidbody otherBody = other.attachedRigidbody;
+                if (otherBody == targetBody) continue;
+                EarthFragment fragment = otherBody != null ? otherBody.GetComponent<EarthFragment>() : null;
+                if (fragment != null && fragment.IsHeld) continue;
+                ResolveSource(other, out EarthCharacterImpactSourceKind sourceKind, out uint sourceId);
+                Vector3 up = _motor != null ? _motor.LocalUp : transform.up;
+                float supportDot = Mathf.Abs(Vector3.Dot(contact.normal, up));
+                CharacterSupportCandidate support = CharacterSupportRuntimeAdapter.Classify(other, 0f, supportDot);
+                if (sourceKind == EarthCharacterImpactSourceKind.Physics && support.IsValid && support.IsWalkable &&
+                    CharacterSupportImpactSolver.IsSupportContact(
+                        ToFloat3(up), ToFloat3(targetBody.worldCenterOfMass), ToFloat3(contact.point),
+                        ToFloat3(contact.normal), otherBody != null && !otherBody.isKinematic))
+                {
+                    // PhysX already resolved floor contact. Do not turn its
+                    // support impulse into a second hit/recoil and velocity kick.
+                    // High falls have their separate height-aware landing path.
+                    FilteredSupportContactCount++;
+                    continue;
+                }
+                float closingSpeed = otherBody != null
+                    ? (otherBody.linearVelocity - targetBody.linearVelocity).magnitude
+                    : collision.relativeVelocity.magnitude;
+                return ApplyImpact(contact.point, -contact.normal, impulse, sourceKind, sourceId, closingSpeed);
+            }
+            return EarthCharacterImpactResponse.Ignore;
         }
 
         private void Awake()
         {
             if (targetBody == null) targetBody = GetComponent<Rigidbody>();
+            _motor = GetComponent<PlanetMotor>();
             if (_visibleRagdoll == null)
                 _visibleRagdoll = GetComponentInChildren<HumanoidRagdollRig>(true);
             _visibleRagdoll?.ConfigureLocalizedReactionProfile(responseProfile);

@@ -1,0 +1,71 @@
+{
+    "utc": "2026-09-05T09:57:04.7557597Z",
+    "completedUtc": "2026-09-05T09:57:04.8361093Z",
+    "unityVersion": "6000.5.7f1",
+    "scene": "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity",
+    "status": "Failed",
+    "error": "System.InvalidOperationException: Earth Material Feedback/Material Contact Dust particle layout changed between phase captures.\r\n  at Elemental.Authoring.Editor.DustProductionVisualQa.HoldShot () [0x000e3] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\DustProductionVisualQa.cs:389 \r\n  at Elemental.Authoring.Editor.DustProductionVisualQa.BeforeCameraRendering (UnityEngine.Rendering.ScriptableRenderContext context, UnityEngine.Camera camera) [0x00016] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\DustProductionVisualQa.cs:328 ",
+    "scope": "Actual saved EarthCoreSlice, production Main Camera/Game view, live production ParticleSystem instances and materials. One deterministic impact/fracture/mote layout is paused at a fixed age for all three celestial phases. No gameplay damage, asset/profile/light tuning or scene save.",
+    "productionMainCamera": true,
+    "sameParticleLayout": false,
+    "restored": true,
+    "sceneWasDirty": false,
+    "originalPhase": 0.31446531414985659,
+    "originalTimeScale": 1.0,
+    "originalCameraPosition": {
+        "x": 6.420351982116699,
+        "y": 59.91521453857422,
+        "z": -6.302349090576172
+    },
+    "captureCameraPosition": {
+        "x": -0.6996039748191834,
+        "y": 57.31999969482422,
+        "z": -2.295768976211548
+    },
+    "captureTarget": {
+        "x": 12.49863338470459,
+        "y": 58.80807876586914,
+        "z": -3.808786630630493
+    },
+    "impactWorld": {
+        "x": 12.49863338470459,
+        "y": 53.526214599609378,
+        "z": -3.808786630630493
+    },
+    "temporarilyDisabled": [
+        "Elemental.Presentation.VFX.EarthChargeCameraLookdevV2 @ Gravity Toy Camera",
+        "UnityEngine.UIElements.UIDocument @ Earth Core HUD",
+        "Elemental.Input.Gestures.MagicInputController @ Planet Character",
+        "Unity.Cinemachine.CinemachineBrain @ Gravity Toy Camera",
+        "Elemental.Presentation.Camera.EarthCameraDirector @ Gravity Toy Camera",
+        "Elemental.Runtime.Characters.EarthMvpBotController @ Rumble Linebreaker Bot",
+        "Elemental.Presentation.Camera.EarthCinemachineCameraController @ Gravity Toy Camera",
+        "Elemental.Presentation.Camera.PlanetCameraRig @ Gravity Toy Camera",
+        "Elemental.Input.Actions.PlanetInputReader @ Planet Character",
+        "Elemental.Presentation.Rendering.VisualQaCaptureBehaviour @ Gravity Toy Camera"
+    ],
+    "sources": [
+        {
+            "objectPath": "Earth Material Feedback/Material Contact Dust",
+            "material": "RumbleDustLit",
+            "shader": "Elemental/Light Dust Mote",
+            "layoutHash": "238CADE7DF889351",
+            "particles": 96
+        },
+        {
+            "objectPath": "Broken Crown Arena/Arena Fracture Dust",
+            "material": "RumbleDustLit",
+            "shader": "Elemental/Light Dust Mote",
+            "layoutHash": "6460CBFD29A8C971",
+            "particles": 180
+        },
+        {
+            "objectPath": "Gravity Toy Camera/Sunlit Air Motes",
+            "material": "LightDustMote",
+            "shader": "Elemental/Light Dust Mote",
+            "layoutHash": "8347CEB8B555B2E3",
+            "particles": 42
+        }
+    ],
+    "captures": []
+}

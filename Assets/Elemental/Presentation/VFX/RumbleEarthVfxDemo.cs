@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using Elemental.Input.Actions;
+using Elemental.Runtime.World;
 using UnityEngine;
 
 namespace Elemental.Presentation.VFX
@@ -22,6 +23,8 @@ namespace Elemental.Presentation.VFX
         private Vector3[] _wallTargets = Array.Empty<Vector3>();
         private Coroutine _wallRoutine;
         private bool _wallRaised;
+        private readonly EarthCosmeticMaterialCache cosmeticMaterials = new();
+        private Material cosmeticDebrisMaterial;
 
         public void Configure(
             Transform[] configuredWall,
@@ -44,14 +47,32 @@ namespace Elemental.Presentation.VFX
             lensDirector = configuredLens;
             inputAdapter = configuredInput;
             CacheWallTargets(true);
+            PrepareEffectLayers();
         }
 
         private void Awake()
         {
             CacheWallTargets(true);
+            PrepareEffectLayers();
             if (inputAdapter == null)
-                inputAdapter = FindFirstObjectByType<EarthInputAdapter>(FindObjectsInactive.Include);
+                inputAdapter = FindAnyObjectByType<EarthInputAdapter>(FindObjectsInactive.Include);
         }
+
+        private void PrepareEffectLayers()
+        {
+            if (pressureDust != null) EarthEffectRenderOrder.ApplyDustRenderer(pressureDust.GetComponent<ParticleSystemRenderer>());
+            if (groundDust != null) EarthEffectRenderOrder.ApplyDustRenderer(groundDust.GetComponent<ParticleSystemRenderer>());
+            if (!Application.isPlaying) return;
+            cosmeticDebrisMaterial = cosmeticMaterials.Get(debrisMaterial);
+            if (gravel != null)
+            {
+                EarthParticleSystemTuningApplier.ApplyChipRotation(gravel, new Vector2(-360f, 360f));
+                var renderer = gravel.GetComponent<ParticleSystemRenderer>();
+                EarthEffectRenderOrder.ApplyCosmeticRenderer(renderer, cosmeticMaterials.Get(renderer.sharedMaterial));
+            }
+        }
+
+        private void OnDestroy() => cosmeticMaterials.Dispose();
 
         private void Update()
         {
@@ -161,7 +182,7 @@ namespace Elemental.Presentation.VFX
                 MeshFilter filter = debris.AddComponent<MeshFilter>();
                 filter.sharedMesh = mesh;
                 MeshRenderer renderer = debris.AddComponent<MeshRenderer>();
-                renderer.sharedMaterial = debrisMaterial;
+                EarthEffectRenderOrder.ApplyCosmeticRenderer(renderer, cosmeticDebrisMaterial);
                 MeshCollider collider = debris.AddComponent<MeshCollider>();
                 collider.sharedMesh = mesh;
                 collider.convex = true;

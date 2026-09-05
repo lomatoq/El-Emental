@@ -13,6 +13,36 @@ namespace Elemental.Runtime.Physics
     {
         private const int TopSubdivisions = 2;
 
+        // Cast preparation only. Acute chamfers may extend outside the original
+        // side planes; keep every render vertex inside its assigned convex cell.
+        public static void ContainRenderFootprint(Mesh mesh, float2[] footprint)
+        {
+            if (mesh == null || footprint == null || footprint.Length < 3) return;
+            Vector3[] points = mesh.vertices;
+            float orientation = SignedArea(footprint, footprint.Length) >= 0f ? 1f : -1f;
+            bool changed = false;
+            for (int v = 0; v < points.Length; v++)
+            {
+                float factor = 1f;
+                float2 point = new float2(points[v].x, points[v].z);
+                for (int edge = 0; edge < footprint.Length; edge++)
+                {
+                    float2 a = footprint[edge], b = footprint[(edge + 1) % footprint.Length];
+                    float2 delta = b - a;
+                    float2 normal = new float2(delta.y, -delta.x) * orientation;
+                    float distance = math.dot(normal, point);
+                    float limit = math.dot(normal, a) * .992f;
+                    if (distance > limit && distance > .0000001f)
+                        factor = math.min(factor, math.max(0f, limit / distance));
+                }
+                if (factor >= 1f) continue;
+                points[v].x *= factor; points[v].z *= factor; changed = true;
+            }
+            if (!changed) return;
+            mesh.vertices = points;
+            mesh.RecalculateNormals(); mesh.RecalculateBounds();
+        }
+
         public static Mesh Create(int poolIndex)
         {
             int family = Mathf.Abs(poolIndex) % 6;
@@ -66,7 +96,8 @@ namespace Elemental.Runtime.Physics
             Mesh mesh,
             float2[] footprint,
             uint seed,
-            float thickness)
+            float thickness,
+            bool stableFootprint = false)
         {
             if (mesh == null || footprint == null || footprint.Length < 3)
                 return System.Array.Empty<Vector3>();
@@ -113,6 +144,10 @@ namespace Elemental.Runtime.Physics
                     float chip = ring == ringCount - 1
                         ? Mathf.Lerp(-0.055f, 0.032f, Hash01(vertexSeed ^ 0xA511u))
                         : Mathf.Lerp(-0.018f, 0.018f, Hash01(vertexSeed ^ 0x71C3u));
+                    // A moving wave must expose the same fracture outline at every
+                    // depth. The old belly/taper changed its ground cross-section
+                    // throughout a slow lift even though the mesh itself was fixed.
+                    if (stableFootprint) scale = .992f;
                     ringVertices[ring, index] = new Vector3(p.x * scale, ringY[ring] + chip, p.y * scale);
                 }
             }

@@ -358,14 +358,13 @@ namespace Elemental.Runtime.Physics
             EarthCharacterImpactTarget characterTarget = hit != null
                 ? hit.GetComponentInParent<EarthCharacterImpactTarget>()
                 : null;
-            if (characterTarget == null) return;
             ContactPoint contact = collision.GetContact(0);
             float relativeSpeed = collision.relativeVelocity.magnitude;
             float impulse = Mathf.Max(collision.impulse.magnitude, Body.mass * relativeSpeed);
             Vector3 direction = Body.linearVelocity.sqrMagnitude > 0.0001f
                 ? Body.linearVelocity.normalized
                 : -contact.normal;
-            characterTarget.ApplyImpact(
+            characterTarget?.ApplyImpact(
                 contact.point,
                 direction,
                 impulse,
@@ -373,6 +372,17 @@ namespace Elemental.Runtime.Physics
                 ImpactSourceId,
                 relativeSpeed,
                 1f);
+            if (relativeSpeed >= .75f)
+            {
+                var structuralImpact = new EarthStructureImpact(contact.point, direction, impulse,
+                    EarthStructureImpactKind.Projectile, ImpactSourceId);
+                EarthStructureImpactRouter.Apply(hit, in structuralImpact);
+            }
+            if (relativeSpeed >= 0.75f)
+            {
+                _owner?.PresentProjectileBreak(contact.point, contact.normal, ImpactSourceId);
+                ResetToPool();
+            }
         }
 
         public void OnEarthMagicGrabbed(EarthMagicGripKind grip)

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-30 00:12:46Z" end-time="2026-08-30 00:12:48Z" duration="2.0491204">
+  <test-suite type="TestSuite" id="1157" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="114" result="Failed" site="Child" start-time="2026-08-30 00:12:46Z" end-time="2026-08-30 00:12:48Z" duration="2.049120" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1150" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="114" result="Failed" site="Child" start-time="2026-08-30 00:12:46Z" end-time="2026-08-30 00:12:48Z" duration="2.035569" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="37260" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1151" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="114" result="Failed" site="Child" start-time="2026-08-30 00:12:46Z" end-time="2026-08-30 00:12:48Z" duration="2.029690" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1152" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="114" result="Failed" site="Child" start-time="2026-08-30 00:12:46Z" end-time="2026-08-30 00:12:48Z" duration="2.026980" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1153" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="114" result="Failed" site="Child" start-time="2026-08-30 00:12:46Z" end-time="2026-08-30 00:12:48Z" duration="2.024871" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1069" name="EarthMvpEncounterRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests" classname="Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests" runstate="Runnable" testcasecount="6" result="Failed" site="Child" start-time="2026-08-30 00:12:46Z" end-time="2026-08-30 00:12:48Z" duration="2.020624" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1074" name="StompStoneHoversThenPunchesAlongTheCrosshairWithoutPoolGrowth" fullname="Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests.StompStoneHoversThenPunchesAlongTheCrosshairWithoutPoolGrowth" methodname="StompStoneHoversThenPunchesAlongTheCrosshairWithoutPoolGrowth" classname="Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests" runstate="Runnable" seed="297272927" result="Failed" start-time="2026-08-30 00:12:46Z" end-time="2026-08-30 00:12:48Z" duration="2.004514" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: greater than 20.0f
+  But was:  11.639102f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests+<StompStoneHoversThenPunchesAlongTheCrosshairWithoutPoolGrowth>d__4.MoveNext () [0x00255] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\EarthMvpEncounterRuntimeTests.cs:459
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\StompStonePlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

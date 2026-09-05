@@ -40,7 +40,10 @@ Shader "Elemental/Atmosphere Shell"
                 float3 view = SafeNormalize(_WorldSpaceCameraPos - input.positionWS);
                 float3 normal = SafeNormalize(input.normalWS);
                 float rim = pow(saturate(1.0 - abs(dot(view, normal))), max(0.2, _HorizonStrength));
-                float sun = pow(saturate(dot(view, SafeNormalize(_ElementalSunDirection.xyz))), 18.0);
+                // `view` points from the shell toward the camera, while the sky
+                // shaders use the camera ray. Keep the forward Mie lobe on the
+                // visible sun side of the atmosphere limb.
+                float sun = pow(saturate(dot(-view, SafeNormalize(_ElementalSunDirection.xyz))), 18.0);
                 float daylight = saturate(dot(normal, SafeNormalize(_ElementalSunDirection.xyz)) * 0.5 + 0.5);
                 half3 color = _RayleighColor.rgb * rim * _RayleighStrength + _MieColor.rgb * sun * rim * _MieStrength;
                 half alpha = saturate(rim * lerp(_NightOpacity, 0.72, daylight));

@@ -1,4 +1,5 @@
 using Elemental.Runtime.Physics;
+using Elemental.Runtime.World;
 using Elemental.Simulation.Bending;
 using Unity.Mathematics;
 using Unity.Profiling;
@@ -19,6 +20,8 @@ namespace Elemental.Runtime.Characters
         [SerializeField] private EarthLandingCushionProfile profile;
         [SerializeField] private Transform cushionVisual;
         [SerializeField] private EarthSurfaceQueryService surfaceQueries;
+        [SerializeField] private EarthMaterialFeedbackHub materialFeedback;
+        public void ConfigureMaterialFeedback(EarthMaterialFeedbackHub hub) => materialFeedback = hub;
 
         private bool _holding;
         private bool _cushioning;
@@ -26,6 +29,8 @@ namespace Elemental.Runtime.Characters
         private float _safeLandingUntil;
         private Vector3 _landingPoint;
         private Vector3 _landingUp;
+        private bool _emergencePresented;
+        private float _nextDustAt;
 
         public bool IsHolding => _holding;
         public bool IsCushioning => _cushioning;
@@ -83,6 +88,8 @@ namespace Elemental.Runtime.Characters
             _holding = true;
             _cushioning = false;
             _retreatElapsed = 0f;
+            _emergencePresented = false;
+            _nextDustAt = 0f;
             return true;
         }
 
@@ -134,6 +141,12 @@ namespace Elemental.Runtime.Characters
                     _landingUp = ToVector3(sample.Normal);
                 }
                 ShowPrediction();
+                if (!_emergencePresented)
+                {
+                    _emergencePresented = true;
+                    materialFeedback?.Emit(EarthMaterialFeedbackKind.Emerge, _landingPoint, _landingUp,
+                        1f, PillarWidth * .5f, dustCount: 72, chipCount: 18);
+                }
 
                 float clearance = Vector3.Dot(
                     targetBody.worldCenterOfMass - _landingPoint, _landingUp) - 1.05f;
@@ -151,7 +164,17 @@ namespace Elemental.Runtime.Characters
                     motor.BeginExternalLaunch(3);
                 }
 
-                if (_cushioning) CompressVisual(clearance);
+                if (_cushioning)
+                {
+                    CompressVisual(clearance);
+                    motor.SuppressLandingRoll(.9f);
+                    if (Time.time >= _nextDustAt)
+                    {
+                        _nextDustAt = Time.time + .09f;
+                        materialFeedback?.Emit(EarthMaterialFeedbackKind.Friction, _landingPoint, _landingUp,
+                            1f, PillarWidth * .5f, dustCount: 20, chipCount: 4);
+                    }
+                }
                 if (clearance > 0.22f && !motor.IsGrounded) return;
                 LastLandingSpeed = Mathf.Max(0f, -Vector3.Dot(
                     targetBody.linearVelocity - ToVector3(LastLandingSurface.Velocity), _landingUp));
@@ -159,6 +182,9 @@ namespace Elemental.Runtime.Characters
                 _cushioning = true;
                 _safeLandingUntil = Time.time + 0.75f;
                 _retreatElapsed = 0f;
+                motor.SuppressLandingRoll(.9f);
+                materialFeedback?.Emit(EarthMaterialFeedbackKind.Land, _landingPoint, _landingUp,
+                    1f, PillarWidth * .6f, dustCount: 80, chipCount: 20);
             }
         }
 

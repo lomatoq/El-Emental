@@ -1,7 +1,9 @@
 using System.Collections;
+using Elemental.Input.Actions;
 using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
 using Elemental.Simulation.Characters;
+using Elemental.Simulation.Bending;
 using Elemental.Simulation.Gravity;
 using NUnit.Framework;
 using Unity.Mathematics;
@@ -10,7 +12,7 @@ using UnityEngine.TestTools;
 
 namespace Elemental.Tests.PlayMode
 {
-    public sealed class PlanetMotorPlayModeTests
+    public sealed partial class PlanetMotorPlayModeTests
     {
         private sealed class ManualInputSource : MonoBehaviour, IPlanetMotorInputSource
         {
@@ -33,7 +35,10 @@ namespace Elemental.Tests.PlayMode
             public GameObject CameraFrame;
             public Rigidbody Body;
             public PlanetMotor Motor;
+            public GravityBody GravityBody;
             public ManualInputSource Input;
+            public PlanetInputReader BufferedJumpInput;
+            public ActiveRagdollPuppet Puppet;
             public Vector3 RadialUp;
             public Vector3 Center;
             public bool OwnsCameraFrame;
@@ -146,6 +151,113 @@ namespace Elemental.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator TankSteering_MovesAndTurnsOnSphericalGroundAwayFromArenaPole()
+        {
+            Fixture fixture = CreateFixture(Vector3.right);
+            fixture.Motor.ConfigureTankSteering(true, 170f);
+            for (int tick = 0; tick < 60; tick++) yield return new WaitForFixedUpdate();
+
+            Assert.That(fixture.Motor.IsGrounded, Is.True);
+            Assert.That(Vector3.Dot(fixture.Motor.LocalUp, Vector3.right), Is.GreaterThan(0.99f));
+            Vector3 start = fixture.Body.position;
+            Vector3 initialForward = Vector3.ProjectOnPlane(
+                fixture.Character.transform.forward, fixture.Motor.LocalUp).normalized;
+
+            fixture.Input.Move = new float2(0.55f, 1f);
+            for (int tick = 0; tick < 36; tick++) yield return new WaitForFixedUpdate();
+
+            Vector3 displacement = fixture.Body.position - start;
+            Vector3 turnedForward = Vector3.ProjectOnPlane(
+                fixture.Character.transform.forward, fixture.Motor.LocalUp).normalized;
+            Assert.That(displacement.magnitude, Is.GreaterThan(0.5f),
+                "Tank locomotion must remain active on the spherical planet, not only on the arena floor.");
+            Assert.That(Vector3.Angle(initialForward, turnedForward), Is.GreaterThan(20f),
+                "The canonical body must turn with the locomotion command on curved ground.");
+            Assert.That(Vector3.Dot(fixture.GravityBody.LastAcceleration, -fixture.Motor.LocalUp),
+                Is.GreaterThan(12f));
+
+            DestroyFixture(fixture);
+        }
+
+        [UnityTest]
+        public IEnumerator ProfiledJump_UsesShortBallisticArcUnderSurfaceGravity()
+        {
+            Fixture fixture = CreateFixture(Vector3.up);
+            PlanetMotorFeelProfile profile = ScriptableObject.CreateInstance<PlanetMotorFeelProfile>();
+            JsonUtility.FromJsonOverwrite("{\"jumpSpeed\":3.2}", profile);
+            fixture.Motor.ConfigureFeel(profile);
+            for (int tick = 0; tick < 60; tick++) yield return new WaitForFixedUpdate();
+
+            Assert.That(fixture.Motor.IsGrounded, Is.True);
+            float launchRadius = Vector3.Distance(fixture.Body.worldCenterOfMass, fixture.Center);
+            float maximumRise = 0f;
+            bool airborne = false;
+            fixture.Input.JumpQueued = true;
+            for (int tick = 0; tick < 90; tick++)
+            {
+                yield return new WaitForFixedUpdate();
+                float rise = Vector3.Distance(fixture.Body.worldCenterOfMass, fixture.Center) - launchRadius;
+                maximumRise = Mathf.Max(maximumRise, rise);
+                airborne |= !fixture.Motor.IsGrounded;
+                if (airborne && tick > 12 && fixture.Motor.IsGrounded) break;
+            }
+
+            Assert.That(airborne, Is.True);
+            Assert.That(maximumRise, Is.InRange(0.18f, 0.75f),
+                "The tuned jump must read as a compact hop; a multi-metre float indicates lost gravity or a stale jump default.");
+            Assert.That(fixture.Motor.IsGrounded, Is.True,
+                "The tuned jump must return to spherical support within the bounded test window.");
+
+            Object.Destroy(profile);
+            DestroyFixture(fixture);
+        }
+
+        [UnityTest]
+        public IEnumerator SameUpdateJumpTap_LaunchesRadiallyWithoutDestabilizingPuppet()
+        {
+            Fixture fixture = CreateFixture(Vector3.up, withBufferedJumpInput: true);
+            for (int tick = 0; tick < 60; tick++) yield return new WaitForFixedUpdate();
+
+            Assert.That(fixture.Motor.IsGrounded, Is.True);
+            Assert.That(fixture.BufferedJumpInput, Is.Not.Null);
+            Assert.That(fixture.Puppet, Is.Not.Null);
+            fixture.Puppet.SuppressImpacts(2f);
+
+            var router = new EarthActionRouter();
+            EarthActionRoute begin = router.Step(new EarthActionRouterFrame(
+                Time.unscaledTime,
+                grounded: true,
+                stableSupport: true,
+                jumpPressed: true,
+                jumpHeld: false,
+                jumpReleased: true));
+            if (begin.Phase == EarthActionRoutePhase.Begin)
+                fixture.BufferedJumpInput.RouteJumpStarted();
+
+            EarthActionRoute commit = router.Step(new EarthActionRouterFrame(
+                Time.unscaledTime + 0.016f,
+                grounded: true,
+                stableSupport: true,
+                jumpHeld: false));
+            if (commit.Phase == EarthActionRoutePhase.Commit)
+                fixture.BufferedJumpInput.RouteJumpCanceled();
+
+            yield return new WaitForFixedUpdate();
+
+            float radialSpeed = Vector3.Dot(
+                fixture.Body.linearVelocity,
+                fixture.Motor.LocalUp);
+            Assert.That(begin.Phase, Is.EqualTo(EarthActionRoutePhase.Begin));
+            Assert.That(commit.Phase, Is.EqualTo(EarthActionRoutePhase.Commit));
+            Assert.That(radialSpeed, Is.GreaterThan(0.5f),
+                "A short Space press/release must reach PlanetMotor's buffered jump on the next physics tick.");
+            Assert.That(fixture.Puppet.CurrentState.Mode, Is.Not.EqualTo(CharacterPhysicalMode.Stagger));
+            Assert.That(fixture.Puppet.CurrentState.Mode, Is.Not.EqualTo(CharacterPhysicalMode.FullRagdoll));
+
+            DestroyFixture(fixture);
+        }
+
+        [UnityTest]
         public IEnumerator FixedCommandReplay_CircumnavigatesAndMatchesIsolatedWorld()
         {
             // Keep deterministic fixture physics outside any production planet that
@@ -189,7 +301,8 @@ namespace Elemental.Tests.PlayMode
         private static Fixture CreateFixture(
             Vector3 radialUp,
             Vector3 center = default,
-            bool useCharacterAsCameraFrame = false)
+            bool useCharacterAsCameraFrame = false,
+            bool withBufferedJumpInput = false)
         {
             if (center == default) center = new Vector3(240f, 0f, 0f);
             Fixture fixture = new Fixture
@@ -220,8 +333,8 @@ namespace Elemental.Tests.PlayMode
             fixture.Body.mass = 20f;
             fixture.Body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             CapsuleCollider capsule = fixture.Character.GetComponent<CapsuleCollider>();
-            GravityBody gravityBody = fixture.Character.AddComponent<GravityBody>();
-            gravityBody.Configure(world, fixture.Body);
+            fixture.GravityBody = fixture.Character.AddComponent<GravityBody>();
+            fixture.GravityBody.Configure(world, fixture.Body);
             fixture.Input = fixture.Character.AddComponent<ManualInputSource>();
             fixture.Motor = fixture.Character.AddComponent<PlanetMotor>();
             Transform cameraFrame;
@@ -240,6 +353,28 @@ namespace Elemental.Tests.PlayMode
             }
 
             fixture.Motor.Configure(world, fixture.Body, capsule, fixture.Input, cameraFrame);
+
+            if (withBufferedJumpInput)
+            {
+                EarthPillarMobility pillar = fixture.Character.AddComponent<EarthPillarMobility>();
+                pillar.Configure(fixture.Body, fixture.Motor);
+                EarthInputAdapter inputAdapter = fixture.Character.AddComponent<EarthInputAdapter>();
+                inputAdapter.enabled = false;
+                fixture.BufferedJumpInput = fixture.Character.AddComponent<PlanetInputReader>();
+                fixture.BufferedJumpInput.enabled = false;
+                fixture.BufferedJumpInput.Configure(inputAdapter, pillar);
+                fixture.Motor.ConfigureInputSource(fixture.BufferedJumpInput);
+                fixture.Puppet = fixture.Character.AddComponent<ActiveRagdollPuppet>();
+                fixture.Puppet.Configure(
+                    1u,
+                    world,
+                    fixture.Body,
+                    fixture.Motor,
+                    null,
+                    fixture.Character.transform,
+                    System.Array.Empty<ActiveRagdollJoint>(),
+                    new Collider[] { capsule });
+            }
 
             fixture.Root.SetActive(true);
             fixture.Character.SetActive(true);

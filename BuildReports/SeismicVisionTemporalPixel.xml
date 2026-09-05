@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="5" result="Passed" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 10:37:00Z" end-time="2026-09-05 10:37:00Z" duration="0.2743264">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="843" result="Passed" start-time="2026-09-05 10:37:00Z" end-time="2026-09-05 10:37:00Z" duration="0.274326" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2033" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="843" result="Passed" start-time="2026-09-05 10:37:00Z" end-time="2026-09-05 10:37:00Z" duration="0.252776" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2034" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="843" result="Passed" start-time="2026-09-05 10:37:00Z" end-time="2026-09-05 10:37:00Z" duration="0.252032" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2035" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="843" result="Passed" start-time="2026-09-05 10:37:00Z" end-time="2026-09-05 10:37:00Z" duration="0.251546" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2036" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="843" result="Passed" start-time="2026-09-05 10:37:00Z" end-time="2026-09-05 10:37:00Z" duration="0.251033" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1932" name="SeismicVisionTemporalPixelTests" fullname="Elemental.Tests.EditMode.SeismicVisionTemporalPixelTests" classname="Elemental.Tests.EditMode.SeismicVisionTemporalPixelTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-05 10:37:00Z" end-time="2026-09-05 10:37:00Z" duration="0.249882" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1939" name="InactiveBranchIsByteExactForDeterministicDayAndNightSource" fullname="Elemental.Tests.EditMode.SeismicVisionTemporalPixelTests.InactiveBranchIsByteExactForDeterministicDayAndNightSource" classname="Elemental.Tests.EditMode.SeismicVisionTemporalPixelTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-05 10:37:00Z" end-time="2026-09-05 10:37:00Z" duration="0.151641" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1937" name="InactiveBranchIsByteExactForDeterministicDayAndNightSource(0.72f,0.82f,0.95f,&quot;Day&quot;)" fullname="Elemental.Tests.EditMode.SeismicVisionTemporalPixelTests.InactiveBranchIsByteExactForDeterministicDayAndNightSource(0.72f,0.82f,0.95f,&quot;Day&quot;)" methodname="InactiveBranchIsByteExactForDeterministicDayAndNightSource" classname="Elemental.Tests.EditMode.SeismicVisionTemporalPixelTests" runstate="Runnable" seed="923846454" result="Passed" start-time="2026-09-05 10:37:00Z" end-time="2026-09-05 10:37:00Z" duration="0.120369" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1938" name="InactiveBranchIsByteExactForDeterministicDayAndNightSource(0.025f,0.035f,0.06f,&quot;Night&quot;)" fullname="Elemental.Tests.EditMode.SeismicVisionTemporalPixelTests.InactiveBranchIsByteExactForDeterministicDayAndNightSource(0.025f,0.035f,0.06f,&quot;Night&quot;)" methodname="InactiveBranchIsByteExactForDeterministicDayAndNightSource" classname="Elemental.Tests.EditMode.SeismicVisionTemporalPixelTests" runstate="Runnable" seed="1662473367" result="Passed" start-time="2026-09-05 10:37:00Z" end-time="2026-09-05 10:37:00Z" duration="0.006857" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="1936" name="MovingFrontHasMeasuredIntermediateGpuSampleAndWritesTemporalStrip" fullname="Elemental.Tests.EditMode.SeismicVisionTemporalPixelTests.MovingFrontHasMeasuredIntermediateGpuSampleAndWritesTemporalStrip" classname="Elemental.Tests.EditMode.SeismicVisionTemporalPixelTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-05 10:37:00Z" end-time="2026-09-05 10:37:00Z" duration="0.091440" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1933" name="MovingFrontHasMeasuredIntermediateGpuSampleAndWritesTemporalStrip(30)" fullname="Elemental.Tests.EditMode.SeismicVisionTemporalPixelTests.MovingFrontHasMeasuredIntermediateGpuSampleAndWritesTemporalStrip(30)" methodname="MovingFrontHasMeasuredIntermediateGpuSampleAndWritesTemporalStrip" classname="Elemental.Tests.EditMode.SeismicVisionTemporalPixelTests" runstate="Runnable" seed="1217535495" result="Passed" start-time="2026-09-05 10:37:00Z" end-time="2026-09-05 10:37:00Z" duration="0.023310" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1934" name="MovingFrontHasMeasuredIntermediateGpuSampleAndWritesTemporalStrip(60)" fullname="Elemental.Tests.EditMode.SeismicVisionTemporalPixelTests.MovingFrontHasMeasuredIntermediateGpuSampleAndWritesTemporalStrip(60)" methodname="MovingFrontHasMeasuredIntermediateGpuSampleAndWritesTemporalStrip" classname="Elemental.Tests.EditMode.SeismicVisionTemporalPixelTests" runstate="Runnable" seed="797620332" result="Passed" start-time="2026-09-05 10:37:00Z" end-time="2026-09-05 10:37:00Z" duration="0.031363" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1935" name="MovingFrontHasMeasuredIntermediateGpuSampleAndWritesTemporalStrip(120)" fullname="Elemental.Tests.EditMode.SeismicVisionTemporalPixelTests.MovingFrontHasMeasuredIntermediateGpuSampleAndWritesTemporalStrip(120)" methodname="MovingFrontHasMeasuredIntermediateGpuSampleAndWritesTemporalStrip" classname="Elemental.Tests.EditMode.SeismicVisionTemporalPixelTests" runstate="Runnable" seed="448058826" result="Passed" start-time="2026-09-05 10:37:00Z" end-time="2026-09-05 10:37:00Z" duration="0.035301" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\SeismicVisionTemporalPixel.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

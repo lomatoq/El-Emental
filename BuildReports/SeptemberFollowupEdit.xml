@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="16" result="Passed" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.1305548">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="822" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.130555" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2007" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="822" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.105340" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2008" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="822" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.104247" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2009" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="822" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.103669" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2010" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="822" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.103018" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1702" name="EarthSeismicPerceptionTests" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.066242" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1709" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.045826" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1703" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,True,False,True)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,True,False,True)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="753667802" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.029477" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1704" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(False,True,True,True,False,False)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(False,True,True,True,False,False)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="2023042245" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.000206" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1705" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,False,True,True,False,False)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,False,True,True,False,False)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="1675235017" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.000120" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1706" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,False,True,False,False)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,False,True,False,False)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="627664840" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.000097" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1707" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,False,False,False)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,False,False,False)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="2087618253" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.000070" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1708" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,True,True,False)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,True,True,False)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="392046831" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.000085" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1710" name="WaveExpiresAndTravelsAtPredictableWorldSpeed" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.WaveExpiresAndTravelsAtPredictableWorldSpeed" methodname="WaveExpiresAndTravelsAtPredictableWorldSpeed" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="1768298304" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.004415" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1717" name="EarthStableArmIkGeometryTests" fullname="Elemental.Tests.EditMode.EarthStableArmIkGeometryTests" classname="Elemental.Tests.EditMode.EarthStableArmIkGeometryTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.017066" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1721" name="EvenOppositeFullSolutionsCannotProduceTheObservedLowWeightFlip" fullname="Elemental.Tests.EditMode.EarthStableArmIkGeometryTests.EvenOppositeFullSolutionsCannotProduceTheObservedLowWeightFlip" methodname="EvenOppositeFullSolutionsCannotProduceTheObservedLowWeightFlip" classname="Elemental.Tests.EditMode.EarthStableArmIkGeometryTests" runstate="Runnable" seed="390187053" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.006692" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1722" name="InvalidOrTooCloseTargetsRemainFiniteAndReachable" fullname="Elemental.Tests.EditMode.EarthStableArmIkGeometryTests.InvalidOrTooCloseTargetsRemainFiniteAndReachable" methodname="InvalidOrTooCloseTargetsRemainFiniteAndReachable" classname="Elemental.Tests.EditMode.EarthStableArmIkGeometryTests" runstate="Runnable" seed="2130130461" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.003226" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1718" name="NearlyStraightRequestRetainsARealBendTowardStablePole" fullname="Elemental.Tests.EditMode.EarthStableArmIkGeometryTests.NearlyStraightRequestRetainsARealBendTowardStablePole" methodname="NearlyStraightRequestRetainsARealBendTowardStablePole" classname="Elemental.Tests.EditMode.EarthStableArmIkGeometryTests" runstate="Runnable" seed="1000810064" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.000980" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1719" name="PoleSideStaysContinuousAcrossSmallTargetMotion" fullname="Elemental.Tests.EditMode.EarthStableArmIkGeometryTests.PoleSideStaysContinuousAcrossSmallTargetMotion" methodname="PoleSideStaysContinuousAcrossSmallTargetMotion" classname="Elemental.Tests.EditMode.EarthStableArmIkGeometryTests" runstate="Runnable" seed="488565069" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.001569" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1720" name="SmallRigWeightBlendsSolvedRotationInsteadOfFullyApplyingIt" fullname="Elemental.Tests.EditMode.EarthStableArmIkGeometryTests.SmallRigWeightBlendsSolvedRotationInsteadOfFullyApplyingIt" methodname="SmallRigWeightBlendsSolvedRotationInsteadOfFullyApplyingIt" classname="Elemental.Tests.EditMode.EarthStableArmIkGeometryTests" runstate="Runnable" seed="303532478" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.001895" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1851" name="NativeBuildSceneOrderTests" fullname="Elemental.Tests.EditMode.NativeBuildSceneOrderTests" classname="Elemental.Tests.EditMode.NativeBuildSceneOrderTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.016604" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1856" name="Create_ExcludesEditorOnlyPolishLab" fullname="Elemental.Tests.EditMode.NativeBuildSceneOrderTests.Create_ExcludesEditorOnlyPolishLab" methodname="Create_ExcludesEditorOnlyPolishLab" classname="Elemental.Tests.EditMode.NativeBuildSceneOrderTests" runstate="Runnable" seed="885675245" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.008308" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1852" name="Create_PutsBootstrapThenPlayableFirstAndPreservesRemainingOrder" fullname="Elemental.Tests.EditMode.NativeBuildSceneOrderTests.Create_PutsBootstrapThenPlayableFirstAndPreservesRemainingOrder" methodname="Create_PutsBootstrapThenPlayableFirstAndPreservesRemainingOrder" classname="Elemental.Tests.EditMode.NativeBuildSceneOrderTests" runstate="Runnable" seed="1827966441" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.000597" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1855" name="Create_RejectsMissingRequiredScene" fullname="Elemental.Tests.EditMode.NativeBuildSceneOrderTests.Create_RejectsMissingRequiredScene" classname="Elemental.Tests.EditMode.NativeBuildSceneOrderTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.005799" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1853" name="Create_RejectsMissingRequiredScene(&quot;MissingBootstrap.unity&quot;,&quot;EarthCoreSlice.unity&quot;,&quot;bootstrap&quot;)" fullname="Elemental.Tests.EditMode.NativeBuildSceneOrderTests.Create_RejectsMissingRequiredScene(&quot;MissingBootstrap.unity&quot;,&quot;EarthCoreSlice.unity&quot;,&quot;bootstrap&quot;)" methodname="Create_RejectsMissingRequiredScene" classname="Elemental.Tests.EditMode.NativeBuildSceneOrderTests" runstate="Runnable" seed="290248410" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.004244" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1854" name="Create_RejectsMissingRequiredScene(&quot;Bootstrap.unity&quot;,&quot;MissingPlayable.unity&quot;,&quot;playable&quot;)" fullname="Elemental.Tests.EditMode.NativeBuildSceneOrderTests.Create_RejectsMissingRequiredScene(&quot;Bootstrap.unity&quot;,&quot;MissingPlayable.unity&quot;,&quot;playable&quot;)" methodname="Create_RejectsMissingRequiredScene" classname="Elemental.Tests.EditMode.NativeBuildSceneOrderTests" runstate="Runnable" seed="1208212519" result="Passed" start-time="2026-09-05 09:49:29Z" end-time="2026-09-05 09:49:29Z" duration="0.000334" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\SeptemberFollowupEdit.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

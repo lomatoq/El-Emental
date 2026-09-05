@@ -236,6 +236,9 @@ namespace Elemental.Simulation.Characters
     {
         private const float MaximumFrameStep = 0.28f;
         private const float MaximumReleaseFrameStep = 0.90f;
+        public const float StanceCaptureResponseSeconds = 0.40f;
+        public const float MaximumStanceCaptureFrameStep = 0.12f;
+        public const float MaximumPivotCaptureFrameStep = 0.17f;
 
         public static float Step(
             float current,
@@ -264,9 +267,9 @@ namespace Elemental.Simulation.Characters
             float current,
             float target,
             float deltaTime,
-            float captureResponseSeconds = 0.40f,
+            float captureResponseSeconds = StanceCaptureResponseSeconds,
             float releaseResponseSeconds = 0.02f,
-            float maximumCaptureFrameStep = MaximumFrameStep)
+            float maximumCaptureFrameStep = MaximumStanceCaptureFrameStep)
         {
             current = math.saturate(math.isfinite(current) ? current : 0f);
             target = math.saturate(math.isfinite(target) ? target : 0f);
@@ -288,11 +291,26 @@ namespace Elemental.Simulation.Characters
             float weight,
             bool locked,
             EarthFootContactReason reason,
-            float maximumSwingWeight = 0.15f)
+            float maximumSwingWeight = 0f)
         {
             float safeWeight = math.saturate(math.isfinite(weight) ? weight : 0f);
             if (locked || reason != EarthFootContactReason.Swing) return safeWeight;
             return math.min(safeWeight, math.saturate(maximumSwingWeight));
+        }
+
+        /// <summary>
+        /// Converts the bounded contact-state ramp into the final Humanoid IK
+        /// weight. The first eighty percent remains linear; the terminal capture
+        /// eases toward full authority so an asymmetric pelvis correction cannot
+        /// leave the almost-planted foot inside the support.
+        /// </summary>
+        public static float ResolveSubmittedGoalWeight(float contactWeight)
+        {
+            float weight = math.saturate(math.isfinite(contactWeight) ? contactWeight : 0f);
+            if (weight <= 0.8f) return weight;
+            float t = math.saturate((weight - 0.8f) / 0.2f);
+            float smooth = t * t * (3f - 2f * t);
+            return math.lerp(weight, 1f, smooth);
         }
     }
 

@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16cbcb33b7e77a849a740d0b021100d5, type: 3}
+  m_Name: CharacterImpactResponseProfile
+  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Characters.CharacterImpactResponseProfile
+  responseMode: 1
+  singleStoneRootVelocity: 0.8
+  maximumRagdollRise: 2
+  maximumRagdollTangentSpeed: 4
+  looseStone:
+    reactionMultiplier: 1
+    movementMultiplier: 0.8
+    maximumRootVelocityChange: 0.9
+  armorProjectile:
+    reactionMultiplier: 1.1
+    movementMultiplier: 0.85
+    maximumRootVelocityChange: 1.35
+  pillarWave:
+    reactionMultiplier: 1.28
+    movementMultiplier: 0.48
+    maximumRootVelocityChange: 2.3
+  pillarCrest:
+    reactionMultiplier: 1.32
+    movementMultiplier: 0.58
+    maximumRootVelocityChange: 2.4
+  stonePunch:
+    reactionMultiplier: 1.28
+    movementMultiplier: 0.62
+    maximumRootVelocityChange: 2
+  surfNose:
+    reactionMultiplier: 1.15
+    movementMultiplier: 0.65
+    maximumRootVelocityChange: 2.4
+  genericPhysics:
+    reactionMultiplier: 1
+    movementMultiplier: 0.8
+    maximumRootVelocityChange: 1.5
+  localizedHitReaction: 1
+  localizedHitDuration: 0.2
+  localizedParentWeight: 0.58
+  localizedTorsoWeight: 0.3
+  localizedHeadTransferWeight: 0.2
+  localizedArmChestMaxAngle: 14
+  localizedHeadMaxAngle: 7
+  localizedHipsLegWeight: 0.12

@@ -1,0 +1,222 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-6145424095152123788
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a89d80126d570d4b814a6bd4a004549, type: 3}
+  m_Name: FutureEllipseExtractor
+  m_EditorClassIdentifier: EAMM.Runtime::EllipseFeatureExtractor
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d0bb4b3a7b78d847be4e6490640196f, type: 3}
+  m_Name: EarthMotionLibraryData
+  m_EditorClassIdentifier: JLPM.MotionMatching::MotionMatching.MotionMatchingData
+  AnimationDatas: []
+  AnimationDataTPose: {fileID: 0}
+  HipsForwardLocalVector:
+    x: -0.4751121
+    y: -0.71905786
+    z: 0.50717294
+  HipsUpLocalVector:
+    x: -0.5071708
+    y: 0.69478965
+    z: 0.5099462
+  ContactVelocityThreshold: 0.15
+  SkeletonToMecanim:
+  - Name: mixamorig:Hips
+    MecanimBone: 0
+  - Name: mixamorig:Spine
+    MecanimBone: 7
+  - Name: mixamorig:Spine1
+    MecanimBone: 8
+  - Name: mixamorig:Spine2
+    MecanimBone: 54
+  - Name: mixamorig:Neck
+    MecanimBone: 9
+  - Name: mixamorig:Head
+    MecanimBone: 10
+  - Name: mixamorig:LeftShoulder
+    MecanimBone: 11
+  - Name: mixamorig:LeftArm
+    MecanimBone: 13
+  - Name: mixamorig:LeftForeArm
+    MecanimBone: 15
+  - Name: mixamorig:LeftHand
+    MecanimBone: 17
+  - Name: mixamorig:RightShoulder
+    MecanimBone: 12
+  - Name: mixamorig:RightArm
+    MecanimBone: 14
+  - Name: mixamorig:RightForeArm
+    MecanimBone: 16
+  - Name: mixamorig:RightHand
+    MecanimBone: 18
+  - Name: mixamorig:LeftUpLeg
+    MecanimBone: 1
+  - Name: mixamorig:LeftLeg
+    MecanimBone: 3
+  - Name: mixamorig:LeftFoot
+    MecanimBone: 5
+  - Name: mixamorig:LeftToeBase
+    MecanimBone: 19
+  - Name: mixamorig:RightUpLeg
+    MecanimBone: 2
+  - Name: mixamorig:RightLeg
+    MecanimBone: 4
+  - Name: mixamorig:RightFoot
+    MecanimBone: 6
+  - Name: mixamorig:RightToeBase
+    MecanimBone: 20
+  TrajectoryFeatures:
+  - Name: FuturePosition
+    FeatureType: 0
+    FramesPrediction: 0300000006000000090000000c000000
+    SimulationBone: 1
+    Bone: 0
+    ZeroX: 0
+    ZeroY: 1
+    ZeroZ: 0
+    FeatureExtractor: {fileID: 0}
+    IsMainPositionFeature: 1
+  - Name: FutureDirection
+    FeatureType: 1
+    FramesPrediction: 0300000006000000090000000c000000
+    SimulationBone: 1
+    Bone: 0
+    ZeroX: 0
+    ZeroY: 1
+    ZeroZ: 0
+    FeatureExtractor: {fileID: 0}
+    IsMainPositionFeature: 0
+  PoseFeatures:
+  - Name: LeftFootPosition
+    FeatureType: 0
+    Bone: 5
+  - Name: LeftFootVelocity
+    FeatureType: 1
+    Bone: 5
+  - Name: RightFootPosition
+    FeatureType: 0
+    Bone: 6
+  - Name: RightFootVelocity
+    FeatureType: 1
+    Bone: 6
+  - Name: HipsVelocity
+    FeatureType: 1
+    Bone: 0
+  EnvironmentFeatures:
+  - Name: FutureEllipse
+    FeatureType: 4
+    FramesPrediction: 03000000060000000c000000
+    SimulationBone: 0
+    Bone: 0
+    ZeroX: 0
+    ZeroY: 0
+    ZeroZ: 0
+    FeatureExtractor: {fileID: -6145424095152123788}
+    IsMainPositionFeature: 0
+  - Name: FutureHeight
+    FeatureType: 3
+    FramesPrediction: 03000000060000000c000000
+    SimulationBone: 0
+    Bone: 0
+    ZeroX: 0
+    ZeroY: 0
+    ZeroZ: 0
+    FeatureExtractor: {fileID: 6713234515646985281}
+    IsMainPositionFeature: 0
+  JointsLocalForward:
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+  - x: 0
+    y: 0
+    z: 1
+--- !u!114 &6713234515646985281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12856cdde05a01346b0a2bf68927a9a0, type: 3}
+  m_Name: FutureHeightExtractor
+  m_EditorClassIdentifier: EAMM.Runtime::HeightFeatureExtractor

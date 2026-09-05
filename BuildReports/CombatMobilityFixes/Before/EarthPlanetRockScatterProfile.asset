@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad32b31b43dd4d2b85b1afe05e76622f, type: 3}
+  m_Name: EarthPlanetRockScatterProfile
+  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.World.EarthPlanetRockScatterProfile
+  seed: 20260904
+  largeCount: 24
+  mediumCount: 160
+  clusterCount: 128
+  largeDiameter: {x: 3, y: 6}
+  mediumDiameter: {x: 0.7, y: 1.8}
+  smallDiameter: {x: 0.1, y: 0.38}
+  clusterMinimumStones: 8
+  clusterMaximumStones: 16
+  clusterRadius: 1.8
+  surfaceInset: 0.02
+  spacing: 0.35
+  gameplayObjectsPerFrame: 4
+  placementAttempts: 8
+  startupWaitSeconds: 20

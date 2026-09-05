@@ -1,0 +1,16 @@
+{
+    "unityVersion": "6000.5.7f1",
+    "utc": "2026-09-04T11:16:49.4459165Z",
+    "mode": "PlayMode",
+    "result": "Failed",
+    "total": 2,
+    "passed": 0,
+    "failed": 2,
+    "skipped": 0,
+    "inconclusive": 0,
+    "durationSeconds": 22.710446,
+    "failures": [
+        "Elemental.Tests.PlayMode.EarthDustCompositingRuntimeTests.ProductionDustOverlaysCosmeticChipsAndOpaqueWallsOccludeBoth:   Overlapping dust changes into dark smoke when direct lighting is lost.\r\n  Expected: less than or equal to 0.00392156886f\r\n  But was:  0.516068339f\r\n",
+        "Elemental.Tests.PlayMode.EarthWaveContactRuntimeTests.LongWaveKeepsItsMeshesAndEmitsOnSurfaceThroughRiseAndRetreat:   Rendered fracture boundaries slide across the ground although the mesh itself is unchanged.\r\n  Expected: less than 9.99999975E-05f\r\n  But was:  1.72405827f\r\n"
+    ]
+}

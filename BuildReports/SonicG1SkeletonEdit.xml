@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="11" result="Passed" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.1922254">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="881" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.192225" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1015" name="Elemental.Experimental.SonicPrototype.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Experimental.SonicPrototype.Tests.EditMode.dll" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.125950" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1016" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.125476" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1017" name="Experimental" fullname="Elemental.Experimental" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.125382" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1018" name="SonicPrototype" fullname="Elemental.Experimental.SonicPrototype" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.125309" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1019" name="Tests" fullname="Elemental.Experimental.SonicPrototype.Tests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.125197" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1020" name="EditMode" fullname="Elemental.Experimental.SonicPrototype.Tests.EditMode" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.083149" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1011" name="SonicHumanoidRetargetMathTests" fullname="Elemental.Experimental.SonicPrototype.Tests.EditMode.SonicHumanoidRetargetMathTests" classname="Elemental.Experimental.SonicPrototype.Tests.EditMode.SonicHumanoidRetargetMathTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.081584" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1014" name="BasisConjugationPreservesAngleAndMapsAxisIntoTargetParent" fullname="Elemental.Experimental.SonicPrototype.Tests.EditMode.SonicHumanoidRetargetMathTests.BasisConjugationPreservesAngleAndMapsAxisIntoTargetParent" methodname="BasisConjugationPreservesAngleAndMapsAxisIntoTargetParent" classname="Elemental.Experimental.SonicPrototype.Tests.EditMode.SonicHumanoidRetargetMathTests" runstate="Runnable" seed="1523031630" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.057030" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1012" name="NeutralSourcePreservesTheEvaluatedHumanoidReference" fullname="Elemental.Experimental.SonicPrototype.Tests.EditMode.SonicHumanoidRetargetMathTests.NeutralSourcePreservesTheEvaluatedHumanoidReference" methodname="NeutralSourcePreservesTheEvaluatedHumanoidReference" classname="Elemental.Experimental.SonicPrototype.Tests.EditMode.SonicHumanoidRetargetMathTests" runstate="Runnable" seed="319149923" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.000936" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1013" name="NonCommutingRestAndHingeProduceAParentFrameDelta" fullname="Elemental.Experimental.SonicPrototype.Tests.EditMode.SonicHumanoidRetargetMathTests.NonCommutingRestAndHingeProduceAParentFrameDelta" methodname="NonCommutingRestAndHingeProduceAParentFrameDelta" classname="Elemental.Experimental.SonicPrototype.Tests.EditMode.SonicHumanoidRetargetMathTests" runstate="Runnable" seed="156297101" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.001038" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+              <test-suite type="TestFixture" id="1001" name="SonicG1SkeletonTests" fullname="Elemental.Experimental.SonicPrototype.Tests.SonicG1SkeletonTests" classname="Elemental.Experimental.SonicPrototype.Tests.SonicG1SkeletonTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.005534" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1003" name="CoordinateMap_PreservesRotatedVectorsAcrossHandednessChange" fullname="Elemental.Experimental.SonicPrototype.Tests.SonicG1SkeletonTests.CoordinateMap_PreservesRotatedVectorsAcrossHandednessChange" methodname="CoordinateMap_PreservesRotatedVectorsAcrossHandednessChange" classname="Elemental.Experimental.SonicPrototype.Tests.SonicG1SkeletonTests" runstate="Runnable" seed="771973858" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.002798" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1004" name="KneeAngle_ChangesOnlyItsDescendantChain" fullname="Elemental.Experimental.SonicPrototype.Tests.SonicG1SkeletonTests.KneeAngle_ChangesOnlyItsDescendantChain" methodname="KneeAngle_ChangesOnlyItsDescendantChain" classname="Elemental.Experimental.SonicPrototype.Tests.SonicG1SkeletonTests" runstate="Runnable" seed="364395637" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.000985" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1002" name="NeutralPose_EvaluatesFiniteSymmetricFeet" fullname="Elemental.Experimental.SonicPrototype.Tests.SonicG1SkeletonTests.NeutralPose_EvaluatesFiniteSymmetricFeet" methodname="NeutralPose_EvaluatesFiniteSymmetricFeet" classname="Elemental.Experimental.SonicPrototype.Tests.SonicG1SkeletonTests" runstate="Runnable" seed="1787981111" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.000420" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1005" name="NonFinitePose_IsRejected" fullname="Elemental.Experimental.SonicPrototype.Tests.SonicG1SkeletonTests.NonFinitePose_IsRejected" methodname="NonFinitePose_IsRejected" classname="Elemental.Experimental.SonicPrototype.Tests.SonicG1SkeletonTests" runstate="Runnable" seed="1994148427" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.000280" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="TestFixture" id="1006" name="SonicPlannerTimelineTests" fullname="Elemental.Experimental.SonicPrototype.Tests.SonicPlannerTimelineTests" classname="Elemental.Experimental.SonicPrototype.Tests.SonicPlannerTimelineTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.036065" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1008" name="AcceptedPlanConsumesElapsedPrefixInsteadOfRestartingAtZero" fullname="Elemental.Experimental.SonicPrototype.Tests.SonicPlannerTimelineTests.AcceptedPlanConsumesElapsedPrefixInsteadOfRestartingAtZero" methodname="AcceptedPlanConsumesElapsedPrefixInsteadOfRestartingAtZero" classname="Elemental.Experimental.SonicPrototype.Tests.SonicPlannerTimelineTests" runstate="Runnable" seed="713805055" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.001207" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1007" name="ContextStartsAtOfficialLookAheadAndSamplesFourFutureFrames" fullname="Elemental.Experimental.SonicPrototype.Tests.SonicPlannerTimelineTests.ContextStartsAtOfficialLookAheadAndSamplesFourFutureFrames" methodname="ContextStartsAtOfficialLookAheadAndSamplesFourFutureFrames" classname="Elemental.Experimental.SonicPrototype.Tests.SonicPlannerTimelineTests" runstate="Runnable" seed="1961910443" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.000353" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1010" name="PlannerMayChooseAnyOfficialSixToSixteenTokenHorizon" fullname="Elemental.Experimental.SonicPrototype.Tests.SonicPlannerTimelineTests.PlannerMayChooseAnyOfficialSixToSixteenTokenHorizon" methodname="PlannerMayChooseAnyOfficialSixToSixteenTokenHorizon" classname="Elemental.Experimental.SonicPrototype.Tests.SonicPlannerTimelineTests" runstate="Runnable" seed="860196872" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.032464" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1009" name="ReplanCadenceUsesOfficialModeIntervalsAndProtectsShortBuffers" fullname="Elemental.Experimental.SonicPrototype.Tests.SonicPlannerTimelineTests.ReplanCadenceUsesOfficialModeIntervalsAndProtectsShortBuffers" methodname="ReplanCadenceUsesOfficialModeIntervalsAndProtectsShortBuffers" classname="Elemental.Experimental.SonicPrototype.Tests.SonicPlannerTimelineTests" runstate="Runnable" seed="924561024" result="Passed" start-time="2026-09-05 13:51:05Z" end-time="2026-09-05 13:51:05Z" duration="0.000836" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\SonicG1SkeletonEdit.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -91,7 +91,7 @@ namespace Elemental.Presentation.VFX
         {
             _camera = GetComponent<UnityCamera>();
             if (inputAdapter == null)
-                inputAdapter = FindFirstObjectByType<EarthInputAdapter>(FindObjectsInactive.Include);
+                inputAdapter = FindAnyObjectByType<EarthInputAdapter>(FindObjectsInactive.Include);
             _baseFieldOfView = _camera.fieldOfView;
             UniversalAdditionalCameraData cameraData = _camera.GetUniversalAdditionalCameraData();
             cameraData.renderPostProcessing = true;

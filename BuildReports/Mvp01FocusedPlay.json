@@ -1,13 +1,21 @@
 {
     "unityVersion": "6000.5.7f1",
-    "utc": "2026-08-26T16:27:01.6852876Z",
+    "utc": "2026-09-03T09:14:09.9545958Z",
     "mode": "PlayMode",
-    "result": "Passed",
-    "total": 16,
-    "passed": 16,
-    "failed": 0,
+    "result": "Failed",
+    "total": 24,
+    "passed": 17,
+    "failed": 7,
     "skipped": 0,
     "inconclusive": 0,
-    "durationSeconds": 42.4500535,
-    "failures": []
+    "durationSeconds": 32.2385088,
+    "failures": [
+        "Elemental.Tests.PlayMode.EarthCoreVisualRuntimeTests.PhysicalMouseClosedStrokeCommitsPlatformThroughShippingRouter:   A real closed LMB contour must commit exactly one platform command. phase=Cancelled, selected=Elemental.Simulation.Magic.AbilityId, status=PLATFORM — outline the area; hold RMB while drawing to raise it higher.\r\n  Expected: 1\r\n  But was:  0\r\n",
+        "Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests.HighFallOntoLandingCushionDoesNotRagdollOrKillPlayer:   Expected: True\r\n  But was:  False\r\n",
+        "Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests.PlayerAndBotUseVisibleDynamicRagdollsAndResetAtomically:   Expected: True\r\n  But was:  False\r\n",
+        "Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests.ShippingSceneContainsLargeRumbleDuelCourtAndOneActiveLinebreaker:   Expected: Calibrated\r\n  But was:  Legacy\r\n",
+        "Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests.SurfWaveAndBotProjectileUseTheSharedVisibleKnockoutPipeline:   Expected: not null\r\n  But was:  null\r\n",
+        "Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests.ZzzAcceptedMvpEvidenceCompletesWithProfilerAndCaptures:   Expected: String containing \"\"success\": true\"\r\n  But was:  \"{\n  \"success\": false,\n  \"utc\": \"2026-09-03T09:14:08.3619922Z\"\n}\"\r\n",
+        "Elemental.Tests.PlayMode.EarthProjectileSurfaceContactRuntimeTests.NearSurfaceTangentFlightStaysArmedAndDirectWallImpactSpendsProjectile:   A shallow physical graze must not consume the projectile's combat effect.\r\n  Expected: Armed\r\n  But was:  Sleeping\r\n"
+    ]
 }

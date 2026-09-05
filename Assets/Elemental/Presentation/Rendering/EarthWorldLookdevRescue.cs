@@ -85,34 +85,22 @@ namespace Elemental.Presentation.Rendering
         private void Awake()
         {
             _camera = GetComponent<UnityCamera>();
-            bool shadowFreeArena = UsesShadowFreeArena();
-            ApplyCameraQuality(shadowFreeArena);
-            ApplyGlobalQuality(shadowFreeArena);
-            AuditDirectionalLights(shadowFreeArena);
+            ApplyCameraQuality();
         }
 
         private void OnEnable()
         {
-            bool shadowFreeArena = UsesShadowFreeArena();
-            ApplyCameraQuality(shadowFreeArena);
-            ApplyGlobalQuality(shadowFreeArena);
-            AuditDirectionalLights(shadowFreeArena);
+            ApplyCameraQuality();
         }
 
-        private bool UsesShadowFreeArena()
-        {
-            Scene scene = gameObject.scene;
-            return scene.IsValid() &&
-                   scene.name.IndexOf("EarthCore", StringComparison.OrdinalIgnoreCase) >= 0;
-        }
-
-        private void ApplyCameraQuality(bool shadowFreeArena)
+        private void ApplyCameraQuality()
         {
             if (_camera == null) return;
             UniversalAdditionalCameraData data = _camera.GetUniversalAdditionalCameraData();
             if (data == null) return;
             data.renderPostProcessing = true;
-            data.renderShadows = !shadowFreeArena;
+            // Shadow enable/strength/bias are authored on the camera, Sun and URP
+            // asset. Never override them based on the scene name at runtime.
             data.requiresDepthTexture = true;
             data.stopNaN = true;
             data.dithering = true;
@@ -120,54 +108,6 @@ namespace Elemental.Presentation.Rendering
             data.antialiasingQuality = AntialiasingQuality.High;
         }
 
-        private static void ApplyGlobalQuality(bool shadowFreeArena)
-        {
-            QualitySettings.shadows = shadowFreeArena
-                ? UnityEngine.ShadowQuality.Disable
-                : UnityEngine.ShadowQuality.All;
-            QualitySettings.shadowCascades = 4;
-            QualitySettings.shadowDistance = 90f;
-            QualitySettings.shadowResolution = UnityEngine.ShadowResolution.High;
-            QualitySettings.softParticles = true;
-            QualitySettings.realtimeReflectionProbes = true;
-        }
-
-        private static void AuditDirectionalLights(bool shadowFreeArena)
-        {
-            Light[] lights = UnityEngine.Object.FindObjectsByType<Light>(FindObjectsInactive.Exclude);
-            Light key = null;
-            for (int index = 0; index < lights.Length; index++)
-            {
-                Light light = lights[index];
-                if (light == null || light.type != LightType.Directional || !light.enabled) continue;
-                if (key == null || light.intensity > key.intensity) key = light;
-            }
-            if (key == null) return;
-
-            if (shadowFreeArena)
-            {
-                key.shadows = LightShadows.None;
-                key.shadowStrength = 0f;
-            }
-            else
-            {
-                key.shadows = LightShadows.Soft;
-                key.shadowStrength = Mathf.Clamp(key.shadowStrength, 0.70f, 0.76f);
-                key.shadowBias = 0.50f;
-                key.shadowNormalBias = 0.30f;
-                key.shadowNearPlane = 0.20f;
-            }
-
-            // A second directional light reads as a second sun. Keep secondary
-            // directionals only as very weak, non-shadowing fill when authored.
-            for (int index = 0; index < lights.Length; index++)
-            {
-                Light light = lights[index];
-                if (light == null || light == key || light.type != LightType.Directional) continue;
-                light.shadows = LightShadows.None;
-                light.intensity = Mathf.Min(light.intensity, key.intensity * 0.075f);
-            }
-        }
     }
 
     /// <summary>

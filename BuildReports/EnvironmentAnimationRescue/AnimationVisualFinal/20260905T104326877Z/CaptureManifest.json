@@ -1,0 +1,888 @@
+{
+    "schema": "animation-actual-game-capture-v1",
+    "startedUtc": "2026-09-05T10:43:26.8877824Z",
+    "completedUtc": "2026-09-05T10:43:36.5114600Z",
+    "unityVersion": "6000.5.7f1",
+    "scene": "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity",
+    "status": "Failed",
+    "error": "System.Reflection.TargetParameterCountException: Number of parameters specified does not match the expected number.\r\n  at System.Reflection.RuntimeMethodInfo.ConvertValues (System.Reflection.Binder binder, System.Object[] args, System.Reflection.ParameterInfo[] pinfo, System.Globalization.CultureInfo culture, System.Reflection.BindingFlags invokeAttr) [0x00016] in <816f70bc2a9c4332b0bd119906a8d40e>:0 \r\n  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x00040] in <816f70bc2a9c4332b0bd119906a8d40e>:0 \r\n  at System.Reflection.MethodBase.Invoke (System.Object obj, System.Object[] parameters) [0x00000] in <816f70bc2a9c4332b0bd119906a8d40e>:0 \r\n  at Elemental.Authoring.Editor.AnimationVisualQaDriver.Magic () [0x00046] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\AnimationVisualQaDriver.cs:43 \r\n  at Elemental.Authoring.Editor.AnimationVisualQaDriver.Step () [0x00251] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\AnimationVisualQaDriver.cs:34 \r\n  at Elemental.Authoring.Editor.AnimationVisualQaDriver.Tick () [0x000af] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\AnimationVisualQaDriver.cs:26 ",
+    "scope": "Actual Game-view ScreenCapture using the live production Main Camera and camera rig. The recorder changes no camera pose, lens, actor input, body, animation state, fixture, clock, light, material or scene asset. Its caller owns deterministic production input/temporary fixtures and must restore them in finally. Every frame records the explicitly required production subject(s); images and manifest still require human visual inspection.",
+    "actualGameScreenCapture": true,
+    "productionCameraRigLeftEnabled": true,
+    "debugUiRestored": true,
+    "probesRestored": true,
+    "completeRequiredMatrix": false,
+    "missingRequiredLabels": [
+        "magic-start",
+        "magic-sample",
+        "magic-recovery"
+    ],
+    "invalidGroundedLabels": [],
+    "temporarilyHiddenUi": [
+        "Elemental.Presentation.UI.BendingDebugOverlay @ Earth Core HUD",
+        "UnityEngine.UIElements.UIDocument @ Earth Core HUD"
+    ],
+    "requiredActors": [
+        "Planet Character"
+    ],
+    "frames": [
+        {
+            "label": "idle",
+            "scenario": "idle",
+            "path": "C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/BuildReports/EnvironmentAnimationRescue/AnimationVisualFinal/20260905T104326877Z/idle.png",
+            "requestedUtc": "2026-09-05T10:43:28.9119110Z",
+            "completedUtc": "2026-09-05T10:43:29.0387201Z",
+            "screenWidth": 1464,
+            "screenHeight": 650,
+            "requestRenderFrame": 139,
+            "screenshotRenderFrame": 140,
+            "completedRenderFrame": 144,
+            "pngBytes": 897515,
+            "cameraPosition": {
+                "x": 4.057694435119629,
+                "y": 80.07342529296875,
+                "z": -10.883193016052246
+            },
+            "cameraEuler": {
+                "x": 4.548127174377441,
+                "y": 359.7563171386719,
+                "z": 357.6279296875
+            },
+            "actors": [
+                {
+                    "actor": "Planet Character",
+                    "action": "Locomotion",
+                    "footPolicy": "DefaultContact",
+                    "baseClip": "Idle",
+                    "mantlePhase": "None",
+                    "eammStatus": "Active",
+                    "viewport": {
+                        "x": 0.43782663345336916,
+                        "y": 0.3371305763721466,
+                        "z": 7.590820789337158
+                    },
+                    "headViewport": {
+                        "x": 0.4418449103832245,
+                        "y": 0.39494749903678896,
+                        "z": 7.623257160186768
+                    },
+                    "leftFootViewport": {
+                        "x": 0.43525704741477969,
+                        "y": 0.14088711142539979,
+                        "z": 8.022686004638672
+                    },
+                    "rightFootViewport": {
+                        "x": 0.4412740170955658,
+                        "y": 0.09108436107635498,
+                        "z": 7.481294631958008
+                    },
+                    "visible": true,
+                    "fullBodyFramed": true,
+                    "lineOfSight": true,
+                    "grounded": true,
+                    "authoredTurn": false,
+                    "leftLocked": false,
+                    "rightLocked": false,
+                    "speed": 0.0,
+                    "filteredTurn": 0.0,
+                    "headHeight": 0.6055129170417786,
+                    "headPitchDegrees": -4.701298713684082,
+                    "leftIkWeight": 1.0,
+                    "rightIkWeight": 1.0,
+                    "leftFootError": 0.0,
+                    "rightFootError": 0.0,
+                    "leftSlopeDegrees": 6.434162616729736,
+                    "rightSlopeDegrees": 7.972599983215332,
+                    "mantleProgress": 0.0,
+                    "magicSampleTime": 0.9800000190734863,
+                    "handConstraintWeight": 0.0,
+                    "eammWeight": 1.0,
+                    "contactFrame": 141,
+                    "sampleFrame": 141,
+                    "finalGraphEvaluations": 141,
+                    "weightedContactPasses": 141
+                }
+            ]
+        },
+        {
+            "label": "walk",
+            "scenario": "walk",
+            "path": "C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/BuildReports/EnvironmentAnimationRescue/AnimationVisualFinal/20260905T104326877Z/walk.png",
+            "requestedUtc": "2026-09-05T10:43:29.4114816Z",
+            "completedUtc": "2026-09-05T10:43:29.5226469Z",
+            "screenWidth": 1464,
+            "screenHeight": 650,
+            "requestRenderFrame": 178,
+            "screenshotRenderFrame": 179,
+            "completedRenderFrame": 183,
+            "pngBytes": 908586,
+            "cameraPosition": {
+                "x": 4.059618949890137,
+                "y": 80.29438781738281,
+                "z": -10.000088691711426
+            },
+            "cameraEuler": {
+                "x": 5.179243564605713,
+                "y": 359.73065185546877,
+                "z": 357.6302795410156
+            },
+            "actors": [
+                {
+                    "actor": "Planet Character",
+                    "action": "Locomotion",
+                    "footPolicy": "DefaultContact",
+                    "baseClip": "Idle",
+                    "mantlePhase": "None",
+                    "eammStatus": "Active",
+                    "viewport": {
+                        "x": 0.43909576535224917,
+                        "y": 0.34120577573776247,
+                        "z": 7.687853813171387
+                    },
+                    "headViewport": {
+                        "x": 0.43928107619285586,
+                        "y": 0.39844417572021487,
+                        "z": 7.670425891876221
+                    },
+                    "leftFootViewport": {
+                        "x": 0.4156005382537842,
+                        "y": 0.08604410290718079,
+                        "z": 7.464425086975098
+                    },
+                    "rightFootViewport": {
+                        "x": 0.4672318398952484,
+                        "y": 0.12581652402877809,
+                        "z": 8.01690673828125
+                    },
+                    "visible": true,
+                    "fullBodyFramed": true,
+                    "lineOfSight": true,
+                    "grounded": true,
+                    "authoredTurn": false,
+                    "leftLocked": true,
+                    "rightLocked": false,
+                    "speed": 2.8126754760742189,
+                    "filteredTurn": 0.0,
+                    "headHeight": 0.6172918677330017,
+                    "headPitchDegrees": -6.8483805656433109,
+                    "leftIkWeight": 0.5283742547035217,
+                    "rightIkWeight": 0.0,
+                    "leftFootError": 0.021925270557403566,
+                    "rightFootError": 0.0,
+                    "leftSlopeDegrees": 6.814947605133057,
+                    "rightSlopeDegrees": 4.466422080993652,
+                    "mantleProgress": 0.0,
+                    "magicSampleTime": 0.9800000190734863,
+                    "handConstraintWeight": 0.0,
+                    "eammWeight": 1.0,
+                    "contactFrame": 180,
+                    "sampleFrame": 180,
+                    "finalGraphEvaluations": 180,
+                    "weightedContactPasses": 174
+                }
+            ]
+        },
+        {
+            "label": "stop",
+            "scenario": "stop",
+            "path": "C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/BuildReports/EnvironmentAnimationRescue/AnimationVisualFinal/20260905T104326877Z/stop.png",
+            "requestedUtc": "2026-09-05T10:43:30.0394454Z",
+            "completedUtc": "2026-09-05T10:43:30.1388348Z",
+            "screenWidth": 1464,
+            "screenHeight": 650,
+            "requestRenderFrame": 259,
+            "screenshotRenderFrame": 260,
+            "completedRenderFrame": 264,
+            "pngBytes": 903368,
+            "cameraPosition": {
+                "x": 4.058640003204346,
+                "y": 80.37542724609375,
+                "z": -9.469940185546875
+            },
+            "cameraEuler": {
+                "x": 5.5583271980285648,
+                "y": 359.7152099609375,
+                "z": 357.6314392089844
+            },
+            "actors": [
+                {
+                    "actor": "Planet Character",
+                    "action": "Locomotion",
+                    "footPolicy": "DefaultContact",
+                    "baseClip": "Idle",
+                    "mantlePhase": "None",
+                    "eammStatus": "Active",
+                    "viewport": {
+                        "x": 0.43810907006263735,
+                        "y": 0.33701473474502566,
+                        "z": 7.595912456512451
+                    },
+                    "headViewport": {
+                        "x": 0.4415680170059204,
+                        "y": 0.39497342705726626,
+                        "z": 7.618021488189697
+                    },
+                    "leftFootViewport": {
+                        "x": 0.43549758195877077,
+                        "y": 0.1390935182571411,
+                        "z": 8.022517204284668
+                    },
+                    "rightFootViewport": {
+                        "x": 0.44141876697540285,
+                        "y": 0.09415078163146973,
+                        "z": 7.478832244873047
+                    },
+                    "visible": true,
+                    "fullBodyFramed": true,
+                    "lineOfSight": true,
+                    "grounded": true,
+                    "authoredTurn": false,
+                    "leftLocked": false,
+                    "rightLocked": false,
+                    "speed": 0.27311575412750246,
+                    "filteredTurn": 0.0,
+                    "headHeight": 0.6085191369056702,
+                    "headPitchDegrees": -4.925337791442871,
+                    "leftIkWeight": 1.0,
+                    "rightIkWeight": 1.0,
+                    "leftFootError": 0.0,
+                    "rightFootError": 0.0,
+                    "leftSlopeDegrees": 4.455005645751953,
+                    "rightSlopeDegrees": 5.342874526977539,
+                    "mantleProgress": 0.0,
+                    "magicSampleTime": 0.9800000190734863,
+                    "handConstraintWeight": 0.0,
+                    "eammWeight": 1.0,
+                    "contactFrame": 261,
+                    "sampleFrame": 261,
+                    "finalGraphEvaluations": 261,
+                    "weightedContactPasses": 245
+                }
+            ]
+        },
+        {
+            "label": "turn-left",
+            "scenario": "turn-left",
+            "path": "C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/BuildReports/EnvironmentAnimationRescue/AnimationVisualFinal/20260905T104326877Z/turn-left.png",
+            "requestedUtc": "2026-09-05T10:43:30.3966668Z",
+            "completedUtc": "2026-09-05T10:43:30.4900952Z",
+            "screenWidth": 1464,
+            "screenHeight": 650,
+            "requestRenderFrame": 307,
+            "screenshotRenderFrame": 308,
+            "completedRenderFrame": 312,
+            "pngBytes": 895962,
+            "cameraPosition": {
+                "x": 7.000273704528809,
+                "y": 80.27766418457031,
+                "z": -8.535344123840332
+            },
+            "cameraEuler": {
+                "x": 4.732292652130127,
+                "y": 336.0172119140625,
+                "z": 358.417236328125
+            },
+            "actors": [
+                {
+                    "actor": "Planet Character",
+                    "action": "Locomotion",
+                    "footPolicy": "DefaultContact",
+                    "baseClip": "Idle",
+                    "mantlePhase": "None",
+                    "eammStatus": "Active",
+                    "viewport": {
+                        "x": 0.43743669986724856,
+                        "y": 0.3343711793422699,
+                        "z": 7.615535259246826
+                    },
+                    "headViewport": {
+                        "x": 0.44210541248321535,
+                        "y": 0.39169830083847048,
+                        "z": 7.648011207580566
+                    },
+                    "leftFootViewport": {
+                        "x": 0.427654504776001,
+                        "y": 0.14568191766738892,
+                        "z": 8.201360702514649
+                    },
+                    "rightFootViewport": {
+                        "x": 0.43174660205841067,
+                        "y": 0.0946580171585083,
+                        "z": 7.484349250793457
+                    },
+                    "visible": true,
+                    "fullBodyFramed": true,
+                    "lineOfSight": true,
+                    "grounded": true,
+                    "authoredTurn": true,
+                    "leftLocked": false,
+                    "rightLocked": true,
+                    "speed": 0.02215716429054737,
+                    "filteredTurn": -0.9936044812202454,
+                    "headHeight": 0.6037704944610596,
+                    "headPitchDegrees": -7.609948635101318,
+                    "leftIkWeight": 0.0,
+                    "rightIkWeight": 1.0,
+                    "leftFootError": 0.0,
+                    "rightFootError": 0.0000012839233249906102,
+                    "leftSlopeDegrees": 4.78511905670166,
+                    "rightSlopeDegrees": 5.342874526977539,
+                    "mantleProgress": 0.0,
+                    "magicSampleTime": 0.9800000190734863,
+                    "handConstraintWeight": 0.0,
+                    "eammWeight": 0.0,
+                    "contactFrame": 309,
+                    "sampleFrame": 309,
+                    "finalGraphEvaluations": 309,
+                    "weightedContactPasses": 293
+                }
+            ]
+        },
+        {
+            "label": "turn-right",
+            "scenario": "turn-right",
+            "path": "C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/BuildReports/EnvironmentAnimationRescue/AnimationVisualFinal/20260905T104326877Z/turn-right.png",
+            "requestedUtc": "2026-09-05T10:43:30.8977582Z",
+            "completedUtc": "2026-09-05T10:43:30.9907414Z",
+            "screenWidth": 1464,
+            "screenHeight": 650,
+            "requestRenderFrame": 383,
+            "screenshotRenderFrame": 384,
+            "completedRenderFrame": 388,
+            "pngBytes": 900552,
+            "cameraPosition": {
+                "x": 5.080567359924316,
+                "y": 80.33767700195313,
+                "z": -9.295384407043457
+            },
+            "cameraEuler": {
+                "x": 5.247250556945801,
+                "y": 351.8019714355469,
+                "z": 357.8548278808594
+            },
+            "actors": [
+                {
+                    "actor": "Planet Character",
+                    "action": "Locomotion",
+                    "footPolicy": "DefaultContact",
+                    "baseClip": "Idle",
+                    "mantlePhase": "None",
+                    "eammStatus": "Active",
+                    "viewport": {
+                        "x": 0.43984532356262209,
+                        "y": 0.3343237042427063,
+                        "z": 7.596180438995361
+                    },
+                    "headViewport": {
+                        "x": 0.43821510672569277,
+                        "y": 0.3922657370567322,
+                        "z": 7.645738124847412
+                    },
+                    "leftFootViewport": {
+                        "x": 0.41102591156959536,
+                        "y": 0.0988657996058464,
+                        "z": 7.576117992401123
+                    },
+                    "rightFootViewport": {
+                        "x": 0.43845731019973757,
+                        "y": 0.09404769539833069,
+                        "z": 7.476465702056885
+                    },
+                    "visible": true,
+                    "fullBodyFramed": true,
+                    "lineOfSight": true,
+                    "grounded": true,
+                    "authoredTurn": true,
+                    "leftLocked": false,
+                    "rightLocked": true,
+                    "speed": 0.0,
+                    "filteredTurn": 0.9998379349708557,
+                    "headHeight": 0.6020645499229431,
+                    "headPitchDegrees": -13.242596626281739,
+                    "leftIkWeight": 0.0,
+                    "rightIkWeight": 1.0,
+                    "leftFootError": 0.0,
+                    "rightFootError": 6.743495646333031e-7,
+                    "leftSlopeDegrees": 5.363556861877441,
+                    "rightSlopeDegrees": 5.342801094055176,
+                    "mantleProgress": 0.0,
+                    "magicSampleTime": 0.9800000190734863,
+                    "handConstraintWeight": 0.0,
+                    "eammWeight": 0.0,
+                    "contactFrame": 385,
+                    "sampleFrame": 385,
+                    "finalGraphEvaluations": 385,
+                    "weightedContactPasses": 369
+                }
+            ]
+        },
+        {
+            "label": "uneven-pit",
+            "scenario": "uneven-pit",
+            "path": "C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/BuildReports/EnvironmentAnimationRescue/AnimationVisualFinal/20260905T104326877Z/uneven-pit.png",
+            "requestedUtc": "2026-09-05T10:43:33.0037789Z",
+            "completedUtc": "2026-09-05T10:43:33.0953492Z",
+            "screenWidth": 1464,
+            "screenHeight": 650,
+            "requestRenderFrame": 730,
+            "screenshotRenderFrame": 731,
+            "completedRenderFrame": 735,
+            "pngBytes": 903842,
+            "cameraPosition": {
+                "x": 2.2266993522644045,
+                "y": 80.77546691894531,
+                "z": -7.247735977172852
+            },
+            "cameraEuler": {
+                "x": 8.418743133544922,
+                "y": 26.690250396728517,
+                "z": 356.7414245605469
+            },
+            "actors": [
+                {
+                    "actor": "Planet Character",
+                    "action": "Locomotion",
+                    "footPolicy": "DefaultContact",
+                    "baseClip": "Idle",
+                    "mantlePhase": "None",
+                    "eammStatus": "Active",
+                    "viewport": {
+                        "x": 0.4379100203514099,
+                        "y": 0.3320006728172302,
+                        "z": 7.595454216003418
+                    },
+                    "headViewport": {
+                        "x": 0.4402576684951782,
+                        "y": 0.39016222953796389,
+                        "z": 7.604889869689941
+                    },
+                    "leftFootViewport": {
+                        "x": 0.43553999066352847,
+                        "y": 0.13578131794929505,
+                        "z": 8.030814170837403
+                    },
+                    "rightFootViewport": {
+                        "x": 0.45715758204460146,
+                        "y": 0.07642889022827149,
+                        "z": 7.41306734085083
+                    },
+                    "visible": true,
+                    "fullBodyFramed": true,
+                    "lineOfSight": true,
+                    "grounded": true,
+                    "authoredTurn": false,
+                    "leftLocked": false,
+                    "rightLocked": false,
+                    "speed": 0.21148918569087983,
+                    "filteredTurn": 0.0,
+                    "headHeight": 0.6120266914367676,
+                    "headPitchDegrees": -3.243617057800293,
+                    "leftIkWeight": 1.0,
+                    "rightIkWeight": 0.0,
+                    "leftFootError": 0.0,
+                    "rightFootError": 0.0,
+                    "leftSlopeDegrees": 1.2122459411621094,
+                    "rightSlopeDegrees": 10.453592300415039,
+                    "mantleProgress": 0.0,
+                    "magicSampleTime": 0.9800000190734863,
+                    "handConstraintWeight": 0.0,
+                    "eammWeight": 1.0,
+                    "contactFrame": 732,
+                    "sampleFrame": 732,
+                    "finalGraphEvaluations": 732,
+                    "weightedContactPasses": 551
+                }
+            ]
+        },
+        {
+            "label": "uneven-slope",
+            "scenario": "uneven-slope",
+            "path": "C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/BuildReports/EnvironmentAnimationRescue/AnimationVisualFinal/20260905T104326877Z/uneven-slope.png",
+            "requestedUtc": "2026-09-05T10:43:33.9103005Z",
+            "completedUtc": "2026-09-05T10:43:34.0073514Z",
+            "screenWidth": 1464,
+            "screenHeight": 650,
+            "requestRenderFrame": 851,
+            "screenshotRenderFrame": 852,
+            "completedRenderFrame": 856,
+            "pngBytes": 903895,
+            "cameraPosition": {
+                "x": 2.8691961765289308,
+                "y": 80.90670013427735,
+                "z": -6.077274799346924
+            },
+            "cameraEuler": {
+                "x": 9.359525680541993,
+                "y": 26.633298873901368,
+                "z": 356.7113037109375
+            },
+            "actors": [
+                {
+                    "actor": "Planet Character",
+                    "action": "Locomotion",
+                    "footPolicy": "DefaultContact",
+                    "baseClip": "Idle",
+                    "mantlePhase": "None",
+                    "eammStatus": "Active",
+                    "viewport": {
+                        "x": 0.4378853142261505,
+                        "y": 0.338994562625885,
+                        "z": 7.5904221534729
+                    },
+                    "headViewport": {
+                        "x": 0.43954920768737795,
+                        "y": 0.39734581112861636,
+                        "z": 7.621650695800781
+                    },
+                    "leftFootViewport": {
+                        "x": 0.4324369728565216,
+                        "y": 0.13831079006195069,
+                        "z": 8.08387565612793
+                    },
+                    "rightFootViewport": {
+                        "x": 0.44624149799346926,
+                        "y": 0.08495190739631653,
+                        "z": 7.462724685668945
+                    },
+                    "visible": true,
+                    "fullBodyFramed": true,
+                    "lineOfSight": true,
+                    "grounded": true,
+                    "authoredTurn": false,
+                    "leftLocked": false,
+                    "rightLocked": false,
+                    "speed": 0.7747431397438049,
+                    "filteredTurn": 0.0,
+                    "headHeight": 0.6087559461593628,
+                    "headPitchDegrees": -5.500350475311279,
+                    "leftIkWeight": 0.252095490694046,
+                    "rightIkWeight": 0.26499325037002566,
+                    "leftFootError": 0.0,
+                    "rightFootError": 0.0,
+                    "leftSlopeDegrees": 2.9466984272003176,
+                    "rightSlopeDegrees": 11.56168270111084,
+                    "mantleProgress": 0.0,
+                    "magicSampleTime": 0.9800000190734863,
+                    "handConstraintWeight": 0.0,
+                    "eammWeight": 1.0,
+                    "contactFrame": 853,
+                    "sampleFrame": 853,
+                    "finalGraphEvaluations": 853,
+                    "weightedContactPasses": 618
+                }
+            ]
+        },
+        {
+            "label": "mantle-reach",
+            "scenario": "mantle-reach",
+            "path": "C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/BuildReports/EnvironmentAnimationRescue/AnimationVisualFinal/20260905T104326877Z/mantle-reach.png",
+            "requestedUtc": "2026-09-05T10:43:34.9112309Z",
+            "completedUtc": "2026-09-05T10:43:35.0001122Z",
+            "screenWidth": 1464,
+            "screenHeight": 650,
+            "requestRenderFrame": 1004,
+            "screenshotRenderFrame": 1005,
+            "completedRenderFrame": 1009,
+            "pngBytes": 901448,
+            "cameraPosition": {
+                "x": 2.841012954711914,
+                "y": 80.96085357666016,
+                "z": -6.1064558029174809
+            },
+            "cameraEuler": {
+                "x": 9.408952713012696,
+                "y": 26.631383895874025,
+                "z": 356.720703125
+            },
+            "actors": [
+                {
+                    "actor": "Planet Character",
+                    "action": "Mantle",
+                    "footPolicy": "FlightIkOff",
+                    "baseClip": "Idle",
+                    "mantlePhase": "Reach",
+                    "eammStatus": "Active",
+                    "viewport": {
+                        "x": 0.43962469696998598,
+                        "y": 0.35147789120674136,
+                        "z": 7.775585174560547
+                    },
+                    "headViewport": {
+                        "x": 0.43972674012184145,
+                        "y": 0.40757325291633608,
+                        "z": 7.740355491638184
+                    },
+                    "leftFootViewport": {
+                        "x": 0.42081281542778017,
+                        "y": 0.13723409175872804,
+                        "z": 8.104238510131836
+                    },
+                    "rightFootViewport": {
+                        "x": 0.45566362142562868,
+                        "y": 0.10523944348096848,
+                        "z": 7.460720062255859
+                    },
+                    "visible": true,
+                    "fullBodyFramed": true,
+                    "lineOfSight": true,
+                    "grounded": true,
+                    "authoredTurn": false,
+                    "leftLocked": false,
+                    "rightLocked": false,
+                    "speed": 6.891509056091309,
+                    "filteredTurn": 0.0,
+                    "headHeight": 0.6178643703460693,
+                    "headPitchDegrees": -2.5880603790283205,
+                    "leftIkWeight": 0.0,
+                    "rightIkWeight": 0.0,
+                    "leftFootError": 0.0,
+                    "rightFootError": 0.0,
+                    "leftSlopeDegrees": 3.8842849731445314,
+                    "rightSlopeDegrees": 9.14163875579834,
+                    "mantleProgress": 0.0,
+                    "magicSampleTime": 0.9800000190734863,
+                    "handConstraintWeight": 0.0,
+                    "eammWeight": 0.0,
+                    "contactFrame": 1006,
+                    "sampleFrame": 1006,
+                    "finalGraphEvaluations": 1006,
+                    "weightedContactPasses": 660
+                }
+            ]
+        },
+        {
+            "label": "mantle-raise",
+            "scenario": "mantle-raise",
+            "path": "C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/BuildReports/EnvironmentAnimationRescue/AnimationVisualFinal/20260905T104326877Z/mantle-raise.png",
+            "requestedUtc": "2026-09-05T10:43:35.1679197Z",
+            "completedUtc": "2026-09-05T10:43:35.2527369Z",
+            "screenWidth": 1464,
+            "screenHeight": 650,
+            "requestRenderFrame": 1037,
+            "screenshotRenderFrame": 1038,
+            "completedRenderFrame": 1042,
+            "pngBytes": 891400,
+            "cameraPosition": {
+                "x": 2.8955841064453127,
+                "y": 80.99844360351563,
+                "z": -6.008297443389893
+            },
+            "cameraEuler": {
+                "x": 9.408952713012696,
+                "y": 26.631383895874025,
+                "z": 356.720703125
+            },
+            "actors": [
+                {
+                    "actor": "Planet Character",
+                    "action": "Mantle",
+                    "footPolicy": "FlightIkOff",
+                    "baseClip": "Idle",
+                    "mantlePhase": "Raise",
+                    "eammStatus": "Active",
+                    "viewport": {
+                        "x": 0.4377780854701996,
+                        "y": 0.33440661430358889,
+                        "z": 7.561051845550537
+                    },
+                    "headViewport": {
+                        "x": 0.44004908204078677,
+                        "y": 0.3928399682044983,
+                        "z": 7.573007583618164
+                    },
+                    "leftFootViewport": {
+                        "x": 0.42883867025375368,
+                        "y": 0.1564696729183197,
+                        "z": 8.246503829956055
+                    },
+                    "rightFootViewport": {
+                        "x": 0.45757460594177248,
+                        "y": 0.08109217882156372,
+                        "z": 7.423961639404297
+                    },
+                    "visible": true,
+                    "fullBodyFramed": true,
+                    "lineOfSight": true,
+                    "grounded": false,
+                    "authoredTurn": false,
+                    "leftLocked": false,
+                    "rightLocked": false,
+                    "speed": 6.891509056091309,
+                    "filteredTurn": 0.0,
+                    "headHeight": 0.6112456917762756,
+                    "headPitchDegrees": -3.428382158279419,
+                    "leftIkWeight": 0.0,
+                    "rightIkWeight": 0.0,
+                    "leftFootError": 0.0,
+                    "rightFootError": 0.0,
+                    "leftSlopeDegrees": 4.211102485656738,
+                    "rightSlopeDegrees": 9.467180252075196,
+                    "mantleProgress": 0.13333328068256379,
+                    "magicSampleTime": 0.9800000190734863,
+                    "handConstraintWeight": 0.9657062292098999,
+                    "eammWeight": 0.0,
+                    "contactFrame": 1039,
+                    "sampleFrame": 1039,
+                    "finalGraphEvaluations": 1039,
+                    "weightedContactPasses": 660
+                }
+            ]
+        },
+        {
+            "label": "mantle-transfer",
+            "scenario": "mantle-transfer",
+            "path": "C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/BuildReports/EnvironmentAnimationRescue/AnimationVisualFinal/20260905T104326877Z/mantle-transfer.png",
+            "requestedUtc": "2026-09-05T10:43:35.8397962Z",
+            "completedUtc": "2026-09-05T10:43:35.9246060Z",
+            "screenWidth": 1464,
+            "screenHeight": 650,
+            "requestRenderFrame": 1141,
+            "screenshotRenderFrame": 1142,
+            "completedRenderFrame": 1146,
+            "pngBytes": 894031,
+            "cameraPosition": {
+                "x": 3.18972110748291,
+                "y": 82.28305053710938,
+                "z": -5.463230133056641
+            },
+            "cameraEuler": {
+                "x": 12.028003692626954,
+                "y": 26.477994918823243,
+                "z": 356.6921691894531
+            },
+            "actors": [
+                {
+                    "actor": "Planet Character",
+                    "action": "Mantle",
+                    "footPolicy": "FlightIkOff",
+                    "baseClip": "Idle",
+                    "mantlePhase": "Transfer",
+                    "eammStatus": "Active",
+                    "viewport": {
+                        "x": 0.4453965425491333,
+                        "y": 0.33785000443458559,
+                        "z": 7.934195518493652
+                    },
+                    "headViewport": {
+                        "x": 0.44761574268341067,
+                        "y": 0.3892551362514496,
+                        "z": 7.944515228271484
+                    },
+                    "leftFootViewport": {
+                        "x": 0.4530845880508423,
+                        "y": 0.25527098774909975,
+                        "z": 8.726346015930176
+                    },
+                    "rightFootViewport": {
+                        "x": 0.47163349390029909,
+                        "y": 0.21218852698802949,
+                        "z": 7.963044166564941
+                    },
+                    "visible": true,
+                    "fullBodyFramed": true,
+                    "lineOfSight": true,
+                    "grounded": false,
+                    "authoredTurn": false,
+                    "leftLocked": false,
+                    "rightLocked": false,
+                    "speed": 6.891509056091309,
+                    "filteredTurn": 0.0,
+                    "headHeight": 0.6093859672546387,
+                    "headPitchDegrees": -4.647605895996094,
+                    "leftIkWeight": 0.0,
+                    "rightIkWeight": 0.0,
+                    "leftFootError": 0.0,
+                    "rightFootError": 0.0,
+                    "leftSlopeDegrees": 0.5549665093421936,
+                    "rightSlopeDegrees": 0.1170339286327362,
+                    "mantleProgress": 0.6166661977767944,
+                    "magicSampleTime": 0.9800000190734863,
+                    "handConstraintWeight": 0.9872599840164185,
+                    "eammWeight": 0.0,
+                    "contactFrame": 1143,
+                    "sampleFrame": 1143,
+                    "finalGraphEvaluations": 1143,
+                    "weightedContactPasses": 660
+                }
+            ]
+        },
+        {
+            "label": "mantle-settle",
+            "scenario": "mantle-settle",
+            "path": "C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/BuildReports/EnvironmentAnimationRescue/AnimationVisualFinal/20260905T104326877Z/mantle-settle.png",
+            "requestedUtc": "2026-09-05T10:43:36.3290343Z",
+            "completedUtc": "2026-09-05T10:43:36.4146070Z",
+            "screenWidth": 1464,
+            "screenHeight": 650,
+            "requestRenderFrame": 1220,
+            "screenshotRenderFrame": 1221,
+            "completedRenderFrame": 1225,
+            "pngBytes": 897684,
+            "cameraPosition": {
+                "x": 3.5283031463623049,
+                "y": 82.32868957519531,
+                "z": -4.8085408210754398
+            },
+            "cameraEuler": {
+                "x": 12.536595344543457,
+                "y": 26.44788360595703,
+                "z": 356.6857604980469
+            },
+            "actors": [
+                {
+                    "actor": "Planet Character",
+                    "action": "Mantle",
+                    "footPolicy": "FlightIkOff",
+                    "baseClip": "Idle",
+                    "mantlePhase": "Settle",
+                    "eammStatus": "Active",
+                    "viewport": {
+                        "x": 0.4497317671775818,
+                        "y": 0.356372207403183,
+                        "z": 7.988595008850098
+                    },
+                    "headViewport": {
+                        "x": 0.4519321322441101,
+                        "y": 0.4074054956436157,
+                        "z": 7.9992265701293949
+                    },
+                    "leftFootViewport": {
+                        "x": 0.4429503381252289,
+                        "y": 0.20544873178005219,
+                        "z": 8.704154014587403
+                    },
+                    "rightFootViewport": {
+                        "x": 0.46656468510627749,
+                        "y": 0.13624078035354615,
+                        "z": 7.8684892654418949
+                    },
+                    "visible": true,
+                    "fullBodyFramed": true,
+                    "lineOfSight": true,
+                    "grounded": false,
+                    "authoredTurn": false,
+                    "leftLocked": false,
+                    "rightLocked": false,
+                    "speed": 6.891509056091309,
+                    "filteredTurn": 0.0,
+                    "headHeight": 0.609387218952179,
+                    "headPitchDegrees": -4.647657871246338,
+                    "leftIkWeight": 0.0,
+                    "rightIkWeight": 0.0,
+                    "leftFootError": 0.0,
+                    "rightFootError": 0.0,
+                    "leftSlopeDegrees": 1.1220446825027466,
+                    "rightSlopeDegrees": 1.1220446825027466,
+                    "mantleProgress": 0.9499992728233337,
+                    "magicSampleTime": 0.9800000190734863,
+                    "handConstraintWeight": 0.0,
+                    "eammWeight": 0.0,
+                    "contactFrame": 1222,
+                    "sampleFrame": 1222,
+                    "finalGraphEvaluations": 1222,
+                    "weightedContactPasses": 660
+                }
+            ]
+        }
+    ]
+}

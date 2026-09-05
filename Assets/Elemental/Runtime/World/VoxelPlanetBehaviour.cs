@@ -23,6 +23,7 @@ namespace Elemental.Runtime.World
             public MeshFilter Filter;
             public Mesh ActiveMesh;
             public Mesh StagingMesh;
+            public bool ActiveMeshShared, StagingMeshShared;
             public MeshCollider ActiveCollider;
             public MeshCollider StagingCollider;
             public uint VisualVersion;
@@ -51,6 +52,12 @@ namespace Elemental.Runtime.World
         [SerializeField, Min(1)] private int renderChunksPerFrame = 2;
         [SerializeField, Min(1)] private int colliderChunksPerFrame = 1;
         [SerializeField] private Material surfaceMaterial;
+        [SerializeField] private PlanetBaseMeshCache baseMeshCache;
+        private static readonly ProfilerMarker CacheHydrateMarker = new("Elemental.Voxel.BaseCache.Hydrate");
+        public bool BaseCacheUsed { get; private set; }
+        public string BaseCacheStatus { get; private set; } = "not-initialized";
+        public double BaseCacheHydrateMilliseconds { get; private set; }
+        public void ConfigureBaseMeshCache(PlanetBaseMeshCache cache) => baseMeshCache = cache;
 
         private readonly Queue<ChunkCoord> _renderQueue = new Queue<ChunkCoord>();
         private readonly Queue<ChunkCoord> _colliderQueue = new Queue<ChunkCoord>();
@@ -78,6 +85,7 @@ namespace Elemental.Runtime.World
         private Material _runtimeSurfaceMaterial;
 
         public VoxelPlanetState State => _state;
+        public bool GeometryReady => _state != null && PendingRenderCount == 0 && PendingColliderCount == 0 && PendingEditTransactionCount == 0 && RuntimeChunkCount > 0;
         public float Radius => radius;
         public PlanetWorldProfile WorldProfile => worldProfile;
         public int PendingRenderCount => _renderQueue.Count;
@@ -149,7 +157,7 @@ namespace Elemental.Runtime.World
             _meshingSettings = new VoxelMeshingSettings(chunkResolution, cellSize);
             _mesher = new SmoothSdfSurfaceMesher();
             _meshBuffers = new ChunkMeshBuffers();
-            QueueInitialChunks();
+            if (!TryHydrateBaseCache()) QueueInitialChunks();
         }
 
         private void Update()
@@ -299,6 +307,51 @@ namespace Elemental.Runtime.World
             ApplyEditBatch(new EditBatch(edits));
         }
 
+        private bool TryHydrateBaseCache()
+        {
+            if (baseMeshCache == null) { BaseCacheStatus = "not-configured: budgeted meshing"; return false; }
+            if (!baseMeshCache.Matches(_state))
+            {
+                BaseCacheStatus = "stale signature: budgeted meshing";
+                Debug.LogWarning("Planet base mesh cache is stale. Run Elemental/World/Bake Startup Caches In Current Scene. Using canonical budgeted meshing.", this);
+                return false;
+            }
+            var seen = new HashSet<ChunkCoord>();
+            foreach (var entry in baseMeshCache.Entries)
+                if (entry.Mesh == null || !seen.Add(entry.Coord))
+                {
+                    BaseCacheStatus = "invalid entries: budgeted meshing";
+                    Debug.LogWarning("Planet base mesh cache has missing/duplicate chunks. Rebake startup caches.", this);
+                    return false;
+                }
+            // Reject incomplete caches before creating any visible runtime chunk.
+            float size = _meshingSettings.ChunkWorldSize;
+            int minimum = Mathf.FloorToInt(-radius / size), maximum = Mathf.FloorToInt(radius / size);
+            int expected = 0;
+            for (int z = minimum; z <= maximum; z++)
+            for (int y = minimum; y <= maximum; y++)
+            for (int x = minimum; x <= maximum; x++)
+                if (PlanetChunkShellSolver.IntersectsSurfaceShell(new int3(x,y,z), size, radius, noiseAmplitude + cellSize * 1.5f))
+                {
+                    expected++;
+                    if (!seen.Contains(new ChunkCoord(x,y,z))) { BaseCacheStatus = "incomplete: budgeted meshing"; Debug.LogWarning("Planet base mesh cache is incomplete. Rebake startup caches.", this); return false; }
+                }
+            if (expected != seen.Count) { BaseCacheStatus = "extra chunks: budgeted meshing"; Debug.LogWarning("Planet base mesh cache has unexpected chunks. Rebake startup caches.", this); return false; }
+            double started = Time.realtimeSinceStartupAsDouble;
+            using (CacheHydrateMarker.Auto())
+                foreach (var entry in baseMeshCache.Entries)
+                {
+                    RuntimeChunk runtime = GetOrCreateRuntimeChunk(entry.Coord, entry.Mesh);
+                    VoxelChunkState chunk = _state.Chunks.GetOrCreate(entry.Coord);
+                    runtime.VisualVersion = runtime.ColliderVersion = chunk.Version;
+                    chunk.MarkBuilt(entry.ContentHash);
+                    ProcessedChunkCount++;
+                }
+            BaseCacheHydrateMilliseconds = (Time.realtimeSinceStartupAsDouble - started) * 1000;
+            BaseCacheUsed = true; BaseCacheStatus = "exact baked base";
+            return true;
+        }
+
         private void QueueInitialChunks()
         {
             float chunkSize = _meshingSettings.ChunkWorldSize;
@@ -391,6 +444,21 @@ namespace Elemental.Runtime.World
         private void UploadMesh(ChunkCoord coord, uint visualVersion, bool stageForTransaction)
         {
             RuntimeChunk runtimeChunk = GetOrCreateRuntimeChunk(coord);
+            if (stageForTransaction)
+            {
+                if (runtimeChunk.StagingMesh == null || runtimeChunk.StagingMeshShared)
+                    runtimeChunk.StagingMesh = new Mesh { name = $"Voxel Chunk {coord} (Staging)" };
+                runtimeChunk.StagingMeshShared = false;
+            }
+            else
+            {
+                if (runtimeChunk.ActiveMeshShared)
+                {
+                    runtimeChunk.ActiveMesh = new Mesh { name = $"Voxel Chunk {coord} (Edited)" };
+                    runtimeChunk.Filter.sharedMesh = runtimeChunk.ActiveMesh;
+                    runtimeChunk.ActiveMeshShared = false;
+                }
+            }
             Mesh mesh = stageForTransaction ? runtimeChunk.StagingMesh : runtimeChunk.ActiveMesh;
             if (_meshBuffers.Vertices.Length == 0)
             {
@@ -458,7 +526,7 @@ namespace Elemental.Runtime.World
                     queue.Enqueue(_queueOrderScratch[index]);
         }
 
-        private RuntimeChunk GetOrCreateRuntimeChunk(ChunkCoord coord)
+        private RuntimeChunk GetOrCreateRuntimeChunk(ChunkCoord coord, Mesh sharedBase = null)
         {
             if (_runtimeChunks.TryGetValue(coord, out RuntimeChunk runtimeChunk))
             {
@@ -467,21 +535,23 @@ namespace Elemental.Runtime.World
 
             GameObject chunkObject = new GameObject($"Voxel Chunk {coord}");
             chunkObject.transform.SetParent(transform, false);
-            Mesh mesh = new Mesh { name = $"Voxel Chunk {coord}" };
-            Mesh stagingMesh = new Mesh { name = $"Voxel Chunk {coord} (Staging)" };
+            Mesh mesh = sharedBase != null ? sharedBase : new Mesh { name = $"Voxel Chunk {coord}" };
+            Mesh stagingMesh = null;
             MeshFilter filter = chunkObject.AddComponent<MeshFilter>();
-            filter.sharedMesh = mesh;
             MeshRenderer renderer = chunkObject.AddComponent<MeshRenderer>();
             renderer.sharedMaterial = _runtimeSurfaceMaterial != null ? _runtimeSurfaceMaterial : surfaceMaterial;
             MeshCollider collider = chunkObject.AddComponent<MeshCollider>();
             MeshCollider stagingCollider = chunkObject.AddComponent<MeshCollider>();
             stagingCollider.enabled = false;
+            filter.sharedMesh = mesh;
+            if (sharedBase != null && sharedBase.vertexCount > 0) collider.sharedMesh = sharedBase;
 
             runtimeChunk = new RuntimeChunk
             {
                 GameObject = chunkObject,
                 Filter = filter,
                 ActiveMesh = mesh,
+                ActiveMeshShared = sharedBase != null,
                 StagingMesh = stagingMesh,
                 ActiveCollider = collider,
                 StagingCollider = stagingCollider
@@ -634,6 +704,8 @@ namespace Elemental.Runtime.World
 
                 (runtime.ActiveMesh, runtime.StagingMesh) =
                     (runtime.StagingMesh, runtime.ActiveMesh);
+                (runtime.ActiveMeshShared, runtime.StagingMeshShared) =
+                    (runtime.StagingMeshShared, runtime.ActiveMeshShared);
                 (runtime.ActiveCollider, runtime.StagingCollider) =
                     (runtime.StagingCollider, runtime.ActiveCollider);
                 runtime.VisualVersion = runtime.StagingVisualVersion;
@@ -660,13 +732,13 @@ namespace Elemental.Runtime.World
             {
                 if (Application.isPlaying)
                 {
-                    if (pair.Value.ActiveMesh != null) Destroy(pair.Value.ActiveMesh);
-                    if (pair.Value.StagingMesh != null) Destroy(pair.Value.StagingMesh);
+                    if (pair.Value.ActiveMesh != null && !pair.Value.ActiveMeshShared) Destroy(pair.Value.ActiveMesh);
+                    if (pair.Value.StagingMesh != null && !pair.Value.StagingMeshShared) Destroy(pair.Value.StagingMesh);
                 }
                 else
                 {
-                    if (pair.Value.ActiveMesh != null) DestroyImmediate(pair.Value.ActiveMesh);
-                    if (pair.Value.StagingMesh != null) DestroyImmediate(pair.Value.StagingMesh);
+                    if (pair.Value.ActiveMesh != null && !pair.Value.ActiveMeshShared) DestroyImmediate(pair.Value.ActiveMesh);
+                    if (pair.Value.StagingMesh != null && !pair.Value.StagingMeshShared) DestroyImmediate(pair.Value.StagingMesh);
                 }
             }
             if (_runtimeSurfaceMaterial != null)

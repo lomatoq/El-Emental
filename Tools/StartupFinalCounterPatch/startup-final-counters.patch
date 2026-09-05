@@ -1,0 +1,24 @@
+diff --git a/Assets/Elemental/Authoring/Editor/ProductionStartupSample.cs b/Assets/Elemental/Authoring/Editor/ProductionStartupSample.cs
+index c4a4101..89a8569 100644
+--- a/Assets/Elemental/Authoring/Editor/ProductionStartupSample.cs
++++ b/Assets/Elemental/Authoring/Editor/ProductionStartupSample.cs
+@@ -59,6 +59,7 @@ public sealed class Report
+             public double bakedCacheLoadMs, backgroundCookingWallMs;
+             public int bakedPlans, preparedPlansAtReady, cookedMeshes, scheduledCookedMeshes;
+             public int bakedPlanMissesAtReady, runtimeChunks, pendingRender, pendingCollider;
++            public int preparedPlansAfterSample, bakedPlanMissesAfterSample;
+             public int preparationDeltaPrimary, preparationDeltaSecondary, releasedPieces, shatteredPieces;
+             public int secondaryExpectedPhysicalPieces;
+             public int primaryTargetIndex, secondaryTargetIndex;
+@@ -463,6 +464,11 @@ private static void Fail(string message, bool stop=true)
+         private static void Finish(bool stop=true)
+         {
+             _running=false;
++            if (_pool != null)
++            {
++                _report.preparedPlansAfterSample = _pool.PreparedFracturePlanCount;
++                _report.bakedPlanMissesAfterSample = _pool.BakedFracturePlanMissCount;
++            }
+             _report.startupFrameMs=StartupFrames.ToArray(); _report.impactFrameMs=ImpactFrames.ToArray();
+             _report.startupObservedFrames=StartupFrames.Count; _report.impactObservedFrames=ImpactFrames.Count;
+             _report.startupMaxMs=Percentile(StartupFrames,1); _report.startupP95Ms=Percentile(StartupFrames,.95);

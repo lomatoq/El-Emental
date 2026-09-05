@@ -1,3 +1,4 @@
+using System;
 using Elemental.Runtime.Characters;
 using Elemental.Simulation.Characters;
 using Unity.Profiling;
@@ -17,6 +18,7 @@ namespace Elemental.Presentation.Animation
             new ProfilerMarker("Elemental.Character.Transition");
 
         [SerializeField] private Animator animator;
+        [SerializeField] private EarthAnimationDriver animationDriver;
         [SerializeField] private CharacterPresentationProfile profile;
 
         private EarthMotionStateId _activeState;
@@ -34,10 +36,16 @@ namespace Elemental.Presentation.Animation
         public float TransitionWeight => _transitionDuration > 0.0001f
             ? Mathf.Clamp01(TransitionElapsedSeconds / _transitionDuration)
             : 1f;
+        public event Action<float> InertializationRequested;
 
         public void Configure(Animator configuredAnimator, CharacterPresentationProfile configuredProfile)
         {
             animator = configuredAnimator;
+            if (animationDriver == null && animator != null)
+                animationDriver = animator.GetComponent<EarthAnimationDriver>();
+            if (animationDriver == null && animator != null)
+                animationDriver = animator.gameObject.AddComponent<EarthAnimationDriver>();
+            animationDriver?.Configure(animator);
             profile = configuredProfile;
             _activeState = EarthMotionStateId.None;
             _activeStateHash = 0;
@@ -55,7 +63,7 @@ namespace Elemental.Presentation.Animation
                 EarthAnimationTransitionDecision decision =
                     EarthAnimationTransitionPolicy.Resolve(in context, in tuning);
                 LastDecision = decision;
-                if (!decision.ShouldTransition || animator == null || !animator.enabled)
+                if (!decision.ShouldTransition || animationDriver == null || !animationDriver.IsUsable)
                     return false;
 
                 if (decision.UseNormalizedStart)
@@ -63,7 +71,7 @@ namespace Elemental.Presentation.Animation
                     float normalizedDuration = Mathf.Clamp01(
                         decision.DurationSeconds /
                         Mathf.Max(0.01f, context.DestinationCycleSeconds));
-                    animator.CrossFade(
+                    animationDriver.CrossFade(
                         destinationHash,
                         normalizedDuration,
                         0,
@@ -71,7 +79,7 @@ namespace Elemental.Presentation.Animation
                 }
                 else
                 {
-                    animator.CrossFadeInFixedTime(
+                    animationDriver.CrossFadeInFixedTime(
                         destinationHash,
                         decision.DurationSeconds,
                         0,
@@ -83,6 +91,8 @@ namespace Elemental.Presentation.Animation
                 _activePriority = context.RequestPriority;
                 _transitionStartedAt = Time.time;
                 _transitionDuration = decision.DurationSeconds;
+                if (decision.RequestsInertialization)
+                    InertializationRequested?.Invoke(decision.DurationSeconds);
                 return true;
             }
         }
@@ -102,8 +112,8 @@ namespace Elemental.Presentation.Animation
             int stateHash,
             float normalizedTime = 0f)
         {
-            if (animator == null || !animator.enabled || stateHash == 0) return;
-            animator.Play(stateHash, 0, Mathf.Clamp01(normalizedTime));
+            if (animationDriver == null || !animationDriver.IsUsable || stateHash == 0) return;
+            animationDriver.Play(stateHash, 0, Mathf.Clamp01(normalizedTime));
             _activeState = state;
             _activeStateHash = stateHash;
             _activePriority = EarthAnimationTransitionPriority.Idle;

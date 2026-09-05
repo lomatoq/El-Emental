@@ -1,0 +1,126 @@
+{
+    "startedUtc": "2026-09-05T10:40:25.6886381Z",
+    "completedUtc": "2026-09-05T10:40:34.9508053Z",
+    "unityVersion": "6000.5.7f1",
+    "packageVersion": "com.unity.ai.inference 2.6.1",
+    "sourcePath": "C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Tools\\SonicPrototype\\Models\\planner_sonic_6733128.onnx",
+    "expectedBytes": 773952989,
+    "actualBytes": 773952989,
+    "expectedSha256": "39b553e197f62f077975ba38512bc04781a3fc37c2af7c6756e04629f760edea",
+    "actualSha256": "39b553e197f62f077975ba38512bc04781a3fc37c2af7c6756e04629f760edea",
+    "status": "Passed",
+    "error": "",
+    "logs": [],
+    "importedModelAssetPath": "Assets/Experimental/SonicPrototype/Models/planner_sonic_6733128.onnx",
+    "backend": "CPU",
+    "processorType": "AMD Ryzen 7 5700G with Radeon Graphics ",
+    "processorCount": 16,
+    "operatingSystem": "Windows 11  (10.0.26200)",
+    "modelLoadMilliseconds": 178.41230000000003,
+    "workerCreateMilliseconds": 34.8624,
+    "memoryBefore": {
+        "managedBytes": 1701343232,
+        "unityAllocatedBytes": 1813057777,
+        "workingSetBytes": 0,
+        "peakWorkingSetBytes": 0
+    },
+    "memoryAfterWorker": {
+        "managedBytes": 2434945024,
+        "unityAllocatedBytes": 1813056505,
+        "workingSetBytes": 0,
+        "peakWorkingSetBytes": 0
+    },
+    "memoryAfterRuns": {
+        "managedBytes": 2439655424,
+        "unityAllocatedBytes": 1816261833,
+        "workingSetBytes": 0,
+        "peakWorkingSetBytes": 0
+    },
+    "contractIssues": [],
+    "cases": [
+        {
+            "name": "walk",
+            "mode": 2,
+            "warmupMilliseconds": 260.3399,
+            "samplesMilliseconds": [
+                79.342,
+                79.0269,
+                77.58760000000001,
+                78.25280000000001,
+                79.8298,
+                80.6328,
+                79.48360000000001,
+                77.7624,
+                83.3465,
+                81.1161
+            ],
+            "p50Milliseconds": 79.4128,
+            "p95Milliseconds": 82.34282,
+            "meanMilliseconds": 79.63804999999999,
+            "minimumMilliseconds": 77.58760000000001,
+            "maximumMilliseconds": 83.3465,
+            "managedMemoryDeltaBytes": 274432,
+            "validFrames": 24,
+            "qposShape": [
+                1,
+                64,
+                36
+            ],
+            "numPredFramesShape": [
+                1
+            ],
+            "finiteValidOutput": true,
+            "rootStart": [
+                0.0,
+                0.0,
+                0.7806649208068848,
+                0.9999915957450867,
+                -0.0034812153317034246,
+                -0.0021744221448898317,
+                -0.0000075701295827457219
+            ]
+        },
+        {
+            "name": "randomPunches",
+            "mode": 13,
+            "warmupMilliseconds": 83.4034,
+            "samplesMilliseconds": [
+                76.2479,
+                73.3289,
+                74.69680000000001,
+                74.736,
+                77.1378,
+                75.6508,
+                76.0261,
+                81.04870000000001,
+                75.7312,
+                76.50150000000001
+            ],
+            "p50Milliseconds": 75.87865,
+            "p95Milliseconds": 79.28879500000001,
+            "meanMilliseconds": 76.11057,
+            "minimumMilliseconds": 73.3289,
+            "maximumMilliseconds": 81.04870000000001,
+            "managedMemoryDeltaBytes": 163840,
+            "validFrames": 24,
+            "qposShape": [
+                1,
+                64,
+                36
+            ],
+            "numPredFramesShape": [
+                1
+            ],
+            "finiteValidOutput": true,
+            "rootStart": [
+                0.0,
+                0.0,
+                0.781192421913147,
+                0.9999836087226868,
+                0.0024057053960859777,
+                -0.00519456947222352,
+                0.000012496904673753306
+            ]
+        }
+    ]
+}

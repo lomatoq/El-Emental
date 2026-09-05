@@ -1,0 +1,212 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f274877bc21f4f22a09f0c6a0c59004e, type: 3}
+  m_Name: EarthPillarWaveProfile
+  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Physics.EarthWebWaveProfile
+  motionMode: 1
+  fullSectorChargeSeconds: 1.4
+  fullPowerChargeSeconds: 1.1
+  columnRiseSeconds: 0.69
+  columnHoldSeconds: 0.13
+  columnRetreatSeconds: 0.5
+  columnWidth: 1.15
+  minimumImpulse: 11.5
+  maximumImpulse: 115
+  impactRadius: 2.07
+  foundationBurialRatio: 0.061
+  minimumRows: 6
+  maximumRows: 8
+  minimumDistance: 2
+  maximumDistance: 11.2
+  minimumWidth: 0.64
+  maximumWidth: 1.28
+  minimumHeight: 0.28
+  crestHeight: 1.55
+  waveSpeed: 6.04
+  crestHoldSeconds: 0.04
+  cellOverlapRatio: 0.07
+  precompressionSeconds: 0.055
+  precompressionDepth01: 0.025
+  premiumRiseSeconds: 3
+  premiumOvershoot01: 0.045
+  premiumSettleSeconds: 1
+  premiumHoldSeconds: 0.5
+  premiumRetreatSeconds: 3
+  premiumTiltDegrees: 12.52
+  premiumSettleFrequencyHz: 5
+  premiumSettleDamping: 0.73
+  seededVariation01: 0.07
+  tremorDistance: 0.006
+  tremorAngle: 0.2
+  tremorFrequency: 8
+  anticipationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0.025
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  riseCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.025
+      inSlope: 3.173332
+      outSlope: 3.173332
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.0375
+    - serializedVersion: 3
+      time: 1
+      value: 1.045
+      inSlope: 0.08180467
+      outSlope: 0.08180467
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.23750001
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  settleCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1.045
+      inSlope: -0.010952473
+      outSlope: -0.010952473
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.25
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: -0.02456163
+      outSlope: -0.02456163
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.23750001
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  holdCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  retreatCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: -0.0068847244
+      outSlope: -0.0068847244
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.34583333
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: -3.2
+      outSlope: -3.2
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.0625
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  tiltCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.32916412
+      value: 0.460598
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.7541687
+      value: -0.045965582
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="6" result="Passed" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 07:50:25Z" end-time="2026-09-05 07:50:25Z" duration="0.0627975">
+  <test-suite type="TestSuite" id="2239" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="804" result="Passed" start-time="2026-09-05 07:50:25Z" end-time="2026-09-05 07:50:25Z" duration="0.062798" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2226" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="804" result="Passed" start-time="2026-09-05 07:50:25Z" end-time="2026-09-05 07:50:25Z" duration="0.062031" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2227" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="804" result="Passed" start-time="2026-09-05 07:50:25Z" end-time="2026-09-05 07:50:25Z" duration="0.061694" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2228" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="804" result="Passed" start-time="2026-09-05 07:50:25Z" end-time="2026-09-05 07:50:25Z" duration="0.061391" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2229" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="804" result="Passed" start-time="2026-09-05 07:50:25Z" end-time="2026-09-05 07:50:25Z" duration="0.061060" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="2162" name="StartupCacheTests" fullname="Elemental.Tests.EditMode.StartupCacheTests" classname="Elemental.Tests.EditMode.StartupCacheTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-05 07:50:25Z" end-time="2026-09-05 07:50:25Z" duration="0.060591" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2164" name="BorrowedConvexPlansMatchColdOutputAndDisposeWithoutDestroyingMeshes" fullname="Elemental.Tests.EditMode.StartupCacheTests.BorrowedConvexPlansMatchColdOutputAndDisposeWithoutDestroyingMeshes" methodname="BorrowedConvexPlansMatchColdOutputAndDisposeWithoutDestroyingMeshes" classname="Elemental.Tests.EditMode.StartupCacheTests" runstate="Runnable" seed="1254103938" result="Passed" start-time="2026-09-05 07:50:25Z" end-time="2026-09-05 07:50:25Z" duration="0.010569" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2168" name="ChangedConvexSourceRejectsStalePlanBeforeUse" fullname="Elemental.Tests.EditMode.StartupCacheTests.ChangedConvexSourceRejectsStalePlanBeforeUse" methodname="ChangedConvexSourceRejectsStalePlanBeforeUse" classname="Elemental.Tests.EditMode.StartupCacheTests" runstate="Runnable" seed="1904078805" result="Passed" start-time="2026-09-05 07:50:25Z" end-time="2026-09-05 07:50:25Z" duration="0.005238" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Rejected 1 stale/invalid convex fracture plans; canonical cold preparation retained. Rebake startup caches.
+]]></output>
+              </test-case>
+              <test-case id="2167" name="EquivalentPrimitiveSourceBindsBakedPlanByValidatedGeometrySignature" fullname="Elemental.Tests.EditMode.StartupCacheTests.EquivalentPrimitiveSourceBindsBakedPlanByValidatedGeometrySignature" methodname="EquivalentPrimitiveSourceBindsBakedPlanByValidatedGeometrySignature" classname="Elemental.Tests.EditMode.StartupCacheTests" runstate="Runnable" seed="1816223527" result="Passed" start-time="2026-09-05 07:50:25Z" end-time="2026-09-05 07:50:25Z" duration="0.003200" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2166" name="PersistentPoolSourceCanCoverEverySupportedDescendantCountWithoutColdMiss" fullname="Elemental.Tests.EditMode.StartupCacheTests.PersistentPoolSourceCanCoverEverySupportedDescendantCountWithoutColdMiss" methodname="PersistentPoolSourceCanCoverEverySupportedDescendantCountWithoutColdMiss" classname="Elemental.Tests.EditMode.StartupCacheTests" runstate="Runnable" seed="1729975651" result="Passed" start-time="2026-09-05 07:50:25Z" end-time="2026-09-05 07:50:25Z" duration="0.032922" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2165" name="PersistentSourcesAreDeduplicatedAcrossDebrisHeroAndScatterLibraries" fullname="Elemental.Tests.EditMode.StartupCacheTests.PersistentSourcesAreDeduplicatedAcrossDebrisHeroAndScatterLibraries" methodname="PersistentSourcesAreDeduplicatedAcrossDebrisHeroAndScatterLibraries" classname="Elemental.Tests.EditMode.StartupCacheTests" runstate="Runnable" seed="753276296" result="Passed" start-time="2026-09-05 07:50:25Z" end-time="2026-09-05 07:50:25Z" duration="0.003465" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2163" name="PlanetManifestRejectsEveryCanonicalParameterChange" fullname="Elemental.Tests.EditMode.StartupCacheTests.PlanetManifestRejectsEveryCanonicalParameterChange" methodname="PlanetManifestRejectsEveryCanonicalParameterChange" classname="Elemental.Tests.EditMode.StartupCacheTests" runstate="Runnable" seed="94150301" result="Passed" start-time="2026-09-05 07:50:25Z" end-time="2026-09-05 07:50:25Z" duration="0.000726" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\StartupCacheEdit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

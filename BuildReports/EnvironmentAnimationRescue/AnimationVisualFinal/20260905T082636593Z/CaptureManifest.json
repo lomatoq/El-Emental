@@ -1,0 +1,296 @@
+{
+    "schema": "animation-actual-game-capture-v1",
+    "startedUtc": "2026-09-05T08:26:36.6033678Z",
+    "completedUtc": "2026-09-05T08:26:42.8543935Z",
+    "unityVersion": "6000.5.7f1",
+    "scene": "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity",
+    "status": "Failed",
+    "error": "System.Exception: stop framing failed: Rumble Linebreaker Bot: full body is outside Game View (head=(0.95, 20.86, 1.30), leftFoot=(0.95, 18.56, 1.37), rightFoot=(0.80, 14.08, 1.83)).\r\n  at Elemental.Authoring.Editor.AnimationVisualQaDriver.Cap (System.String n) [0x0004a] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\AnimationVisualQaDriver.cs:37 \r\n  at Elemental.Authoring.Editor.AnimationVisualQaDriver.Step () [0x000a7] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\AnimationVisualQaDriver.cs:28 \r\n  at Elemental.Authoring.Editor.AnimationVisualQaDriver.Tick () [0x000af] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\AnimationVisualQaDriver.cs:25 ",
+    "scope": "Actual Game-view ScreenCapture using the live production Main Camera and camera rig. The recorder changes no camera pose, lens, actor input, body, animation state, fixture, clock, light, material or scene asset. Its caller owns deterministic production input/temporary fixtures and must restore them in finally. Every frame records both actors; images and manifest still require human visual inspection.",
+    "actualGameScreenCapture": true,
+    "productionCameraRigLeftEnabled": true,
+    "debugUiRestored": true,
+    "probesRestored": true,
+    "completeRequiredMatrix": false,
+    "missingRequiredLabels": [
+        "stop",
+        "turn",
+        "uneven-pit",
+        "uneven-slope",
+        "mantle-reach",
+        "mantle-raise",
+        "mantle-transfer",
+        "mantle-settle",
+        "magic-start",
+        "magic-sample",
+        "magic-recovery"
+    ],
+    "temporarilyHiddenUi": [
+        "Elemental.Presentation.UI.BendingDebugOverlay @ Earth Core HUD",
+        "UnityEngine.UIElements.UIDocument @ Earth Core HUD"
+    ],
+    "frames": [
+        {
+            "label": "idle",
+            "scenario": "idle",
+            "path": "C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/BuildReports/EnvironmentAnimationRescue/AnimationVisualFinal/20260905T082636593Z/idle.png",
+            "requestedUtc": "2026-09-05T08:26:38.6181017Z",
+            "completedUtc": "2026-09-05T08:26:38.7374740Z",
+            "screenWidth": 1464,
+            "screenHeight": 650,
+            "requestRenderFrame": 102,
+            "screenshotRenderFrame": 103,
+            "completedRenderFrame": 107,
+            "pngBytes": 907261,
+            "cameraPosition": {
+                "x": -0.5137563347816467,
+                "y": 81.01294708251953,
+                "z": -0.13076448440551759
+            },
+            "cameraEuler": {
+                "x": 12.184873580932618,
+                "y": 0.14254571497440339,
+                "z": 0.9072201251983643
+            },
+            "actors": [
+                {
+                    "actor": "Planet Character",
+                    "action": "Locomotion",
+                    "footPolicy": "DefaultContact",
+                    "baseClip": "Idle",
+                    "mantlePhase": "None",
+                    "eammStatus": "Active",
+                    "viewport": {
+                        "x": 0.43796050548553469,
+                        "y": 0.32841935753822329,
+                        "z": 7.597439765930176
+                    },
+                    "headViewport": {
+                        "x": 0.4403171241283417,
+                        "y": 0.38661661744117739,
+                        "z": 7.614095211029053
+                    },
+                    "leftFootViewport": {
+                        "x": 0.435526043176651,
+                        "y": 0.13369113206863404,
+                        "z": 8.034936904907227
+                    },
+                    "rightFootViewport": {
+                        "x": 0.4570739269256592,
+                        "y": 0.07303515076637268,
+                        "z": 7.4235124588012699
+                    },
+                    "visible": true,
+                    "fullBodyFramed": true,
+                    "lineOfSight": true,
+                    "grounded": true,
+                    "authoredTurn": false,
+                    "leftLocked": false,
+                    "rightLocked": false,
+                    "speed": 0.0,
+                    "filteredTurn": 0.0,
+                    "headHeight": 0.6107015013694763,
+                    "headPitchDegrees": -3.0335628986358644,
+                    "leftIkWeight": 1.0,
+                    "rightIkWeight": 0.0,
+                    "leftFootError": 0.0,
+                    "rightFootError": 0.0,
+                    "leftSlopeDegrees": 5.4276227951049809,
+                    "rightSlopeDegrees": 3.7509238719940187,
+                    "mantleProgress": 0.0,
+                    "magicSampleTime": 0.9800000190734863,
+                    "handConstraintWeight": 0.0,
+                    "eammWeight": 1.0,
+                    "contactFrame": 104,
+                    "sampleFrame": 104,
+                    "finalGraphEvaluations": 104,
+                    "weightedContactPasses": 104
+                },
+                {
+                    "actor": "Rumble Linebreaker Bot",
+                    "action": "Locomotion",
+                    "footPolicy": "DefaultContact",
+                    "baseClip": "Idle",
+                    "mantlePhase": "None",
+                    "eammStatus": "Active",
+                    "viewport": {
+                        "x": 0.5793127417564392,
+                        "y": 0.29816359281539919,
+                        "z": 7.6663079261779789
+                    },
+                    "headViewport": {
+                        "x": 0.5785176157951355,
+                        "y": 0.34175997972488406,
+                        "z": 7.5819993019104
+                    },
+                    "leftFootViewport": {
+                        "x": 0.5838946104049683,
+                        "y": 0.10276013612747193,
+                        "z": 7.55025053024292
+                    },
+                    "rightFootViewport": {
+                        "x": 0.5706347823143005,
+                        "y": 0.12925124168395997,
+                        "z": 8.011621475219727
+                    },
+                    "visible": true,
+                    "fullBodyFramed": true,
+                    "lineOfSight": true,
+                    "grounded": true,
+                    "authoredTurn": false,
+                    "leftLocked": false,
+                    "rightLocked": false,
+                    "speed": 0.0,
+                    "filteredTurn": 0.0,
+                    "headHeight": 0.5069038271903992,
+                    "headPitchDegrees": -4.749387264251709,
+                    "leftIkWeight": 1.0,
+                    "rightIkWeight": 1.0,
+                    "leftFootError": 0.0,
+                    "rightFootError": 0.0,
+                    "leftSlopeDegrees": 4.0186848640441898,
+                    "rightSlopeDegrees": 5.22205924987793,
+                    "mantleProgress": 0.0,
+                    "magicSampleTime": 0.9800000190734863,
+                    "handConstraintWeight": 0.0,
+                    "eammWeight": 1.0,
+                    "contactFrame": 104,
+                    "sampleFrame": 104,
+                    "finalGraphEvaluations": 104,
+                    "weightedContactPasses": 104
+                }
+            ]
+        },
+        {
+            "label": "walk",
+            "scenario": "walk",
+            "path": "C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/BuildReports/EnvironmentAnimationRescue/AnimationVisualFinal/20260905T082636593Z/walk.png",
+            "requestedUtc": "2026-09-05T08:26:39.2586047Z",
+            "completedUtc": "2026-09-05T08:26:39.3772411Z",
+            "screenWidth": 1464,
+            "screenHeight": 650,
+            "requestRenderFrame": 159,
+            "screenshotRenderFrame": 160,
+            "completedRenderFrame": 164,
+            "pngBytes": 907280,
+            "cameraPosition": {
+                "x": -0.5158485174179077,
+                "y": 80.52861022949219,
+                "z": 1.3798727989196778
+            },
+            "cameraEuler": {
+                "x": 13.350234031677246,
+                "y": 0.1618746817111969,
+                "z": 0.9142497777938843
+            },
+            "actors": [
+                {
+                    "actor": "Planet Character",
+                    "action": "Fall",
+                    "footPolicy": "FlightIkOff",
+                    "baseClip": "Idle",
+                    "mantlePhase": "None",
+                    "eammStatus": "Active",
+                    "viewport": {
+                        "x": 0.4463598430156708,
+                        "y": 0.3232015371322632,
+                        "z": 7.767725944519043
+                    },
+                    "headViewport": {
+                        "x": 0.4472963213920593,
+                        "y": 0.37588202953338625,
+                        "z": 7.792596340179443
+                    },
+                    "leftFootViewport": {
+                        "x": 0.4223838448524475,
+                        "y": 0.15191546082496644,
+                        "z": 8.209975242614746
+                    },
+                    "rightFootViewport": {
+                        "x": 0.4693022072315216,
+                        "y": 0.10203199833631516,
+                        "z": 7.476451396942139
+                    },
+                    "visible": true,
+                    "fullBodyFramed": true,
+                    "lineOfSight": true,
+                    "grounded": false,
+                    "authoredTurn": false,
+                    "leftLocked": false,
+                    "rightLocked": false,
+                    "speed": 3.4876346588134767,
+                    "filteredTurn": 0.0,
+                    "headHeight": 0.6061238646507263,
+                    "headPitchDegrees": -2.63553524017334,
+                    "leftIkWeight": 0.0,
+                    "rightIkWeight": 0.0,
+                    "leftFootError": 0.0,
+                    "rightFootError": 0.0,
+                    "leftSlopeDegrees": 0.15450507402420045,
+                    "rightSlopeDegrees": 0.15450507402420045,
+                    "mantleProgress": 0.0,
+                    "magicSampleTime": 0.9800000190734863,
+                    "handConstraintWeight": 0.0,
+                    "eammWeight": 0.0,
+                    "contactFrame": 161,
+                    "sampleFrame": 161,
+                    "finalGraphEvaluations": 161,
+                    "weightedContactPasses": 124
+                },
+                {
+                    "actor": "Rumble Linebreaker Bot",
+                    "action": "Locomotion",
+                    "footPolicy": "DefaultContact",
+                    "baseClip": "Idle",
+                    "mantlePhase": "None",
+                    "eammStatus": "Active",
+                    "viewport": {
+                        "x": 0.5929778218269348,
+                        "y": 0.3309148848056793,
+                        "z": 6.092502117156982
+                    },
+                    "headViewport": {
+                        "x": 0.5937681198120117,
+                        "y": 0.3819468021392822,
+                        "z": 6.006217002868652
+                    },
+                    "leftFootViewport": {
+                        "x": 0.6114512085914612,
+                        "y": 0.08934628963470459,
+                        "z": 5.898037433624268
+                    },
+                    "rightFootViewport": {
+                        "x": 0.5717647671699524,
+                        "y": 0.15210458636283875,
+                        "z": 6.603120803833008
+                    },
+                    "visible": true,
+                    "fullBodyFramed": true,
+                    "lineOfSight": true,
+                    "grounded": true,
+                    "authoredTurn": false,
+                    "leftLocked": false,
+                    "rightLocked": false,
+                    "speed": 0.0,
+                    "filteredTurn": 0.0,
+                    "headHeight": 0.5089941620826721,
+                    "headPitchDegrees": -5.163359642028809,
+                    "leftIkWeight": 0.0,
+                    "rightIkWeight": 0.0,
+                    "leftFootError": 0.0,
+                    "rightFootError": 0.0,
+                    "leftSlopeDegrees": 3.7621304988861086,
+                    "rightSlopeDegrees": 5.728784561157227,
+                    "mantleProgress": 0.0,
+                    "magicSampleTime": 0.9800000190734863,
+                    "handConstraintWeight": 0.0,
+                    "eammWeight": 1.0,
+                    "contactFrame": 161,
+                    "sampleFrame": 161,
+                    "finalGraphEvaluations": 161,
+                    "weightedContactPasses": 156
+                }
+            ]
+        }
+    ]
+}

@@ -10,15 +10,25 @@ namespace Elemental.Authoring.Bakers
     {
         [SerializeField] private MagicExecutor executor;
         [SerializeField] private AbilityRecipeAsset[] recipes;
+        private bool started;
+        private bool bootstrapped;
 
         public void Configure(MagicExecutor configuredExecutor, AbilityRecipeAsset[] configuredRecipes)
         {
             executor = configuredExecutor;
             recipes = configuredRecipes;
+            if (started) TryBootstrap();
         }
 
-        private void Awake()
+        private void Start()
         {
+            started = true;
+            TryBootstrap();
+        }
+
+        private void TryBootstrap()
+        {
+            if (bootstrapped) return;
             if (executor == null || recipes == null)
             {
                 Debug.LogError("[Elemental] Ability registry is not configured.", this);
@@ -41,6 +51,7 @@ namespace Elemental.Authoring.Bakers
             }
 
             executor.ConfigureRecipes(compiled);
+            bootstrapped = true;
         }
     }
 }

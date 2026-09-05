@@ -6,6 +6,240 @@ namespace Elemental.Tests.EditMode
 {
     public sealed class EarthFootSupportAuthorityIntegrationTests
     {
+        [TestCase(30, 6f)]
+        [TestCase(60, 6f)]
+        [TestCase(120, 6f)]
+        [TestCase(30, -6f)]
+        [TestCase(60, -6f)]
+        [TestCase(120, -6f)]
+        public void StopDoesNotPullFeetTowardAWorldSpaceFilterBacklog(int fps, float speed)
+        {
+            EarthFootContactState left = default;
+            EarthFootContactState right = default;
+            EarthFootContactPairDecision decision = default;
+            float position = 0f;
+            for (int frame = 0; frame < fps; frame++)
+            {
+                position = speed * frame / fps;
+                var l = TravellingFoot(true, position, 1f / fps, true, true);
+                var r = TravellingFoot(false, position, 1f / fps, true, true);
+                decision = EarthFootContactSolver.ResolvePair(ref left, ref right, in l, in r);
+            }
+            var stoppedLeft = TravellingFoot(true, position, 1f / fps, false, true);
+            var stoppedRight = TravellingFoot(false, position, 1f / fps, false, true);
+            decision = EarthFootContactSolver.ResolvePair(
+                ref left, ref right, in stoppedLeft, in stoppedRight);
+            Assert.That(math.abs(decision.Left.TargetLocal.z - position), Is.LessThan(0.025f));
+            Assert.That(math.abs(decision.Right.TargetLocal.z - position), Is.LessThan(0.025f));
+        }
+
+        [TestCase(30)]
+        [TestCase(60)]
+        [TestCase(120)]
+        public void StopOnChangedTerrainReseedsContactFollowingFromTheCurrentSurface(int fps)
+        {
+            EarthFootContactState left = default;
+            EarthFootContactState right = default;
+            float dt = 1f / fps;
+
+            // Keep both feet in authored swing while the sampled support moves
+            // through a pronounced vertical profile. The free-foot filter is
+            // deliberately allowed to carry its prior surface correction.
+            for (int frame = 0; frame < fps / 2; frame++)
+            {
+                float progress = frame / (float)math.max(1, fps / 2 - 1);
+                float height = math.lerp(0.11f, -0.13f, progress);
+                var movingLeft = TerrainFoot(
+                    true, frame * 0.04f, height, 0.28f, dt, true);
+                var movingRight = TerrainFoot(
+                    false, frame * 0.04f, height, 0.28f, dt, true);
+                EarthFootContactSolver.ResolvePair(
+                    ref left, ref right, in movingLeft, in movingRight);
+            }
+
+            const float stoppedHeight = 0.09f;
+            var stoppedLeft = TerrainFoot(
+                true, 0.8f, stoppedHeight, stoppedHeight + 0.03f, dt, false);
+            var stoppedRight = TerrainFoot(
+                false, 0.8f, stoppedHeight, stoppedHeight + 0.03f, dt, false);
+            EarthFootContactPairDecision stopped = EarthFootContactSolver.ResolvePair(
+                ref left, ref right, in stoppedLeft, in stoppedRight);
+
+            Assert.That(stopped.Left.Reason, Is.EqualTo(EarthFootContactReason.Stance));
+            Assert.That(stopped.Right.Reason, Is.EqualTo(EarthFootContactReason.Stance));
+            Assert.That(stopped.Left.TargetWeight, Is.EqualTo(1f));
+            Assert.That(stopped.Right.TargetWeight, Is.EqualTo(1f));
+            Assert.That(math.distance(stopped.Left.TargetLocal, stoppedLeft.ContactTargetLocal),
+                Is.LessThan(0.0001f),
+                "First stationary contact frame must not use a terrain target from the preceding swing.");
+            Assert.That(math.distance(stopped.Right.TargetLocal, stoppedRight.ContactTargetLocal),
+                Is.LessThan(0.0001f));
+        }
+
+        [Test]
+        public void StopCapturesARecoverableRaisedFootButKeepsAnUnreachableFootAuthored()
+        {
+            EarthFootContactState left = default;
+            EarthFootContactState right = default;
+            var raisedLeft = TerrainFoot(true, 0f, 0f, 0.54f, 1f / 60f, false);
+            var groundedRight = TerrainFoot(false, 0f, 0f, 0.03f, 1f / 60f, false);
+
+            EarthFootContactPairDecision raised = EarthFootContactSolver.ResolvePair(
+                ref left, ref right, in raisedLeft, in groundedRight);
+            Assert.That(raised.Left.Reason, Is.EqualTo(EarthFootContactReason.Swing));
+            Assert.That(raised.Left.TargetWeight, Is.Zero);
+            Assert.That(raised.Right.Reason, Is.EqualTo(EarthFootContactReason.Stance));
+            Assert.That(raised.Right.TargetWeight, Is.EqualTo(1f));
+
+            var recoverableLeft = TerrainFoot(true, 0f, 0f, 0.26f, 1f / 60f, false);
+            EarthFootContactPairDecision recovered = EarthFootContactSolver.ResolvePair(
+                ref left, ref right, in recoverableLeft, in groundedRight);
+            Assert.That(recovered.Left.Reason, Is.EqualTo(EarthFootContactReason.Stance));
+            Assert.That(recovered.Left.TargetWeight, Is.EqualTo(1f));
+            Assert.That(math.distance(recovered.Left.TargetLocal, recoverableLeft.ContactTargetLocal),
+                Is.LessThan(0.0001f),
+                "A 26 cm idle-transition foot is inside the combined 22 cm pelvis and leg-chain reach.");
+
+            var settledLeft = TerrainFoot(true, 0f, 0f, 0.04f, 1f / 60f, false);
+            EarthFootContactPairDecision settled = EarthFootContactSolver.ResolvePair(
+                ref left, ref right, in settledLeft, in groundedRight);
+            Assert.That(settled.Left.Reason, Is.EqualTo(EarthFootContactReason.Stance));
+            Assert.That(settled.Left.TargetWeight, Is.EqualTo(1f));
+            Assert.That(math.distance(settled.Left.TargetLocal, settledLeft.ContactTargetLocal),
+                Is.LessThan(0.0001f));
+        }
+
+        [Test]
+        public void StopRecoversAShallowlyPenetratingFootOntoTheSupport()
+        {
+            EarthFootContactState left = default;
+            EarthFootContactState right = default;
+            var penetratingLeft = TerrainFoot(true, 0f, 0f, -0.055f, 1f / 60f, false);
+            var groundedRight = TerrainFoot(false, 0f, 0f, 0.03f, 1f / 60f, false);
+
+            EarthFootContactPairDecision recovered = EarthFootContactSolver.ResolvePair(
+                ref left, ref right, in penetratingLeft, in groundedRight);
+
+            Assert.That(recovered.Left.Reason, Is.EqualTo(EarthFootContactReason.Stance));
+            Assert.That(recovered.Left.TargetWeight, Is.EqualTo(1f));
+            Assert.That(math.distance(recovered.Left.TargetLocal, penetratingLeft.ContactTargetLocal),
+                Is.LessThan(0.0001f),
+                "A shallow post-transition intersection must be pulled back to the support.");
+        }
+
+        [TestCase(30)]
+        [TestCase(60)]
+        [TestCase(120)]
+        public void StationaryContactFollowingDoesNotFeedSolvedFootMotionBackIntoTarget(int fps)
+        {
+            EarthFootContactState left = default;
+            EarthFootContactState right = default;
+            float dt = 1f / fps;
+            var initialLeft = TerrainFoot(true, 0f, 0f, 0.03f, dt, false);
+            var initialRight = TerrainFoot(false, 0f, 0f, 0.03f, dt, false);
+            EarthFootContactSolver.ResolvePair(
+                ref left, ref right, in initialLeft, in initialRight);
+
+            for (int frame = 1; frame <= 4; frame++)
+            {
+                // Reproduce an Animator goal that contains some of the prior
+                // frame's downward solve while the ray still resolves the same
+                // static support point.
+                float solvedHeight = 0.03f - frame * 0.08f;
+                var feedbackLeft = TerrainFoot(
+                    true, 0f, 0f, solvedHeight, dt, false);
+                var feedbackRight = TerrainFoot(
+                    false, 0f, 0f, solvedHeight, dt, false);
+                EarthFootContactPairDecision decision = EarthFootContactSolver.ResolvePair(
+                    ref left, ref right, in feedbackLeft, in feedbackRight);
+
+                Assert.That(math.distance(
+                        decision.Left.TargetLocal,
+                        feedbackLeft.ContactTargetLocal),
+                    Is.LessThan(0.0001f));
+                Assert.That(math.distance(
+                        decision.Right.TargetLocal,
+                        feedbackRight.ContactTargetLocal),
+                    Is.LessThan(0.0001f));
+            }
+        }
+
+        [TestCase(30)]
+        [TestCase(60)]
+        [TestCase(120)]
+        public void StationaryContactFollowingUsesTheCurrentFullSurfaceTarget(int fps)
+        {
+            EarthFootContactState left = default;
+            EarthFootContactState right = default;
+            float dt = 1f / fps;
+            var initialLeft = TerrainFoot(true, 0f, 0f, 0.03f, dt, false);
+            var initialRight = TerrainFoot(false, 0f, 0f, 0.03f, dt, false);
+            EarthFootContactPairDecision initial = EarthFootContactSolver.ResolvePair(
+                ref left, ref right, in initialLeft, in initialRight);
+
+            var steppedLeft = TerrainFoot(true, 0.5f, 0.13f, 0.16f, dt, false);
+            var steppedRight = TerrainFoot(false, 0.5f, 0.13f, 0.16f, dt, false);
+            EarthFootContactPairDecision stepped = EarthFootContactSolver.ResolvePair(
+                ref left, ref right, in steppedLeft, in steppedRight);
+
+            Assert.That(math.distance(
+                    stepped.Left.TargetLocal,
+                    steppedLeft.ContactTargetLocal),
+                Is.LessThan(0.0001f),
+                "An unlocked stationary follower must stay on the current curved surface sample.");
+            Assert.That(math.distance(
+                    stepped.Right.TargetLocal,
+                    steppedRight.ContactTargetLocal),
+                Is.LessThan(0.0001f));
+            Assert.That(math.distance(stepped.Left.TargetLocal,initial.Left.TargetLocal),
+                Is.GreaterThan(0.5f),
+                "The regression must exercise a meaningful tangent and height change.");
+        }
+
+        [Test]
+        public void LeavingPlatformDiscardsFilteredAnchorImmediately()
+        {
+            EarthFootContactState left = default;
+            EarthFootContactState right = default;
+            var l = TravellingFoot(true, 0f, 1f / 60f, false, true);
+            var r = TravellingFoot(false, 0f, 1f / 60f, false, true);
+            EarthFootContactSolver.ResolvePair(ref left, ref right, in l, in r);
+            l = TravellingFoot(true, 2f, 1f / 60f, false, false);
+            r = TravellingFoot(false, 2f, 1f / 60f, false, false);
+            var released = EarthFootContactSolver.ResolvePair(ref left, ref right, in l, in r);
+            Assert.That(released.Left.TargetWeight, Is.Zero);
+            Assert.That(math.distance(released.Left.TargetLocal, l.FallbackTargetLocal), Is.LessThan(0.001f));
+            Assert.That(released.Left.Locked, Is.False);
+        }
+
+        private static EarthFootContactInput TravellingFoot(
+            bool left, float position, float dt, bool moving, bool supported)
+        {
+            float3 contact = new float3(left ? -0.15f : 0.15f, 0f, position);
+            return new EarthFootContactInput(left, supported, moving, false, false,
+                supported, 0.03f, 0f, 0f, 0.5f, contact, new float3(0f, 1f, 0f),
+                contact + new float3(0f, 0.03f, 0f), new float3(0f, 1f, 0f),
+                10u, 1u, dt, 0f);
+        }
+
+        private static EarthFootContactInput TerrainFoot(
+            bool left,
+            float position,
+            float terrainHeight,
+            float animatedHeight,
+            float dt,
+            bool moving)
+        {
+            float x = left ? -0.15f : 0.15f;
+            float3 contact = new float3(x, terrainHeight, position);
+            float3 animated = new float3(x, animatedHeight, position);
+            return new EarthFootContactInput(
+                left, true, moving, false, false, true,
+                animatedHeight - terrainHeight, 0f, 0f, 0.5f,
+                contact, new float3(0f, 1f, 0f), animated,
+                new float3(0f, 1f, 0f), 10u, 1u, dt, 0f);
+        }
+
         [Test]
         public void FootStateMachinePlantsMaintainsReleasesAndResetsAirborne()
         {
@@ -123,6 +357,33 @@ namespace Elemental.Tests.EditMode
             Assert.That(decision.Left.Reason, Is.EqualTo(EarthFootContactReason.Swing));
             Assert.That(decision.Right.Locked, Is.True);
             Assert.That(decision.Right.Reason, Is.EqualTo(EarthFootContactReason.Capture));
+        }
+
+        [Test]
+        public void AlternatingAuthoredContactsTransferPlantAuthorityToTheOppositeFoot()
+        {
+            EarthFootContactState leftState = default;
+            EarthFootContactState rightState = default;
+            EarthFootContactInput leftPlant = Contact(
+                true, 20u, 1u, true, authoredContact: 1f);
+            EarthFootContactInput rightSwing = Contact(
+                false, 20u, 1u, true, authoredContact: 0f);
+            EarthFootContactPairDecision first = EarthFootContactSolver.ResolvePair(
+                ref leftState, ref rightState, in leftPlant, in rightSwing);
+            Assert.That(first.Left.Locked, Is.True);
+            Assert.That(first.Right.Locked, Is.False);
+
+            EarthFootContactInput leftSwing = Contact(
+                true, 20u, 1u, true, authoredContact: 0f);
+            EarthFootContactInput rightPlant = Contact(
+                false, 20u, 1u, true, authoredContact: 1f);
+            EarthFootContactPairDecision second = EarthFootContactSolver.ResolvePair(
+                ref leftState, ref rightState, in leftSwing, in rightPlant);
+
+            Assert.That(second.Left.Locked, Is.False);
+            Assert.That(second.Left.Reason, Is.EqualTo(EarthFootContactReason.Swing));
+            Assert.That(second.Right.Locked, Is.True);
+            Assert.That(second.Right.Reason, Is.EqualTo(EarthFootContactReason.Capture));
         }
 
         private static EarthFootContactInput Contact(

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="9" result="Passed" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-04 08:46:00Z" end-time="2026-09-04 08:46:02Z" duration="1.9188472">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="699" result="Passed" start-time="2026-09-04 08:46:00Z" end-time="2026-09-04 08:46:02Z" duration="1.918847" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1854" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="699" result="Passed" start-time="2026-09-04 08:46:00Z" end-time="2026-09-04 08:46:02Z" duration="1.883970" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13600" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1855" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="699" result="Passed" start-time="2026-09-04 08:46:00Z" end-time="2026-09-04 08:46:02Z" duration="1.883589" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1856" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="699" result="Passed" start-time="2026-09-04 08:46:00Z" end-time="2026-09-04 08:46:02Z" duration="1.883485" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1857" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="699" result="Passed" start-time="2026-09-04 08:46:00Z" end-time="2026-09-04 08:46:02Z" duration="1.883319" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1292" name="EarthCombatMobilityFixTests" fullname="Elemental.Tests.EditMode.EarthCombatMobilityFixTests" classname="Elemental.Tests.EditMode.EarthCombatMobilityFixTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-04 08:46:00Z" end-time="2026-09-04 08:46:00Z" duration="0.053153" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1296" name="MeshChipsHaveIndependentSpawnAnglesAndSpinOnAllAxes" fullname="Elemental.Tests.EditMode.EarthCombatMobilityFixTests.MeshChipsHaveIndependentSpawnAnglesAndSpinOnAllAxes" methodname="MeshChipsHaveIndependentSpawnAnglesAndSpinOnAllAxes" classname="Elemental.Tests.EditMode.EarthCombatMobilityFixTests" runstate="Runnable" seed="1806709088" result="Passed" start-time="2026-09-04 08:46:00Z" end-time="2026-09-04 08:46:00Z" duration="0.016721" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1293" name="PlatformAccumulatesWeakHitsWhileFracturePreparationIsPending" fullname="Elemental.Tests.EditMode.EarthCombatMobilityFixTests.PlatformAccumulatesWeakHitsWhileFracturePreparationIsPending" methodname="PlatformAccumulatesWeakHitsWhileFracturePreparationIsPending" classname="Elemental.Tests.EditMode.EarthCombatMobilityFixTests" runstate="Runnable" seed="1179222832" result="Passed" start-time="2026-09-04 08:46:00Z" end-time="2026-09-04 08:46:00Z" duration="0.018371" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1295" name="PremiumWaveHasContinuousPoseAtEveryPhaseBoundary" fullname="Elemental.Tests.EditMode.EarthCombatMobilityFixTests.PremiumWaveHasContinuousPoseAtEveryPhaseBoundary" methodname="PremiumWaveHasContinuousPoseAtEveryPhaseBoundary" classname="Elemental.Tests.EditMode.EarthCombatMobilityFixTests" runstate="Runnable" seed="363243583" result="Passed" start-time="2026-09-04 08:46:00Z" end-time="2026-09-04 08:46:00Z" duration="0.002749" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1294" name="WeakImpactsAccumulateAndInvalidContactsCannotPoisonDamage" fullname="Elemental.Tests.EditMode.EarthCombatMobilityFixTests.WeakImpactsAccumulateAndInvalidContactsCannotPoisonDamage" methodname="WeakImpactsAccumulateAndInvalidContactsCannotPoisonDamage" classname="Elemental.Tests.EditMode.EarthCombatMobilityFixTests" runstate="Runnable" seed="277198107" result="Passed" start-time="2026-09-04 08:46:00Z" end-time="2026-09-04 08:46:00Z" duration="0.000320" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1344" name="EarthEffectsTuningProfileTests" fullname="Elemental.Tests.EditMode.EarthEffectsTuningProfileTests" classname="Elemental.Tests.EditMode.EarthEffectsTuningProfileTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-04 08:46:00Z" end-time="2026-09-04 08:46:02Z" duration="1.828634" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1346" name="Evaluators_AreDeterministicBoundedAndFiniteSafe" fullname="Elemental.Tests.EditMode.EarthEffectsTuningProfileTests.Evaluators_AreDeterministicBoundedAndFiniteSafe" methodname="Evaluators_AreDeterministicBoundedAndFiniteSafe" classname="Elemental.Tests.EditMode.EarthEffectsTuningProfileTests" runstate="Runnable" seed="1339840978" result="Passed" start-time="2026-09-04 08:46:00Z" end-time="2026-09-04 08:46:00Z" duration="0.002484" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1348" name="M3ProfileLoader_PreservesExistingInspectorValuesAndGuid" fullname="Elemental.Tests.EditMode.EarthEffectsTuningProfileTests.M3ProfileLoader_PreservesExistingInspectorValuesAndGuid" methodname="M3ProfileLoader_PreservesExistingInspectorValuesAndGuid" classname="Elemental.Tests.EditMode.EarthEffectsTuningProfileTests" runstate="Runnable" seed="917616773" result="Passed" start-time="2026-09-04 08:46:00Z" end-time="2026-09-04 08:46:01Z" duration="1.237903" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1345" name="MaterialDustColorRemovesRgbMultipliersButPreservesOpacityAndMaterial" fullname="Elemental.Tests.EditMode.EarthEffectsTuningProfileTests.MaterialDustColorRemovesRgbMultipliersButPreservesOpacityAndMaterial" methodname="MaterialDustColorRemovesRgbMultipliersButPreservesOpacityAndMaterial" classname="Elemental.Tests.EditMode.EarthEffectsTuningProfileTests" runstate="Runnable" seed="161780698" result="Passed" start-time="2026-09-04 08:46:01Z" end-time="2026-09-04 08:46:01Z" duration="0.012014" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1347" name="ParticleApplier_AppliesProfileCapacityRangesAndMaterial" fullname="Elemental.Tests.EditMode.EarthEffectsTuningProfileTests.ParticleApplier_AppliesProfileCapacityRangesAndMaterial" methodname="ParticleApplier_AppliesProfileCapacityRangesAndMaterial" classname="Elemental.Tests.EditMode.EarthEffectsTuningProfileTests" runstate="Runnable" seed="262202980" result="Passed" start-time="2026-09-04 08:46:01Z" end-time="2026-09-04 08:46:01Z" duration="0.004130" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1349" name="RegeneratedEarthCoreScene_UsesOneCanonicalEffectsProfileAndItsMaterials" fullname="Elemental.Tests.EditMode.EarthEffectsTuningProfileTests.RegeneratedEarthCoreScene_UsesOneCanonicalEffectsProfileAndItsMaterials" methodname="RegeneratedEarthCoreScene_UsesOneCanonicalEffectsProfileAndItsMaterials" classname="Elemental.Tests.EditMode.EarthEffectsTuningProfileTests" runstate="Runnable" seed="648048096" result="Passed" start-time="2026-09-04 08:46:01Z" end-time="2026-09-04 08:46:02Z" duration="0.570754" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\CombatMobilityEdit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Failed(Child)" total="8" passed="6" failed="2" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-04 22:41:36Z" end-time="2026-09-04 22:44:44Z" duration="188.2115453">
+  <test-suite type="TestSuite" id="1236" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="174" result="Failed" site="Child" start-time="2026-09-04 22:41:36Z" end-time="2026-09-04 22:44:44Z" duration="188.211545" total="8" passed="6" failed="2" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1229" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="174" result="Failed" site="Child" start-time="2026-09-04 22:41:37Z" end-time="2026-09-04 22:44:44Z" duration="186.922410" total="8" passed="6" failed="2" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13600" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1230" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="174" result="Failed" site="Child" start-time="2026-09-04 22:41:37Z" end-time="2026-09-04 22:44:44Z" duration="186.873001" total="8" passed="6" failed="2" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1231" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="174" result="Failed" site="Child" start-time="2026-09-04 22:41:37Z" end-time="2026-09-04 22:44:44Z" duration="186.854473" total="8" passed="6" failed="2" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1232" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="174" result="Failed" site="Child" start-time="2026-09-04 22:41:37Z" end-time="2026-09-04 22:44:44Z" duration="186.837991" total="8" passed="6" failed="2" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1210" name="SeptemberAnimationRescueRuntimeTests" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" testcasecount="8" result="Failed" site="Child" start-time="2026-09-04 22:41:37Z" end-time="2026-09-04 22:44:44Z" duration="186.819596" total="8" passed="6" failed="2" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1215" name="AllElevenAcceptedTechniquesAdvanceVisibleMotionAndReturnToEamm" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.AllElevenAcceptedTechniquesAdvanceVisibleMotionAndReturnToEamm" methodname="AllElevenAcceptedTechniquesAdvanceVisibleMotionAndReturnToEamm" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="246624307" result="Passed" start-time="2026-09-04 22:41:38Z" end-time="2026-09-04 22:42:12Z" duration="33.595043" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+[StartupCache] Scene ready in 10294.56ms; ground=exact baked base, bakedPlans=1403, cookedMeshes=5436, peakCookingSlice=3.14ms.
+[September Animation] RaiseWall: accepted cast hand travel=0.1799m, sample range=0.646..0.980.
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[September Animation] RaisePlatform: accepted cast hand travel=0.1625m, sample range=0.464..0.980.
+[September Animation] PullStone: accepted cast hand travel=0.2620m, sample range=0.382..0.980.
+[September Animation] ThrowStone: accepted cast hand travel=0.3076m, sample range=0.491..0.980.
+[September Animation] VectorPush: accepted cast hand travel=0.2354m, sample range=0.340..0.960.
+[September Animation] Repair: accepted cast hand travel=0.1947m, sample range=0.455..0.990.
+[September Animation] Resonance: accepted cast hand travel=0.3383m, sample range=0.440..0.990.
+[September Animation] PillarJump: accepted cast hand travel=0.2416m, sample range=0.381..0.960.
+[September Animation] Armor: accepted cast hand travel=0.2286m, sample range=0.507..0.990.
+[September Animation] ArmorBarrage: accepted cast hand travel=0.3326m, sample range=0.335..0.960.
+[September Animation] MeteorFinish: accepted cast hand travel=0.2172m, sample range=0.358..0.960.
+]]></output>
+              </test-case>
+              <test-case id="1218" name="FinalHumanoidFeetTraverseRealPitHumpAndSlopeAtControlledThirtySixtyOneTwentySteps" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.FinalHumanoidFeetTraverseRealPitHumpAndSlopeAtControlledThirtySixtyOneTwentySteps" methodname="FinalHumanoidFeetTraverseRealPitHumpAndSlopeAtControlledThirtySixtyOneTwentySteps" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="650824208" result="Passed" start-time="2026-09-04 22:42:12Z" end-time="2026-09-04 22:43:22Z" duration="70.261415" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+[StartupCache] Scene ready in 5338.76ms; ground=exact baked base, bakedPlans=1403, cookedMeshes=5436, peakCookingSlice=3.11ms.
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+]]></output>
+              </test-case>
+              <test-case id="1213" name="HeadAndFeetAreMeasuredAcrossAuthoredEammContactsAndAdditiveStages" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.HeadAndFeetAreMeasuredAcrossAuthoredEammContactsAndAdditiveStages" methodname="HeadAndFeetAreMeasuredAcrossAuthoredEammContactsAndAdditiveStages" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1819159861" result="Passed" start-time="2026-09-04 22:43:22Z" end-time="2026-09-04 22:43:34Z" duration="12.065790" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+[StartupCache] Scene ready in 5311.94ms; ground=exact baked base, bakedPlans=1403, cookedMeshes=5436, peakCookingSlice=3.15ms.
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+]]></output>
+              </test-case>
+              <test-case id="1214" name="ProductionIdleTurnsAndStopsKeepFinalPoseAndAuthoredTurnOwnership" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ProductionIdleTurnsAndStopsKeepFinalPoseAndAuthoredTurnOwnership" methodname="ProductionIdleTurnsAndStopsKeepFinalPoseAndAuthoredTurnOwnership" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1147874609" result="Passed" start-time="2026-09-04 22:43:34Z" end-time="2026-09-04 22:43:48Z" duration="13.493538" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+[StartupCache] Scene ready in 5160.00ms; ground=exact baked base, bakedPlans=1403, cookedMeshes=5436, peakCookingSlice=3.15ms.
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+]]></output>
+              </test-case>
+              <test-case id="1212" name="ProductionMantleNativeHandFallbackUsesBaseLayer" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ProductionMantleNativeHandFallbackUsesBaseLayer" methodname="ProductionMantleNativeHandFallbackUsesBaseLayer" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1985814400" result="Failed" start-time="2026-09-04 22:43:48Z" end-time="2026-09-04 22:43:58Z" duration="10.759965" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Ground contact did not resume after mantle.
+  Expected: greater than 1.0f
+  But was:  1.0f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+<ObserveProductionMantle>d__9.MoveNext () [0x007b3] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\SeptemberAnimationRescueRuntimeTests.cs:161
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+[StartupCache] Scene ready in 5671.51ms; ground=exact baked base, bakedPlans=1403, cookedMeshes=5436, peakCookingSlice=3.16ms.
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+]]></output>
+              </test-case>
+              <test-case id="1211" name="ProductionMantleOwnsPoseReleasesFeetAndReturnsToContacts" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ProductionMantleOwnsPoseReleasesFeetAndReturnsToContacts" methodname="ProductionMantleOwnsPoseReleasesFeetAndReturnsToContacts" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="63453698" result="Failed" start-time="2026-09-04 22:43:58Z" end-time="2026-09-04 22:44:08Z" duration="9.193217" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  The authored/fallback wrist never reached the ledge contact region.
+  Expected: less than 0.349999994f
+  But was:  0.350485504f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+<ObserveProductionMantle>d__9.MoveNext () [0x006d0] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\SeptemberAnimationRescueRuntimeTests.cs:155
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+[StartupCache] Scene ready in 5330.56ms; ground=exact baked base, bakedPlans=1403, cookedMeshes=5436, peakCookingSlice=3.18ms.
+]]></output>
+              </test-case>
+              <test-case id="1216" name="SemanticMagicSlotsBecomeOneHotAndKeepAValidUpperBodyPose" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.SemanticMagicSlotsBecomeOneHotAndKeepAValidUpperBodyPose" methodname="SemanticMagicSlotsBecomeOneHotAndKeepAValidUpperBodyPose" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="2059627045" result="Passed" start-time="2026-09-04 22:44:08Z" end-time="2026-09-04 22:44:34Z" duration="26.696617" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+[StartupCache] Scene ready in 5185.60ms; ground=exact baked base, bakedPlans=1403, cookedMeshes=5436, peakCookingSlice=3.14ms.
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+]]></output>
+              </test-case>
+              <test-case id="1217" name="WalkStopKeepsKneesFiniteAndAvoidsAOneFrameLegSnap" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.WalkStopKeepsKneesFiniteAndAvoidsAOneFrameLegSnap" methodname="WalkStopKeepsKneesFiniteAndAvoidsAOneFrameLegSnap" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="2133007594" result="Passed" start-time="2026-09-04 22:44:34Z" end-time="2026-09-04 22:44:44Z" duration="9.786516" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+[StartupCache] Scene ready in 5389.60ms; ground=exact baked base, bakedPlans=1403, cookedMeshes=5436, peakCookingSlice=3.11ms.
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\SeptemberAnimationPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -53,6 +53,10 @@ namespace Elemental.Input.Gestures
             if (fragment != null)
                 return new EarthResolvedTarget(
                     EarthSourceKind.Rock, collider, fragment.Body, fragment, null);
+            EarthRockDebris persistentChunk = collider.GetComponentInParent<EarthRockDebris>();
+            if (persistentChunk != null && persistentChunk.IsEarthTargetValid)
+                return new EarthResolvedTarget(
+                    EarthSourceKind.Rock, collider, persistentChunk.Body, persistentChunk, null);
             EarthPillarWaveColumn pillar = collider.GetComponentInParent<EarthPillarWaveColumn>();
             if (pillar != null)
                 return new EarthResolvedTarget(

@@ -15,10 +15,14 @@ namespace Elemental.Presentation.Animation
         [SerializeField] private Transform leftHandTarget;
         [SerializeField] private Transform rightHandTarget;
         [SerializeField] private Rig rig;
-        [SerializeField] private TwoBoneIKConstraint leftArm;
-        [SerializeField] private TwoBoneIKConstraint rightArm;
+        // Retained so existing scene data migrates without losing its references.
+        // The package constraint is held at zero once the stable constraints exist.
+        [SerializeField] private TwoBoneIKConstraint leftArm = null;
+        [SerializeField] private TwoBoneIKConstraint rightArm = null;
+        [SerializeField] private EarthStableTwoBoneIkConstraint stableLeftArm;
+        [SerializeField] private EarthStableTwoBoneIkConstraint stableRightArm;
 
-        public bool IsBuilt => rig != null && leftArm != null && rightArm != null;
+        public bool IsBuilt => rig != null && stableLeftArm != null && stableRightArm != null;
         public float Weight => rig != null ? rig.weight : 0f;
 
         public void Configure(
@@ -36,18 +40,20 @@ namespace Elemental.Presentation.Animation
         {
             float clamped = Mathf.Clamp01(weight);
             if (rig != null) rig.weight = clamped;
-            if (clamped > 0.0001f)
-            {
-                if (leftArm != null) leftArm.weight = 1f;
-                if (rightArm != null) rightArm.weight = 1f;
-            }
+            DisableLegacyConstraint(leftArm);
+            DisableLegacyConstraint(rightArm);
+            if (clamped <= 0.0001f) return;
+            if (stableLeftArm != null) stableLeftArm.weight = 1f;
+            if (stableRightArm != null) stableRightArm.weight = 1f;
         }
 
         public void ResetMagicIk()
         {
             if (rig != null) rig.weight = 0f;
-            if (leftArm != null) leftArm.weight = 0f;
-            if (rightArm != null) rightArm.weight = 0f;
+            DisableLegacyConstraint(leftArm);
+            DisableLegacyConstraint(rightArm);
+            if (stableLeftArm != null) stableLeftArm.weight = 0f;
+            if (stableRightArm != null) stableRightArm.weight = 0f;
         }
 
         private void Awake()
@@ -56,11 +62,11 @@ namespace Elemental.Presentation.Animation
             BuildIfNeeded();
         }
 
-        private void LateUpdate()
+        public void PrepareForEvaluation()
         {
             if (rig == null || rig.weight <= 0.001f) return;
-            UpdateArmHint(leftArm, -1f);
-            UpdateArmHint(rightArm, 1f);
+            UpdateArmHint(stableLeftArm, -1f);
+            UpdateArmHint(stableRightArm, 1f);
         }
 
         private void BuildIfNeeded()
@@ -81,22 +87,14 @@ namespace Elemental.Presentation.Animation
                 if (rig == null) rig = root.AddComponent<Rig>();
             }
 
-            leftArm = EnsureArm(
-                leftArm,
-                "Left Arm Bending IK",
-                HumanBodyBones.LeftUpperArm,
-                HumanBodyBones.LeftLowerArm,
-                HumanBodyBones.LeftHand,
-                leftHandTarget,
-                -1f);
-            rightArm = EnsureArm(
-                rightArm,
-                "Right Arm Bending IK",
-                HumanBodyBones.RightUpperArm,
-                HumanBodyBones.RightLowerArm,
-                HumanBodyBones.RightHand,
-                rightHandTarget,
-                1f);
+            stableLeftArm = EnsureArm(
+                stableLeftArm, leftArm, "Left Arm Bending IK",
+                HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftLowerArm,
+                HumanBodyBones.LeftHand, leftHandTarget, -1f);
+            stableRightArm = EnsureArm(
+                stableRightArm, rightArm, "Right Arm Bending IK",
+                HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm,
+                HumanBodyBones.RightHand, rightHandTarget, 1f);
 
             bool found = false;
             for (int index = 0; index < builder.layers.Count; index++)
@@ -110,8 +108,9 @@ namespace Elemental.Presentation.Animation
             if (Application.isPlaying) builder.Build();
         }
 
-        private TwoBoneIKConstraint EnsureArm(
-            TwoBoneIKConstraint existing,
+        private EarthStableTwoBoneIkConstraint EnsureArm(
+            EarthStableTwoBoneIkConstraint existing,
+            TwoBoneIKConstraint legacy,
             string objectName,
             HumanBodyBones rootBone,
             HumanBodyBones midBone,
@@ -119,14 +118,14 @@ namespace Elemental.Presentation.Animation
             Transform target,
             float side)
         {
-            if (existing == null)
-            {
-                Transform child = rig.transform.Find(objectName);
-                GameObject go = child != null ? child.gameObject : new GameObject(objectName);
-                if (child == null) go.transform.SetParent(rig.transform, false);
-                existing = go.GetComponent<TwoBoneIKConstraint>();
-                if (existing == null) existing = go.AddComponent<TwoBoneIKConstraint>();
-            }
+            Transform child = rig.transform.Find(objectName);
+            GameObject armObject = child != null ? child.gameObject : new GameObject(objectName);
+            if (child == null) armObject.transform.SetParent(rig.transform, false);
+            if (legacy == null) legacy = armObject.GetComponent<TwoBoneIKConstraint>();
+            DisableLegacyConstraint(legacy);
+            if (existing == null) existing = armObject.GetComponent<EarthStableTwoBoneIkConstraint>();
+            if (existing == null) existing = armObject.AddComponent<EarthStableTwoBoneIkConstraint>();
+
             Transform hint = existing.transform.Find("Hint");
             if (hint == null)
             {
@@ -137,37 +136,54 @@ namespace Elemental.Presentation.Animation
             Transform rootBoneTransform = animator.GetBoneTransform(rootBone);
             Transform midBoneTransform = animator.GetBoneTransform(midBone);
             Transform tipBoneTransform = animator.GetBoneTransform(tipBone);
-            if (rootBoneTransform == null || midBoneTransform == null || tipBoneTransform == null) return existing;
-            hint.position = midBoneTransform.position + animator.transform.right * side * 0.28f -
-                            animator.transform.forward * 0.12f;
+            if (rootBoneTransform == null || midBoneTransform == null || tipBoneTransform == null)
+                return existing;
 
-            TwoBoneIKConstraintData data = existing.data;
-            data.root = rootBoneTransform;
-            data.mid = midBoneTransform;
-            data.tip = tipBoneTransform;
-            data.target = target;
-            data.hint = hint;
-            data.targetPositionWeight = 1f;
-            data.targetRotationWeight = 0.45f;
-            data.hintWeight = 0.68f;
-            data.maintainTargetPositionOffset = false;
-            data.maintainTargetRotationOffset = true;
+            EarthStableTwoBoneIkData data = existing.data;
+            data.Root = rootBoneTransform;
+            data.Mid = midBoneTransform;
+            data.Tip = tipBoneTransform;
+            data.Target = target;
+            data.Hint = hint;
+            data.TargetRotationWeight = .45f;
+            data.MaximumReachFraction = .92f;
+            data.MaintainTargetRotationOffset = true;
             existing.data = data;
             existing.weight = 1f;
+            UpdateArmHint(existing, side);
             return existing;
         }
 
-        private void UpdateArmHint(TwoBoneIKConstraint constraint, float side)
+        private void UpdateArmHint(EarthStableTwoBoneIkConstraint constraint, float side)
         {
             if (constraint == null) return;
-            TwoBoneIKConstraintData data = constraint.data;
-            if (data.root == null || data.mid == null || data.target == null || data.hint == null) return;
-            Vector3 up = animator != null ? animator.transform.up : transform.up;
-            Vector3 aim = Vector3.ProjectOnPlane(data.target.position - data.root.position, up).normalized;
-            if (aim.sqrMagnitude < 0.1f) aim = animator != null ? animator.transform.forward : transform.forward;
-            Vector3 outward = Vector3.Cross(up, aim).normalized * side;
-            Vector3 desired = data.mid.position + outward * 0.24f - aim * 0.09f + up * 0.035f;
-            data.hint.position = Vector3.Lerp(data.hint.position, desired, 1f - Mathf.Exp(-18f * Time.deltaTime));
+            EarthStableTwoBoneIkData data = constraint.data;
+            if (data.Root == null || data.Mid == null || data.Target == null || data.Hint == null) return;
+
+            Transform body = animator != null ? animator.transform : transform;
+            Vector3 aim = data.Target.position - data.Root.position;
+            if (aim.sqrMagnitude < .0001f) aim = body.forward;
+            aim.Normalize();
+            Vector3 outward = Vector3.ProjectOnPlane(body.right * side, aim);
+            if (outward.sqrMagnitude < .0001f)
+                outward = Vector3.ProjectOnPlane(Vector3.Cross(body.up, aim) * side, aim);
+            if (outward.sqrMagnitude < .0001f)
+                outward = Vector3.ProjectOnPlane(body.up, aim);
+            outward.Normalize();
+
+            float upperLength = Vector3.Distance(data.Root.position, data.Mid.position);
+            float poleDistance = Mathf.Max(.22f, upperLength * .9f);
+            // The previous solved elbow is deliberately not an input, so a flipped
+            // solve cannot feed the next frame's pole.
+            data.Hint.position = data.Root.position + aim * (upperLength * .55f) +
+                                 outward * poleDistance - body.up * (upperLength * .10f);
+        }
+
+        private static void DisableLegacyConstraint(TwoBoneIKConstraint legacy)
+        {
+            if (legacy == null) return;
+            legacy.weight = 0f;
+            if (Application.isPlaying) legacy.enabled = false;
         }
     }
 }

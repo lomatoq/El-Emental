@@ -1,0 +1,64 @@
+{
+    "utc": "2026-09-04T11:16:26.9417608Z",
+    "graphicsDevice": "Direct3D11",
+    "renderPipeline": "ElEmentalURP",
+    "dustMaterial": "RumbleDustLit",
+    "passed": false,
+    "captureResolution": 96,
+    "centerRoiSize": 12,
+    "chipCameraDistance": 5.0,
+    "dustCameraDistance": 6.5,
+    "opaqueWallCameraDistance": 4.0,
+    "samples": [
+        {
+            "renderer": "MeshParticle",
+            "sourceMaterial": "LooseEarthChipVfx",
+            "shader": "Elemental/Graphics V5/Rumble Rock Lit",
+            "chipOnly": {
+                "r": 0.9307470321655273,
+                "g": 0.6581423282623291,
+                "b": 0.46631303429603579,
+                "a": 1.0
+            },
+            "chipWithDust": {
+                "r": 0.9750819802284241,
+                "g": 0.8754642009735107,
+                "b": 0.683332622051239,
+                "a": 1.0
+            },
+            "chipVisibleDelta": 0.5125190615653992,
+            "dustVisibleDelta": 0.4840681850910187,
+            "dustOverChipDelta": 0.15955887734889985,
+            "opaqueWallOcclusionDelta": 0.0
+        },
+        {
+            "renderer": "PillarMesh",
+            "sourceMaterial": "RumbleSandstone",
+            "shader": "Elemental/Graphics V5/Rumble Rock Lit",
+            "chipOnly": {
+                "r": 0.7751102447509766,
+                "g": 0.4846407175064087,
+                "b": 0.28431349992752077,
+                "a": 1.0
+            },
+            "chipWithDust": {
+                "r": 0.9177840352058411,
+                "g": 0.8113027811050415,
+                "b": 0.6168022751808167,
+                "a": 1.0
+            },
+            "chipVisibleDelta": 0.36697494983673098,
+            "dustVisibleDelta": 0.4840681850910187,
+            "dustOverChipDelta": 0.2672751843929291,
+            "opaqueWallOcclusionDelta": 0.0
+        }
+    ],
+    "denseDustLightingDelta": 0.5160683393478394,
+    "denseDustUnlitPixels": {
+        "r": 0.16598577797412873,
+        "g": 0.10215158015489578,
+        "b": 0.06165579333901405,
+        "a": 1.0
+    },
+    "scope": "Production materials and shared compositing policy, isolated stationary mesh particle and pillar-style MeshRenderer. Preview camera runs the active URP renderer without gameplay atmosphere/DOF. Not an all-technique visual acceptance."
+}

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Passed" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 15:33:08Z" end-time="2026-09-05 15:33:08Z" duration="0.0116384">
+  <test-suite type="TestSuite" id="1277" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="899" result="Passed" start-time="2026-09-05 15:33:08Z" end-time="2026-09-05 15:33:08Z" duration="0.011638" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2386" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="888" result="Passed" start-time="2026-09-05 15:33:08Z" end-time="2026-09-05 15:33:08Z" duration="0.011050" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2387" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="888" result="Passed" start-time="2026-09-05 15:33:08Z" end-time="2026-09-05 15:33:08Z" duration="0.010955" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2388" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="888" result="Passed" start-time="2026-09-05 15:33:08Z" end-time="2026-09-05 15:33:08Z" duration="0.010880" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2389" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="888" result="Passed" start-time="2026-09-05 15:33:08Z" end-time="2026-09-05 15:33:08Z" duration="0.010767" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1408" name="EarthAirborneMantleAdmissionTests" fullname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests" classname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-09-05 15:33:08Z" end-time="2026-09-05 15:33:08Z" duration="0.010013" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1418" name="AirborneProbeReachesBeforeCapsuleContactWithoutChangingGroundedRange" fullname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests.AirborneProbeReachesBeforeCapsuleContactWithoutChangingGroundedRange" methodname="AirborneProbeReachesBeforeCapsuleContactWithoutChangingGroundedRange" classname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests" runstate="Runnable" seed="320784877" result="Passed" start-time="2026-09-05 15:33:08Z" end-time="2026-09-05 15:33:08Z" duration="0.004592" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1416" name="CatchStillRequiresIntentWalkableTopAndReachableHeight" fullname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests.CatchStillRequiresIntentWalkableTopAndReachableHeight" methodname="CatchStillRequiresIntentWalkableTopAndReachableHeight" classname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests" runstate="Runnable" seed="557972883" result="Passed" start-time="2026-09-05 15:33:08Z" end-time="2026-09-05 15:33:08Z" duration="0.000336" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1417" name="ExistingGroundedAdmissionStillRejectsUnsupportedStarts" fullname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests.ExistingGroundedAdmissionStillRejectsUnsupportedStarts" methodname="ExistingGroundedAdmissionStillRejectsUnsupportedStarts" classname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests" runstate="Runnable" seed="1510704562" result="Passed" start-time="2026-09-05 15:33:08Z" end-time="2026-09-05 15:33:08Z" duration="0.000184" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1412" name="ReachableAirborneApproachCanCatchLedge" fullname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests.ReachableAirborneApproachCanCatchLedge" classname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-05 15:33:08Z" end-time="2026-09-05 15:33:08Z" duration="0.000895" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1409" name="ReachableAirborneApproachCanCatchLedge(-1.2f)" fullname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests.ReachableAirborneApproachCanCatchLedge(-1.2f)" methodname="ReachableAirborneApproachCanCatchLedge" classname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests" runstate="Runnable" seed="976384901" result="Passed" start-time="2026-09-05 15:33:08Z" end-time="2026-09-05 15:33:08Z" duration="0.000218" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1410" name="ReachableAirborneApproachCanCatchLedge(0.0f)" fullname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests.ReachableAirborneApproachCanCatchLedge(0.0f)" methodname="ReachableAirborneApproachCanCatchLedge" classname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests" runstate="Runnable" seed="2098639713" result="Passed" start-time="2026-09-05 15:33:08Z" end-time="2026-09-05 15:33:08Z" duration="0.000033" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1411" name="ReachableAirborneApproachCanCatchLedge(4.5f)" fullname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests.ReachableAirborneApproachCanCatchLedge(4.5f)" methodname="ReachableAirborneApproachCanCatchLedge" classname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests" runstate="Runnable" seed="333255764" result="Passed" start-time="2026-09-05 15:33:08Z" end-time="2026-09-05 15:33:08Z" duration="0.000023" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="1415" name="UnsafeRelativeVerticalSpeedCannotCatch" fullname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests.UnsafeRelativeVerticalSpeedCannotCatch" classname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-05 15:33:08Z" end-time="2026-09-05 15:33:08Z" duration="0.000454" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1413" name="UnsafeRelativeVerticalSpeedCannotCatch(-3.26f)" fullname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests.UnsafeRelativeVerticalSpeedCannotCatch(-3.26f)" methodname="UnsafeRelativeVerticalSpeedCannotCatch" classname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests" runstate="Runnable" seed="1713918709" result="Passed" start-time="2026-09-05 15:33:08Z" end-time="2026-09-05 15:33:08Z" duration="0.000104" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1414" name="UnsafeRelativeVerticalSpeedCannotCatch(6.51f)" fullname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests.UnsafeRelativeVerticalSpeedCannotCatch(6.51f)" methodname="UnsafeRelativeVerticalSpeedCannotCatch" classname="Elemental.Tests.EditMode.EarthAirborneMantleAdmissionTests" runstate="Runnable" seed="917327014" result="Passed" start-time="2026-09-05 15:33:08Z" end-time="2026-09-05 15:33:08Z" duration="0.000026" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\AirborneMantleEdit.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

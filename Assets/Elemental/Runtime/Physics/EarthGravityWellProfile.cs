@@ -1,4 +1,5 @@
 using UnityEngine;
+using Elemental.Simulation.Bending;
 
 namespace Elemental.Runtime.Physics
 {
@@ -20,6 +21,12 @@ namespace Elemental.Runtime.Physics
         [SerializeField, Min(0f)] private float clusterOrbitRadius = 1.35f;
         [SerializeField, Min(0f)] private float clusterAngularDamping = 6.5f;
         [SerializeField, Min(0.1f)] private float clusterMaximumAcceleration = 62f;
+        [Header("Cluster launch")]
+        [SerializeField, Min(0.1f)] private float fullChargeSeconds = 1.05f;
+        [SerializeField, Min(0.01f)] private float directTapSeconds = 0.22f;
+        [SerializeField, Min(1f)] private float directLaunchSpeed = 15f;
+        [SerializeField, Min(1f)] private float minimumBlastSpeed = 19f;
+        [SerializeField, Min(1f)] private float maximumBlastSpeed = 31f;
         [Header("Structure stress")]
         [SerializeField, Min(0.05f)] private float fractureDelaySeconds = 0.68f;
         [SerializeField, Min(0f)] private float fractureImpulse = 1450f;
@@ -32,6 +39,10 @@ namespace Elemental.Runtime.Physics
         public float MaximumSpeed => maximumSpeed;
         public float CoreRadius => Mathf.Min(coreRadius, radius * 0.8f);
         public float FocusLift => focusLift;
+        public float FullChargeSeconds => fullChargeSeconds;
+        public float DirectTapSeconds => directTapSeconds;
+        public EarthGravityClusterThrowTuning ThrowTuning => new EarthGravityClusterThrowTuning(
+            directLaunchSpeed, minimumBlastSpeed, maximumBlastSpeed, 0.34f, 7.5f, 65f);
         // Assets authored before the latched-cluster upgrade deserialize new fields as zero.
         // Keep those profiles functional without requiring a destructive re-create/migration.
         public int MaximumCapturedTargets => maximumCapturedTargets > 0

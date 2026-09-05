@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9c19b8efe5ab0646af15e22b319c2d2, type: 3}
+  m_Name: EarthVectorFieldProfile
+  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Physics.EarthVectorFieldProfile
+  continuousForce: 4200
+  minimumReleaseImpulse: 260
+  minimumWallReleaseImpulse: 650
+  maximumReleaseImpulse: 2400
+  rockSpeedLimit: 32
+  wallSpeedLimit: 14
+  controlledRockSpeedLimit: 9
+  controlledWallSpeedLimit: 6.5
+  wallForceMultiplier: 72
+  fullChargeSeconds: 1.35

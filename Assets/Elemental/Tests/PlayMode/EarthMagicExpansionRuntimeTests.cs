@@ -79,9 +79,9 @@ namespace Elemental.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator MmbPressLocksOneExplicitTargetAndNeverSweepsNearbyBodies()
+        public IEnumerator MmbFieldCollectsNearbyBodiesAndNewArrivalsUntilRelease()
         {
-            GameObject executorObject = new GameObject("Fixed MMB Target Runtime");
+            GameObject executorObject = new GameObject("MMB Area Field Runtime");
             MagicExecutor executor = executorObject.AddComponent<MagicExecutor>();
             EarthGravityWellProfile gravityProfile = ScriptableObject.CreateInstance<EarthGravityWellProfile>();
             executor.ConfigureEarthExtensions(null, null, gravityProfile);
@@ -93,29 +93,68 @@ namespace Elemental.Tests.PlayMode
             PhysicalImpactTarget aimed = aimedObject.AddComponent<PhysicalImpactTarget>();
             aimed.Configure(aimedBody);
             GameObject neighbourObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            neighbourObject.name = "Nearby Unselected Earth Target";
-            neighbourObject.transform.position = Vector3.right * 0.35f;
+            neighbourObject.name = "Nearby Earth Target";
+            neighbourObject.transform.position = Vector3.right * 2f;
             Rigidbody neighbourBody = neighbourObject.AddComponent<Rigidbody>();
             neighbourBody.useGravity = false;
             PhysicalImpactTarget neighbour = neighbourObject.AddComponent<PhysicalImpactTarget>();
             neighbour.Configure(neighbourBody);
-
-            Assert.That(executor.TryBeginGravityWell(
-                aimedObject.GetComponent<Collider>(), Vector3.up * 1.2f, Vector3.up), Is.True);
+            GameObject arrivalObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            arrivalObject.transform.position = Vector3.right * 20f;
+            Rigidbody arrivalBody = arrivalObject.AddComponent<Rigidbody>();
+            arrivalBody.useGravity = false;
+            arrivalObject.AddComponent<PhysicalImpactTarget>().Configure(arrivalBody);
+            Physics.SyncTransforms();
+            long bytes = System.GC.GetAllocatedBytesForCurrentThread();
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            bool began = executor.TryBeginGravityWell(
+                aimedObject.GetComponent<Collider>(), Vector3.up * 1.2f, Vector3.up, true);
+            double milliseconds = (System.Diagnostics.Stopwatch.GetTimestamp()-started)*1000d/System.Diagnostics.Stopwatch.Frequency;
+            long allocated = System.GC.GetAllocatedBytesForCurrentThread()-bytes;
+            Assert.That(began, Is.True);
+            Debug.Log($"[ArenaGravity] Area-field begin: {milliseconds:F4} ms / {allocated} managed bytes.");
+            Assert.That(executor.GravityWellCapturedCount, Is.EqualTo(2), "Capture both nearby stones, excluding the distant one.");
             for (int tick = 0; tick < 12; tick++) yield return new WaitForFixedUpdate();
-            Assert.That(executor.GravityWellCapturedCount, Is.EqualTo(1),
-                "An MMB session may only grow from the selected structure's fracture event, never an overlap sweep.");
+            Assert.That(executor.GravityWellCapturedCount, Is.EqualTo(2));
+            arrivalBody.position = Vector3.right * 3f;
+            Physics.SyncTransforms();
+            for (int tick = 0; tick < 12; tick++) yield return new WaitForFixedUpdate();
+            Assert.That(executor.GravityWellCapturedCount, Is.EqualTo(3), "The held field also collects a new loose stone entering its radius.");
+            yield return new WaitForSeconds(2f);
+            var shapes = new[] { aimedObject.GetComponent<Collider>(), neighbourObject.GetComponent<Collider>(), arrivalObject.GetComponent<Collider>() };
+            for(int index = 0; index < shapes.Length; index++)
+            {
+                float nearestGap = float.PositiveInfinity;
+                for(int other = 0; other < shapes.Length; other++)
+                {
+                    if(index == other) continue;
+                    Vector3 point = shapes[index].ClosestPoint(shapes[other].bounds.center);
+                    nearestGap = Mathf.Min(nearestGap,Vector3.Distance(point,shapes[other].ClosestPoint(point)));
+                    bool overlap = Physics.ComputePenetration(shapes[index],shapes[index].transform.position,shapes[index].transform.rotation,
+                        shapes[other],shapes[other].transform.position,shapes[other].transform.rotation,out _,out float depth);
+                    Assert.That(!overlap || depth < .04f, Is.True,"Packing must retain physical separation, not disable collisions.");
+                }
+                Assert.That(nearestGap, Is.LessThan(.04f),"Every stone must touch the packed group without orbit-slot gaps.");
+            }
 
             executor.CancelGravityWell();
+            Assert.That(executor.GravityWellCapturedCount, Is.Zero);
             Object.Destroy(executorObject);
             Object.Destroy(aimedObject);
             Object.Destroy(neighbourObject);
+            Object.Destroy(arrivalObject);
             Object.Destroy(gravityProfile);
         }
 
         [UnityTest]
         public IEnumerator MmbRmbTapAndChargeProduceDistinctPhysicalLaunches()
         {
+            GameObject gravityObject = new GameObject("MMB Launch Gravity");
+            gravityObject.transform.position = Vector3.down * 20f;
+            PointPlanetGravitySource source = gravityObject.AddComponent<PointPlanetGravitySource>();
+            source.Configure(new Elemental.Simulation.Gravity.GravityFieldId(991u), 20f, 11.5f, 1f, 100f);
+            GravityWorldBehaviour world = gravityObject.AddComponent<GravityWorldBehaviour>();
+            world.Configure(new[] { source });
             GameObject caster = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             caster.name = "MMB Throw Caster";
             Rigidbody casterBody = caster.AddComponent<Rigidbody>();
@@ -124,6 +163,7 @@ namespace Elemental.Tests.PlayMode
             MagicExecutor executor = caster.AddComponent<MagicExecutor>();
             EarthGravityWellProfile profile = ScriptableObject.CreateInstance<EarthGravityWellProfile>();
             executor.ConfigureEarthExtensions(null, null, profile);
+            executor.ConfigureGravityLaunchWorld(world);
 
             GameObject stone = GameObject.CreatePrimitive(PrimitiveType.Cube);
             stone.name = "MMB Throw Stone";
@@ -156,12 +196,21 @@ namespace Elemental.Tests.PlayMode
             Assert.That(chargedCount, Is.EqualTo(1));
             Assert.That(body.linearVelocity.magnitude, Is.GreaterThan(directSpeed + 5f));
             Assert.That(executor.IsGravityWellActive, Is.False);
+            Vector3 releasedAt = body.position;
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            Assert.That(body.isKinematic, Is.False);
+            Assert.That(body.GetComponent<GravityBody>().IsOperational, Is.True);
+            Assert.That(body.linearVelocity.magnitude, Is.GreaterThan(10f));
+            Assert.That(Vector3.Distance(body.position, releasedAt), Is.GreaterThan(0.1f),
+                "Release must survive the next physics ticks, not merely report a launch count.");
             Assert.That(casterBody.linearVelocity, Is.EqualTo(Vector3.zero),
                 "Scoped launch grace and the throw solver may never recoil the caster.");
 
             Object.Destroy(caster);
             Object.Destroy(stone);
             Object.Destroy(profile);
+            Object.Destroy(gravityObject);
             yield return null;
         }
 

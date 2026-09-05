@@ -64,6 +64,7 @@ namespace Elemental.Presentation.Rendering
         private bool _requested;
         private bool _runtimeActive;
         private bool _hasEnvelope;
+        private bool _subjectsValid;
         private float _requestedFor;
         private float _targetFocusDistance = 8f;
         private EarthCinematicDepthOfFieldEnvelope _targetEnvelope =
@@ -86,6 +87,7 @@ namespace Elemental.Presentation.Rendering
         public float SilhouettePadding => silhouettePadding;
         public Transform PrimarySubject => primarySubject;
         public Transform SecondarySubject => secondarySubject;
+        public bool HasRequiredSubjects => _subjectsValid;
         public bool HasCaptureOverride => _captureOverride;
         public EarthCinematicDepthOfFieldDebugView CaptureDebugView =>
             _captureDebugView;
@@ -98,6 +100,8 @@ namespace Elemental.Presentation.Rendering
             secondarySubject = configuredSecondarySubject;
             _primaryRenderers = ResolveSubjectRenderers(primarySubject);
             _secondaryRenderers = ResolveSubjectRenderers(secondarySubject);
+            _requestedFor = 0f;
+            _runtimeActive = false;
             RefreshEnvelope(0f, true);
         }
 
@@ -147,7 +151,7 @@ namespace Elemental.Presentation.Rendering
                 Mathf.Max(0.1f, farTransition),
                 Mathf.Clamp(maxRadiusPixels * _lensRadiusScale, 1f, 12f),
                 _captureOverride ? _captureDebugView : debugView);
-            return active && isActiveAndEnabled;
+            return active && _subjectsValid && isActiveAndEnabled;
         }
 
         private void OnEnable()
@@ -161,7 +165,7 @@ namespace Elemental.Presentation.Rendering
         {
             float deltaTime = Mathf.Max(0.0001f, Time.unscaledDeltaTime);
             RefreshEnvelope(deltaTime, false);
-            if (!_requested)
+            if (!_requested || !_subjectsValid)
             {
                 // Capability policy may cut the lens immediately (currently Web);
                 // the focus value remains warm for a later native re-entry.
@@ -190,6 +194,7 @@ namespace Elemental.Presentation.Rendering
                 _secondaryRenderers,
                 out float secondaryNear,
                 out float secondaryFar);
+            _subjectsValid = primaryValid && secondaryValid;
             if (!primaryValid && !secondaryValid)
             {
                 primaryNear = _targetFocusDistance;

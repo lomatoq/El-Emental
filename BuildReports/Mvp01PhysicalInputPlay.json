@@ -1,13 +1,15 @@
 {
     "unityVersion": "6000.5.7f1",
-    "utc": "2026-08-26T16:25:25.1187299Z",
+    "utc": "2026-09-03T09:31:40.8924165Z",
     "mode": "PlayMode",
-    "result": "Passed",
+    "result": "Failed",
     "total": 4,
-    "passed": 4,
-    "failed": 0,
+    "passed": 3,
+    "failed": 1,
     "skipped": 0,
     "inconclusive": 0,
-    "durationSeconds": 5.4038749,
-    "failures": []
+    "durationSeconds": 10.220669,
+    "failures": [
+        "Elemental.Tests.PlayMode.EarthCoreVisualRuntimeTests.PhysicalMouseHoldMovesVisibleDecorRockThroughShippingRouter:   Telekinesis acquired the rock but never applied control force.\r\n  Expected: greater than 1.0f\r\n  But was:  0.0f\r\n"
+    ]
 }

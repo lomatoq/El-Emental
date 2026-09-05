@@ -1,13 +1,15 @@
 {
     "unityVersion": "6000.5.7f1",
-    "utc": "2026-08-31T09:48:54.9191653Z",
+    "utc": "2026-09-03T18:19:28.0491928Z",
     "mode": "EditMode",
-    "result": "Passed",
-    "total": 274,
-    "passed": 274,
-    "failed": 0,
+    "result": "Failed",
+    "total": 291,
+    "passed": 290,
+    "failed": 1,
     "skipped": 0,
     "inconclusive": 0,
-    "durationSeconds": 37.1207628,
-    "failures": []
+    "durationSeconds": 53.4615962,
+    "failures": [
+        "Elemental.Tests.EditMode.MotionMatching.MotionLibraryValidationTests.ProductionPivot_IsBakedAsInPlaceRotation:   Expected: greater than 1.0f\r\n  But was:  0.0f\r\n"
+    ]
 }

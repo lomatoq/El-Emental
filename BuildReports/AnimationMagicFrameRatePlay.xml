@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="3" result="Passed" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 11:17:03Z" end-time="2026-09-05 11:17:19Z" duration="15.8862081">
+  <test-suite type="TestSuite" id="1256" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="194" result="Passed" start-time="2026-09-05 11:17:03Z" end-time="2026-09-05 11:17:19Z" duration="15.886208" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1249" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="194" result="Passed" start-time="2026-09-05 11:17:03Z" end-time="2026-09-05 11:17:19Z" duration="15.854742" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1250" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="194" result="Passed" start-time="2026-09-05 11:17:03Z" end-time="2026-09-05 11:17:19Z" duration="15.852019" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1251" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="194" result="Passed" start-time="2026-09-05 11:17:03Z" end-time="2026-09-05 11:17:19Z" duration="15.850141" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1252" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="194" result="Passed" start-time="2026-09-05 11:17:03Z" end-time="2026-09-05 11:17:19Z" duration="15.848201" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1183" name="SeptemberAnimationRescueRuntimeTests" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" testcasecount="27" result="Passed" start-time="2026-09-05 11:17:03Z" end-time="2026-09-05 11:17:19Z" duration="15.844820" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1199" name="ShippingDualMouseChordIsContinuousAtOneTwentyHertz" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ShippingDualMouseChordIsContinuousAtOneTwentyHertz" methodname="ShippingDualMouseChordIsContinuousAtOneTwentyHertz" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1945495662" result="Passed" start-time="2026-09-05 11:17:03Z" end-time="2026-09-05 11:17:11Z" duration="7.163602" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 2422.42ms; ground=exact baked base, cacheLoad=12.11ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1381.16ms, peakCookingPoll=0.35ms; sync=ArenaInitialize=366.96ms/15;ArenaBevel=344.61ms/175;ArenaMeshPicking=1.84ms/175;WallAwake=499.87ms/1;WallPieceVisuals=20.24ms/40;PlatformPoolAwake=10.53ms/1;PlatformRuntimeMeshes=1.39ms/12;PillarPoolAwake=18.43ms/1;PillarMeshLibrary=3.57ms/1;PillarColumns=13.80ms/1;DebrisPoolAwake=82.95ms/1;HeroFragmentPoolAwake=12.58ms/1.
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+MAGIC_FRAME_RATE target=120 samples=120 actualAverageDelta=0.01193 actualMaximumDelta=0.06221 animationAverageDelta=0.00836 maximumBoneStep=10.419
+]]></output>
+              </test-case>
+              <test-case id="1198" name="ShippingDualMouseChordIsContinuousAtSixtyHertz" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ShippingDualMouseChordIsContinuousAtSixtyHertz" methodname="ShippingDualMouseChordIsContinuousAtSixtyHertz" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1408652260" result="Passed" start-time="2026-09-05 11:17:11Z" end-time="2026-09-05 11:17:15Z" duration="4.315724" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 1241.00ms; ground=exact baked base, cacheLoad=6.84ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1148.60ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=366.96ms/15;ArenaBevel=344.61ms/175;ArenaMeshPicking=1.84ms/175;WallAwake=499.87ms/1;WallPieceVisuals=20.24ms/40;PlatformPoolAwake=10.53ms/1;PlatformRuntimeMeshes=1.39ms/12;PillarPoolAwake=18.43ms/1;PillarMeshLibrary=3.57ms/1;PillarColumns=13.80ms/1;DebrisPoolAwake=82.95ms/1;HeroFragmentPoolAwake=12.58ms/1.
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+MAGIC_FRAME_RATE target=60 samples=62 actualAverageDelta=0.01655 actualMaximumDelta=0.02812 animationAverageDelta=0.01660 maximumBoneStep=18.695
+]]></output>
+              </test-case>
+              <test-case id="1197" name="ShippingDualMouseChordIsContinuousAtThirtyHertz" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ShippingDualMouseChordIsContinuousAtThirtyHertz" methodname="ShippingDualMouseChordIsContinuousAtThirtyHertz" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1202182734" result="Passed" start-time="2026-09-05 11:17:15Z" end-time="2026-09-05 11:17:19Z" duration="4.336388" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 1261.12ms; ground=exact baked base, cacheLoad=7.21ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1176.27ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=366.96ms/15;ArenaBevel=344.61ms/175;ArenaMeshPicking=1.84ms/175;WallAwake=499.87ms/1;WallPieceVisuals=20.24ms/40;PlatformPoolAwake=10.53ms/1;PlatformRuntimeMeshes=1.39ms/12;PillarPoolAwake=18.43ms/1;PillarMeshLibrary=3.57ms/1;PillarColumns=13.80ms/1;DebrisPoolAwake=82.95ms/1;HeroFragmentPoolAwake=12.58ms/1.
+MAGIC_BONE_STEP stage=LateUpdate frame=584 bone=mixamorig:RightArm step=33.211 delta=0.03333 unscaledDelta=0.03331 sequence=3489660929 technique=PillarJump phase=Root state=2123799777 next=0 transition=False clock=0.0996 clockA=0.0996 clockB=0.0000 layer=0.920 handIk=0.000 previous=(10.17, 16.58, 281.67) current=(23.09, 345.18, 278.58)
+MAGIC_BONE_STEP stage=LateUpdate frame=595 bone=mixamorig:LeftForeArm step=31.184 delta=0.03333 unscaledDelta=0.03352 sequence=3489660930 technique=PullStone phase=Root state=-229411403 next=0 transition=False clock=0.0650 clockA=0.4914 clockB=0.0650 layer=0.920 handIk=0.000 previous=(7.12, 2.51, 349.49) current=(37.79, 0.03, 343.27)
+MAGIC_BONE_STEP stage=LateUpdate frame=599 bone=mixamorig:RightForeArm step=36.736 delta=0.03333 unscaledDelta=0.03112 sequence=3489660931 technique=QuickStonePunch phase=Sustain state=-229411403 next=2123799777 transition=True clock=0.4915 clockA=0.4915 clockB=0.1300 layer=0.920 handIk=0.000 previous=(80.53, 72.75, 99.37) current=(52.86, 356.72, 18.36)
+MAGIC_FRAME_RATE target=30 samples=33 actualAverageDelta=0.03284 actualMaximumDelta=0.03827 animationAverageDelta=0.03267 maximumBoneStep=36.736
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\AnimationMagicFrameRatePlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

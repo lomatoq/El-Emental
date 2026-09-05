@@ -119,10 +119,11 @@ namespace Elemental.Simulation.Characters
             return math.lerp(MinimumAnticipationSeconds, MaximumAnticipationSeconds, speed01);
         }
 
-        public EarthLandingStyle StyleFor(float impactSpeed, float planarSpeed)
+        public EarthLandingStyle StyleFor(float impactSpeed, float planarSpeed, bool allowLandingRoll = false)
         {
+            if (allowLandingRoll) return EarthLandingStyle.Moving;
             if (impactSpeed >= HardImpactSpeed) return EarthLandingStyle.Hard;
-            return planarSpeed >= MovingPlanarSpeed ? EarthLandingStyle.Moving : EarthLandingStyle.Soft;
+            return EarthLandingStyle.Soft;
         }
 
         public float RecoveryFor(EarthLandingStyle style) => style switch
@@ -182,6 +183,40 @@ namespace Elemental.Simulation.Characters
         }
     }
 
+    public static class EarthLandingPoseStrength
+    {
+        public static float Resolve(float dropHeight, float impactSpeed, float airborneSeconds)
+        {
+            // A first support acquisition or a probe seam has no airborne history.
+            if (airborneSeconds < 0.10f || dropHeight <= 0.015f) return 0f;
+            float height01 = math.saturate((dropHeight - 0.05f) / 2.45f);
+            float speed01 = math.saturate((impactSpeed - 0.5f) / 7f);
+            // Both height and speed must support a strong reaction. The 3.2 m/s
+            // hop (~0.36 m under 14 m/s2 gravity) stays near a 15% pose amplitude.
+            return math.lerp(0.08f, 1f, math.min(height01, speed01));
+        }
+    }
+
+    public static class EarthLandingRollPolicy
+    {
+        public const float MinimumDropHeight = 2f;
+        // Ordinary authored running is 7.2 m/s. The fast-jump exception must
+        // require boosted travel, not every normal running short hop.
+        public const float FastJumpSpeed = 9f;
+        public const float StrongImpulseDeltaSpeed = 4f;
+
+        public static bool AllowsRoll(
+            bool observedSupport, float airborneSeconds, float dropHeight,
+            bool deliberateJump, float signedTakeoffSpeed, float externalDeltaSpeed)
+        {
+            // Startup contact, ordinary gravity and ordinary short hops cannot roll.
+            return observedSupport && airborneSeconds >= 0.10f &&
+                   (dropHeight > MinimumDropHeight ||
+                    (deliberateJump && math.abs(signedTakeoffSpeed) >= FastJumpSpeed) ||
+                    externalDeltaSpeed >= StrongImpulseDeltaSpeed);
+        }
+    }
+
     public static class EarthAnimationStateResolver
     {
         public static EarthAnimationRescueSample Step(
@@ -193,7 +228,8 @@ namespace Elemental.Simulation.Characters
             bool ragdoll,
             float verticalSpeed,
             float supportRelativePlanarSpeed,
-            float deltaTime)
+            float deltaTime,
+            bool allowLandingRoll = false)
         {
             deltaTime = math.max(0.0001f, deltaTime);
             EarthAnimationPhase previous = state.Phase;
@@ -217,7 +253,8 @@ namespace Elemental.Simulation.Characters
                     float observedImpact = math.max(state.LastPredictedImpactSpeed, -state.MinimumAirVerticalSpeed);
                     state.LandingStyle = tuning.StyleFor(
                         observedImpact,
-                        math.max(state.LastPredictedPlanarSpeed, supportRelativePlanarSpeed));
+                        math.max(state.LastPredictedPlanarSpeed, supportRelativePlanarSpeed),
+                        allowLandingRoll);
                     Enter(ref state, EarthAnimationPhase.LandingContact);
                 }
                 else if (previous == EarthAnimationPhase.LandingContact)
@@ -284,7 +321,8 @@ namespace Elemental.Simulation.Characters
                     state.CandidateLostSeconds = 0f;
                     state.LandingStyle = tuning.StyleFor(
                         state.LastPredictedImpactSpeed,
-                        state.LastPredictedPlanarSpeed);
+                        state.LastPredictedPlanarSpeed,
+                        allowLandingRoll);
                     Enter(ref state, EarthAnimationPhase.PreLanding);
                 }
                 else if (previous == EarthAnimationPhase.PreLanding && !sameCandidate)

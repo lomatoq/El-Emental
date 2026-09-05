@@ -1,0 +1,135 @@
+diff --git a/Assets/Elemental/Presentation/Animation/HumanoidCharacterPresentation.cs b/Assets/Elemental/Presentation/Animation/HumanoidCharacterPresentation.cs
+--- a/Assets/Elemental/Presentation/Animation/HumanoidCharacterPresentation.cs
++++ b/Assets/Elemental/Presentation/Animation/HumanoidCharacterPresentation.cs
+@@ -140,6 +140,7 @@
+         private Vector3 _previousFacing;
+         private bool _hasPreviousFacing;
+         private int _activeBaseStateHash;
++        private EarthResponsiveHandTargetState _responsiveHandTargetState;
+         private HandIkState _handIkState;
+         private float _gaitPhase01;
+         private float _locomotionCycleSeconds = 1f;
+@@ -1460,12 +1461,32 @@
+ 
+         private void UpdateHandTargets()
+         {
+-            if (_handIkState == HandIkState.Inactive || leftHandTarget == null || rightHandTarget == null) return;
+-            Vector3 focus;
+-            if (executor != null && executor.IsGravityWellActive) focus = executor.GravityWellFocus;
+-            else if (executor != null && executor.IsVectorFieldActive) focus = executor.VectorFieldPoint;
+-            else if (executor != null && executor.HeldBody != null) focus = executor.HeldBody.worldCenterOfMass;
+-            else focus = transform.position + transform.forward * 1.4f + motor.LocalUp * 0.8f;
++            if (_handIkState == HandIkState.Inactive || leftHandTarget == null || rightHandTarget == null)
++            {
++                EarthResponsiveHandTargetSolver.Reset(ref _responsiveHandTargetState);
++                return;
++            }
++
++            bool hasLiveFocus = false;
++            Vector3 focus = default;
++            if (executor != null && executor.IsGravityWellActive)
++            {
++                focus = executor.GravityWellFocus;
++                hasLiveFocus = true;
++            }
++            else if (executor != null && executor.IsVectorFieldActive)
++            {
++                focus = executor.VectorFieldPoint;
++                hasLiveFocus = true;
++            }
++            else if (executor != null && executor.HeldBody != null)
++            {
++                focus = executor.HeldBody.worldCenterOfMass;
++                hasLiveFocus = true;
++            }
++            // A one-shot retains the authored arm pose. During sustained release,
++            // keep the last body-relative target while the rig weight fades.
++            if (!hasLiveFocus && !_responsiveHandTargetState.IsInitialized) return;
+ 
+             // Telekinesis points can be many metres away. They define gaze/aim,
+             // not a literal wrist destination. Feeding the distant point directly
+@@ -1476,29 +1497,43 @@
+             Vector3 shoulderCenter = chest != null
+                 ? chest.position
+                 : transform.position + motor.LocalUp * 0.66f;
+-            Vector3 aimDirection = focus - shoulderCenter;
+-            if (aimDirection.sqrMagnitude < 0.001f) aimDirection = transform.forward;
+-            EarthCastPhase castPhase = poseController != null
+-                ? poseController.CurrentRequest.Phase
+-                : EarthCastPhase.Sustain;
+-            float effort = poseController != null
+-                ? poseController.CurrentRequest.Effort01
+-                : _castWeight;
+-            Vector3 localAim = transform.InverseTransformDirection(aimDirection);
+-            EarthMagicReachSample reach = EarthMagicReachSolver.Resolve(
+-                new float3(localAim.x, localAim.y, localAim.z),
+-                castPhase,
+-                effort);
+-            aimDirection = transform.TransformDirection(new Vector3(
+-                reach.LocalAim.x,
+-                reach.LocalAim.y,
+-                reach.LocalAim.z)).normalized;
+-            float targetReach = reach.ReachMeters;
+-            Vector3 reachableFocus = shoulderCenter + aimDirection * targetReach;
++            EarthResponsiveHandTargetSample target;
++            if (hasLiveFocus)
++            {
++                Vector3 desiredAim = focus - shoulderCenter;
++                if (desiredAim.sqrMagnitude < 0.001f) desiredAim = transform.forward;
++                EarthCastPhase castPhase = poseController != null
++                    ? poseController.CurrentRequest.Phase
++                    : EarthCastPhase.Sustain;
++                float effort = poseController != null
++                    ? poseController.CurrentRequest.Effort01
++                    : _castWeight;
++                Vector3 localAim = transform.InverseTransformDirection(desiredAim);
++                EarthMagicReachSample reach = EarthMagicReachSolver.Resolve(
++                    new float3(localAim.x, localAim.y, localAim.z),
++                    castPhase,
++                    effort);
++                target = EarthResponsiveHandTargetSolver.Step(
++                    ref _responsiveHandTargetState,
++                    reach.LocalAim,
++                    reach.ReachMeters,
++                    reach.HandSpreadMeters,
++                    true,
++                    Time.deltaTime);
++            }
++            else
++            {
++                target = EarthResponsiveHandTargetSolver.Step(
++                    ref _responsiveHandTargetState, default, 0f, 0f, false, Time.deltaTime);
++            }
++
++            Vector3 aimDirection = transform.TransformDirection(new Vector3(
++                target.LocalAim.x, target.LocalAim.y, target.LocalAim.z)).normalized;
++            Vector3 reachableFocus = shoulderCenter + aimDirection * target.ReachMeters;
+             Vector3 across = Vector3.Cross(motor.LocalUp, aimDirection).normalized;
+             if (across.sqrMagnitude < 0.1f) across = transform.right;
+-            leftHandTarget.position = reachableFocus - across * reach.HandSpreadMeters;
+-            rightHandTarget.position = reachableFocus + across * reach.HandSpreadMeters;
++            leftHandTarget.position = reachableFocus - across * target.HandSpreadMeters;
++            rightHandTarget.position = reachableFocus + across * target.HandSpreadMeters;
+             Quaternion rotation = Quaternion.LookRotation(aimDirection, motor.LocalUp);
+             leftHandTarget.rotation = rotation;
+             rightHandTarget.rotation = rotation;
+@@ -1512,6 +1547,11 @@
+                 return _magicHandConstraintWeight;
+             }
+         }
++
++        public bool HasResponsiveSustainedAim =>
++            _responsiveHandTargetState.IsInitialized && _magicHandConstraintWeight > 0.001f;
++        public float3 ResponsiveSustainedLocalAim => _responsiveHandTargetState.LocalAim;
++        public float ResponsiveSustainedAimWeight => _magicHandConstraintWeight;
+ 
+         private float ResolveMagicHandConstraintTarget()
+         {
+@@ -1622,6 +1662,7 @@
+             _pendingRenderedMagicRecovery = 0f;
+             _castWeight = 0f;
+             _magicHandConstraintWeight = 0f;
++            EarthResponsiveHandTargetSolver.Reset(ref _responsiveHandTargetState);
+             _handIkState = HandIkState.Inactive;
+             animationRigBridge?.ResetMagicIk();
+             if (animator == null) return;

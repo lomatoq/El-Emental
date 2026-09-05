@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e71815172ec7c040b6134e14155d43a, type: 3}
+  m_Name: EarthWallProfile
+  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Physics.EarthWallProfile
+  minimumEmergenceSeconds: 0.55
+  maximumEmergenceSeconds: 1.25
+  automaticCrackDelaySeconds: 0
+  fractureWaveSeconds: 0.26
+  cohesionDecaySeconds: 2.8
+  debrisRestSeconds: 1.35
+  debrisShrinkSeconds: 1.25
+  shrinkDetachedStructuralPieces: 0
+  minimumRockImpactImpulse: 55
+  wallSlideDrag: 0.72
+  maximumSlideSpeed: 14
+  cohesionImpulsePerMass: 0.12
+  impactDamageMultiplier: 0.92
+  excessImpulseRelease: 0.18
+  foundationStrengthMultiplier: 1.45
+  planetaryDebrisAcceleration: 11.5
+  minimumChordEmbedDepth: 0.42
+  surfaceTolerance: 0.06
+  visibleVoxelSafetyDepth: 0.55
+  magicFieldSlideDrag: 0.16

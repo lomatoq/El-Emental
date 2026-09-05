@@ -348,8 +348,10 @@ namespace Elemental.Authoring.Editor
                 errors.Add("KayKitMage Earth Cast state must use the curated semantic BlendTree.");
                 return;
             }
-            if (!cast.timeParameterActive || cast.timeParameter != "EarthMotionTime")
-                errors.Add("KayKitMage Earth Cast must be phase-scrubbed by EarthMotionTime so held magic cannot freeze on the final frame.");
+            if (!cast.timeParameterActive || cast.timeParameter != "EarthMotionTimeA")
+                errors.Add("KayKitMage Earth Cast needs the independent EarthMotionTimeA clock.");
+            if (stateMachine.defaultState != cast || cast.transitions.Length != 0)
+                errors.Add("KayKitMage Earth Cast must remain the resident upper-body state; runtime layer weight is the only cast visibility gate.");
             if (tree.blendType != BlendTreeType.Direct || !IsDirectBlendNormalized(tree) ||
                 tree.children.Length < 11)
                 errors.Add("KayKitMage hero cast BlendTree must expose eleven normalized direct pose weights.");
@@ -358,11 +360,27 @@ namespace Elemental.Authoring.Editor
             for (int index = 0; index < children.Length; index++)
             {
                 if (children[index].motion != null) unique.Add(children[index].motion);
-                if (children[index].directBlendParameter != $"EarthPose{index + 1:00}")
+                if (children[index].directBlendParameter != $"EarthPoseA{index + 1:00}")
                     errors.Add($"KayKitMage direct cast child {index} has the wrong semantic weight parameter.");
             }
             if (unique.Count < 8)
                 errors.Add("KayKitMage hero cast BlendTree must use at least eight distinct authored clips.");
+            AnimatorState alternate = FindState(stateMachine, "Earth Cast B");
+            if (alternate == null || alternate.motion is not BlendTree incoming ||
+                incoming == tree || !alternate.timeParameterActive ||
+                alternate.timeParameter != "EarthMotionTimeB" || alternate.transitions.Length != 0)
+            {
+                errors.Add("KayKitMage needs an independent Earth Cast B state and clock for repeated casts.");
+                return;
+            }
+            if (incoming.blendType != BlendTreeType.Direct || !IsDirectBlendNormalized(incoming) ||
+                incoming.children.Length != 11)
+                errors.Add("KayKitMage incoming magic buffer needs eleven normalized direct weights.");
+            ChildMotion[] incomingChildren = incoming.children;
+            for (int index = 0; index < incomingChildren.Length; index++)
+                if (incomingChildren[index].directBlendParameter != $"EarthPoseB{index + 1:00}" ||
+                    index >= children.Length || incomingChildren[index].motion != children[index].motion)
+                    errors.Add($"KayKitMage incoming child {index} lost its independent parameter or curated clip.");
         }
 
         private static bool IsDirectBlendNormalized(BlendTree tree)

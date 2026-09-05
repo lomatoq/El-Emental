@@ -4,9 +4,8 @@ namespace Elemental.Simulation.Time
 {
     /// <summary>
     /// Chooses who owns the gameplay key light and celestial clock.
-    /// GameplayLocked is the production default: the authored key, ambient
-    /// and ephemeris remain temporally stable during a duel.
-    /// AnimatedEphemeris is an explicit QA/look-development mode.
+    /// AnimatedEphemeris is the production day/night cycle. GameplayLocked remains
+    /// an explicit option for fixed-light look development and comparisons.
     /// </summary>
     public enum CelestialLightingAuthorityMode : byte
     {

@@ -1,0 +1,191 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a8dc94477d2b314baab8a6cb09758cf, type: 3}
+  m_Name: EarthMagicMotionProfile
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.Animation.EarthMagicMotionProfile
+  motions:
+  - slot: 1
+    timing:
+      AcquireEnd: 0.09
+      RootEnd: 0.21
+      LoadEnd: 0.39
+      Contact: 0.56
+      Sustain: 0.72
+      RecoverEnd: 0.98
+      AcquireSeconds: 0.09
+      RootSeconds: 0.12
+      LoadSeconds: 0.17
+      StrikeSeconds: 0.11
+      SustainSeconds: 0.19
+      RecoverSeconds: 0.22
+    actionHandInfluence: 0.12
+    sustainedHandInfluence: 0.34
+  - slot: 2
+    timing:
+      AcquireEnd: 0.11
+      RootEnd: 0.25
+      LoadEnd: 0.43
+      Contact: 0.59
+      Sustain: 0.75
+      RecoverEnd: 0.98
+      AcquireSeconds: 0.1
+      RootSeconds: 0.14
+      LoadSeconds: 0.18
+      StrikeSeconds: 0.11
+      SustainSeconds: 0.18
+      RecoverSeconds: 0.23
+    actionHandInfluence: 0.1
+    sustainedHandInfluence: 0.38
+  - slot: 3
+    timing:
+      AcquireEnd: 0.08
+      RootEnd: 0.2
+      LoadEnd: 0.36
+      Contact: 0.5
+      Sustain: 0.73
+      RecoverEnd: 0.98
+      AcquireSeconds: 0.08
+      RootSeconds: 0.12
+      LoadSeconds: 0.15
+      StrikeSeconds: 0.09
+      SustainSeconds: 0.22
+      RecoverSeconds: 0.22
+    actionHandInfluence: 0.18
+    sustainedHandInfluence: 0.62
+  - slot: 4
+    timing:
+      AcquireEnd: 0.1
+      RootEnd: 0.27
+      LoadEnd: 0.47
+      Contact: 0.64
+      Sustain: 0.76
+      RecoverEnd: 0.98
+      AcquireSeconds: 0.1
+      RootSeconds: 0.16
+      LoadSeconds: 0.2
+      StrikeSeconds: 0.11
+      SustainSeconds: 0.15
+      RecoverSeconds: 0.23
+    actionHandInfluence: 0.08
+    sustainedHandInfluence: 0.24
+  - slot: 5
+    timing:
+      AcquireEnd: 0.07
+      RootEnd: 0.17
+      LoadEnd: 0.31
+      Contact: 0.46
+      Sustain: 0.61
+      RecoverEnd: 0.96
+      AcquireSeconds: 0.07
+      RootSeconds: 0.1
+      LoadSeconds: 0.13
+      StrikeSeconds: 0.08
+      SustainSeconds: 0.14
+      RecoverSeconds: 0.18
+    actionHandInfluence: 0.08
+    sustainedHandInfluence: 0.28
+  - slot: 6
+    timing:
+      AcquireEnd: 0.12
+      RootEnd: 0.28
+      LoadEnd: 0.44
+      Contact: 0.54
+      Sustain: 0.78
+      RecoverEnd: 0.99
+      AcquireSeconds: 0.11
+      RootSeconds: 0.15
+      LoadSeconds: 0.16
+      StrikeSeconds: 0.09
+      SustainSeconds: 0.24
+      RecoverSeconds: 0.21
+    actionHandInfluence: 0.2
+    sustainedHandInfluence: 0.66
+  - slot: 7
+    timing:
+      AcquireEnd: 0.1
+      RootEnd: 0.24
+      LoadEnd: 0.42
+      Contact: 0.58
+      Sustain: 0.77
+      RecoverEnd: 0.99
+      AcquireSeconds: 0.1
+      RootSeconds: 0.14
+      LoadSeconds: 0.18
+      StrikeSeconds: 0.1
+      SustainSeconds: 0.2
+      RecoverSeconds: 0.22
+    actionHandInfluence: 0.1
+    sustainedHandInfluence: 0.42
+  - slot: 8
+    timing:
+      AcquireEnd: 0.08
+      RootEnd: 0.19
+      LoadEnd: 0.35
+      Contact: 0.49
+      Sustain: 0.63
+      RecoverEnd: 0.96
+      AcquireSeconds: 0.08
+      RootSeconds: 0.11
+      LoadSeconds: 0.15
+      StrikeSeconds: 0.09
+      SustainSeconds: 0.14
+      RecoverSeconds: 0.19
+    actionHandInfluence: 0.06
+    sustainedHandInfluence: 0.2
+  - slot: 9
+    timing:
+      AcquireEnd: 0.13
+      RootEnd: 0.3
+      LoadEnd: 0.49
+      Contact: 0.62
+      Sustain: 0.82
+      RecoverEnd: 0.99
+      AcquireSeconds: 0.12
+      RootSeconds: 0.17
+      LoadSeconds: 0.19
+      StrikeSeconds: 0.1
+      SustainSeconds: 0.22
+      RecoverSeconds: 0.22
+    actionHandInfluence: 0.22
+    sustainedHandInfluence: 0.58
+  - slot: 10
+    timing:
+      AcquireEnd: 0.06
+      RootEnd: 0.16
+      LoadEnd: 0.3
+      Contact: 0.48
+      Sustain: 0.66
+      RecoverEnd: 0.96
+      AcquireSeconds: 0.06
+      RootSeconds: 0.1
+      LoadSeconds: 0.13
+      StrikeSeconds: 0.08
+      SustainSeconds: 0.16
+      RecoverSeconds: 0.18
+    actionHandInfluence: 0.06
+    sustainedHandInfluence: 0.18
+  - slot: 11
+    timing:
+      AcquireEnd: 0.07
+      RootEnd: 0.18
+      LoadEnd: 0.33
+      Contact: 0.47
+      Sustain: 0.62
+      RecoverEnd: 0.96
+      AcquireSeconds: 0.07
+      RootSeconds: 0.11
+      LoadSeconds: 0.14
+      StrikeSeconds: 0.08
+      SustainSeconds: 0.14
+      RecoverSeconds: 0.18
+    actionHandInfluence: 0.1
+    sustainedHandInfluence: 0.3

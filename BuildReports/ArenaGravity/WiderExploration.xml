@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Failed(Child)" total="8" passed="6" failed="2" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-04 13:22:16Z" end-time="2026-09-04 13:22:51Z" duration="35.1301487">
+  <test-suite type="TestSuite" id="1203" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="145" result="Failed" site="Child" start-time="2026-09-04 13:22:16Z" end-time="2026-09-04 13:22:51Z" duration="35.130149" total="8" passed="6" failed="2" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1196" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="145" result="Failed" site="Child" start-time="2026-09-04 13:22:17Z" end-time="2026-09-04 13:22:51Z" duration="34.950124" total="8" passed="6" failed="2" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13600" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1197" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="145" result="Failed" site="Child" start-time="2026-09-04 13:22:17Z" end-time="2026-09-04 13:22:51Z" duration="34.933565" total="8" passed="6" failed="2" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1198" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="145" result="Failed" site="Child" start-time="2026-09-04 13:22:17Z" end-time="2026-09-04 13:22:51Z" duration="34.927628" total="8" passed="6" failed="2" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1199" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="145" result="Failed" site="Child" start-time="2026-09-04 13:22:17Z" end-time="2026-09-04 13:22:51Z" duration="34.923423" total="8" passed="6" failed="2" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1013" name="BrokenCrownArenaRuntimeTests" fullname="Elemental.Tests.PlayMode.BrokenCrownArenaRuntimeTests" classname="Elemental.Tests.PlayMode.BrokenCrownArenaRuntimeTests" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2026-09-04 13:22:17Z" end-time="2026-09-04 13:22:31Z" duration="14.433732" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1014" name="LocalDamagePluckGravityAndProtectedFloorShareOneBoundedContract" fullname="Elemental.Tests.PlayMode.BrokenCrownArenaRuntimeTests.LocalDamagePluckGravityAndProtectedFloorShareOneBoundedContract" methodname="LocalDamagePluckGravityAndProtectedFloorShareOneBoundedContract" classname="Elemental.Tests.PlayMode.BrokenCrownArenaRuntimeTests" runstate="Runnable" seed="960042794" result="Failed" start-time="2026-09-04 13:22:17Z" end-time="2026-09-04 13:22:31Z" duration="14.410338" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  EarthCore Game camera must not render the striped realtime shadow map.
+  Expected: False
+  But was:  True
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.BrokenCrownArenaRuntimeTests+<LocalDamagePluckGravityAndProtectedFloorShareOneBoundedContract>d__0.MoveNext () [0x005ba] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\BrokenCrownArenaRuntimeTests.cs:130
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1029" name="EarthArenaGravityTargetRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthArenaGravityTargetRuntimeTests" classname="Elemental.Tests.PlayMode.EarthArenaGravityTargetRuntimeTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-04 13:22:31Z" end-time="2026-09-04 13:22:45Z" duration="13.956934" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1031" name="NonTargetColliderCannotStartAnEmptySuccessfulGrip" fullname="Elemental.Tests.PlayMode.EarthArenaGravityTargetRuntimeTests.NonTargetColliderCannotStartAnEmptySuccessfulGrip" methodname="NonTargetColliderCannotStartAnEmptySuccessfulGrip" classname="Elemental.Tests.PlayMode.EarthArenaGravityTargetRuntimeTests" runstate="Runnable" seed="28714428" result="Passed" start-time="2026-09-04 13:22:31Z" end-time="2026-09-04 13:22:31Z" duration="0.010576" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1030" name="ProtectedArenaFloorCannotStealScreenPointGrabOfReleasedCell" fullname="Elemental.Tests.PlayMode.EarthArenaGravityTargetRuntimeTests.ProtectedArenaFloorCannotStealScreenPointGrabOfReleasedCell" methodname="ProtectedArenaFloorCannotStealScreenPointGrabOfReleasedCell" classname="Elemental.Tests.PlayMode.EarthArenaGravityTargetRuntimeTests" runstate="Runnable" seed="1276839254" result="Passed" start-time="2026-09-04 13:22:31Z" end-time="2026-09-04 13:22:45Z" duration="13.860862" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+[ArenaGravity] Shipping floor + released cell: four screen-point grabs and lift passed; first press 1.8616 ms / 0 bytes including first-use acquisition feedback.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1066" name="EarthGravityGripSessionTests" fullname="Elemental.Tests.PlayMode.EarthGravityGripSessionTests" classname="Elemental.Tests.PlayMode.EarthGravityGripSessionTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-04 13:22:45Z" end-time="2026-09-04 13:22:45Z" duration="0.065819" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1068" name="LegacyProfileWithMissingClusterFieldsMigratesToSafeDefaults" fullname="Elemental.Tests.PlayMode.EarthGravityGripSessionTests.LegacyProfileWithMissingClusterFieldsMigratesToSafeDefaults" methodname="LegacyProfileWithMissingClusterFieldsMigratesToSafeDefaults" classname="Elemental.Tests.PlayMode.EarthGravityGripSessionTests" runstate="Runnable" seed="1913555743" result="Passed" start-time="2026-09-04 13:22:45Z" end-time="2026-09-04 13:22:45Z" duration="0.002625" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1067" name="SessionKeepsFortyTargetsAndRejectsReusedGeneration" fullname="Elemental.Tests.PlayMode.EarthGravityGripSessionTests.SessionKeepsFortyTargetsAndRejectsReusedGeneration" methodname="SessionKeepsFortyTargetsAndRejectsReusedGeneration" classname="Elemental.Tests.PlayMode.EarthGravityGripSessionTests" runstate="Runnable" seed="2101138994" result="Passed" start-time="2026-09-04 13:22:45Z" end-time="2026-09-04 13:22:45Z" duration="0.002995" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1074" name="EarthLooseStoneRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthLooseStoneRuntimeTests" classname="Elemental.Tests.PlayMode.EarthLooseStoneRuntimeTests" runstate="Runnable" testcasecount="2" result="Failed" site="Child" start-time="2026-09-04 13:22:45Z" end-time="2026-09-04 13:22:51Z" duration="6.198903" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1075" name="CameraHiddenParentDoesNotMakeLooseStoneUntargetable" fullname="Elemental.Tests.PlayMode.EarthLooseStoneRuntimeTests.CameraHiddenParentDoesNotMakeLooseStoneUntargetable" methodname="CameraHiddenParentDoesNotMakeLooseStoneUntargetable" classname="Elemental.Tests.PlayMode.EarthLooseStoneRuntimeTests" runstate="Runnable" seed="324546233" result="Passed" start-time="2026-09-04 13:22:45Z" end-time="2026-09-04 13:22:45Z" duration="0.005356" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1076" name="FallenStonesSleepStayStillAndWakeForGravityGrip" fullname="Elemental.Tests.PlayMode.EarthLooseStoneRuntimeTests.FallenStonesSleepStayStillAndWakeForGravityGrip" methodname="FallenStonesSleepStayStillAndWakeForGravityGrip" classname="Elemental.Tests.PlayMode.EarthLooseStoneRuntimeTests" runstate="Runnable" seed="1051195592" result="Failed" start-time="2026-09-04 13:22:45Z" end-time="2026-09-04 13:22:51Z" duration="6.123047" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Gravity must let settled bodies sleep rather than restarting their contact solver every tick.
+  Expected: 3
+  But was:  1
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.EarthLooseStoneRuntimeTests+<FallenStonesSleepStayStillAndWakeForGravityGrip>d__1.MoveNext () [0x002ab] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\EarthLooseStoneRuntimeTests.cs:67
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 67.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1077" name="EarthMagicExpansionRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-09-04 13:22:51Z" end-time="2026-09-04 13:22:51Z" duration="0.261470" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1079" name="MmbPressLocksOneExplicitTargetAndNeverSweepsNearbyBodies" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.MmbPressLocksOneExplicitTargetAndNeverSweepsNearbyBodies" methodname="MmbPressLocksOneExplicitTargetAndNeverSweepsNearbyBodies" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="1200538411" result="Passed" start-time="2026-09-04 13:22:51Z" end-time="2026-09-04 13:22:51Z" duration="0.253172" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\LooseStonePlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -72,7 +72,9 @@ namespace Elemental.Tests.PlayMode
             AssertArenaPropsAreSeated(scene, "loaded");
 
             yield return null;
-            EarthArenaStructure[] structures = FindAllInScene<EarthArenaStructure>(scene);
+            // Other independent authored structures can share this scene and runtime.
+            EarthArenaStructure[] structures = FindByName(scene, "Broken Crown Arena")
+                .GetComponentsInChildren<EarthArenaStructure>(true);
             MagicExecutor executor = FindInScene<MagicExecutor>(scene);
             EarthPillarWavePool wavePool = FindInScene<EarthPillarWavePool>(scene);
             EarthWallPool wallPool = FindInScene<EarthWallPool>(scene);
@@ -305,6 +307,11 @@ namespace Elemental.Tests.PlayMode
                 MeshFilter filter = renderer.GetComponent<MeshFilter>();
                 if (filter == null || filter.sharedMesh == null) continue;
                 visibleFractureMeshes++;
+                Assert.That(filter.sharedMesh.name, Does.EndWith("Render"),
+                    $"{renderer.name} must swap to the baked normal-preserving fracture mesh.");
+                Assert.That(filter.sharedMesh.normals,
+                    Has.Length.EqualTo(filter.sharedMesh.vertexCount),
+                    $"{renderer.name} must carry explicit exterior/cut normals at runtime.");
                 Assert.That(filter.sharedMesh.subMeshCount, Is.EqualTo(2), renderer.name);
                 Assert.That(renderer.sharedMaterials, Has.Length.EqualTo(2),
                     $"{renderer.name} must render exterior stone plus a sandstone cut interior.");

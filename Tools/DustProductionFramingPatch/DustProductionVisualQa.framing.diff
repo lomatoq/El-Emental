@@ -1,0 +1,98 @@
+--- Assets/Elemental/Authoring/Editor/DustProductionVisualQa.cs
++++ Assets/Elemental/Authoring/Editor/DustProductionVisualQa.cs
+@@
+             Vector3 side = Vector3.Cross(_up, outward).normalized;
+             float downwardExtent = Mathf.Abs(_up.x) * archBounds.extents.x +
+                                    Mathf.Abs(_up.y) * archBounds.extents.y +
+                                    Mathf.Abs(_up.z) * archBounds.extents.z;
+-            _impactPoint = archBounds.center - _up * downwardExtent + _up * .48f;
+-            _captureCameraPosition = anchor + _up * 3.2f + side * 2.4f;
+-            _captureTarget = archBounds.center + _up * 1.45f;
++            float outwardExtent = Mathf.Abs(outward.x) * archBounds.extents.x +
++                                  Mathf.Abs(outward.y) * archBounds.extents.y +
++                                  Mathf.Abs(outward.z) * archBounds.extents.z;
++            // Probe the arena immediately in front of the column. Bounds-bottom
++            // was below the curved arena surface in the first production capture
++            // (impact viewport y=-0.314), so the dust itself was outside the frame.
++            Vector3 surfaceProbe = archBounds.center - outward * (outwardExtent + .65f);
++            _impactPoint = FindVisibleStaticSurface(
++                surfaceProbe, _up, Mathf.Max(8f, downwardExtent * 2f + 4f)) + _up * .10f;
++            // Stay close enough to read the production particles while retaining
++            // the authored column as lighting/context behind them.
++            _captureCameraPosition = _impactPoint - outward * 4.2f + side * .75f + _up * 1.8f;
++            _captureTarget = _impactPoint + outward * .70f + _up * .78f;
+             _captureCameraRotation = Quaternion.LookRotation(_captureTarget - _captureCameraPosition, _up);
+@@
+                 // Save live particle state before disabling its production
+                 // presenters: EarthMaterialFeedbackPresenter.OnDisable clears
+                 // its owned systems by design.
+                 SuspendOwners();
+                 Quaternion surfaceFrame = Quaternion.FromToRotation(Vector3.up, _up);
+                 Vector3 towardCamera = (_captureCameraPosition - _impactPoint).normalized;
+-                impact.PoseAndEmit(_impactPoint + towardCamera * .18f + side * .72f,
++                Vector3 impactCloud = _impactPoint + towardCamera * .18f + side * .72f;
++                Vector3 fractureCloud = _impactPoint + towardCamera * .12f - side * .42f;
++                ValidateFraming(impactCloud, fractureCloud);
++                impact.PoseAndEmit(impactCloud,
+                     surfaceFrame, 96, 0xD0571001u, .24f);
+-                fracture.PoseAndEmit(_impactPoint + towardCamera * .12f - side * .42f,
++                fracture.PoseAndEmit(fractureCloud,
+                     surfaceFrame, 180, 0xD0572002u, .31f);
+@@
+         private static void HoldShot()
+         {
+@@
+         }
++
++        private static Vector3 FindVisibleStaticSurface(Vector3 probe, Vector3 up, float castDistance)
++        {
++            Vector3 origin = probe + up * (castDistance * .5f);
++            RaycastHit[] hits = Physics.RaycastAll(
++                origin, -up, castDistance, Physics.DefaultRaycastLayers,
++                QueryTriggerInteraction.Ignore);
++            Array.Sort(hits, (left, right) => left.distance.CompareTo(right.distance));
++            for (int index = 0; index < hits.Length; index++)
++            {
++                RaycastHit hit = hits[index];
++                if (hit.collider == null || hit.collider.gameObject.scene != _scene ||
++                    hit.rigidbody != null || Vector3.Dot(hit.normal, up) < .65f)
++                    continue;
++                return hit.point;
++            }
++            throw new InvalidOperationException(
++                "No upward-facing static arena surface was found in front of FRAME_outer_arch_02.");
++        }
++
++        private static void ValidateFraming(Vector3 impactCloud, Vector3 fractureCloud)
++        {
++            ValidateViewport("surface impact", _impactPoint);
++            ValidateViewport("material contact dust", impactCloud);
++            ValidateViewport("fracture dust", fractureCloud);
++            ValidateLineOfSight("material contact dust", impactCloud);
++            ValidateLineOfSight("fracture dust", fractureCloud);
++        }
++
++        private static void ValidateViewport(string label, Vector3 point)
++        {
++            Vector3 viewport = _camera.WorldToViewportPoint(point);
++            if (viewport.z <= _camera.nearClipPlane || viewport.x < .15f || viewport.x > .85f ||
++                viewport.y < .15f || viewport.y > .85f)
++                throw new InvalidOperationException(
++                    $"{label} is not safely framed: viewport={viewport.ToString("R")}.");
++        }
++
++        private static void ValidateLineOfSight(string label, Vector3 point)
++        {
++            Vector3 displacement = point - _captureCameraPosition;
++            float distance = displacement.magnitude;
++            // Stop short of the particle origin so the supporting ground at the
++            // endpoint is allowed while intervening arena/column geometry is not.
++            float unobstructedDistance = Mathf.Max(0f, distance - .14f);
++            if (unobstructedDistance > 0f && Physics.Raycast(
++                    _captureCameraPosition, displacement / distance, out RaycastHit hit,
++                    unobstructedDistance, Physics.DefaultRaycastLayers,
++                    QueryTriggerInteraction.Ignore))
++                throw new InvalidOperationException(
++                    $"{label} is occluded by {hit.collider.name} " +
++                    $"at {hit.distance:F3}m before its {distance:F3}m origin.");
++        }

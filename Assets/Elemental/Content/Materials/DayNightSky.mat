@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: DayNightSky
+  m_Shader: {fileID: 4800000, guid: 6fb89a14a83c70943aa000a076cd2abf, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _StarCube:
+        m_Texture: {fileID: 8900000, guid: 5c65b2be26b2cb64f968625fd0a6a81d, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Exposure: 1.15
+    - _MilkyWayStrength: 0.22
+    - _Rotation: 0
+    - _Seed: 57824
+    - _StarVisibility: 0
+    - _SunDiscDegrees: 0.44
+    - _SunGlow: 0.72
+    - _Twilight01: 0
+    m_Colors:
+    - _DuskPink: {r: 0.72, g: 0.24, b: 0.39, a: 1}
+    - _HorizonColor: {r: 0.56, g: 0.79, b: 0.98, a: 1}
+    - _LocalUp: {r: 0, g: 1, b: 0, a: 0}
+    - _SunColor: {r: 1, g: 0.88, b: 0.62, a: 1}
+    - _SunDirection: {r: 0, g: 1, b: 0, a: 0}
+    - _Tint: {r: 0.42, g: 0.58, b: 1, a: 1}
+    - _ZenithColor: {r: 0.075, g: 0.31, b: 0.72, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

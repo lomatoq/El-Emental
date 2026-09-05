@@ -19,6 +19,8 @@ namespace Elemental.Runtime.World
         [SerializeField] private Vector2 noiseStrength = Vector2.zero;
         [SerializeField, Min(0.01f)] private float noiseFrequency = 0.5f;
         [SerializeField] private float noiseScrollSpeed = 0.15f;
+        [Tooltip("Random spin on each local axis for mesh shards, in degrees per second.")]
+        [SerializeField] private Vector2 angularSpeed = new Vector2(-360f, 360f);
 
         public bool Enabled => enabled;
         public int MaxParticles => Mathf.Max(1, maxParticles);
@@ -31,6 +33,7 @@ namespace Elemental.Runtime.World
         public Vector2 NoiseStrength => Sorted(noiseStrength, 0f);
         public float NoiseFrequency => Mathf.Max(0.01f, noiseFrequency);
         public float NoiseScrollSpeed => noiseScrollSpeed;
+        public Vector2 AngularSpeed => Sorted(angularSpeed, -2160f);
 
         internal static EarthParticleLayerTuning Create(
             int capacity,
@@ -321,6 +324,7 @@ namespace Elemental.Runtime.World
         [SerializeField] private EarthAmbientEffectsTuning ambient = new EarthAmbientEffectsTuning();
         [SerializeField] private EarthMeteorEffectsTuning meteor = new EarthMeteorEffectsTuning();
         [SerializeField] private EarthPillarEffectsTuning pillar = new EarthPillarEffectsTuning();
+        [SerializeField] private EarthMaterialEventsTuning materialEvents = new EarthMaterialEventsTuning();
 
         public int SchemaVersion => schemaVersion;
         public EarthEffectsMaterials Materials => materials;
@@ -331,6 +335,7 @@ namespace Elemental.Runtime.World
         public EarthAmbientEffectsTuning Ambient => ambient;
         public EarthMeteorEffectsTuning Meteor => meteor;
         public EarthPillarEffectsTuning Pillar => pillar;
+        public EarthMaterialEventsTuning MaterialEvents => materialEvents;
 
         public void InitializeAuthoringDefaults(
             Material dust,
@@ -378,6 +383,75 @@ namespace Elemental.Runtime.World
 
     public static class EarthParticleSystemTuningApplier
     {
+        public static void ApplyDust(ParticleSystem system, EarthParticleLayerTuning tuning, Material material)
+        {
+            Apply(system, tuning, material);
+            UseMaterialDustColor(system);
+        }
+
+        public static void ApplyChips(ParticleSystem system, EarthParticleLayerTuning tuning,
+            Material material, EarthCosmeticMaterialCache ownedMaterials)
+        {
+            Apply(system, tuning, material);
+            if (system == null) return;
+            ApplyChipRotation(system, tuning != null ? tuning.AngularSpeed : new Vector2(-360f, 360f));
+            EarthEffectRenderOrder.ApplyCosmeticRenderer(system.GetComponent<ParticleSystemRenderer>(),
+                ownedMaterials.Get(material));
+        }
+
+        public static void ApplyChipRotation(ParticleSystem system, Vector2 degreesPerSecond)
+        {
+            if (system == null) return;
+            var main = system.main;
+            main.startRotation3D = true;
+            var angle = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+            main.startRotationX = angle;
+            main.startRotationY = angle;
+            main.startRotationZ = angle;
+            var spin = system.rotationOverLifetime;
+            spin.enabled = true;
+            spin.separateAxes = true;
+            var rate = new ParticleSystem.MinMaxCurve(degreesPerSecond.x * Mathf.Deg2Rad,
+                degreesPerSecond.y * Mathf.Deg2Rad);
+            spin.x = rate;
+            spin.y = rate;
+            spin.z = rate;
+        }
+
+        // The shader already multiplies by the shared material tint. White particle
+        // RGB leaves that tint authoritative (copying it here would square it).
+        // Keep opacity ranges and fade timing; never modify the material asset.
+        public static void UseMaterialDustColor(ParticleSystem system)
+        {
+            if (system == null) return;
+            EarthEffectRenderOrder.ApplyDustRenderer(system.GetComponent<ParticleSystemRenderer>());
+            var main = system.main;
+            main.startColor = AlphaOnly(main.startColor);
+            var lifetime = system.colorOverLifetime;
+            if (lifetime.enabled) lifetime.color = AlphaOnly(lifetime.color);
+            var speed = system.colorBySpeed;
+            if (speed.enabled) speed.color = AlphaOnly(speed.color);
+        }
+
+        private static ParticleSystem.MinMaxGradient AlphaOnly(ParticleSystem.MinMaxGradient value)
+        {
+            var mode = value.mode;
+            value.colorMin = new Color(1f, 1f, 1f, value.colorMin.a);
+            value.colorMax = new Color(1f, 1f, 1f, value.colorMax.a);
+            if (value.gradientMin != null) value.gradientMin = AlphaOnly(value.gradientMin);
+            if (value.gradientMax != null) value.gradientMax = AlphaOnly(value.gradientMax);
+            value.mode = mode;
+            return value;
+        }
+
+        private static Gradient AlphaOnly(Gradient source)
+        {
+            var result = new Gradient { mode = source.mode };
+            result.SetKeys(new[] { new GradientColorKey(Color.white, 0f),
+                new GradientColorKey(Color.white, 1f) }, source.alphaKeys);
+            return result;
+        }
+
         public static void Apply(ParticleSystem system, EarthParticleLayerTuning tuning, Material material)
         {
             if (system == null || tuning == null) return;

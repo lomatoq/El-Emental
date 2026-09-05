@@ -1,0 +1,16 @@
+{
+    "unityVersion": "6000.5.7f1",
+    "utc": "2026-09-04T13:19:23.9168512Z",
+    "mode": "PlayMode",
+    "result": "Failed",
+    "total": 7,
+    "passed": 5,
+    "failed": 2,
+    "skipped": 0,
+    "inconclusive": 0,
+    "durationSeconds": 25.8871359,
+    "failures": [
+        "Elemental.Tests.PlayMode.EarthArenaGravityTargetRuntimeTests.NonTargetColliderCannotStartAnEmptySuccessfulGrip:   Expected: False\r\n  But was:  True\r\n",
+        "Elemental.Tests.PlayMode.EarthArenaGravityTargetRuntimeTests.ProtectedArenaFloorCannotStealScreenPointGrabOfReleasedCell:   Surface-only floor must not produce an empty successful grip.\r\n  Expected: 1\r\n  But was:  0\r\n"
+    ]
+}

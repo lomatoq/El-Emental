@@ -1,0 +1,2632 @@
+{
+  "schemaVersion": 1,
+  "structures": [
+    {
+      "structure_id": "outer_arch_01",
+      "frame_object": "FRAME_outer_arch_01",
+      "intact_object": "OuterArch_01_INTACT",
+      "damage_mode": "normal",
+      "trigger": "Impact",
+      "fracture_profile": "authored_column_closed_seams_v1",
+      "repairable": true,
+      "piece_count": 12,
+      "pieces": [
+        {
+          "id": 1,
+          "name": "FR_outer_arch_01_P001",
+          "collider": "COL_FR_outer_arch_01_P001",
+          "repairable": true,
+          "volume_cubic_metres": 2.8458917723159014,
+          "minZ": 5.998360633850098,
+          "maxZ": 7.730590343475342,
+          "foundation": false
+        },
+        {
+          "id": 2,
+          "name": "FR_outer_arch_01_P002",
+          "collider": "COL_FR_outer_arch_01_P002",
+          "repairable": true,
+          "volume_cubic_metres": 3.115268776907469,
+          "minZ": 5.774377822875977,
+          "maxZ": 7.739790916442871,
+          "foundation": false
+        },
+        {
+          "id": 3,
+          "name": "FR_outer_arch_01_P003",
+          "collider": "COL_FR_outer_arch_01_P003",
+          "repairable": true,
+          "volume_cubic_metres": 1.5803324087009796,
+          "minZ": 0.74355149269104,
+          "maxZ": 2.077737808227539,
+          "foundation": false
+        },
+        {
+          "id": 4,
+          "name": "FR_outer_arch_01_P004",
+          "collider": "COL_FR_outer_arch_01_P004",
+          "repairable": true,
+          "volume_cubic_metres": 2.5133758413228984,
+          "minZ": 1.8147130012512207,
+          "maxZ": 3.1653430461883545,
+          "foundation": false
+        },
+        {
+          "id": 5,
+          "name": "FR_outer_arch_01_P005",
+          "collider": "COL_FR_outer_arch_01_P005",
+          "repairable": true,
+          "volume_cubic_metres": 2.171855477720721,
+          "minZ": 2.8383452892303467,
+          "maxZ": 4.331313133239746,
+          "foundation": false
+        },
+        {
+          "id": 6,
+          "name": "FR_outer_arch_01_P006",
+          "collider": "COL_FR_outer_arch_01_P006",
+          "repairable": true,
+          "volume_cubic_metres": 1.8785852693958747,
+          "minZ": 5.960464477539063e-08,
+          "maxZ": 1.9450559616088867,
+          "foundation": true
+        },
+        {
+          "id": 7,
+          "name": "FR_outer_arch_01_P007",
+          "collider": "COL_FR_outer_arch_01_P007",
+          "repairable": true,
+          "volume_cubic_metres": 2.677747170280998,
+          "minZ": 0.0,
+          "maxZ": 2.1049225330352783,
+          "foundation": true
+        },
+        {
+          "id": 8,
+          "name": "FR_outer_arch_01_P008",
+          "collider": "COL_FR_outer_arch_01_P008",
+          "repairable": true,
+          "volume_cubic_metres": 1.144566072276473,
+          "minZ": 4.020971775054932,
+          "maxZ": 4.972003936767578,
+          "foundation": false
+        },
+        {
+          "id": 9,
+          "name": "FR_outer_arch_01_P009",
+          "collider": "COL_FR_outer_arch_01_P009",
+          "repairable": true,
+          "volume_cubic_metres": 3.318347275109091,
+          "minZ": 4.59658670425415,
+          "maxZ": 6.590818405151367,
+          "foundation": false
+        },
+        {
+          "id": 10,
+          "name": "FR_outer_arch_01_P010",
+          "collider": "COL_FR_outer_arch_01_P010",
+          "repairable": true,
+          "volume_cubic_metres": 0.01737446590222253,
+          "minZ": 5.766087532043457,
+          "maxZ": 6.033858776092529,
+          "foundation": false
+        },
+        {
+          "id": 11,
+          "name": "FR_outer_arch_01_P011",
+          "collider": "COL_FR_outer_arch_01_P011",
+          "repairable": true,
+          "volume_cubic_metres": 2.1788355299070417,
+          "minZ": 5.960464477539063e-08,
+          "maxZ": 1.2221661806106567,
+          "foundation": true
+        },
+        {
+          "id": 12,
+          "name": "FR_outer_arch_01_P012",
+          "collider": "COL_FR_outer_arch_01_P012",
+          "repairable": true,
+          "volume_cubic_metres": 1.7570323696406143,
+          "minZ": 0.0,
+          "maxZ": 1.1041218042373657,
+          "foundation": true
+        }
+      ],
+      "bonds": [
+        {
+          "id": 1,
+          "pieceA": 4,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_01_001",
+          "contactArea": 1.909380316734314,
+          "foundation": false
+        },
+        {
+          "id": 2,
+          "pieceA": 2,
+          "pieceB": 3,
+          "marker": "BOND_outer_arch_01_002",
+          "contactArea": 1.3445017337799072,
+          "foundation": false
+        },
+        {
+          "id": 3,
+          "pieceA": 3,
+          "pieceB": 5,
+          "marker": "BOND_outer_arch_01_003",
+          "contactArea": 0.4629361033439636,
+          "foundation": false
+        },
+        {
+          "id": 4,
+          "pieceA": 3,
+          "pieceB": 6,
+          "marker": "BOND_outer_arch_01_004",
+          "contactArea": 0.9676206111907959,
+          "foundation": false
+        },
+        {
+          "id": 5,
+          "pieceA": 0,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_01_005",
+          "contactArea": 2.641345977783203,
+          "foundation": false
+        },
+        {
+          "id": 6,
+          "pieceA": 1,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_01_006",
+          "contactArea": 0.3233915317155045,
+          "foundation": false
+        },
+        {
+          "id": 7,
+          "pieceA": 1,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_01_007",
+          "contactArea": 0.3233915317155045,
+          "foundation": false
+        },
+        {
+          "id": 8,
+          "pieceA": 2,
+          "pieceB": 5,
+          "marker": "BOND_outer_arch_01_008",
+          "contactArea": 1.411375641822815,
+          "foundation": false
+        },
+        {
+          "id": 9,
+          "pieceA": 2,
+          "pieceB": 6,
+          "marker": "BOND_outer_arch_01_009",
+          "contactArea": 1.411375641822815,
+          "foundation": false
+        },
+        {
+          "id": 10,
+          "pieceA": 5,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_01_010",
+          "contactArea": 1.633754849433899,
+          "foundation": false
+        },
+        {
+          "id": 11,
+          "pieceA": 6,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_01_011",
+          "contactArea": 1.633754849433899,
+          "foundation": false
+        },
+        {
+          "id": 12,
+          "pieceA": 6,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_01_012",
+          "contactArea": 1.1223820447921753,
+          "foundation": false
+        },
+        {
+          "id": 13,
+          "pieceA": 0,
+          "pieceB": 1,
+          "marker": "BOND_outer_arch_01_013",
+          "contactArea": 1.7795262336730957,
+          "foundation": false
+        },
+        {
+          "id": 14,
+          "pieceA": 2,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_01_014",
+          "contactArea": 1.1957026720046997,
+          "foundation": false
+        },
+        {
+          "id": 15,
+          "pieceA": 2,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_01_015",
+          "contactArea": 1.907705545425415,
+          "foundation": false
+        },
+        {
+          "id": 16,
+          "pieceA": 3,
+          "pieceB": 4,
+          "marker": "BOND_outer_arch_01_016",
+          "contactArea": 2.0994386672973633,
+          "foundation": false
+        },
+        {
+          "id": 17,
+          "pieceA": 5,
+          "pieceB": 6,
+          "marker": "BOND_outer_arch_01_017",
+          "contactArea": 2.1654515266418457,
+          "foundation": false
+        },
+        {
+          "id": 18,
+          "pieceA": 7,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_01_018",
+          "contactArea": 1.8479607105255127,
+          "foundation": false
+        },
+        {
+          "id": 19,
+          "pieceA": 10,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_01_019",
+          "contactArea": 1.7067370414733887,
+          "foundation": false
+        },
+        {
+          "id": 20,
+          "pieceA": 5,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_01_020",
+          "contactArea": 0.5328708778291201,
+          "foundation": true
+        },
+        {
+          "id": 21,
+          "pieceA": 6,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_01_021",
+          "contactArea": 0.6749129433611247,
+          "foundation": true
+        },
+        {
+          "id": 22,
+          "pieceA": 10,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_01_022",
+          "contactArea": 0.5882352013092398,
+          "foundation": true
+        },
+        {
+          "id": 23,
+          "pieceA": 11,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_01_023",
+          "contactArea": 0.5096294922948086,
+          "foundation": true
+        }
+      ]
+    },
+    {
+      "structure_id": "outer_arch_02",
+      "frame_object": "FRAME_outer_arch_02",
+      "intact_object": "OuterArch_02_INTACT",
+      "damage_mode": "normal",
+      "trigger": "Impact",
+      "fracture_profile": "authored_column_closed_seams_v1",
+      "repairable": true,
+      "piece_count": 13,
+      "pieces": [
+        {
+          "id": 1,
+          "name": "FR_outer_arch_02_P001",
+          "collider": "COL_FR_outer_arch_02_P001",
+          "repairable": true,
+          "volume_cubic_metres": 2.6807773494853078,
+          "minZ": 1.7453272960210597e-07,
+          "maxZ": 1.7867239713668823,
+          "foundation": true
+        },
+        {
+          "id": 2,
+          "name": "FR_outer_arch_02_P002",
+          "collider": "COL_FR_outer_arch_02_P002",
+          "repairable": true,
+          "volume_cubic_metres": 2.1305190761312294,
+          "minZ": -5.005424519310964e-09,
+          "maxZ": 1.78192937374115,
+          "foundation": true
+        },
+        {
+          "id": 3,
+          "name": "FR_outer_arch_02_P003",
+          "collider": "COL_FR_outer_arch_02_P003",
+          "repairable": true,
+          "volume_cubic_metres": 2.021172417348705,
+          "minZ": 5.673319947163691e-08,
+          "maxZ": 1.803449034690857,
+          "foundation": true
+        },
+        {
+          "id": 4,
+          "name": "FR_outer_arch_02_P004",
+          "collider": "COL_FR_outer_arch_02_P004",
+          "repairable": true,
+          "volume_cubic_metres": 1.8080198019895901,
+          "minZ": 2.9559643268585205,
+          "maxZ": 4.230417728424072,
+          "foundation": false
+        },
+        {
+          "id": 5,
+          "name": "FR_outer_arch_02_P005",
+          "collider": "COL_FR_outer_arch_02_P005",
+          "repairable": true,
+          "volume_cubic_metres": 2.58689680378635,
+          "minZ": 3.815748453140259,
+          "maxZ": 5.552796363830566,
+          "foundation": false
+        },
+        {
+          "id": 6,
+          "name": "FR_outer_arch_02_P006",
+          "collider": "COL_FR_outer_arch_02_P006",
+          "repairable": true,
+          "volume_cubic_metres": 1.0897696969845398,
+          "minZ": 5.245209217071533,
+          "maxZ": 6.999574184417725,
+          "foundation": false
+        },
+        {
+          "id": 7,
+          "name": "FR_outer_arch_02_P007",
+          "collider": "COL_FR_outer_arch_02_P007",
+          "repairable": true,
+          "volume_cubic_metres": 2.2962670864324486,
+          "minZ": 5.243454933166504,
+          "maxZ": 7.563887119293213,
+          "foundation": false
+        },
+        {
+          "id": 8,
+          "name": "FR_outer_arch_02_P008",
+          "collider": "COL_FR_outer_arch_02_P008",
+          "repairable": true,
+          "volume_cubic_metres": 1.7195298703099495,
+          "minZ": 5.768546104431152,
+          "maxZ": 7.7371015548706055,
+          "foundation": false
+        },
+        {
+          "id": 9,
+          "name": "FR_outer_arch_02_P009",
+          "collider": "COL_FR_outer_arch_02_P009",
+          "repairable": true,
+          "volume_cubic_metres": 1.630263158734931,
+          "minZ": 5.766087055206299,
+          "maxZ": 7.739790439605713,
+          "foundation": false
+        },
+        {
+          "id": 10,
+          "name": "FR_outer_arch_02_P010",
+          "collider": "COL_FR_outer_arch_02_P010",
+          "repairable": true,
+          "volume_cubic_metres": 1.678172053898027,
+          "minZ": 1.6820167303085327,
+          "maxZ": 3.130753993988037,
+          "foundation": false
+        },
+        {
+          "id": 11,
+          "name": "FR_outer_arch_02_P011",
+          "collider": "COL_FR_outer_arch_02_P011",
+          "repairable": true,
+          "volume_cubic_metres": 1.472549288094695,
+          "minZ": 1.7175356149673462,
+          "maxZ": 3.0558316707611084,
+          "foundation": false
+        },
+        {
+          "id": 12,
+          "name": "FR_outer_arch_02_P012",
+          "collider": "COL_FR_outer_arch_02_P012",
+          "repairable": true,
+          "volume_cubic_metres": 1.8793821170131817,
+          "minZ": 2.4397444065016316e-08,
+          "maxZ": 1.0333137512207031,
+          "foundation": true
+        },
+        {
+          "id": 13,
+          "name": "FR_outer_arch_02_P013",
+          "collider": "COL_FR_outer_arch_02_P013",
+          "repairable": true,
+          "volume_cubic_metres": 0.8072449089732618,
+          "minZ": 0.9354442358016968,
+          "maxZ": 1.8435742855072021,
+          "foundation": false
+        }
+      ],
+      "bonds": [
+        {
+          "id": 1,
+          "pieceA": 3,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_02_001",
+          "contactArea": 0.9147860407829285,
+          "foundation": false
+        },
+        {
+          "id": 2,
+          "pieceA": 3,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_02_002",
+          "contactArea": 1.1361370086669922,
+          "foundation": false
+        },
+        {
+          "id": 3,
+          "pieceA": 0,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_02_003",
+          "contactArea": 0.713430643081665,
+          "foundation": false
+        },
+        {
+          "id": 4,
+          "pieceA": 1,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_02_004",
+          "contactArea": 0.3039790391921997,
+          "foundation": false
+        },
+        {
+          "id": 5,
+          "pieceA": 1,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_02_005",
+          "contactArea": 0.3039790391921997,
+          "foundation": false
+        },
+        {
+          "id": 6,
+          "pieceA": 2,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_02_006",
+          "contactArea": 0.9788161516189575,
+          "foundation": false
+        },
+        {
+          "id": 7,
+          "pieceA": 2,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_02_007",
+          "contactArea": 0.9788161516189575,
+          "foundation": false
+        },
+        {
+          "id": 8,
+          "pieceA": 9,
+          "pieceB": 12,
+          "marker": "BOND_outer_arch_02_008",
+          "contactArea": 0.8690598011016846,
+          "foundation": false
+        },
+        {
+          "id": 9,
+          "pieceA": 10,
+          "pieceB": 12,
+          "marker": "BOND_outer_arch_02_009",
+          "contactArea": 0.8690598011016846,
+          "foundation": false
+        },
+        {
+          "id": 10,
+          "pieceA": 6,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_02_010",
+          "contactArea": 2.085695266723633,
+          "foundation": false
+        },
+        {
+          "id": 11,
+          "pieceA": 0,
+          "pieceB": 12,
+          "marker": "BOND_outer_arch_02_011",
+          "contactArea": 0.005638504400849342,
+          "foundation": false
+        },
+        {
+          "id": 12,
+          "pieceA": 1,
+          "pieceB": 2,
+          "marker": "BOND_outer_arch_02_012",
+          "contactArea": 2.0376369953155518,
+          "foundation": false
+        },
+        {
+          "id": 13,
+          "pieceA": 1,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_02_013",
+          "contactArea": 1.4184321165084839,
+          "foundation": false
+        },
+        {
+          "id": 14,
+          "pieceA": 1,
+          "pieceB": 12,
+          "marker": "BOND_outer_arch_02_014",
+          "contactArea": 0.5671690702438354,
+          "foundation": false
+        },
+        {
+          "id": 15,
+          "pieceA": 4,
+          "pieceB": 5,
+          "marker": "BOND_outer_arch_02_015",
+          "contactArea": 1.2432618141174316,
+          "foundation": false
+        },
+        {
+          "id": 16,
+          "pieceA": 4,
+          "pieceB": 6,
+          "marker": "BOND_outer_arch_02_016",
+          "contactArea": 0.7706735730171204,
+          "foundation": false
+        },
+        {
+          "id": 17,
+          "pieceA": 0,
+          "pieceB": 1,
+          "marker": "BOND_outer_arch_02_017",
+          "contactArea": 3.7124083042144775,
+          "foundation": false
+        },
+        {
+          "id": 18,
+          "pieceA": 2,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_02_018",
+          "contactArea": 1.26369309425354,
+          "foundation": false
+        },
+        {
+          "id": 19,
+          "pieceA": 2,
+          "pieceB": 12,
+          "marker": "BOND_outer_arch_02_019",
+          "contactArea": 1.0003376007080078,
+          "foundation": false
+        },
+        {
+          "id": 20,
+          "pieceA": 3,
+          "pieceB": 4,
+          "marker": "BOND_outer_arch_02_020",
+          "contactArea": 1.9676605463027954,
+          "foundation": false
+        },
+        {
+          "id": 21,
+          "pieceA": 5,
+          "pieceB": 6,
+          "marker": "BOND_outer_arch_02_021",
+          "contactArea": 1.8882523775100708,
+          "foundation": false
+        },
+        {
+          "id": 22,
+          "pieceA": 7,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_02_022",
+          "contactArea": 1.764628529548645,
+          "foundation": false
+        },
+        {
+          "id": 23,
+          "pieceA": 9,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_02_023",
+          "contactArea": 1.9179892539978027,
+          "foundation": false
+        },
+        {
+          "id": 24,
+          "pieceA": 11,
+          "pieceB": 12,
+          "marker": "BOND_outer_arch_02_024",
+          "contactArea": 1.6518625020980835,
+          "foundation": false
+        },
+        {
+          "id": 25,
+          "pieceA": 0,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_02_025",
+          "contactArea": 0.6754220085110838,
+          "foundation": true
+        },
+        {
+          "id": 26,
+          "pieceA": 1,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_02_026",
+          "contactArea": 0.579506523391545,
+          "foundation": true
+        },
+        {
+          "id": 27,
+          "pieceA": 2,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_02_027",
+          "contactArea": 0.5595045460562249,
+          "foundation": true
+        },
+        {
+          "id": 28,
+          "pieceA": 11,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_02_028",
+          "contactArea": 0.5330215539374693,
+          "foundation": true
+        }
+      ]
+    },
+    {
+      "structure_id": "outer_arch_03",
+      "frame_object": "FRAME_outer_arch_03",
+      "intact_object": "OuterArch_03_INTACT",
+      "damage_mode": "normal",
+      "trigger": "Impact",
+      "fracture_profile": "authored_column_closed_seams_v1",
+      "repairable": true,
+      "piece_count": 12,
+      "pieces": [
+        {
+          "id": 1,
+          "name": "FR_outer_arch_03_P001",
+          "collider": "COL_FR_outer_arch_03_P001",
+          "repairable": true,
+          "volume_cubic_metres": 0.8669386462143918,
+          "minZ": 2.899435520172119,
+          "maxZ": 6.13261079788208,
+          "foundation": false
+        },
+        {
+          "id": 2,
+          "name": "FR_outer_arch_03_P002",
+          "collider": "COL_FR_outer_arch_03_P002",
+          "repairable": true,
+          "volume_cubic_metres": 2.5211084961018067,
+          "minZ": 2.854053258895874,
+          "maxZ": 6.247856616973877,
+          "foundation": false
+        },
+        {
+          "id": 3,
+          "name": "FR_outer_arch_03_P003",
+          "collider": "COL_FR_outer_arch_03_P003",
+          "repairable": true,
+          "volume_cubic_metres": 1.4656244381197294,
+          "minZ": 1.767484292258814e-07,
+          "maxZ": 1.8259392976760864,
+          "foundation": true
+        },
+        {
+          "id": 4,
+          "name": "FR_outer_arch_03_P004",
+          "collider": "COL_FR_outer_arch_03_P004",
+          "repairable": true,
+          "volume_cubic_metres": 2.1236610723140923,
+          "minZ": -2.251367980932173e-09,
+          "maxZ": 1.8053994178771973,
+          "foundation": true
+        },
+        {
+          "id": 5,
+          "name": "FR_outer_arch_03_P005",
+          "collider": "COL_FR_outer_arch_03_P005",
+          "repairable": true,
+          "volume_cubic_metres": 1.8351473606051791,
+          "minZ": 1.381696343421936,
+          "maxZ": 3.0062482357025146,
+          "foundation": false
+        },
+        {
+          "id": 6,
+          "name": "FR_outer_arch_03_P006",
+          "collider": "COL_FR_outer_arch_03_P006",
+          "repairable": true,
+          "volume_cubic_metres": 1.5792572610905036,
+          "minZ": 1.344256043434143,
+          "maxZ": 3.0485405921936035,
+          "foundation": false
+        },
+        {
+          "id": 7,
+          "name": "FR_outer_arch_03_P007",
+          "collider": "COL_FR_outer_arch_03_P007",
+          "repairable": true,
+          "volume_cubic_metres": 1.148624033169819,
+          "minZ": 2.8135690689086914,
+          "maxZ": 6.159505844116211,
+          "foundation": false
+        },
+        {
+          "id": 8,
+          "name": "FR_outer_arch_03_P008",
+          "collider": "COL_FR_outer_arch_03_P008",
+          "repairable": true,
+          "volume_cubic_metres": 1.6644126174394636,
+          "minZ": 2.887868642807007,
+          "maxZ": 6.3028740882873535,
+          "foundation": false
+        },
+        {
+          "id": 9,
+          "name": "FR_outer_arch_03_P009",
+          "collider": "COL_FR_outer_arch_03_P009",
+          "repairable": true,
+          "volume_cubic_metres": 2.1451980412840093,
+          "minZ": 1.1703227897896795e-07,
+          "maxZ": 1.0440279245376587,
+          "foundation": true
+        },
+        {
+          "id": 10,
+          "name": "FR_outer_arch_03_P010",
+          "collider": "COL_FR_outer_arch_03_P010",
+          "repairable": true,
+          "volume_cubic_metres": 0.5971204444377409,
+          "minZ": 0.9067397713661194,
+          "maxZ": 1.6828477382659912,
+          "foundation": false
+        },
+        {
+          "id": 11,
+          "name": "FR_outer_arch_03_P011",
+          "collider": "COL_FR_outer_arch_03_P011",
+          "repairable": true,
+          "volume_cubic_metres": 1.214845907158612,
+          "minZ": 5.802429470236348e-08,
+          "maxZ": 1.6308189630508423,
+          "foundation": true
+        },
+        {
+          "id": 12,
+          "name": "FR_outer_arch_03_P012",
+          "collider": "COL_FR_outer_arch_03_P012",
+          "repairable": true,
+          "volume_cubic_metres": 1.4742570732503262,
+          "minZ": -1.4256222868880286e-09,
+          "maxZ": 1.508880376815796,
+          "foundation": true
+        }
+      ],
+      "bonds": [
+        {
+          "id": 1,
+          "pieceA": 0,
+          "pieceB": 4,
+          "marker": "BOND_outer_arch_03_001",
+          "contactArea": 0.7037821412086487,
+          "foundation": false
+        },
+        {
+          "id": 2,
+          "pieceA": 0,
+          "pieceB": 5,
+          "marker": "BOND_outer_arch_03_002",
+          "contactArea": 0.7037821412086487,
+          "foundation": false
+        },
+        {
+          "id": 3,
+          "pieceA": 1,
+          "pieceB": 4,
+          "marker": "BOND_outer_arch_03_003",
+          "contactArea": 0.627003014087677,
+          "foundation": false
+        },
+        {
+          "id": 4,
+          "pieceA": 1,
+          "pieceB": 5,
+          "marker": "BOND_outer_arch_03_004",
+          "contactArea": 0.627003014087677,
+          "foundation": false
+        },
+        {
+          "id": 5,
+          "pieceA": 4,
+          "pieceB": 6,
+          "marker": "BOND_outer_arch_03_005",
+          "contactArea": 0.5539128184318542,
+          "foundation": false
+        },
+        {
+          "id": 6,
+          "pieceA": 4,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_03_006",
+          "contactArea": 0.24540147185325623,
+          "foundation": false
+        },
+        {
+          "id": 7,
+          "pieceA": 2,
+          "pieceB": 4,
+          "marker": "BOND_outer_arch_03_007",
+          "contactArea": 0.45045557618141174,
+          "foundation": false
+        },
+        {
+          "id": 8,
+          "pieceA": 3,
+          "pieceB": 4,
+          "marker": "BOND_outer_arch_03_008",
+          "contactArea": 0.7183201909065247,
+          "foundation": false
+        },
+        {
+          "id": 9,
+          "pieceA": 3,
+          "pieceB": 5,
+          "marker": "BOND_outer_arch_03_009",
+          "contactArea": 0.7183201909065247,
+          "foundation": false
+        },
+        {
+          "id": 10,
+          "pieceA": 4,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_03_010",
+          "contactArea": 0.9645971655845642,
+          "foundation": false
+        },
+        {
+          "id": 11,
+          "pieceA": 4,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_03_011",
+          "contactArea": 0.577155590057373,
+          "foundation": false
+        },
+        {
+          "id": 12,
+          "pieceA": 4,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_03_012",
+          "contactArea": 0.36869293451309204,
+          "foundation": false
+        },
+        {
+          "id": 13,
+          "pieceA": 5,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_03_013",
+          "contactArea": 0.9645971655845642,
+          "foundation": false
+        },
+        {
+          "id": 14,
+          "pieceA": 5,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_03_014",
+          "contactArea": 0.577155590057373,
+          "foundation": false
+        },
+        {
+          "id": 15,
+          "pieceA": 5,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_03_015",
+          "contactArea": 0.36869293451309204,
+          "foundation": false
+        },
+        {
+          "id": 16,
+          "pieceA": 2,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_03_016",
+          "contactArea": 1.427497386932373,
+          "foundation": false
+        },
+        {
+          "id": 17,
+          "pieceA": 2,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_03_017",
+          "contactArea": 0.8590399622917175,
+          "foundation": false
+        },
+        {
+          "id": 18,
+          "pieceA": 3,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_03_018",
+          "contactArea": 1.427497386932373,
+          "foundation": false
+        },
+        {
+          "id": 19,
+          "pieceA": 3,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_03_019",
+          "contactArea": 0.8590399622917175,
+          "foundation": false
+        },
+        {
+          "id": 20,
+          "pieceA": 3,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_03_020",
+          "contactArea": 1.8897290229797363,
+          "foundation": false
+        },
+        {
+          "id": 21,
+          "pieceA": 0,
+          "pieceB": 1,
+          "marker": "BOND_outer_arch_03_021",
+          "contactArea": 3.0793204307556152,
+          "foundation": false
+        },
+        {
+          "id": 22,
+          "pieceA": 8,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_03_022",
+          "contactArea": 0.7972109317779541,
+          "foundation": false
+        },
+        {
+          "id": 23,
+          "pieceA": 8,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_03_023",
+          "contactArea": 1.3182780742645264,
+          "foundation": false
+        },
+        {
+          "id": 24,
+          "pieceA": 9,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_03_024",
+          "contactArea": 0.5515264868736267,
+          "foundation": false
+        },
+        {
+          "id": 25,
+          "pieceA": 9,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_03_025",
+          "contactArea": 0.5515264868736267,
+          "foundation": false
+        },
+        {
+          "id": 26,
+          "pieceA": 1,
+          "pieceB": 6,
+          "marker": "BOND_outer_arch_03_026",
+          "contactArea": 1.5692659616470337,
+          "foundation": false
+        },
+        {
+          "id": 27,
+          "pieceA": 1,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_03_027",
+          "contactArea": 2.4876010417938232,
+          "foundation": false
+        },
+        {
+          "id": 28,
+          "pieceA": 2,
+          "pieceB": 3,
+          "marker": "BOND_outer_arch_03_028",
+          "contactArea": 1.494483470916748,
+          "foundation": false
+        },
+        {
+          "id": 29,
+          "pieceA": 4,
+          "pieceB": 5,
+          "marker": "BOND_outer_arch_03_029",
+          "contactArea": 2.0273706912994385,
+          "foundation": false
+        },
+        {
+          "id": 30,
+          "pieceA": 6,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_03_030",
+          "contactArea": 2.602132797241211,
+          "foundation": false
+        },
+        {
+          "id": 31,
+          "pieceA": 8,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_03_031",
+          "contactArea": 1.4623651504516602,
+          "foundation": false
+        },
+        {
+          "id": 32,
+          "pieceA": 10,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_03_032",
+          "contactArea": 1.8914034366607666,
+          "foundation": false
+        },
+        {
+          "id": 33,
+          "pieceA": 2,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_03_033",
+          "contactArea": 0.4515957467283628,
+          "foundation": true
+        },
+        {
+          "id": 34,
+          "pieceA": 3,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_03_034",
+          "contactArea": 0.578262259119092,
+          "foundation": true
+        },
+        {
+          "id": 35,
+          "pieceA": 8,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_03_035",
+          "contactArea": 0.5821652863177846,
+          "foundation": true
+        },
+        {
+          "id": 36,
+          "pieceA": 10,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_03_036",
+          "contactArea": 0.3984882385112696,
+          "foundation": true
+        },
+        {
+          "id": 37,
+          "pieceA": 11,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_03_037",
+          "contactArea": 0.4533672984546536,
+          "foundation": true
+        }
+      ]
+    },
+    {
+      "structure_id": "outer_arch_04",
+      "frame_object": "FRAME_outer_arch_04",
+      "intact_object": "OuterArch_04_INTACT",
+      "damage_mode": "normal",
+      "trigger": "Impact",
+      "fracture_profile": "authored_column_closed_seams_v1",
+      "repairable": true,
+      "piece_count": 14,
+      "pieces": [
+        {
+          "id": 1,
+          "name": "FR_outer_arch_04_P001",
+          "collider": "COL_FR_outer_arch_04_P001",
+          "repairable": true,
+          "volume_cubic_metres": 3.093272784231257,
+          "minZ": 6.065298557281494,
+          "maxZ": 7.739790439605713,
+          "foundation": false
+        },
+        {
+          "id": 2,
+          "name": "FR_outer_arch_04_P002",
+          "collider": "COL_FR_outer_arch_04_P002",
+          "repairable": true,
+          "volume_cubic_metres": 1.761439431151299,
+          "minZ": 4.180705843737087e-07,
+          "maxZ": 1.6393274068832397,
+          "foundation": true
+        },
+        {
+          "id": 3,
+          "name": "FR_outer_arch_04_P003",
+          "collider": "COL_FR_outer_arch_04_P003",
+          "repairable": true,
+          "volume_cubic_metres": 1.9860294407032255,
+          "minZ": 1.4051480293273926,
+          "maxZ": 2.6491236686706543,
+          "foundation": false
+        },
+        {
+          "id": 4,
+          "name": "FR_outer_arch_04_P004",
+          "collider": "COL_FR_outer_arch_04_P004",
+          "repairable": true,
+          "volume_cubic_metres": 2.7935727796122336,
+          "minZ": 2.1879193782806396,
+          "maxZ": 3.930082082748413,
+          "foundation": false
+        },
+        {
+          "id": 5,
+          "name": "FR_outer_arch_04_P005",
+          "collider": "COL_FR_outer_arch_04_P005",
+          "repairable": true,
+          "volume_cubic_metres": 0.5600439490898682,
+          "minZ": 5.766087055206299,
+          "maxZ": 6.587430477142334,
+          "foundation": false
+        },
+        {
+          "id": 6,
+          "name": "FR_outer_arch_04_P006",
+          "collider": "COL_FR_outer_arch_04_P006",
+          "repairable": true,
+          "volume_cubic_metres": 2.475286508701563,
+          "minZ": 3.1033344782827044e-08,
+          "maxZ": 0.9712857604026794,
+          "foundation": true
+        },
+        {
+          "id": 7,
+          "name": "FR_outer_arch_04_P007",
+          "collider": "COL_FR_outer_arch_04_P007",
+          "repairable": true,
+          "volume_cubic_metres": 1.331803624039667,
+          "minZ": 0.7397031188011169,
+          "maxZ": 1.95619535446167,
+          "foundation": false
+        },
+        {
+          "id": 8,
+          "name": "FR_outer_arch_04_P008",
+          "collider": "COL_FR_outer_arch_04_P008",
+          "repairable": true,
+          "volume_cubic_metres": 0.5363119677950894,
+          "minZ": 3.651672601699829,
+          "maxZ": 6.1443095207214355,
+          "foundation": false
+        },
+        {
+          "id": 9,
+          "name": "FR_outer_arch_04_P009",
+          "collider": "COL_FR_outer_arch_04_P009",
+          "repairable": true,
+          "volume_cubic_metres": 1.789870391707591,
+          "minZ": 5.472092628479004,
+          "maxZ": 7.34597635269165,
+          "foundation": false
+        },
+        {
+          "id": 10,
+          "name": "FR_outer_arch_04_P010",
+          "collider": "COL_FR_outer_arch_04_P010",
+          "repairable": true,
+          "volume_cubic_metres": 1.9355507509154521,
+          "minZ": 5.804915904998779,
+          "maxZ": 7.687366962432861,
+          "foundation": false
+        },
+        {
+          "id": 11,
+          "name": "FR_outer_arch_04_P011",
+          "collider": "COL_FR_outer_arch_04_P011",
+          "repairable": true,
+          "volume_cubic_metres": 2.859517367812951,
+          "minZ": 1.8026578008090155e-09,
+          "maxZ": 1.3914932012557983,
+          "foundation": true
+        },
+        {
+          "id": 12,
+          "name": "FR_outer_arch_04_P012",
+          "collider": "COL_FR_outer_arch_04_P012",
+          "repairable": true,
+          "volume_cubic_metres": 0.8657742481093622,
+          "minZ": 0.7860821485519409,
+          "maxZ": 1.8434029817581177,
+          "foundation": false
+        },
+        {
+          "id": 13,
+          "name": "FR_outer_arch_04_P013",
+          "collider": "COL_FR_outer_arch_04_P013",
+          "repairable": true,
+          "volume_cubic_metres": 1.4088436785952014,
+          "minZ": 3.655102014541626,
+          "maxZ": 4.813820838928223,
+          "foundation": false
+        },
+        {
+          "id": 14,
+          "name": "FR_outer_arch_04_P014",
+          "collider": "COL_FR_outer_arch_04_P014",
+          "repairable": true,
+          "volume_cubic_metres": 1.7975454193162668,
+          "minZ": 4.495782852172852,
+          "maxZ": 5.879458904266357,
+          "foundation": false
+        }
+      ],
+      "bonds": [
+        {
+          "id": 1,
+          "pieceA": 3,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_04_001",
+          "contactArea": 0.34536489844322205,
+          "foundation": false
+        },
+        {
+          "id": 2,
+          "pieceA": 3,
+          "pieceB": 12,
+          "marker": "BOND_outer_arch_04_002",
+          "contactArea": 1.497740387916565,
+          "foundation": false
+        },
+        {
+          "id": 3,
+          "pieceA": 1,
+          "pieceB": 2,
+          "marker": "BOND_outer_arch_04_003",
+          "contactArea": 0.1374714970588684,
+          "foundation": false
+        },
+        {
+          "id": 4,
+          "pieceA": 2,
+          "pieceB": 6,
+          "marker": "BOND_outer_arch_04_004",
+          "contactArea": 1.1341966390609741,
+          "foundation": false
+        },
+        {
+          "id": 5,
+          "pieceA": 2,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_04_005",
+          "contactArea": 1.6989270448684692,
+          "foundation": false
+        },
+        {
+          "id": 6,
+          "pieceA": 0,
+          "pieceB": 4,
+          "marker": "BOND_outer_arch_04_006",
+          "contactArea": 2.2459635734558105,
+          "foundation": false
+        },
+        {
+          "id": 7,
+          "pieceA": 0,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_04_007",
+          "contactArea": 1.3287317752838135,
+          "foundation": false
+        },
+        {
+          "id": 8,
+          "pieceA": 7,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_04_008",
+          "contactArea": 1.3287317752838135,
+          "foundation": false
+        },
+        {
+          "id": 9,
+          "pieceA": 7,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_04_009",
+          "contactArea": 1.1768579483032227,
+          "foundation": false
+        },
+        {
+          "id": 10,
+          "pieceA": 8,
+          "pieceB": 13,
+          "marker": "BOND_outer_arch_04_010",
+          "contactArea": 1.7568269968032837,
+          "foundation": false
+        },
+        {
+          "id": 11,
+          "pieceA": 9,
+          "pieceB": 13,
+          "marker": "BOND_outer_arch_04_011",
+          "contactArea": 1.1768579483032227,
+          "foundation": false
+        },
+        {
+          "id": 12,
+          "pieceA": 5,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_04_012",
+          "contactArea": 2.0917470455169678,
+          "foundation": false
+        },
+        {
+          "id": 13,
+          "pieceA": 5,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_04_013",
+          "contactArea": 1.0682240724563599,
+          "foundation": false
+        },
+        {
+          "id": 14,
+          "pieceA": 6,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_04_014",
+          "contactArea": 1.6856169700622559,
+          "foundation": false
+        },
+        {
+          "id": 15,
+          "pieceA": 6,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_04_015",
+          "contactArea": 1.0682240724563599,
+          "foundation": false
+        },
+        {
+          "id": 16,
+          "pieceA": 0,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_04_016",
+          "contactArea": 1.7663311958312988,
+          "foundation": false
+        },
+        {
+          "id": 17,
+          "pieceA": 1,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_04_017",
+          "contactArea": 2.8319873809814453,
+          "foundation": false
+        },
+        {
+          "id": 18,
+          "pieceA": 1,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_04_018",
+          "contactArea": 0.5528268814086914,
+          "foundation": false
+        },
+        {
+          "id": 19,
+          "pieceA": 2,
+          "pieceB": 3,
+          "marker": "BOND_outer_arch_04_019",
+          "contactArea": 2.4951915740966797,
+          "foundation": false
+        },
+        {
+          "id": 20,
+          "pieceA": 4,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_04_020",
+          "contactArea": 0.00571943074464798,
+          "foundation": false
+        },
+        {
+          "id": 21,
+          "pieceA": 5,
+          "pieceB": 6,
+          "marker": "BOND_outer_arch_04_021",
+          "contactArea": 2.6566388607025146,
+          "foundation": false
+        },
+        {
+          "id": 22,
+          "pieceA": 7,
+          "pieceB": 12,
+          "marker": "BOND_outer_arch_04_022",
+          "contactArea": 0.8689568638801575,
+          "foundation": false
+        },
+        {
+          "id": 23,
+          "pieceA": 7,
+          "pieceB": 13,
+          "marker": "BOND_outer_arch_04_023",
+          "contactArea": 1.3999781608581543,
+          "foundation": false
+        },
+        {
+          "id": 24,
+          "pieceA": 8,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_04_024",
+          "contactArea": 1.6853822469711304,
+          "foundation": false
+        },
+        {
+          "id": 25,
+          "pieceA": 10,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_04_025",
+          "contactArea": 2.2738990783691406,
+          "foundation": false
+        },
+        {
+          "id": 26,
+          "pieceA": 12,
+          "pieceB": 13,
+          "marker": "BOND_outer_arch_04_026",
+          "contactArea": 1.8476277589797974,
+          "foundation": false
+        },
+        {
+          "id": 27,
+          "pieceA": 1,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_04_027",
+          "contactArea": 0.5104813190070496,
+          "foundation": true
+        },
+        {
+          "id": 28,
+          "pieceA": 5,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_04_028",
+          "contactArea": 0.6404497014316163,
+          "foundation": true
+        },
+        {
+          "id": 29,
+          "pieceA": 10,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_04_029",
+          "contactArea": 0.7051202764837987,
+          "foundation": true
+        }
+      ]
+    },
+    {
+      "structure_id": "outer_arch_05",
+      "frame_object": "FRAME_outer_arch_05",
+      "intact_object": "OuterArch_05_INTACT",
+      "damage_mode": "normal",
+      "trigger": "Impact",
+      "fracture_profile": "authored_column_closed_seams_v1",
+      "repairable": true,
+      "piece_count": 12,
+      "pieces": [
+        {
+          "id": 1,
+          "name": "FR_outer_arch_05_P001",
+          "collider": "COL_FR_outer_arch_05_P001",
+          "repairable": true,
+          "volume_cubic_metres": 2.8756205065400673,
+          "minZ": 2.5358660221099854,
+          "maxZ": 4.4528489112854,
+          "foundation": false
+        },
+        {
+          "id": 2,
+          "name": "FR_outer_arch_05_P002",
+          "collider": "COL_FR_outer_arch_05_P002",
+          "repairable": true,
+          "volume_cubic_metres": 1.183718168275531,
+          "minZ": 5.766088008880615,
+          "maxZ": 7.739039897918701,
+          "foundation": false
+        },
+        {
+          "id": 3,
+          "name": "FR_outer_arch_05_P003",
+          "collider": "COL_FR_outer_arch_05_P003",
+          "repairable": true,
+          "volume_cubic_metres": 2.0093634078397056,
+          "minZ": -4.489605132107499e-09,
+          "maxZ": 1.2899597883224487,
+          "foundation": true
+        },
+        {
+          "id": 4,
+          "name": "FR_outer_arch_05_P004",
+          "collider": "COL_FR_outer_arch_05_P004",
+          "repairable": true,
+          "volume_cubic_metres": 2.373700545381342,
+          "minZ": -6.272842512089483e-08,
+          "maxZ": 1.3977160453796387,
+          "foundation": true
+        },
+        {
+          "id": 5,
+          "name": "FR_outer_arch_05_P005",
+          "collider": "COL_FR_outer_arch_05_P005",
+          "repairable": true,
+          "volume_cubic_metres": 2.5543968163332877,
+          "minZ": 1.139998435974121,
+          "maxZ": 2.9914426803588867,
+          "foundation": false
+        },
+        {
+          "id": 6,
+          "name": "FR_outer_arch_05_P006",
+          "collider": "COL_FR_outer_arch_05_P006",
+          "repairable": true,
+          "volume_cubic_metres": 1.5438416660078986,
+          "minZ": 0.9251829981803894,
+          "maxZ": 2.757384777069092,
+          "foundation": false
+        },
+        {
+          "id": 7,
+          "name": "FR_outer_arch_05_P007",
+          "collider": "COL_FR_outer_arch_05_P007",
+          "repairable": true,
+          "volume_cubic_metres": 2.124138486619367,
+          "minZ": 4.156230926513672,
+          "maxZ": 7.18896484375,
+          "foundation": false
+        },
+        {
+          "id": 8,
+          "name": "FR_outer_arch_05_P008",
+          "collider": "COL_FR_outer_arch_05_P008",
+          "repairable": true,
+          "volume_cubic_metres": 1.7353085939961403,
+          "minZ": 4.106204986572266,
+          "maxZ": 7.297172546386719,
+          "foundation": false
+        },
+        {
+          "id": 9,
+          "name": "FR_outer_arch_05_P009",
+          "collider": "COL_FR_outer_arch_05_P009",
+          "repairable": true,
+          "volume_cubic_metres": 1.7236646403053182,
+          "minZ": 2.408862656011479e-07,
+          "maxZ": 1.4491220712661743,
+          "foundation": true
+        },
+        {
+          "id": 10,
+          "name": "FR_outer_arch_05_P010",
+          "collider": "COL_FR_outer_arch_05_P010",
+          "repairable": true,
+          "volume_cubic_metres": 1.8857312062177973,
+          "minZ": 1.8191931872024725e-07,
+          "maxZ": 1.5247043371200562,
+          "foundation": true
+        },
+        {
+          "id": 11,
+          "name": "FR_outer_arch_05_P011",
+          "collider": "COL_FR_outer_arch_05_P011",
+          "repairable": true,
+          "volume_cubic_metres": 0.26616430141951636,
+          "minZ": 4.1064677238464355,
+          "maxZ": 5.799254894256592,
+          "foundation": false
+        },
+        {
+          "id": 12,
+          "name": "FR_outer_arch_05_P012",
+          "collider": "COL_FR_outer_arch_05_P012",
+          "repairable": true,
+          "volume_cubic_metres": 2.7901743984750107,
+          "minZ": 5.628142833709717,
+          "maxZ": 7.7368879318237305,
+          "foundation": false
+        }
+      ],
+      "bonds": [
+        {
+          "id": 1,
+          "pieceA": 0,
+          "pieceB": 6,
+          "marker": "BOND_outer_arch_05_001",
+          "contactArea": 0.7731293439865112,
+          "foundation": false
+        },
+        {
+          "id": 2,
+          "pieceA": 0,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_05_002",
+          "contactArea": 1.052248239517212,
+          "foundation": false
+        },
+        {
+          "id": 3,
+          "pieceA": 0,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_05_003",
+          "contactArea": 0.15808792412281036,
+          "foundation": false
+        },
+        {
+          "id": 4,
+          "pieceA": 0,
+          "pieceB": 4,
+          "marker": "BOND_outer_arch_05_004",
+          "contactArea": 1.6102991104125977,
+          "foundation": false
+        },
+        {
+          "id": 5,
+          "pieceA": 0,
+          "pieceB": 5,
+          "marker": "BOND_outer_arch_05_005",
+          "contactArea": 0.6900415420532227,
+          "foundation": false
+        },
+        {
+          "id": 6,
+          "pieceA": 2,
+          "pieceB": 4,
+          "marker": "BOND_outer_arch_05_006",
+          "contactArea": 1.1943963766098022,
+          "foundation": false
+        },
+        {
+          "id": 7,
+          "pieceA": 2,
+          "pieceB": 5,
+          "marker": "BOND_outer_arch_05_007",
+          "contactArea": 1.1943963766098022,
+          "foundation": false
+        },
+        {
+          "id": 8,
+          "pieceA": 3,
+          "pieceB": 4,
+          "marker": "BOND_outer_arch_05_008",
+          "contactArea": 1.1909884214401245,
+          "foundation": false
+        },
+        {
+          "id": 9,
+          "pieceA": 3,
+          "pieceB": 5,
+          "marker": "BOND_outer_arch_05_009",
+          "contactArea": 1.1909884214401245,
+          "foundation": false
+        },
+        {
+          "id": 10,
+          "pieceA": 4,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_05_010",
+          "contactArea": 0.5340782999992371,
+          "foundation": false
+        },
+        {
+          "id": 11,
+          "pieceA": 4,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_05_011",
+          "contactArea": 0.6827177405357361,
+          "foundation": false
+        },
+        {
+          "id": 12,
+          "pieceA": 1,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_05_012",
+          "contactArea": 1.7286821603775024,
+          "foundation": false
+        },
+        {
+          "id": 13,
+          "pieceA": 2,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_05_013",
+          "contactArea": 1.389988899230957,
+          "foundation": false
+        },
+        {
+          "id": 14,
+          "pieceA": 2,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_05_014",
+          "contactArea": 1.4224907159805298,
+          "foundation": false
+        },
+        {
+          "id": 15,
+          "pieceA": 3,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_05_015",
+          "contactArea": 1.389988899230957,
+          "foundation": false
+        },
+        {
+          "id": 16,
+          "pieceA": 3,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_05_016",
+          "contactArea": 1.6830344200134277,
+          "foundation": false
+        },
+        {
+          "id": 17,
+          "pieceA": 7,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_05_017",
+          "contactArea": 1.559521198272705,
+          "foundation": false
+        },
+        {
+          "id": 18,
+          "pieceA": 7,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_05_018",
+          "contactArea": 1.7152146100997925,
+          "foundation": false
+        },
+        {
+          "id": 19,
+          "pieceA": 2,
+          "pieceB": 3,
+          "marker": "BOND_outer_arch_05_019",
+          "contactArea": 1.825124740600586,
+          "foundation": false
+        },
+        {
+          "id": 20,
+          "pieceA": 4,
+          "pieceB": 5,
+          "marker": "BOND_outer_arch_05_020",
+          "contactArea": 2.2195749282836914,
+          "foundation": false
+        },
+        {
+          "id": 21,
+          "pieceA": 6,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_05_021",
+          "contactArea": 3.5460808277130127,
+          "foundation": false
+        },
+        {
+          "id": 22,
+          "pieceA": 8,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_05_022",
+          "contactArea": 1.6308825016021729,
+          "foundation": false
+        },
+        {
+          "id": 23,
+          "pieceA": 10,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_05_023",
+          "contactArea": 0.6307979822158813,
+          "foundation": false
+        },
+        {
+          "id": 24,
+          "pieceA": 2,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_05_024",
+          "contactArea": 0.5573230909968875,
+          "foundation": true
+        },
+        {
+          "id": 25,
+          "pieceA": 3,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_05_025",
+          "contactArea": 0.6228048664744873,
+          "foundation": true
+        },
+        {
+          "id": 26,
+          "pieceA": 8,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_05_026",
+          "contactArea": 0.5031566605058089,
+          "foundation": true
+        },
+        {
+          "id": 27,
+          "pieceA": 9,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_05_027",
+          "contactArea": 0.5342213449937243,
+          "foundation": true
+        }
+      ]
+    },
+    {
+      "structure_id": "outer_arch_06",
+      "frame_object": "FRAME_outer_arch_06",
+      "intact_object": "OuterArch_06_INTACT",
+      "damage_mode": "normal",
+      "trigger": "Impact",
+      "fracture_profile": "authored_column_closed_seams_v1",
+      "repairable": true,
+      "piece_count": 9,
+      "pieces": [
+        {
+          "id": 1,
+          "name": "FR_outer_arch_06_P001",
+          "collider": "COL_FR_outer_arch_06_P001",
+          "repairable": true,
+          "volume_cubic_metres": 2.5727248191027083,
+          "minZ": 3.667999237677577e-10,
+          "maxZ": 1.7691947221755981,
+          "foundation": true
+        },
+        {
+          "id": 2,
+          "name": "FR_outer_arch_06_P002",
+          "collider": "COL_FR_outer_arch_06_P002",
+          "repairable": true,
+          "volume_cubic_metres": 2.4121354134252804,
+          "minZ": 3.3087306022644043,
+          "maxZ": 5.758915424346924,
+          "foundation": false
+        },
+        {
+          "id": 3,
+          "name": "FR_outer_arch_06_P003",
+          "collider": "COL_FR_outer_arch_06_P003",
+          "repairable": true,
+          "volume_cubic_metres": 1.5651993903479953,
+          "minZ": 3.2534990310668945,
+          "maxZ": 5.879055500030518,
+          "foundation": false
+        },
+        {
+          "id": 4,
+          "name": "FR_outer_arch_06_P004",
+          "collider": "COL_FR_outer_arch_06_P004",
+          "repairable": true,
+          "volume_cubic_metres": 1.9186164498579041,
+          "minZ": 1.5921272039413452,
+          "maxZ": 3.3827970027923584,
+          "foundation": false
+        },
+        {
+          "id": 5,
+          "name": "FR_outer_arch_06_P005",
+          "collider": "COL_FR_outer_arch_06_P005",
+          "repairable": true,
+          "volume_cubic_metres": 1.9526617645664257,
+          "minZ": 1.5977967977523804,
+          "maxZ": 3.330498456954956,
+          "foundation": false
+        },
+        {
+          "id": 6,
+          "name": "FR_outer_arch_06_P006",
+          "collider": "COL_FR_outer_arch_06_P006",
+          "repairable": true,
+          "volume_cubic_metres": 2.2333899391389824,
+          "minZ": 1.1945896005727263e-07,
+          "maxZ": 1.6533564329147339,
+          "foundation": true
+        },
+        {
+          "id": 7,
+          "name": "FR_outer_arch_06_P007",
+          "collider": "COL_FR_outer_arch_06_P007",
+          "repairable": true,
+          "volume_cubic_metres": 1.4486132371262928,
+          "minZ": 1.1752428719091768e-07,
+          "maxZ": 1.664900302886963,
+          "foundation": true
+        },
+        {
+          "id": 8,
+          "name": "FR_outer_arch_06_P008",
+          "collider": "COL_FR_outer_arch_06_P008",
+          "repairable": true,
+          "volume_cubic_metres": 1.2820570809846181,
+          "minZ": -3.700105777326712e-10,
+          "maxZ": 1.7734957933425903,
+          "foundation": true
+        },
+        {
+          "id": 9,
+          "name": "FR_outer_arch_06_P009",
+          "collider": "COL_FR_outer_arch_06_P009",
+          "repairable": true,
+          "volume_cubic_metres": 1.756576997372978,
+          "minZ": -1.0982629250477771e-09,
+          "maxZ": 1.775112271308899,
+          "foundation": true
+        }
+      ],
+      "bonds": [
+        {
+          "id": 1,
+          "pieceA": 1,
+          "pieceB": 3,
+          "marker": "BOND_outer_arch_06_001",
+          "contactArea": 0.6788958311080933,
+          "foundation": false
+        },
+        {
+          "id": 2,
+          "pieceA": 1,
+          "pieceB": 4,
+          "marker": "BOND_outer_arch_06_002",
+          "contactArea": 0.7009115815162659,
+          "foundation": false
+        },
+        {
+          "id": 3,
+          "pieceA": 2,
+          "pieceB": 3,
+          "marker": "BOND_outer_arch_06_003",
+          "contactArea": 0.6651380062103271,
+          "foundation": false
+        },
+        {
+          "id": 4,
+          "pieceA": 2,
+          "pieceB": 4,
+          "marker": "BOND_outer_arch_06_004",
+          "contactArea": 0.6651380062103271,
+          "foundation": false
+        },
+        {
+          "id": 5,
+          "pieceA": 0,
+          "pieceB": 3,
+          "marker": "BOND_outer_arch_06_005",
+          "contactArea": 0.8163877725601196,
+          "foundation": false
+        },
+        {
+          "id": 6,
+          "pieceA": 0,
+          "pieceB": 4,
+          "marker": "BOND_outer_arch_06_006",
+          "contactArea": 0.8163877725601196,
+          "foundation": false
+        },
+        {
+          "id": 7,
+          "pieceA": 3,
+          "pieceB": 5,
+          "marker": "BOND_outer_arch_06_007",
+          "contactArea": 0.4791490435600281,
+          "foundation": false
+        },
+        {
+          "id": 8,
+          "pieceA": 3,
+          "pieceB": 6,
+          "marker": "BOND_outer_arch_06_008",
+          "contactArea": 0.44562122225761414,
+          "foundation": false
+        },
+        {
+          "id": 9,
+          "pieceA": 3,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_06_009",
+          "contactArea": 0.6524613499641418,
+          "foundation": false
+        },
+        {
+          "id": 10,
+          "pieceA": 4,
+          "pieceB": 5,
+          "marker": "BOND_outer_arch_06_010",
+          "contactArea": 0.4791490435600281,
+          "foundation": false
+        },
+        {
+          "id": 11,
+          "pieceA": 4,
+          "pieceB": 6,
+          "marker": "BOND_outer_arch_06_011",
+          "contactArea": 0.44562122225761414,
+          "foundation": false
+        },
+        {
+          "id": 12,
+          "pieceA": 4,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_06_012",
+          "contactArea": 0.6524613499641418,
+          "foundation": false
+        },
+        {
+          "id": 13,
+          "pieceA": 4,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_06_013",
+          "contactArea": 0.5402226448059082,
+          "foundation": false
+        },
+        {
+          "id": 14,
+          "pieceA": 0,
+          "pieceB": 5,
+          "marker": "BOND_outer_arch_06_014",
+          "contactArea": 2.0719151496887207,
+          "foundation": false
+        },
+        {
+          "id": 15,
+          "pieceA": 5,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_06_015",
+          "contactArea": 0.9968487024307251,
+          "foundation": false
+        },
+        {
+          "id": 16,
+          "pieceA": 5,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_06_016",
+          "contactArea": 1.1641098260879517,
+          "foundation": false
+        },
+        {
+          "id": 17,
+          "pieceA": 6,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_06_017",
+          "contactArea": 0.9968487024307251,
+          "foundation": false
+        },
+        {
+          "id": 18,
+          "pieceA": 6,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_06_018",
+          "contactArea": 1.1641098260879517,
+          "foundation": false
+        },
+        {
+          "id": 19,
+          "pieceA": 0,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_06_019",
+          "contactArea": 2.27895188331604,
+          "foundation": false
+        },
+        {
+          "id": 20,
+          "pieceA": 1,
+          "pieceB": 2,
+          "marker": "BOND_outer_arch_06_020",
+          "contactArea": 2.7641208171844482,
+          "foundation": false
+        },
+        {
+          "id": 21,
+          "pieceA": 3,
+          "pieceB": 4,
+          "marker": "BOND_outer_arch_06_021",
+          "contactArea": 2.4671993255615234,
+          "foundation": false
+        },
+        {
+          "id": 22,
+          "pieceA": 5,
+          "pieceB": 6,
+          "marker": "BOND_outer_arch_06_022",
+          "contactArea": 1.5119152069091797,
+          "foundation": false
+        },
+        {
+          "id": 23,
+          "pieceA": 7,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_06_023",
+          "contactArea": 2.150879383087158,
+          "foundation": false
+        },
+        {
+          "id": 24,
+          "pieceA": 0,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_06_024",
+          "contactArea": 0.6571486223862983,
+          "foundation": true
+        },
+        {
+          "id": 25,
+          "pieceA": 5,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_06_025",
+          "contactArea": 0.5980136282124929,
+          "foundation": true
+        },
+        {
+          "id": 26,
+          "pieceA": 6,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_06_026",
+          "contactArea": 0.44809456596899133,
+          "foundation": true
+        },
+        {
+          "id": 27,
+          "pieceA": 7,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_06_027",
+          "contactArea": 0.41305348000736125,
+          "foundation": true
+        },
+        {
+          "id": 28,
+          "pieceA": 8,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_06_028",
+          "contactArea": 0.5095414342840072,
+          "foundation": true
+        }
+      ]
+    },
+    {
+      "structure_id": "outer_arch_07",
+      "frame_object": "FRAME_outer_arch_07",
+      "intact_object": "OuterArch_07_INTACT",
+      "damage_mode": "normal",
+      "trigger": "Impact",
+      "fracture_profile": "authored_column_closed_seams_v1",
+      "repairable": true,
+      "piece_count": 13,
+      "pieces": [
+        {
+          "id": 1,
+          "name": "FR_outer_arch_07_P001",
+          "collider": "COL_FR_outer_arch_07_P001",
+          "repairable": true,
+          "volume_cubic_metres": 1.8177942978936008,
+          "minZ": -5.998786889449548e-08,
+          "maxZ": 1.944135069847107,
+          "foundation": true
+        },
+        {
+          "id": 2,
+          "name": "FR_outer_arch_07_P002",
+          "collider": "COL_FR_outer_arch_07_P002",
+          "repairable": true,
+          "volume_cubic_metres": 2.275626429509685,
+          "minZ": 3.490553140640259,
+          "maxZ": 6.655738830566406,
+          "foundation": false
+        },
+        {
+          "id": 3,
+          "name": "FR_outer_arch_07_P003",
+          "collider": "COL_FR_outer_arch_07_P003",
+          "repairable": true,
+          "volume_cubic_metres": 2.4558795634558326,
+          "minZ": 5.336049556732178,
+          "maxZ": 7.7134480476379395,
+          "foundation": false
+        },
+        {
+          "id": 4,
+          "name": "FR_outer_arch_07_P004",
+          "collider": "COL_FR_outer_arch_07_P004",
+          "repairable": true,
+          "volume_cubic_metres": 2.609187505459395,
+          "minZ": 5.766087532043457,
+          "maxZ": 7.739790916442871,
+          "foundation": false
+        },
+        {
+          "id": 5,
+          "name": "FR_outer_arch_07_P005",
+          "collider": "COL_FR_outer_arch_07_P005",
+          "repairable": true,
+          "volume_cubic_metres": 2.6320832761530926,
+          "minZ": 1.22256224699413e-07,
+          "maxZ": 2.0062355995178223,
+          "foundation": true
+        },
+        {
+          "id": 6,
+          "name": "FR_outer_arch_07_P006",
+          "collider": "COL_FR_outer_arch_07_P006",
+          "repairable": true,
+          "volume_cubic_metres": 1.5363202403272453,
+          "minZ": 1.989340692176711e-09,
+          "maxZ": 1.9960886240005493,
+          "foundation": true
+        },
+        {
+          "id": 7,
+          "name": "FR_outer_arch_07_P007",
+          "collider": "COL_FR_outer_arch_07_P007",
+          "repairable": true,
+          "volume_cubic_metres": 1.1388508135853728,
+          "minZ": 0.6854803562164307,
+          "maxZ": 1.9589992761611938,
+          "foundation": false
+        },
+        {
+          "id": 8,
+          "name": "FR_outer_arch_07_P008",
+          "collider": "COL_FR_outer_arch_07_P008",
+          "repairable": true,
+          "volume_cubic_metres": 2.0803997844674726,
+          "minZ": 1.9235491752624512,
+          "maxZ": 3.7317495346069336,
+          "foundation": false
+        },
+        {
+          "id": 9,
+          "name": "FR_outer_arch_07_P009",
+          "collider": "COL_FR_outer_arch_07_P009",
+          "repairable": true,
+          "volume_cubic_metres": 1.4805025517296282,
+          "minZ": 1.8823882341384888,
+          "maxZ": 3.5568840503692627,
+          "foundation": false
+        },
+        {
+          "id": 10,
+          "name": "FR_outer_arch_07_P010",
+          "collider": "COL_FR_outer_arch_07_P010",
+          "repairable": true,
+          "volume_cubic_metres": 1.8288101633839478,
+          "minZ": 3.343618154525757,
+          "maxZ": 5.635659694671631,
+          "foundation": false
+        },
+        {
+          "id": 11,
+          "name": "FR_outer_arch_07_P011",
+          "collider": "COL_FR_outer_arch_07_P011",
+          "repairable": true,
+          "volume_cubic_metres": 1.7019311277982176,
+          "minZ": 5.309729099273682,
+          "maxZ": 7.3150634765625,
+          "foundation": false
+        },
+        {
+          "id": 12,
+          "name": "FR_outer_arch_07_P012",
+          "collider": "COL_FR_outer_arch_07_P012",
+          "repairable": true,
+          "volume_cubic_metres": 1.2329119549809697,
+          "minZ": -5.6470113918294373e-08,
+          "maxZ": 1.2691665887832642,
+          "foundation": true
+        },
+        {
+          "id": 13,
+          "name": "FR_outer_arch_07_P013",
+          "collider": "COL_FR_outer_arch_07_P013",
+          "repairable": true,
+          "volume_cubic_metres": 1.6759973903984389,
+          "minZ": -5.841540229312159e-08,
+          "maxZ": 1.1965866088867188,
+          "foundation": true
+        }
+      ],
+      "bonds": [
+        {
+          "id": 1,
+          "pieceA": 1,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_07_001",
+          "contactArea": 0.9113000631332397,
+          "foundation": false
+        },
+        {
+          "id": 2,
+          "pieceA": 7,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_07_002",
+          "contactArea": 0.9832848906517029,
+          "foundation": false
+        },
+        {
+          "id": 3,
+          "pieceA": 8,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_07_003",
+          "contactArea": 0.8293561935424805,
+          "foundation": false
+        },
+        {
+          "id": 4,
+          "pieceA": 0,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_07_004",
+          "contactArea": 0.5450635552406311,
+          "foundation": false
+        },
+        {
+          "id": 5,
+          "pieceA": 0,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_07_005",
+          "contactArea": 0.5450635552406311,
+          "foundation": false
+        },
+        {
+          "id": 6,
+          "pieceA": 4,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_07_006",
+          "contactArea": 0.857153594493866,
+          "foundation": false
+        },
+        {
+          "id": 7,
+          "pieceA": 4,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_07_007",
+          "contactArea": 0.857153594493866,
+          "foundation": false
+        },
+        {
+          "id": 8,
+          "pieceA": 5,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_07_008",
+          "contactArea": 0.4956425726413727,
+          "foundation": false
+        },
+        {
+          "id": 9,
+          "pieceA": 5,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_07_009",
+          "contactArea": 0.4956425726413727,
+          "foundation": false
+        },
+        {
+          "id": 10,
+          "pieceA": 6,
+          "pieceB": 7,
+          "marker": "BOND_outer_arch_07_010",
+          "contactArea": 0.8681878447532654,
+          "foundation": false
+        },
+        {
+          "id": 11,
+          "pieceA": 6,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_07_011",
+          "contactArea": 0.8681878447532654,
+          "foundation": false
+        },
+        {
+          "id": 12,
+          "pieceA": 2,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_07_012",
+          "contactArea": 0.05253792554140091,
+          "foundation": false
+        },
+        {
+          "id": 13,
+          "pieceA": 2,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_07_013",
+          "contactArea": 2.178663969039917,
+          "foundation": false
+        },
+        {
+          "id": 14,
+          "pieceA": 0,
+          "pieceB": 4,
+          "marker": "BOND_outer_arch_07_014",
+          "contactArea": 1.601248025894165,
+          "foundation": false
+        },
+        {
+          "id": 15,
+          "pieceA": 0,
+          "pieceB": 5,
+          "marker": "BOND_outer_arch_07_015",
+          "contactArea": 1.4396023750305176,
+          "foundation": false
+        },
+        {
+          "id": 16,
+          "pieceA": 4,
+          "pieceB": 6,
+          "marker": "BOND_outer_arch_07_016",
+          "contactArea": 0.7493112683296204,
+          "foundation": false
+        },
+        {
+          "id": 17,
+          "pieceA": 4,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_07_017",
+          "contactArea": 1.8582426309585571,
+          "foundation": false
+        },
+        {
+          "id": 18,
+          "pieceA": 5,
+          "pieceB": 6,
+          "marker": "BOND_outer_arch_07_018",
+          "contactArea": 0.7493112683296204,
+          "foundation": false
+        },
+        {
+          "id": 19,
+          "pieceA": 5,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_07_019",
+          "contactArea": 1.4396023750305176,
+          "foundation": false
+        },
+        {
+          "id": 20,
+          "pieceA": 0,
+          "pieceB": 6,
+          "marker": "BOND_outer_arch_07_020",
+          "contactArea": 0.841988601066987,
+          "foundation": false
+        },
+        {
+          "id": 21,
+          "pieceA": 0,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_07_021",
+          "contactArea": 0.6680243611335754,
+          "foundation": false
+        },
+        {
+          "id": 22,
+          "pieceA": 0,
+          "pieceB": 12,
+          "marker": "BOND_outer_arch_07_022",
+          "contactArea": 1.265759825706482,
+          "foundation": false
+        },
+        {
+          "id": 23,
+          "pieceA": 1,
+          "pieceB": 9,
+          "marker": "BOND_outer_arch_07_023",
+          "contactArea": 2.506202459335327,
+          "foundation": false
+        },
+        {
+          "id": 24,
+          "pieceA": 1,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_07_024",
+          "contactArea": 1.261629581451416,
+          "foundation": false
+        },
+        {
+          "id": 25,
+          "pieceA": 2,
+          "pieceB": 3,
+          "marker": "BOND_outer_arch_07_025",
+          "contactArea": 1.7667851448059082,
+          "foundation": false
+        },
+        {
+          "id": 26,
+          "pieceA": 4,
+          "pieceB": 5,
+          "marker": "BOND_outer_arch_07_026",
+          "contactArea": 2.0974373817443848,
+          "foundation": false
+        },
+        {
+          "id": 27,
+          "pieceA": 6,
+          "pieceB": 11,
+          "marker": "BOND_outer_arch_07_027",
+          "contactArea": 0.7428869009017944,
+          "foundation": false
+        },
+        {
+          "id": 28,
+          "pieceA": 6,
+          "pieceB": 12,
+          "marker": "BOND_outer_arch_07_028",
+          "contactArea": 1.6711622476577759,
+          "foundation": false
+        },
+        {
+          "id": 29,
+          "pieceA": 7,
+          "pieceB": 8,
+          "marker": "BOND_outer_arch_07_029",
+          "contactArea": 2.2295424938201904,
+          "foundation": false
+        },
+        {
+          "id": 30,
+          "pieceA": 9,
+          "pieceB": 10,
+          "marker": "BOND_outer_arch_07_030",
+          "contactArea": 1.1882387399673462,
+          "foundation": false
+        },
+        {
+          "id": 31,
+          "pieceA": 11,
+          "pieceB": 12,
+          "marker": "BOND_outer_arch_07_031",
+          "contactArea": 1.7670434713363647,
+          "foundation": false
+        },
+        {
+          "id": 32,
+          "pieceA": 0,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_07_032",
+          "contactArea": 0.521312176300767,
+          "foundation": true
+        },
+        {
+          "id": 33,
+          "pieceA": 4,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_07_033",
+          "contactArea": 0.6672180626814359,
+          "foundation": true
+        },
+        {
+          "id": 34,
+          "pieceA": 5,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_07_034",
+          "contactArea": 0.46600353643386205,
+          "foundation": true
+        },
+        {
+          "id": 35,
+          "pieceA": 11,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_07_035",
+          "contactArea": 0.4024291396510587,
+          "foundation": true
+        },
+        {
+          "id": 36,
+          "pieceA": 12,
+          "pieceB": -1,
+          "marker": "BOND_outer_arch_07_036",
+          "contactArea": 0.49383697428908907,
+          "foundation": true
+        }
+      ]
+    }
+  ],
+  "looseRocks": [
+    "OuterArch_02_Loose_FR_outer_arch_02_013_FALLEN",
+    "OuterArch_03_Loose_FR_outer_arch_03_012_FALLEN",
+    "OuterArch_05_Loose_FR_outer_arch_05_012_FALLEN",
+    "OuterArch_06_Loose_FR_outer_arch_06_001",
+    "OuterArch_06_Loose_FR_outer_arch_06_001_001",
+    "OuterArch_06_Loose_FR_outer_arch_06_001_002",
+    "OuterArch_06_Loose_FR_outer_arch_06_010_FALLEN",
+    "OuterArch_07_Loose_FR_outer_arch_07_013_FALLEN"
+  ],
+  "cosmeticRubble": [],
+  "sourceFile": "C:\\Users\\nirrt\\OneDrive\\\u0414\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u044b\\ChatGPT\\El Ements\\El-Emental\\ArtSource\\Environment\\OuterStoneRing\\OuterStoneRing_Working.blend",
+  "ignoredEmptyArtistObjects": [
+    "FR_outer_arch_03_000.001"
+  ]
+}

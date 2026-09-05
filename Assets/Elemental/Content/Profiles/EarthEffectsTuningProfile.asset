@@ -37,13 +37,14 @@ MonoBehaviour:
       noiseStrength: {x: 0.16, y: 0.42}
       noiseFrequency: 0.5
       noiseScrollSpeed: 0.15
+      angularSpeed: {x: -360, y: 360}
     baseCount: 105
     perReleasedPiece: 34
     perImpulse: 0.045
     minimumCount: 120
     maximumCount: 260
-    directionBlend: 0.24
-    emitterInset: 0.05
+    directionBlend: 0.278
+    emitterInset: 0.061
     emitterRadius: 0.42
     radiusThickness: 0.72
   impact:
@@ -59,6 +60,7 @@ MonoBehaviour:
       noiseStrength: {x: 0.06, y: 0.18}
       noiseFrequency: 0.5
       noiseScrollSpeed: 0.15
+      angularSpeed: {x: -360, y: 360}
     sparks:
       enabled: 1
       maxParticles: 192
@@ -71,21 +73,23 @@ MonoBehaviour:
       noiseStrength: {x: 0, y: 0}
       noiseFrequency: 0.5
       noiseScrollSpeed: 0.15
+      angularSpeed: {x: -360, y: 360}
     rubble:
       enabled: 1
       maxParticles: 256
       lifetime: {x: 0.45, y: 0.92}
       speed: {x: 1.4, y: 4.1}
-      size: {x: 0.1, y: 0.24}
-      colorA: {r: 0.68, g: 0.5, b: 0.31, a: 1}
-      colorB: {r: 0.35, g: 0.24, b: 0.16, a: 1}
+      size: {x: 0.01, y: 0.24}
+      colorA: {r: 0.8018868, g: 0.5249475, b: 0.31394622, a: 1}
+      colorB: {r: 0.6313726, g: 0.3803922, b: 0.20392159, a: 1}
       gravity: {x: 0, y: 0}
       noiseStrength: {x: 0, y: 0}
       noiseFrequency: 0.5
       noiseScrollSpeed: 0.15
-    maximumDustCount: 52
-    maximumRubbleCount: 14
-    maximumBatchedDustPerFrame: 72
+      angularSpeed: {x: -360, y: 360}
+    maximumDustCount: 56
+    maximumRubbleCount: 16
+    maximumBatchedDustPerFrame: 85
     maximumBatchedRubblePerFrame: 20
     impulseNormalization: 2200
     sparkEnergyThreshold: 18000
@@ -105,6 +109,7 @@ MonoBehaviour:
       noiseStrength: {x: 0.04, y: 0.15}
       noiseFrequency: 0.5
       noiseScrollSpeed: 0.15
+      angularSpeed: {x: -360, y: 360}
     rateOverDistance: 29
     trailLifetime: 0.85
     trailEndWidth: 0.34
@@ -127,6 +132,7 @@ MonoBehaviour:
       noiseStrength: {x: 0.02, y: 0.1}
       noiseFrequency: 0.5
       noiseScrollSpeed: 0.15
+      angularSpeed: {x: -360, y: 360}
     trigger01: 0.42
     emitCount: 20
     emitterRadius: 0.46
@@ -143,6 +149,7 @@ MonoBehaviour:
       noiseStrength: {x: 0, y: 0}
       noiseFrequency: 0.5
       noiseScrollSpeed: 0.15
+      angularSpeed: {x: -360, y: 360}
     emissionRate: 18
     localOffset: {x: 0, y: 0.15, z: 5.1}
     boxSize: {x: 10, y: 5.5, z: 9}
@@ -161,11 +168,12 @@ MonoBehaviour:
       noiseStrength: {x: 0, y: 0}
       noiseFrequency: 0.5
       noiseScrollSpeed: 0.15
+      angularSpeed: {x: -360, y: 360}
     distantRate: 0.24
     radius: 240
     radiusThickness: 0.05
     velocityScale: 0.12
-    lengthScale: 3.5
+    lengthScale: 11.14
     physicalTrailLifetime: 0.95
     approachTrailLifetime: 1.55
   pillar:
@@ -178,3 +186,73 @@ MonoBehaviour:
     waveSparkThreshold: 0.48
     waveSparkCount: 2
     pulseStrength: {x: 0.15, y: 0.62}
+  materialEvents:
+    dustPerFrame: 256
+    chipsPerFrame: 64
+    mergeDistance: 1.5
+    intensity: 1
+    footsteps: 1
+    emergence: 1
+    repair: 1
+    friction: 1
+    events:
+    - kind: 0
+      dustCount: -1
+      chipCount: -1
+      intensity: 1
+      particleSizeScale: 1
+    - kind: 1
+      dustCount: -1
+      chipCount: -1
+      intensity: 1
+      particleSizeScale: 1
+    - kind: 2
+      dustCount: -1
+      chipCount: -1
+      intensity: 1
+      particleSizeScale: 1
+    - kind: 3
+      dustCount: -1
+      chipCount: -1
+      intensity: 1
+      particleSizeScale: 1
+    - kind: 4
+      dustCount: -1
+      chipCount: -1
+      intensity: 1
+      particleSizeScale: 1
+    - kind: 5
+      dustCount: -1
+      chipCount: -1
+      intensity: 1
+      particleSizeScale: 1
+    - kind: 6
+      dustCount: -1
+      chipCount: -1
+      intensity: 1
+      particleSizeScale: 1
+    - kind: 7
+      dustCount: -1
+      chipCount: -1
+      intensity: 1
+      particleSizeScale: 1
+    - kind: 8
+      dustCount: -1
+      chipCount: -1
+      intensity: 1
+      particleSizeScale: 1
+    - kind: 9
+      dustCount: -1
+      chipCount: -1
+      intensity: 1
+      particleSizeScale: 1
+    - kind: 10
+      dustCount: -1
+      chipCount: -1
+      intensity: 1
+      particleSizeScale: 1
+    - kind: 11
+      dustCount: -1
+      chipCount: -1
+      intensity: 1
+      particleSizeScale: 1

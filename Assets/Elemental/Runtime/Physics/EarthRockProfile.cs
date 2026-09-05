@@ -1,4 +1,5 @@
 using UnityEngine;
+using Elemental.Simulation.Structures;
 
 namespace Elemental.Runtime.Physics
 {
@@ -8,7 +9,17 @@ namespace Elemental.Runtime.Physics
         [Header("Impact fracture")]
         [SerializeField, Min(0f)] private float minimumShatterImpulse = 45f;
         [SerializeField, Min(0.1f)] private float shatterSpecificImpulse = 7.5f;
-        [SerializeField, Range(3, 16)] private int shatterPieceCount = 9;
+        [SerializeField, Min(0.05f)] private float smallShatterRadius = 0.35f;
+        [SerializeField, Min(0.1f)] private float hugeShatterRadius = 1.2f;
+        [Tooltip("Number of persistent physical children from a medium rock. Dust/chips are additional visual effects.")]
+        [SerializeField, Range(2, 4)] private int mediumPieceCount = 4;
+        [SerializeField, Range(2, 3)] private int hugePieceCount = 3;
+        [Tooltip("Maximum recursive split depth. 0 disables physical splitting; still-large stones remain intact at the limit. Safety cap: 2.")]
+        [SerializeField, Range(0, 2)] private int maximumSplitDepth = 2;
+        [Tooltip("Minimum impact impulse per unit mass for small stones. Cannot be below the 0.75 m/s anti-idle contact gate.")]
+        [SerializeField, Min(0.75f)] private float smallImpactSpeed = 0.75f;
+        [Tooltip("Legacy serialized value; not used by sized fracture. Use Medium/Huge Piece Count.")]
+        [SerializeField, HideInInspector] private int shatterPieceCount = 9;
         [SerializeField, Min(0f)] private float shatterSpreadSpeed = 3.8f;
         [SerializeField, Min(0f)] private float craterRadiusPerImpulse = 0.0032f;
         [SerializeField, Min(0.05f)] private float minimumCraterRadius = 0.35f;
@@ -23,13 +34,23 @@ namespace Elemental.Runtime.Physics
         [SerializeField, Min(1f)] private float materialDensity = 120f;
         [SerializeField, Range(2, 8)] private int accretionChipCount = 4;
 
-        [Header("Debris lifecycle")]
+        [Header("Cosmetic debris lifecycle (persistent split stones do not expire)")]
         [SerializeField, Min(0f)] private float debrisRestSeconds = 1.15f;
         [SerializeField, Min(0.05f)] private float debrisShrinkSeconds = 0.9f;
 
         public float MinimumShatterImpulse => minimumShatterImpulse;
         public float ShatterSpecificImpulse => shatterSpecificImpulse;
+        public float SmallShatterRadius => smallShatterRadius;
+        public float HugeShatterRadius => Mathf.Max(smallShatterRadius, hugeShatterRadius);
         public int ShatterPieceCount => shatterPieceCount;
+        public int MediumPieceCount => Mathf.Clamp(mediumPieceCount, 2, 4);
+        public int HugePieceCount => Mathf.Clamp(hugePieceCount, 2, 3);
+        public int MaximumSplitDepth => Mathf.Clamp(maximumSplitDepth, 0, 2);
+        public float SmallImpactSpeed => float.IsFinite(smallImpactSpeed) ? Mathf.Max(0.75f, smallImpactSpeed) : 0.75f;
+        public EarthRockBreakDecision ResolveBreak(float radius, float mass, float impulse,
+            bool controlled = false, int depth = 0) => EarthRockBreakPolicy.Resolve(radius, mass, impulse,
+                controlled, depth, SmallShatterRadius, HugeShatterRadius, MinimumShatterImpulse,
+                ShatterSpecificImpulse, MediumPieceCount, HugePieceCount, MaximumSplitDepth, SmallImpactSpeed);
         public float ShatterSpreadSpeed => shatterSpreadSpeed;
         public float CraterRadiusPerImpulse => craterRadiusPerImpulse;
         public float MinimumCraterRadius => minimumCraterRadius;

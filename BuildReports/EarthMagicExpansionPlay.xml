@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="17" result="Failed(Child)" total="17" passed="16" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-03 01:22:36Z" end-time="2026-09-03 01:23:03Z" duration="26.0937225">
+  <test-suite type="TestSuite" id="1171" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="124" result="Failed" site="Child" start-time="2026-09-03 01:22:36Z" end-time="2026-09-03 01:23:03Z" duration="26.093723" total="17" passed="16" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1164" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="124" result="Failed" site="Child" start-time="2026-09-03 01:22:36Z" end-time="2026-09-03 01:23:03Z" duration="26.064478" total="17" passed="16" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="35168" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1165" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="124" result="Failed" site="Child" start-time="2026-09-03 01:22:36Z" end-time="2026-09-03 01:23:03Z" duration="26.058000" total="17" passed="16" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1166" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="124" result="Failed" site="Child" start-time="2026-09-03 01:22:36Z" end-time="2026-09-03 01:23:03Z" duration="26.055969" total="17" passed="16" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1167" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="124" result="Failed" site="Child" start-time="2026-09-03 01:22:36Z" end-time="2026-09-03 01:23:03Z" duration="26.053670" total="17" passed="16" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1057" name="EarthMagicExpansionRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" testcasecount="17" result="Failed" site="Child" start-time="2026-09-03 01:22:36Z" end-time="2026-09-03 01:23:03Z" duration="26.049455" total="17" passed="16" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1069" name="BallisticRockDebrisKeepsMovingWhileItShrinks" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.BallisticRockDebrisKeepsMovingWhileItShrinks" methodname="BallisticRockDebrisKeepsMovingWhileItShrinks" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="1821832497" result="Passed" start-time="2026-09-03 01:22:37Z" end-time="2026-09-03 01:22:38Z" duration="1.451806" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1063" name="ChargedFieldSlidesWallSeveralMetersAndKeepsItUpright" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.ChargedFieldSlidesWallSeveralMetersAndKeepsItUpright" methodname="ChargedFieldSlidesWallSeveralMetersAndKeepsItUpright" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="893704864" result="Passed" start-time="2026-09-03 01:22:38Z" end-time="2026-09-03 01:22:40Z" duration="2.269755" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1061" name="ExtractedRocksUseBeveledMeshAndConvexCollider" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.ExtractedRocksUseBeveledMeshAndConvexCollider" methodname="ExtractedRocksUseBeveledMeshAndConvexCollider" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="1964934823" result="Passed" start-time="2026-09-03 01:22:40Z" end-time="2026-09-03 01:22:42Z" duration="1.431897" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1074" name="FallingSpaceCushionCapsDescentWithoutInjectingImpactDamage" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.FallingSpaceCushionCapsDescentWithoutInjectingImpactDamage" methodname="FallingSpaceCushionCapsDescentWithoutInjectingImpactDamage" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="1884584019" result="Passed" start-time="2026-09-03 01:22:42Z" end-time="2026-09-03 01:22:42Z" duration="0.787847" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1065" name="GrabbedWallPieceBreaksItsBondsAndPausesShrinkLifecycle" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.GrabbedWallPieceBreaksItsBondsAndPausesShrinkLifecycle" methodname="GrabbedWallPieceBreaksItsBondsAndPausesShrinkLifecycle" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="1180014487" result="Passed" start-time="2026-09-03 01:22:42Z" end-time="2026-09-03 01:22:47Z" duration="4.634015" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1070" name="HeldRectangularEarthMassLevelsAndDampsItsSpin" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.HeldRectangularEarthMassLevelsAndDampsItsSpin" methodname="HeldRectangularEarthMassLevelsAndDampsItsSpin" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="1325312154" result="Passed" start-time="2026-09-03 01:22:47Z" end-time="2026-09-03 01:22:49Z" duration="1.792267" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1059" name="MmbPressLocksOneExplicitTargetAndNeverSweepsNearbyBodies" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.MmbPressLocksOneExplicitTargetAndNeverSweepsNearbyBodies" methodname="MmbPressLocksOneExplicitTargetAndNeverSweepsNearbyBodies" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="1864733907" result="Passed" start-time="2026-09-03 01:22:49Z" end-time="2026-09-03 01:22:49Z" duration="0.240912" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1060" name="MmbRmbTapAndChargeProduceDistinctPhysicalLaunches" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.MmbRmbTapAndChargeProduceDistinctPhysicalLaunches" methodname="MmbRmbTapAndChargeProduceDistinctPhysicalLaunches" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="1023939221" result="Passed" start-time="2026-09-03 01:22:49Z" end-time="2026-09-03 01:22:50Z" duration="0.494126" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1058" name="MmbSessionKeepsFracturedWallClusterLatchedUntilRelease" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.MmbSessionKeepsFracturedWallClusterLatchedUntilRelease" methodname="MmbSessionKeepsFracturedWallClusterLatchedUntilRelease" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="1939985208" result="Passed" start-time="2026-09-03 01:22:50Z" end-time="2026-09-03 01:22:55Z" duration="4.945618" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1072" name="PillarWaveColumnIgnoresItsCasterUntilItReturnsToPool" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.PillarWaveColumnIgnoresItsCasterUntilItReturnsToPool" methodname="PillarWaveColumnIgnoresItsCasterUntilItReturnsToPool" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="61038931" result="Passed" start-time="2026-09-03 01:22:55Z" end-time="2026-09-03 01:22:55Z" duration="0.031962" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1068" name="PlatformDrawnUnderPlayerCarriesWithoutFractureOrRagdoll" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.PlatformDrawnUnderPlayerCarriesWithoutFractureOrRagdoll" methodname="PlatformDrawnUnderPlayerCarriesWithoutFractureOrRagdoll" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="647490793" result="Failed" start-time="2026-09-03 01:22:55Z" end-time="2026-09-03 01:22:57Z" duration="1.945360" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  The pillar jump must launch upward from the platform surface.
+  Expected: greater than 0.5f
+  But was:  0.415780783f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests+<PlatformDrawnUnderPlayerCarriesWithoutFractureOrRagdoll>d__11.MoveNext () [0x00dc9] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\EarthMagicExpansionRuntimeTests.cs:608
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1066" name="PlatformIsWalkableSolidUntilHeavyImpactThenUsesGrabbablePieces" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.PlatformIsWalkableSolidUntilHeavyImpactThenUsesGrabbablePieces" methodname="PlatformIsWalkableSolidUntilHeavyImpactThenUsesGrabbablePieces" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="394153380" result="Passed" start-time="2026-09-03 01:22:57Z" end-time="2026-09-03 01:22:58Z" duration="1.357902" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1067" name="PlatformLightImpactDetachesLocalCellsWhileFoundationIslandStaysSupported" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.PlatformLightImpactDetachesLocalCellsWhileFoundationIslandStaysSupported" methodname="PlatformLightImpactDetachesLocalCellsWhileFoundationIslandStaysSupported" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="718540798" result="Passed" start-time="2026-09-03 01:22:58Z" end-time="2026-09-03 01:22:59Z" duration="1.520230" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1064" name="QuickTapFieldImmediatelySlidesAWholeWallWithoutRecoil" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.QuickTapFieldImmediatelySlidesAWholeWallWithoutRecoil" methodname="QuickTapFieldImmediatelySlidesAWholeWallWithoutRecoil" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="380068119" result="Passed" start-time="2026-09-03 01:22:59Z" end-time="2026-09-03 01:23:00Z" duration="1.001406" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1073" name="RaisedPillarCanBeControlledThenFlickedAsAProjectile" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.RaisedPillarCanBeControlledThenFlickedAsAProjectile" methodname="RaisedPillarCanBeControlledThenFlickedAsAProjectile" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="392892504" result="Passed" start-time="2026-09-03 01:23:00Z" end-time="2026-09-03 01:23:01Z" duration="0.515656" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1062" name="VectorFieldAcceleratesEveryPhysicsTickAndReleaseAddsImpulseWithoutTeleporting" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.VectorFieldAcceleratesEveryPhysicsTickAndReleaseAddsImpulseWithoutTeleporting" methodname="VectorFieldAcceleratesEveryPhysicsTickAndReleaseAddsImpulseWithoutTeleporting" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="1356143304" result="Passed" start-time="2026-09-03 01:23:01Z" end-time="2026-09-03 01:23:01Z" duration="0.380416" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1071" name="WallChordBottomSamplesStayInsidePlanetSurface" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.WallChordBottomSamplesStayInsidePlanetSurface" methodname="WallChordBottomSamplesStayInsidePlanetSurface" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="1413990226" result="Passed" start-time="2026-09-03 01:23:01Z" end-time="2026-09-03 01:23:03Z" duration="1.226449" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\EarthMagicExpansionPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

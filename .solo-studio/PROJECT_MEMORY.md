@@ -1,8 +1,18 @@
 # Project Memory — El-Emental
 
+2026-09-04 outer column integration: the artist-edited OuterStoneRing working
+blend is authoritative. Seven columns remain separate from Broken Crown in both
+asset paths and scene hierarchy; 85 repairable cells plus eight authored loose
+stones share arena materials/runtime. Preserve native FBX Y-up, frame-local rest
+poses, 2.5 m final spherical-ground clearance and buried caps. Repair restores the
+current damaged silhouettes. Focused 2/2 Edit + 2/2 Play passed; details in
+`Docs/OUTER_STONE_RING.md`. Do not regenerate the artist's Blender meshes.
+
 Updated: 2026-08-30
 
 Current gate: M11 animation contact and Broken Crown rendering rehabilitation
+
+2026-09-02 animation handoff: the dirty working tree contains the feature-flagged EAMM production pass (single animation graph, cached per-bone inertialization, stable semantic catalog, 2D locomotion, front/back recovery, bounded slope and magic reach). Existing arena/material/scene edits were preserved and the generated scene was not rebuilt. Runtime/visual/30-60-120/profile acceptance is deliberately pending because the implementation request excluded PlayMode/test runs.
 
 Baseline commit: `7bdce0dac855007ec14e1f7114a6af37e563614a`
 

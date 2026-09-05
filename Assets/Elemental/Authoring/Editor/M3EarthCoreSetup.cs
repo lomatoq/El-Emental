@@ -10,6 +10,9 @@ using Elemental.Presentation.Diagnostics;
 using Elemental.Presentation.Rendering;
 using Elemental.Presentation.UI;
 using Elemental.Presentation.VFX;
+using Elemental.Presentation.MotionMatching;
+using Elemental.Authoring.Editor.MotionMatching;
+using MotionMatching;
 using Elemental.Runtime.Physics;
 using Elemental.Runtime.Characters;
 using Elemental.Runtime.Matter;
@@ -89,6 +92,16 @@ namespace Elemental.Authoring.Editor
         private const string MixamoWalkPath = "Assets/ThirdParty/Mixamo/X Bot@Walking.fbx";
         private const string MixamoWalkBackPath = "Assets/ThirdParty/Mixamo/X Bot@Walking Backwards.fbx";
         private const string MixamoPunchPath = "Assets/ThirdParty/Mixamo/X Bot@Punching.fbx";
+        private const string MixamoIdlePath = "Assets/ThirdParty/Mixamo/X Bot@Idle.fbx";
+        private const string MixamoTurnPath = "Assets/ThirdParty/Mixamo/X Bot@Left Turn.fbx";
+        private const string EammLibraryPath =
+            "Assets/Elemental/Content/Characters/MotionMatching/EarthMotionLibrary.asset";
+        private const string EammDataPath =
+            "Assets/Elemental/Content/Characters/MotionMatching/EarthMotionLibraryData.asset";
+        private const string EammSearchPath =
+            "Assets/Elemental/Content/Characters/MotionMatching/EarthMotionLibraryData_EnvironmentSearch.asset";
+        private const string EammRuntimeProfilePath =
+            "Assets/Elemental/Content/Profiles/EAMMRuntimeProfile.asset";
         private const string MageControllerPath = "Assets/Elemental/Content/Animation/KayKitMage.controller";
         private const string MageMaskPath = "Assets/Elemental/Content/Animation/KayKitMageUpperBody.mask";
 
@@ -165,7 +178,7 @@ namespace Elemental.Authoring.Editor
                                         "EarthWall.mat", style.StoneColor * 0.95f, 0.05f,
                                         style.StoneEmission * 0.5f);
             if (!IsRumbleMaterial(wallMaterial)) earthMaterialProfile.Apply(wallMaterial, false);
-            Material fractureInteriorMaterial = LoadRumbleMaterial("RumbleClay.mat") ??
+            Material fractureInteriorMaterial = LoadRumbleMaterial("RumbleSandstone.mat") ??
                                                 CreateOrLoadEarthMaterial(
                                                     "EarthFractureInterior.mat",
                                                     earthMaterialProfile.FreshInteriorTint, 0.025f,
@@ -174,6 +187,7 @@ namespace Elemental.Authoring.Editor
                 earthMaterialProfile.Apply(fractureInteriorMaterial, true);
             EarthWallPool wallPool = magicRoot.AddComponent<EarthWallPool>();
             wallPool.Configure(8, wallMesh, wallMaterial, CreateOrLoadWallProfile());
+            wallPool.ConfigureNaturalFracture(debrisPool);
             wallPool.ConfigureGravity(gravityWorld);
             wallPool.ConfigureShapeGrammar(shapeGrammar);
             EarthStructureFractureProfile structureFracture =
@@ -362,11 +376,9 @@ namespace Elemental.Authoring.Editor
             Transform enemyFocusProxy = focusEnemy != null
                 ? focusEnemy.transform.Find("EnemyFocusProxy")
                 : null;
+            RepairGameplayCameraWiring(camera, character, focusEnemy);
             EarthCinematicDepthOfFieldController cinematicDepthOfField =
                 camera.GetComponent<EarthCinematicDepthOfFieldController>();
-            cinematicDepthOfField?.ConfigureSubjects(
-                character.transform,
-                focusEnemy != null ? focusEnemy.transform : null);
             if (cinematicDepthOfField != null)
                 EditorUtility.SetDirty(cinematicDepthOfField);
             ConfigureMiniBokeh(camera, enemyFocusProxy);
@@ -389,6 +401,1107 @@ namespace Elemental.Authoring.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("[Elemental] M3 Earth Core Slice configured.");
+        }
+
+        [MenuItem("Elemental/Setup/Integrate EAMM Into Current Earth Core Slice")]
+        public static void IntegrateEammIntoCurrentScene()
+        {
+            Scene scene = SceneManager.GetActiveScene();
+            if (!scene.IsValid() || !scene.isLoaded)
+                throw new UnityEditor.Build.BuildFailedException("Open EarthCoreSlice before integrating EAMM.");
+
+            GameObject player = GameObject.Find("Planet Character");
+            GameObject bot = GameObject.Find("Rumble Linebreaker Bot");
+            if (player == null || bot == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    "Current scene must contain Planet Character and Rumble Linebreaker Bot.");
+
+            IntegrateEammActor(player, true);
+            IntegrateEammActor(bot, false);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[EAMM] Integrated the baked base-pose source into player and bot without rebuilding arena or render authoring.");
+        }
+
+        [MenuItem("Elemental/Setup/Repair Earth Ability Registry Wiring")]
+        public static void RepairEarthAbilityRegistryWiring()
+        {
+            if (Application.isPlaying)
+                throw new System.InvalidOperationException(
+                    "Stop Play Mode before repairing the Earth ability registry.");
+
+            MagicExecutor executor =
+                UnityEngine.Object.FindAnyObjectByType<MagicExecutor>(FindObjectsInactive.Include);
+            if (executor == null)
+                throw new System.InvalidOperationException(
+                    "Earth ability registry repair requires the existing MagicExecutor.");
+            AbilityRegistryBootstrap registry = executor.GetComponent<AbilityRegistryBootstrap>();
+            if (registry == null)
+                registry = executor.gameObject.AddComponent<AbilityRegistryBootstrap>();
+            registry.Configure(executor, CreateOrLoadRecipes());
+            EditorUtility.SetDirty(registry);
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            EditorSceneManager.SaveOpenScenes();
+            Debug.Log("[Elemental] Earth ability registry runtime wiring repaired.");
+        }
+
+        [MenuItem("Elemental/Setup/Repair Character Test Runtime Wiring")]
+        public static void RepairCharacterTestRuntimeWiring()
+        {
+            if (Application.isPlaying)
+                throw new System.InvalidOperationException(
+                    "Stop Play Mode before repairing character test wiring.");
+
+            NormalizeLoadedSceneMaterialShaderState();
+
+            // Keep the rendered voxel shell on the same canonical world profile as
+            // gravity, spawns and the authored arena. Older generated scenes can
+            // retain VoxelPlanetBehaviour's one-metre defaults after a partial
+            // wiring repair, which leaves gameplay at the real surface radius while
+            // the visible planet is stranded at the world origin.
+            PlanetWorldProfile worldProfile = M2VoxelPlanetSetup.CreateOrLoadWorldProfile();
+            VoxelPlanetBehaviour voxelPlanet =
+                UnityEngine.Object.FindAnyObjectByType<VoxelPlanetBehaviour>(FindObjectsInactive.Include);
+            Material planetMaterial = LoadRumbleMaterial("RumbleGround.mat") ??
+                                      AssetDatabase.LoadAssetAtPath<Material>(
+                                          "Assets/Elemental/Content/Materials/VoxelPlanetSurface.mat");
+            if (voxelPlanet == null || worldProfile == null || planetMaterial == null)
+                throw new System.InvalidOperationException(
+                    "Character test repair requires the voxel planet, canonical world profile and planet material.");
+            voxelPlanet.Configure(worldProfile, planetMaterial);
+            EditorUtility.SetDirty(voxelPlanet);
+
+            GravityWorldBehaviour gravityWorld =
+                UnityEngine.Object.FindAnyObjectByType<GravityWorldBehaviour>(FindObjectsInactive.Include);
+            PointPlanetGravitySource[] gravitySources =
+                UnityEngine.Object.FindObjectsByType<PointPlanetGravitySource>(
+                    FindObjectsInactive.Include);
+            GameObject player = GameObject.Find("Planet Character");
+            GameObject bot = GameObject.Find("Rumble Linebreaker Bot");
+            UnityEngine.Camera camera = UnityEngine.Camera.main ??
+                UnityEngine.Object.FindAnyObjectByType<UnityEngine.Camera>(FindObjectsInactive.Include);
+            if (gravityWorld == null || gravitySources.Length == 0 ||
+                player == null || bot == null || camera == null)
+                throw new System.InvalidOperationException(
+                    "Character test repair requires gravity world/source, player, bot and game camera.");
+
+            for (int index = 0; index < gravitySources.Length; index++)
+            {
+                PointPlanetGravitySource gravitySource = gravitySources[index];
+                if (gravitySource == null) continue;
+                gravitySource.Configure(worldProfile);
+                EditorUtility.SetDirty(gravitySource);
+            }
+            gravityWorld.Configure(gravitySources);
+            RepairActorGravityAndMotor(
+                player,
+                gravityWorld,
+                player.GetComponent<PlanetInputReader>(),
+                camera.transform,
+                true);
+            RepairActorGravityAndMotor(
+                bot,
+                gravityWorld,
+                bot.GetComponent<EarthMvpBotController>(),
+                bot.transform,
+                false);
+
+            Vector3 arenaCenter = BrokenCrownArenaSceneIntegrator.RepairCharacterTestSpawns(
+                player,
+                bot,
+                gravitySources[0].transform.position);
+            BrokenCrownArenaSceneIntegrator.RepairCurrentSceneRuntimeWiring();
+            EarthMvpBotController botController = bot.GetComponent<EarthMvpBotController>();
+            botController.Configure(
+                player.transform,
+                player.GetComponent<Rigidbody>(),
+                player.GetComponent<PhysicalImpactTarget>(),
+                player.GetComponent<ActiveRagdollPuppet>(),
+                gravitySources[0].transform,
+                bot.GetComponent<Rigidbody>(),
+                bot.GetComponent<PlanetMotor>(),
+                bot.GetComponent<EarthCombatDummy>(),
+                arenaCenter,
+                6.5f);
+
+            PlanetCameraRig cameraRig = camera.GetComponent<PlanetCameraRig>();
+            if (cameraRig == null) cameraRig = camera.gameObject.AddComponent<PlanetCameraRig>();
+            cameraRig.Configure(player.transform, player.GetComponent<Rigidbody>(), gravityWorld);
+            RepairGameplayCameraWiring(camera, player, bot);
+            RepairMagicRuntimeCoreWiring(voxelPlanet, gravityWorld, player);
+            RepairPlayerInputAndMagicWiring(player, camera);
+            RepairCharacterCombatAndLandingWiring(
+                player,
+                bot,
+                gravityWorld,
+                arenaCenter);
+
+            RepairCanonicalEffectsProfileWiring(CreateOrLoadEffectsProfile());
+            RepairEarthMobilityVisualBindings(
+                player,
+                GameObject.Find("Planet Collision Proxy").transform,
+                cameraRig,
+                UnityEngine.Object.FindAnyObjectByType<EarthPillarFeedback>(FindObjectsInactive.Include));
+
+            IntegrateEammActor(player, true);
+            IntegrateEammActor(bot, false);
+            EditorUtility.SetDirty(gravityWorld);
+            EditorUtility.SetDirty(player);
+            EditorUtility.SetDirty(bot);
+            EditorUtility.SetDirty(camera.gameObject);
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            EditorSceneManager.SaveOpenScenes();
+            AssetDatabase.SaveAssets();
+            Debug.Log(
+                "[Elemental] Character test runtime wiring repaired: camera, radial gravity, motors and EAMM bridges.");
+        }
+
+        [MenuItem("Elemental/Setup/Repair Surf And Launch Pillar Bindings")]
+        public static void RepairSurfAndLaunchPillarBindings()
+        {
+            if (Application.isPlaying)
+                throw new System.InvalidOperationException("Stop Play Mode before repairing mobility bindings.");
+            GameObject planet = GameObject.Find("Planet Collision Proxy");
+            int changed = RepairEarthMobilityVisualBindings(
+                GameObject.Find("Planet Character"),
+                planet != null ? planet.transform : null,
+                UnityEngine.Object.FindAnyObjectByType<PlanetCameraRig>(FindObjectsInactive.Include),
+                UnityEngine.Object.FindAnyObjectByType<EarthPillarFeedback>(FindObjectsInactive.Include));
+            if (changed > 0)
+                EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
+            Debug.Log($"[Elemental] Restored {changed} missing surf/launch-pillar bindings; existing tuning and transforms preserved.");
+        }
+
+        /// <summary>
+        /// Repairs only absent references, without rebuilding the scene, material assets,
+        /// runtime surf views, or authored launch geometry. Returns changed components.
+        /// </summary>
+        public static int RepairEarthMobilityVisualBindings(
+            GameObject player,
+            Transform planetCenter,
+            PlanetCameraRig cameraRig,
+            EarthPillarFeedback feedback)
+        {
+            if (Application.isPlaying)
+                throw new System.InvalidOperationException("Mobility binding repair is an Edit Mode operation.");
+            EarthSurfController surf = player != null ? player.GetComponent<EarthSurfController>() : null;
+            EarthPillarMobility mobility = player != null ? player.GetComponent<EarthPillarMobility>() : null;
+            if (surf == null || mobility == null || feedback == null)
+                throw new System.InvalidOperationException(
+                    "Mobility repair requires the existing player surf/mobility components and Earth Pillar Feedback; it does not generate replacements.");
+
+            var surfData = new SerializedObject(surf);
+            var feedbackData = new SerializedObject(feedback);
+            EarthEffectsTuningProfile surfEffects =
+                surfData.FindProperty("effectsProfile").objectReferenceValue as EarthEffectsTuningProfile ??
+                AssetDatabase.LoadAssetAtPath<EarthEffectsTuningProfile>(EarthEffectsProfilePath);
+            EarthEffectsTuningProfile pillarEffects =
+                feedbackData.FindProperty("effectsProfile").objectReferenceValue as EarthEffectsTuningProfile ?? surfEffects;
+            FillMissingMobilityReference(surfData, "casterBody", player.GetComponent<Rigidbody>());
+            FillMissingMobilityReference(surfData, "motor", player.GetComponent<PlanetMotor>());
+            FillMissingMobilityReference(surfData, "planetCenter", planetCenter);
+            FillMissingMobilityReference(surfData, "profile", AssetDatabase.LoadAssetAtPath<EarthSurfProfile>(SurfProfilePath));
+            FillMissingMobilityReference(surfData, "effectsProfile", surfEffects);
+            FillMissingMobilityReference(surfData, "material", LoadRumbleMaterial("RumbleSandstone.mat"));
+            FillMissingMobilityReference(surfData, "dustMaterial", surfEffects != null ? surfEffects.Materials.SurfDust : null);
+
+            FillMissingMobilityReference(feedbackData, "mobility", mobility);
+            FillMissingMobilityReference(feedbackData, "pillar", FindDescendantByName(feedback.transform, "Rising Earth Pillar"));
+            FillMissingMobilityReference(feedbackData, "cameraRig", cameraRig);
+            FillMissingMobilityReference(feedbackData, "effectsProfile", pillarEffects);
+            var existingChips = new List<Transform>();
+            foreach (Transform child in feedback.GetComponentsInChildren<Transform>(true))
+                if (child.name.StartsWith("Lift Ground Chip ", System.StringComparison.Ordinal))
+                    existingChips.Add(child);
+            SerializedProperty chips = feedbackData.FindProperty("groundChips");
+            if (chips.arraySize == 0)
+            {
+                if (existingChips.Count == 0)
+                    throw new System.InvalidOperationException("Launch feedback has no authored Lift Ground Chip children to bind.");
+                chips.arraySize = existingChips.Count;
+            }
+            for (int index = 0; index < chips.arraySize; index++)
+            {
+                SerializedProperty chip = chips.GetArrayElementAtIndex(index);
+                if (chip.objectReferenceValue != null) continue;
+                if (index >= existingChips.Count)
+                    throw new System.InvalidOperationException($"No existing launch chip is available for slot {index}; restore the authored child.");
+                chip.objectReferenceValue = existingChips[index];
+            }
+
+            int changed = 0;
+            if (surfData.ApplyModifiedProperties())
+            {
+                EditorUtility.SetDirty(surf);
+                EditorSceneManager.MarkSceneDirty(surf.gameObject.scene);
+                changed++;
+            }
+            if (feedbackData.ApplyModifiedProperties())
+            {
+                EditorUtility.SetDirty(feedback);
+                EditorSceneManager.MarkSceneDirty(feedback.gameObject.scene);
+                changed++;
+            }
+            return changed;
+        }
+
+        private static void FillMissingMobilityReference(
+            SerializedObject target, string propertyName, UnityEngine.Object fallback)
+        {
+            SerializedProperty property = target.FindProperty(propertyName);
+            if (property.objectReferenceValue != null) return;
+            if (fallback == null)
+                throw new System.InvalidOperationException(
+                    $"Cannot repair {target.targetObject.name}.{propertyName}: the existing authored dependency/asset is missing.");
+            property.objectReferenceValue = fallback;
+        }
+
+        [MenuItem("Elemental/Setup/Repair Gameplay Camera Wiring")]
+        public static void RepairGameplayCameraOnly()
+        {
+            if (Application.isPlaying)
+                throw new System.InvalidOperationException(
+                    "Stop Play Mode before repairing gameplay camera wiring.");
+
+            GameObject player = GameObject.Find("Planet Character");
+            GameObject bot = GameObject.Find("Rumble Linebreaker Bot");
+            UnityEngine.Camera camera = UnityEngine.Camera.main ??
+                UnityEngine.Object.FindAnyObjectByType<UnityEngine.Camera>(FindObjectsInactive.Include);
+            GravityWorldBehaviour gravityWorld =
+                UnityEngine.Object.FindAnyObjectByType<GravityWorldBehaviour>(FindObjectsInactive.Include);
+            if (player == null || camera == null || gravityWorld == null)
+                throw new System.InvalidOperationException(
+                    "Gameplay camera repair requires the player, main camera and gravity world.");
+
+            PlanetCameraRig cameraRig = camera.GetComponent<PlanetCameraRig>();
+            if (cameraRig == null) cameraRig = camera.gameObject.AddComponent<PlanetCameraRig>();
+            cameraRig.Configure(player.transform, player.GetComponent<Rigidbody>(), gravityWorld);
+            RepairGameplayCameraWiring(camera, player, bot);
+            EditorUtility.SetDirty(camera.gameObject);
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            EditorSceneManager.SaveOpenScenes();
+            Debug.Log("[Elemental] Gameplay camera target, spherical world-up frame and aim pivot repaired.");
+        }
+
+        private static void RepairMagicRuntimeCoreWiring(
+            VoxelPlanetBehaviour voxelPlanet,
+            GravityWorldBehaviour gravityWorld,
+            GameObject player)
+        {
+            GameObject magicRoot = GameObject.Find("Earth Magic Runtime");
+            GameObject collisionProxy = GameObject.Find("Planet Collision Proxy");
+            if (magicRoot == null || collisionProxy == null ||
+                collisionProxy.GetComponent<Collider>() == null)
+                throw new System.InvalidOperationException(
+                    "Magic runtime repair requires the existing Earth Magic Runtime and planet collision proxy.");
+
+            EarthSurfaceQueryService surfaceQueries =
+                magicRoot.GetComponent<EarthSurfaceQueryService>();
+            EarthRockDebrisPool debrisPool = magicRoot.GetComponent<EarthRockDebrisPool>();
+            EarthFragmentPool fragmentPool = magicRoot.GetComponent<EarthFragmentPool>();
+            EarthWallPool wallPool = magicRoot.GetComponent<EarthWallPool>();
+            EarthPlatformPool platformPool = magicRoot.GetComponent<EarthPlatformPool>();
+            EarthPillarWavePool wavePool = magicRoot.GetComponent<EarthPillarWavePool>();
+            EarthTelekinesisController telekinesis =
+                magicRoot.GetComponent<EarthTelekinesisController>();
+            MagicExecutor executor = magicRoot.GetComponent<MagicExecutor>();
+            if (surfaceQueries == null || debrisPool == null || fragmentPool == null ||
+                wallPool == null || platformPool == null || wavePool == null ||
+                telekinesis == null || executor == null)
+                throw new System.InvalidOperationException(
+                    "Magic runtime repair requires all existing Earth pools and controllers.");
+
+            VoxelPlanetEarthSurfaceProvider planetSurface =
+                collisionProxy.GetComponent<VoxelPlanetEarthSurfaceProvider>();
+            if (planetSurface == null)
+                planetSurface = collisionProxy.AddComponent<VoxelPlanetEarthSurfaceProvider>();
+            planetSurface.Configure(
+                collisionProxy.GetComponent<Collider>(),
+                voxelPlanet,
+                surfaceQueries);
+
+            Material looseEarthMaterial = LoadRumbleMaterial("RumbleSandstone.mat") ??
+                                          CreateOrLoadEarthMaterial(
+                                              "EarthLooseStone.mat",
+                                              new Color(0.52f, 0.31f, 0.16f),
+                                              0.05f,
+                                              Color.black);
+            Material wallMaterial = looseEarthMaterial;
+            Material fractureInteriorMaterial = LoadRumbleMaterial("RumbleSandstone.mat") ??
+                                                wallMaterial;
+            Mesh[] fragmentMeshes = CreateOrLoadFragmentMeshes();
+            Mesh[] debrisMeshes = CreateOrLoadDebrisMeshes();
+            Mesh wallMesh = CreateOrLoadChippedWallMesh();
+            EarthRockProfile rockProfile = CreateOrLoadRockProfile();
+            EarthPhysicsFeelProfile physicsFeel =
+                CreateOrLoadProfile<EarthPhysicsFeelProfile>(
+                    PhysicsFeelProfilePath,
+                    "Earth Physics Feel Profile");
+            EarthShapeGrammarProfile shapeGrammar =
+                CreateOrLoadProfile<EarthShapeGrammarProfile>(
+                    ShapeGrammarProfilePath,
+                    "Earth Shape Grammar Profile");
+            EarthHoverProfile hoverProfile = CreateOrLoadHoverProfile();
+            EarthStructureFractureProfile structureFracture =
+                CreateOrLoadProfile<EarthStructureFractureProfile>(
+                    StructureFractureProfilePath,
+                    "Earth Structure Fracture Profile");
+
+            debrisPool.Configure(72, looseEarthMaterial, debrisMeshes[0], gravityWorld, rockProfile);
+            debrisPool.ConfigureMeshVariants(debrisMeshes);
+            debrisPool.ConfigureShapeGrammar(shapeGrammar);
+            fragmentPool.Configure(
+                32,
+                looseEarthMaterial,
+                gravityWorld,
+                fragmentMeshes[0],
+                rockProfile,
+                debrisPool);
+            fragmentPool.ConfigureMeshVariants(fragmentMeshes);
+            fragmentPool.ConfigureShapeGrammar(shapeGrammar);
+            fragmentPool.ConfigurePhysicsFeel(physicsFeel);
+            fragmentPool.ConfigureHover(hoverProfile);
+
+            wallPool.Configure(8, wallMesh, wallMaterial, CreateOrLoadWallProfile());
+            wallPool.ConfigureGravity(gravityWorld);
+            wallPool.ConfigureShapeGrammar(shapeGrammar);
+            wallPool.ConfigureStructureFracture(structureFracture);
+            wallPool.ConfigureSurfaceQueries(surfaceQueries);
+            wallPool.ConfigureFractureMaterials(wallMaterial, fractureInteriorMaterial);
+            wallPool.ConfigurePhysicsFeel(physicsFeel);
+            wallPool.ConfigureRepair(CreateOrLoadProfile<EarthRepairProfile>(
+                RepairProfilePath,
+                "Earth Repair Profile"));
+            wallPool.ConfigureFractureAsset(
+                EarthFractureBaker.CreateOrLoadProductionWall(wallMesh, wallMesh),
+                false);
+
+            EarthPlatformProfile platformProfile = CreateOrLoadPlatformProfile();
+            platformPool.Configure(6, wallMaterial, platformProfile);
+            platformPool.ConfigureGravity(gravityWorld);
+            platformPool.ConfigureFractureProfile(structureFracture);
+            platformPool.ConfigureSurfaceQueries(surfaceQueries);
+            platformPool.ConfigurePhysicsFeel(physicsFeel);
+            platformPool.ConfigurePieceMeshes(fragmentMeshes);
+
+            EarthPillarWaveProfile waveProfile = CreateOrLoadWaveProfile();
+            waveProfile.ConfigureMotionMode(WaveMotionMode.PremiumVisual);
+            wavePool.Configure(96, wallMesh, wallMaterial, collisionProxy.transform, waveProfile);
+            wavePool.ConfigureSurfaceQueries(surfaceQueries);
+            wavePool.ConfigureMeshVariants(fragmentMeshes);
+            telekinesis.ConfigureHover(hoverProfile, collisionProxy.transform);
+
+            Transform heldFragmentAnchor = player.transform.Find("Held Earth Anchor");
+            if (heldFragmentAnchor == null)
+            {
+                GameObject anchor = new GameObject("Held Earth Anchor");
+                heldFragmentAnchor = anchor.transform;
+                heldFragmentAnchor.SetParent(player.transform, false);
+                heldFragmentAnchor.localPosition = new Vector3(0.82f, 1.18f, 0.62f);
+            }
+            executor.Configure(
+                voxelPlanet,
+                fragmentPool,
+                collisionProxy.transform,
+                wallPool,
+                heldFragmentAnchor);
+            executor.ConfigureTelekinesis(telekinesis);
+            executor.ConfigureEarthExtensions(
+                CreateOrLoadVectorFieldProfile(),
+                platformPool,
+                CreateOrLoadGravityWellProfile());
+            executor.ConfigureWallProfile(1.5f, 4.0f, 14f, 0.95f);
+
+            EditorUtility.SetDirty(planetSurface);
+            EditorUtility.SetDirty(debrisPool);
+            EditorUtility.SetDirty(fragmentPool);
+            EditorUtility.SetDirty(wallPool);
+            EditorUtility.SetDirty(platformPool);
+            EditorUtility.SetDirty(wavePool);
+            EditorUtility.SetDirty(telekinesis);
+            EditorUtility.SetDirty(executor);
+            EditorUtility.SetDirty(waveProfile);
+        }
+
+        private static void RepairPlayerInputAndMagicWiring(
+            GameObject player,
+            UnityEngine.Camera camera)
+        {
+            MagicExecutor executor =
+                UnityEngine.Object.FindAnyObjectByType<MagicExecutor>(FindObjectsInactive.Include);
+            EarthSurfaceQueryService surfaceQueries =
+                UnityEngine.Object.FindAnyObjectByType<EarthSurfaceQueryService>(FindObjectsInactive.Include);
+            GameObject collisionProxy = GameObject.Find("Planet Collision Proxy");
+            PlayerInput playerInput = player.GetComponent<PlayerInput>();
+            MagicInputController magicInput = player.GetComponent<MagicInputController>();
+            PlanetInputReader motorInput = player.GetComponent<PlanetInputReader>();
+            if (executor == null || surfaceQueries == null || collisionProxy == null ||
+                collisionProxy.GetComponent<Collider>() == null || playerInput == null ||
+                magicInput == null || motorInput == null)
+                throw new System.InvalidOperationException(
+                    "Character test repair requires the existing Earth magic runtime, surface queries, collision proxy and player input components.");
+
+            EarthInputAdapter inputAdapter = player.GetComponent<EarthInputAdapter>();
+            if (inputAdapter == null) inputAdapter = player.AddComponent<EarthInputAdapter>();
+            inputAdapter.Configure(playerInput);
+
+            LineRenderer preview = player.GetComponent<LineRenderer>();
+            if (preview == null) preview = player.AddComponent<LineRenderer>();
+            preview.useWorldSpace = true;
+            preview.loop = false;
+            preview.widthMultiplier = 0.08f;
+            preview.sharedMaterial = CreateOrLoadPreviewMaterial();
+            preview.positionCount = 0;
+
+            EarthPillarMobility pillarMobility = player.GetComponent<EarthPillarMobility>();
+            EarthPillarWaveAbility pillarWave = player.GetComponent<EarthPillarWaveAbility>();
+            EarthLandingCushion landingCushion = player.GetComponent<EarthLandingCushion>();
+            EarthPillarWavePool wavePool =
+                UnityEngine.Object.FindAnyObjectByType<EarthPillarWavePool>(FindObjectsInactive.Include);
+            if (pillarMobility == null || pillarWave == null || wavePool == null)
+                throw new System.InvalidOperationException(
+                    "Character test repair requires the existing pillar mobility, pillar wave ability and wave pool.");
+            pillarMobility.Configure(
+                player.GetComponent<Rigidbody>(),
+                player.GetComponent<PlanetMotor>(),
+                surfaceQueries);
+            pillarWave.Configure(
+                player.GetComponent<Rigidbody>(),
+                player.GetComponent<PlanetMotor>(),
+                wavePool,
+                CreateOrLoadProfile<EarthPillarWaveProfile>(
+                    WaveProfilePath,
+                    "Earth Pillar Wave Profile"));
+            EarthActionRouterBehaviour actionRouter = player.GetComponent<EarthActionRouterBehaviour>();
+            if (actionRouter == null) actionRouter = player.AddComponent<EarthActionRouterBehaviour>();
+
+            magicInput.Configure(
+                playerInput,
+                camera,
+                executor,
+                collisionProxy.GetComponent<Collider>(),
+                preview);
+            magicInput.ConfigureGestureProfile(CreateOrLoadProfile<EarthGestureProfile>(
+                GestureProfilePath,
+                "Earth Gesture Profile"));
+            magicInput.ConfigureEarthTechniques(pillarWave);
+            magicInput.ConfigureEarthSurfaceQueries(surfaceQueries);
+            magicInput.ConfigureEarthFeatureProfiles(
+                CreateOrLoadProfile<EarthQuickCastProfile>(
+                    QuickCastProfilePath,
+                    "Earth Quick Cast Profile"),
+                CreateOrLoadProfile<EarthArmorProfile>(
+                    ArmorProfilePath,
+                    "Earth Armor Profile"));
+            motorInput.Configure(
+                inputAdapter,
+                pillarMobility,
+                pillarWave,
+                landingCushion,
+                actionRouter);
+            player.GetComponent<PlanetMotor>()?.ConfigureInputSource(motorInput);
+
+            AbilityRegistryBootstrap registry = executor.GetComponent<AbilityRegistryBootstrap>();
+            if (registry == null) registry = executor.gameObject.AddComponent<AbilityRegistryBootstrap>();
+            registry.Configure(executor, CreateOrLoadRecipes());
+
+            EditorUtility.SetDirty(inputAdapter);
+            EditorUtility.SetDirty(magicInput);
+            EditorUtility.SetDirty(motorInput);
+            EditorUtility.SetDirty(pillarMobility);
+            EditorUtility.SetDirty(pillarWave);
+            EditorUtility.SetDirty(actionRouter);
+            EditorUtility.SetDirty(registry);
+            EditorUtility.SetDirty(preview);
+        }
+
+        private static void RepairCharacterCombatAndLandingWiring(
+            GameObject player,
+            GameObject bot,
+            GravityWorldBehaviour gravityWorld,
+            Vector3 arenaCenter)
+        {
+            GameObject collisionProxy = GameObject.Find("Planet Collision Proxy");
+            EarthSurfaceQueryService surfaceQueries =
+                UnityEngine.Object.FindAnyObjectByType<EarthSurfaceQueryService>(FindObjectsInactive.Include);
+            EarthFragmentPool projectilePool =
+                UnityEngine.Object.FindAnyObjectByType<EarthFragmentPool>(FindObjectsInactive.Include);
+            if (player == null || bot == null || gravityWorld == null || collisionProxy == null ||
+                collisionProxy.GetComponent<Collider>() == null || surfaceQueries == null ||
+                projectilePool == null)
+                throw new System.InvalidOperationException(
+                    "Combat repair requires both fighters, gravity, the planet collider, surface queries and projectile pool.");
+
+            Rigidbody playerBody = player.GetComponent<Rigidbody>();
+            CapsuleCollider playerCollider = player.GetComponent<CapsuleCollider>();
+            PlanetMotor playerMotor = player.GetComponent<PlanetMotor>();
+            MagicInputController magicInput = player.GetComponent<MagicInputController>();
+            PlanetInputReader inputReader = player.GetComponent<PlanetInputReader>();
+            PhysicalImpactTarget playerPhysicalImpact = player.GetComponent<PhysicalImpactTarget>();
+            ActiveRagdollPuppet playerPuppet = player.GetComponent<ActiveRagdollPuppet>();
+            Rigidbody botBody = bot.GetComponent<Rigidbody>();
+            CapsuleCollider botCollider = bot.GetComponent<CapsuleCollider>();
+            PlanetMotor botMotor = bot.GetComponent<PlanetMotor>();
+            EarthCombatDummy botCombat = bot.GetComponent<EarthCombatDummy>();
+            EarthMvpBotController botController = bot.GetComponent<EarthMvpBotController>();
+            if (playerBody == null || playerCollider == null || playerMotor == null ||
+                magicInput == null || inputReader == null || playerPhysicalImpact == null ||
+                playerPuppet == null || botBody == null || botCollider == null ||
+                botMotor == null || botCombat == null || botController == null)
+                throw new System.InvalidOperationException(
+                    "Combat repair requires the authored player and bot physics/control components.");
+
+            playerPhysicalImpact.Configure(playerBody, 0.34f);
+            RepairPlayerPhysicalPuppet(
+                player,
+                playerPuppet,
+                playerBody,
+                playerMotor,
+                playerPhysicalImpact,
+                gravityWorld,
+                magicInput,
+                inputReader);
+
+            HumanoidCharacterPresentation playerPresentation =
+                player.GetComponentInChildren<HumanoidCharacterPresentation>(true);
+            HumanoidCharacterPresentation botPresentation =
+                bot.GetComponentInChildren<HumanoidCharacterPresentation>(true);
+            Animator playerAnimator = playerPresentation != null
+                ? playerPresentation.GetComponent<Animator>() ??
+                  playerPresentation.GetComponentInChildren<Animator>(true)
+                : null;
+            Animator botAnimator = botPresentation != null
+                ? botPresentation.GetComponent<Animator>() ??
+                  botPresentation.GetComponentInChildren<Animator>(true)
+                : null;
+            HumanoidRagdollRig playerRagdoll = playerPresentation != null
+                ? playerPresentation.GetComponent<HumanoidRagdollRig>()
+                : null;
+            HumanoidRagdollRig botRagdoll = botPresentation != null
+                ? botPresentation.GetComponent<HumanoidRagdollRig>()
+                : null;
+            if (playerAnimator == null || botAnimator == null ||
+                playerRagdoll == null || botRagdoll == null)
+                throw new System.InvalidOperationException(
+                    "Combat repair requires both visible Humanoid animators and ragdoll rigs.");
+
+            EarthEffectsTuningProfile effectsProfile = CreateOrLoadEffectsProfile();
+            CharacterImpactResponseProfile impactResponseProfile =
+                CreateOrLoadProfile<CharacterImpactResponseProfile>(
+                    CharacterImpactProfilePath,
+                    "Character Impact Response Profile");
+            impactResponseProfile.ConfigureMode(ImpactResponseMode.Calibrated);
+            EditorUtility.SetDirty(impactResponseProfile);
+
+            playerRagdoll.ConfigureAndBuild(
+                playerAnimator,
+                playerBody,
+                playerCollider,
+                gravityWorld,
+                playerPuppet,
+                playerPresentation.GetComponentInChildren<ParticleSystem>(true),
+                playerPuppet,
+                playerMotor,
+                magicInput,
+                inputReader);
+            playerRagdoll.ConfigureEffectsProfile(effectsProfile);
+            playerRagdoll.ConfigureLocalizedReactionProfile(impactResponseProfile);
+            botRagdoll.ConfigureAndBuild(
+                botAnimator,
+                botBody,
+                botCollider,
+                gravityWorld,
+                null,
+                botPresentation.GetComponentInChildren<ParticleSystem>(true));
+            botRagdoll.ConfigureEffectsProfile(effectsProfile);
+            botRagdoll.ConfigureLocalizedReactionProfile(impactResponseProfile);
+
+            CharacterPresentationProfile characterProfile =
+                CreateOrLoadProfile<CharacterPresentationProfile>(
+                    CharacterProfilePath,
+                    "Character Presentation Profile");
+            MagicExecutor executor =
+                UnityEngine.Object.FindAnyObjectByType<MagicExecutor>(FindObjectsInactive.Include);
+            Transform leftHandTarget = FindDescendantByName(player.transform, "Left Hand IK");
+            Transform rightHandTarget = FindDescendantByName(player.transform, "Right Hand IK");
+            playerPresentation.Configure(
+                characterProfile,
+                playerAnimator,
+                leftHandTarget,
+                rightHandTarget,
+                playerMotor,
+                playerBody,
+                playerPuppet,
+                magicInput,
+                executor,
+                CreateOrLoadProfile<EarthTechniquePresentationProfile>(
+                    TechniquePresentationProfilePath,
+                    "Earth Technique Presentation Profile"),
+                player.GetComponent<EarthPillarMobility>(),
+                playerRagdoll,
+                true);
+            botPresentation.Configure(
+                characterProfile,
+                botAnimator,
+                null,
+                null,
+                botMotor,
+                botBody,
+                null,
+                null,
+                null,
+                null,
+                null,
+                botRagdoll,
+                false);
+            HumanoidOrganicIdle playerOrganicIdle =
+                playerPresentation.GetComponent<HumanoidOrganicIdle>();
+            playerOrganicIdle?.Configure(
+                playerAnimator,
+                playerPresentation,
+                playerMotor,
+                playerRagdoll,
+                characterProfile.OrganicIdleBlendInSeconds,
+                characterProfile.OrganicIdleBlendOutSeconds);
+            HumanoidOrganicIdle botOrganicIdle =
+                botPresentation.GetComponent<HumanoidOrganicIdle>();
+            botOrganicIdle?.Configure(
+                botAnimator,
+                botPresentation,
+                botMotor,
+                botRagdoll,
+                characterProfile.OrganicIdleBlendInSeconds,
+                characterProfile.OrganicIdleBlendOutSeconds);
+
+            EarthCharacterImpactTarget playerCharacterImpact =
+                player.GetComponent<EarthCharacterImpactTarget>();
+            if (playerCharacterImpact == null)
+                playerCharacterImpact = player.AddComponent<EarthCharacterImpactTarget>();
+            EarthCharacterImpactTarget botCharacterImpact =
+                bot.GetComponent<EarthCharacterImpactTarget>();
+            if (botCharacterImpact == null)
+                botCharacterImpact = bot.AddComponent<EarthCharacterImpactTarget>();
+            playerCharacterImpact.Configure(
+                EarthDuelFighterId.Player,
+                0xC0010001u,
+                playerBody,
+                null,
+                impactResponseProfile);
+            botCharacterImpact.Configure(
+                EarthDuelFighterId.Bot,
+                0xC0010002u,
+                botBody,
+                null,
+                impactResponseProfile);
+            playerPhysicalImpact.ConfigureCharacterImpactTarget(playerCharacterImpact);
+            botCombat.SetCharacterImpactAuthority(botCharacterImpact);
+
+            EarthMvpDuelController duel = bot.GetComponent<EarthMvpDuelController>();
+            if (duel == null) duel = bot.AddComponent<EarthMvpDuelController>();
+            duel.Configure(
+                playerPuppet,
+                playerBody,
+                playerPhysicalImpact,
+                botController,
+                botCombat,
+                botMotor,
+                botBody,
+                botCollider,
+                botAnimator,
+                playerRagdoll,
+                botRagdoll,
+                playerCharacterImpact,
+                botCharacterImpact,
+                3.5f);
+            botController.Configure(
+                player.transform,
+                playerBody,
+                playerPhysicalImpact,
+                playerPuppet,
+                gravityWorld.transform,
+                botBody,
+                botMotor,
+                botCombat,
+                arenaCenter,
+                6.5f);
+            botController.ConfigureTuning(5.8f, 0.82f, 15f, 0.24f, 0.72f, 1.0f);
+            botController.ConfigureMagic(projectilePool, botCollider, duel);
+            botController.enabled = true;
+            // Reassert the authored rival motor feel during repair as well as
+            // initial scene generation. Older scenes carried PlanetMotor defaults,
+            // which made the repaired bot strafe and accelerate like the player.
+            botMotor.ConfigureInputSource(botController);
+            botMotor.ConfigureFeel(3.1f, 18f, 0.18f);
+            botMotor.ConfigureTankSteering(true, 245f);
+            botMotor.ConfigureOrientationFeel(62f, 13f, 150f);
+
+            EarthMvpBotPresenter botPresenter = bot.GetComponent<EarthMvpBotPresenter>();
+            LineRenderer strikeLine = bot.GetComponent<LineRenderer>();
+            if (botPresenter != null && strikeLine != null)
+                botPresenter.Configure(
+                    botController,
+                    strikeLine,
+                    botAnimator.GetComponentsInChildren<Renderer>(true),
+                    botAnimator,
+                    botMotor,
+                    botBody,
+                    botPresentation);
+
+            EarthLandingCushion landingCushion = player.GetComponent<EarthLandingCushion>();
+            Transform cushionVisual = FindTransformByNameIncludingInactive(
+                "Earth Landing Cushion Preview");
+            if (landingCushion == null || cushionVisual == null)
+                throw new System.InvalidOperationException(
+                    "Combat repair requires the authored landing cushion and preview visual.");
+            landingCushion.Configure(
+                playerBody,
+                playerMotor,
+                playerPuppet,
+                collisionProxy.GetComponent<Collider>(),
+                CreateOrLoadProfile<EarthLandingCushionProfile>(
+                    LandingCushionProfilePath,
+                    "Earth Landing Cushion Profile"),
+                cushionVisual,
+                surfaceQueries);
+
+            EditorUtility.SetDirty(playerPhysicalImpact);
+            EditorUtility.SetDirty(playerPuppet);
+            EditorUtility.SetDirty(playerRagdoll);
+            EditorUtility.SetDirty(botRagdoll);
+            EditorUtility.SetDirty(playerPresentation);
+            EditorUtility.SetDirty(botPresentation);
+            if (playerOrganicIdle != null) EditorUtility.SetDirty(playerOrganicIdle);
+            if (botOrganicIdle != null) EditorUtility.SetDirty(botOrganicIdle);
+            EditorUtility.SetDirty(playerCharacterImpact);
+            EditorUtility.SetDirty(botCharacterImpact);
+            EditorUtility.SetDirty(duel);
+            EditorUtility.SetDirty(botController);
+            if (botPresenter != null) EditorUtility.SetDirty(botPresenter);
+            EditorUtility.SetDirty(landingCushion);
+        }
+
+        private static void RepairPlayerPhysicalPuppet(
+            GameObject player,
+            ActiveRagdollPuppet puppet,
+            Rigidbody playerBody,
+            PlanetMotor playerMotor,
+            PhysicalImpactTarget physicalImpact,
+            GravityWorldBehaviour gravityWorld,
+            MagicInputController magicInput,
+            PlanetInputReader inputReader)
+        {
+            GameObject physicalRoot = FindTransformByNameIncludingInactive(
+                "Earth Shaper Puppet")?.gameObject;
+            Transform chest = physicalRoot != null
+                ? FindDescendantByName(physicalRoot.transform, "Puppet Chest")
+                : null;
+            if (physicalRoot == null || chest == null)
+                throw new System.InvalidOperationException(
+                    "Player puppet repair requires the authored Earth Shaper Puppet hierarchy.");
+
+            // The physical puppet lives outside the character Rigidbody hierarchy
+            // by design. Whenever the authored player spawn is repaired, move the
+            // detached puppet root to the same frame before reconnecting its
+            // joints; otherwise the old world-space bodies pull the motor out of
+            // the arena as soon as Play Mode starts.
+            physicalRoot.transform.SetPositionAndRotation(
+                player.transform.position - player.transform.up * 0.12f,
+                player.transform.rotation);
+
+            var targetNames = new Dictionary<string, string>
+            {
+                { "Puppet Chest", "Chest Target" },
+                { "Puppet Head", "Head Target" },
+                { "Puppet Arm L", "Left Arm Target" },
+                { "Puppet Arm R", "Right Arm Target" },
+                { "Puppet Upper Leg L", "Left Upper Leg Target" },
+                { "Puppet Upper Leg R", "Right Upper Leg Target" },
+                { "Puppet Lower Leg L", "Left Lower Leg Target" },
+                { "Puppet Lower Leg R", "Right Lower Leg Target" }
+            };
+            var limits = new Dictionary<string, float>
+            {
+                { "Puppet Chest", 36f },
+                { "Puppet Head", 42f },
+                { "Puppet Arm L", 58f },
+                { "Puppet Arm R", 58f },
+                { "Puppet Upper Leg L", 48f },
+                { "Puppet Upper Leg R", 48f },
+                { "Puppet Lower Leg L", 52f },
+                { "Puppet Lower Leg R", 52f }
+            };
+            ActiveRagdollJoint[] joints =
+                physicalRoot.GetComponentsInChildren<ActiveRagdollJoint>(true);
+            for (int index = 0; index < joints.Length; index++)
+            {
+                ActiveRagdollJoint jointDriver = joints[index];
+                Rigidbody body = jointDriver.GetComponent<Rigidbody>();
+                ConfigurableJoint joint = jointDriver.GetComponent<ConfigurableJoint>();
+                if (body == null || joint == null ||
+                    !targetNames.TryGetValue(jointDriver.name, out string targetName))
+                    throw new System.InvalidOperationException(
+                        $"Player puppet joint '{jointDriver.name}' cannot be repaired.");
+                Transform poseTarget = FindDescendantByName(player.transform, targetName);
+                if (poseTarget == null)
+                    throw new System.InvalidOperationException(
+                        $"Player puppet pose target '{targetName}' is missing.");
+                body.position = poseTarget.position;
+                body.rotation = poseTarget.rotation;
+                body.linearVelocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+                GravityBody gravityBody = jointDriver.GetComponent<GravityBody>();
+                gravityBody?.Configure(gravityWorld, body);
+                jointDriver.Configure(
+                    body,
+                    joint,
+                    poseTarget,
+                    900f,
+                    65f,
+                    1400f,
+                    limits[jointDriver.name]);
+                if (gravityBody != null) EditorUtility.SetDirty(gravityBody);
+                EditorUtility.SetDirty(body);
+                EditorUtility.SetDirty(jointDriver);
+            }
+            UnityEngine.Physics.SyncTransforms();
+            if (joints.Length != 8)
+                throw new System.InvalidOperationException(
+                    $"Player puppet repair expected 8 driven joints, found {joints.Length}.");
+
+            var selfColliders = new List<Collider>();
+            Collider playerCollider = player.GetComponent<Collider>();
+            if (playerCollider != null) selfColliders.Add(playerCollider);
+            Collider[] puppetColliders = physicalRoot.GetComponentsInChildren<Collider>(true);
+            for (int index = 0; index < puppetColliders.Length; index++)
+                if (puppetColliders[index] != null && !selfColliders.Contains(puppetColliders[index]))
+                    selfColliders.Add(puppetColliders[index]);
+            puppet.Configure(
+                1u,
+                gravityWorld,
+                playerBody,
+                playerMotor,
+                physicalImpact,
+                chest,
+                joints,
+                selfColliders.ToArray());
+            puppet.ConfigureControlBehaviours(magicInput, inputReader);
+
+            // The production HumanoidRagdollRig is now the sole visible/dynamic
+            // body handoff. Keeping the retired proxy bodies active at the same
+            // time creates a second articulated mass connected to the motor root;
+            // their ground depenetration can launch the player out of the arena.
+            // Preserve the hierarchy for authoring/fallback inspection but keep it
+            // outside the live PhysX scene.
+            physicalRoot.SetActive(false);
+            EditorUtility.SetDirty(physicalRoot);
+        }
+
+        private static Transform FindDescendantByName(Transform root, string name)
+        {
+            if (root == null) return null;
+            Transform[] descendants = root.GetComponentsInChildren<Transform>(true);
+            for (int index = 0; index < descendants.Length; index++)
+                if (descendants[index] != null && descendants[index].name == name)
+                    return descendants[index];
+            return null;
+        }
+
+        private static Transform FindTransformByNameIncludingInactive(string name)
+        {
+            Transform[] transforms = UnityEngine.Object.FindObjectsByType<Transform>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+            for (int index = 0; index < transforms.Length; index++)
+                if (transforms[index] != null && transforms[index].name == name)
+                    return transforms[index];
+            return null;
+        }
+
+        private static void RepairCanonicalEffectsProfileWiring(EarthEffectsTuningProfile profile)
+        {
+            RepairEffectsProfileReferences<EarthArenaFractureDustPresenter>(profile);
+            RepairEffectsProfileReferences<EarthMagicFeedback>(profile);
+            RepairEffectsProfileReferences<EarthSurfController>(profile);
+            RepairEffectsProfileReferences<MeteorShowerBehaviour>(profile);
+            RepairEffectsProfileReferences<EarthPillarFeedback>(profile);
+            RepairEffectsProfileReferences<HumanoidRagdollRig>(profile);
+        }
+
+        private static void RepairEffectsProfileReferences<T>(EarthEffectsTuningProfile profile)
+            where T : MonoBehaviour
+        {
+            T[] components = UnityEngine.Object.FindObjectsByType<T>(
+                FindObjectsInactive.Include);
+            for (int index = 0; index < components.Length; index++)
+            {
+                SerializedObject serialized = new SerializedObject(components[index]);
+                SerializedProperty property = serialized.FindProperty("effectsProfile");
+                if (property == null || property.objectReferenceValue == profile) continue;
+                property.objectReferenceValue = profile;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(components[index]);
+            }
+        }
+
+        [MenuItem("Elemental/Setup/Normalize Loaded Scene Material Shader State")]
+        public static void NormalizeLoadedSceneMaterialShaderState()
+        {
+            Renderer[] renderers = UnityEngine.Object.FindObjectsByType<Renderer>(
+                FindObjectsInactive.Include);
+            HashSet<Material> materials = new HashSet<Material>();
+            int normalizedCount = 0;
+            for (int rendererIndex = 0; rendererIndex < renderers.Length; rendererIndex++)
+            {
+                Material[] shared = renderers[rendererIndex].sharedMaterials;
+                for (int materialIndex = 0; materialIndex < shared.Length; materialIndex++)
+                {
+                    Material material = shared[materialIndex];
+                    if (material == null || !materials.Add(material)) continue;
+                    string assetPath = AssetDatabase.GetAssetPath(material);
+                    if (!string.IsNullOrEmpty(assetPath) &&
+                        assetPath.StartsWith("Packages/", System.StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    MaterialShaderStateUtility.NormalizeKeywords(material);
+                    normalizedCount++;
+                    if (AssetDatabase.Contains(material)) EditorUtility.SetDirty(material);
+                }
+            }
+
+            AssetDatabase.SaveAssets();
+            SceneView.RepaintAll();
+            Debug.Log($"[Elemental] Normalized shader keyword state for {normalizedCount} loaded scene materials.");
+        }
+
+        private static void RepairActorGravityAndMotor(
+            GameObject actor,
+            GravityWorldBehaviour gravityWorld,
+            MonoBehaviour inputSource,
+            Transform cameraFrame,
+            bool player)
+        {
+            Rigidbody body = actor.GetComponent<Rigidbody>();
+            CapsuleCollider capsule = actor.GetComponent<CapsuleCollider>();
+            PlanetMotor motor = actor.GetComponent<PlanetMotor>();
+            GravityBody gravity = actor.GetComponent<GravityBody>();
+            if (body == null || capsule == null || motor == null || gravity == null || inputSource == null)
+                throw new System.InvalidOperationException(
+                    $"{actor.name} is missing Rigidbody, CapsuleCollider, PlanetMotor, GravityBody or input source.");
+            body.useGravity = false;
+            body.isKinematic = false;
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+            gravity.Configure(gravityWorld, body);
+            motor.Configure(gravityWorld, body, capsule, inputSource, cameraFrame);
+            // The Broken Crown floor is a detailed non-convex mesh. Persist the
+            // same contact skin used by generated actors so edit-time repair does
+            // not silently restore the legacy 1 cm grounding tolerance.
+            motor.ConfigureGroundContactSkin(0.045f);
+            if (player)
+            {
+                motor.ConfigureFeel(CreateOrLoadProfile<PlanetMotorFeelProfile>(
+                    MotorFeelProfilePath,
+                    "Planet Motor Feel Profile"));
+                motor.ConfigureTankSteering(true, 170f);
+                motor.ConfigureOrientationFeel(60f, 12f, 140f);
+            }
+            else
+            {
+                motor.ConfigureFeel(3.1f, 18f, 0.18f);
+                motor.ConfigureTankSteering(true, 245f);
+                motor.ConfigureOrientationFeel(62f, 13f, 150f);
+            }
+            EditorUtility.SetDirty(body);
+            EditorUtility.SetDirty(gravity);
+            EditorUtility.SetDirty(motor);
+            EarthGravityRuntimeAudit audit = actor.GetComponent<EarthGravityRuntimeAudit>();
+            if (audit == null) audit = actor.AddComponent<EarthGravityRuntimeAudit>();
+            audit.Configure(gravity, motor);
+        }
+
+        private static void RepairGameplayCameraWiring(
+            Camera camera,
+            GameObject player,
+            GameObject opponent)
+        {
+            if (camera == null || player == null) return;
+            PlanetCameraRig cameraRig = camera.GetComponent<PlanetCameraRig>();
+            if (cameraRig == null) cameraRig = camera.gameObject.AddComponent<PlanetCameraRig>();
+            PlanetMotor motor = player.GetComponent<PlanetMotor>();
+            MagicInputController input = player.GetComponent<MagicInputController>();
+            if (input == null)
+                input = UnityEngine.Object.FindAnyObjectByType<MagicInputController>(
+                    FindObjectsInactive.Include);
+            MagicExecutor executor = player.GetComponent<MagicExecutor>();
+            if (executor == null)
+                executor = UnityEngine.Object.FindAnyObjectByType<MagicExecutor>(
+                    FindObjectsInactive.Include);
+
+            EarthCameraDirector director = camera.GetComponent<EarthCameraDirector>();
+            if (director == null) director = camera.gameObject.AddComponent<EarthCameraDirector>();
+            director.Configure(
+                cameraRig,
+                camera,
+                player.transform,
+                player.GetComponent<Rigidbody>(),
+                motor,
+                input,
+                player.GetComponent<EarthInputAdapter>(),
+                executor,
+                player.GetComponent<ActiveRagdollPuppet>(),
+                CreateOrLoadProfile<EarthCameraProfile>(
+                    EarthCameraProfilePath,
+                    "Earth Camera Profile"));
+
+            EarthCinemachineCameraController oldController =
+                camera.GetComponent<EarthCinemachineCameraController>();
+            if (oldController != null) UnityEngine.Object.DestroyImmediate(oldController);
+            ConfigureCinemachineCamera(camera, player, cameraRig, director, motor);
+
+            EarthChargeCameraLookdevV2 lookdev = camera.GetComponent<EarthChargeCameraLookdevV2>();
+            lookdev?.BindDirector(director);
+            EarthCinematicDepthOfFieldController depthOfField =
+                camera.GetComponent<EarthCinematicDepthOfFieldController>();
+            if (depthOfField == null)
+                depthOfField = camera.gameObject.AddComponent<EarthCinematicDepthOfFieldController>();
+            depthOfField.ConfigureSubjects(
+                player.transform,
+                opponent != null ? opponent.transform : null);
+            EarthCameraRuntimeAudit cameraAudit = camera.GetComponent<EarthCameraRuntimeAudit>();
+            if (cameraAudit == null) cameraAudit = camera.gameObject.AddComponent<EarthCameraRuntimeAudit>();
+            cameraAudit.Configure(
+                director,
+                camera.GetComponent<EarthCinemachineCameraController>(),
+                depthOfField);
+
+            EditorUtility.SetDirty(cameraRig);
+            EditorUtility.SetDirty(director);
+            if (lookdev != null) EditorUtility.SetDirty(lookdev);
+            EditorUtility.SetDirty(depthOfField);
+            EditorUtility.SetDirty(cameraAudit);
+        }
+
+        private static void IntegrateEammActor(GameObject gameplayRoot, bool player)
+        {
+            HumanoidCharacterPresentation presentation =
+                gameplayRoot.GetComponentInChildren<HumanoidCharacterPresentation>(true);
+            if (presentation == null)
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"{gameplayRoot.name} has no HumanoidCharacterPresentation.");
+            Animator animator = presentation.GetComponent<Animator>();
+            if (animator == null) animator = presentation.GetComponentInChildren<Animator>(true);
+            if (animator == null || animator.avatar == null || !animator.avatar.isHuman)
+                throw new UnityEditor.Build.BuildFailedException(
+                    $"{gameplayRoot.name} has no valid Humanoid Animator on its visible presentation.");
+            HumanoidRagdollRig ragdoll = presentation.GetComponent<HumanoidRagdollRig>();
+            if (ragdoll == null) ragdoll = presentation.GetComponentInChildren<HumanoidRagdollRig>(true);
+            ConfigureEammBasePose(
+                gameplayRoot,
+                presentation.gameObject,
+                animator,
+                presentation,
+                ragdoll,
+                player);
         }
 
         [MenuItem("Elemental Suite/Character/Refresh Mixamo Presentation Assets")]
@@ -520,7 +1633,7 @@ namespace Elemental.Authoring.Editor
             if (material == null) return;
             ConfigureEarthTextureImport();
             Shader shader = Shader.Find("Elemental/SG Earth Master");
-            if (shader != null && material.shader != shader) material.shader = shader;
+            if (shader != null) MaterialShaderStateUtility.RebindShader(material, shader);
             material.color = style.StoneColor;
             material.SetColor("_BaseColor", style.StoneColor);
             material.SetColor("_EmissionColor", style.StoneEmission);
@@ -546,7 +1659,7 @@ namespace Elemental.Authoring.Editor
                 material = new Material(shader) { name = System.IO.Path.GetFileNameWithoutExtension(fileName) };
                 AssetDatabase.CreateAsset(material, folder + fileName);
             }
-            else if (material.shader != shader) material.shader = shader;
+            else MaterialShaderStateUtility.RebindShader(material, shader);
             ConfigureEarthTextureImport();
             material.SetColor("_BaseColor", color);
             material.SetColor("_EmissionColor", emission);
@@ -618,7 +1731,7 @@ namespace Elemental.Authoring.Editor
             // EarthCore uses restrained SSAO plus analytic material form depth.
             // Realtime directional shadows are intentionally disabled because
             // their moving cascade bands were the source of the visible stripes.
-            cameraData.renderShadows = false;
+            cameraData.renderShadows = true;
             cameraData.requiresDepthTexture = true;
             cameraData.stopNaN = true;
             cameraData.dithering = true;
@@ -773,11 +1886,11 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
             {
                 sun.color = new Color(1f, 0.91f, 0.78f);
                 sun.intensity = 1.28f;
-                // Broken Crown's broad planar courses alias as travelling shadow
-                // bands in Game view. Contact depth belongs to the restrained
-                // DepthNormals SSAO path; realtime sun shadows stay disabled.
-                sun.shadows = LightShadows.None;
-                sun.shadowStrength = 0f;
+                // Keep readable contact with the spherical terrain and props.
+                // The high-quality URP profile supplies the filtering needed to
+                // avoid the old travelling-band artifact.
+                sun.shadows = LightShadows.Soft;
+                sun.shadowStrength = 0.554f;
                 sun.transform.rotation = Quaternion.Euler(38f, -36f, 0f);
                 RenderSettings.sun = sun;
             }
@@ -1260,6 +2373,7 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
                 visibleRagdoll,
                 profile.OrganicIdleBlendInSeconds,
                 profile.OrganicIdleBlendOutSeconds);
+            ConfigureEammBasePose(character, presentationObject, animator, presentation, visibleRagdoll, true);
             EarthStompContactPresenter stomp = presentationObject.GetComponent<EarthStompContactPresenter>();
             if (stomp == null) stomp = presentationObject.AddComponent<EarthStompContactPresenter>();
             stomp.Configure(pillarMobility);
@@ -1664,9 +2778,10 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
                 controller.layers[0].stateMachine, "Locomotion");
             if (locomotionState?.motion is not BlendTree locomotion) return;
 
-            AnimationClip walk = LoadAnimationClip(MixamoWalkPath);
+            AnimationClip walk = LoadAnimationClip(MixamoWalkPath, "Walking");
             AnimationClip walkBack = LoadAnimationClip(MixamoWalkBackPath);
-            AnimationClip idle = FindClip(fallbackClips, "idle");
+            AnimationClip idle = LoadAnimationClip(MixamoIdlePath, "Idle") ??
+                                 FindClip(fallbackClips, "idle");
             AnimationClip run = FindClip(fallbackClips, "run");
             var motions = new List<ChildMotion>(4);
             if (walkBack != null)
@@ -1688,13 +2803,19 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
             AssetDatabase.SaveAssets();
         }
 
-        private static AnimationClip LoadAnimationClip(string path)
+        private static AnimationClip LoadAnimationClip(string path, string preferredName = null)
         {
             Object[] assets = AssetDatabase.LoadAllAssetsAtPath(path);
+            AnimationClip longest = null;
             for (int index = 0; index < assets.Length; index++)
-                if (assets[index] is AnimationClip clip && !clip.name.StartsWith("__preview__"))
+            {
+                if (assets[index] is not AnimationClip clip || clip.name.StartsWith("__preview__"))
+                    continue;
+                if (!string.IsNullOrEmpty(preferredName) && clip.name == preferredName)
                     return clip;
-            return null;
+                if (longest == null || clip.length > longest.length) longest = clip;
+            }
+            return longest;
         }
 
         private static List<AnimationClip> LoadCharacterClips()
@@ -2077,9 +3198,7 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
             CreateOrLoadProfile<CharacterPresentationProfile>(CharacterProfilePath, "Character Presentation Profile");
             CreateOrLoadProfile<EarthPhysicsFeelProfile>(PhysicsFeelProfilePath, "Earth Physics Feel Profile");
 
-            Material sky = CreateOrLoadShaderMaterial(
-                "ProceduralStarSkybox.mat",
-                "Elemental/Procedural Stars");
+            Material sky = DayNightSkyRestore.PrepareSkyMaterial(skyProfile);
             Material fullscreenAtmosphere = CreateOrLoadShaderMaterial(
                 "AtmosphereFullscreen.mat",
                 "Elemental/Atmosphere Fullscreen");
@@ -2095,7 +3214,7 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
                     EarthCinematicDepthOfFieldController>();
             EditorUtility.SetDirty(depthOfFieldController);
             sky.SetColor("_Tint", new Color(0.42f, 0.58f, 1f));
-            sky.SetFloat("_Seed", worldProfile.Seed);
+            sky.SetFloat("_Seed", skyProfile.StarSeed);
             RenderSettings.skybox = sky;
             camera.clearFlags = CameraClearFlags.Skybox;
             camera.farClipPlane = Mathf.Max(camera.farClipPlane, celestial.ScaledSpaceDistance * 1.35f);
@@ -2104,6 +3223,7 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
             Material moonMaterial = CreateOrLoadLitMaterial("ScaledMoon.mat", celestial.MoonColor, 0.12f, Color.black);
             Material distantMaterial = CreateOrLoadLitMaterial("ScaledPlanet.mat", celestial.DistantPlanetColor, 0.22f, Color.black);
             GameObject sunDisc = CreatePart("Visible Sun", PrimitiveType.Sphere, backdrop.transform, Vector3.zero, Vector3.one, sunMaterial);
+            sunDisc.SetActive(false); // The sky shader owns the sole solar disc.
             GameObject moon = CreatePart("Distant Moon", PrimitiveType.Sphere, backdrop.transform, Vector3.zero, Vector3.one, moonMaterial);
             GameObject farPlanet = CreatePart("Ringed Ember Planet", PrimitiveType.Sphere, backdrop.transform, Vector3.zero, Vector3.one, distantMaterial);
 
@@ -2123,6 +3243,12 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
             EarthSkyController skyController = backdrop.AddComponent<EarthSkyController>();
             skyController.Configure(skyProfile, camera, sky);
             CelestialSystemBehaviour system = backdrop.AddComponent<CelestialSystemBehaviour>();
+            // Arena content is integrated later in this generator. Author its stable
+            // north-pole lighting reference explicitly, independent of camera position.
+            GameObject lightingAnchor = new GameObject("Celestial Lighting Anchor");
+            lightingAnchor.transform.SetParent(backdrop.transform, false);
+            lightingAnchor.transform.position = planetCenter.position + Vector3.up * worldProfile.Radius;
+            system.ConfigureLightingAnchor(lightingAnchor.transform);
             system.Configure(
                 celestial,
                 atmosphere,
@@ -2130,7 +3256,7 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
                 planetCenter,
                 camera,
                 sunLight,
-                sunDisc.transform,
+                null,
                 moon.transform,
                 farPlanet.transform,
                 atmosphereRenderer,
@@ -2271,7 +3397,7 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
                 material = new Material(shader) { name = System.IO.Path.GetFileNameWithoutExtension(fileName) };
                 AssetDatabase.CreateAsset(material, path);
             }
-            else if (material.shader != shader) material.shader = shader;
+            else MaterialShaderStateUtility.RebindShader(material, shader);
             EditorUtility.SetDirty(material);
             return material;
         }
@@ -2666,7 +3792,7 @@ private static void ConfigureLights(EarthCoreVisualStyle style)
             go.transform.SetParent(parent, false);
             ParticleSystem dust = go.AddComponent<ParticleSystem>();
             if (effectsProfile != null)
-                EarthParticleSystemTuningApplier.Apply(
+                EarthParticleSystemTuningApplier.ApplyDust(
                     dust,
                     effectsProfile.StoneFade.Dust,
                     effectsProfile.Materials.StoneFadeDust);
@@ -3024,13 +4150,14 @@ private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
             const string folder = "Assets/Elemental/Content/Materials/";
             string path = folder + fileName;
             Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null) throw new UnityEditor.Build.BuildFailedException("URP Lit shader was not found.");
             if (material == null)
             {
-                Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-                if (shader == null) throw new UnityEditor.Build.BuildFailedException("URP Lit shader was not found.");
                 material = new Material(shader) { name = System.IO.Path.GetFileNameWithoutExtension(fileName) };
                 AssetDatabase.CreateAsset(material, path);
             }
+            else MaterialShaderStateUtility.RebindShader(material, shader);
             material.color = color;
             material.SetColor("_BaseColor", color);
             material.SetFloat("_Smoothness", smoothness);
@@ -3046,13 +4173,14 @@ private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
             const string folder = "Assets/Elemental/Content/Materials/";
             string path = folder + fileName;
             Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+            if (shader == null) throw new UnityEditor.Build.BuildFailedException("URP Unlit shader was not found.");
             if (material == null)
             {
-                Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
-                if (shader == null) throw new UnityEditor.Build.BuildFailedException("URP Unlit shader was not found.");
                 material = new Material(shader) { name = System.IO.Path.GetFileNameWithoutExtension(fileName) };
                 AssetDatabase.CreateAsset(material, path);
             }
+            else MaterialShaderStateUtility.RebindShader(material, shader);
             material.color = color;
             material.SetColor("_BaseColor", color);
             EditorUtility.SetDirty(material);
@@ -3384,6 +4512,7 @@ private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
                 botVisibleRagdoll,
                 characterProfile.OrganicIdleBlendInSeconds,
                 characterProfile.OrganicIdleBlendOutSeconds);
+            ConfigureEammBasePose(bot, botVisualRoot.gameObject, humanoidAnimator, botSharedPresentation, botVisibleRagdoll, false);
             HumanoidRagdollRig playerVisibleRagdoll =
                 player.GetComponentInChildren<HumanoidRagdollRig>(true);
             Rigidbody playerBody = player.GetComponent<Rigidbody>();
@@ -3475,6 +4604,146 @@ private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
                     3.5498571f),
                 new Quaternion(0f, 0.999495f, 0.031776477f, 0f));
             EditorUtility.SetDirty(bot.transform);
+        }
+
+        private static void ConfigureEammBasePose(
+            GameObject gameplayRoot,
+            GameObject visibleRoot,
+            Animator animator,
+            HumanoidCharacterPresentation presentation,
+            HumanoidRagdollRig ragdoll,
+            bool player)
+        {
+            MotionMatchingData data = EnsureDefaultEammDatabase();
+            EnvironmentMotionMatchingSearch search =
+                AssetDatabase.LoadAssetAtPath<EnvironmentMotionMatchingSearch>(EammSearchPath);
+            if (data == null || search == null)
+            {
+                Debug.LogWarning("[EAMM] Database/search unavailable; character remains on safe Legacy locomotion.");
+                return;
+            }
+
+            EAMMRuntimeProfile runtimeProfile = CreateOrLoadProfile<EAMMRuntimeProfile>(
+                EammRuntimeProfilePath,
+                "EAMM Runtime Profile");
+            EarthRetargetBindPose bindPose = EnsureDefaultEammBindPose();
+            // Early EAMM scenes serialized SurfaceMotionResolver while the type
+            // lived in SurfaceMotionProfile.cs. Unity cannot persist a component
+            // whose MonoScript does not match its file, leaving one missing
+            // Behaviour on each character. Remove only those invalid entries on
+            // the two integration roots before attaching the stable component.
+            GameObjectUtility.RemoveMonoBehavioursWithMissingScript(gameplayRoot);
+            // A domain reload can resolve the old class name even though its
+            // serialized m_Script pointer is still the invalid file-local id.
+            // Recreate this stateless resolver so the scene records the new
+            // dedicated MonoScript GUID. This touches no transform or authoring.
+            SurfaceMotionResolver existingResolver = gameplayRoot.GetComponent<SurfaceMotionResolver>();
+            if (existingResolver != null) Object.DestroyImmediate(existingResolver);
+            gameplayRoot.AddComponent<SurfaceMotionResolver>();
+            Transform previous = gameplayRoot.transform.Find("EAMM Hidden Driver");
+            if (previous != null) Object.DestroyImmediate(previous.gameObject);
+            GameObject hidden = new GameObject("EAMM Hidden Driver");
+            hidden.transform.SetParent(gameplayRoot.transform, false);
+            hidden.hideFlags = HideFlags.HideInHierarchy;
+            MotionMatchingController controller = hidden.AddComponent<MotionMatchingController>();
+            PlanetEAMMCharacterController adapter = hidden.AddComponent<PlanetEAMMCharacterController>();
+            adapter.MotionMatching = controller;
+            adapter.Configure(gameplayRoot.GetComponent<PlanetMotor>(), runtimeProfile);
+            controller.CharacterController = adapter;
+            controller.MMData = data;
+            controller.Search = search;
+            controller.SearchTime = player
+                ? runtimeProfile.PlayerSearchSeconds
+                : runtimeProfile.BotSearchSeconds;
+            controller.LockFPS = false;
+            controller.FootLock = false;
+            controller.Inertialize = true;
+            controller.DebugSkeleton = false;
+            controller.DebugFutureSkeleton = false;
+            controller.DebugCurrent = false;
+            controller.DebugPose = false;
+            controller.DebugTrajectory = false;
+            controller.DebugEnvironment = false;
+            controller.DebugSearch = false;
+            controller.DebugContacts = false;
+            controller.DebugGUI = false;
+
+            EAMMBasePoseBridge bridge = visibleRoot.GetComponent<EAMMBasePoseBridge>();
+            if (bridge == null) bridge = visibleRoot.AddComponent<EAMMBasePoseBridge>();
+            bridge.Configure(controller, runtimeProfile, bindPose, player);
+            EditorUtility.SetDirty(gameplayRoot);
+            EditorUtility.SetDirty(visibleRoot);
+        }
+
+        private static MotionMatchingData EnsureDefaultEammDatabase()
+        {
+            MotionMatchingData existing = AssetDatabase.LoadAssetAtPath<MotionMatchingData>(EammDataPath);
+            if (existing != null) return existing;
+            EnsureAssetFolder("Assets/Elemental/Content/Characters/MotionMatching");
+            MotionLibraryAsset library = AssetDatabase.LoadAssetAtPath<MotionLibraryAsset>(EammLibraryPath);
+            if (library == null)
+            {
+                library = ScriptableObject.CreateInstance<MotionLibraryAsset>();
+                library.name = "EarthMotionLibraryData";
+                library.sourceRig = AssetDatabase.LoadAssetAtPath<GameObject>(CharacterModelPath);
+                library.databaseRate = 30f;
+                AddDefaultMotionClip(library, MixamoIdlePath, MotionClipRole.Idle, 0f, true);
+                AddDefaultMotionClip(library, MixamoWalkPath, MotionClipRole.Locomotion, 2.4f, true);
+                AddDefaultMotionClip(library, MixamoWalkBackPath, MotionClipRole.Locomotion, 1.8f, true);
+                AddDefaultMotionClip(library, MixamoTurnPath, MotionClipRole.Pivot, 0f, false);
+                AssetDatabase.CreateAsset(library, EammLibraryPath);
+            }
+            if (library.sourceRig == null || library.clips.Count == 0) return null;
+            return MotionLibraryBuilder.Bake(library);
+        }
+
+        private static EarthRetargetBindPose EnsureDefaultEammBindPose()
+        {
+            EarthRetargetBindPose existing =
+                AssetDatabase.LoadAssetAtPath<EarthRetargetBindPose>(
+                    MotionLibraryBuilder.RetargetBindPosePath);
+            if (existing != null) return existing;
+            MotionLibraryAsset library =
+                AssetDatabase.LoadAssetAtPath<MotionLibraryAsset>(EammLibraryPath);
+            if (library == null || library.sourceRig == null) return null;
+            return MotionLibraryBuilder.BakeRetargetBindPose(library);
+        }
+
+        private static void AddDefaultMotionClip(
+            MotionLibraryAsset library,
+            string assetPath,
+            MotionClipRole role,
+            float speed,
+            bool loop)
+        {
+            Object[] assets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
+            AnimationClip longest = null;
+            for (int i = 0; i < assets.Length; i++)
+            {
+                if (assets[i] is not AnimationClip clip || clip.name.StartsWith("__preview__")) continue;
+                if (longest == null || clip.length > longest.length) longest = clip;
+            }
+            if (longest == null) return;
+            library.clips.Add(new MotionClipRecipe
+            {
+                clip = longest,
+                role = role,
+                nominalSpeed = speed,
+                nominalYaw = role == MotionClipRole.Pivot ? -90f : 0f,
+                loop = loop
+            });
+        }
+
+        private static void EnsureAssetFolder(string path)
+        {
+            string[] parts = path.Split('/');
+            string current = parts[0];
+            for (int i = 1; i < parts.Length; i++)
+            {
+                string next = current + "/" + parts[i];
+                if (!AssetDatabase.IsValidFolder(next)) AssetDatabase.CreateFolder(current, parts[i]);
+                current = next;
+            }
         }
 
         private static Animator CreateLinebreakerHumanoidVisual(Transform bot)
@@ -3570,10 +4839,7 @@ private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
                         characterMaterial = new Material(rumbleShader) { name = $"{safeName}_{token}" };
                         AssetDatabase.CreateAsset(characterMaterial, path);
                     }
-                    else
-                    {
-                        characterMaterial.shader = rumbleShader;
-                    }
+                    else MaterialShaderStateUtility.RebindShader(characterMaterial, rumbleShader);
                     Color resting = source.HasProperty("_BaseColor")
                         ? source.GetColor("_BaseColor")
                         : source.HasProperty("_Color")

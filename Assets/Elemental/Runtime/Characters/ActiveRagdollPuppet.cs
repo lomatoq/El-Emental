@@ -61,6 +61,7 @@ namespace Elemental.Runtime.Characters
         public event Action<CharacterPhysicalState> StateChanged;
         public event Action<Vector3, float> ImpactObserved;
         public bool IsExternalRagdollAuthority { get; private set; }
+        public Rigidbody RootBody => rootBody;
 
         public bool OwnsCollider(Collider candidate) => IsSelfCollider(candidate);
 
@@ -77,15 +78,17 @@ namespace Elemental.Runtime.Characters
             _suppressImpactsUntil = Mathf.Max(_suppressImpactsUntil, Time.time + Mathf.Max(0f, seconds));
         }
 
-        public void ApplyUniformVelocityChange(Vector3 velocityChange)
+        public void ApplyUniformVelocityChange(
+            Vector3 velocityChange,
+            Rigidbody excludedBody = null)
         {
             if (!IsFinite(velocityChange) || velocityChange.sqrMagnitude <= 0f) return;
-            if (rootBody != null && !rootBody.isKinematic)
+            if (rootBody != null && rootBody != excludedBody && !rootBody.isKinematic)
                 rootBody.AddForce(velocityChange, ForceMode.VelocityChange);
             for (int index = 0; index < joints.Length; index++)
             {
                 Rigidbody body = joints[index] != null ? joints[index].Body : null;
-                if (body != null && !body.isKinematic)
+                if (body != null && body != excludedBody && !body.isKinematic)
                     body.AddForce(velocityChange, ForceMode.VelocityChange);
             }
         }

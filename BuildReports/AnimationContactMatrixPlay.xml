@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-31 20:58:32Z" end-time="2026-08-31 20:58:57Z" duration="25.6308083">
+  <test-suite type="TestSuite" id="1166" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="120" result="Failed" site="Child" start-time="2026-08-31 20:58:32Z" end-time="2026-08-31 20:58:57Z" duration="25.630808" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1159" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="120" result="Failed" site="Child" start-time="2026-08-31 20:58:32Z" end-time="2026-08-31 20:58:57Z" duration="25.605059" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="5768" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1160" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="120" result="Failed" site="Child" start-time="2026-08-31 20:58:32Z" end-time="2026-08-31 20:58:57Z" duration="25.601985" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1161" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="120" result="Failed" site="Child" start-time="2026-08-31 20:58:32Z" end-time="2026-08-31 20:58:57Z" duration="25.599369" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1162" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="120" result="Failed" site="Child" start-time="2026-08-31 20:58:32Z" end-time="2026-08-31 20:58:57Z" duration="25.596426" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1019" name="EarthAnimationContactTelemetryRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthAnimationContactTelemetryRuntimeTests" classname="Elemental.Tests.PlayMode.EarthAnimationContactTelemetryRuntimeTests" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2026-08-31 20:58:32Z" end-time="2026-08-31 20:58:57Z" duration="25.592236" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1020" name="ProductionActorsEmitRealThirtySixtyOneTwentyMatrix" fullname="Elemental.Tests.PlayMode.EarthAnimationContactTelemetryRuntimeTests.ProductionActorsEmitRealThirtySixtyOneTwentyMatrix" methodname="ProductionActorsEmitRealThirtySixtyOneTwentyMatrix" classname="Elemental.Tests.PlayMode.EarthAnimationContactTelemetryRuntimeTests" runstate="Runnable" seed="154542600" result="Failed" start-time="2026-08-31 20:58:32Z" end-time="2026-08-31 20:58:57Z" duration="25.573056" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  The 30/60/120 outcome delta exceeded 10%; read the crossFps records.
+  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.EarthAnimationContactTelemetryRuntimeTests+<ProductionActorsEmitRealThirtySixtyOneTwentyMatrix>d__3.MoveNext () [0x00222] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\EarthAnimationContactTelemetryRuntimeTests.cs:89
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[[Animation Contact Matrix] rows=2520, metricGates=True, crossFps=False, coverage=True. JSON: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\AnimationArenaTelemetryLatest.json
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\AnimationContactMatrixPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

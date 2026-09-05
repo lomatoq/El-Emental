@@ -1,0 +1,59 @@
+{
+  "result": "Passed",
+  "contract": "The old clamped plane projection collapses vertical variation at the horizon. Latitude/longitude removes that stretch but has a pole singularity. The final soft cube-style projection has normalized bounded weights and remains continuous through the former pole while preserving finite two-dimensional texture support.",
+  "oldHorizonAngularAspect": 458.36659971173515,
+  "latLongPoleUSpanForNearIdenticalDirections": 0.75,
+  "triplanarPoleNoiseSpanForNearIdenticalDirections": 0.00015664311773971873,
+  "maximumWeightSumError": 2.220446049250313e-16,
+  "minimumDominantPlaneWeight": 0.3686326327472829,
+  "poleSamples": {
+    "+x": {
+      "latLongUv": [
+        0.5,
+        0.999968169011465
+      ],
+      "triplanarNoise": 0.38184408034411005,
+      "triplanarWeights": [
+        1.0000000000000001e-16,
+        0.9999999999999999,
+        0.0
+      ]
+    },
+    "-x": {
+      "latLongUv": [
+        1.0,
+        0.999968169011465
+      ],
+      "triplanarNoise": 0.38168743722637033,
+      "triplanarWeights": [
+        1.0000000000000001e-16,
+        0.9999999999999999,
+        0.0
+      ]
+    },
+    "+z": {
+      "latLongUv": [
+        0.75,
+        0.999968169011465
+      ],
+      "triplanarNoise": 0.38175906779672275,
+      "triplanarWeights": [
+        0.0,
+        0.9999999999999999,
+        1.0000000000000001e-16
+      ]
+    },
+    "-z": {
+      "latLongUv": [
+        0.25,
+        0.999968169011465
+      ],
+      "triplanarNoise": 0.3817724664792782,
+      "triplanarWeights": [
+        0.0,
+        0.9999999999999999,
+        1.0000000000000001e-16
+      ]
+    }
+  }
+}

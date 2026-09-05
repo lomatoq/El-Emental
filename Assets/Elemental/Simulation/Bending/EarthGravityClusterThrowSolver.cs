@@ -8,6 +8,11 @@ namespace Elemental.Simulation.Bending
         CompressionBlast = 1
     }
 
+    public enum EarthGravityThrowStatus : byte
+    {
+        Idle, Charging, Released, NoActiveGrip, NoTargets, ActiveRepair, InvalidBodies
+    }
+
     public readonly struct EarthGravityClusterThrowTuning
     {
         public EarthGravityClusterThrowTuning(
@@ -102,6 +107,27 @@ namespace Elemental.Simulation.Bending
             float spinSign = (stableId & 1u) == 0u ? -1f : 1f;
             float3 angular = direction * (tuning.Spin * spinSign * math.lerp(0.35f, 1f, blast01));
             return new EarthGravityClusterLaunchSample(direction * speed, angular, speed);
+        }
+
+        public static EarthGravityClusterLaunchSample SolveRadial(
+            uint stableId, int index, int count, float mass, float3 outward,
+            float3 aimDirection, float3 localUp, float charge01,
+            in EarthGravityClusterThrowTuning tuning)
+        {
+            // Actual cluster geometry controls the burst, not a forward cone.
+            float3 up = math.normalizesafe(localUp, new float3(0f, 1f, 0f));
+            float3 forward = math.normalizesafe(aimDirection, new float3(0f, 0f, 1f));
+            float3 right = math.normalizesafe(math.cross(up, forward), new float3(1f, 0f, 0f));
+            float phase = Hash01(stableId ^ ((uint)(index + 1) * 0x9E3779B9u)) * math.PI * 2f;
+            float3 fallback = math.normalizesafe(right * math.cos(phase) + forward * math.sin(phase), right);
+            float3 direction = math.normalizesafe(outward, fallback);
+            // Keep downward pieces from being fired immediately into the support.
+            float vertical = math.dot(direction, up);
+            if (vertical < 0.08f) direction = math.normalizesafe(direction + up * (0.08f - vertical), fallback);
+            float speed = math.lerp(tuning.MinimumBlastSpeed, tuning.MaximumBlastSpeed, math.saturate(charge01));
+            float sign = (stableId & 1u) == 0u ? -1f : 1f;
+            return new EarthGravityClusterLaunchSample(direction * speed,
+                right * (tuning.Spin * sign), speed);
         }
 
         private static float Hash01(uint value)

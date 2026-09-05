@@ -1,0 +1,552 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="16" result="Passed" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:16:10Z" duration="21.4399766">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="633" result="Passed" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:16:10Z" duration="21.439977" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1767" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="633" result="Passed" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:16:10Z" duration="21.433171" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="26692" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1768" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="633" result="Passed" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:16:10Z" duration="21.432897" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1769" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="633" result="Passed" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:16:10Z" duration="21.432831" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1770" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="633" result="Passed" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:16:10Z" duration="21.432707" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1012" name="BrokenCrownArenaImporterTests" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:16:09Z" duration="21.140591" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1017" name="FloorSeatingOnlyOverridesAPropWhenTheFloorWasActuallyHit" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.FloorSeatingOnlyOverridesAPropWhenTheFloorWasActuallyHit" methodname="FloorSeatingOnlyOverridesAPropWhenTheFloorWasActuallyHit" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="442892531" result="Passed" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:15:48Z" duration="0.013592" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1014" name="ModelImporterKeepsMeshesReadableWithoutAnimationOrMaterials" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.ModelImporterKeepsMeshesReadableWithoutAnimationOrMaterials" methodname="ModelImporterKeepsMeshesReadableWithoutAnimationOrMaterials" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="1531576342" result="Passed" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:15:49Z" duration="0.323136" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[ImportFBX Warnings:
+Can't import tangents and binormals, because mesh 'Arena_Column_NorthEast_INTACT' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Column_NorthWest_INTACT' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Column_SouthEast_INTACT' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Column_SouthWest_INTACT' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_FloorBase_INTACT' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_GateThreshold_STATIC' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Gate_INTACT' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rock_NorthEast_Large' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rock_NorthWest_Large' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rock_SouthEast_Large' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rock_SouthEast_Small' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rock_SouthWest_Large' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rock_SouthWest_Slab' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rock_West_Slab' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rubble_SouthWest_01' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rubble_SouthWest_02' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Wall_East_INTACT' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Wall_West_INTACT' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_east_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_east_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_east_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_east_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_east_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_west_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_west_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_west_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_west_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_west_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_south_east_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_south_east_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_south_east_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_south_east_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_south_west_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_south_west_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_south_west_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_south_west_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P006' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P007' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P008' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P009' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P010' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P011' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P012' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P013' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P014' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P015' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P016' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P017' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P018' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P019' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P020' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P021' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P022' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P023' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P024' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P025' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P026' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P027' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P028' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P029' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P030' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P031' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P032' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P033' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P034' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P035' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P036' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P006' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P007' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P008' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P009' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P010' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P011' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P012' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P006' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P007' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P008' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P009' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P010' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P011' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P012' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P006' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P007' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P008' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P009' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P010' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P011' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P012' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_east_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_east_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_east_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_east_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_east_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_west_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_west_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_west_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_west_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_west_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_south_east_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_south_east_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_south_east_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_south_east_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_south_west_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_south_west_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_south_west_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_south_west_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P006' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P007' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P008' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P009' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P010' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P011' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P012' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P013' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P014' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P015' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P016' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P017' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P018' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P019' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P020' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P021' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P022' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P023' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P024' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P025' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P026' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P027' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P028' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P029' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P030' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P031' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P032' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P033' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P034' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P035' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P036' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P006' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P007' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P008' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P009' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P010' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P011' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P012' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P006' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P007' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P008' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P009' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P010' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P011' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P012' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P006' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P007' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P008' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P009' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P010' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P011' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P012' doesn't have any.
+
+]]></output>
+              </test-case>
+              <test-case id="1021" name="NativeArenaLookdevUsesAuthoredNormalsHighShadowFilteringAndCleanContactAo" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.NativeArenaLookdevUsesAuthoredNormalsHighShadowFilteringAndCleanContactAo" methodname="NativeArenaLookdevUsesAuthoredNormalsHighShadowFilteringAndCleanContactAo" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="37659604" result="Passed" start-time="2026-09-03 18:15:49Z" end-time="2026-09-03 18:15:49Z" duration="0.012145" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1016" name="OrdinaryCombatUsesBoundedLocalReleaseWhileMeteorOwnsTheFloorSwap" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.OrdinaryCombatUsesBoundedLocalReleaseWhileMeteorOwnsTheFloorSwap" methodname="OrdinaryCombatUsesBoundedLocalReleaseWhileMeteorOwnsTheFloorSwap" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="602456208" result="Passed" start-time="2026-09-03 18:15:49Z" end-time="2026-09-03 18:15:49Z" duration="0.000478" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1013" name="RebuildProducesValidatedCauseDrivenCatalog" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.RebuildProducesValidatedCauseDrivenCatalog" methodname="RebuildProducesValidatedCauseDrivenCatalog" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="280610471" result="Passed" start-time="2026-09-03 18:15:49Z" end-time="2026-09-03 18:16:09Z" duration="20.480361" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[ImportFBX Warnings:
+Can't import tangents and binormals, because mesh 'Arena_Column_NorthEast_INTACT' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Column_NorthWest_INTACT' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Column_SouthEast_INTACT' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Column_SouthWest_INTACT' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_FloorBase_INTACT' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_GateThreshold_STATIC' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Gate_INTACT' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rock_NorthEast_Large' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rock_NorthWest_Large' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rock_SouthEast_Large' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rock_SouthEast_Small' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rock_SouthWest_Large' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rock_SouthWest_Slab' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rock_West_Slab' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rubble_SouthWest_01' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Rubble_SouthWest_02' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Wall_East_INTACT' doesn't have any.
+Can't import tangents and binormals, because mesh 'Arena_Wall_West_INTACT' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_east_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_east_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_east_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_east_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_east_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_west_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_west_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_west_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_west_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_north_west_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_south_east_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_south_east_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_south_east_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_south_east_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_south_west_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_south_west_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_south_west_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_column_south_west_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P006' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P007' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P008' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P009' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P010' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P011' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P012' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P013' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P014' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P015' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P016' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P017' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P018' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P019' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P020' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P021' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P022' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P023' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P024' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P025' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P026' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P027' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P028' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P029' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P030' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P031' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P032' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P033' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P034' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P035' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_floor_base_P036' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P006' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P007' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P008' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P009' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P010' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P011' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_gate_P012' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P006' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P007' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P008' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P009' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P010' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P011' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_east_P012' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P006' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P007' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P008' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P009' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P010' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P011' doesn't have any.
+Can't import tangents and binormals, because mesh 'COL_FR_arena_wall_west_P012' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_east_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_east_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_east_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_east_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_east_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_west_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_west_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_west_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_west_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_north_west_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_south_east_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_south_east_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_south_east_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_south_east_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_south_west_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_south_west_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_south_west_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_column_south_west_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P006' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P007' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P008' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P009' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P010' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P011' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P012' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P013' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P014' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P015' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P016' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P017' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P018' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P019' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P020' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P021' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P022' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P023' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P024' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P025' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P026' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P027' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P028' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P029' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P030' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P031' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P032' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P033' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P034' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P035' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_floor_base_P036' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P006' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P007' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P008' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P009' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P010' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P011' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_gate_P012' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P006' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P007' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P008' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P009' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P010' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P011' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_east_P012' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P001' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P002' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P003' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P004' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P005' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P006' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P007' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P008' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P009' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P010' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P011' doesn't have any.
+Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P012' doesn't have any.
+
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+[Elemental] Broken Crown import ready: 8 structures, 90 fracture pieces, catalog Assets/Elemental/Content/Arena/BrokenCrown/Generated/BrokenCrownArenaCatalog.asset.
+]]></output>
+              </test-case>
+              <test-case id="1015" name="SavedArenaPreservesEveryAuthoredChildTransform" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.SavedArenaPreservesEveryAuthoredChildTransform" methodname="SavedArenaPreservesEveryAuthoredChildTransform" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="1515412520" result="Passed" start-time="2026-09-03 18:16:09Z" end-time="2026-09-03 18:16:09Z" duration="0.292502" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+]]></output>
+              </test-case>
+              <test-case id="1020" name="SupportPatchCapsSamplesAndRejectsMoreThanOneCentimetreBurial" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.SupportPatchCapsSamplesAndRejectsMoreThanOneCentimetreBurial" methodname="SupportPatchCapsSamplesAndRejectsMoreThanOneCentimetreBurial" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="130838705" result="Passed" start-time="2026-09-03 18:16:09Z" end-time="2026-09-03 18:16:09Z" duration="0.001739" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1019" name="SupportPatchRequiresThreeUniqueWitnessesAroundCenterOfMass" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.SupportPatchRequiresThreeUniqueWitnessesAroundCenterOfMass" methodname="SupportPatchRequiresThreeUniqueWitnessesAroundCenterOfMass" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="984131753" result="Passed" start-time="2026-09-03 18:16:09Z" end-time="2026-09-03 18:16:09Z" duration="0.001046" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1018" name="VisibleSupportPatchUsesMedianWitnessWithoutExceedingControlledInset" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.VisibleSupportPatchUsesMedianWitnessWithoutExceedingControlledInset" methodname="VisibleSupportPatchUsesMedianWitnessWithoutExceedingControlledInset" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="403856375" result="Passed" start-time="2026-09-03 18:16:09Z" end-time="2026-09-03 18:16:09Z" duration="0.000495" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1131" name="EarthArenaFractureShadingTests" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-03 18:16:09Z" end-time="2026-09-03 18:16:10Z" duration="0.286028" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1137" name="ArenaExteriorAndInteriorShareStableReceiverContract" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.ArenaExteriorAndInteriorShareStableReceiverContract" methodname="ArenaExteriorAndInteriorShareStableReceiverContract" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="1608709507" result="Passed" start-time="2026-09-03 18:16:09Z" end-time="2026-09-03 18:16:09Z" duration="0.000830" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1136" name="BrokenCrownPiecesKeepRestFramesFiniteNormalsAndOptionalValidTangents" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.BrokenCrownPiecesKeepRestFramesFiniteNormalsAndOptionalValidTangents" methodname="BrokenCrownPiecesKeepRestFramesFiniteNormalsAndOptionalValidTangents" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="565048951" result="Passed" start-time="2026-09-03 18:16:09Z" end-time="2026-09-03 18:16:10Z" duration="0.272592" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1133" name="InvalidOrSingularMappingFrameIsRejected" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.InvalidOrSingularMappingFrameIsRejected" methodname="InvalidOrSingularMappingFrameIsRejected" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="531777425" result="Passed" start-time="2026-09-03 18:16:10Z" end-time="2026-09-03 18:16:10Z" duration="0.000625" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1134" name="RendererAdapterMergesMappingWithoutClearingExistingOverrides" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.RendererAdapterMergesMappingWithoutClearingExistingOverrides" methodname="RendererAdapterMergesMappingWithoutClearingExistingOverrides" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="1060611752" result="Passed" start-time="2026-09-03 18:16:10Z" end-time="2026-09-03 18:16:10Z" duration="0.002295" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1132" name="RestPieceFrameContinuesTheIntactMappingAfterCentroidRecentering" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.RestPieceFrameContinuesTheIntactMappingAfterCentroidRecentering" methodname="RestPieceFrameContinuesTheIntactMappingAfterCentroidRecentering" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="1103443601" result="Passed" start-time="2026-09-03 18:16:10Z" end-time="2026-09-03 18:16:10Z" duration="0.004706" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1135" name="RuntimeCapturesRestFramesAndProxyCyclesPreservePropertyBlocks" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.RuntimeCapturesRestFramesAndProxyCyclesPreservePropertyBlocks" methodname="RuntimeCapturesRestFramesAndProxyCyclesPreservePropertyBlocks" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="1698880730" result="Passed" start-time="2026-09-03 18:16:10Z" end-time="2026-09-03 18:16:10Z" duration="0.003583" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1347" name="EarthHardSurfaceMeshUtilityTests" fullname="Elemental.Tests.EditMode.EarthHardSurfaceMeshUtilityTests" classname="Elemental.Tests.EditMode.EarthHardSurfaceMeshUtilityTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-03 18:16:10Z" end-time="2026-09-03 18:16:10Z" duration="0.004218" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1348" name="FractureCopyPreservesAuthoredExteriorAndHardensOnlyFreshInterior" fullname="Elemental.Tests.EditMode.EarthHardSurfaceMeshUtilityTests.FractureCopyPreservesAuthoredExteriorAndHardensOnlyFreshInterior" methodname="FractureCopyPreservesAuthoredExteriorAndHardensOnlyFreshInterior" classname="Elemental.Tests.EditMode.EarthHardSurfaceMeshUtilityTests" runstate="Runnable" seed="2090154785" result="Passed" start-time="2026-09-03 18:16:10Z" end-time="2026-09-03 18:16:10Z" duration="0.003774" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\ArenaFractureShadingEdit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

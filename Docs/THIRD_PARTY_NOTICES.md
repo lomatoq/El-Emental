@@ -59,3 +59,18 @@ The original license text for each archive is stored beside the imported assets 
 - `X Bot@Standing 2H Magic Area Attack 02.fbx` SHA-256: `B6754CDEF28919370AB3B130E85F3FD622761D88DD278AF10D763F492FBBF177`
 - Alternate unprefixed `Standing 2H Magic Attack 05.fbx` SHA-256: `C09F72CFF17D368565D6981FA414C39F65D484BE88092D5B901F46F9801835A6`
 - Root motion is disabled; `PlanetMotor` remains authoritative for movement.
+
+## JLPM MotionMatching
+
+- Source: https://github.com/JLPM22/MotionMatching
+- Pinned commit: `35fc8ee9a0fd97f12de458ea81eaef7c8219d87a`
+- License: MIT, copyright 2022-present Jose Luis Ponton
+- Imported scope: runtime/editor source required for database baking, search and inertialized playback. Samples and animation assets were excluded.
+- Local compatibility changes: removed an unused missing debug-draw reference, removed an Editor namespace from runtime, made playback render-FPS independent, interpolated adjacent database poses, and exposed contact/continuous-frame state. The September 5 Player-build repair also keeps obstacle gizmos under `UNITY_EDITOR` while making the existing trajectory-value decoder available to runtime callers.
+
+## Environment-aware Motion Matching
+
+- Source: https://github.com/UPC-ViRVIG/Environment-aware-Motion-Matching
+- Pinned commit: `273928addc94ddf4a3bd7b8bf1ef17c360b0000e`
+- License: MIT, copyright 2025 Jose Luis Ponton
+- Imported scope: custom feature extractors and environment-aware search/jobs only. Upstream scenes, models, animation and mocap data were excluded. Local Player compatibility: ellipse gizmo drawing is compiled only in the Editor; feature extraction is unchanged.

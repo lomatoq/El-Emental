@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Passed" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 14:31:14Z" end-time="2026-09-05 14:31:23Z" duration="9.3025706">
+  <test-suite type="TestSuite" id="1270" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="203" result="Passed" start-time="2026-09-05 14:31:14Z" end-time="2026-09-05 14:31:23Z" duration="9.302571" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1263" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="203" result="Passed" start-time="2026-09-05 14:31:14Z" end-time="2026-09-05 14:31:23Z" duration="9.183941" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1264" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="203" result="Passed" start-time="2026-09-05 14:31:14Z" end-time="2026-09-05 14:31:23Z" duration="9.163507" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1265" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="203" result="Passed" start-time="2026-09-05 14:31:14Z" end-time="2026-09-05 14:31:23Z" duration="9.156603" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1266" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="203" result="Passed" start-time="2026-09-05 14:31:14Z" end-time="2026-09-05 14:31:23Z" duration="9.025737" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1162" name="EarthSurfRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthSurfRuntimeTests" classname="Elemental.Tests.PlayMode.EarthSurfRuntimeTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-05 14:31:14Z" end-time="2026-09-05 14:31:21Z" duration="6.820333" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1167" name="ProductionSurfPillarJumpRaisesOnePillarBreaksBoardAndLaunchesHero" fullname="Elemental.Tests.PlayMode.EarthSurfRuntimeTests.ProductionSurfPillarJumpRaisesOnePillarBreaksBoardAndLaunchesHero" methodname="ProductionSurfPillarJumpRaisesOnePillarBreaksBoardAndLaunchesHero" classname="Elemental.Tests.PlayMode.EarthSurfRuntimeTests" runstate="Runnable" seed="1539512786" result="Passed" start-time="2026-09-05 14:31:14Z" end-time="2026-09-05 14:31:21Z" duration="6.740375" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 3197.17ms; ground=exact baked base, cacheLoad=18.82ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1631.08ms, peakCookingPoll=0.32ms; sync=ArenaInitialize=464.56ms/15;ArenaBevel=439.53ms/175;ArenaMeshPicking=2.79ms/175;WallAwake=524.79ms/1;WallPieceVisuals=22.50ms/40;PlatformPoolAwake=14.28ms/1;PlatformRuntimeMeshes=1.48ms/12;PillarPoolAwake=25.47ms/1;PillarMeshLibrary=4.69ms/1;PillarColumns=19.15ms/1;DebrisPoolAwake=108.39ms/1;HeroFragmentPoolAwake=13.64ms/1.
+[SurfPillarDiag] selectedLane=(0.98, 0.00, 0.20) clearance=8.574
+[SurfPillarDiag] release tick=0 deltaTravel=0.0818 deltaUp=-0.0005 deltaAxis=0.0328 speedTravel=4.1069 speedUp=-0.0282 speedAxis=1.6423 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,0.000) support=0x5F000001 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=1 deltaTravel=0.1648 deltaUp=0.0221 deltaAxis=0.0871 speedTravel=4.1525 speedUp=1.1269 speedAxis=2.7166 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,0.000) support=0x5F000001 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=2 deltaTravel=0.2512 deltaUp=0.1156 deltaAxis=0.2077 speedTravel=4.3192 speedUp=4.6771 speedAxis=6.0291 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,0.000) support=0x5F000001 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=3 deltaTravel=0.3815 deltaUp=0.3124 deltaAxis=0.4404 speedTravel=6.5136 speedUp=9.8379 speedAxis=11.6365 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=4 deltaTravel=0.5487 deltaUp=0.5880 deltaAxis=0.7602 speedTravel=8.3632 speedUp=13.7788 speedAxis=15.9890 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=5 deltaTravel=0.7454 deltaUp=0.9245 deltaAxis=1.1476 speedTravel=9.8339 speedUp=16.8247 speedAxis=19.3696 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=6 deltaTravel=0.9646 deltaUp=1.3065 deltaAxis=1.5857 speedTravel=10.9612 speedUp=19.1001 speedAxis=21.9068 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=7 deltaTravel=1.2010 deltaUp=1.7218 deltaAxis=2.0613 speedTravel=11.8174 speedUp=20.7681 speedAxis=23.7787 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=8 deltaTravel=1.4490 deltaUp=2.1584 deltaAxis=2.5610 speedTravel=12.4024 speedUp=21.8288 speedAxis=24.9855 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=9 deltaTravel=1.7033 deltaUp=2.6040 deltaAxis=3.0716 speedTravel=12.7160 speedUp=22.2821 speedAxis=25.5271 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=10 deltaTravel=1.9585 deltaUp=3.0466 deltaAxis=3.5796 speedTravel=12.7584 speedUp=22.1280 speedAxis=25.4035 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=11 deltaTravel=2.2091 deltaUp=3.4739 deltaAxis=4.0719 speedTravel=12.5295 speedUp=21.3665 speedAxis=24.6146 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=12 deltaTravel=2.4497 deltaUp=3.8739 deltaAxis=4.5351 speedTravel=12.0293 speedUp=19.9976 speedAxis=23.1605 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=13 deltaTravel=2.6748 deltaUp=4.2343 deltaAxis=4.9560 speedTravel=11.2580 speedUp=18.0211 speedAxis=21.0411 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=14 deltaTravel=2.8791 deltaUp=4.5430 deltaAxis=5.3211 speedTravel=10.2155 speedUp=15.4371 speedAxis=18.2564 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=15 deltaTravel=3.0572 deltaUp=4.7880 deltaAxis=5.6172 speedTravel=8.9021 speedUp=12.2455 speedAxis=14.8063 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=16 deltaTravel=3.2035 deltaUp=4.9569 deltaAxis=5.8310 speedTravel=7.3178 speedUp=8.4461 speedAxis=10.6910 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=17 deltaTravel=3.3128 deltaUp=5.0377 deltaAxis=5.9492 speedTravel=5.4628 speedUp=4.0389 speedAxis=5.9102 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=True grounded=False pending=True ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=18 deltaTravel=3.4202 deltaUp=5.1096 deltaAxis=6.0587 speedTravel=5.3696 speedUp=3.5999 speedAxis=5.4711 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=False grounded=False pending=False ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=19 deltaTravel=3.5310 deltaUp=5.1763 deltaAxis=6.1646 speedTravel=5.5399 speedUp=3.3330 speedAxis=5.2962 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=False grounded=False pending=False ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=20 deltaTravel=3.6452 deltaUp=5.2376 deltaAxis=6.2670 speedTravel=5.7103 speedUp=3.0662 speedAxis=5.1213 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=False grounded=False pending=False ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=21 deltaTravel=3.7628 deltaUp=5.2936 deltaAxis=6.3659 speedTravel=5.8809 speedUp=2.7993 speedAxis=4.9465 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=False grounded=False pending=False ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=22 deltaTravel=3.8838 deltaUp=5.3443 deltaAxis=6.4614 speedTravel=6.0515 speedUp=2.5324 speedAxis=4.7717 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=False grounded=False pending=False ragdoll=AnimatedMotor
+[SurfPillarDiag] rise tick=23 deltaTravel=4.0083 deltaUp=5.3896 deltaAxis=6.5533 speedTravel=6.2222 speedUp=2.2655 speedAxis=4.5969 releaseSpeedTravel=4.0158 surfSpeedTravel=8.3670 command=(0.000,1.000) support=0x00000000 lease=False grounded=False pending=False ragdoll=AnimatedMotor
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1255" name="SurfPillarOwnerRegressionTests" fullname="Elemental.Tests.PlayMode.SurfPillarOwnerRegressionTests" classname="Elemental.Tests.PlayMode.SurfPillarOwnerRegressionTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-05 14:31:21Z" end-time="2026-09-05 14:31:23Z" duration="2.169712" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1256" name="OrdinaryPhysicalSpaceHoldRemainsVerticalPillarChargeUntilRelease" fullname="Elemental.Tests.PlayMode.SurfPillarOwnerRegressionTests.OrdinaryPhysicalSpaceHoldRemainsVerticalPillarChargeUntilRelease" methodname="OrdinaryPhysicalSpaceHoldRemainsVerticalPillarChargeUntilRelease" classname="Elemental.Tests.PlayMode.SurfPillarOwnerRegressionTests" runstate="Runnable" seed="2069231408" result="Passed" start-time="2026-09-05 14:31:21Z" end-time="2026-09-05 14:31:23Z" duration="2.141188" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 1223.43ms; ground=exact baked base, cacheLoad=7.04ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1138.14ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=464.56ms/15;ArenaBevel=439.53ms/175;ArenaMeshPicking=2.79ms/175;WallAwake=524.79ms/1;WallPieceVisuals=22.50ms/40;PlatformPoolAwake=14.28ms/1;PlatformRuntimeMeshes=1.48ms/12;PillarPoolAwake=25.47ms/1;PillarMeshLibrary=4.69ms/1;PillarColumns=19.15ms/1;DebrisPoolAwake=108.39ms/1;HeroFragmentPoolAwake=13.64ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\SurfPillarJumpPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

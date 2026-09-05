@@ -1,0 +1,34 @@
+diff --git a/Assets/Elemental/Presentation/Animation/EarthChoreographyDirector.cs b/Assets/Elemental/Presentation/Animation/EarthChoreographyDirector.cs
+--- a/Assets/Elemental/Presentation/Animation/EarthChoreographyDirector.cs
++++ b/Assets/Elemental/Presentation/Animation/EarthChoreographyDirector.cs
+@@ -1,4 +1,5 @@
+ using Elemental.Simulation.Characters;
++using Unity.Mathematics;
+ using Unity.Profiling;
+ using UnityEngine;
+ 
+@@ -131,6 +132,24 @@
+                 CurrentRequest.Grounding01,
+                 CurrentRequest.Precision01,
+                 CurrentRequest.LeftDominant);
++            if (presentation != null && presentation.HasResponsiveSustainedAim)
++            {
++                // Chest already belongs to this late choreography pass. Consume
++                // the hand solver's body-local aim here rather than adding another
++                // transform writer or rotating the gameplay root/head.
++                float3 chest = target.ChestEuler;
++                chest.y = math.clamp(
++                    chest.y + EarthResponsiveHandTargetSolver.ResolveTorsoYawDegrees(
++                        presentation.ResponsiveSustainedLocalAim,
++                        presentation.ResponsiveSustainedAimWeight),
++                    -EarthChoreographyVisualSolver.MaximumChestDegrees,
++                    EarthChoreographyVisualSolver.MaximumChestDegrees);
++                target = new EarthChoreographyPoseOffset(
++                    chest,
++                    target.HeadEuler,
++                    target.LeftShoulderEuler,
++                    target.RightShoulderEuler);
++            }
+             float responseSeconds = CurrentRequest.IsActive ? 0.065f : 0.10f;
+             float blend = 1f - Mathf.Exp(-Mathf.Max(0f, deltaTime) / responseSeconds);
+             _appliedVisualPose = EarthChoreographyPoseOffset.Lerp(

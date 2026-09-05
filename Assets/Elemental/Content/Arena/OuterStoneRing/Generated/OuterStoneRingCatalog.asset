@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4eac64621f6e09e4f8ad0a35cf2832d1, type: 3}
+  m_Name: OuterStoneRingCatalog
+  m_EditorClassIdentifier: Elemental.Authoring::Elemental.Authoring.Fracture.EarthArenaFractureCatalog
+  schemaVersion: 1
+  importedModel: {fileID: 919132149155446097, guid: 702b10277b3fc0b45832c3e7f76e1962, type: 3}
+  structures:
+  - structureId: outer_arch_01
+    intactObjectName: OuterArch_01_INTACT
+    fractureProfile: authored_column_closed_seams_v1
+    activationCause: 0
+    ordinaryDamageEnabled: 1
+    repairable: 1
+    usesVirtualDormantSupport: 0
+    fractureAsset: {fileID: 11400000, guid: 596257939548ccb468737363f8c3f79c, type: 2}
+  - structureId: outer_arch_02
+    intactObjectName: OuterArch_02_INTACT
+    fractureProfile: authored_column_closed_seams_v1
+    activationCause: 0
+    ordinaryDamageEnabled: 1
+    repairable: 1
+    usesVirtualDormantSupport: 0
+    fractureAsset: {fileID: 11400000, guid: dbcea65f746aa024fad08b50e69f512a, type: 2}
+  - structureId: outer_arch_03
+    intactObjectName: OuterArch_03_INTACT
+    fractureProfile: authored_column_closed_seams_v1
+    activationCause: 0
+    ordinaryDamageEnabled: 1
+    repairable: 1
+    usesVirtualDormantSupport: 0
+    fractureAsset: {fileID: 11400000, guid: 83b6b72fa03d79546b8d102da45e30b1, type: 2}
+  - structureId: outer_arch_04
+    intactObjectName: OuterArch_04_INTACT
+    fractureProfile: authored_column_closed_seams_v1
+    activationCause: 0
+    ordinaryDamageEnabled: 1
+    repairable: 1
+    usesVirtualDormantSupport: 0
+    fractureAsset: {fileID: 11400000, guid: 58f9be2d0d96889499daef7870f4bd7b, type: 2}
+  - structureId: outer_arch_05
+    intactObjectName: OuterArch_05_INTACT
+    fractureProfile: authored_column_closed_seams_v1
+    activationCause: 0
+    ordinaryDamageEnabled: 1
+    repairable: 1
+    usesVirtualDormantSupport: 0
+    fractureAsset: {fileID: 11400000, guid: 7e3cf5233fddcfa46916ed1be84848a1, type: 2}
+  - structureId: outer_arch_06
+    intactObjectName: OuterArch_06_INTACT
+    fractureProfile: authored_column_closed_seams_v1
+    activationCause: 0
+    ordinaryDamageEnabled: 1
+    repairable: 1
+    usesVirtualDormantSupport: 0
+    fractureAsset: {fileID: 11400000, guid: 0390122ed2618794a8037bbb1baebaf6, type: 2}
+  - structureId: outer_arch_07
+    intactObjectName: OuterArch_07_INTACT
+    fractureProfile: authored_column_closed_seams_v1
+    activationCause: 0
+    ordinaryDamageEnabled: 1
+    repairable: 1
+    usesVirtualDormantSupport: 0
+    fractureAsset: {fileID: 11400000, guid: 9ea358e44eaca1a48b494d69fd45f268, type: 2}
+  looseRockObjectNames:
+  - OuterArch_02_Loose_FR_outer_arch_02_013_FALLEN
+  - OuterArch_03_Loose_FR_outer_arch_03_012_FALLEN
+  - OuterArch_05_Loose_FR_outer_arch_05_012_FALLEN
+  - OuterArch_06_Loose_FR_outer_arch_06_001
+  - OuterArch_06_Loose_FR_outer_arch_06_001_001
+  - OuterArch_06_Loose_FR_outer_arch_06_001_002
+  - OuterArch_06_Loose_FR_outer_arch_06_010_FALLEN
+  - OuterArch_07_Loose_FR_outer_arch_07_013_FALLEN
+  cosmeticRubbleObjectNames: []

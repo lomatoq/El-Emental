@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02d7dcd86a5f410097371561b07bde6f, type: 3}
+  m_Name: EarthTechniquePresentationProfile
+  m_EditorClassIdentifier:
+  techniques:
+  - technique: 1
+    anticipationSeconds: 0.14
+    releaseSeconds: 0.08
+    impactSeconds: 0.1
+    settleSeconds: 0.22
+    poseEffort: 0.58
+    braceAmount: 0.42
+    cameraImpulse: 0.18
+    cameraLookAhead: 0.4
+    dustAmount: 0.45
+    chipAmount: 0.3
+    rumbleAmount: 0.2
+  - technique: 2
+    anticipationSeconds: 0.2
+    releaseSeconds: 0.12
+    impactSeconds: 0.16
+    settleSeconds: 0.36
+    poseEffort: 0.82
+    braceAmount: 0.7
+    cameraImpulse: 0.38
+    cameraLookAhead: 0.9
+    dustAmount: 1
+    chipAmount: 0.65
+    rumbleAmount: 0.52
+  - technique: 3
+    anticipationSeconds: 0.22
+    releaseSeconds: 0.13
+    impactSeconds: 0.16
+    settleSeconds: 0.38
+    poseEffort: 0.86
+    braceAmount: 0.72
+    cameraImpulse: 0.4
+    cameraLookAhead: 1
+    dustAmount: 1.05
+    chipAmount: 0.55
+    rumbleAmount: 0.54
+  - technique: 4
+    anticipationSeconds: 0.16
+    releaseSeconds: 0.08
+    impactSeconds: 0.13
+    settleSeconds: 0.28
+    poseEffort: 0.72
+    braceAmount: 0.76
+    cameraImpulse: 0.34
+    cameraLookAhead: 0.45
+    dustAmount: 0.8
+    chipAmount: 0.5
+    rumbleAmount: 0.48
+  - technique: 5
+    anticipationSeconds: 0.26
+    releaseSeconds: 0.14
+    impactSeconds: 0.18
+    settleSeconds: 0.42
+    poseEffort: 1
+    braceAmount: 0.9
+    cameraImpulse: 0.55
+    cameraLookAhead: 1.25
+    dustAmount: 1.25
+    chipAmount: 0.9
+    rumbleAmount: 0.72
+  - technique: 6
+    anticipationSeconds: 0.24
+    releaseSeconds: 0.12
+    impactSeconds: 0.14
+    settleSeconds: 0.4
+    poseEffort: 0.92
+    braceAmount: 0.78
+    cameraImpulse: 0.2
+    cameraLookAhead: 0.75
+    dustAmount: 0.65
+    chipAmount: 0.35
+    rumbleAmount: 0.4

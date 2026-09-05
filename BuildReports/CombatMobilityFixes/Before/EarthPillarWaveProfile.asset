@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f274877bc21f4f22a09f0c6a0c59004e, type: 3}
+  m_Name: EarthPillarWaveProfile
+  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Physics.EarthWebWaveProfile
+  motionMode: 1
+  fullSectorChargeSeconds: 1.4
+  fullPowerChargeSeconds: 1.1
+  columnRiseSeconds: 0.3
+  columnHoldSeconds: 0.04
+  columnRetreatSeconds: 0.32
+  columnWidth: 1.15
+  minimumImpulse: 85
+  maximumImpulse: 420
+  impactRadius: 1.05
+  foundationBurialRatio: 0.2
+  minimumRows: 6
+  maximumRows: 8
+  minimumDistance: 2
+  maximumDistance: 11.2
+  minimumWidth: 0.64
+  maximumWidth: 1.28
+  minimumHeight: 0.28
+  crestHeight: 1.55
+  waveSpeed: 5.4
+  crestHoldSeconds: 0.04
+  cellOverlapRatio: 0.07
+  precompressionSeconds: 0.055
+  precompressionDepth01: 0.025
+  premiumRiseSeconds: 0.22
+  premiumOvershoot01: 0.045
+  premiumSettleSeconds: 0.145
+  premiumHoldSeconds: 0.055
+  premiumRetreatSeconds: 0.3
+  premiumTiltDegrees: 6
+  premiumSettleFrequencyHz: 5
+  premiumSettleDamping: 0.73
+  seededVariation01: 0.07

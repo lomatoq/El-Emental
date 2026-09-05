@@ -1,0 +1,153 @@
+{
+    "status": "Failed",
+    "error": "System.InvalidOperationException: walk produced inference but no current-frame Humanoid retarget application (count=30, lastFrame=553, frame=560).\r\n  at Elemental.Experimental.SonicPrototype.SonicProductionActorPreview.SampleAndValidatePose (Elemental.Experimental.SonicPrototype.SonicProductionActorPreview+Session session, System.String label, System.Int32 minimumPreviousApplications) [0x00402] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Experimental\\SonicPrototype\\Editor\\SonicProductionActorPreview.cs:442 \r\n  at Elemental.Experimental.SonicPrototype.SonicProductionActorPreview.Tick () [0x000f2] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Experimental\\SonicPrototype\\Editor\\SonicProductionActorPreview.cs:155 ",
+    "completedUtc": "2026-09-05T13:59:55.2706267Z",
+    "actor": "Linebreaker Presentation",
+    "avatar": "LinebreakerAvatar",
+    "backend": "CPU",
+    "walkSequence": 1,
+    "boxingSequence": 0,
+    "walkStatus": "active:Walk:sequence-1",
+    "boxingStatus": "",
+    "walkCapturePath": "",
+    "boxingCapturePath": "",
+    "walkCaptureExists": false,
+    "boxingCaptureExists": false,
+    "walkPose": {
+        "retargetApplicationCount": 0,
+        "lastRetargetFrame": 0,
+        "maximumAppliedBoneDeltaDegrees": 0.0,
+        "headHeightMeters": 0.0,
+        "baselineHeadHeightMeters": 0.0,
+        "headHeightRatio": 0.0,
+        "viewportHeight": 0.0,
+        "headViewport": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "leftFootViewport": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "rightFootViewport": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "skinnedBoundsViewportMin": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "skinnedBoundsViewportMax": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "fullSkinnedBoundsVisible": false,
+        "rootLocalPositionDriftMeters": 0.0,
+        "rootLocalRotationDriftDegrees": 0.0,
+        "localUpDriftDegrees": 0.0,
+        "footOwnerPreserved": false,
+        "ownershipValid": false,
+        "fullBodyVisible": false,
+        "anatomyValid": false
+    },
+    "boxingPose": {
+        "retargetApplicationCount": 0,
+        "lastRetargetFrame": 0,
+        "maximumAppliedBoneDeltaDegrees": 0.0,
+        "headHeightMeters": 0.0,
+        "baselineHeadHeightMeters": 0.0,
+        "headHeightRatio": 0.0,
+        "viewportHeight": 0.0,
+        "headViewport": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "leftFootViewport": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "rightFootViewport": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "skinnedBoundsViewportMin": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "skinnedBoundsViewportMax": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "fullSkinnedBoundsVisible": false,
+        "rootLocalPositionDriftMeters": 0.0,
+        "rootLocalRotationDriftDegrees": 0.0,
+        "localUpDriftDegrees": 0.0,
+        "footOwnerPreserved": false,
+        "ownershipValid": false,
+        "fullBodyVisible": false,
+        "anatomyValid": false
+    },
+    "boxingPhases": [],
+    "boxingMotion": {
+        "sampledFrames": 0,
+        "sampledSeconds": 0.0,
+        "leftHandRelativeChestMin": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "leftHandRelativeChestMax": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "rightHandRelativeChestMin": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "rightHandRelativeChestMax": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "leftHandSpatialRangeMeters": 0.0,
+        "rightHandSpatialRangeMeters": 0.0,
+        "leftHandMinimumChestDistanceMeters": 0.0,
+        "leftHandMaximumChestDistanceMeters": 0.0,
+        "rightHandMinimumChestDistanceMeters": 0.0,
+        "rightHandMaximumChestDistanceMeters": 0.0,
+        "leftHandMaximumExcursionMeters": 0.0,
+        "rightHandMaximumExcursionMeters": 0.0,
+        "selectedDynamicFrame": 0,
+        "selectedDynamicElapsedSeconds": 0.0,
+        "selectedDynamicScoreMeters": 0.0,
+        "selectedDynamicCapturePath": "",
+        "durationValid": false,
+        "bilateralMotionValid": false,
+        "acceptedSequences": 0,
+        "rollingReplanningObserved": false,
+        "minimumHeadHeightMeters": 0.0,
+        "maximumHeadHeightMeters": 0.0,
+        "maximumRootLocalPositionDriftMeters": 0.0,
+        "maximumRootLocalRotationDriftDegrees": 0.0,
+        "maximumLocalUpDriftDegrees": 0.0,
+        "footOwnershipPreservedThroughout": false,
+        "anatomyAndOwnershipValidThroughout": false,
+        "valid": false
+    },
+    "bridgeWasEnabled": true,
+    "bridgeRestored": true,
+    "cameraAndUiRestored": true,
+    "runtimeOnlyObjects": true
+}

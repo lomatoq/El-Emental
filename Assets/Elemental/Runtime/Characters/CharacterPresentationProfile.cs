@@ -35,7 +35,7 @@ namespace Elemental.Runtime.Characters
 
         [Header("Animation VNext / Transition Policy")]
         [SerializeField] private bool useLegacyTransitionPolicy;
-        [SerializeField] private bool enableAnimationInertialization;
+        [SerializeField] private bool enableAnimationInertialization = true;
         [SerializeField, Range(0.06f, 0.24f)] private float locomotionTransitionSeconds = 0.14f;
         [SerializeField, Range(0.06f, 0.22f)] private float turnTransitionSeconds = 0.12f;
         [SerializeField, Range(0.03f, 0.12f)] private float takeoffTransitionSeconds = 0.06f;

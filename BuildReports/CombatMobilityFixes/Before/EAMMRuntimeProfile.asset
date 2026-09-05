@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99c82c639f214424acae47157a0d6b36, type: 3}
+  m_Name: EAMMRuntimeProfile
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.MotionMatching.EAMMRuntimeProfile
+  enabledForPlayer: 1
+  enabledForBots: 1
+  databaseRate: 30
+  playerSearchSeconds: 0.1
+  botSearchSeconds: 0.16
+  predictionSeconds: 0.85
+  obstacleRadius: 1.35
+  basePoseWeight: 1
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 4294967295

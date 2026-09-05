@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="5" result="Passed" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 13:05:53Z" end-time="2026-09-05 13:05:54Z" duration="0.1198574">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="873" result="Passed" start-time="2026-09-05 13:05:53Z" end-time="2026-09-05 13:05:54Z" duration="0.119857" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2075" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="866" result="Passed" start-time="2026-09-05 13:05:54Z" end-time="2026-09-05 13:05:54Z" duration="0.068862" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2076" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="866" result="Passed" start-time="2026-09-05 13:05:54Z" end-time="2026-09-05 13:05:54Z" duration="0.068190" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2077" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="866" result="Passed" start-time="2026-09-05 13:05:54Z" end-time="2026-09-05 13:05:54Z" duration="0.068098" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2078" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="866" result="Passed" start-time="2026-09-05 13:05:54Z" end-time="2026-09-05 13:05:54Z" duration="0.067967" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1019" name="ArmorJumpAimAnimationPolicyTests" fullname="Elemental.Tests.EditMode.ArmorJumpAimAnimationPolicyTests" classname="Elemental.Tests.EditMode.ArmorJumpAimAnimationPolicyTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-05 13:05:54Z" end-time="2026-09-05 13:05:54Z" duration="0.065695" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1023" name="CenteredAimRemovesOnlyLateLateralBodyDrift" fullname="Elemental.Tests.EditMode.ArmorJumpAimAnimationPolicyTests.CenteredAimRemovesOnlyLateLateralBodyDrift" methodname="CenteredAimRemovesOnlyLateLateralBodyDrift" classname="Elemental.Tests.EditMode.ArmorJumpAimAnimationPolicyTests" runstate="Runnable" seed="972908702" result="Passed" start-time="2026-09-05 13:05:54Z" end-time="2026-09-05 13:05:54Z" duration="0.038496" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1020" name="EquippedArmorUsesOrdinaryLocomotionInsteadOfPermanentCastPose" fullname="Elemental.Tests.EditMode.ArmorJumpAimAnimationPolicyTests.EquippedArmorUsesOrdinaryLocomotionInsteadOfPermanentCastPose" methodname="EquippedArmorUsesOrdinaryLocomotionInsteadOfPermanentCastPose" classname="Elemental.Tests.EditMode.ArmorJumpAimAnimationPolicyTests" runstate="Runnable" seed="259826133" result="Passed" start-time="2026-09-05 13:05:54Z" end-time="2026-09-05 13:05:54Z" duration="0.004992" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1024" name="LateralAimRetainsAuthoredBodyDirectionAndIsSymmetric" fullname="Elemental.Tests.EditMode.ArmorJumpAimAnimationPolicyTests.LateralAimRetainsAuthoredBodyDirectionAndIsSymmetric" methodname="LateralAimRetainsAuthoredBodyDirectionAndIsSymmetric" classname="Elemental.Tests.EditMode.ArmorJumpAimAnimationPolicyTests" runstate="Runnable" seed="118098318" result="Passed" start-time="2026-09-05 13:05:54Z" end-time="2026-09-05 13:05:54Z" duration="0.001134" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1022" name="OrdinaryJumpClearsOldMagicOnceWithoutSuppressingLaterAirCasts" fullname="Elemental.Tests.EditMode.ArmorJumpAimAnimationPolicyTests.OrdinaryJumpClearsOldMagicOnceWithoutSuppressingLaterAirCasts" methodname="OrdinaryJumpClearsOldMagicOnceWithoutSuppressingLaterAirCasts" classname="Elemental.Tests.EditMode.ArmorJumpAimAnimationPolicyTests" runstate="Runnable" seed="1190669984" result="Passed" start-time="2026-09-05 13:05:54Z" end-time="2026-09-05 13:05:54Z" duration="0.000747" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1021" name="ShortJumpDoesNotAcquirePillarUpperBodyButRealChargeDoes" fullname="Elemental.Tests.EditMode.ArmorJumpAimAnimationPolicyTests.ShortJumpDoesNotAcquirePillarUpperBodyButRealChargeDoes" methodname="ShortJumpDoesNotAcquirePillarUpperBodyButRealChargeDoes" classname="Elemental.Tests.EditMode.ArmorJumpAimAnimationPolicyTests" runstate="Runnable" seed="674408762" result="Passed" start-time="2026-09-05 13:05:54Z" end-time="2026-09-05 13:05:54Z" duration="0.000270" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\ArmorJumpAimAnimationEdit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

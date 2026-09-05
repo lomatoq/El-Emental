@@ -6,11 +6,11 @@ namespace Elemental.Tests.EditMode
     public sealed class EarthSurfIntegritySolverTests
     {
         [Test]
-        public void SemanticGraphHasThreeProtectedAndTwelveDetachableCells()
+        public void SemanticGraphHasThreeProtectedAndNineDetachableStones()
         {
-            Assert.That(EarthSurfCellGraph.CellCount, Is.EqualTo(15));
+            Assert.That(EarthSurfCellGraph.CellCount, Is.EqualTo(12));
             Assert.That(EarthSurfCellGraph.CountBits(EarthSurfCellGraph.SupportCoreMask), Is.EqualTo(3));
-            Assert.That(EarthSurfCellGraph.CountBits(EarthSurfCellGraph.DetachableMask), Is.EqualTo(12));
+            Assert.That(EarthSurfCellGraph.CountBits(EarthSurfCellGraph.DetachableMask), Is.EqualTo(9));
             Assert.That(EarthSurfCellGraph.SupportCoreMask & EarthSurfCellGraph.DetachableMask, Is.Zero);
 
             for (int index = 0; index < EarthSurfCellGraph.CellCount; index++)

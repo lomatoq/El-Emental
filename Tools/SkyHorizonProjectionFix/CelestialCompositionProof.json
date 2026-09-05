@@ -1,0 +1,34 @@
+{
+  "result": "Passed",
+  "scope": "Pure altitude/phase policy and staged-source contracts; Unity compile and visual QA remain required.",
+  "altitudePolicy": {
+    "innerRadius": 55.1,
+    "outerMultiplier": 1.055,
+    "minimumAtmosphereHeightMeters": 8.0,
+    "effectiveOuterMultiplier": 1.1451905626134302,
+    "outerRadius": 63.10000000000001,
+    "revealDistance": 0.9600000000000009,
+    "samples": {
+      "baseSurface": 0.0,
+      "normalArenaCamera": 0.0,
+      "insideAtmosphere": 0.0,
+      "outerBoundary": 0.0,
+      "halfReveal": 0.5000000000000054,
+      "outsideReveal": 1.0
+    }
+  },
+  "moonCenterPhasePolicy": {
+    "newCenter": 0.0081,
+    "quarterCenter": 0.07539611276725959,
+    "fullCenter": 1.0
+  },
+  "sourceContracts": {
+    "transparentBeforeAtmosphere": true,
+    "premultipliedBlend": true,
+    "noCelestialDepthWrite": true,
+    "phaseDrivenBySun": true,
+    "moonNotAltitudeHidden": true,
+    "systemPlanetUsesOuterRadius": true,
+    "atmosphereIncludesPlayableEnvelope": true
+  }
+}

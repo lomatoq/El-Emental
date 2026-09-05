@@ -114,6 +114,11 @@ namespace Elemental.Presentation.VFX
             if (isActiveAndEnabled) ResolveOrBuildVolume();
         }
 
+        public void BindDirector(EarthCameraDirector configuredDirector)
+        {
+            cameraDirector = configuredDirector;
+        }
+
         private void Awake()
         {
             _camera = GetComponent<UnityCamera>();
@@ -193,14 +198,26 @@ namespace Elemental.Presentation.VFX
             _hasAppliedFov = true;
 
             Transform playerFocus = cameraDirector != null ? cameraDirector.Player : null;
-            Vector3 focusPoint = playerFocus != null
-                ? playerFocus.position + playerFocus.up * 1.1f
-                : cameraDirector != null
-                    ? cameraDirector.LastWeightedFocus
-                    : transform.position + transform.forward * 8f;
-            float desiredFocus = IsFinite(focusPoint)
-                ? Vector3.Dot(focusPoint - transform.position, transform.forward)
-                : 8f;
+            float desiredFocus;
+            if (_cinematicDepthOfField != null &&
+                _cinematicDepthOfField.HasRequiredSubjects)
+            {
+                desiredFocus = _cinematicDepthOfField.FocusDistance;
+            }
+            else if (playerFocus != null)
+            {
+                Vector3 focusPoint = playerFocus.position + playerFocus.up * 1.1f;
+                desiredFocus = IsFinite(focusPoint)
+                    ? Vector3.Dot(focusPoint - transform.position, transform.forward)
+                    : 8f;
+            }
+            else
+            {
+                // Never interpret the director's default world-origin focus as
+                // authored camera intent. Missing subjects make custom DOF fail
+                // closed; this warm value only feeds non-bokeh clarity policy.
+                desiredFocus = 8f;
+            }
             _focusDistance = Mathf.SmoothDamp(
                 _focusDistance,
                 Mathf.Clamp(desiredFocus, 1.25f, 36f),

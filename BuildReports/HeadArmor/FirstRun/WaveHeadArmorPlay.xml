@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="9" result="Failed(Child)" total="9" passed="4" failed="5" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-04 12:02:40Z" end-time="2026-09-04 12:03:06Z" duration="26.5733832">
+  <test-suite type="TestSuite" id="1197" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="141" result="Failed" site="Child" start-time="2026-09-04 12:02:40Z" end-time="2026-09-04 12:03:06Z" duration="26.573383" total="9" passed="4" failed="5" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1190" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="141" result="Failed" site="Child" start-time="2026-09-04 12:02:40Z" end-time="2026-09-04 12:03:06Z" duration="26.364894" total="9" passed="4" failed="5" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13600" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1191" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="141" result="Failed" site="Child" start-time="2026-09-04 12:02:40Z" end-time="2026-09-04 12:03:06Z" duration="26.335043" total="9" passed="4" failed="5" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1192" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="141" result="Failed" site="Child" start-time="2026-09-04 12:02:40Z" end-time="2026-09-04 12:03:06Z" duration="26.331888" total="9" passed="4" failed="5" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1193" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="141" result="Failed" site="Child" start-time="2026-09-04 12:02:40Z" end-time="2026-09-04 12:03:06Z" duration="26.329238" total="9" passed="4" failed="5" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1029" name="EarthArmorHeadRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthArmorHeadRuntimeTests" classname="Elemental.Tests.PlayMode.EarthArmorHeadRuntimeTests" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2026-09-04 12:02:40Z" end-time="2026-09-04 12:02:49Z" duration="9.299588" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1030" name="ProductionArmorCoversHeadAndFollowsItsRotation" fullname="Elemental.Tests.PlayMode.EarthArmorHeadRuntimeTests.ProductionArmorCoversHeadAndFollowsItsRotation" methodname="ProductionArmorCoversHeadAndFollowsItsRotation" classname="Elemental.Tests.PlayMode.EarthArmorHeadRuntimeTests" runstate="Runnable" seed="105789635" result="Failed" start-time="2026-09-04 12:02:40Z" end-time="2026-09-04 12:02:49Z" duration="9.280867" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[Unhandled log message: '[Error] Not allowed to access vertices on mesh 'LinebreakerBody' (isReadable is false; Read/Write must be enabled in import settings)'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                  <stack-trace><![CDATA[UnityEngine.Mesh:get_vertices ()
+Elemental.Runtime.Physics.EarthArmorHeadSurface:TryMeasure (UnityEngine.Animator,Unity.Mathematics.float3[]&,UnityEngine.Vector3&) (at Assets/Elemental/Runtime/Physics/EarthArmorHeadSurface.cs:23)
+Elemental.Runtime.Physics.EarthArmorController:TryBuildHumanoidShellAnchors () (at Assets/Elemental/Runtime/Physics/EarthArmorController.cs:1137)
+Elemental.Runtime.Physics.EarthArmorController:BuildBodySurfaceAnchors () (at Assets/Elemental/Runtime/Physics/EarthArmorController.cs:975)
+Elemental.Runtime.Physics.EarthArmorController:Configure (UnityEngine.Rigidbody,UnityEngine.Transform,Elemental.Runtime.Physics.EarthFragmentPool,Elemental.Runtime.Physics.EarthArmorProfile) (at Assets/Elemental/Runtime/Physics/EarthArmorController.cs:171)
+Elemental.Input.Gestures.MagicInputController:EnsureEarthFeatureSessions () (at Assets/Elemental/Input/Gestures/MagicInputController.cs:596)
+Elemental.Input.Gestures.MagicInputController:Awake () (at Assets/Elemental/Input/Gestures/MagicInputController.cs:566)
+
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+Not allowed to access vertices on mesh 'LinebreakerBody' (isReadable is false; Read/Write must be enabled in import settings)
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1156" name="EarthWaveContactRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthWaveContactRuntimeTests" classname="Elemental.Tests.PlayMode.EarthWaveContactRuntimeTests" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2026-09-04 12:02:49Z" end-time="2026-09-04 12:02:59Z" duration="9.624640" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1157" name="LongWaveKeepsItsMeshesAndEmitsOnSurfaceThroughRiseAndRetreat" fullname="Elemental.Tests.PlayMode.EarthWaveContactRuntimeTests.LongWaveKeepsItsMeshesAndEmitsOnSurfaceThroughRiseAndRetreat" methodname="LongWaveKeepsItsMeshesAndEmitsOnSurfaceThroughRiseAndRetreat" classname="Elemental.Tests.PlayMode.EarthWaveContactRuntimeTests" runstate="Runnable" seed="1709182492" result="Failed" start-time="2026-09-04 12:02:50Z" end-time="2026-09-04 12:02:59Z" duration="8.626085" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[Unhandled log message: '[Error] Not allowed to access vertices on mesh 'LinebreakerBody' (isReadable is false; Read/Write must be enabled in import settings)'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                  <stack-trace><![CDATA[UnityEngine.Mesh:get_vertices ()
+Elemental.Runtime.Physics.EarthArmorHeadSurface:TryMeasure (UnityEngine.Animator,Unity.Mathematics.float3[]&,UnityEngine.Vector3&) (at Assets/Elemental/Runtime/Physics/EarthArmorHeadSurface.cs:23)
+Elemental.Runtime.Physics.EarthArmorController:TryBuildHumanoidShellAnchors () (at Assets/Elemental/Runtime/Physics/EarthArmorController.cs:1137)
+Elemental.Runtime.Physics.EarthArmorController:BuildBodySurfaceAnchors () (at Assets/Elemental/Runtime/Physics/EarthArmorController.cs:975)
+Elemental.Runtime.Physics.EarthArmorController:Configure (UnityEngine.Rigidbody,UnityEngine.Transform,Elemental.Runtime.Physics.EarthFragmentPool,Elemental.Runtime.Physics.EarthArmorProfile) (at Assets/Elemental/Runtime/Physics/EarthArmorController.cs:171)
+Elemental.Input.Gestures.MagicInputController:EnsureEarthFeatureSessions () (at Assets/Elemental/Input/Gestures/MagicInputController.cs:596)
+Elemental.Input.Gestures.MagicInputController:Awake () (at Assets/Elemental/Input/Gestures/MagicInputController.cs:566)
+
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+Not allowed to access vertices on mesh 'LinebreakerBody' (isReadable is false; Read/Write must be enabled in import settings)
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1160" name="EarthWebArmorRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests" classname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests" runstate="Runnable" testcasecount="7" result="Failed" site="Child" start-time="2026-09-04 12:02:59Z" end-time="2026-09-04 12:03:06Z" duration="7.400673" total="7" passed="4" failed="3" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1161" name="ArmorAssemblesAndConfirmedOverscrollReleasesPhysicalPieces" fullname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests.ArmorAssemblesAndConfirmedOverscrollReleasesPhysicalPieces" methodname="ArmorAssemblesAndConfirmedOverscrollReleasesPhysicalPieces" classname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests" runstate="Runnable" seed="1044685834" result="Failed" start-time="2026-09-04 12:02:59Z" end-time="2026-09-04 12:03:00Z" duration="0.636094" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Formation is a visual shell; colliders and canonical matter are deferred until launch.
+  Expected: False
+  But was:  True
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests+<ArmorAssemblesAndConfirmedOverscrollReleasesPhysicalPieces>d__0.MoveNext () [0x00146] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\EarthWebArmorRuntimeTests.cs:37
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1162" name="ArmorConformsToBodyCollidersThenExpandsAsHemisphereWithoutKickingCaster" fullname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests.ArmorConformsToBodyCollidersThenExpandsAsHemisphereWithoutKickingCaster" methodname="ArmorConformsToBodyCollidersThenExpandsAsHemisphereWithoutKickingCaster" classname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests" runstate="Runnable" seed="1637327592" result="Failed" start-time="2026-09-04 12:03:00Z" end-time="2026-09-04 12:03:01Z" duration="0.674389" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Armor stones must follow the actual head/torso/limb surfaces, not a root cylinder.
+  Expected: greater than or equal to 90
+  But was:  73
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests+<ArmorConformsToBodyCollidersThenExpandsAsHemisphereWithoutKickingCaster>d__1.MoveNext () [0x0044b] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\EarthWebArmorRuntimeTests.cs:118
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1163" name="ArmorKeepsAnimatedBodyAliveAndFormsUniformNonIntersectingSkin" fullname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests.ArmorKeepsAnimatedBodyAliveAndFormsUniformNonIntersectingSkin" methodname="ArmorKeepsAnimatedBodyAliveAndFormsUniformNonIntersectingSkin" classname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests" runstate="Runnable" seed="1495818504" result="Passed" start-time="2026-09-04 12:03:01Z" end-time="2026-09-04 12:03:01Z" duration="0.674801" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1164" name="ExpandedArmorFiresSelectedPlateThenRemainingDirectedVolleyWithoutCasterRecoil" fullname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests.ExpandedArmorFiresSelectedPlateThenRemainingDirectedVolleyWithoutCasterRecoil" methodname="ExpandedArmorFiresSelectedPlateThenRemainingDirectedVolleyWithoutCasterRecoil" classname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests" runstate="Runnable" seed="1023417996" result="Passed" start-time="2026-09-04 12:03:01Z" end-time="2026-09-04 12:03:02Z" duration="0.691958" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1166" name="FastConvexRockCannotTunnelThroughPlatform" fullname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests.FastConvexRockCannotTunnelThroughPlatform" methodname="FastConvexRockCannotTunnelThroughPlatform" classname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests" runstate="Runnable" seed="549341816" result="Failed" start-time="2026-09-04 12:03:02Z" end-time="2026-09-04 12:03:03Z" duration="1.215880" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  The sweep must emit exactly one impact without callback duplication.
+  Expected: 1
+  But was:  2
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests+<FastConvexRockCannotTunnelThroughPlatform>d__5.MoveNext () [0x002b8] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\EarthWebArmorRuntimeTests.cs:364
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1167" name="PlatformVoronoiPiecesReassembleIntoSolidCollider" fullname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests.PlatformVoronoiPiecesReassembleIntoSolidCollider" methodname="PlatformVoronoiPiecesReassembleIntoSolidCollider" classname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests" runstate="Runnable" seed="721612542" result="Passed" start-time="2026-09-04 12:03:03Z" end-time="2026-09-04 12:03:06Z" duration="2.652749" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1165" name="WheelDownRecallsOnlyTheSurvivingReleasedArmorPlate" fullname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests.WheelDownRecallsOnlyTheSurvivingReleasedArmorPlate" methodname="WheelDownRecallsOnlyTheSurvivingReleasedArmorPlate" classname="Elemental.Tests.PlayMode.EarthWebArmorRuntimeTests" runstate="Runnable" seed="296802087" result="Passed" start-time="2026-09-04 12:03:06Z" end-time="2026-09-04 12:03:06Z" duration="0.725220" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\WaveHeadArmorPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

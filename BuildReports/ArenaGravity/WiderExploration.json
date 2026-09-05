@@ -1,0 +1,16 @@
+{
+    "unityVersion": "6000.5.7f1",
+    "utc": "2026-09-04T13:22:52.0127686Z",
+    "mode": "PlayMode",
+    "result": "Failed",
+    "total": 8,
+    "passed": 6,
+    "failed": 2,
+    "skipped": 0,
+    "inconclusive": 0,
+    "durationSeconds": 35.1301487,
+    "failures": [
+        "Elemental.Tests.PlayMode.BrokenCrownArenaRuntimeTests.LocalDamagePluckGravityAndProtectedFloorShareOneBoundedContract:   EarthCore Game camera must not render the striped realtime shadow map.\r\n  Expected: False\r\n  But was:  True\r\n",
+        "Elemental.Tests.PlayMode.EarthLooseStoneRuntimeTests.FallenStonesSleepStayStillAndWakeForGravityGrip:   Gravity must let settled bodies sleep rather than restarting their contact solver every tick.\r\n  Expected: 3\r\n  But was:  1\r\n"
+    ]
+}

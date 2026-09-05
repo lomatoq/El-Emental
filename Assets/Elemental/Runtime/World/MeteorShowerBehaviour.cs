@@ -1,6 +1,9 @@
 using System;
 using Elemental.Runtime.Physics;
+using Elemental.Runtime.Geometry;
 using Elemental.Simulation.Magic;
+using Elemental.Simulation.Bending;
+using Elemental.Simulation.Structures;
 using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine;
@@ -22,6 +25,13 @@ namespace Elemental.Runtime.World
         [SerializeField] private Material meteorMaterial;
         [SerializeField] private EarthPhysicsFeelProfile physicsFeelProfile;
         [SerializeField] private EarthEffectsTuningProfile effectsProfile;
+        [SerializeField] private EarthRockDebrisPool debrisPool;
+        [SerializeField] private EarthMaterialFeedbackHub materialFeedback;
+        [SerializeField] private EarthStoneBevelProfile stoneBevelProfile;
+        private readonly EarthStoneRenderBevelCache _renderBevels = new();
+        private readonly Mesh[] _meteorSourceMeshes = new Mesh[MaximumPhysicalPool + MaximumApproachPool];
+        public void ConfigureDebrisPool(EarthRockDebrisPool pool) => debrisPool = pool;
+        public void ConfigureMaterialFeedback(EarthMaterialFeedbackHub hub) => materialFeedback = hub;
 
         private readonly PhysicalMeteor[] _meteors = new PhysicalMeteor[MaximumPhysicalPool];
         private readonly ApproachMeteor[] _approaches = new ApproachMeteor[MaximumApproachPool];
@@ -119,7 +129,8 @@ namespace Elemental.Runtime.World
 
         internal void ResolveImpact(PhysicalMeteor meteor, Collision collision)
         {
-            if (meteor == null || collision.contactCount == 0 || !meteor.gameObject.activeSelf) return;
+            if (meteor == null || meteor.ImpactSpent || collision.contactCount == 0 || !meteor.gameObject.activeSelf) return;
+            meteor.ImpactSpent = true;
             ContactPoint contact = collision.GetContact(0);
             float speed = collision.relativeVelocity.magnitude;
             float impulse = collision.impulse.magnitude;
@@ -166,7 +177,22 @@ namespace Elemental.Runtime.World
                 ToFloat3(contact.point),
                 ToFloat3(contact.normal),
                 EarthImpactMaterialKind.Meteor));
-            meteor.Deactivate();
+            var breakDecision = debrisPool != null ? debrisPool.ResolveBreak(meteor.Radius, meteor.Body.mass,
+                Mathf.Max(impulse, meteor.Body.mass * speed)) : default;
+            if (debrisPool != null && breakDecision.Breaks)
+            {
+                if (debrisPool.TryEmitBreak(contact.point, contact.normal, meteor.Body.linearVelocity,
+                    meteor.Radius, meteor.Body.mass, meteor.MeteorId, breakDecision, 0, meteor.MatterIdentity))
+                    meteor.Deactivate();
+                // Capacity exhaustion keeps the original spent physical stone; never
+                // replay its crater/damage and never overwrite another live chunk.
+            }
+            else
+            {
+                materialFeedback?.Emit(EarthMaterialFeedbackKind.Impact, contact.point, contact.normal,
+                    1.5f, meteor.Radius, meteor.MeteorId, 0, 140, 28);
+                // Missing split authority or a low-energy landing retains the original body.
+            }
         }
 
         private void EnsurePool()
@@ -178,7 +204,11 @@ namespace Elemental.Runtime.World
                 meteorObject.name = $"Physical Meteor {index + 1:00}";
                 meteorObject.transform.SetParent(transform, false);
                 MeshFilter filter = meteorObject.GetComponent<MeshFilter>();
-                if (filter != null) filter.sharedMesh = EarthWebWaveCellMeshFactory.Create(6200 + index * 47);
+                if (filter != null)
+                {
+                    _meteorSourceMeshes[index] = EarthWebWaveCellMeshFactory.Create(6200 + index * 47);
+                    filter.sharedMesh = _renderBevels.Get(_meteorSourceMeshes[index], stoneBevelProfile);
+                }
                 Renderer renderer = meteorObject.GetComponent<Renderer>();
                 if (renderer != null && meteorMaterial != null) renderer.sharedMaterial = meteorMaterial;
                 Rigidbody body = meteorObject.AddComponent<Rigidbody>();
@@ -213,7 +243,8 @@ namespace Elemental.Runtime.World
                 var approachObject = new GameObject($"Scaled Approach Meteor {index + 1:00}");
                 approachObject.transform.SetParent(transform, false);
                 MeshFilter filter = approachObject.AddComponent<MeshFilter>();
-                filter.sharedMesh = EarthWebWaveCellMeshFactory.Create(7100 + index * 59);
+                _meteorSourceMeshes[MaximumPhysicalPool + index] = EarthWebWaveCellMeshFactory.Create(7100 + index * 59);
+                filter.sharedMesh = _renderBevels.Get(_meteorSourceMeshes[MaximumPhysicalPool + index], stoneBevelProfile);
                 MeshRenderer renderer = approachObject.AddComponent<MeshRenderer>();
                 renderer.sharedMaterial = meteorMaterial;
                 TrailRenderer trail = approachObject.AddComponent<TrailRenderer>();
@@ -234,6 +265,18 @@ namespace Elemental.Runtime.World
                     Transform = approachObject.transform,
                     Trail = trail
                 };
+            }
+        }
+
+        private void OnDestroy()
+        {
+            _renderBevels.Clear();
+            for (int index = 0; index < _meteorSourceMeshes.Length; index++)
+            {
+                Mesh source = _meteorSourceMeshes[index];
+                if (source == null) continue;
+                if (Application.isPlaying) Destroy(source);
+                else DestroyImmediate(source);
             }
         }
 

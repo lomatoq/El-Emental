@@ -12,7 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88a887db2309f38458627685d9ac387f, type: 3}
   m_Name: CelestialSystemProfile
   m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.World.CelestialSystemProfile
-  daySeconds: 480
+  daylightSeconds: 300
+  nightSeconds: 300
+  cycleSchema: 1
+  legacyCycleSeconds: 0
   visualYearSeconds: 1440
   moonOrbitSeconds: 240
   axialTiltDegrees: 18
@@ -20,13 +23,13 @@ MonoBehaviour:
   timeScale: 1
   paused: 0
   daylightIntensity: 1.55
-  moonlightIntensity: 0.22
+  moonlightIntensity: 0.8
   dayColor: {r: 1, g: 0.9, b: 0.74, a: 1}
   duskColor: {r: 1, g: 0.55, b: 0.3, a: 1}
   dayAmbientSky: {r: 0.18, g: 0.23, b: 0.31, a: 1}
   dayAmbientEquator: {r: 0.12, g: 0.105, b: 0.1, a: 1}
   dayAmbientGround: {r: 0.045, g: 0.035, b: 0.03, a: 1}
-  nightAmbient: {r: 0.025, g: 0.04, b: 0.085, a: 1}
+  nightAmbient: {r: 0.05, g: 0.07, b: 0.12, a: 1}
   sunAngularSize: 2.2
   moonAngularSize: 1.25
   distantPlanetAngularSize: 2.8

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Passed" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 11:39:25Z" end-time="2026-09-05 11:39:36Z" duration="11.0738748">
+  <test-suite type="TestSuite" id="1261" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="198" result="Passed" start-time="2026-09-05 11:39:25Z" end-time="2026-09-05 11:39:36Z" duration="11.073875" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1254" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="198" result="Passed" start-time="2026-09-05 11:39:25Z" end-time="2026-09-05 11:39:36Z" duration="11.025009" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1255" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="198" result="Passed" start-time="2026-09-05 11:39:25Z" end-time="2026-09-05 11:39:36Z" duration="11.020641" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1256" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="198" result="Passed" start-time="2026-09-05 11:39:25Z" end-time="2026-09-05 11:39:36Z" duration="11.006465" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1257" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="198" result="Passed" start-time="2026-09-05 11:39:25Z" end-time="2026-09-05 11:39:36Z" duration="11.002481" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1187" name="SeptemberAnimationRescueRuntimeTests" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" testcasecount="28" result="Passed" start-time="2026-09-05 11:39:25Z" end-time="2026-09-05 11:39:36Z" duration="10.996267" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1208" name="GravityGripPreContactWithoutGenericC1MatchesBoundedSourceAtSixtyHertz" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.GravityGripPreContactWithoutGenericC1MatchesBoundedSourceAtSixtyHertz" methodname="GravityGripPreContactWithoutGenericC1MatchesBoundedSourceAtSixtyHertz" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1096275994" result="Passed" start-time="2026-09-05 11:39:25Z" end-time="2026-09-05 11:39:32Z" duration="7.031133" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 2796.71ms; ground=exact baked base, cacheLoad=19.57ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1573.15ms, peakCookingPoll=0.32ms; sync=ArenaInitialize=459.21ms/15;ArenaBevel=424.55ms/175;ArenaMeshPicking=2.86ms/175;WallAwake=534.30ms/1;WallPieceVisuals=23.80ms/40;PlatformPoolAwake=12.90ms/1;PlatformRuntimeMeshes=1.65ms/12;PillarPoolAwake=29.48ms/1;PillarMeshLibrary=5.35ms/1;PillarColumns=22.27ms/1;DebrisPoolAwake=117.24ms/1;HeroFragmentPoolAwake=13.45ms/1.
+[GravityC1Isolation] requestedHz=60 observedFrames=36 clockRange=0.0000..0.3791 freshMax=0.3791 windowSamples=19 trace=0.000,0.011,0.022,0.032,0.043,0.054,0.065,0.076,0.087,0.097,0.108,0.119,0.130,0.141,0.152,0.162,0.173,0.184,0.195,0.206,0.217,0.227,0.238,0.249,0.260,0.271,0.282,0.292,0.303,0.314,0.325,0.336
+[GravityC1Isolation] requestedHz=60 maximumFinalBoneStep=18.958 samples=19 avgDelta=0.01667
+]]></output>
+              </test-case>
+              <test-case id="1207" name="GravityGripPreContactWithoutGenericC1MatchesBoundedSourceAtThirtyHertz" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.GravityGripPreContactWithoutGenericC1MatchesBoundedSourceAtThirtyHertz" methodname="GravityGripPreContactWithoutGenericC1MatchesBoundedSourceAtThirtyHertz" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="55831243" result="Passed" start-time="2026-09-05 11:39:32Z" end-time="2026-09-05 11:39:36Z" duration="3.917342" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 1329.53ms; ground=exact baked base, cacheLoad=9.96ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1241.15ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=459.21ms/15;ArenaBevel=424.55ms/175;ArenaMeshPicking=2.86ms/175;WallAwake=534.30ms/1;WallPieceVisuals=23.80ms/40;PlatformPoolAwake=12.90ms/1;PlatformRuntimeMeshes=1.65ms/12;PillarPoolAwake=29.48ms/1;PillarMeshLibrary=5.35ms/1;PillarColumns=22.27ms/1;DebrisPoolAwake=117.24ms/1;HeroFragmentPoolAwake=13.45ms/1.
+[GravityC1Isolation] requestedHz=30 observedFrames=19 clockRange=0.0000..0.3900 freshMax=0.3900 windowSamples=10 trace=0.000,0.022,0.043,0.065,0.087,0.108,0.130,0.152,0.173,0.195,0.217,0.238,0.260,0.282,0.303,0.325,0.347,0.368,0.390
+[GravityC1Isolation] requestedHz=30 maximumFinalBoneStep=36.469 samples=10 avgDelta=0.03333
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\AnimationGravityC1IsolationPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

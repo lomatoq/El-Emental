@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="3" result="Passed" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 01:07:46Z" end-time="2026-09-05 01:07:51Z" duration="4.9710305">
+  <test-suite type="TestSuite" id="1236" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="174" result="Passed" start-time="2026-09-05 01:07:46Z" end-time="2026-09-05 01:07:51Z" duration="4.971031" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1229" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="174" result="Passed" start-time="2026-09-05 01:07:49Z" end-time="2026-09-05 01:07:51Z" duration="2.118154" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13600" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1230" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="174" result="Passed" start-time="2026-09-05 01:07:49Z" end-time="2026-09-05 01:07:51Z" duration="2.087554" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1231" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="174" result="Passed" start-time="2026-09-05 01:07:49Z" end-time="2026-09-05 01:07:51Z" duration="2.067214" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1232" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="174" result="Passed" start-time="2026-09-05 01:07:50Z" end-time="2026-09-05 01:07:51Z" duration="1.556951" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1219" name="StartupCacheRuntimeTests" fullname="Elemental.Tests.PlayMode.StartupCacheRuntimeTests" classname="Elemental.Tests.PlayMode.StartupCacheRuntimeTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-05 01:07:50Z" end-time="2026-09-05 01:07:51Z" duration="1.528534" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1220" name="CompleteBaseExistsBeforeFirstFrameAndEditsNeverMutateSharedAssets" fullname="Elemental.Tests.PlayMode.StartupCacheRuntimeTests.CompleteBaseExistsBeforeFirstFrameAndEditsNeverMutateSharedAssets" methodname="CompleteBaseExistsBeforeFirstFrameAndEditsNeverMutateSharedAssets" classname="Elemental.Tests.PlayMode.StartupCacheRuntimeTests" runstate="Runnable" seed="198055875" result="Passed" start-time="2026-09-05 01:07:50Z" end-time="2026-09-05 01:07:51Z" duration="0.747277" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1222" name="MissingCacheKeepsCommandsPausedUntilCanonicalGroundAndPhysicsReady" fullname="Elemental.Tests.PlayMode.StartupCacheRuntimeTests.MissingCacheKeepsCommandsPausedUntilCanonicalGroundAndPhysicsReady" methodname="MissingCacheKeepsCommandsPausedUntilCanonicalGroundAndPhysicsReady" classname="Elemental.Tests.PlayMode.StartupCacheRuntimeTests" runstate="Runnable" seed="1731208504" result="Passed" start-time="2026-09-05 01:07:51Z" end-time="2026-09-05 01:07:51Z" duration="0.646222" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 598.93ms; ground=not-configured: budgeted meshing, cacheLoad=0.99ms, bakedPlans=0, planMisses=0, cookedMeshes=0/0, backgroundCooking=0.00ms, peakCookingPoll=0.00ms.
+]]></output>
+              </test-case>
+              <test-case id="1221" name="OverlappingTransactionsCommitNewestGeometryWithoutChangingBakedBase" fullname="Elemental.Tests.PlayMode.StartupCacheRuntimeTests.OverlappingTransactionsCommitNewestGeometryWithoutChangingBakedBase" methodname="OverlappingTransactionsCommitNewestGeometryWithoutChangingBakedBase" classname="Elemental.Tests.PlayMode.StartupCacheRuntimeTests" runstate="Runnable" seed="701625341" result="Passed" start-time="2026-09-05 01:07:51Z" end-time="2026-09-05 01:07:51Z" duration="0.088413" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\StartupCachePlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

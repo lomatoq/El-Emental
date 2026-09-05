@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Failed(Child)" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-04 21:10:09Z" end-time="2026-09-04 21:10:53Z" duration="43.798169">
+  <test-suite type="TestSuite" id="1236" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="174" result="Failed" site="Child" start-time="2026-09-04 21:10:09Z" end-time="2026-09-04 21:10:53Z" duration="43.798169" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1229" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="174" result="Failed" site="Child" start-time="2026-09-04 21:10:10Z" end-time="2026-09-04 21:10:53Z" duration="43.264961" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13600" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1230" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="174" result="Failed" site="Child" start-time="2026-09-04 21:10:10Z" end-time="2026-09-04 21:10:53Z" duration="42.706136" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1231" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="174" result="Failed" site="Child" start-time="2026-09-04 21:10:10Z" end-time="2026-09-04 21:10:53Z" duration="42.688314" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1232" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="174" result="Failed" site="Child" start-time="2026-09-04 21:10:10Z" end-time="2026-09-04 21:10:53Z" duration="42.673103" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1210" name="SeptemberAnimationRescueRuntimeTests" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" testcasecount="8" result="Failed" site="Child" start-time="2026-09-04 21:10:10Z" end-time="2026-09-04 21:10:53Z" duration="42.655958" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1216" name="SemanticMagicSlotsBecomeOneHotAndKeepAValidUpperBodyPose" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.SemanticMagicSlotsBecomeOneHotAndKeepAValidUpperBodyPose" methodname="SemanticMagicSlotsBecomeOneHotAndKeepAValidUpperBodyPose" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1634824896" result="Passed" start-time="2026-09-04 21:10:11Z" end-time="2026-09-04 21:10:43Z" duration="32.182107" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+[StartupCache] Scene ready in 9086.57ms; ground=exact baked base, bakedPlans=1403, cookedMeshes=5436, peakCookingSlice=3.14ms.
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+]]></output>
+              </test-case>
+              <test-case id="1217" name="WalkStopKeepsKneesFiniteAndAvoidsAOneFrameLegSnap" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.WalkStopKeepsKneesFiniteAndAvoidsAOneFrameLegSnap" methodname="WalkStopKeepsKneesFiniteAndAvoidsAOneFrameLegSnap" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1460453295" result="Failed" start-time="2026-09-04 21:10:43Z" end-time="2026-09-04 21:10:53Z" duration="9.694988" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  A walk-stop transition snapped a knee in one rendered frame.
+  Expected: less than 35.0f
+  But was:  43.2706757f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+<WalkStopKeepsKneesFiniteAndAvoidsAOneFrameLegSnap>d__20.MoveNext () [0x00316] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\SeptemberAnimationSemanticRuntimeTests.cs:197
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+[StartupCache] Scene ready in 5307.30ms; ground=exact baked base, bakedPlans=1403, cookedMeshes=5436, peakCookingSlice=3.18ms.
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\AnimationSemanticRuntimeAuditPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

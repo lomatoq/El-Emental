@@ -26,6 +26,7 @@ namespace Elemental.Runtime.Physics
         public bool Register(IEarthSurfaceProvider provider)
         {
             if (provider == null) return false;
+            CompactDestroyedProviders();
             for (int index = 0; index < _providerCount; index++)
                 if (ReferenceEquals(_providers[index], provider)) return true;
             if (_providerCount >= _providers.Length)
@@ -54,6 +55,7 @@ namespace Elemental.Runtime.Physics
         {
             using (QueryMarker.Auto())
             {
+                CompactDestroyedProviders();
                 sample = default;
                 if (!query.IsValid) return false;
                 for (int index = 0; index < _providerCount; index++)
@@ -71,6 +73,7 @@ namespace Elemental.Runtime.Physics
 
         public bool IsCurrent(in EarthSurfaceHandle handle)
         {
+            CompactDestroyedProviders();
             if (!handle.IsValid) return false;
             for (int index = 0; index < _providerCount; index++)
             {
@@ -78,6 +81,26 @@ namespace Elemental.Runtime.Physics
                 if (provider != null && provider.IsCurrent(in handle)) return true;
             }
             return false;
+        }
+
+        private void CompactDestroyedProviders()
+        {
+            int write = 0;
+            for (int read = 0; read < _providerCount; read++)
+            {
+                IEarthSurfaceProvider provider = _providers[read];
+                // Interface references bypass UnityEngine.Object's overloaded null
+                // comparison. Authoring repairs can replace provider components,
+                // leaving destroyed wrappers in this fixed allocation until they
+                // are explicitly compacted.
+                if (provider == null ||
+                    (provider is UnityEngine.Object unityObject && unityObject == null))
+                    continue;
+                _providers[write++] = provider;
+            }
+            for (int index = write; index < _providerCount; index++)
+                _providers[index] = null;
+            _providerCount = write;
         }
 
         internal static float3 ToFloat3(Vector3 value) => new float3(value.x, value.y, value.z);

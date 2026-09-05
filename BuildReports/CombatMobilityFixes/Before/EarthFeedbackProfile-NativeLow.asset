@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb545e6cb11f43f1abc66fe0fb50176f, type: 3}
+  m_Name: EarthFeedbackProfile-NativeLow
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.VFX.EarthFeedbackProfile
+  decalCapacity: 20
+  maximumDustCount: 28
+  maximumChipCount: 8
+  minimumScarImpulse: 55
+  minimumScarRadius: 0.24
+  maximumScarRadius: 1.45
+  scarLifetime: 18
+  persistentSurfaceScars: 1
+  scarFadeSeconds: 4
+  decalDrawDistance: 32

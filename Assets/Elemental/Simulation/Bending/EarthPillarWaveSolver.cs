@@ -4,6 +4,22 @@ using Unity.Mathematics;
 
 namespace Elemental.Simulation.Bending
 {
+    public static class EarthWaveSurfaceFollow
+    {
+        public const float MaximumStepUp = 0.45f;
+        public const float MaximumDrop = 4f;
+
+        public static EarthSurfaceQuery CreateQuery(float3 surface, float3 up)
+        {
+            up = math.normalizesafe(up, new float3(0f, 1f, 0f));
+            // Continue the ground sheet from the source height. A ray starting
+            // metres overhead picks an arch/ceiling instead of the floor below it.
+            return new EarthSurfaceQuery(surface + up * MaximumStepUp, -up,
+                MaximumStepUp + MaximumDrop,
+                EarthSurfaceCapabilities.Support | EarthSurfaceCapabilities.Pillar);
+        }
+    }
+
     public enum EarthWaveSemanticFamily : byte
     {
         BroadRipple = 0,
@@ -184,17 +200,17 @@ namespace Elemental.Simulation.Bending
             float settleDamping,
             float seededVariation01)
         {
-            PrecompressionSeconds = math.clamp(precompressionSeconds, 0.04f, 0.08f);
-            PrecompressionDepth01 = math.clamp(precompressionDepth01, 0.02f, 0.03f);
-            RiseSeconds = math.clamp(riseSeconds, 0.20f, 0.24f);
-            Overshoot01 = math.clamp(overshoot01, 0.035f, 0.05f);
-            SettleSeconds = math.clamp(settleSeconds, 0.12f, 0.17f);
-            HoldSeconds = math.clamp(holdSeconds, 0.04f, 0.07f);
-            RetreatSeconds = math.clamp(retreatSeconds, 0.26f, 0.34f);
-            TiltDegrees = math.clamp(tiltDegrees, 5f, 7f);
-            SettleFrequencyHz = math.clamp(settleFrequencyHz, 4.5f, 5.5f);
-            SettleDamping = math.clamp(settleDamping, 0.68f, 0.78f);
-            SeededVariation01 = math.clamp(seededVariation01, 0f, 0.07f);
+            PrecompressionSeconds = math.clamp(precompressionSeconds, .01f, .5f);
+            PrecompressionDepth01 = math.clamp(precompressionDepth01, 0f, .15f);
+            RiseSeconds = math.clamp(riseSeconds, .05f, 2f);
+            Overshoot01 = math.clamp(overshoot01, 0f, .25f);
+            SettleSeconds = math.clamp(settleSeconds, .01f, 1f);
+            HoldSeconds = math.clamp(holdSeconds, 0f, 2f);
+            RetreatSeconds = math.clamp(retreatSeconds, .05f, 3f);
+            TiltDegrees = math.clamp(tiltDegrees, 0f, 20f);
+            SettleFrequencyHz = math.clamp(settleFrequencyHz, .1f, 12f);
+            SettleDamping = math.clamp(settleDamping, .1f, 3f);
+            SeededVariation01 = math.clamp(seededVariation01, 0f, .3f);
         }
 
         public float PrecompressionSeconds { get; }
@@ -526,9 +542,15 @@ namespace Elemental.Simulation.Bending
                 EarthPillarWaveSample source = samples[index];
                 if (sectorDegrees < 359.5f && math.abs(source.AngleDegrees) > halfSector) continue;
                 VoronoiFractureCell cell = plan.Cells[index];
-                float2[] footprint = SimplifyFootprint(cell.Vertices, cell.Centroid, 8);
-                float centroidDistance = math.length(cell.Centroid);
-                float centroidAngle = math.degrees(math.atan2(cell.Centroid.x, cell.Centroid.y));
+                // Sparse semantic families do not occupy the whole clipping disk.
+                // Edge sites must not inherit its empty 10-metre outer territory.
+                float2[] bounded = EarthWaveFootprintSolver.Clip(cell.Vertices, sites[index],
+                    EarthWaveFootprintSolver.Radius(tuning.MaximumWidth) * (source.ShapeAreaScale / 1.7f),
+                    out float2 centroid, out float boundedArea);
+                if (bounded.Length < 3 || boundedArea <= .00001f) continue;
+                float2[] footprint = SimplifyFootprint(bounded, centroid, 8);
+                float centroidDistance = math.length(centroid);
+                float centroidAngle = math.degrees(math.atan2(centroid.x, centroid.y));
                 float centroidRadians = math.radians(centroidAngle);
                 float sine = math.sin(centroidRadians);
                 float cosine = math.cos(centroidRadians);
@@ -553,7 +575,7 @@ namespace Elemental.Simulation.Bending
                     source.ShapeAreaScale,
                     source.SpiralPhase01,
                     family);
-                cells.Add(new EarthWebWaveCell(index, in sample, footprint, cell.Area));
+                cells.Add(new EarthWebWaveCell(index, in sample, footprint, boundedArea));
             }
             CapTerminalVisualFootprints(cells);
             int radialThreads = 12 + ((seed * 5 + 3) % 7);
@@ -692,7 +714,7 @@ namespace Elemental.Simulation.Bending
                 return new EarthPillarWaveVisualSample(
                     math.lerp(tuning.PrecompressionDepth01, 1f + tuning.Overshoot01, quintic),
                     math.lerp(1f - tuning.PrecompressionDepth01, 1.018f, quintic),
-                    tilt * math.sin(rise01 * math.PI),
+                    tilt * (.18f * (1f - quintic) + math.pow(math.sin(rise01 * math.PI), 2f)),
                     1f - quintic);
             }
 
@@ -704,12 +726,12 @@ namespace Elemental.Simulation.Bending
                 float oscillation = math.cos(
                     settleTime * math.PI * 2f * tuning.SettleFrequencyHz);
                 float decay = math.exp(
-                    -tuning.SettleDamping * tuning.SettleFrequencyHz * settleTime);
+                    -tuning.SettleDamping * tuning.SettleFrequencyHz * settleTime * settle01);
                 return new EarthPillarWaveVisualSample(
                     1f + tuning.Overshoot01 * oscillation * decay * settleEnvelope,
                     math.lerp(1.018f, 1f, SmootherStep(settle01)),
-                    tilt * 0.34f * settleEnvelope,
-                    0.28f * settleEnvelope);
+                    tilt * .34f * math.pow(math.sin(settle01 * math.PI), 2f) * settleEnvelope,
+                    .28f * math.pow(math.sin(settle01 * math.PI), 2f) * settleEnvelope);
             }
 
             float retreatStart = tuning.RiseSeconds + tuning.SettleSeconds + tuning.HoldSeconds;
@@ -721,7 +743,7 @@ namespace Elemental.Simulation.Bending
             return new EarthPillarWaveVisualSample(
                 math.max(0f, 1f - retreatCurve),
                 math.lerp(1f, 0.82f, retreatCurve),
-                -tilt * 0.20f * math.sin(retreat01 * math.PI),
+                -tilt * 0.20f * math.pow(math.sin(retreat01 * math.PI), 2f),
                 0f);
         }
 

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="4" result="Passed" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-08-31 02:25:15Z" end-time="2026-08-31 02:25:15Z" duration="0.0082904">
+  <test-suite type="TestSuite" id="1163" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="560" result="Passed" start-time="2026-08-31 02:25:15Z" end-time="2026-08-31 02:25:15Z" duration="0.008290" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1837" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="560" result="Passed" start-time="2026-08-31 02:25:15Z" end-time="2026-08-31 02:25:15Z" duration="0.007780" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="21132" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1838" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="560" result="Passed" start-time="2026-08-31 02:25:15Z" end-time="2026-08-31 02:25:15Z" duration="0.007684" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1839" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="560" result="Passed" start-time="2026-08-31 02:25:15Z" end-time="2026-08-31 02:25:15Z" duration="0.007593" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1840" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="560" result="Passed" start-time="2026-08-31 02:25:15Z" end-time="2026-08-31 02:25:15Z" duration="0.007475" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1602" name="EarthProjectileSurfaceContactSolverTests" fullname="Elemental.Tests.EditMode.EarthProjectileSurfaceContactSolverTests" classname="Elemental.Tests.EditMode.EarthProjectileSurfaceContactSolverTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-08-31 02:25:15Z" end-time="2026-08-31 02:25:15Z" duration="0.007206" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1605" name="DirectWallApproachIsAcceptedFromRelativeNormalSpeed" fullname="Elemental.Tests.EditMode.EarthProjectileSurfaceContactSolverTests.DirectWallApproachIsAcceptedFromRelativeNormalSpeed" methodname="DirectWallApproachIsAcceptedFromRelativeNormalSpeed" classname="Elemental.Tests.EditMode.EarthProjectileSurfaceContactSolverTests" runstate="Runnable" seed="849136726" result="Passed" start-time="2026-08-31 02:25:15Z" end-time="2026-08-31 02:25:15Z" duration="0.003529" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1606" name="SameSurfaceContactEpisodeEmitsOneImpactButLaterImpactRearms" fullname="Elemental.Tests.EditMode.EarthProjectileSurfaceContactSolverTests.SameSurfaceContactEpisodeEmitsOneImpactButLaterImpactRearms" methodname="SameSurfaceContactEpisodeEmitsOneImpactButLaterImpactRearms" classname="Elemental.Tests.EditMode.EarthProjectileSurfaceContactSolverTests" runstate="Runnable" seed="1771206003" result="Passed" start-time="2026-08-31 02:25:15Z" end-time="2026-08-31 02:25:15Z" duration="0.000482" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1604" name="SpeculativeContactOutsidePhysicalClearanceIsNotAnImpact" fullname="Elemental.Tests.EditMode.EarthProjectileSurfaceContactSolverTests.SpeculativeContactOutsidePhysicalClearanceIsNotAnImpact" methodname="SpeculativeContactOutsidePhysicalClearanceIsNotAnImpact" classname="Elemental.Tests.EditMode.EarthProjectileSurfaceContactSolverTests" runstate="Runnable" seed="2089185602" result="Passed" start-time="2026-08-31 02:25:15Z" end-time="2026-08-31 02:25:15Z" duration="0.000263" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1603" name="TangentContactPreservesProjectileGameplayEffect" fullname="Elemental.Tests.EditMode.EarthProjectileSurfaceContactSolverTests.TangentContactPreservesProjectileGameplayEffect" methodname="TangentContactPreservesProjectileGameplayEffect" classname="Elemental.Tests.EditMode.EarthProjectileSurfaceContactSolverTests" runstate="Runnable" seed="1339810906" result="Passed" start-time="2026-08-31 02:25:15Z" end-time="2026-08-31 02:25:15Z" duration="0.000273" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\ProjectileSurfaceContactEdit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

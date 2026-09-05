@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Passed" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 08:54:05Z" end-time="2026-09-05 08:54:06Z" duration="0.7058259">
+  <test-suite type="TestSuite" id="2004" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="808" result="Passed" start-time="2026-09-05 08:54:05Z" end-time="2026-09-05 08:54:06Z" duration="0.705826" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1989" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="808" result="Passed" start-time="2026-09-05 08:54:05Z" end-time="2026-09-05 08:54:06Z" duration="0.705688" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1990" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="808" result="Passed" start-time="2026-09-05 08:54:05Z" end-time="2026-09-05 08:54:06Z" duration="0.705620" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1991" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="808" result="Passed" start-time="2026-09-05 08:54:05Z" end-time="2026-09-05 08:54:06Z" duration="0.705559" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1992" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="808" result="Passed" start-time="2026-09-05 08:54:05Z" end-time="2026-09-05 08:54:06Z" duration="0.705460" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1058" name="DayNightSkyTests" fullname="Elemental.Tests.EditMode.DayNightSkyTests" classname="Elemental.Tests.EditMode.DayNightSkyTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-09-05 08:54:05Z" end-time="2026-09-05 08:54:06Z" duration="0.704875" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1066" name="CubeFaceBasesShareAllEdgesAndCornersInWorldDirection" fullname="Elemental.Tests.EditMode.DayNightSkyTests.CubeFaceBasesShareAllEdgesAndCornersInWorldDirection" methodname="CubeFaceBasesShareAllEdgesAndCornersInWorldDirection" classname="Elemental.Tests.EditMode.DayNightSkyTests" runstate="Runnable" seed="1696291027" result="Passed" start-time="2026-09-05 08:54:05Z" end-time="2026-09-05 08:54:05Z" duration="0.001700" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1061" name="DaylightAndNightUseObserverRadialUpAndSolarLightStopsBelowHorizon" fullname="Elemental.Tests.EditMode.DayNightSkyTests.DaylightAndNightUseObserverRadialUpAndSolarLightStopsBelowHorizon" methodname="DaylightAndNightUseObserverRadialUpAndSolarLightStopsBelowHorizon" classname="Elemental.Tests.EditMode.DayNightSkyTests" runstate="Runnable" seed="1270673634" result="Passed" start-time="2026-09-05 08:54:05Z" end-time="2026-09-05 08:54:05Z" duration="0.000904" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1065" name="ElevatedObserverSeesSunBelowTangentUntilActualPlanetHorizon" fullname="Elemental.Tests.EditMode.DayNightSkyTests.ElevatedObserverSeesSunBelowTangentUntilActualPlanetHorizon" methodname="ElevatedObserverSeesSunBelowTangentUntilActualPlanetHorizon" classname="Elemental.Tests.EditMode.DayNightSkyTests" runstate="Runnable" seed="535311017" result="Passed" start-time="2026-09-05 08:54:05Z" end-time="2026-09-05 08:54:05Z" duration="0.000680" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1063" name="LegacyFullCycleIsMigratedOnceAndNewDefaultsStayFiveMinutesEach" fullname="Elemental.Tests.EditMode.DayNightSkyTests.LegacyFullCycleIsMigratedOnceAndNewDefaultsStayFiveMinutesEach" methodname="LegacyFullCycleIsMigratedOnceAndNewDefaultsStayFiveMinutesEach" classname="Elemental.Tests.EditMode.DayNightSkyTests" runstate="Runnable" seed="1642716784" result="Passed" start-time="2026-09-05 08:54:05Z" end-time="2026-09-05 08:54:06Z" duration="0.669400" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Main Object Name 'LegacyCelestialMigration' does not match filename 'LegacyCelestialMigration_f0ab57d0e6a9425e8224abf837043ec0'
+Main Object Name 'LegacyCelestialMigration' does not match filename 'LegacyCelestialMigration_f0ab57d0e6a9425e8224abf837043ec0'
+Main Object Name 'LegacyCelestialMigration' does not match filename 'LegacyCelestialMigration_f0ab57d0e6a9425e8224abf837043ec0'
+]]></output>
+              </test-case>
+              <test-case id="1064" name="MissingLegacyNightExposureFieldsUseReadableConservativeDefaults" fullname="Elemental.Tests.EditMode.DayNightSkyTests.MissingLegacyNightExposureFieldsUseReadableConservativeDefaults" methodname="MissingLegacyNightExposureFieldsUseReadableConservativeDefaults" classname="Elemental.Tests.EditMode.DayNightSkyTests" runstate="Runnable" seed="383587349" result="Passed" start-time="2026-09-05 08:54:06Z" end-time="2026-09-05 08:54:06Z" duration="0.001151" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1060" name="PhaseSeekWrapPauseAndUnequalDurationsRemainConsistent" fullname="Elemental.Tests.EditMode.DayNightSkyTests.PhaseSeekWrapPauseAndUnequalDurationsRemainConsistent" methodname="PhaseSeekWrapPauseAndUnequalDurationsRemainConsistent" classname="Elemental.Tests.EditMode.DayNightSkyTests" runstate="Runnable" seed="1908624650" result="Passed" start-time="2026-09-05 08:54:06Z" end-time="2026-09-05 08:54:06Z" duration="0.002433" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1062" name="StarsAreDeterministicNormalizedAndDistributedByEqualAreaWithoutRows" fullname="Elemental.Tests.EditMode.DayNightSkyTests.StarsAreDeterministicNormalizedAndDistributedByEqualAreaWithoutRows" methodname="StarsAreDeterministicNormalizedAndDistributedByEqualAreaWithoutRows" classname="Elemental.Tests.EditMode.DayNightSkyTests" runstate="Runnable" seed="1650766543" result="Passed" start-time="2026-09-05 08:54:06Z" end-time="2026-09-05 08:54:06Z" duration="0.025325" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1059" name="SunriseToSunsetIsFiveMinutesAndNightHasItsOwnDuration" fullname="Elemental.Tests.EditMode.DayNightSkyTests.SunriseToSunsetIsFiveMinutesAndNightHasItsOwnDuration" methodname="SunriseToSunsetIsFiveMinutesAndNightHasItsOwnDuration" classname="Elemental.Tests.EditMode.DayNightSkyTests" runstate="Runnable" seed="1107738185" result="Passed" start-time="2026-09-05 08:54:06Z" end-time="2026-09-05 08:54:06Z" duration="0.000524" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\DayNightSkyEdit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

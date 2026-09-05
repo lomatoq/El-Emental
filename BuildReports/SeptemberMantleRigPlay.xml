@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 00:14:09Z" end-time="2026-09-05 00:14:29Z" duration="19.3568381">
+  <test-suite type="TestSuite" id="1236" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="174" result="Failed" site="Child" start-time="2026-09-05 00:14:09Z" end-time="2026-09-05 00:14:29Z" duration="19.356838" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1229" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="174" result="Failed" site="Child" start-time="2026-09-05 00:14:11Z" end-time="2026-09-05 00:14:29Z" duration="17.751542" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13600" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1230" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="174" result="Failed" site="Child" start-time="2026-09-05 00:14:11Z" end-time="2026-09-05 00:14:29Z" duration="17.724093" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1231" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="174" result="Failed" site="Child" start-time="2026-09-05 00:14:11Z" end-time="2026-09-05 00:14:29Z" duration="17.705426" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1232" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="174" result="Failed" site="Child" start-time="2026-09-05 00:14:11Z" end-time="2026-09-05 00:14:29Z" duration="17.689212" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1210" name="SeptemberAnimationRescueRuntimeTests" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" testcasecount="8" result="Failed" site="Child" start-time="2026-09-05 00:14:11Z" end-time="2026-09-05 00:14:29Z" duration="17.671088" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1211" name="ProductionMantleOwnsPoseReleasesFeetAndReturnsToContacts" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ProductionMantleOwnsPoseReleasesFeetAndReturnsToContacts" methodname="ProductionMantleOwnsPoseReleasesFeetAndReturnsToContacts" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="596628966" result="Failed" start-time="2026-09-05 00:14:11Z" end-time="2026-09-05 00:14:29Z" duration="17.255091" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  The authored/fallback wrist never reached the ledge contact region.
+  Expected: less than 0.349999994f
+  But was:  0.364415765f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+<ObserveProductionMantle>d__9.MoveNext () [0x006d0] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\SeptemberAnimationRescueRuntimeTests.cs:155
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
+Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+[StartupCache] Scene ready in 11555.32ms; ground=exact baked base, bakedPlans=1403, cookedMeshes=5436, peakCookingSlice=3.16ms.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\SeptemberMantleRigPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

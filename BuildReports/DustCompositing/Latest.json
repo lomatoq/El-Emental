@@ -1,0 +1,102 @@
+{
+    "utc": "2026-09-05T10:25:56.3450516Z",
+    "graphicsDevice": "Direct3D11",
+    "renderPipeline": "ElEmentalURP",
+    "dustMaterial": "RumbleDustLit",
+    "ambientMoteMaterial": "LightDustMote",
+    "passed": true,
+    "captureResolution": 96,
+    "centerRoiSize": 12,
+    "chipCameraDistance": 5.0,
+    "dustCameraDistance": 6.5,
+    "opaqueWallCameraDistance": 4.0,
+    "samples": [
+        {
+            "renderer": "MeshParticle",
+            "sourceMaterial": "LooseEarthChipVfx",
+            "shader": "Elemental/Graphics V5/Rumble Rock Lit",
+            "chipOnly": {
+                "r": 0.9827616214752197,
+                "g": 0.7017421126365662,
+                "b": 0.5082243084907532,
+                "a": 1.0
+            },
+            "chipWithDust": {
+                "r": 0.8921034932136536,
+                "g": 0.5916115045547485,
+                "b": 0.37418249249458315,
+                "a": 1.0
+            },
+            "chipVisibleDelta": 0.5583611726760864,
+            "dustVisibleDelta": 0.2528235912322998,
+            "dustOverChipDelta": 0.1116103008389473,
+            "opaqueWallOcclusionDelta": 0.0
+        },
+        {
+            "renderer": "PillarMesh",
+            "sourceMaterial": "RumbleSandstone",
+            "shader": "Elemental/Graphics V5/Rumble Rock Lit",
+            "chipOnly": {
+                "r": 0.8069999814033508,
+                "g": 0.509803831577301,
+                "b": 0.3047928810119629,
+                "a": 1.0
+            },
+            "chipWithDust": {
+                "r": 0.8276153802871704,
+                "g": 0.5212416052818298,
+                "b": 0.2996727526187897,
+                "a": 1.0
+            },
+            "chipVisibleDelta": 0.3810543715953827,
+            "dustVisibleDelta": 0.2528235912322998,
+            "dustOverChipDelta": 0.017819548025727273,
+            "opaqueWallOcclusionDelta": 0.0
+        }
+    ],
+    "denseDustLightingDelta": 0.3961959481239319,
+    "denseDustUnlitPixels": {
+        "r": 0.18940669298171998,
+        "g": 0.15261417627334596,
+        "b": 0.13161757588386537,
+        "a": 1.0
+    },
+    "denseDustDayPixels": {
+        "r": 0.8390803933143616,
+        "g": 0.5271510481834412,
+        "b": 0.2959963381290436,
+        "a": 1.0
+    },
+    "denseDustDuskPixels": {
+        "r": 0.3424832820892334,
+        "g": 0.13169926404953004,
+        "b": 0.05683557316660881,
+        "a": 1.0
+    },
+    "denseDustNightPixels": {
+        "r": 0.18940669298171998,
+        "g": 0.15261417627334596,
+        "b": 0.13161757588386537,
+        "a": 1.0
+    },
+    "dayNightLightingDelta": 0.3961959481239319,
+    "nightDustVisibilityDelta": 0.11604925990104675,
+    "neutralLegacyPixels": {
+        "r": 0.5915024280548096,
+        "g": 0.40503862500190737,
+        "b": 0.2695259153842926,
+        "a": 1.0
+    },
+    "neutralPatchedPixels": {
+        "r": 0.5915024280548096,
+        "g": 0.4042760729789734,
+        "b": 0.2689540386199951,
+        "a": 1.0
+    },
+    "neutralLegacyVisibilityDelta": 0.2324797362089157,
+    "neutralReferenceDelta": 0.0010984023101627827,
+    "neutralReferenceFootprintDelta": 0.0012310462770983577,
+    "neutralReferenceMaxChannelDelta": 0.003921598196029663,
+    "neutralReferenceFootprintPixels": 3915,
+    "scope": "Production materials and shared compositing policy, isolated stationary mesh particle and pillar-style MeshRenderer. Preview camera runs the active URP renderer without gameplay atmosphere/DOF. Not an all-technique visual acceptance."
+}

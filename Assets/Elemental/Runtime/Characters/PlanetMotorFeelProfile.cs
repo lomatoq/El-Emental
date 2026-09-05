@@ -12,7 +12,16 @@ namespace Elemental.Runtime.Characters
         [SerializeField, Range(0f, 1f)] private float airControl = 0.32f;
         [SerializeField, Min(0.1f)] private float jumpSpeed = 8f;
         [SerializeField, Min(10f)] private float turnResponseDegrees = 170f;
+        [Header("Landing roll travel")]
+        [SerializeField, Range(0.2f, 2f)] private float landingRollSeconds = Elemental.Simulation.Characters.EarthLandingRollMotion.DefaultDurationSeconds;
+        [SerializeField, Range(0f, 12f)] private float landingRollMinimumSpeed = 7.5f;
+        [SerializeField, Range(0f, 14f)] private float landingRollMaximumSpeed = 9.5f;
         [Header("Forgiveness")]
+        [SerializeField] private bool autoMantle = true;
+        [SerializeField, Range(.15f, 1f)] private float mantleMinimumHeight = .35f;
+        [SerializeField, Range(.4f, 2f)] private float mantleMaximumHeight = 1.35f;
+        [SerializeField, Range(.2f, 1f)] private float mantleReach = .60f;
+        [SerializeField, Range(.6f, 2f)] private float mantleDuration = 1.2f;
         [SerializeField, Range(0f, 0.3f)] private float coyoteSeconds = 0.12f;
         [SerializeField, Range(0f, 0.3f)] private float jumpBufferSeconds = 0.14f;
         [SerializeField, Range(0f, 1f)] private float castSpeedMultiplier = 0.36f;
@@ -23,6 +32,14 @@ namespace Elemental.Runtime.Characters
         [SerializeField, Min(0f)] private float groundSnapSpeed = 3.5f;
 
         public float MaximumGroundSpeed => maximumGroundSpeed;
+        public bool AutoMantle => autoMantle;
+        public float MantleMinimumHeight => mantleMinimumHeight;
+        public float MantleMaximumHeight => mantleMaximumHeight;
+        public float MantleReach => mantleReach;
+        public float MantleDuration => mantleDuration;
+        public float LandingRollSeconds => landingRollSeconds;
+        public float LandingRollMinimumSpeed => landingRollMinimumSpeed;
+        public float LandingRollMaximumSpeed => landingRollMaximumSpeed;
         public float Acceleration => acceleration;
         public float Deceleration => deceleration;
         public float AirControl => airControl;

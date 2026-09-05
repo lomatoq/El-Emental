@@ -20,7 +20,7 @@ namespace Elemental.Runtime.Bootstrap
 
         private void Awake()
         {
-            _clock = new SimulationClock(physicsTickRate);
+            EnsureClock();
             string[] arguments = Environment.GetCommandLineArgs();
             for (int index = 0; index < arguments.Length; index++)
             {
@@ -32,16 +32,32 @@ namespace Elemental.Runtime.Bootstrap
             }
         }
 
+        private void OnEnable()
+        {
+            // With Enter Play Mode Options or a script-domain rescue, Unity can
+            // resume FixedUpdate on an already-loaded component before Awake has
+            // reconstructed non-serialized state. Keep the authoritative clock
+            // alive across that seam instead of dropping every physics tick.
+            EnsureClock();
+        }
+
         private void FixedUpdate()
         {
             using (FixedTickMarker.Auto())
             {
+                EnsureClock();
                 SimulationTick tick = _clock.Advance();
                 if (_smokeAutoQuit && tick.Value >= 120u)
                 {
                     Application.Quit(0);
                 }
             }
+        }
+
+        private void EnsureClock()
+        {
+            if (_clock == null)
+                _clock = new SimulationClock(Math.Max(1, physicsTickRate));
         }
     }
 }

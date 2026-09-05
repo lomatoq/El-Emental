@@ -50,6 +50,9 @@ namespace Elemental.Input.Actions
 
         private void OnEnable()
         {
+            // Enter Play Mode and round restarts may keep managed fields alive.
+            // Never replay a queued jump or an interrupted hold into tick zero.
+            RouteCancel();
             if (inputAdapter == null)
             {
                 Debug.LogError("[Elemental] Earth input adapter is not configured.", this);
@@ -60,11 +63,7 @@ namespace Elemental.Input.Actions
 
         private void OnDisable()
         {
-            earthPillarMobility?.CancelCharge();
-            earthPillarWave?.CancelCharge();
-            earthLandingCushion?.EndHold();
-            _jumpCastMode = JumpCastMode.None;
-            _jumpStartedAt = 0f;
+            RouteCancel();
         }
 
         private void Update()
@@ -125,6 +124,7 @@ namespace Elemental.Input.Actions
         public void RouteCancel()
         {
             earthPillarMobility?.CancelCharge();
+            earthPillarWave?.CancelCharge();
             earthLandingCushion?.EndHold();
             _jumpCastMode = JumpCastMode.None;
             _jumpStartedAt = 0f;

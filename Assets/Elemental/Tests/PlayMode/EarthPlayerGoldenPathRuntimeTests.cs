@@ -45,6 +45,12 @@ namespace Elemental.Tests.PlayMode
             Assert.That(armor, Is.Not.Null);
             Assert.That(cameraController, Is.Not.Null);
             Assert.That(gameplayCamera, Is.Not.Null);
+            Assert.That(cameraController.WorldUpFrame, Is.Not.Null,
+                "The production camera must retain or recover its spherical world-up frame.");
+            Assert.That(cameraController.AimPivot, Is.Not.Null,
+                "The production camera must retain or recover its Cinemachine tracking target.");
+            Assert.That(cameraController.TracksAimPivot, Is.True,
+                "The gameplay virtual camera must track the local-up aim pivot.");
             Assert.That(cameraController.IgnoresControlledMagic, Is.True);
             Assert.That(cameraController.HasSphericalClearance, Is.True,
                 "The production Cinemachine rig must own a spherical-world final clearance constraint.");

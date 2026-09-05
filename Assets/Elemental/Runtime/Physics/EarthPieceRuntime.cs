@@ -136,6 +136,9 @@ namespace Elemental.Runtime.Physics
             Owner.HandlePieceCollision(PieceIndex, collision);
         }
 
+        protected virtual void OnCollisionStay(Collision collision) =>
+            Owner?.ReportPieceFriction(PieceIndex, collision);
+
         private static Vector3 ToVector3(float3 value) => new Vector3(value.x, value.y, value.z);
     }
 }

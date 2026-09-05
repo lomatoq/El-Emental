@@ -1,0 +1,223 @@
+{
+  "utc": "2026-09-05T10:07:58.736182+00:00",
+  "model": "C:\\Users\\nirrt\\OneDrive\\\u0414\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u044b\\ChatGPT\\El Ements\\El-Emental\\Tools\\SonicPrototype\\Models\\planner_sonic_6733128.onnx",
+  "expectedBytes": 773952989,
+  "actualBytes": 773952989,
+  "expectedSha256": "39b553e197f62f077975ba38512bc04781a3fc37c2af7c6756e04629f760edea",
+  "actualSha256": "39b553e197f62f077975ba38512bc04781a3fc37c2af7c6756e04629f760edea",
+  "python": "3.12.1 (tags/v3.12.1:2305ca5, Dec  7 2023, 22:03:25) [MSC v.1937 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",
+  "logicalCpuCount": 16,
+  "onnxRuntimeVersion": "1.20.1",
+  "availableProviders": [
+    "AzureExecutionProvider",
+    "CPUExecutionProvider"
+  ],
+  "memoryBefore": {
+    "rssBytes": 48771072,
+    "peakWorkingSetBytes": 65470464
+  },
+  "status": "Passed",
+  "sessionCreateMs": 1889.5612999913283,
+  "memoryAfterSession": {
+    "rssBytes": 1544839168,
+    "peakWorkingSetBytes": 1544839168
+  },
+  "runtimeInputs": [
+    {
+      "name": "context_mujoco_qpos",
+      "shape": [
+        1,
+        4,
+        36
+      ],
+      "type": "tensor(float)"
+    },
+    {
+      "name": "target_vel",
+      "shape": [
+        1
+      ],
+      "type": "tensor(float)"
+    },
+    {
+      "name": "mode",
+      "shape": [
+        1
+      ],
+      "type": "tensor(int64)"
+    },
+    {
+      "name": "movement_direction",
+      "shape": [
+        1,
+        3
+      ],
+      "type": "tensor(float)"
+    },
+    {
+      "name": "facing_direction",
+      "shape": [
+        1,
+        3
+      ],
+      "type": "tensor(float)"
+    },
+    {
+      "name": "random_seed",
+      "shape": [
+        1
+      ],
+      "type": "tensor(int64)"
+    },
+    {
+      "name": "has_specific_target",
+      "shape": [
+        1,
+        1
+      ],
+      "type": "tensor(int64)"
+    },
+    {
+      "name": "specific_target_positions",
+      "shape": [
+        1,
+        4,
+        3
+      ],
+      "type": "tensor(float)"
+    },
+    {
+      "name": "specific_target_headings",
+      "shape": [
+        1,
+        4
+      ],
+      "type": "tensor(float)"
+    },
+    {
+      "name": "allowed_pred_num_tokens",
+      "shape": [
+        1,
+        11
+      ],
+      "type": "tensor(int64)"
+    },
+    {
+      "name": "height",
+      "shape": [
+        1
+      ],
+      "type": "tensor(float)"
+    }
+  ],
+  "runtimeOutputs": [
+    {
+      "name": "mujoco_qpos",
+      "shape": [
+        1,
+        64,
+        36
+      ],
+      "type": "tensor(float)"
+    },
+    {
+      "name": "num_pred_frames",
+      "shape": [
+        1
+      ],
+      "type": "tensor(int32)"
+    }
+  ],
+  "cases": [
+    {
+      "name": "walk",
+      "mode": 2,
+      "warmupMs": 61.48630002280697,
+      "samplesMs": [
+        52.81729999114759,
+        52.916399989044294,
+        54.858600022271276,
+        52.57220001658425,
+        52.33289999887347,
+        53.0404000019189,
+        53.19569999119267,
+        51.92550001083873,
+        56.503300002077594,
+        52.57519998122007
+      ],
+      "p50Ms": 52.86684999009594,
+      "p95Ms": 55.76318501116475,
+      "meanMs": 53.273750000516884,
+      "minMs": 51.92550001083873,
+      "maxMs": 56.503300002077594,
+      "validFrames": 24,
+      "qposShape": [
+        1,
+        64,
+        36
+      ],
+      "numPredFramesShape": [
+        1
+      ],
+      "numPredFramesDtype": "int32",
+      "finiteValidOutput": true,
+      "rootStart": [
+        0.0,
+        0.0,
+        0.78066486120224,
+        0.9999915361404419,
+        -0.003481224412098527,
+        -0.002174639841541648,
+        -7.57106226956239e-06
+      ]
+    },
+    {
+      "name": "randomPunches",
+      "mode": 13,
+      "warmupMs": 53.91509999753907,
+      "samplesMs": [
+        53.082300000824034,
+        57.40640001022257,
+        54.17390001821332,
+        54.6160000085365,
+        53.6951000103727,
+        51.21800000779331,
+        52.708700008224696,
+        52.69380001118407,
+        49.659500014968216,
+        48.13400001148693
+      ],
+      "p50Ms": 52.895500004524365,
+      "p95Ms": 56.15072000946384,
+      "meanMs": 52.738770010182634,
+      "minMs": 48.13400001148693,
+      "maxMs": 57.40640001022257,
+      "validFrames": 24,
+      "qposShape": [
+        1,
+        64,
+        36
+      ],
+      "numPredFramesShape": [
+        1
+      ],
+      "numPredFramesDtype": "int32",
+      "finiteValidOutput": true,
+      "rootStart": [
+        0.0,
+        0.0,
+        0.781192421913147,
+        0.9999836683273315,
+        0.002405855106189847,
+        -0.005194864701479673,
+        1.249830165761523e-05
+      ]
+    }
+  ],
+  "memoryAfterRuns": {
+    "rssBytes": 1546682368,
+    "peakWorkingSetBytes": 1546682368
+  }
+}

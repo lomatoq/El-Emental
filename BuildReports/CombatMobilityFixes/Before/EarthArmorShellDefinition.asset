@@ -1,0 +1,399 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa4928df0af94940860b5235ce97b4ea, type: 3}
+  m_Name: EarthArmorShellDefinition
+  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Physics.EarthArmorShellDefinition
+  segments:
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: 0, y: 1, z: 0}
+    Scale: {x: 0.32, y: 0.075, z: 0.3}
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: 0, y: -0.87789565, z: 0.47885215}
+    Scale: {x: 0.28, y: 0.065, z: 0.25}
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: 0, y: 0.32190272, z: 0.9467727}
+    Scale: {x: 0.220708, y: 0.06785064, z: 0.23762356}
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: 0.6694694, y: 0.32190272, z: 0.6694694}
+    Scale: {x: 0.22013755, y: 0.06519435, z: 0.23745126}
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: 0.9467727, y: 0.32190272, z: -0.00000004138475}
+    Scale: {x: 0.18937886, y: 0.06763828, z: 0.21072608}
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: 0.6694694, y: 0.32190272, z: -0.6694694}
+    Scale: {x: 0.21488674, y: 0.06909377, z: 0.21347295}
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: -0.0000000827695, y: 0.32190272, z: -0.9467727}
+    Scale: {x: 0.22651727, y: 0.06146762, z: 0.20619783}
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: -0.66946936, y: 0.32190272, z: -0.6694695}
+    Scale: {x: 0.21667315, y: 0.06361582, z: 0.22736461}
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: -0.9467727, y: 0.32190272, z: 0.000000011290152}
+    Scale: {x: 0.20963702, y: 0.064234376, z: 0.2275366}
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: -0.66946954, y: 0.32190272, z: 0.6694693}
+    Scale: {x: 0.19509047, y: 0.061661728, z: 0.22713673}
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: 0.3685104, y: -0.26962993, z: 0.88966274}
+    Scale: {x: 0.17957482, y: 0.062266886, z: 0.2122024}
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: 0.88966274, y: -0.26962993, z: 0.36851037}
+    Scale: {x: 0.21087314, y: 0.05758292, z: 0.20351423}
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: 0.8896628, y: -0.26962993, z: -0.36851034}
+    Scale: {x: 0.19847696, y: 0.05836017, z: 0.2024932}
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: 0.36851043, y: -0.26962993, z: -0.88966274}
+    Scale: {x: 0.17572545, y: 0.059752513, z: 0.20395802}
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: -0.36851037, y: -0.26962993, z: -0.88966274}
+    Scale: {x: 0.20218112, y: 0.062146295, z: 0.2296365}
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: -0.88966274, y: -0.26962993, z: -0.3685105}
+    Scale: {x: 0.17862943, y: 0.06389694, z: 0.19389084}
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: -0.8896627, y: -0.26962993, z: 0.36851054}
+    Scale: {x: 0.18102995, y: 0.05738046, z: 0.20419253}
+  - Region: 0
+    Bone: 10
+    CharacterDirection: {x: -0.36851037, y: -0.26962993, z: 0.8896628}
+    Scale: {x: 0.21091454, y: 0.05877168, z: 0.21300675}
+  - Region: 1
+    Bone: 54
+    CharacterDirection: {x: 0.49840763, y: 0.07974522, z: 0.8632673}
+    Scale: {x: 0.2991327, y: 0.07214043, z: 0.27248842}
+  - Region: 1
+    Bone: 54
+    CharacterDirection: {x: 0.99681526, y: 0.07974522, z: -0.00000004357218}
+    Scale: {x: 0.29994833, y: 0.07443517, z: 0.30225122}
+  - Region: 1
+    Bone: 54
+    CharacterDirection: {x: 0.4984077, y: 0.07974522, z: -0.8632673}
+    Scale: {x: 0.3180287, y: 0.06525661, z: 0.28618076}
+  - Region: 1
+    Bone: 54
+    CharacterDirection: {x: -0.49840766, y: 0.079745226, z: -0.8632674}
+    Scale: {x: 0.26415628, y: 0.07413727, z: 0.28445736}
+  - Region: 1
+    Bone: 54
+    CharacterDirection: {x: -0.99681526, y: 0.07974522, z: 0.000000011886903}
+    Scale: {x: 0.30381292, y: 0.06719326, z: 0.3053149}
+  - Region: 1
+    Bone: 54
+    CharacterDirection: {x: -0.4984078, y: 0.07974522, z: 0.86326724}
+    Scale: {x: 0.28879297, y: 0.06672689, z: 0.28174382}
+  - Region: 1
+    Bone: 8
+    CharacterDirection: {x: 0, y: 0, z: 1}
+    Scale: {x: 0.2922637, y: 0.06976704, z: 0.2836075}
+  - Region: 1
+    Bone: 8
+    CharacterDirection: {x: 0.86602545, y: 0, z: 0.49999997}
+    Scale: {x: 0.2898435, y: 0.0732006, z: 0.30708978}
+  - Region: 1
+    Bone: 8
+    CharacterDirection: {x: 0.8660254, y: 0, z: -0.50000006}
+    Scale: {x: 0.28884992, y: 0.068449646, z: 0.2847297}
+  - Region: 1
+    Bone: 8
+    CharacterDirection: {x: -0.00000008742278, y: 0, z: -1}
+    Scale: {x: 0.27806723, y: 0.07417742, z: 0.29636404}
+  - Region: 1
+    Bone: 8
+    CharacterDirection: {x: -0.86602545, y: 0, z: -0.4999999}
+    Scale: {x: 0.2786933, y: 0.06727752, z: 0.318224}
+  - Region: 1
+    Bone: 8
+    CharacterDirection: {x: -0.86602545, y: 0, z: 0.4999999}
+    Scale: {x: 0.3287245, y: 0.076079875, z: 0.28752738}
+  - Region: 1
+    Bone: 7
+    CharacterDirection: {x: 0.4991024, y: -0.05989229, z: 0.8644707}
+    Scale: {x: 0.30055258, y: 0.070693605, z: 0.30927357}
+  - Region: 1
+    Bone: 7
+    CharacterDirection: {x: 0.9982048, y: -0.05989229, z: -0.00000004363292}
+    Scale: {x: 0.27903724, y: 0.07278078, z: 0.2825194}
+  - Region: 1
+    Bone: 7
+    CharacterDirection: {x: 0.49910247, y: -0.05989229, z: -0.8644707}
+    Scale: {x: 0.30137756, y: 0.068286724, z: 0.2658388}
+  - Region: 1
+    Bone: 7
+    CharacterDirection: {x: -0.49910238, y: -0.05989229, z: -0.8644707}
+    Scale: {x: 0.24690478, y: 0.063680135, z: 0.26526558}
+  - Region: 1
+    Bone: 7
+    CharacterDirection: {x: -0.9982048, y: -0.05989229, z: 0.000000011903474}
+    Scale: {x: 0.27264643, y: 0.06690781, z: 0.3135906}
+  - Region: 1
+    Bone: 7
+    CharacterDirection: {x: -0.4991026, y: -0.05989229, z: 0.86447066}
+    Scale: {x: 0.30067816, y: 0.066433184, z: 0.31801027}
+  - Region: 2
+    Bone: 0
+    CharacterDirection: {x: 0.38268346, y: 0, z: 0.9238795}
+    Scale: {x: 0.2294122, y: 0.068099044, z: 0.25825712}
+  - Region: 2
+    Bone: 0
+    CharacterDirection: {x: 0.9238795, y: 0, z: 0.38268343}
+    Scale: {x: 0.21290036, y: 0.06273817, z: 0.27349994}
+  - Region: 2
+    Bone: 0
+    CharacterDirection: {x: 0.92387956, y: 0, z: -0.3826834}
+    Scale: {x: 0.21257873, y: 0.06547573, z: 0.24218543}
+  - Region: 2
+    Bone: 0
+    CharacterDirection: {x: 0.3826835, y: 0, z: -0.9238795}
+    Scale: {x: 0.23873533, y: 0.068958886, z: 0.26676804}
+  - Region: 2
+    Bone: 0
+    CharacterDirection: {x: -0.38268343, y: 0, z: -0.9238795}
+    Scale: {x: 0.2396303, y: 0.06481346, z: 0.27726188}
+  - Region: 2
+    Bone: 0
+    CharacterDirection: {x: -0.9238795, y: 0, z: -0.38268358}
+    Scale: {x: 0.2521359, y: 0.06571998, z: 0.2712838}
+  - Region: 2
+    Bone: 0
+    CharacterDirection: {x: -0.92387944, y: 0, z: 0.3826836}
+    Scale: {x: 0.25705087, y: 0.06713421, z: 0.23382965}
+  - Region: 2
+    Bone: 0
+    CharacterDirection: {x: -0.38268343, y: 0, z: 0.92387956}
+    Scale: {x: 0.21179612, y: 0.06483636, z: 0.25029474}
+  - Region: 3
+    Bone: 13
+    CharacterDirection: {x: 0, y: 0, z: 1}
+    Scale: {x: 0.14784375, y: 0.051027313, z: 0.22544345}
+  - Region: 3
+    Bone: 13
+    CharacterDirection: {x: 0.95105654, y: 0, z: 0.30901697}
+    Scale: {x: 0.1420939, y: 0.05426535, z: 0.24407442}
+  - Region: 3
+    Bone: 13
+    CharacterDirection: {x: 0.5877852, y: 0, z: -0.80901706}
+    Scale: {x: 0.13924603, y: 0.049611352, z: 0.2472167}
+  - Region: 3
+    Bone: 13
+    CharacterDirection: {x: -0.5877851, y: 0, z: -0.80901706}
+    Scale: {x: 0.13966566, y: 0.055231992, z: 0.22737433}
+  - Region: 3
+    Bone: 13
+    CharacterDirection: {x: -0.9510565, y: 0, z: 0.30901712}
+    Scale: {x: 0.14244209, y: 0.05015449, z: 0.23583977}
+  - Region: 3
+    Bone: 15
+    CharacterDirection: {x: 0.58778524, y: 0, z: 0.809017}
+    Scale: {x: 0.10914998, y: 0.045915026, z: 0.24365358}
+  - Region: 3
+    Bone: 15
+    CharacterDirection: {x: 0.95105654, y: 0, z: -0.30901694}
+    Scale: {x: 0.13622525, y: 0.04749488, z: 0.218303}
+  - Region: 3
+    Bone: 15
+    CharacterDirection: {x: -0.00000008742278, y: 0, z: -1}
+    Scale: {x: 0.12754972, y: 0.049532656, z: 0.2418837}
+  - Region: 3
+    Bone: 15
+    CharacterDirection: {x: -0.9510565, y: 0, z: -0.3090171}
+    Scale: {x: 0.12430223, y: 0.049423713, z: 0.23083447}
+  - Region: 3
+    Bone: 15
+    CharacterDirection: {x: -0.5877853, y: 0, z: 0.80901694}
+    Scale: {x: 0.10849104, y: 0.04832052, z: 0.22237378}
+  - Region: 3
+    Bone: 14
+    CharacterDirection: {x: 0, y: 0, z: 1}
+    Scale: {x: 0.12463653, y: 0.04969469, z: 0.25801167}
+  - Region: 3
+    Bone: 14
+    CharacterDirection: {x: 0.95105654, y: 0, z: 0.30901697}
+    Scale: {x: 0.12508208, y: 0.05406522, z: 0.23958467}
+  - Region: 3
+    Bone: 14
+    CharacterDirection: {x: 0.5877852, y: 0, z: -0.80901706}
+    Scale: {x: 0.14727464, y: 0.055465575, z: 0.22675629}
+  - Region: 3
+    Bone: 14
+    CharacterDirection: {x: -0.5877851, y: 0, z: -0.80901706}
+    Scale: {x: 0.14012052, y: 0.052508663, z: 0.24224211}
+  - Region: 3
+    Bone: 14
+    CharacterDirection: {x: -0.9510565, y: 0, z: 0.30901712}
+    Scale: {x: 0.13912708, y: 0.05078905, z: 0.2236175}
+  - Region: 3
+    Bone: 16
+    CharacterDirection: {x: 0.58778524, y: 0, z: 0.809017}
+    Scale: {x: 0.13439247, y: 0.050452325, z: 0.22802614}
+  - Region: 3
+    Bone: 16
+    CharacterDirection: {x: 0.95105654, y: 0, z: -0.30901694}
+    Scale: {x: 0.13545513, y: 0.050727226, z: 0.22990717}
+  - Region: 3
+    Bone: 16
+    CharacterDirection: {x: -0.00000008742278, y: 0, z: -1}
+    Scale: {x: 0.11162207, y: 0.05015653, z: 0.21506865}
+  - Region: 3
+    Bone: 16
+    CharacterDirection: {x: -0.9510565, y: 0, z: -0.3090171}
+    Scale: {x: 0.11338612, y: 0.051692333, z: 0.21906705}
+  - Region: 3
+    Bone: 16
+    CharacterDirection: {x: -0.5877853, y: 0, z: 0.80901694}
+    Scale: {x: 0.12940216, y: 0.049796693, z: 0.24204439}
+  - Region: 3
+    Bone: 17
+    CharacterDirection: {x: 0.99503714, y: 0.09950372, z: -0.000000043494456}
+    Scale: {x: 0.1395658, y: 0.05149042, z: 0.16052204}
+  - Region: 3
+    Bone: 17
+    CharacterDirection: {x: -0.99503714, y: 0.09950372, z: 0.0000000118656995}
+    Scale: {x: 0.14586847, y: 0.04835811, z: 0.16475193}
+  - Region: 3
+    Bone: 18
+    CharacterDirection: {x: 0.99503714, y: 0.09950372, z: -0.000000043494456}
+    Scale: {x: 0.12464984, y: 0.046867136, z: 0.15054828}
+  - Region: 3
+    Bone: 18
+    CharacterDirection: {x: -0.99503714, y: 0.09950372, z: 0.0000000118656995}
+    Scale: {x: 0.13132446, y: 0.051514722, z: 0.16653943}
+  - Region: 4
+    Bone: 1
+    CharacterDirection: {x: 0, y: 0, z: 1}
+    Scale: {x: 0.16589917, y: 0.05552651, z: 0.31241378}
+  - Region: 4
+    Bone: 1
+    CharacterDirection: {x: 0.95105654, y: 0, z: 0.30901697}
+    Scale: {x: 0.16689897, y: 0.058870517, z: 0.327463}
+  - Region: 4
+    Bone: 1
+    CharacterDirection: {x: 0.5877852, y: 0, z: -0.80901706}
+    Scale: {x: 0.14738563, y: 0.058119558, z: 0.28839105}
+  - Region: 4
+    Bone: 1
+    CharacterDirection: {x: -0.5877851, y: 0, z: -0.80901706}
+    Scale: {x: 0.14903308, y: 0.061058868, z: 0.33621454}
+  - Region: 4
+    Bone: 1
+    CharacterDirection: {x: -0.9510565, y: 0, z: 0.30901712}
+    Scale: {x: 0.15607132, y: 0.059557464, z: 0.28293383}
+  - Region: 4
+    Bone: 3
+    CharacterDirection: {x: 0.58778524, y: 0, z: 0.809017}
+    Scale: {x: 0.13889796, y: 0.051626056, z: 0.28239805}
+  - Region: 4
+    Bone: 3
+    CharacterDirection: {x: 0.95105654, y: 0, z: -0.30901694}
+    Scale: {x: 0.13077453, y: 0.054617524, z: 0.2799152}
+  - Region: 4
+    Bone: 3
+    CharacterDirection: {x: -0.00000008742278, y: 0, z: -1}
+    Scale: {x: 0.14867082, y: 0.05786562, z: 0.31245798}
+  - Region: 4
+    Bone: 3
+    CharacterDirection: {x: -0.9510565, y: 0, z: -0.3090171}
+    Scale: {x: 0.13089794, y: 0.05120943, z: 0.26879296}
+  - Region: 4
+    Bone: 3
+    CharacterDirection: {x: -0.5877853, y: 0, z: 0.80901694}
+    Scale: {x: 0.16061212, y: 0.055086076, z: 0.27772084}
+  - Region: 4
+    Bone: 5
+    CharacterDirection: {x: 0.6809184, y: 0.26962993, z: 0.6809184}
+    Scale: {x: 0.19340661, y: 0.05937215, z: 0.25067443}
+  - Region: 4
+    Bone: 5
+    CharacterDirection: {x: 0.6809184, y: 0.26962993, z: -0.6809184}
+    Scale: {x: 0.19225994, y: 0.05258544, z: 0.25444278}
+  - Region: 4
+    Bone: 5
+    CharacterDirection: {x: -0.68091834, y: 0.26962993, z: -0.68091846}
+    Scale: {x: 0.17379448, y: 0.05860522, z: 0.26793835}
+  - Region: 4
+    Bone: 5
+    CharacterDirection: {x: -0.6809185, y: 0.26962993, z: 0.6809183}
+    Scale: {x: 0.16134411, y: 0.053981066, z: 0.2560991}
+  - Region: 4
+    Bone: 2
+    CharacterDirection: {x: 0, y: 0, z: 1}
+    Scale: {x: 0.1665703, y: 0.057400852, z: 0.29158327}
+  - Region: 4
+    Bone: 2
+    CharacterDirection: {x: 0.95105654, y: 0, z: 0.30901697}
+    Scale: {x: 0.14927599, y: 0.055459533, z: 0.28578272}
+  - Region: 4
+    Bone: 2
+    CharacterDirection: {x: 0.5877852, y: 0, z: -0.80901706}
+    Scale: {x: 0.17884313, y: 0.05689824, z: 0.28143907}
+  - Region: 4
+    Bone: 2
+    CharacterDirection: {x: -0.5877851, y: 0, z: -0.80901706}
+    Scale: {x: 0.1791401, y: 0.05995178, z: 0.32281053}
+  - Region: 4
+    Bone: 2
+    CharacterDirection: {x: -0.9510565, y: 0, z: 0.30901712}
+    Scale: {x: 0.17567086, y: 0.06175284, z: 0.31101704}
+  - Region: 4
+    Bone: 4
+    CharacterDirection: {x: 0.58778524, y: 0, z: 0.809017}
+    Scale: {x: 0.14030677, y: 0.050245315, z: 0.26363197}
+  - Region: 4
+    Bone: 4
+    CharacterDirection: {x: 0.95105654, y: 0, z: -0.30901694}
+    Scale: {x: 0.13906918, y: 0.057343554, z: 0.28059077}
+  - Region: 4
+    Bone: 4
+    CharacterDirection: {x: -0.00000008742278, y: 0, z: -1}
+    Scale: {x: 0.14656872, y: 0.05498101, z: 0.29099596}
+  - Region: 4
+    Bone: 4
+    CharacterDirection: {x: -0.9510565, y: 0, z: -0.3090171}
+    Scale: {x: 0.13543849, y: 0.053680696, z: 0.3018045}
+  - Region: 4
+    Bone: 4
+    CharacterDirection: {x: -0.5877853, y: 0, z: 0.80901694}
+    Scale: {x: 0.14875847, y: 0.05777725, z: 0.2910678}
+  - Region: 4
+    Bone: 6
+    CharacterDirection: {x: 0.6809184, y: 0.26962993, z: 0.6809184}
+    Scale: {x: 0.18879911, y: 0.055270854, z: 0.25942364}
+  - Region: 4
+    Bone: 6
+    CharacterDirection: {x: 0.6809184, y: 0.26962993, z: -0.6809184}
+    Scale: {x: 0.18746059, y: 0.056723904, z: 0.28473324}
+  - Region: 4
+    Bone: 6
+    CharacterDirection: {x: -0.68091834, y: 0.26962993, z: -0.68091846}
+    Scale: {x: 0.1736156, y: 0.058401354, z: 0.28464764}
+  - Region: 4
+    Bone: 6
+    CharacterDirection: {x: -0.6809185, y: 0.26962993, z: 0.6809183}
+    Scale: {x: 0.19125451, y: 0.05144641, z: 0.25626534}

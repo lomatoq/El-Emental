@@ -1,6 +1,7 @@
 using Elemental.Runtime.World;
 using Elemental.Runtime.Physics;
 using Elemental.Simulation.Magic;
+using Elemental.Simulation.Bending;
 using Elemental.Presentation.Camera;
 using Elemental.Input.Gestures;
 using Unity.Profiling;
@@ -11,6 +12,8 @@ namespace Elemental.Presentation.VFX
     [DisallowMultipleComponent]
     public sealed class EarthMagicFeedback : MonoBehaviour
     {
+        private readonly EarthCosmeticMaterialCache cosmeticMaterials = new();
+        private void OnDestroy() => cosmeticMaterials.Dispose();
         private static readonly ProfilerMarker RouteMarker =
             new ProfilerMarker("Elemental.Earth.Feedback.Route");
         [SerializeField] private MagicExecutor executor;
@@ -25,6 +28,17 @@ namespace Elemental.Presentation.VFX
         [SerializeField] private Transform planetCenter;
         [SerializeField] private EarthFeedbackProfile impactFeedbackProfile;
         [SerializeField] private EarthEffectsTuningProfile effectsProfile;
+        [SerializeField] private EarthMaterialFeedbackHub materialFeedback;
+        public void ConfigureMaterialFeedback(EarthMaterialFeedbackHub hub) => materialFeedback = hub;
+
+        private void Awake()
+        {
+            // Repair only known children of this authored feedback object.
+            if (dust == null) dust = transform.Find("Chunky Earth Dust")?.GetComponent<ParticleSystem>();
+            if (rubble == null) rubble = transform.Find("Loose Earth Chips")?.GetComponent<ParticleSystem>();
+            if (sparks == null) sparks = transform.Find("Amber Shards")?.GetComponent<ParticleSystem>();
+            ApplyEffectsProfile();
+        }
 
         private float _pulse;
         private float _crackLife;
@@ -138,7 +152,7 @@ namespace Elemental.Presentation.VFX
             Vector3 start = new Vector3(value.Start.x, value.Start.y, value.Start.z);
             Vector3 end = new Vector3(value.End.x, value.End.y, value.End.z);
             Vector3 midpoint = (start + end) * 0.5f;
-            Vector3 up = midpoint.sqrMagnitude > 0.01f ? midpoint.normalized : Vector3.up;
+            Vector3 up = LocalUp(midpoint);
             Vector3 tangent = Vector3.ProjectOnPlane(end - start, up).normalized;
             Vector3 side = Vector3.Cross(tangent, up).normalized;
             UnityEngine.Camera camera = UnityEngine.Camera.main;
@@ -153,8 +167,10 @@ namespace Elemental.Presentation.VFX
                 Vector3 alongWall = Vector3.Lerp(start, end, t);
                 // The wall itself is pooled. Short-lived irregular chips sell loose
                 // soil being pushed aside without modifying voxel geometry.
-                Emit(alongWall + (up * 0.10f), 5, index % 2 == 0 ? 2 : 1);
-                if (rubble != null)
+                if (materialFeedback != null) materialFeedback.Emit(EarthMaterialFeedbackKind.Emerge,
+                    alongWall + up * .10f, up, 1f, .35f, value.WallId, dustCount: 12, chipCount: 6);
+                else Emit(alongWall + (up * 0.10f), 5, index % 2 == 0 ? 2 : 1);
+                if (materialFeedback == null && rubble != null)
                 {
                     rubble.transform.position = alongWall + (up * 0.32f) + (side * (0.48f + ((index % 3) * 0.10f)));
                     rubble.transform.rotation = Quaternion.FromToRotation(Vector3.up, up);
@@ -173,12 +189,14 @@ namespace Elemental.Presentation.VFX
             Vector3 start = new Vector3(value.Start.x, value.Start.y, value.Start.z);
             Vector3 end = new Vector3(value.End.x, value.End.y, value.End.z);
             Vector3 midpoint = (start + end) * 0.5f;
-            Vector3 up = midpoint.sqrMagnitude > 0.01f ? midpoint.normalized : Vector3.up;
+            Vector3 up = LocalUp(midpoint);
             for (int index = 0; index < 7; index++)
             {
                 Vector3 point = Vector3.Lerp(start, end, index / 6f) + (up * value.Height * 0.22f);
-                Emit(point, 4, index % 2 == 0 ? 1 : 0);
-                if (rubble != null)
+                if (materialFeedback != null) materialFeedback.Emit(EarthMaterialFeedbackKind.Fracture,
+                    point, up, 1f, .35f, value.WallId, dustCount: 16, chipCount: 6);
+                else Emit(point, 4, index % 2 == 0 ? 1 : 0);
+                if (materialFeedback == null && rubble != null)
                 {
                     rubble.transform.position = point;
                     rubble.transform.rotation = Quaternion.FromToRotation(Vector3.up, up);
@@ -190,7 +208,10 @@ namespace Elemental.Presentation.VFX
 
         private void OnFragmentSpawned(FragmentSpawnedEvent value)
         {
-            Emit(new Vector3(value.Position.x, value.Position.y, value.Position.z), 20, 9);
+            Vector3 anchor = new Vector3(value.SurfaceAnchor.x, value.SurfaceAnchor.y, value.SurfaceAnchor.z);
+            if (materialFeedback != null) materialFeedback.Emit(EarthMaterialFeedbackKind.Extract,
+                anchor, LocalUp(anchor), 1f, .5f, value.FragmentId, dustCount: 40, chipCount: 12);
+            else Emit(anchor, 20, 9);
             ShowCracks(value);
             cameraRig?.AddPresentationImpulse(0.075f, 0.34f, value.FragmentId);
         }
@@ -216,6 +237,8 @@ namespace Elemental.Presentation.VFX
         {
             if (effectsProfile == null) return;
             EarthImpactEffectsSample evaluated = effectsProfile.EvaluateImpact(in value);
+            if (materialFeedback != null) materialFeedback.Emit(EarthMaterialFeedbackKind.Impact,
+                value.Point, value.Normal, 1f, .35f, dustCount: evaluated.DustCount, chipCount: evaluated.RubbleCount);
             var sample = new EarthFeedbackSample(evaluated.DustCount, evaluated.RubbleCount, 0f, 0f);
             _impactBatch.Add(
                 in value,
@@ -231,8 +254,7 @@ namespace Elemental.Presentation.VFX
             Vector3 up = new Vector3(batch.Normal.x, batch.Normal.y, batch.Normal.z);
             SetEmitterFrame(dust, point, up);
             SetEmitterFrame(rubble, point + up * 0.025f, up);
-            dust?.Emit(batch.DustCount);
-            rubble?.Emit(batch.ChipCount);
+            if (materialFeedback == null) { dust?.Emit(batch.DustCount); rubble?.Emit(batch.ChipCount); }
             // Bright motes are an accent for exceptional energy, never the dominant layer.
             if (sparks != null && effectsProfile != null &&
                 batch.MaximumKineticEnergy > effectsProfile.Impact.SparkEnergyThreshold)
@@ -309,11 +331,13 @@ namespace Elemental.Presentation.VFX
             SetEmitterFrame(dust, pulse.Position, pulse.Up);
             SetEmitterFrame(sparks, pulse.Position + (pulse.Up * 0.08f), pulse.Up);
             SetEmitterFrame(rubble, pulse.Position + (pulse.Up * 0.06f), pulse.Up);
-            dust?.Emit(dustCount);
+            if (materialFeedback != null) materialFeedback.Emit(EarthMaterialFeedbackKind.Emerge,
+                pulse.Position, pulse.Up, .8f + pulse.Crest01, .4f, pulse.StableId, dustCount: Mathf.Max(12, dustCount), chipCount: Mathf.Max(4, chipCount));
+            else dust?.Emit(dustCount);
             float sparkThreshold = tuning != null ? tuning.WaveSparkThreshold : 0.48f;
             int sparkCount = tuning != null ? tuning.WaveSparkCount : 2;
             sparks?.Emit(pulse.Crest01 > sparkThreshold ? sparkCount : 0);
-            rubble?.Emit(chipCount);
+            if (materialFeedback == null) rubble?.Emit(chipCount);
             if (pulse.Crest01 > 0.45f && Time.unscaledTime >= _nextWaveCameraPulse)
             {
                 _nextWaveCameraPulse = Time.unscaledTime + 0.075f;
@@ -330,17 +354,19 @@ namespace Elemental.Presentation.VFX
         private void ApplyEffectsProfile()
         {
             if (effectsProfile == null) return;
-            EarthParticleSystemTuningApplier.Apply(
+            EarthParticleSystemTuningApplier.ApplyDust(
                 dust, effectsProfile.Impact.Dust, effectsProfile.Materials.ImpactDust);
-            EarthParticleSystemTuningApplier.Apply(
-                sparks, effectsProfile.Impact.Sparks, effectsProfile.Materials.ImpactSparks);
-            EarthParticleSystemTuningApplier.Apply(
-                rubble, effectsProfile.Impact.Rubble, effectsProfile.Materials.ImpactRubble);
+            EarthParticleSystemTuningApplier.ApplyChips(
+                sparks, effectsProfile.Impact.Sparks, effectsProfile.Materials.ImpactSparks, cosmeticMaterials);
+            EarthParticleSystemTuningApplier.ApplyChips(
+                rubble, effectsProfile.Impact.Rubble, effectsProfile.Materials.ImpactRubble, cosmeticMaterials);
         }
 
         private void Emit(Vector3 position, int dustCount, int sparkCount)
         {
-            if (dust != null)
+            if (materialFeedback != null) materialFeedback.Emit(EarthMaterialFeedbackKind.Impact,
+                position, LocalUp(position), 1f, .3f, dustCount: dustCount, chipCount: Mathf.Max(2, dustCount / 3));
+            if (dust != null && materialFeedback == null)
             {
                 SetEmitterFrame(dust, position, LocalUp(position));
                 dust.Emit(dustCount);

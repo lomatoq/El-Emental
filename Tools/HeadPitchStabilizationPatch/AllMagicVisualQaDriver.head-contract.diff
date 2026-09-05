@@ -1,0 +1,26 @@
+--- Assets/Elemental/Authoring/Editor/AllMagicVisualQaDriver.cs
++++ Assets/Elemental/Authoring/Editor/AllMagicVisualQaDriver.cs
+@@
+                 headHeight = sample.headHeight,
+                 headPitchDegrees = sample.headPitchDegrees,
++                neckLength = sample.neckLength,
+@@
+             if (!HasLineOfSight(chest.position))
+@@
+                 return false;
+             }
+             EarthAnimationPoseSample sample = _probe != null ? _probe.Latest : default;
++            if (sample.headPitchDegrees < EarthHeadPitchStabilizer.MinimumPitchDegrees - .5f ||
++                sample.headPitchDegrees > EarthHeadPitchStabilizer.MaximumPitchDegrees + .5f)
++            {
++                reason = $"Rest-calibrated head pitch escaped its expressive envelope: {sample.headPitchDegrees:F2} degrees.";
++                return false;
++            }
++            if (!float.IsFinite(sample.neckLength) || sample.neckLength <= .01f)
++            {
++                reason = $"Head/neck chain is invalid: neckLength={sample.neckLength}.";
++                return false;
++            }
+@@
+                 handConstraintWeight, leftFootIkWeight, rightFootIkWeight, headHeight, headPitchDegrees;
++            public float neckLength;

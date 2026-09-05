@@ -1,0 +1,52 @@
+{
+    "utc": "2026-09-05T10:34:39.7307123Z",
+    "completedUtc": "2026-09-05T10:34:39.7675556Z",
+    "unityVersion": "6000.5.7f1",
+    "scene": "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity",
+    "status": "Failed",
+    "error": "System.InvalidOperationException: Earth Material Feedback/Material Contact Dust particle layout differed from its settled evidence snapshot after SetParticles. count=96/96 index=4 position=(12.1167984, 53.57564, -4.032916)/(12.1167984, 53.57564, -4.032916) velocity=(0, 0, 1.853702)/(0, 0, 1.853702) life=0.3870248/0.38702482 size=0.188552588/0.188552588\r\n  at Elemental.Authoring.Editor.DustProductionVisualQa+ParticleSnapshot.ValidateEvidence () [0x001fc] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\DustProductionVisualQa.cs:201 \r\n  at Elemental.Authoring.Editor.DustProductionVisualQa+ParticleSnapshot.ReapplyEvidence () [0x00063] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\DustProductionVisualQa.cs:175 \r\n  at Elemental.Authoring.Editor.DustProductionVisualQa+ParticleSnapshot.PoseAndEmit (UnityEngine.Vector3 position, UnityEngine.Quaternion rotation, System.Int32 count, System.UInt32 seed, System.Single age) [0x001a8] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\DustProductionVisualQa.cs:160 \r\n  at Elemental.Authoring.Editor.DustProductionVisualQa.Run () [0x0054e] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\DustProductionVisualQa.cs:313 ",
+    "scope": "Actual saved EarthCoreSlice, production Main Camera/Game view, live production ParticleSystem instances and materials. One deterministic impact/fracture/mote layout is paused at a fixed age for all three celestial phases. No gameplay damage, asset/profile/light tuning or scene save.",
+    "productionMainCamera": true,
+    "sameParticleLayout": false,
+    "restored": true,
+    "sceneWasDirty": false,
+    "originalPhase": 0.26686516404151919,
+    "originalTimeScale": 1.0,
+    "originalCameraPosition": {
+        "x": -0.353786438703537,
+        "y": 59.80752944946289,
+        "z": -14.019110679626465
+    },
+    "captureCameraPosition": {
+        "x": -0.6996039748191834,
+        "y": 57.31999969482422,
+        "z": -2.295768976211548
+    },
+    "captureTarget": {
+        "x": 12.49863338470459,
+        "y": 58.80807876586914,
+        "z": -3.808786630630493
+    },
+    "impactWorld": {
+        "x": 12.49863338470459,
+        "y": 53.526214599609378,
+        "z": -3.808786630630493
+    },
+    "temporarilyDisabled": [
+        "Elemental.Presentation.VFX.EarthArenaFractureDustPresenter @ Arena Fracture Dust",
+        "Elemental.Presentation.Rendering.VisualQaCaptureBehaviour @ Gravity Toy Camera",
+        "Elemental.Presentation.VFX.EarthChargeCameraLookdevV2 @ Gravity Toy Camera",
+        "Elemental.Presentation.VFX.EarthArenaFractureDustPresenter @ Outer Column Fracture Dust",
+        "Elemental.Presentation.Camera.EarthCameraDirector @ Gravity Toy Camera",
+        "Elemental.Runtime.Characters.EarthMvpBotController @ Rumble Linebreaker Bot",
+        "Elemental.Presentation.VFX.EarthMaterialFeedbackPresenter @ Earth Material Feedback",
+        "Elemental.Presentation.Camera.EarthCinemachineCameraController @ Gravity Toy Camera",
+        "Elemental.Presentation.Camera.PlanetCameraRig @ Gravity Toy Camera",
+        "UnityEngine.UIElements.UIDocument @ Earth Core HUD",
+        "Unity.Cinemachine.CinemachineBrain @ Gravity Toy Camera",
+        "Elemental.Input.Actions.PlanetInputReader @ Planet Character",
+        "Elemental.Input.Gestures.MagicInputController @ Planet Character"
+    ],
+    "sources": [],
+    "captures": []
+}

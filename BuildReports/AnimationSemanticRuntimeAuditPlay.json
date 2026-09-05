@@ -1,0 +1,15 @@
+{
+    "unityVersion": "6000.5.7f1",
+    "utc": "2026-09-04T21:10:53.6545058Z",
+    "mode": "PlayMode",
+    "result": "Failed",
+    "total": 2,
+    "passed": 1,
+    "failed": 1,
+    "skipped": 0,
+    "inconclusive": 0,
+    "durationSeconds": 43.798169,
+    "failures": [
+        "Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.WalkStopKeepsKneesFiniteAndAvoidsAOneFrameLegSnap:   A walk-stop transition snapped a knee in one rendered frame.\r\n  Expected: less than 35.0f\r\n  But was:  43.2706757f\r\n"
+    ]
+}

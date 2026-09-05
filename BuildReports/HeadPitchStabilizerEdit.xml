@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="10" result="Passed" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.0910252">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="862" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.091025" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2061" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="858" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.058601" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="56680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2062" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="858" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.058124" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2063" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="858" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.057959" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2064" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="858" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.057806" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1468" name="EarthHeadPitchStabilizerTests" fullname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests" classname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.056862" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1479" name="ExcessPitchIsCorrectedExactlyToNearestExpressiveLimit" fullname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests.ExcessPitchIsCorrectedExactlyToNearestExpressiveLimit" classname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.040434" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1475" name="ExcessPitchIsCorrectedExactlyToNearestExpressiveLimit(46.17736f,-18.17736f)" fullname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests.ExcessPitchIsCorrectedExactlyToNearestExpressiveLimit(46.17736f,-18.17736f)" methodname="ExcessPitchIsCorrectedExactlyToNearestExpressiveLimit" classname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests" runstate="Runnable" seed="993427193" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.028716" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1476" name="ExcessPitchIsCorrectedExactlyToNearestExpressiveLimit(61.56589f,-33.56589f)" fullname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests.ExcessPitchIsCorrectedExactlyToNearestExpressiveLimit(61.56589f,-33.56589f)" methodname="ExcessPitchIsCorrectedExactlyToNearestExpressiveLimit" classname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests" runstate="Runnable" seed="170680479" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.000245" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1477" name="ExcessPitchIsCorrectedExactlyToNearestExpressiveLimit(32.23f,-4.23f)" fullname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests.ExcessPitchIsCorrectedExactlyToNearestExpressiveLimit(32.23f,-4.23f)" methodname="ExcessPitchIsCorrectedExactlyToNearestExpressiveLimit" classname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests" runstate="Runnable" seed="1846163457" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.000166" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1478" name="ExcessPitchIsCorrectedExactlyToNearestExpressiveLimit(-31.0f,6.0f)" fullname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests.ExcessPitchIsCorrectedExactlyToNearestExpressiveLimit(-31.0f,6.0f)" methodname="ExcessPitchIsCorrectedExactlyToNearestExpressiveLimit" classname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests" runstate="Runnable" seed="1454007197" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.000135" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="1474" name="ExpressivePitchInsideEnvelopeIsUnchanged" fullname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests.ExpressivePitchInsideEnvelopeIsUnchanged" classname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.003299" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1469" name="ExpressivePitchInsideEnvelopeIsUnchanged(-25.0f)" fullname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests.ExpressivePitchInsideEnvelopeIsUnchanged(-25.0f)" methodname="ExpressivePitchInsideEnvelopeIsUnchanged" classname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests" runstate="Runnable" seed="519086050" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.001170" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1470" name="ExpressivePitchInsideEnvelopeIsUnchanged(-12.0f)" fullname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests.ExpressivePitchInsideEnvelopeIsUnchanged(-12.0f)" methodname="ExpressivePitchInsideEnvelopeIsUnchanged" classname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests" runstate="Runnable" seed="1581434175" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.000292" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1471" name="ExpressivePitchInsideEnvelopeIsUnchanged(0.0f)" fullname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests.ExpressivePitchInsideEnvelopeIsUnchanged(0.0f)" methodname="ExpressivePitchInsideEnvelopeIsUnchanged" classname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests" runstate="Runnable" seed="696693680" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.000236" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1472" name="ExpressivePitchInsideEnvelopeIsUnchanged(23.16f)" fullname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests.ExpressivePitchInsideEnvelopeIsUnchanged(23.16f)" methodname="ExpressivePitchInsideEnvelopeIsUnchanged" classname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests" runstate="Runnable" seed="1554077741" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.000207" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1473" name="ExpressivePitchInsideEnvelopeIsUnchanged(28.0f)" fullname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests.ExpressivePitchInsideEnvelopeIsUnchanged(28.0f)" methodname="ExpressivePitchInsideEnvelopeIsUnchanged" classname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests" runstate="Runnable" seed="365559429" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.000137" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1480" name="NonFiniteMeasurementCannotInjectANewRotation" fullname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests.NonFiniteMeasurementCannotInjectANewRotation" methodname="NonFiniteMeasurementCannotInjectANewRotation" classname="Elemental.Tests.EditMode.EarthHeadPitchStabilizerTests" runstate="Runnable" seed="638901117" result="Passed" start-time="2026-09-05 11:12:27Z" end-time="2026-09-05 11:12:27Z" duration="0.000410" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HeadPitchStabilizerEdit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

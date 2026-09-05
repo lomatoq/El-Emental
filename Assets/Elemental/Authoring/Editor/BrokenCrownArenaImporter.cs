@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Elemental.Authoring.Fracture;
+using Elemental.Runtime.Geometry;
 using Elemental.Simulation.Structures;
 using UnityEditor;
 using UnityEditor.Build;
@@ -16,7 +17,8 @@ namespace Elemental.Authoring.Editor
             if (!string.Equals(
                     assetPath,
                     BrokenCrownArenaImporter.ModelPath,
-                    StringComparison.Ordinal)) return;
+                    StringComparison.Ordinal) &&
+                !string.Equals(assetPath, OuterStoneRingImporter.ModelPath, StringComparison.Ordinal)) return;
             var importer = (ModelImporter)assetImporter;
             importer.importAnimation = false;
             importer.importBlendShapes = false;
@@ -28,10 +30,17 @@ namespace Elemental.Authoring.Editor
             importer.isReadable = true;
             importer.meshCompression = ModelImporterMeshCompression.Off;
             importer.weldVertices = true;
+            importer.importNormals = ModelImporterNormals.Import;
+            importer.importTangents = ModelImporterTangents.Import;
+            // These authored columns use the arena's world-space procedural shader;
+            // their closed collider proxies intentionally have no UV/tangent stream.
+            if (string.Equals(assetPath, OuterStoneRingImporter.ModelPath, StringComparison.Ordinal))
+                importer.importTangents = ModelImporterTangents.None;
             importer.addCollider = false;
             importer.useFileScale = true;
             importer.globalScale = 1f;
         }
+
     }
 
     public static class BrokenCrownArenaImporter
@@ -61,34 +70,44 @@ namespace Elemental.Authoring.Editor
 
         public static EarthArenaFractureCatalog Rebuild()
         {
-            if (!File.Exists(ModelPath) || !File.Exists(SidecarPath))
+            EarthArenaFractureCatalog catalog = RebuildPackage(
+                ModelPath, SidecarPath, GeneratedFolder, CatalogPath, 8);
+            BrokenCrownArenaSceneIntegrator.RepairLoadedArenaRendererSettings();
+            return catalog;
+        }
+
+        public static EarthArenaFractureCatalog RebuildPackage(
+            string modelPath, string sidecarPath, string generatedFolder,
+            string catalogPath, int expectedStructures)
+        {
+            if (!File.Exists(modelPath) || !File.Exists(sidecarPath))
             {
                 throw new BuildFailedException(
                     "Broken Crown import requires both BrokenCrownArena.fbx and " +
                     "BrokenCrownArena.fracture.json. Run the Blender arena baker first.");
             }
 
-            Sidecar sidecar = JsonUtility.FromJson<Sidecar>(File.ReadAllText(SidecarPath));
-            ValidateSidecar(sidecar);
-            AssetDatabase.ImportAsset(ModelPath, ImportAssetOptions.ForceSynchronousImport |
+            Sidecar sidecar = JsonUtility.FromJson<Sidecar>(File.ReadAllText(sidecarPath));
+            ValidateSidecar(sidecar, expectedStructures);
+            AssetDatabase.ImportAsset(modelPath, ImportAssetOptions.ForceSynchronousImport |
                                                   ImportAssetOptions.ForceUpdate);
-            GameObject model = AssetDatabase.LoadAssetAtPath<GameObject>(ModelPath);
+            GameObject model = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
             if (model == null)
                 throw new BuildFailedException($"Unity could not import {ModelPath}.");
 
-            EnsureFolder(GeneratedFolder);
+            EnsureFolder(generatedFolder);
             Dictionary<string, Transform> transforms = IndexTransforms(model.transform);
             var entries = new EarthArenaFractureEntry[sidecar.structures.Length];
             for (int index = 0; index < sidecar.structures.Length; index++)
-                entries[index] = BuildStructure(sidecar.structures[index], model, transforms);
+                entries[index] = BuildStructure(sidecar.structures[index], model, transforms, generatedFolder);
 
             EarthArenaFractureCatalog catalog =
-                AssetDatabase.LoadAssetAtPath<EarthArenaFractureCatalog>(CatalogPath);
+                AssetDatabase.LoadAssetAtPath<EarthArenaFractureCatalog>(catalogPath);
             if (catalog == null)
             {
                 catalog = ScriptableObject.CreateInstance<EarthArenaFractureCatalog>();
-                catalog.name = "Broken Crown Arena Catalog";
-                AssetDatabase.CreateAsset(catalog, CatalogPath);
+                catalog.name = Path.GetFileNameWithoutExtension(catalogPath);
+                AssetDatabase.CreateAsset(catalog, catalogPath);
             }
             catalog.SetImportedData(
                 model,
@@ -100,15 +119,18 @@ namespace Elemental.Authoring.Editor
             AssetDatabase.Refresh();
             Debug.Log(
                 $"[Elemental] Broken Crown import ready: {entries.Length} structures, " +
-                $"{CountPieces(entries)} fracture pieces, catalog {CatalogPath}.");
+                $"{CountPieces(entries)} fracture pieces, catalog {catalogPath}.");
             return catalog;
         }
 
         private static EarthArenaFractureEntry BuildStructure(
             SidecarStructure source,
             GameObject model,
-            IReadOnlyDictionary<string, Transform> transforms)
+            IReadOnlyDictionary<string, Transform> transforms,
+            string generatedFolder)
         {
+            Transform frame = string.IsNullOrEmpty(source.frame_object)
+                ? model.transform : RequireTransform(transforms, source.frame_object);
             Transform intact = RequireTransform(transforms, source.intact_object);
             Mesh intactMesh = RequireMesh(intact, source.intact_object);
             if (source.pieces == null || source.pieces.Length == 0)
@@ -120,6 +142,8 @@ namespace Elemental.Authoring.Editor
             averageVolume /= source.pieces.Length;
 
             var records = new EarthFracturePieceRecord[source.pieces.Length];
+            Matrix4x4 intactToModel = frame.worldToLocalMatrix *
+                                       intact.localToWorldMatrix;
             for (int index = 0; index < source.pieces.Length; index++)
             {
                 SidecarPiece piece = source.pieces[index];
@@ -130,8 +154,16 @@ namespace Elemental.Authoring.Editor
                 Transform colliderTransform = RequireTransform(transforms, piece.collider);
                 Mesh renderMesh = RequireMesh(renderTransform, piece.name);
                 Mesh colliderMesh = RequireMesh(colliderTransform, piece.collider);
-                Matrix4x4 rest = model.transform.worldToLocalMatrix *
+                Matrix4x4 rest = frame.worldToLocalMatrix *
                                  renderTransform.localToWorldMatrix;
+                Matrix4x4 pieceToIntact = intactToModel.inverse * rest;
+                renderMesh = BakeFractureRenderMesh(
+                    source.structure_id,
+                    index,
+                    renderMesh,
+                    intactMesh,
+                    pieceToIntact,
+                    generatedFolder);
                 float volume = Mathf.Max(0.0001f, piece.volume_cubic_metres);
                 EarthPieceFlags flags = EarthPieceFlags.Structural;
                 if (piece.repairable) flags |= EarthPieceFlags.Repairable;
@@ -164,11 +196,11 @@ namespace Elemental.Authoring.Editor
                 source.damage_mode, "meteor_only", StringComparison.Ordinal);
             EarthFractureBondRecord[] bonds = BuildBonds(
                 source,
-                model,
+                frame,
                 transforms,
                 records,
                 meteorOnly);
-            string assetPath = GeneratedFolder + "/" + ToAssetName(source.structure_id) + ".asset";
+            string assetPath = generatedFolder + "/" + ToAssetName(source.structure_id) + ".asset";
             EarthFractureAsset asset = AssetDatabase.LoadAssetAtPath<EarthFractureAsset>(assetPath);
             if (asset == null)
             {
@@ -201,9 +233,45 @@ namespace Elemental.Authoring.Editor
             };
         }
 
+        private static Mesh BakeFractureRenderMesh(
+            string structureId,
+            int pieceIndex,
+            Mesh importedPiece,
+            Mesh intactMesh,
+            Matrix4x4 pieceToIntact,
+            string generatedFolder)
+        {
+            string assetName = ToAssetName(structureId) +
+                               $"Piece{pieceIndex + 1:000}Render";
+            string assetPath = generatedFolder + "/" + assetName + ".asset";
+            Mesh generated = EarthHardSurfaceMeshUtility.CreateFractureShadedCopy(
+                importedPiece,
+                intactMesh,
+                pieceToIntact,
+                0,
+                1,
+                assetName);
+            if (generated == null)
+                throw new BuildFailedException(
+                    $"{structureId}: could not preserve normals for piece {pieceIndex + 1}.");
+
+            Mesh persistent = AssetDatabase.LoadAssetAtPath<Mesh>(assetPath);
+            if (persistent == null)
+            {
+                AssetDatabase.CreateAsset(generated, assetPath);
+                return generated;
+            }
+
+            EditorUtility.CopySerialized(generated, persistent);
+            persistent.name = assetName;
+            EditorUtility.SetDirty(persistent);
+            UnityEngine.Object.DestroyImmediate(generated);
+            return persistent;
+        }
+
         private static EarthFractureBondRecord[] BuildBonds(
             SidecarStructure source,
-            GameObject model,
+            Transform frame,
             IReadOnlyDictionary<string, Transform> transforms,
             EarthFracturePieceRecord[] pieces,
             bool meteorOnly)
@@ -222,7 +290,7 @@ namespace Elemental.Authoring.Editor
                         $"{source.structure_id}: bond {bond.id} has invalid endpoints.");
                 }
                 Transform marker = RequireTransform(transforms, bond.marker);
-                Vector3 centroid = model.transform.InverseTransformPoint(marker.position);
+                Vector3 centroid = frame.InverseTransformPoint(marker.position);
                 if (bond.pieceB >= 0)
                 {
                     centroid = StabilizeBondCentroid(
@@ -237,7 +305,7 @@ namespace Elemental.Authoring.Editor
                 Vector3 normal = bond.pieceB >= 0
                     ? (pieces[bond.pieceB].restLocalPosition -
                        pieces[bond.pieceA].restLocalPosition).normalized
-                    : Vector3.down;
+                    : string.IsNullOrEmpty(source.frame_object) ? Vector3.down : Vector3.back;
                 int stableBondId = output + 1;
                 bonds[output] = CreateBond(
                     stableBondId,
@@ -333,13 +401,13 @@ namespace Elemental.Authoring.Editor
             };
         }
 
-        private static void ValidateSidecar(Sidecar sidecar)
+        private static void ValidateSidecar(Sidecar sidecar, int expectedStructures)
         {
             if (sidecar == null || sidecar.schemaVersion != 1 ||
-                sidecar.structures == null || sidecar.structures.Length != 8)
+                sidecar.structures == null || sidecar.structures.Length != expectedStructures)
             {
                 throw new BuildFailedException(
-                    "Broken Crown fracture sidecar must use schema 1 and contain eight structures.");
+                    $"Fracture sidecar must use schema 1 and contain {expectedStructures} structures.");
             }
             var ids = new HashSet<string>(StringComparer.Ordinal);
             for (int index = 0; index < sidecar.structures.Length; index++)
@@ -435,6 +503,7 @@ namespace Elemental.Authoring.Editor
         private sealed class SidecarStructure
         {
             public string structure_id;
+            public string frame_object;
             public string intact_object;
             public string damage_mode;
             public string trigger;

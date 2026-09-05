@@ -1,5 +1,6 @@
 using System.Collections;
 using Elemental.Runtime.Physics;
+using Elemental.Runtime.Matter;
 using Elemental.Input.Gestures;
 using Elemental.Runtime.World;
 using NUnit.Framework;
@@ -52,8 +53,10 @@ namespace Elemental.Tests.PlayMode
             EarthRockProfile profile = ScriptableObject.CreateInstance<EarthRockProfile>();
             GameObject root = new GameObject("Rock Lifecycle Pool");
             root.SetActive(false);
+            EarthMatterKernelBehaviour kernel = root.AddComponent<EarthMatterKernelBehaviour>();
             EarthRockDebrisPool debris = root.AddComponent<EarthRockDebrisPool>();
             debris.Configure(16, null, null, null, profile);
+            debris.ConfigureMatterKernel(kernel);
             EarthFragmentPool fragments = root.AddComponent<EarthFragmentPool>();
             fragments.Configure(2, null, null, null, profile, debris);
             root.SetActive(true);
@@ -65,10 +68,19 @@ namespace Elemental.Tests.PlayMode
 
             Assert.That(rock.Radius, Is.GreaterThan(originalRadius));
             Assert.That(rock.Mass, Is.GreaterThan(originalMass));
+            int expectedParts = profile.ResolveBreak(rock.Radius, rock.Mass, 10000f).PhysicalPieces;
+            float expectedMass = rock.Mass;
             Assert.That(rock.TryShatter(rock.transform.position, Vector3.up, 10000f), Is.True);
             Assert.That(rock.gameObject.activeSelf, Is.False);
-            Assert.That(root.GetComponentsInChildren<EarthRockDebris>().Length,
-                Is.EqualTo(profile.ShatterPieceCount));
+            EarthRockDebris[] children = root.GetComponentsInChildren<EarthRockDebris>();
+            Assert.That(children.Length, Is.EqualTo(expectedParts));
+            float childMass = 0f;
+            foreach (EarthRockDebris child in children)
+            {
+                childMass += child.EarthMass;
+                Assert.That(child.IsEarthTargetValid, Is.True);
+            }
+            Assert.That(childMass, Is.EqualTo(expectedMass).Within(0.001f));
 
             Object.Destroy(root);
             Object.Destroy(profile);

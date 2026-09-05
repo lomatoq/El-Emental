@@ -19,7 +19,7 @@ namespace Elemental.Runtime.Characters
         private static void Install()
         {
             EarthRuntimeRescueInstaller.Ensure();
-            EarthRuntimeRescueInstaller.ResetPlayerGameplayAuthority();
+            EarthRuntimeRescueInstaller.ResetGameplayAuthority();
         }
     }
 
@@ -39,18 +39,28 @@ namespace Elemental.Runtime.Characters
             _instance = host.AddComponent<EarthRuntimeRescueInstaller>();
         }
 
-        public static void ResetPlayerGameplayAuthority()
+        public static void ResetGameplayAuthority()
         {
+            // With Enter Play Mode reloads disabled, a visible fighter can retain
+            // dynamic ragdoll bones and detached hierarchy from the previous run.
+            // Restore every active fighter before the first simulation tick, not
+            // only the tagged player.
+            HumanoidRagdollRig[] visibleRigs = FindObjectsByType<HumanoidRagdollRig>(
+                FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            for (int index = 0; index < visibleRigs.Length; index++)
+            {
+                HumanoidRagdollRig visibleRig = visibleRigs[index];
+                if (visibleRig != null &&
+                    (visibleRig.IsRagdollActive || visibleRig.IsRecoveringToAnimation))
+                    visibleRig.ResetToAnimated();
+            }
+
             ActiveRagdollPuppet[] puppets = FindObjectsByType<ActiveRagdollPuppet>(
-                FindObjectsInactive.Exclude);
+                FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             for (int index = 0; index < puppets.Length; index++)
             {
                 ActiveRagdollPuppet puppet = puppets[index];
-                if (puppet == null || !puppet.CompareTag("Player")) continue;
-                HumanoidRagdollRig visibleRig =
-                    puppet.GetComponentInChildren<HumanoidRagdollRig>(true);
-                if (visibleRig != null && visibleRig.IsRagdollActive)
-                    visibleRig.ResetToAnimated();
+                if (puppet == null) continue;
                 puppet.ResetPhysicalState(puppet.transform.position, puppet.transform.rotation);
             }
         }
@@ -160,6 +170,15 @@ namespace Elemental.Runtime.Characters
         private void FixedUpdate()
         {
             if (_motor == null || _body == null || _capsule == null || !_motor.enabled) return;
+            // An authored pillar/jump lane owns radial velocity until its external
+            // launch window expires. Startup settling must never zero that impulse.
+            if (!_motor.AcceptsMovingSupport)
+            {
+                _startupSettled = true;
+                _startupStableTicks = 0;
+                HasCentralSupport = false;
+                return;
+            }
 
             // A registered moving support owns its support contract. The surf and
             // moving-platform solvers already supply contact-point velocity and a
@@ -261,9 +280,9 @@ namespace Elemental.Runtime.Characters
     }
 
     /// <summary>
-    /// Support contacts are intentionally filtered by ActiveRagdollPuppet so normal
-    /// walking does not build impact debt. This bridge restores the missing semantic
-    /// distinction between an ordinary step and a high-energy landing.
+    /// Normal landings are animation-owned, including recovery rolls. Only a
+    /// catastrophic fall crosses into the physical knockout path; combat impacts
+    /// retain their separate knockdown/ragdoll authority.
     /// </summary>
     [DefaultExecutionOrder(900)]
     [DisallowMultipleComponent]
@@ -275,6 +294,7 @@ namespace Elemental.Runtime.Characters
         private Rigidbody _body;
         private EarthLandingCushion _landingCushion;
         private bool _wasSupported;
+        private bool _hasObservedSupport;
         private float _minimumVerticalSpeed;
         private Vector3 _airborneStartPosition;
         private float _graceUntil;
@@ -293,6 +313,7 @@ namespace Elemental.Runtime.Characters
         private void OnEnable()
         {
             _wasSupported = _motor != null && _motor.HasStableSupport;
+            _hasObservedSupport = _wasSupported;
             _minimumVerticalSpeed = 0f;
             _airborneStartPosition = transform.position;
             _graceUntil = Time.time + 0.9f;
@@ -313,6 +334,20 @@ namespace Elemental.Runtime.Characters
             }
             float verticalSpeed = Vector3.Dot(_body.linearVelocity, up) - supportUpSpeed;
             bool supported = _motor.HasStableSupport;
+
+            if (!_hasObservedSupport)
+            {
+                // First ground acquisition is scene initialization, not a fall
+                // impact. A time-only grace could expire during a slow load and
+                // turn startup into a recoverable ragdoll/roll.
+                _hasObservedSupport = supported;
+                _wasSupported = supported;
+                _minimumVerticalSpeed = 0f;
+                _airborneStartPosition = _body.position;
+                LastLandingSpeed = 0f;
+                LastInjectedSeverity = 0f;
+                return;
+            }
 
             if (!supported)
             {
@@ -342,12 +377,16 @@ namespace Elemental.Runtime.Characters
                     float fallDistance = Mathf.Max(
                         0f,
                         Vector3.Dot(_airborneStartPosition - _body.position, up));
-                    EarthCharacterImpactTarget target = GetComponent<EarthCharacterImpactTarget>();
-                    CharacterOutcome outcome = target != null
-                        ? target.ResolveFallLanding(_body.worldCenterOfMass, fallDistance, LastLandingSpeed)
-                        : CharacterOutcome.RecoverableRagdoll;
-                    if (outcome == CharacterOutcome.RecoverableRagdoll)
-                        _puppet.InjectImpact(Mathf.Max(0.01f, _body.mass) * LastInjectedSeverity);
+                    if (fallDistance >= CharacterOutcomeResolver.KnockoutFallDistance &&
+                        LastLandingSpeed >= CharacterOutcomeResolver.KnockoutDownwardSpeed)
+                    {
+                        EarthCharacterImpactTarget target = GetComponent<EarthCharacterImpactTarget>();
+                        target?.ResolveFallLanding(_body.worldCenterOfMass, fallDistance, LastLandingSpeed);
+                    }
+                    // A fall-only recovery must not replace the height/direction-
+                    // selected landing animation with a physical collapse and a
+                    // second, unconditional forward get-up roll.
+                    LastInjectedSeverity = 0f;
                 }
             }
 

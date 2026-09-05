@@ -268,6 +268,7 @@ namespace Elemental.Authoring.Editor
             collider.RecalculateNormals();
             collider.RecalculateBounds();
             var renderVertices = new List<Vector3>(cell.Triangles.Length);
+            var renderNormals = new List<Vector3>(cell.Triangles.Length);
             var colors = new List<Color32>(cell.Triangles.Length);
             var uv = new List<Vector2>(cell.Triangles.Length);
             var renderExterior = new List<int>(cell.Triangles.Length);
@@ -277,12 +278,14 @@ namespace Elemental.Authoring.Editor
                 EarthVolumetricFractureFace face = cell.Faces[faceIndex];
                 if (face.VertexIndices.Length < 3) continue;
                 int start = renderVertices.Count;
+                Vector3 faceNormal = ResolveFaceNormal(vertices, face.VertexIndices);
                 byte cavity = (byte)Mathf.RoundToInt(Mathf.Lerp(
                     118f, 186f, Hash01((uint)(pieceIndex + 1), faceIndex)));
                 for (int index = 0; index < face.VertexIndices.Length; index++)
                 {
                     Vector3 vertex = vertices[face.VertexIndices[index]];
                     renderVertices.Add(vertex);
+                    renderNormals.Add(faceNormal);
                     colors.Add(face.IsExterior
                         ? new Color32(255, 0, 0, 28)
                         : new Color32(0, 255, 0, cavity));
@@ -299,15 +302,31 @@ namespace Elemental.Authoring.Editor
 
             var render = new Mesh { name = $"Earth Wall Baked Piece {pieceIndex + 1:000}" };
             render.SetVertices(renderVertices);
+            render.SetNormals(renderNormals);
             render.SetColors(colors);
             render.SetUVs(0, uv);
             render.subMeshCount = 2;
             render.SetTriangles(renderExterior, 0, false);
             render.SetTriangles(renderInterior, 1, false);
-            render.RecalculateNormals();
             render.RecalculateTangents();
             render.RecalculateBounds();
             return new PieceMeshPair(render, collider);
+        }
+
+        private static Vector3 ResolveFaceNormal(
+            IReadOnlyList<Vector3> vertices,
+            IReadOnlyList<int> indices)
+        {
+            if (vertices == null || indices == null || indices.Count < 3) return Vector3.up;
+            Vector3 origin = vertices[indices[0]];
+            for (int index = 1; index < indices.Count - 1; index++)
+            {
+                Vector3 normal = Vector3.Cross(
+                    vertices[indices[index]] - origin,
+                    vertices[indices[index + 1]] - origin);
+                if (normal.sqrMagnitude > 0.00000001f) return normal.normalized;
+            }
+            return Vector3.up;
         }
 
         private static bool HasProductionShapeQuality(EarthFractureAsset asset)

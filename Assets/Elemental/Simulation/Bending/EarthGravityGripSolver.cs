@@ -18,6 +18,21 @@ namespace Elemental.Simulation.Bending
 
     public static class EarthGravityGripSolver
     {
+        // Nearest loose matter wins the bounded MMB selection; stable identity
+        // breaks ties independently of the physics overlap result order.
+        public static bool PreferCaptureCandidate(float distanceSquared, uint stableId,
+            float otherDistanceSquared, uint otherStableId) =>
+            distanceSquared < otherDistanceSquared ||
+            (distanceSquared == otherDistanceSquared && stableId < otherStableId);
+
+        // An intact structure can start a circle gesture before it releases any
+        // cells. Empty terrain/unsupported targets cannot start a physical grip.
+        public static bool CanBeginSession(int capturedTargets, bool hasManipulableStructure) =>
+            capturedTargets > 0 || hasManipulableStructure;
+
+        public static float CompactOrbitRadius(float maximumRadius, float summedRadiusCubed) =>
+            math.min(math.max(.12f, maximumRadius), math.max(.12f, math.pow(math.max(0f, summedRadiusCubed), 1f / 3f) * 1.2f));
+
         public static float3 SlotOffset(uint stableId, float orbitRadius, float3 localUp)
         {
             uint hash = stableId * 0x9E3779B9u + 0x7F4A7C15u;

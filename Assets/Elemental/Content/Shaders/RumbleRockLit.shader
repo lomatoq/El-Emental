@@ -31,6 +31,7 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
         [Enum(Off,0,Mapping,1,Normals,2,BlendWeights,3,FaceData,4,Albedo,5)] _DebugMode("Seam Debug", Float) = 0
         [HideInInspector] _Cutoff("Cutoff", Range(0,1)) = 0.5
         [HideInInspector] _Surface("Surface", Float) = 0
+        [HideInInspector] _ZWrite("Depth Write", Float) = 1
     }
 
     SubShader
@@ -48,14 +49,14 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
             Name "ForwardLit"
             Tags { "LightMode"="UniversalForward" }
             Cull Back
-            ZWrite On
+            ZWrite [_ZWrite]
 
             HLSLPROGRAM
             #pragma target 3.5
             #pragma vertex Vert
             #pragma fragment Frag
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
             #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
@@ -339,6 +340,15 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                                mainLight.distanceAttenuation *
                                screenAo.directAmbientOcclusion;
 
+                half3 additional = 0;
+                uint additionalCount = GetAdditionalLightsCount();
+                LIGHT_LOOP_BEGIN(additionalCount)
+                    Light light = GetAdditionalLight(lightIndex, input.positionWS);
+                    half additionalDiffuse = saturate(dot(normalWS, light.direction));
+                    additional += albedo * light.color * additionalDiffuse *
+                                  light.distanceAttenuation * light.shadowAttenuation;
+                LIGHT_LOOP_END
+
                 half3 ambient = SampleSH(normalWS) * _AmbientStrength;
                 ambient += _ShadowColor.rgb * 0.12h;
                 ambient *= (1.0h - stableFormOcclusion) *
@@ -350,7 +360,7 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                 half specular = pow(saturate(dot(normalWS, halfDirection)), specularPower) *
                                 lerp(0.018h, 0.075h, smoothness) * shadow;
                 half fresnel = pow(saturate(1.0h - dot(normalWS, viewDirection)), 4.0h);
-                half3 color = direct + albedo * ambient +
+                half3 color = direct + additional + albedo * ambient +
                               mainLight.color * specular +
                               _EdgeColor.rgb * fresnel * 0.035h;
                 color = MixFog(color, input.fogFactor);
@@ -369,7 +379,7 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
             Name "DepthNormals"
             Tags { "LightMode"="DepthNormals" }
             Cull Back
-            ZWrite On
+            ZWrite [_ZWrite]
 
             HLSLPROGRAM
             #pragma target 3.5

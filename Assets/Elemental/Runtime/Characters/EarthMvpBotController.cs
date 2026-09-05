@@ -23,6 +23,7 @@ namespace Elemental.Runtime.Characters
         [Header("Explicit scene references")]
         [SerializeField] private Transform player;
         [SerializeField] private ActiveRagdollPuppet playerPuppet;
+        [SerializeField] private Collider playerCollider;
         [SerializeField] private Transform planetCenter;
         [SerializeField] private Rigidbody targetBody;
         [SerializeField] private PlanetMotor motor;
@@ -47,16 +48,19 @@ namespace Elemental.Runtime.Characters
         [SerializeField, Min(0.1f)] private float projectileMass = 18f;
         [SerializeField, Min(0.1f)] private float projectileLifetimeSeconds = 2.1f;
         [SerializeField, Min(0.1f)] private float knockoutVelocityChange = 11.8f;
+        [SerializeField, Range(0f, 4f)] private float initialStrikeProtectionSeconds = 2.5f;
 
         private EarthMvpBotPlannerState _plannerState = EarthMvpBotPlannerState.Initial;
         private EarthMvpBotGuardReason _lastGuardReason;
         private float _chargeUntil;
         private uint _lastSampleTick;
         private bool _hasSampled;
+        private float _strikeReadyAt;
 
         public EarthMvpBotPhase Phase => _plannerState.Phase;
         public EarthMvpBotGuardReason LastGuardReason => _lastGuardReason;
         public Vector3 ArenaCenter => arenaCenter;
+        public float ArenaRadius => arenaRadius;
         public Vector3 LocalUp => ResolveLocalUp();
         public Vector3 LockedStrikeDirection => ToVector3(_plannerState.LockedStrikeDirection);
         public float Telegraph01 => Phase == EarthMvpBotPhase.Windup
@@ -86,12 +90,26 @@ namespace Elemental.Runtime.Characters
         {
             player = configuredPlayer;
             playerPuppet = configuredPlayerPuppet;
+            playerCollider = configuredPlayer != null
+                ? configuredPlayer.GetComponent<Collider>()
+                : null;
             planetCenter = configuredPlanetCenter;
             targetBody = configuredBody;
             motor = configuredMotor;
             combatBody = configuredCombatBody;
             arenaCenter = configuredArenaCenter;
-            arenaRadius = Mathf.Max(attackRange + 0.25f, configuredArenaRadius);
+            // Broken Crown preserves valid authored tangent placement when it seats
+            // the fighters. That can put the player farther from the floor centre
+            // than the old 6.5 m prototype radius. Treat the configured value as a
+            // minimum and always include both current spawn points; otherwise the
+            // planner reports TargetOutsideArena forever and the rival never walks.
+            float selfDistance = Vector3.Distance(transform.position, arenaCenter);
+            float playerDistance = configuredPlayer != null
+                ? Vector3.Distance(configuredPlayer.position, arenaCenter)
+                : 0f;
+            float requiredRadius = Mathf.Max(selfDistance, playerDistance) + 1f;
+            arenaRadius = Mathf.Max(attackRange + 0.25f, configuredArenaRadius, requiredRadius);
+            ConfigureFighterCollisionFiltering();
             ResetPlanner();
         }
 
@@ -124,6 +142,7 @@ namespace Elemental.Runtime.Characters
             projectilePool = configuredProjectilePool;
             casterCollider = configuredCasterCollider;
             duelController = configuredDuelController;
+            ConfigureFighterCollisionFiltering();
             projectileRadius = Mathf.Max(0.1f, configuredProjectileRadius);
             projectileMass = Mathf.Max(0.1f, configuredProjectileMass);
             projectileLifetimeSeconds = Mathf.Max(0.25f, configuredProjectileLifetimeSeconds);
@@ -165,7 +184,11 @@ namespace Elemental.Runtime.Characters
 
             Vector3 facing = ToVector3(plan.DesiredFacingDirection);
             if (facing.sqrMagnitude > 0.01f) motor?.SetAimDirection(facing);
-            if (plan.StrikeThisTick) BeginStrike(up);
+            // The duel grants the player matching startup impact protection, but a
+            // physical projectile can still transfer momentum before its typed
+            // impact is accepted. Keep the first projectile out of the scene until
+            // that grace window has elapsed; approach locomotion remains active.
+            if (plan.StrikeThisTick && Time.time >= _strikeReadyAt) BeginStrike(up);
 
             Vector3 move = ToVector3(plan.DesiredMoveDirection);
             if (move.sqrMagnitude < 0.0001f || motor == null)
@@ -189,7 +212,20 @@ namespace Elemental.Runtime.Characters
             combatBody?.SetBraced(false);
         }
 
-        private void Awake() => ResolveLocalReferences();
+        private void Awake()
+        {
+            ResolveLocalReferences();
+            ConfigureFighterCollisionFiltering();
+            _strikeReadyAt = Time.time + Mathf.Clamp(initialStrikeProtectionSeconds, 0f, 4f);
+        }
+
+        private void OnEnable()
+        {
+            ConfigureFighterCollisionFiltering();
+            _strikeReadyAt = Mathf.Max(
+                _strikeReadyAt,
+                Time.time + Mathf.Clamp(initialStrikeProtectionSeconds, 0f, 4f));
+        }
 
         private void FixedUpdate()
         {
@@ -294,6 +330,17 @@ namespace Elemental.Runtime.Characters
             if (targetBody == null) targetBody = GetComponent<Rigidbody>();
             if (motor == null) motor = GetComponent<PlanetMotor>();
             if (combatBody == null) combatBody = GetComponent<EarthCombatDummy>();
+            if (playerCollider == null && player != null)
+                playerCollider = player.GetComponent<Collider>();
+        }
+
+        private void ConfigureFighterCollisionFiltering()
+        {
+            if (casterCollider == null) casterCollider = GetComponent<Collider>();
+            if (playerCollider == null && player != null)
+                playerCollider = player.GetComponent<Collider>();
+            if (casterCollider != null && playerCollider != null)
+                UnityEngine.Physics.IgnoreCollision(casterCollider, playerCollider, true);
         }
 
         private static float3 ToFloat3(Vector3 value) => new float3(value.x, value.y, value.z);

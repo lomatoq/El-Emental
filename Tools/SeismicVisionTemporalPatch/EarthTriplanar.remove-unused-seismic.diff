@@ -1,0 +1,11 @@
+--- Assets/Elemental/Content/Shaders/EarthTriplanar.shader
++++ Assets/Elemental/Content/Shaders/EarthTriplanar.shader
+@@
+-            // Grounded seismic perception is driven globally by EarthSeismicVision.
+-            // Keeping it outside UnityPerMaterial lets terrain, walls and loose matter
+-            // share one causal pulse without cloning material instances.
+-            half _EarthSeismicVision;
+-            float4 _EarthSeismicOrigin;
+-            float _EarthSeismicRadius;
+-
+             struct Attributes

@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 157acea416754524d9a3d89051a70bc1, type: 3}
+  m_Name: EarthGravityWellProfile
+  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Physics.EarthGravityWellProfile
+  radius: 7.5
+  pullAcceleration: 38
+  orbitAcceleration: 5.5
+  velocityDamping: 1.8
+  maximumSpeed: 16
+  coreRadius: 0.9
+  focusLift: 0.75
+  maximumCapturedTargets: 48
+  clusterStiffness: 16
+  clusterDamping: 5.5
+  clusterOrbitRadius: 1.35
+  clusterAngularDamping: 6.5
+  clusterMaximumAcceleration: 62
+  fractureDelaySeconds: 0.68
+  fractureImpulse: 1450
+  sustainedDamageImpulsePerSecond: 680

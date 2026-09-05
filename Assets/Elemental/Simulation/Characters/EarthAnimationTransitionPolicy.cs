@@ -15,7 +15,8 @@ namespace Elemental.Simulation.Characters
         Surf = 8,
         DirectionalDodge = 9,
         KnockdownRecovery = 10,
-        ImpactOverlay = 11
+        ImpactOverlay = 11,
+        Mantle = 12
     }
 
     public enum EarthMotionCategory : byte

@@ -1,0 +1,72 @@
+{
+    "status": "Failed",
+    "error": "System.InvalidOperationException: walk full body is not reviewable: head=(0.41, 0.30, 4.22), leftFoot=(0.39, -0.14, 4.58), rightFoot=(0.39, -0.25, 4.03), viewportHeight=0.545.\r\n  at Elemental.Experimental.SonicPrototype.SonicProductionActorPreview.SampleAndValidatePose (Elemental.Experimental.SonicPrototype.SonicProductionActorPreview+Session session, System.String label, System.Int32 minimumPreviousApplications) [0x0026c] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Experimental\\SonicPrototype\\Editor\\SonicProductionActorPreview.cs:313 \r\n  at Elemental.Experimental.SonicPrototype.SonicProductionActorPreview.Tick () [0x000e5] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Experimental\\SonicPrototype\\Editor\\SonicProductionActorPreview.cs:150 ",
+    "completedUtc": "2026-09-05T13:21:20.0274260Z",
+    "actor": "Linebreaker Presentation",
+    "avatar": "LinebreakerAvatar",
+    "backend": "CPU",
+    "walkSequence": 1,
+    "boxingSequence": 0,
+    "walkStatus": "planning",
+    "boxingStatus": "",
+    "walkCapturePath": "",
+    "boxingCapturePath": "",
+    "walkCaptureExists": false,
+    "boxingCaptureExists": false,
+    "walkPose": {
+        "retargetApplicationCount": 0,
+        "lastRetargetFrame": 0,
+        "maximumAppliedBoneDeltaDegrees": 0.0,
+        "headHeightMeters": 0.0,
+        "baselineHeadHeightMeters": 0.0,
+        "headHeightRatio": 0.0,
+        "viewportHeight": 0.0,
+        "headViewport": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "leftFootViewport": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "rightFootViewport": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "fullBodyVisible": false,
+        "anatomyValid": false
+    },
+    "boxingPose": {
+        "retargetApplicationCount": 0,
+        "lastRetargetFrame": 0,
+        "maximumAppliedBoneDeltaDegrees": 0.0,
+        "headHeightMeters": 0.0,
+        "baselineHeadHeightMeters": 0.0,
+        "headHeightRatio": 0.0,
+        "viewportHeight": 0.0,
+        "headViewport": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "leftFootViewport": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "rightFootViewport": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "fullBodyVisible": false,
+        "anatomyValid": false
+    },
+    "bridgeWasEnabled": true,
+    "bridgeRestored": true,
+    "cameraAndUiRestored": true,
+    "runtimeOnlyObjects": true
+}

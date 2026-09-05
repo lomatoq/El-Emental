@@ -35,6 +35,12 @@ namespace Elemental.Simulation.Time
             float startTime01)
         {
             float day01 = Repeat01(startTime01 + elapsedSeconds / math.max(1f, daySeconds));
+            return EvaluateAtPhase(elapsedSeconds, day01, yearSeconds, moonSeconds, axialTiltDegrees);
+        }
+
+        public static CelestialSnapshot EvaluateAtPhase(
+            double elapsedSeconds, float day01, float yearSeconds, float moonSeconds, float axialTiltDegrees)
+        {
             float orbit01 = Repeat01(elapsedSeconds / math.max(1f, yearSeconds));
             float moon01 = Repeat01(elapsedSeconds / math.max(1f, moonSeconds));
             float dayAngle = day01 * math.PI * 2f;

@@ -1,0 +1,474 @@
+diff --git a/Assets/Elemental/Authoring/Editor/ProductionStartupSample.cs b/Assets/Elemental/Authoring/Editor/ProductionStartupSample.cs
+index c41a219..c4a4101 100644
+--- a/Assets/Elemental/Authoring/Editor/ProductionStartupSample.cs
++++ b/Assets/Elemental/Authoring/Editor/ProductionStartupSample.cs
+@@ -7,6 +7,7 @@
+ using System.Reflection;
+ using System.Security.Cryptography;
+ using Elemental.Runtime.Characters;
++using Elemental.Runtime.Diagnostics;
+ using Elemental.Runtime.Physics;
+ using Elemental.Runtime.World;
+ using Elemental.Simulation.Structures;
+@@ -53,7 +54,7 @@ public sealed class Report
+         {
+             public string label, utc, comparisonScope, scene, status, error, unityVersion;
+             public bool editorSample, cacheUsed, geometryReady, physicsPrepared, primaryAccepted, secondaryAccepted;
+-            public string baseCacheStatus, column, readyScreenshot, impactScreenshot;
++            public string baseCacheStatus, column, readyScreenshot, impactScreenshot, synchronousStartupTiming;
+             public double enterToReadyMs, gateAwakeToReadyMs, hydrationMs, peakCookingSliceMs;
+             public double bakedCacheLoadMs, backgroundCookingWallMs;
+             public int bakedPlans, preparedPlansAtReady, cookedMeshes, scheduledCookedMeshes;
+@@ -308,6 +309,7 @@ private static void Tick()
+                     _report.bakedCacheLoadMs = _pool.BakedCacheLoadMilliseconds;
+                     _report.backgroundCookingWallMs = _pool.BackgroundCookingWallMilliseconds;
+                     _report.bakedPlanMissesAtReady = _pool.BakedFracturePlanMissCount;
++                    _report.synchronousStartupTiming = EarthStartupTiming.Format();
+                     _report.runtimeChunks = _planet.RuntimeChunkCount; _report.pendingRender = _planet.PendingRenderCount; _report.pendingCollider = _planet.PendingColliderCount;
+                     if (_report.transientCacheOverride && (_report.cacheUsed || _report.bakedPlans != 0))
+                     { Fail("Transient uncached fields were not copied into Play Mode; this is not a valid uncached sample."); return; }
+diff --git a/Tools/StartupTimingPatch/after/Assets/Elemental/Runtime/Diagnostics/EarthStartupTiming.cs b/Assets/Elemental/Runtime/Diagnostics/EarthStartupTiming.cs
+new file mode 100644
+index 0000000..adeb83e
+--- /dev/null
++++ b/Assets/Elemental/Runtime/Diagnostics/EarthStartupTiming.cs
+@@ -0,0 +1,101 @@
++using System;
++using System.Diagnostics;
++using System.Globalization;
++using System.Text;
++using Unity.Profiling;
++using UnityEngine;
++
++namespace Elemental.Runtime.Diagnostics
++{
++    /// <summary>
++    /// Startup-only aggregate timings. Recording is sealed when the scene readiness
++    /// gate opens, so later casts cannot contaminate the loading sample.
++    /// </summary>
++    public static class EarthStartupTiming
++    {
++        public enum Category
++        {
++            ArenaInitialize,
++            ArenaBevel,
++            ArenaMeshPicking,
++            WallAwake,
++            WallPieceVisuals,
++            PlatformPoolAwake,
++            PlatformRuntimeMeshes,
++            PillarPoolAwake,
++            PillarMeshLibrary,
++            PillarColumns,
++            DebrisPoolAwake,
++            HeroFragmentPoolAwake,
++            Count
++        }
++
++        private static readonly long[] ElapsedTicks = new long[(int)Category.Count];
++        private static readonly int[] Counts = new int[(int)Category.Count];
++        private static readonly ProfilerMarker[] Markers = BuildMarkers();
++        private static bool _recording = true;
++
++        public readonly struct Scope : IDisposable
++        {
++            private readonly Category _category;
++            private readonly long _started;
++            private readonly bool _active;
++            private readonly ProfilerMarker.AutoScope _profiler;
++
++            internal Scope(Category category, bool active)
++            {
++                _category = category;
++                _active = active;
++                _started = active ? Stopwatch.GetTimestamp() : 0;
++                _profiler = active ? Markers[(int)category].Auto() : default;
++            }
++
++            public void Dispose()
++            {
++                if (!_active) return;
++                _profiler.Dispose();
++                int index = (int)_category;
++                ElapsedTicks[index] += Stopwatch.GetTimestamp() - _started;
++                Counts[index]++;
++            }
++        }
++
++        public static Scope Measure(Category category) => new(category, _recording);
++
++        public static string SealAndFormat()
++        {
++            _recording = false;
++            return Format();
++        }
++
++        public static string Format()
++        {
++            var output = new StringBuilder(384);
++            for (int index = 0; index < (int)Category.Count; index++)
++            {
++                if (index > 0) output.Append(';');
++                output.Append((Category)index).Append('=')
++                    .Append((ElapsedTicks[index] * 1000.0 / Stopwatch.Frequency)
++                        .ToString("F2", CultureInfo.InvariantCulture))
++                    .Append("ms/").Append(Counts[index]);
++            }
++            return output.ToString();
++        }
++
++        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
++        private static void Reset()
++        {
++            Array.Clear(ElapsedTicks, 0, ElapsedTicks.Length);
++            Array.Clear(Counts, 0, Counts.Length);
++            _recording = true;
++        }
++
++        private static ProfilerMarker[] BuildMarkers()
++        {
++            var markers = new ProfilerMarker[(int)Category.Count];
++            for (int index = 0; index < markers.Length; index++)
++                markers[index] = new ProfilerMarker("Elemental.Startup." + (Category)index);
++            return markers;
++        }
++    }
++}
+diff --git a/Assets/Elemental/Runtime/Physics/EarthArenaStructure.cs b/Assets/Elemental/Runtime/Physics/EarthArenaStructure.cs
+index 56dda79..a07e1ce 100644
+--- a/Assets/Elemental/Runtime/Physics/EarthArenaStructure.cs
++++ b/Assets/Elemental/Runtime/Physics/EarthArenaStructure.cs
+@@ -4,6 +4,7 @@
+ using Elemental.Runtime.World;
+ using Elemental.Runtime.Geometry;
+ using Elemental.Runtime.Matter;
++using Elemental.Runtime.Diagnostics;
+ using Unity.Mathematics;
+ using Unity.Profiling;
+ using UnityEngine;
+@@ -337,7 +338,8 @@ public bool ApplyReleasedPieceImpact(int index, in EarthStructureImpact impact)
+ 
+         private void Awake()
+         {
+-            InitializeRuntime(false);
++            using (EarthStartupTiming.Measure(EarthStartupTiming.Category.ArenaInitialize))
++                InitializeRuntime(false);
+         }
+ 
+         private void Start()
+@@ -415,7 +417,9 @@ private bool InitializeRuntime(bool resetProxy)
+                 Mesh bakedRenderMesh = _asset.GetPieceRenderMesh(index);
+                 if (filter != null && bakedRenderMesh != null)
+                 {
+-                    _beveledRenderMeshes[index] ??= EarthFractureBevelMeshBuilder.Create(bakedRenderMesh, stoneBevelProfile);
++                    if (_beveledRenderMeshes[index] == null)
++                        using (EarthStartupTiming.Measure(EarthStartupTiming.Category.ArenaBevel))
++                            _beveledRenderMeshes[index] = EarthFractureBevelMeshBuilder.Create(bakedRenderMesh, stoneBevelProfile);
+                     filter.sharedMesh = _beveledRenderMeshes[index];
+                 }
+                 if (renderer != null && pieceMaterial != null)
+@@ -444,7 +448,8 @@ private bool InitializeRuntime(bool resetProxy)
+                 MeshCollider collider = piece.GetComponent<MeshCollider>();
+                 if (collider == null) collider = piece.gameObject.AddComponent<MeshCollider>();
+                 collider.sharedMesh = _asset.GetPieceColliderMesh(index);
+-                _piecePicking[index] = new EarthArenaMeshPicking(collider.sharedMesh);
++                using (EarthStartupTiming.Measure(EarthStartupTiming.Category.ArenaMeshPicking))
++                    _piecePicking[index] = new EarthArenaMeshPicking(collider.sharedMesh);
+                 collider.convex = true;
+                 if (Application.isPlaying) rockDebrisPool?.PrepareFracture(collider);
+                 collider.enabled = false;
+diff --git a/Assets/Elemental/Runtime/Physics/EarthFragmentPool.cs b/Assets/Elemental/Runtime/Physics/EarthFragmentPool.cs
+index 10c6f01..974516f 100644
+--- a/Assets/Elemental/Runtime/Physics/EarthFragmentPool.cs
++++ b/Assets/Elemental/Runtime/Physics/EarthFragmentPool.cs
+@@ -3,6 +3,7 @@
+ using Elemental.Runtime.Characters;
+ using Elemental.Runtime.World;
+ using Elemental.Runtime.Matter;
++using Elemental.Runtime.Diagnostics;
+ using Elemental.Simulation.Bending;
+ using Elemental.Simulation.Structures;
+ using UnityEngine;
+@@ -116,20 +117,23 @@ public void ConfigureShapeGrammar(EarthShapeGrammarProfile profile)
+ 
+         private void Awake()
+         {
+-            debrisPool?.ConfigureMaterialFeedback(materialFeedback);
+-            _shapeDiversity ??= new EarthShapeDiversityTracker(
+-                shapeGrammarProfile != null ? shapeGrammarProfile.LocalHistoryLength : 16);
+-            EnsureRuntimeShapeLibrary();
+-            Mesh[] preparedShapes = AvailableShapeVariants;
+-            if (preparedShapes != null)
+-                for (int index = 0; index < preparedShapes.Length; index++) _renderBevels.Get(preparedShapes[index], stoneBevelProfile);
+-            _renderBevels.Get(fragmentMesh, stoneBevelProfile);
+-            // The complete hero pool is authored up front. A cast may claim an existing
+-            // shell, but must never create a GameObject, collider or mesh at runtime.
+-            int warmCount = capacity;
+-            for (int index = 0; index < warmCount; index++)
++            using (EarthStartupTiming.Measure(EarthStartupTiming.Category.HeroFragmentPoolAwake))
+             {
+-                CreateFragment();
++                debrisPool?.ConfigureMaterialFeedback(materialFeedback);
++                _shapeDiversity ??= new EarthShapeDiversityTracker(
++                    shapeGrammarProfile != null ? shapeGrammarProfile.LocalHistoryLength : 16);
++                EnsureRuntimeShapeLibrary();
++                Mesh[] preparedShapes = AvailableShapeVariants;
++                if (preparedShapes != null)
++                    for (int index = 0; index < preparedShapes.Length; index++) _renderBevels.Get(preparedShapes[index], stoneBevelProfile);
++                _renderBevels.Get(fragmentMesh, stoneBevelProfile);
++                // The complete hero pool is authored up front. A cast may claim an existing
++                // shell, but must never create a GameObject, collider or mesh at runtime.
++                int warmCount = capacity;
++                for (int index = 0; index < warmCount; index++)
++                {
++                    CreateFragment();
++                }
+             }
+         }
+ 
+diff --git a/Assets/Elemental/Runtime/Physics/EarthPillarWavePool.cs b/Assets/Elemental/Runtime/Physics/EarthPillarWavePool.cs
+index 4f34825..38b5ecc 100644
+--- a/Assets/Elemental/Runtime/Physics/EarthPillarWavePool.cs
++++ b/Assets/Elemental/Runtime/Physics/EarthPillarWavePool.cs
+@@ -2,6 +2,7 @@
+ using Elemental.Runtime.Characters;
+ using Elemental.Runtime.Geometry;
+ using Elemental.Runtime.Matter;
++using Elemental.Runtime.Diagnostics;
+ using Elemental.Runtime.World;
+ using Elemental.Simulation.Bending;
+ using Elemental.Simulation.Combat;
+@@ -157,19 +158,24 @@ public void ConfigureMeshVariants(params Mesh[] meshes)
+ 
+         private void Awake()
+         {
+-            if (surfaceQueries == null)
+-                surfaceQueries = FindAnyObjectByType<EarthSurfaceQueryService>(FindObjectsInactive.Include);
+-            _matterKernel = EarthMatterKernelBehaviour.FindOrCreate(this);
+-            if (!useLegacyColumnMeshes)
++            using (EarthStartupTiming.Measure(EarthStartupTiming.Category.PillarPoolAwake))
+             {
+-                for (int family = 0; family < _webCellMeshes.Length; family++)
++                if (surfaceQueries == null)
++                    surfaceQueries = FindAnyObjectByType<EarthSurfaceQueryService>(FindObjectsInactive.Include);
++                _matterKernel = EarthMatterKernelBehaviour.FindOrCreate(this);
++                if (!useLegacyColumnMeshes)
+                 {
+-                    _webCellMeshes[family] = EarthWebWaveCellMeshFactory.Create(family);
+-                    _webCellRenderMeshes[family] = _renderBevels.Get(_webCellMeshes[family], stoneBevelProfile);
+-                    _webMatrices[family] = new Matrix4x4[capacity];
++                    using (EarthStartupTiming.Measure(EarthStartupTiming.Category.PillarMeshLibrary))
++                        for (int family = 0; family < _webCellMeshes.Length; family++)
++                        {
++                            _webCellMeshes[family] = EarthWebWaveCellMeshFactory.Create(family);
++                            _webCellRenderMeshes[family] = _renderBevels.Get(_webCellMeshes[family], stoneBevelProfile);
++                            _webMatrices[family] = new Matrix4x4[capacity];
++                        }
+                 }
++                using (EarthStartupTiming.Measure(EarthStartupTiming.Category.PillarColumns))
++                    for (int index = 0; index < capacity; index++) CreateColumn();
+             }
+-            for (int index = 0; index < capacity; index++) CreateColumn();
+         }
+ 
+         private void LateUpdate()
+diff --git a/Assets/Elemental/Runtime/Physics/EarthPlatform.cs b/Assets/Elemental/Runtime/Physics/EarthPlatform.cs
+index 6e7fe0e..634d154 100644
+--- a/Assets/Elemental/Runtime/Physics/EarthPlatform.cs
++++ b/Assets/Elemental/Runtime/Physics/EarthPlatform.cs
+@@ -7,6 +7,7 @@
+ using Elemental.Runtime.Geometry;
+ using Elemental.Runtime.World;
+ using Elemental.Runtime.Matter;
++using Elemental.Runtime.Diagnostics;
+ using Elemental.Simulation.Matter;
+ using Unity.Mathematics;
+ using Unity.Profiling;
+@@ -353,16 +354,19 @@ private void DiscardIncompletePreparedPieces()
+ 
+         private void EnsureReusablePieceMeshes()
+         {
+-            if (_generatedPieceMeshes == null || _generatedPieceMeshes.Length != MaximumPieces)
+-                _generatedPieceMeshes = new Mesh[MaximumPieces];
+-            for (int index = 0; index < _generatedPieceMeshes.Length; index++)
++            using (EarthStartupTiming.Measure(EarthStartupTiming.Category.PlatformRuntimeMeshes))
+             {
+-                if (_generatedPieceMeshes[index] != null) continue;
+-                _generatedPieceMeshes[index] = new Mesh
++                if (_generatedPieceMeshes == null || _generatedPieceMeshes.Length != MaximumPieces)
++                    _generatedPieceMeshes = new Mesh[MaximumPieces];
++                for (int index = 0; index < _generatedPieceMeshes.Length; index++)
+                 {
+-                    name = $"Earth Platform Volume {index:00}",
+-                    hideFlags = HideFlags.DontSave
+-                };
++                    if (_generatedPieceMeshes[index] != null) continue;
++                    _generatedPieceMeshes[index] = new Mesh
++                    {
++                        name = $"Earth Platform Volume {index:00}",
++                        hideFlags = HideFlags.DontSave
++                    };
++                }
+             }
+         }
+ 
+diff --git a/Assets/Elemental/Runtime/Physics/EarthPlatformPool.cs b/Assets/Elemental/Runtime/Physics/EarthPlatformPool.cs
+index 9209eb3..c58015b 100644
+--- a/Assets/Elemental/Runtime/Physics/EarthPlatformPool.cs
++++ b/Assets/Elemental/Runtime/Physics/EarthPlatformPool.cs
+@@ -1,6 +1,7 @@
+ using System;
+ using System.Collections.Generic;
+ using Elemental.Runtime.Matter;
++using Elemental.Runtime.Diagnostics;
+ using Elemental.Runtime.World;
+ using Elemental.Simulation.Bending;
+ using Elemental.Simulation.Matter;
+@@ -106,13 +107,16 @@ public void ConfigureFractureProfile(EarthStructureFractureProfile configuredPro
+ 
+         private void Awake()
+         {
+-            if (surfaceQueries == null)
+-                surfaceQueries = FindFirstObjectByType<EarthSurfaceQueryService>();
+-            if (gravityWorld == null)
+-                gravityWorld = FindFirstObjectByType<GravityWorldBehaviour>();
+-            if (matterKernel == null) matterKernel = EarthMatterKernelBehaviour.FindOrCreate(this);
+-            RebuildPreparedCache();
+-            if (_platforms.Count == 0 && capacity > 0) CreatePlatform();
++            using (EarthStartupTiming.Measure(EarthStartupTiming.Category.PlatformPoolAwake))
++            {
++                if (surfaceQueries == null)
++                    surfaceQueries = FindFirstObjectByType<EarthSurfaceQueryService>();
++                if (gravityWorld == null)
++                    gravityWorld = FindFirstObjectByType<GravityWorldBehaviour>();
++                if (matterKernel == null) matterKernel = EarthMatterKernelBehaviour.FindOrCreate(this);
++                RebuildPreparedCache();
++                if (_platforms.Count == 0 && capacity > 0) CreatePlatform();
++            }
+         }
+ 
+         public void PrewarmAll()
+diff --git a/Assets/Elemental/Runtime/Physics/EarthRockDebrisPool.cs b/Assets/Elemental/Runtime/Physics/EarthRockDebrisPool.cs
+index ddeb3a0..309badb 100644
+--- a/Assets/Elemental/Runtime/Physics/EarthRockDebrisPool.cs
++++ b/Assets/Elemental/Runtime/Physics/EarthRockDebrisPool.cs
+@@ -2,6 +2,7 @@
+ using Elemental.Runtime.Geometry;
+ using Elemental.Runtime.World;
+ using Elemental.Runtime.Matter;
++using Elemental.Runtime.Diagnostics;
+ using Elemental.Simulation.Matter;
+ using Unity.Mathematics;
+ using Elemental.Simulation.Bending;
+@@ -151,12 +152,15 @@ public void ConfigureShapeGrammar(EarthShapeGrammarProfile configuredProfile) =>
+ 
+         private void Awake()
+         {
+-            EnsureBakedCache();
+-            EnsureRuntimeShapeLibrary();
+-            // All split shells cook before play: collisions never create/cook bodies.
+-            int warmCount = capacity;
+-            for (int index = 0; index < warmCount; index++) CreatePiece();
+-            _awakeComplete = true;
++            using (EarthStartupTiming.Measure(EarthStartupTiming.Category.DebrisPoolAwake))
++            {
++                EnsureBakedCache();
++                EnsureRuntimeShapeLibrary();
++                // All split shells cook before play: collisions never create/cook bodies.
++                int warmCount = capacity;
++                for (int index = 0; index < warmCount; index++) CreatePiece();
++                _awakeComplete = true;
++            }
+         }
+ 
+         private void Start() => _startComplete = true;
+diff --git a/Assets/Elemental/Runtime/Physics/EarthWallPool.cs b/Assets/Elemental/Runtime/Physics/EarthWallPool.cs
+index 2fb3ca1..777dde1 100644
+--- a/Assets/Elemental/Runtime/Physics/EarthWallPool.cs
++++ b/Assets/Elemental/Runtime/Physics/EarthWallPool.cs
+@@ -3,6 +3,7 @@
+ using Elemental.Runtime.Geometry;
+ using Elemental.Runtime.World;
+ using Elemental.Runtime.Matter;
++using Elemental.Runtime.Diagnostics;
+ using Elemental.Simulation.Matter;
+ using Elemental.Simulation.Structures;
+ using Unity.Mathematics;
+@@ -148,12 +149,15 @@ public void ConfigureFractureAsset(
+ 
+         private void Awake()
+         {
+-            if (matterKernel == null) matterKernel = EarthMatterKernelBehaviour.FindOrCreate(this);
+-            _wallShapeDiversity ??= new EarthWallShapeDiversityTracker(
+-                shapeGrammarProfile != null ? shapeGrammarProfile.LocalHistoryLength : 16);
+-            // A baked wall owns forty convex fracture pieces. Prewarming the
+-            // entire pool cooked hundreds of colliders before the first frame.
+-            if (capacity > 0) CreateWall();
++            using (EarthStartupTiming.Measure(EarthStartupTiming.Category.WallAwake))
++            {
++                if (matterKernel == null) matterKernel = EarthMatterKernelBehaviour.FindOrCreate(this);
++                _wallShapeDiversity ??= new EarthWallShapeDiversityTracker(
++                    shapeGrammarProfile != null ? shapeGrammarProfile.LocalHistoryLength : 16);
++                // A baked wall owns forty convex fracture pieces. Prewarming the
++                // entire pool cooked hundreds of colliders before the first frame.
++                if (capacity > 0) CreateWall();
++            }
+         }
+ 
+         private void OnDestroy()
+@@ -572,17 +576,22 @@ private bool TryConfigureBakedWall(
+                     rotation.value.x, rotation.value.y, rotation.value.z, rotation.value.w);
+                 piece.transform.localScale = ToVector3(definition.RestLocalScale);
+                 MeshFilter pieceFilter = piece.AddComponent<MeshFilter>();
+-                Mesh hardRenderMesh = EarthHardSurfaceMeshUtility.CreateFractureShadedCopy(
+-                    renderMesh,
+-                    renderMesh,
+-                    Matrix4x4.identity,
+-                    0,
+-                    1,
+-                    $"{renderMesh.name} Hard {pieceIndex + 1:000}");
+-                Mesh beveled = EarthFractureBevelMeshBuilder.Create(hardRenderMesh, stoneBevelProfile);
+-                pieceFilter.sharedMesh = beveled;
+-                _runtimeFractureMeshes.Add(beveled);
+-                _runtimeFractureMeshes.Add(hardRenderMesh);
++                Mesh hardRenderMesh;
++                Mesh beveled;
++                using (EarthStartupTiming.Measure(EarthStartupTiming.Category.WallPieceVisuals))
++                {
++                    hardRenderMesh = EarthHardSurfaceMeshUtility.CreateFractureShadedCopy(
++                        renderMesh,
++                        renderMesh,
++                        Matrix4x4.identity,
++                        0,
++                        1,
++                        $"{renderMesh.name} Hard {pieceIndex + 1:000}");
++                    beveled = EarthFractureBevelMeshBuilder.Create(hardRenderMesh, stoneBevelProfile);
++                    pieceFilter.sharedMesh = beveled;
++                    _runtimeFractureMeshes.Add(beveled);
++                    _runtimeFractureMeshes.Add(hardRenderMesh);
++                }
+                 MeshRenderer pieceRenderer = piece.AddComponent<MeshRenderer>();
+                 pieceRenderer.sharedMaterials = hardRenderMesh.subMeshCount > 1
+                     ? new[] { wallMaterial, fractureInteriorMaterial != null ? fractureInteriorMaterial : wallMaterial }
+diff --git a/Assets/Elemental/Runtime/World/EarthSceneReadinessGate.cs b/Assets/Elemental/Runtime/World/EarthSceneReadinessGate.cs
+index 88eea38..7ae1ba2 100644
+--- a/Assets/Elemental/Runtime/World/EarthSceneReadinessGate.cs
++++ b/Assets/Elemental/Runtime/World/EarthSceneReadinessGate.cs
+@@ -1,5 +1,6 @@
+ using System;
+ using Elemental.Runtime.Physics;
++using Elemental.Runtime.Diagnostics;
+ using UnityEngine;
+ 
+ namespace Elemental.Runtime.World
+@@ -49,8 +50,9 @@ private void Update()
+                 UnityEngine.Physics.SyncTransforms();
+                 ReadyMilliseconds = (Time.realtimeSinceStartupAsDouble - _started) * 1000;
+                 IsReady = true;
++                string startupTiming = EarthStartupTiming.SealAndFormat();
+                 RestorePause();
+-                Debug.Log($"[StartupCache] Scene ready in {ReadyMilliseconds:F2}ms; ground={planet.BaseCacheStatus}, cacheLoad={debris.BakedCacheLoadMilliseconds:F2}ms, bakedPlans={debris.BakedFracturePlanCount}, planMisses={debris.BakedFracturePlanMissCount}, cookedMeshes={debris.CookedBakedMeshCount}/{debris.ScheduledBakedMeshCount}, backgroundCooking={debris.BackgroundCookingWallMilliseconds:F2}ms, peakCookingPoll={debris.PeakStartupCookingMilliseconds:F2}ms.", this);
++                Debug.Log($"[StartupCache] Scene ready in {ReadyMilliseconds:F2}ms; ground={planet.BaseCacheStatus}, cacheLoad={debris.BakedCacheLoadMilliseconds:F2}ms, bakedPlans={debris.BakedFracturePlanCount}, planMisses={debris.BakedFracturePlanMissCount}, cookedMeshes={debris.CookedBakedMeshCount}/{debris.ScheduledBakedMeshCount}, backgroundCooking={debris.BackgroundCookingWallMilliseconds:F2}ms, peakCookingPoll={debris.PeakStartupCookingMilliseconds:F2}ms; sync={startupTiming}.", this);
+             }
+             else if (Time.realtimeSinceStartupAsDouble - _started > timeoutSeconds)
+                 Fail($"Scene preparation timed out: {Status}; terrain={planet.PendingRenderCount}/{planet.PendingColliderCount}, physics={debris.PendingBakedCookingCount}. Rebake startup caches or inspect preparation errors.");

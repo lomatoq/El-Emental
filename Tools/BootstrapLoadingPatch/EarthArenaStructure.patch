@@ -1,0 +1,31 @@
+*** Begin Patch
+*** Update File: Assets/Elemental/Runtime/Physics/EarthArenaStructure.cs
+@@
+-                if (filter != null && bakedRenderMesh != null)
+-                {
+-                    if (_beveledRenderMeshes[index] == null)
+-                        using (EarthStartupTiming.Measure(EarthStartupTiming.Category.ArenaBevel))
+-                            _beveledRenderMeshes[index] = EarthFractureBevelMeshBuilder.Create(bakedRenderMesh, stoneBevelProfile);
+-                    filter.sharedMesh = _beveledRenderMeshes[index];
+-                }
++                if (filter != null && bakedRenderMesh != null)
++                {
++                    // Editor-time Configure validates and persists the dormant fracture
++                    // hierarchy. Saving a generated bevel here embeds tens of megabytes
++                    // into the scene even though Awake replaces every one at runtime.
++                    // Persist the authored fracture-asset mesh; construct the identical
++                    // presentation mesh only for the live runtime.
++                    if (Application.isPlaying)
++                    {
++                        if (_beveledRenderMeshes[index] == null)
++                            using (EarthStartupTiming.Measure(EarthStartupTiming.Category.ArenaBevel))
++                                _beveledRenderMeshes[index] = EarthFractureBevelMeshBuilder.Create(
++                                    bakedRenderMesh, stoneBevelProfile);
++                        filter.sharedMesh = _beveledRenderMeshes[index];
++                    }
++                    else
++                    {
++                        filter.sharedMesh = bakedRenderMesh;
++                    }
++                }
+*** End Patch

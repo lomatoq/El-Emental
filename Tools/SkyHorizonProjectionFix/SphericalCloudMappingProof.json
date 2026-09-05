@@ -1,0 +1,42 @@
+{
+  "result": "Passed",
+  "contract": "The old clamped perspective-plane projection collapses vertical variation at the horizon; the replacement maps equal angular elevation steps to a finite spherical-texture distance.",
+  "samples": [
+    {
+      "elevationDegrees": -4.0,
+      "oldAlongHorizon": 0.01566968702853719,
+      "oldAcrossHorizon": 0.0010615427236055908,
+      "oldAngularAspect": 14.761240108466101,
+      "sphericalAlongHorizon": 0.000694444444444442,
+      "sphericalAcrossHorizon": 0.001388888888888884,
+      "sphericalAngularAspect": 0.5
+    },
+    {
+      "elevationDegrees": 0.0,
+      "oldAlongHorizon": 0.015707950807224744,
+      "oldAcrossHorizon": 3.4269405356113225e-05,
+      "oldAngularAspect": 458.36659971173515,
+      "sphericalAlongHorizon": 0.000694444444444442,
+      "sphericalAcrossHorizon": 0.001388888888888884,
+      "sphericalAngularAspect": 0.5
+    },
+    {
+      "elevationDegrees": 4.0,
+      "oldAlongHorizon": 0.01566968702853719,
+      "oldAcrossHorizon": 0.0011299145772185604,
+      "oldAngularAspect": 13.868028030145672,
+      "sphericalAlongHorizon": 0.000694444444444442,
+      "sphericalAcrossHorizon": 0.001388888888888884,
+      "sphericalAngularAspect": 0.5
+    },
+    {
+      "elevationDegrees": 12.0,
+      "oldAlongHorizon": 0.010771868161747727,
+      "oldAcrossHorizon": 0.026658896186589676,
+      "oldAngularAspect": 0.4040627971373526,
+      "sphericalAlongHorizon": 0.000694444444444442,
+      "sphericalAcrossHorizon": 0.001388888888888884,
+      "sphericalAngularAspect": 0.5
+    }
+  ]
+}

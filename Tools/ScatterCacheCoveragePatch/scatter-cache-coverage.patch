@@ -1,0 +1,142 @@
+diff --git a/Assets/Elemental/Authoring/Editor/StartupCacheBaker.cs b/Assets/Elemental/Authoring/Editor/StartupCacheBaker.cs
+index 8c295cc..fa2f2c0 100644
+--- a/Assets/Elemental/Authoring/Editor/StartupCacheBaker.cs
++++ b/Assets/Elemental/Authoring/Editor/StartupCacheBaker.cs
+@@ -30,6 +30,7 @@ public static void BakeCurrentScene()
+             var planets = new List<VoxelPlanetBehaviour>();
+             var pools = new List<EarthRockDebrisPool>();
+             var fragmentPools = new List<EarthFragmentPool>();
++            var scatters = new List<EarthPlanetRockScatter>();
+             var structures = new List<EarthArenaStructure>();
+             var colliders = new List<Collider>();
+             foreach (GameObject root in scene.GetRootGameObjects())
+@@ -37,6 +38,7 @@ public static void BakeCurrentScene()
+                 planets.AddRange(root.GetComponentsInChildren<VoxelPlanetBehaviour>(true));
+                 pools.AddRange(root.GetComponentsInChildren<EarthRockDebrisPool>(true));
+                 fragmentPools.AddRange(root.GetComponentsInChildren<EarthFragmentPool>(true));
++                scatters.AddRange(root.GetComponentsInChildren<EarthPlanetRockScatter>(true));
+                 structures.AddRange(root.GetComponentsInChildren<EarthArenaStructure>(true));
+                 colliders.AddRange(root.GetComponentsInChildren<Collider>(true));
+             }
+@@ -44,7 +46,8 @@ public static void BakeCurrentScene()
+                 throw new InvalidOperationException($"Expected one planet and debris pool in current scene; got {planets.Count}/{pools.Count}.");
+             // Publish component references only after both independent cache builds succeeded.
+             PlanetBaseMeshCache planetCache = BakePlanet(planets[0], scene.name);
+-            EarthConvexFractureCacheAsset convexCache = BakeConvex(pools[0], fragmentPools, structures, colliders, scene.name);
++            EarthConvexFractureCacheAsset convexCache = BakeConvex(
++                pools[0], fragmentPools, scatters, structures, colliders, scene.name);
+             Undo.RecordObject(planets[0], "Use exact baked planet base");
+             Undo.RecordObject(pools[0], "Use baked convex fracture cache");
+             planets[0].ConfigureBaseMeshCache(planetCache);
+@@ -136,7 +139,8 @@ private sealed class FractureSource
+         }
+ 
+         private static EarthConvexFractureCacheAsset BakeConvex(EarthRockDebrisPool pool,
+-            List<EarthFragmentPool> fragmentPools, List<EarthArenaStructure> structures,
++            List<EarthFragmentPool> fragmentPools, List<EarthPlanetRockScatter> scatters,
++            List<EarthArenaStructure> structures,
+             List<Collider> colliders, string sceneName)
+         {
+             var sources = new List<FractureSource>();
+@@ -150,8 +154,10 @@ private static EarthConvexFractureCacheAsset BakeConvex(EarthRockDebrisPool pool
+             pool.AppendAuthoredFractureSources(poolSources);
+             foreach (EarthFragmentPool fragmentPool in fragmentPools)
+                 fragmentPool.AppendAuthoredFractureSources(poolSources);
++            foreach (EarthPlanetRockScatter scatter in scatters)
++                scatter.AppendAuthoredFractureSources(poolSources);
+             if (poolSources.Count == 0)
+-                throw new InvalidOperationException("No persistent debris/hero-fragment fracture meshes are configured. Assign the authored physics libraries before baking startup caches.");
++                throw new InvalidOperationException("No persistent debris/hero/scatter fracture meshes are configured. Assign the authored physics libraries before baking startup caches.");
+             foreach (Mesh source in poolSources)
+                 if (!source.isReadable || !AssetDatabase.Contains(source))
+                     throw new InvalidOperationException($"Persistent pool fracture source '{source.name}' must be a readable imported asset before baking startup caches.");
+@@ -173,6 +179,7 @@ private static EarthConvexFractureCacheAsset BakeConvex(EarthRockDebrisPool pool
+                 "Assets/Elemental/Runtime/Geometry/EarthConvexFragmentCache.cs",
+                 "Assets/Elemental/Runtime/Physics/EarthRockDebrisPool.cs",
+                 "Assets/Elemental/Runtime/Physics/EarthFragmentPool.cs",
++                "Assets/Elemental/Runtime/Physics/EarthPlanetRockScatter.cs",
+                 "Assets/Elemental/Authoring/Editor/StartupCacheBaker.cs");
+             string path = $"{Folder}/{sceneName}ConvexFracture_{key}.asset";
+             var existing = AssetDatabase.LoadAssetAtPath<EarthConvexFractureCacheAsset>(path);
+@@ -222,7 +229,7 @@ private static EarthConvexFractureCacheAsset BakeConvex(EarthRockDebrisPool pool
+             cache.TransferMeshOwnershipToAsset();
+             asset.Configure(plans);
+             EditorUtility.SetDirty(asset);
+-            Debug.Log($"[StartupCache] Baked {plans.Length} recursive convex plans from {bakedSources} authoritative arena/decor sources and {poolSources.Count} persistent pool sources in {EditorApplication.timeSinceStartup-started:F3}s, {path}.");
++            Debug.Log($"[StartupCache] Baked {plans.Length} recursive convex plans from {bakedSources} authoritative arena/decor sources and {poolSources.Count} persistent pool/scatter sources in {EditorApplication.timeSinceStartup-started:F3}s, {path}.");
+             output.Commit();
+             return asset;
+         }
+diff --git a/Assets/Elemental/Runtime/Physics/EarthPlanetRockScatter.cs b/Assets/Elemental/Runtime/Physics/EarthPlanetRockScatter.cs
+index a69b36d..a6ab88a 100644
+--- a/Assets/Elemental/Runtime/Physics/EarthPlanetRockScatter.cs
++++ b/Assets/Elemental/Runtime/Physics/EarthPlanetRockScatter.cs
+@@ -57,6 +57,20 @@ public void Configure(EarthPlanetRockScatterProfile configuredProfile, VoxelPlan
+             if (Application.isPlaying && isActiveAndEnabled) Begin();
+         }
+ 
++        /// <summary>Appends stable collider sources created by the staged planet dressing pass.</summary>
++        public int AppendAuthoredFractureSources(List<Mesh> destination)
++        {
++            if (destination == null) throw new ArgumentNullException(nameof(destination));
++            int before = destination.Count;
++            if (colliderMeshes != null)
++                for (int index = 0; index < colliderMeshes.Length; index++)
++                {
++                    Mesh candidate = colliderMeshes[index];
++                    if (candidate != null && !destination.Contains(candidate)) destination.Add(candidate);
++                }
++            return destination.Count - before;
++        }
++
+         private void Start() => Begin();
+         private void OnEnable() { if (initialized && !completed && build == null) build = StartCoroutine(Build()); }
+         private void OnDisable() { if (build != null) StopCoroutine(build); build = null; }
+diff --git a/Assets/Elemental/Tests/EditMode/StartupCacheTests.cs b/Assets/Elemental/Tests/EditMode/StartupCacheTests.cs
+index c737c85..5dc8bb4 100644
+--- a/Assets/Elemental/Tests/EditMode/StartupCacheTests.cs
++++ b/Assets/Elemental/Tests/EditMode/StartupCacheTests.cs
+@@ -69,32 +69,40 @@ public void BorrowedConvexPlansMatchColdOutputAndDisposeWithoutDestroyingMeshes(
+         }
+ 
+         [Test]
+-        public void PoolAuthoredSourcesAreDeduplicatedAcrossDebrisAndHeroLibraries()
++        public void PersistentSourcesAreDeduplicatedAcrossDebrisHeroAndScatterLibraries()
+         {
+             Mesh first = EarthSafeMeshFactory.CreateBox("Pool source A", new Bounds(Vector3.zero, Vector3.one));
+             Mesh second = EarthSafeMeshFactory.CreateBox("Pool source B", new Bounds(Vector3.zero, Vector3.one * 2));
++            Mesh third = EarthSafeMeshFactory.CreateBox("Scatter collider source", new Bounds(Vector3.zero, Vector3.one * 3));
+             var debrisObject = new GameObject("Debris source coverage");
+             var fragmentObject = new GameObject("Fragment source coverage");
+-            debrisObject.SetActive(false); fragmentObject.SetActive(false);
++            var scatterObject = new GameObject("Scatter source coverage");
++            debrisObject.SetActive(false); fragmentObject.SetActive(false); scatterObject.SetActive(false);
+             var debris = debrisObject.AddComponent<EarthRockDebrisPool>();
+             var fragments = fragmentObject.AddComponent<EarthFragmentPool>();
++            var scatter = scatterObject.AddComponent<EarthPlanetRockScatter>();
+             try
+             {
+                 debris.Configure(16, null, first, null, null);
+                 debris.ConfigureMeshVariants(first, second, first);
+                 fragments.Configure(1, null, null, second, null, debris);
+                 fragments.ConfigureMeshVariants(second, first, second);
++                scatter.Configure(null, null, null, null, debris, null, null,
++                    new[] { first, second, third }, new[] { third, first, third });
+                 var sources = new List<Mesh>();
+                 Assert.That(debris.AppendAuthoredFractureSources(sources), Is.EqualTo(2));
+                 Assert.That(fragments.AppendAuthoredFractureSources(sources), Is.Zero);
+-                Assert.That(sources, Is.EqualTo(new[] { first, second }));
++                Assert.That(scatter.AppendAuthoredFractureSources(sources), Is.EqualTo(1));
++                Assert.That(sources, Is.EqualTo(new[] { first, second, third }));
+             }
+             finally
+             {
++                UnityEngine.Object.DestroyImmediate(scatterObject);
+                 UnityEngine.Object.DestroyImmediate(fragmentObject);
+                 UnityEngine.Object.DestroyImmediate(debrisObject);
+                 UnityEngine.Object.DestroyImmediate(first);
+                 UnityEngine.Object.DestroyImmediate(second);
++                UnityEngine.Object.DestroyImmediate(third);
+             }
+         }
+ 

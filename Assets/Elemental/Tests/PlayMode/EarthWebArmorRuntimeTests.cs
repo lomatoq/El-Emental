@@ -28,10 +28,10 @@ namespace Elemental.Tests.PlayMode
             Assert.That(armor.Begin(), Is.True);
             for (int tick = 0; tick < 18; tick++) yield return new WaitForFixedUpdate();
             Assert.That(armor.IsActive, Is.True);
-            Assert.That(armor.ActivePieceCount, Is.EqualTo(EarthArmorProfile.MaximumPieceCount));
-            var registered = new EarthArmorPiece[EarthArmorProfile.MaximumPieceCount];
+            Assert.That(armor.ActivePieceCount, Is.EqualTo(EarthArmorProfile.DefaultPieceCount));
+            var registered = new EarthArmorPiece[EarthArmorProfile.DefaultPieceCount];
             Assert.That(armor.CopyActivePiecesNonAlloc(registered),
-                Is.EqualTo(EarthArmorProfile.MaximumPieceCount));
+                Is.EqualTo(EarthArmorProfile.DefaultPieceCount));
             for (int index = 0; index < registered.Length; index++)
             {
                 Assert.That(registered[index].IsPhysical, Is.False,
@@ -85,9 +85,9 @@ namespace Elemental.Tests.PlayMode
             Assert.That(armor.Begin(), Is.True);
             for (int tick = 0; tick < 22; tick++) yield return new WaitForFixedUpdate();
 
-            var pieces = new EarthArmorPiece[EarthArmorProfile.MaximumPieceCount];
+            var pieces = new EarthArmorPiece[EarthArmorProfile.DefaultPieceCount];
             int count = armor.CopyActivePiecesNonAlloc(pieces);
-            Assert.That(count, Is.EqualTo(EarthArmorProfile.MaximumPieceCount));
+            Assert.That(count, Is.EqualTo(EarthArmorProfile.DefaultPieceCount));
             int bodyConforming = 0;
             for (int index = 0; index < count; index++)
             {
@@ -175,9 +175,9 @@ namespace Elemental.Tests.PlayMode
                 "The armor is an external shell; it must never replace or hide the animated hero.");
             Assert.That(bodyRenderer.sharedMaterial, Is.SameAs(originalBodyMaterial),
                 "Compact armor must not repaint the animated character with the stone material.");
-            var pieces = new EarthArmorPiece[EarthArmorProfile.MaximumPieceCount];
+            var pieces = new EarthArmorPiece[EarthArmorProfile.DefaultPieceCount];
             int count = armor.CopyActivePiecesNonAlloc(pieces);
-            Assert.That(count, Is.EqualTo(EarthArmorProfile.MaximumPieceCount));
+            Assert.That(count, Is.EqualTo(EarthArmorProfile.DefaultPieceCount));
             int frontPieces = 0;
             int rearPieces = 0;
             int severeIntersections = 0;
@@ -254,14 +254,14 @@ namespace Elemental.Tests.PlayMode
             for (int step = 0; step < 5; step++) armor.ApplyWheel(120f, Time.unscaledTime);
             for (int tick = 0; tick < 18; tick++) yield return new WaitForFixedUpdate();
             Assert.That(armor.Phase01, Is.GreaterThan(0.30f));
-            Assert.That(armor.ControllablePieceCount, Is.EqualTo(EarthArmorProfile.MaximumPieceCount));
+            Assert.That(armor.ControllablePieceCount, Is.EqualTo(EarthArmorProfile.DefaultPieceCount));
 
             Vector3 casterVelocity = caster.linearVelocity;
             Assert.That(armor.FireNearest(Vector3.forward), Is.True,
                 "LMB needs a production action on expanded armor, not only a visual dome.");
             Assert.That(armor.ControllablePieceCount,
-                Is.EqualTo(EarthArmorProfile.MaximumPieceCount - 1));
-            var pieces = new EarthArmorPiece[EarthArmorProfile.MaximumPieceCount];
+                Is.EqualTo(EarthArmorProfile.DefaultPieceCount - 1));
+            var pieces = new EarthArmorPiece[EarthArmorProfile.DefaultPieceCount];
             armor.CopyActivePiecesNonAlloc(pieces);
             int released = 0;
             for (int index = 0; index < pieces.Length; index++)
@@ -275,7 +275,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(released, Is.EqualTo(1));
 
             Assert.That(armor.FireAll(Vector3.forward),
-                Is.EqualTo(EarthArmorProfile.MaximumPieceCount - 1),
+                Is.EqualTo(EarthArmorProfile.DefaultPieceCount - 1),
                 "RMB must launch the remaining shell as a compact aimed fan.");
             for (int tick = 0; tick < 8; tick++) yield return new WaitForFixedUpdate();
             Assert.That(armor.IsActive, Is.False);
@@ -283,7 +283,7 @@ namespace Elemental.Tests.PlayMode
             int totalReleased = 0;
             for (int index = 0; index < pieces.Length; index++)
                 if (pieces[index] != null && pieces[index].IsReleased) totalReleased++;
-            Assert.That(totalReleased, Is.EqualTo(EarthArmorProfile.MaximumPieceCount));
+            Assert.That(totalReleased, Is.EqualTo(EarthArmorProfile.DefaultPieceCount));
 
             Object.Destroy(casterObject);
             yield return null;
@@ -305,15 +305,15 @@ namespace Elemental.Tests.PlayMode
             for (int tick = 0; tick < 18; tick++) yield return new WaitForFixedUpdate();
             Assert.That(armor.FireNearest(Vector3.forward), Is.True);
             Assert.That(armor.ControllablePieceCount,
-                Is.EqualTo(EarthArmorProfile.MaximumPieceCount - 1));
+                Is.EqualTo(EarthArmorProfile.DefaultPieceCount - 1));
 
             EarthArmorInputResult result = armor.ApplyWheel(-120f, Time.unscaledTime);
             Assert.That(result, Is.EqualTo(EarthArmorInputResult.PhaseChanged));
-            Assert.That(armor.ControllablePieceCount, Is.EqualTo(EarthArmorProfile.MaximumPieceCount),
+            Assert.That(armor.ControllablePieceCount, Is.EqualTo(EarthArmorProfile.DefaultPieceCount),
                 "Wheel-down should recall the surviving physical plate into its persistent slot.");
             for (int tick = 0; tick < 12; tick++) yield return new WaitForFixedUpdate();
 
-            var pieces = new EarthArmorPiece[EarthArmorProfile.MaximumPieceCount];
+            var pieces = new EarthArmorPiece[EarthArmorProfile.DefaultPieceCount];
             int count = armor.CopyActivePiecesNonAlloc(pieces);
             int released = 0;
             for (int index = 0; index < count; index++)

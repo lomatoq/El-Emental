@@ -111,6 +111,9 @@ namespace Elemental.Simulation.Characters
         public float3 FilteredTargetLocal;
         public float3 FilterVelocityLocal;
         public float3 FilteredNormalLocal;
+        public float3 FilterReferenceLocal;
+        public bool FilterWasLocked;
+        public bool FilterWasContactFollowing;
     }
 
     public readonly struct EarthFootContactDecision
@@ -169,9 +172,19 @@ namespace Elemental.Simulation.Characters
     public static class EarthFootContactSolver
     {
         public const float ReleaseHysteresisSeconds = 0.12f;
-        private const float MinimumCaptureClearance = -0.045f;
+        // A fresh pose transition can place the rendered sole slightly inside
+        // the resolved support before IK gets ownership. Accept a shallow
+        // penetration so the solver can lift the foot back onto the surface;
+        // deeper intersections still stay authored instead of snapping.
+        private const float MinimumCaptureClearance = -0.065f;
         private const float MaximumCaptureClearance = 0.055f;
         private const float ReleaseClearance = 0.135f;
+        // A stopped Humanoid can still present one foot above the support while
+        // its locomotion pose yields to idle. The contact controller can safely
+        // recover 0.22 m through its bounded pelvis drop and roughly another
+        // 0.10 m through the leg chain. Beyond this combined reach, keep the
+        // authored swing pose so a high foot cannot straighten the other knee.
+        public const float MaximumStationaryCaptureClearance = 0.32f;
         private const float RearmClearance = 0.11f;
         private const float DescendingTolerance = 0.002f;
         private const float MaximumLockReach = 0.24f;
@@ -285,10 +298,28 @@ namespace Elemental.Simulation.Characters
                 prepared.State.Locked = false;
                 prepared.State.PlantState = EarthFootPlantState.Free;
                 prepared.State.PoseOwned = false;
-                prepared.State.Armed = true;
                 prepared.State.HasPreviousClearance = true;
                 prepared.State.PreviousClearance = input.SoleClearance;
-                prepared.TargetWeight = 0f;
+                bool withinStationaryReach =
+                    input.SoleClearance >= MinimumCaptureClearance &&
+                    input.SoleClearance <= MaximumStationaryCaptureClearance;
+                prepared.State.Armed = withinStationaryReach;
+                if (!withinStationaryReach)
+                {
+                    // A walk -> idle query may still be presenting a raised
+                    // authored swing foot. Do not turn a ray hit far below that
+                    // pose into immediate full-body IK: wait until the coherent
+                    // idle leg chain brings the sole inside reachable capture.
+                    prepared.TargetWeight = 0f;
+                    prepared.Reason = EarthFootContactReason.Swing;
+                    return prepared;
+                }
+                // Stationary feet still need to follow the resolved support.
+                // Leaving both IK weights at zero exposed the imported clip's
+                // floor offset and made the whole character appear to hover.
+                // This is contact following, not a world-space lock, so both
+                // feet may settle without violating locomotion arbitration.
+                prepared.TargetWeight = 1f;
                 prepared.Reason = EarthFootContactReason.Stance;
                 return prepared;
             }
@@ -422,8 +453,11 @@ namespace Elemental.Simulation.Characters
                 ref state,
                 prepared.RawTargetLocal,
                 prepared.RawNormalLocal,
+                input.FallbackTargetLocal,
+                prepared.Valid,
                 input.SupportId,
                 input.SupportGeneration,
+                prepared.WantsLock || (!input.Locomoting && prepared.Valid),
                 input.DeltaTime);
             return new EarthFootContactDecision(
                 in state,
@@ -513,13 +547,34 @@ namespace Elemental.Simulation.Characters
             ref EarthFootContactState state,
             float3 rawTargetLocal,
             float3 rawNormalLocal,
+            float3 animatedReferenceLocal,
+            bool validContact,
             uint supportId,
             uint supportGeneration,
+            bool contactFollowing,
             float deltaTime)
         {
             bool sameFilterSupport = state.HasFilteredTarget &&
                                      state.FilterSupportId == supportId &&
-                                     state.FilterSupportGeneration == supportGeneration;
+                                     state.FilterSupportGeneration == supportGeneration &&
+                                     state.FilterWasLocked == state.Locked &&
+                                     state.FilterWasContactFollowing == contactFollowing &&
+                                     validContact;
+            if (sameFilterSupport && !state.Locked && !contactFollowing)
+            {
+                // A free foot follows authored/root motion without a speed cap.
+                // Filter only the surface correction relative to that motion.
+                // Filtering the absolute support-local position at 1.5 m/s built
+                // a multi-metre backlog during a 6 m/s run; idle then applied it
+                // at full IK weight and stretched both legs toward the old target.
+                // Stationary contact following is procedural ownership, not a
+                // free foot. Feeding its already-solved motion back here makes
+                // the target chase the IK result away from the current surface.
+                state.FilteredTargetLocal += animatedReferenceLocal - state.FilterReferenceLocal;
+            }
+            state.FilterReferenceLocal = animatedReferenceLocal;
+            state.FilterWasLocked = state.Locked;
+            state.FilterWasContactFollowing = contactFollowing;
             if (!sameFilterSupport)
             {
                 state.HasFilteredTarget = true;
@@ -533,20 +588,36 @@ namespace Elemental.Simulation.Characters
                 return;
             }
 
-            float3 previous = state.FilteredTargetLocal;
-            float3 filtered = SmoothDamp(
-                previous,
-                rawTargetLocal,
-                ref state.FilterVelocityLocal,
-                TargetResponseSeconds,
-                deltaTime);
-            float maximumStep = MaximumTargetStepAt60Hz * deltaTime * 60f;
-            float3 delta = filtered - previous;
-            float distance = math.length(delta);
-            if (distance > maximumStep && distance > 0.000001f)
+            float3 filtered;
+            if (contactFollowing && !state.Locked)
             {
-                filtered = previous + delta * (maximumStep / distance);
-                state.FilterVelocityLocal = (filtered - previous) / math.max(0.0001f, deltaTime);
+                // This is a resolved surface follower, not an anchored foot.
+                // Smoothing xyz as one vector is geometrically invalid on a
+                // curved support: an old tangent coordinate paired with the new
+                // sampled height can put the goal above or below the surface.
+                // Keep position on the current ray target; ankle/normal rotation
+                // remains inertialized independently below and in ApplyFoot.
+                filtered = rawTargetLocal;
+                state.FilterVelocityLocal = float3.zero;
+            }
+            else
+            {
+                float3 previous = state.FilteredTargetLocal;
+                filtered = SmoothDamp(
+                    previous,
+                    rawTargetLocal,
+                    ref state.FilterVelocityLocal,
+                    TargetResponseSeconds,
+                    deltaTime);
+                float maximumStep = MaximumTargetStepAt60Hz * deltaTime * 60f;
+                float3 delta = filtered - previous;
+                float distance = math.length(delta);
+                if (distance > maximumStep && distance > 0.000001f)
+                {
+                    filtered = previous + delta * (maximumStep / distance);
+                    state.FilterVelocityLocal = (filtered - previous) /
+                                                math.max(0.0001f, deltaTime);
+                }
             }
             state.FilteredTargetLocal = filtered;
 

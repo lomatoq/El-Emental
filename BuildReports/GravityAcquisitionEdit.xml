@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="9" result="Passed" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-04 14:08:22Z" end-time="2026-09-04 14:08:23Z" duration="0.353862">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="740" result="Passed" start-time="2026-09-04 14:08:22Z" end-time="2026-09-04 14:08:23Z" duration="0.353862" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1909" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="740" result="Passed" start-time="2026-09-04 14:08:23Z" end-time="2026-09-04 14:08:23Z" duration="0.166601" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13600" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1910" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="740" result="Passed" start-time="2026-09-04 14:08:23Z" end-time="2026-09-04 14:08:23Z" duration="0.166026" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1911" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="740" result="Passed" start-time="2026-09-04 14:08:23Z" end-time="2026-09-04 14:08:23Z" duration="0.165885" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1912" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="740" result="Passed" start-time="2026-09-04 14:08:23Z" end-time="2026-09-04 14:08:23Z" duration="0.165698" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1388" name="EarthGravityAcquisitionTests" fullname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests" classname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-09-04 14:08:23Z" end-time="2026-09-04 14:08:23Z" duration="0.164553" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1393" name="AreaCapturePrefersNearestThenStableIdentity" fullname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests.AreaCapturePrefersNearestThenStableIdentity" classname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-04 14:08:23Z" end-time="2026-09-04 14:08:23Z" duration="0.147836" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1389" name="AreaCapturePrefersNearestThenStableIdentity(1.0f,9,4.0f,1,True)" fullname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests.AreaCapturePrefersNearestThenStableIdentity(1.0f,9,4.0f,1,True)" methodname="AreaCapturePrefersNearestThenStableIdentity" classname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests" runstate="Runnable" seed="485288051" result="Passed" start-time="2026-09-04 14:08:23Z" end-time="2026-09-04 14:08:23Z" duration="0.136086" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1390" name="AreaCapturePrefersNearestThenStableIdentity(4.0f,1,1.0f,9,False)" fullname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests.AreaCapturePrefersNearestThenStableIdentity(4.0f,1,1.0f,9,False)" methodname="AreaCapturePrefersNearestThenStableIdentity" classname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests" runstate="Runnable" seed="1735266008" result="Passed" start-time="2026-09-04 14:08:23Z" end-time="2026-09-04 14:08:23Z" duration="0.000347" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1391" name="AreaCapturePrefersNearestThenStableIdentity(1.0f,2,1.0f,3,True)" fullname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests.AreaCapturePrefersNearestThenStableIdentity(1.0f,2,1.0f,3,True)" methodname="AreaCapturePrefersNearestThenStableIdentity" classname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests" runstate="Runnable" seed="674784118" result="Passed" start-time="2026-09-04 14:08:23Z" end-time="2026-09-04 14:08:23Z" duration="0.000295" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1392" name="AreaCapturePrefersNearestThenStableIdentity(1.0f,3,1.0f,2,False)" fullname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests.AreaCapturePrefersNearestThenStableIdentity(1.0f,3,1.0f,2,False)" methodname="AreaCapturePrefersNearestThenStableIdentity" classname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests" runstate="Runnable" seed="2076844139" result="Passed" start-time="2026-09-04 14:08:23Z" end-time="2026-09-04 14:08:23Z" duration="0.000190" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1394" name="ArmorReleaseLeavesNextPlainMiddlePressOwnedByGravity" fullname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests.ArmorReleaseLeavesNextPlainMiddlePressOwnedByGravity" methodname="ArmorReleaseLeavesNextPlainMiddlePressOwnedByGravity" classname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests" runstate="Runnable" seed="834959541" result="Passed" start-time="2026-09-04 14:08:23Z" end-time="2026-09-04 14:08:23Z" duration="0.003153" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1399" name="GripRequiresCapturedMatterOrAControllableStructure" fullname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests.GripRequiresCapturedMatterOrAControllableStructure" classname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-04 14:08:23Z" end-time="2026-09-04 14:08:23Z" duration="0.001296" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1395" name="GripRequiresCapturedMatterOrAControllableStructure(0,False,False)" fullname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests.GripRequiresCapturedMatterOrAControllableStructure(0,False,False)" methodname="GripRequiresCapturedMatterOrAControllableStructure" classname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests" runstate="Runnable" seed="1607286931" result="Passed" start-time="2026-09-04 14:08:23Z" end-time="2026-09-04 14:08:23Z" duration="0.000304" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1396" name="GripRequiresCapturedMatterOrAControllableStructure(0,True,True)" fullname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests.GripRequiresCapturedMatterOrAControllableStructure(0,True,True)" methodname="GripRequiresCapturedMatterOrAControllableStructure" classname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests" runstate="Runnable" seed="843868836" result="Passed" start-time="2026-09-04 14:08:23Z" end-time="2026-09-04 14:08:23Z" duration="0.000055" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1397" name="GripRequiresCapturedMatterOrAControllableStructure(1,False,True)" fullname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests.GripRequiresCapturedMatterOrAControllableStructure(1,False,True)" methodname="GripRequiresCapturedMatterOrAControllableStructure" classname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests" runstate="Runnable" seed="133910745" result="Passed" start-time="2026-09-04 14:08:23Z" end-time="2026-09-04 14:08:23Z" duration="0.000040" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1398" name="GripRequiresCapturedMatterOrAControllableStructure(1,True,True)" fullname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests.GripRequiresCapturedMatterOrAControllableStructure(1,True,True)" methodname="GripRequiresCapturedMatterOrAControllableStructure" classname="Elemental.Tests.EditMode.EarthGravityAcquisitionTests" runstate="Runnable" seed="1979258387" result="Passed" start-time="2026-09-04 14:08:23Z" end-time="2026-09-04 14:08:23Z" duration="0.000035" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\GravityAcquisitionEdit.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

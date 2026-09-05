@@ -1,5 +1,6 @@
 using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
+using Elemental.Presentation.MotionMatching;
 using Elemental.Simulation.Characters;
 using Unity.Mathematics;
 using Unity.Profiling;
@@ -35,6 +36,12 @@ namespace Elemental.Presentation.Animation
         [SerializeField, Min(0f)] private float soleOffset = 0.035f;
         [SerializeField, Min(0f)] private float maximumPelvisDrop = 0.22f;
         [SerializeField, Range(0f, 0.08f)] private float supportSwapHysteresis = 0.035f;
+        [SerializeField, Range(0.02f, 0.4f)] private float contactCaptureSeconds = 0.10f;
+        private EarthAnimationDriver _animationDriver;
+        private EAMMBasePoseBridge _basePoseBridge;
+        private int _lastContactFrame = -1;
+        private Vector3 _leftHintWorld, _rightHintWorld;
+        public int LastContactEvaluationFrame => _lastContactFrame;
 
         private readonly RaycastHit[] _leftHits = new RaycastHit[FootHitCapacity];
         private readonly RaycastHit[] _rightHits = new RaycastHit[FootHitCapacity];
@@ -58,6 +65,8 @@ namespace Elemental.Presentation.Animation
         private float3 _rightKneeDirection;
         private float _pelvisOffset;
         private float _pelvisVelocity;
+        private Vector3 _previousPelvisBaseWorld;
+        private bool _hasPreviousPelvisBaseWorld;
         private float _pelvisResponseSeconds = 0.085f;
         private float _pelvisMaximumSpeed = 0.8f;
         private Vector3 _previousLeftAnimated;
@@ -76,12 +85,6 @@ namespace Elemental.Presentation.Animation
         private bool _poseLocked;
         private EarthAuthoredFootPolicy _authoredFootPolicy;
         private float _turnIntent;
-        private Quaternion _previousLeftAnkleRelative;
-        private Quaternion _previousRightAnkleRelative;
-        private bool _hasPreviousAnklePose;
-        private Vector3 _previousLeftFinalLocal;
-        private Vector3 _previousRightFinalLocal;
-        private bool _hasPreviousFinalLocalPose;
         private Transform _leftLowerLeg;
         private Transform _rightLowerLeg;
         private Vector3 _leftRawContactWorld;
@@ -98,6 +101,11 @@ namespace Elemental.Presentation.Animation
         private float _leftGaitPhase;
         private float _rightGaitPhase = 0.5f;
         private bool _hasClipContactMetadata;
+        private bool _hasBasePoseContactMetadata;
+        private float _basePoseLeftPhase;
+        private float _basePoseRightPhase = 0.5f;
+        private float _basePoseLeftContact;
+        private float _basePoseRightContact;
         private bool _locomoting;
         private bool _pivotingInPlace;
         private bool _surfing;
@@ -152,6 +160,10 @@ namespace Elemental.Presentation.Animation
         public Quaternion RightActualFootRotation => _rightActualRotation;
         public bool LeftHasContact => _leftSupportCollider != null;
         public bool RightHasContact => _rightSupportCollider != null;
+        public float PelvisOffsetMeters => _pelvisOffset;
+        public float LeftPelvisRequestMeters { get; private set; }
+        public float RightPelvisRequestMeters { get; private set; }
+        public float PelvisTargetMeters { get; private set; }
         public bool IsLocomoting => _locomoting;
         public bool IsPivotingInPlace => _pivotingInPlace;
         public bool IsSurfing => _surfing;
@@ -199,10 +211,50 @@ namespace Elemental.Presentation.Animation
         public void SetTurnIntent(float turn) =>
             _turnIntent = Mathf.Clamp(turn, -1f, 1f);
 
+        public void SetBasePoseContactMetadata(
+            float leftPhase,
+            float rightPhase,
+            bool leftContact,
+            bool rightContact)
+        {
+            _hasBasePoseContactMetadata = true;
+            _basePoseLeftPhase = Mathf.Repeat(leftPhase, 1f);
+            _basePoseRightPhase = Mathf.Repeat(rightPhase, 1f);
+            _basePoseLeftContact = leftContact ? 1f : 0f;
+            _basePoseRightContact = rightContact ? 1f : 0f;
+        }
+
+        public void ClearBasePoseContactMetadata() =>
+            _hasBasePoseContactMetadata = false;
+
         public void ConfigureAnimationRescue(float pelvisResponseSeconds, float pelvisMaximumSpeed)
         {
             _pelvisResponseSeconds = Mathf.Clamp(pelvisResponseSeconds, 0.02f, 0.25f);
             _pelvisMaximumSpeed = Mathf.Clamp(pelvisMaximumSpeed, 0.2f, 1.5f);
+        }
+
+        public void InvalidateBasePose()
+        {
+            _lastContactFrame = -1;
+            _hasBasePoseContactMetadata = false;
+            _leftState = default;
+            _rightState = default;
+            _leftDecision = default;
+            _rightDecision = default;
+            _leftAppliedWeight = 0f;
+            _rightAppliedWeight = 0f;
+            _pelvisOffset = 0f;
+            _pelvisVelocity = 0f;
+            _hasPreviousPelvisBaseWorld = false;
+            LeftPelvisRequestMeters = 0f;
+            RightPelvisRequestMeters = 0f;
+            PelvisTargetMeters = 0f;
+            _poseLocked = false;
+            _hasPreviousAnimatedFeet = false;
+            _leftSupportCollider = null;
+            _rightSupportCollider = null;
+            _leftSupportSelection = CharacterSupportSelection.None;
+            _rightSupportSelection = CharacterSupportSelection.None;
         }
 
         private void Awake()
@@ -217,6 +269,8 @@ namespace Elemental.Presentation.Animation
 
         private void OnDisable()
         {
+            _lastContactFrame = -1;
+            _hasBasePoseContactMetadata = false;
             _leftState = default;
             _rightState = default;
             _leftDecision = default;
@@ -225,6 +279,7 @@ namespace Elemental.Presentation.Animation
             _rightAppliedWeight = 0f;
             _pelvisOffset = 0f;
             _pelvisVelocity = 0f;
+            _hasPreviousPelvisBaseWorld = false;
             _hasPreviousAnimatedFeet = false;
             _leftSupportCollider = null;
             _rightSupportCollider = null;
@@ -232,8 +287,6 @@ namespace Elemental.Presentation.Animation
             _rightSupportSelection = CharacterSupportSelection.None;
             _authoredFootPolicy = EarthAuthoredFootPolicy.DefaultContact;
             _turnIntent = 0f;
-            _hasPreviousAnklePose = false;
-            _hasPreviousFinalLocalPose = false;
             _gaitPhase = 0f;
             _leftGaitPhase = 0f;
             _rightGaitPhase = 0.5f;
@@ -247,50 +300,21 @@ namespace Elemental.Presentation.Animation
             if (animator == null || !animator.enabled || !animator.isHuman ||
                 _leftFoot == null || _rightFoot == null)
             {
-                _hasPreviousAnklePose = false;
                 return;
             }
-
-            Quaternion rootRotation = animator.transform.rotation;
-            Quaternion inverseRoot = Quaternion.Inverse(rootRotation);
-            Quaternion leftRelative = inverseRoot * _leftFoot.rotation;
-            Quaternion rightRelative = inverseRoot * _rightFoot.rotation;
-            if (_hasPreviousAnklePose)
-            {
-                // Animator foot IK can unload a deeply planted pivot in a single
-                // jump/contact-window frame. The solver metrics were clean while
-                // the visible ankle rotated 110 degrees. Bound the final visible
-                // Humanoid foot pose here, inside the same one-writer component,
-                // so authored clips and IK transition coherently at every FPS.
-                leftRelative = ToQuaternion(EarthAnkleRotationInertializer.Step(
-                    ToQuaternion(_previousLeftAnkleRelative),
-                    ToQuaternion(leftRelative),
-                    Time.deltaTime));
-                rightRelative = ToQuaternion(EarthAnkleRotationInertializer.Step(
-                    ToQuaternion(_previousRightAnkleRelative),
-                    ToQuaternion(rightRelative),
-                    Time.deltaTime));
-                _leftFoot.rotation = rootRotation * leftRelative;
-                _rightFoot.rotation = rootRotation * rightRelative;
-            }
-            _previousLeftAnkleRelative = leftRelative;
-            _previousRightAnkleRelative = rightRelative;
-            _hasPreviousAnklePose = true;
-            ApplyFinalPlantedTranslation(
-                _leftFoot,
-                _leftTargetWorld,
-                _leftAppliedWeight,
-                _leftDecision.Locked);
-            ApplyFinalPlantedTranslation(
-                _rightFoot,
-                _rightTargetWorld,
-                _rightAppliedWeight,
-                _rightDecision.Locked);
-            ApplyFinalFootTranslationInertialization();
+            // Observation only. Moving or rotating an ankle after Humanoid IK
+            // disconnects it from the already-solved knee and stretches the shin.
+            // Smooth contact targets/weights before IK, never the resulting bones.
             _leftActualWorld = _leftFoot.position;
             _rightActualWorld = _rightFoot.position;
             _leftActualRotation = _leftFoot.rotation;
             _rightActualRotation = _rightFoot.rotation;
+            // These metrics describe the final rendered chain, after the graph
+            // and final OnAnimatorIK contact pass, rather than the pre-IK pose.
+            LeftAnchorErrorMeters = _leftDecision.Locked
+                ? Vector3.Distance(_leftTargetWorld, _leftActualWorld) : 0f;
+            RightAnchorErrorMeters = _rightDecision.Locked
+                ? Vector3.Distance(_rightTargetWorld, _rightActualWorld) : 0f;
             _leftActualSupportLocal = ToVector3(EarthSupportFootLockSolver.CaptureLocal(
                 ToFloat3(_leftActualWorld),
                 in _leftContactSupport));
@@ -299,64 +323,27 @@ namespace Elemental.Presentation.Animation
                 in _rightContactSupport));
         }
 
-        private static quaternion ToQuaternion(Quaternion value) =>
-            new quaternion(value.x, value.y, value.z, value.w);
-
-        private static Quaternion ToQuaternion(quaternion value) =>
-            new Quaternion(value.value.x, value.value.y, value.value.z, value.value.w);
-
-        private static void ApplyFinalPlantedTranslation(
-            Transform foot,
-            Vector3 target,
-            float weight,
-            bool locked)
-        {
-            if (foot == null || !locked || weight < 0.90f) return;
-            Vector3 error = target - foot.position;
-            float distance = error.magnitude;
-            // A larger mismatch is a broken/stale support and must be released by
-            // the solver, not hidden by a bone teleport. Once the capture ramp is
-            // fully planted, however, leaving a bounded residual still lets a
-            // pivot skate by that residual every rendered frame. The support-local
-            // target is already validated and owned by this controller, so close
-            // the reachable residual exactly.
-            if (!float.IsFinite(distance) || distance > 0.08f) return;
-            foot.position = target;
-        }
-
-        private void ApplyFinalFootTranslationInertialization()
-        {
-            Vector3 leftLocal = animator.transform.InverseTransformPoint(_leftFoot.position);
-            Vector3 rightLocal = animator.transform.InverseTransformPoint(_rightFoot.position);
-            bool authoredFlight = _authoredFootPolicy == EarthAuthoredFootPolicy.FlightIkOff;
-            if (_hasPreviousFinalLocalPose && !authoredFlight)
-            {
-                // A fading lock must rejoin the authored swing pose over several
-                // frames. Without this final local-space bound Unity Humanoid can
-                // snap the released foot 10-30 cm in one rendered frame even
-                // though the solver weight and target are continuous.
-                float maximumStep = 0.075f * Mathf.Max(0.0001f, Time.deltaTime) * 60f;
-                leftLocal = Vector3.MoveTowards(
-                    _previousLeftFinalLocal,
-                    leftLocal,
-                    maximumStep);
-                rightLocal = Vector3.MoveTowards(
-                    _previousRightFinalLocal,
-                    rightLocal,
-                    maximumStep);
-                _leftFoot.position = animator.transform.TransformPoint(leftLocal);
-                _rightFoot.position = animator.transform.TransformPoint(rightLocal);
-            }
-            _previousLeftFinalLocal = leftLocal;
-            _previousRightFinalLocal = rightLocal;
-            _hasPreviousFinalLocalPose = !authoredFlight;
-        }
-
         private void OnAnimatorIK(int layerIndex)
         {
             if (layerIndex != 0 || animator == null || motor == null ||
                 _leftFoot == null || _rightFoot == null) return;
+            if (_animationDriver == null) _animationDriver = GetComponent<EarthAnimationDriver>();
+            if (_basePoseBridge == null) _basePoseBridge = GetComponent<EAMMBasePoseBridge>();
+            // The landing mixer has two controller inputs. A second IK callback
+            // must not advance contact ramps and anchor history twice this frame.
+            if (_lastContactFrame == Time.frameCount)
+            {
+                ApplyFoot(AvatarIKGoal.LeftFoot, _leftTargetWorld, _leftNormalWorld, _leftAppliedWeight);
+                ApplyFoot(AvatarIKGoal.RightFoot, _rightTargetWorld, _rightNormalWorld, _rightAppliedWeight);
+                // Reuse the computed hints. A second mixer input must not step
+                // the knee filter, pelvis spring or contact state a second time.
+                ApplyCachedKneeHints();
+                return;
+            }
+            _lastContactFrame = Time.frameCount;
             using (ContactMarker.Auto()) EvaluateFootContacts();
+            if (Mathf.Max(_leftAppliedWeight, _rightAppliedWeight) > .001f)
+                _animationDriver?.RecordFinalContactPass();
         }
 
         private void EvaluateFootContacts()
@@ -371,8 +358,10 @@ namespace Elemental.Presentation.Animation
             bool authoredContact = _authoredFootPolicy == EarthAuthoredFootPolicy.AuthoredContact;
             bool authoredBrace = _authoredFootPolicy == EarthAuthoredFootPolicy.BraceBoth;
             bool contactSupported = supported && !authoredFlight && !authoredContact;
+            float3 supportVelocity = motor.CurrentSupportFrame.IsValid
+                ? motor.CurrentSupportFrame.ContactPointVelocity : float3.zero;
             float tangentSpeed = rootBody != null
-                ? Vector3.ProjectOnPlane(rootBody.linearVelocity, up).magnitude
+                ? Vector3.ProjectOnPlane(rootBody.linearVelocity - ToVector3(supportVelocity), up).magnitude
                 : 0f;
             float2 moveInput = motor.LastCommand.Move;
             bool pivotingInPlace = supported && !surfLock &&
@@ -509,24 +498,34 @@ namespace Elemental.Presentation.Animation
                 up,
                 out _rightTargetWorld,
                 out _rightNormalWorld);
-            // Contact ownership changes immediately, but the visible Humanoid
-            // chain needs a longer capture ramp. A 300 ms ramp still produced an
-            // 8.7-degree bot knee kick as a stance anchor entered at speed.
-            float responseSeconds = 0.40f;
+            // Final IK follows the selected base pose. A regular stance capture
+            // takes four percent per 60 Hz frame and cannot consume more than
+            // twelve percent in a hitch frame; otherwise the last 0.84 -> 1.0
+            // step can visibly straighten a Humanoid knee. Pivot capture stays
+            // quicker, while swing release remains immediate.
+            float responseSeconds = contactCaptureSeconds;
             _leftAppliedWeight = EarthFootIkWeightBlend.StepContact(
                 _leftAppliedWeight,
                 _leftDecision.TargetWeight,
                 deltaTime,
-                pivotingInPlace ? 0.06f : responseSeconds,
+                pivotingInPlace
+                    ? 0.06f
+                    : Mathf.Max(responseSeconds, EarthFootIkWeightBlend.StanceCaptureResponseSeconds),
                 0.02f,
-                pivotingInPlace ? 0.34f : 0.28f);
+                pivotingInPlace
+                    ? EarthFootIkWeightBlend.MaximumPivotCaptureFrameStep
+                    : EarthFootIkWeightBlend.MaximumStanceCaptureFrameStep);
             _rightAppliedWeight = EarthFootIkWeightBlend.StepContact(
                 _rightAppliedWeight,
                 _rightDecision.TargetWeight,
                 deltaTime,
-                pivotingInPlace ? 0.06f : responseSeconds,
+                pivotingInPlace
+                    ? 0.06f
+                    : Mathf.Max(responseSeconds, EarthFootIkWeightBlend.StanceCaptureResponseSeconds),
                 0.02f,
-                pivotingInPlace ? 0.34f : 0.28f);
+                pivotingInPlace
+                    ? EarthFootIkWeightBlend.MaximumPivotCaptureFrameStep
+                    : EarthFootIkWeightBlend.MaximumStanceCaptureFrameStep);
             _leftAppliedWeight = EarthFootIkWeightBlend.EnforceSwingMaximum(
                 _leftAppliedWeight,
                 _leftDecision.Locked,
@@ -536,20 +535,19 @@ namespace Elemental.Presentation.Animation
                 _rightDecision.Locked,
                 _rightDecision.Reason);
 
+            // Establish final body reach before setting goals and hints.
+            ApplyPelvis(up, in poseIntent, requestLock, deltaTime);
             ApplyFoot(
                 AvatarIKGoal.LeftFoot,
-                _leftFoot,
                 _leftTargetWorld,
                 _leftNormalWorld,
                 _leftAppliedWeight);
             ApplyFoot(
                 AvatarIKGoal.RightFoot,
-                _rightFoot,
                 _rightTargetWorld,
                 _rightNormalWorld,
                 _rightAppliedWeight);
             ApplyKneeHints(up, _leftAppliedWeight, _rightAppliedWeight);
-            ApplyPelvis(up, in poseIntent, requestLock, deltaTime);
         }
 
         private EarthFootContactInput BuildInput(
@@ -617,7 +615,22 @@ namespace Elemental.Presentation.Animation
             in SupportFrameSnapshot previousSupportFrame,
             in CharacterSupportSelection previousSupport)
         {
-            Vector3 animated = foot.position;
+            // Transform positions can still contain last frame's solved stance.
+            // Probe the current controller goal, or the already-validated EAMM
+            // candidate, rather than feeding last frame's IK back into itself.
+            bool left = side < 0f;
+            // Animator IK goals retain their last submitted world position while
+            // an authored flight/mantle lane keeps their weight at zero. After an
+            // explicit invalidation, seed from the freshly evaluated bone once;
+            // otherwise a stale high mantle goal can make grounded idle look
+            // 0.9 m out of reach forever.
+            float previousWeight = left ? _leftAppliedWeight : _rightAppliedWeight;
+            bool needsFreshIdlePose = !_locomoting && previousWeight <= 0.001f;
+            Vector3 animated = !_hasPreviousAnimatedFeet || needsFreshIdlePose
+                ? foot.position
+                : animator.GetIKPosition(left ? AvatarIKGoal.LeftFoot : AvatarIKGoal.RightFoot);
+            if (_basePoseBridge != null && _basePoseBridge.TryGetBaseFootPosition(left, out Vector3 baseFoot))
+                animated = Vector3.Lerp(animated, baseFoot, _basePoseBridge.AppliedEammMasterWeight);
             EarthPoseIntent poseIntent = poseIntentSource != null
                 ? poseIntentSource.CurrentIntent
                 : default;
@@ -705,12 +718,18 @@ namespace Elemental.Presentation.Animation
 
         private void ApplyFoot(
             AvatarIKGoal goal,
-            Transform animatedFoot,
             Vector3 target,
             Vector3 normal,
             float weight)
         {
-            float applied = Mathf.Clamp01(weight);
+            // This callback runs after graph evaluation; it is the supported final
+            // Humanoid goal owner for both authored and EAMM-composed base poses.
+            // Humanoid IK goals and skeleton bones have different orientation
+            // bases. Capture the authored goal before writing IK: feeding the
+            // bone rotation back as a goal tipped Linebreaker toes ~90 degrees
+            // upwards as idle contact weight approached one.
+            Quaternion authoredGoalRotation = animator.GetIKRotation(goal);
+            float applied = EarthFootIkWeightBlend.ResolveSubmittedGoalWeight(weight);
             animator.SetIKPositionWeight(goal, applied);
             animator.SetIKRotationWeight(goal, applied);
             if (applied <= 0.001f) return;
@@ -727,7 +746,7 @@ namespace Elemental.Presentation.Animation
             // captured (70.9 degrees in the live audit). Surface adaptation is
             // only the bounded slope delta from character-up to contact normal.
             Quaternion slopeAlignment = Quaternion.FromToRotation(characterUp, normal);
-            animator.SetIKRotation(goal, slopeAlignment * animatedFoot.rotation);
+            animator.SetIKRotation(goal, slopeAlignment * authoredGoalRotation);
         }
 
         private void ApplyKneeHints(Vector3 up, float leftWeight, float rightWeight)
@@ -778,12 +797,17 @@ namespace Elemental.Presentation.Animation
                 rightDesired,
                 response,
                 deltaTime);
-            animator.SetIKHintPosition(
-                AvatarIKHint.LeftKnee,
-                _leftUpperLeg.position + ToVector3(_leftKneeDirection) * 0.60f);
-            animator.SetIKHintPosition(
-                AvatarIKHint.RightKnee,
-                _rightUpperLeg.position + ToVector3(_rightKneeDirection) * 0.60f);
+            _leftHintWorld = _leftUpperLeg.position + ToVector3(_leftKneeDirection) * 0.60f;
+            _rightHintWorld = _rightUpperLeg.position + ToVector3(_rightKneeDirection) * 0.60f;
+            ApplyCachedKneeHints();
+        }
+
+        private void ApplyCachedKneeHints()
+        {
+            animator.SetIKHintPositionWeight(AvatarIKHint.LeftKnee, _leftAppliedWeight * 0.28f);
+            animator.SetIKHintPositionWeight(AvatarIKHint.RightKnee, _rightAppliedWeight * 0.28f);
+            animator.SetIKHintPosition(AvatarIKHint.LeftKnee, _leftHintWorld);
+            animator.SetIKHintPosition(AvatarIKHint.RightKnee, _rightHintWorld);
         }
 
         private static float3 StepKneeDirection(
@@ -819,7 +843,15 @@ namespace Elemental.Presentation.Animation
             float rightError = _rightAppliedWeight > 0.05f
                 ? Vector3.Dot(_rightTargetWorld - _rightFoot.position, up)
                 : 0f;
-            float allowedDrop = requestLock
+            bool finalContactOwned = Mathf.Max(
+                _leftAppliedWeight,
+                _rightAppliedWeight) >= 0.999f;
+            bool stanceCaptureOwned =
+                (_leftDecision.TargetWeight > 0.05f &&
+                 (_leftDecision.Reason is EarthFootContactReason.Capture or EarthFootContactReason.Stance)) ||
+                (_rightDecision.TargetWeight > 0.05f &&
+                 (_rightDecision.Reason is EarthFootContactReason.Capture or EarthFootContactReason.Stance));
+            float allowedDrop = requestLock || stanceCaptureOwned
                 ? maximumPelvisDrop
                 : Mathf.Min(0.08f, maximumPelvisDrop);
             float target = EarthPelvisCompensation.Solve(
@@ -827,13 +859,31 @@ namespace Elemental.Presentation.Animation
                 rightError,
                 requestLock ? poseIntent.PelvisCompression01 : 0f,
                 allowedDrop);
-            _pelvisOffset = Mathf.SmoothDamp(
+            LeftPelvisRequestMeters = leftError;
+            RightPelvisRequestMeters = rightError;
+            PelvisTargetMeters = target;
+            float previousOffset = _pelvisOffset;
+            Vector3 pelvisBaseWorld = animator.bodyPosition;
+            float baseRiseAlongUp = _hasPreviousPelvisBaseWorld
+                ? Vector3.Dot(pelvisBaseWorld - _previousPelvisBaseWorld, up)
+                : 0f;
+            _previousPelvisBaseWorld = pelvisBaseWorld;
+            _hasPreviousPelvisBaseWorld = true;
+            float smoothed = Mathf.SmoothDamp(
                 _pelvisOffset,
                 target,
                 ref _pelvisVelocity,
                 _pelvisResponseSeconds,
                 _pelvisMaximumSpeed,
                 deltaTime);
+            _pelvisOffset = EarthPelvisCompensation.SelectAppliedOffset(
+                previousOffset,
+                target,
+                smoothed,
+                finalContactOwned,
+                baseRiseAlongUp);
+            if (finalContactOwned && target < previousOffset)
+                _pelvisVelocity = 0f;
             animator.bodyPosition += up * _pelvisOffset;
             LeftAnchorErrorMeters = _leftDecision.Locked
                 ? Vector3.Distance(_leftTargetWorld, _leftFoot.position)
@@ -907,7 +957,9 @@ namespace Elemental.Presentation.Animation
         private float ResolveGaitPhase()
         {
             if (animator == null || !animator.enabled) return 0f;
-            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+            AnimatorStateInfo state = _animationDriver != null
+                ? _animationDriver.GetCurrentAnimatorStateInfo(0)
+                : animator.GetCurrentAnimatorStateInfo(0);
             return Mathf.Repeat(state.normalizedTime, 1f);
         }
 
@@ -917,6 +969,14 @@ namespace Elemental.Presentation.Animation
             out float leftContact,
             out float rightContact)
         {
+            if (_hasBasePoseContactMetadata)
+            {
+                leftPhase = _basePoseLeftPhase;
+                rightPhase = _basePoseRightPhase;
+                leftContact = _basePoseLeftContact;
+                rightContact = _basePoseRightContact;
+                return;
+            }
             float fallback = ResolveGaitPhase();
             if (!_hasClipContactMetadata || animator == null || !animator.enabled)
             {
@@ -926,11 +986,14 @@ namespace Elemental.Presentation.Animation
                 rightContact = float.NaN;
                 return;
             }
-            leftPhase = Mathf.Repeat(animator.GetFloat(LeftFootPhaseHash), 1f);
-            rightPhase = Mathf.Repeat(animator.GetFloat(RightFootPhaseHash), 1f);
-            leftContact = Mathf.Clamp01(animator.GetFloat(LeftFootContactHash));
-            rightContact = Mathf.Clamp01(animator.GetFloat(RightFootContactHash));
+            leftPhase = Mathf.Repeat(ReadParameter(LeftFootPhaseHash), 1f);
+            rightPhase = Mathf.Repeat(ReadParameter(RightFootPhaseHash), 1f);
+            leftContact = Mathf.Clamp01(ReadParameter(LeftFootContactHash));
+            rightContact = Mathf.Clamp01(ReadParameter(RightFootContactHash));
         }
+
+        private float ReadParameter(int hash) => _animationDriver != null
+            ? _animationDriver.GetFloat(hash) : animator.GetFloat(hash);
 
         private void ResolveMetadataAvailability()
         {

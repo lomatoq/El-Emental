@@ -1,0 +1,13 @@
+*** Begin Patch
+*** Update File: Assets/Elemental/Input/Gestures/MagicInputController.cs
+@@
+         private void Awake()
+         {
++            // selectedElement is serialized in the lab scenes, while the active
++            // ability is runtime-only. Restore a valid element-specific default
++            // before the first pointer release can build a cross-element command.
++            _selectedAbility = MagicGesturePolicy.NormalizeSelection(
++                selectedElement,
++                _selectedAbility);
+             _scrollAccumulator = new EarthScrollAccumulator(ScrollDeviceProfile);
+*** End Patch

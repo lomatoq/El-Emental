@@ -52,6 +52,29 @@ namespace Elemental.Simulation.Characters
             bool ragdoll,
             float deltaTime)
         {
+            return Step(
+                in input,
+                localAcceleration,
+                yawRateDegrees,
+                moveTurn,
+                float2.zero,
+                impactKickDegrees,
+                grounded,
+                ragdoll,
+                deltaTime);
+        }
+
+        public static EarthInertialBodySample Step(
+            in EarthInertialBodyState input,
+            float3 localAcceleration,
+            float yawRateDegrees,
+            float moveTurn,
+            float2 slopeTiltDegrees,
+            float3 impactKickDegrees,
+            bool grounded,
+            bool ragdoll,
+            float deltaTime)
+        {
             EarthInertialBodyState state = input;
             float dt = math.clamp(deltaTime, 0f, 0.05f);
             if (ragdoll)
@@ -70,6 +93,11 @@ namespace Elemental.Simulation.Characters
                 math.clamp(moveTurn * 2.6f, -3.5f, 3.5f),
                 math.clamp(-localAcceleration.x * 0.22f - yawRateDegrees * 0.018f, -8f, 8f)) *
                 groundedWeight;
+            float2 safeSlope = math.select(float2.zero, slopeTiltDegrees, math.isfinite(slopeTiltDegrees));
+            target += new float3(
+                math.clamp(safeSlope.x, -6f, 6f),
+                0f,
+                math.clamp(safeSlope.y, -6f, 6f)) * groundedWeight;
             target = math.select(float3.zero, target, math.isfinite(target));
             float3 velocity = state.AngularVelocity;
             state.AnglesDegrees = SmoothDamp(
