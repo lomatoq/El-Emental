@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Passed" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-08 21:40:07Z" end-time="2026-09-08 21:40:44Z" duration="36.1098204">
+  <test-suite type="TestSuite" id="1451" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="327" result="Passed" start-time="2026-09-08 21:40:07Z" end-time="2026-09-08 21:40:44Z" duration="36.109820" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1444" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="321" result="Passed" start-time="2026-09-08 21:40:08Z" end-time="2026-09-08 21:40:44Z" duration="35.944259" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="11736" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1445" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="321" result="Passed" start-time="2026-09-08 21:40:08Z" end-time="2026-09-08 21:40:44Z" duration="35.926262" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1446" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="321" result="Passed" start-time="2026-09-08 21:40:08Z" end-time="2026-09-08 21:40:44Z" duration="35.914499" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1447" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="321" result="Passed" start-time="2026-09-08 21:40:08Z" end-time="2026-09-08 21:40:44Z" duration="35.887654" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1284" name="EarthWallChargeFeedbackPlayTests" fullname="Elemental.Tests.PlayMode.EarthWallChargeFeedbackPlayTests" classname="Elemental.Tests.PlayMode.EarthWallChargeFeedbackPlayTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-08 21:40:08Z" end-time="2026-09-08 21:40:33Z" duration="25.778768" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1285" name="WallChargeFeedsExistingCameraEnvelopeAndClearsOnCancelAndRelease" fullname="Elemental.Tests.PlayMode.EarthWallChargeFeedbackPlayTests.WallChargeFeedsExistingCameraEnvelopeAndClearsOnCancelAndRelease" methodname="WallChargeFeedsExistingCameraEnvelopeAndClearsOnCancelAndRelease" classname="Elemental.Tests.PlayMode.EarthWallChargeFeedbackPlayTests" runstate="Runnable" seed="782319738" result="Passed" start-time="2026-09-08 21:40:08Z" end-time="2026-09-08 21:40:33Z" duration="25.690711" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 5827.48ms; ground=exact baked base, cacheLoad=12.49ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=2077.11ms, peakCookingPoll=0.36ms; sync=ArenaInitialize=399.92ms/15;ArenaBevel=379.32ms/175;ArenaMeshPicking=2.11ms/175;WallAwake=101.04ms/1;WallPieceVisuals=57.53ms/40;PlatformPoolAwake=13.39ms/1;PlatformRuntimeMeshes=1.73ms/12;PillarPoolAwake=18.35ms/1;PillarMeshLibrary=3.54ms/1;PillarColumns=14.80ms/1;DebrisPoolAwake=146.22ms/1;HeroFragmentPoolAwake=15.36ms/1.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1295" name="EarthWallPushKeyboardProductionTests" fullname="Elemental.Tests.PlayMode.EarthWallPushKeyboardProductionTests" classname="Elemental.Tests.PlayMode.EarthWallPushKeyboardProductionTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-08 21:40:33Z" end-time="2026-09-08 21:40:44Z" duration="10.102772" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1296" name="PairedControlForceTargetsGroundWallOnceAndRespectsOcclusion" fullname="Elemental.Tests.PlayMode.EarthWallPushKeyboardProductionTests.PairedControlForceTargetsGroundWallOnceAndRespectsOcclusion" methodname="PairedControlForceTargetsGroundWallOnceAndRespectsOcclusion" classname="Elemental.Tests.PlayMode.EarthWallPushKeyboardProductionTests" runstate="Runnable" seed="196396893" result="Passed" start-time="2026-09-08 21:40:33Z" end-time="2026-09-08 21:40:44Z" duration="10.084117" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 2794.74ms; ground=exact baked base, cacheLoad=6.27ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=829.65ms, peakCookingPoll=0.00ms; sync=ArenaInitialize=399.92ms/15;ArenaBevel=379.32ms/175;ArenaMeshPicking=2.11ms/175;WallAwake=101.04ms/1;WallPieceVisuals=57.53ms/40;PlatformPoolAwake=13.39ms/1;PlatformRuntimeMeshes=1.73ms/12;PillarPoolAwake=18.35ms/1;PillarMeshLibrary=3.54ms/1;PillarColumns=14.80ms/1;DebrisPoolAwake=146.22ms/1;HeroFragmentPoolAwake=15.36ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\WallContactFinalPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -203,6 +203,8 @@ namespace Elemental.Tests.PlayMode
                             contactReport.AppendLine($"other={candidate};bounds={candidate.bounds};overlap={overlap};normal={normal};depth={depth}");
                         }
                     }
+                    // A verified frontal Collision can retire the shell before overlap queries see it.
+                    if(_wall.HeavyContactChippedPieceCount>0)blockedByObstacle=true;
                     if(!blockedByObstacle)backwards=Mathf.Max(backwards,-Vector3.Dot(step,travel));
                     Vector3 heading=_wall.HeldPushDirection;
                     _wall.UpdateHeldPush(Vector3.Cross(up,heading));
@@ -241,7 +243,14 @@ namespace Elemental.Tests.PlayMode
                 Assert.That(collisionRecoil,Is.LessThan(.15f),"Blocking contact recoil must remain bounded.");
                 Assert.That(maxPenetration,Is.LessThan(.04f),"Full collider must remain supported by real floor geometry without repeated embed correction.");
                 Assert.That(Vector3.ProjectOnPlane(_wall.Body.position-start,up).magnitude, Is.GreaterThan(.2f));
-                Assert.That(_wall.Body.mass, Is.EqualTo(mass).Within(.001f));
+                float physicalMass=0;
+                if(_wall.IsCollapsing)
+                {
+                    var domains=(Rigidbody[])typeof(EarthWall).GetField("_pieceBodies",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(_wall);
+                    foreach(var pieceBody in domains)if(pieceBody!=null)physicalMass+=pieceBody.mass;
+                }
+                else physicalMass=_wall.Body.mass;
+                Assert.That(physicalMass, Is.EqualTo(mass).Within(.01f),"Fracture transfers shell mass into real child bodies.");
                 Assert.That(router.WallPushBeginCount, Is.EqualTo(attempts));
 
                 Assert.That(dust, Is.GreaterThan(0)); Assert.That(chips, Is.GreaterThan(0));

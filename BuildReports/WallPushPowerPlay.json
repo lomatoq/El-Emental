@@ -1,13 +1,16 @@
 {
     "unityVersion": "6000.5.7f1",
-    "utc": "2026-09-08T20:47:56.3630020Z",
+    "utc": "2026-09-08T21:34:57.0681309Z",
     "mode": "PlayMode",
-    "result": "Passed",
-    "total": 6,
-    "passed": 6,
-    "failed": 0,
+    "result": "Failed",
+    "total": 9,
+    "passed": 7,
+    "failed": 2,
     "skipped": 0,
     "inconclusive": 0,
-    "durationSeconds": 82.5830629,
-    "failures": []
+    "durationSeconds": 104.7118341,
+    "failures": [
+        "Elemental.Tests.PlayMode.EarthWallChargeFeedbackPlayTests.WallChargeFeedsExistingCameraEnvelopeAndClearsOnCancelAndRelease: Unhandled log message: '[Error] [MVP QA] Stop Play Mode before starting the focused test run.'. Use UnityEngine.TestTools.LogAssert.Expect",
+        "Elemental.Tests.PlayMode.EarthWallPushKeyboardProductionTests.PairedControlForceTargetsGroundWallOnceAndRespectsOcclusion:   Expected: 895.006287f +/- 0.00100000005f\r\n  But was:  9.99999997E-07f\r\n"
+    ]
 }

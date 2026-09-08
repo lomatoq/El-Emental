@@ -1,0 +1,20 @@
+# Denser wall emergence/cracks and grounded full-charge shove — September 8
+
+Baseline main46b725f5. User requested much more dust and chips on emergence and cracking, and less airborne motion on fully charged pushes.
+
+Full charge impulse multiplier is now1.8 instead of2.5 (28% reduction); ordinary click impulse is unchanged. The full-charge tangent speed cap is32.4m/s instead of45. Charged support adds bounded downward force proportional to ground gap and upward speed; rising-slope assistance has a lower vertical speed/acceleration ceiling at full charge. This damps lift while allowing the physical collider to follow shallow ramps. Translation remains PhysX-owned, with no snap to ground or collision bypass.
+
+Regression evidence includes a physical8-degree ramp into raised ground: full charge must progress onto it, remain within15cm of support for at least80% of measured steps, and never lift more than35cm. Existing repeated shoves, keyboard input, obstacle response, camera charge and feedback tests remain in the focused suite.
+Emergence now emits every0.09s (was0.14s), with3–8 stations at roughly1.3m spacing and larger per-station dust/chip requests. First reveal gets three0.085s-spaced fracture puffs across both faces and different heights; repeated RevealCracks calls do not restart them, and pooled reuse resets the sequence. Actual cohesive fracture also starts the richer sequence. Existing particle/material settings and shared frame budgets remain authoritative.
+
+Heavy frontal contacts during a shove now reveal cohesive fracture and gently displace up to three connected supported domains over 0.12 s. Displacement ranges from 1.2 cm on a tap to 2.5 cm at full charge, with smaller offsets for neighbors. Bonds and child mass remain intact; this is local deformation, not flying fragments. Floor seams and light rocks are excluded by contact height, normal, forward speed and obstacle mass.
+
+Support now samples three leading rows to anticipate a shallow rise. Final focused ramp evidence before the complete regression: travel 6.638569 m, peak separation 0.05268097 m, zero samples above 15 cm (52 samples). Emergence fixture measured 1075 dust / 235 chips; the three crack pulses measured 1449 dust / 554 chips across 4.5 m. These are accumulated budgeted events, not simultaneous particle capacity.
+
+Persistent game-feel rule: large abilities, emergence/sliding and heavy impacts/high falls use the shared bounded material microshake. See MATERIAL_MICRO_SHAKE_2026_09_08.md. Both saved production camera components explicitly reference the scene hub. User materials and camera profile values are preserved.
+
+Validation notes: Edit 136/136 passed at 2026-09-08T21:25:03Z. The 21:34:57Z broad Play run passed seven of nine cases, including emergence, grounded full charge, three-domain contact and repeated shoves. Its camera case was interrupted by a test-launcher error; its keyboard fixture incorrectly asserted mass on the retired shell. Follow-up WallContactFinalPlay covers those two cases using canonical detached domain bodies. The remote floor fixture now prioritizes its wall in the production feedback budget, like a nearby player, so unrelated arena events cannot evict all distant launch events. Counts are measured after frame budgets, which vary with concurrent effects.
+
+Measured heavy contact: three selected and displaced domains, maximum 0.02499998 m, child mass 1668.881 kg equals original, 42 bonds remain. Clear-floor tap 4.944867 m; full charge 10.24167 m; subsequent taps remain above 5.4 m. Grounded-push screenshot inspected. No fresh standalone build, online session or exhaustive visual playtest of every ability is claimed.
+
+Final WallContactFinalPlay: 2/2 passed at 2026-09-08T21:40:44Z (36.11 s). This supersedes the two broad-run failures. All nine distinct selected Play cases have passing evidence. Production marker peak 0.0882 ms; real-arena shove advances 2.605 m before heavy contact, emits225 dust/36 chips. Final source compiles without errors.

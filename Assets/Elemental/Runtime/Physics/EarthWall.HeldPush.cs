@@ -76,7 +76,7 @@ namespace Elemental.Runtime.Physics
             if(_body.isKinematic)return false;
             if(!_heldPushOwnsCollisionMode){_heldPushPreviousCollisionMode=_body.collisionDetectionMode;_heldPushOwnsCollisionMode=true;}
             _body.collisionDetectionMode=CollisionDetectionMode.ContinuousDynamic;
-            _heldPushReleasedSpeedCap=Mathf.Lerp(18f,45f,charge);
+            _heldPushReleasedSpeedCap=Mathf.Lerp(18f,32.4f,charge);
             _heldPushCoasting=true;_heldPushDustClock=0;
             _body.AddForce(_heldPushDirection*impulse,ForceMode.Impulse);
             RecordHeldPushLaunch(impulse);
@@ -233,11 +233,11 @@ namespace Elemental.Runtime.Physics
             float nearestGap=float.PositiveInfinity;
             Vector3 supportNormal=_up;
             float ahead=Mathf.Abs(_collider.size.z*scale.z)*.5f+
-                Mathf.Max(0,Vector3.Dot(tangentVelocity,_heldPushDirection))*Time.fixedDeltaTime;
-            for(int row=0;row<2;row++)
+                Mathf.Max(0,Vector3.Dot(tangentVelocity,_heldPushDirection))*Time.fixedDeltaTime*Mathf.Lerp(1,2,_heldPushReleasedCharge);
+            for(int row=0;row<3;row++)
             for(int station=-1;station<=1;station++)
             {
-                Vector3 point=foot+_tangent*(station*halfWidth)+_heldPushDirection*(row*ahead);
+                Vector3 point=foot+_tangent*(station*halfWidth)+_heldPushDirection*(row*.5f*ahead);
                 int count=UnityEngine.Physics.RaycastNonAlloc(point+_up*.35f,-_up,_heldPushSupportHits,1.4f,~0,QueryTriggerInteraction.Ignore);
                 for(int i=0;i<count;i++)
                 {
@@ -257,10 +257,11 @@ namespace Elemental.Runtime.Physics
             {
                 // Follow a rising support plane before the leading bottom edge hits it.
                 // This supplies vertical velocity through force, without moving the body pose.
-                float climbSpeed=Mathf.Max(0,-Vector3.Dot(tangentVelocity,supportNormal)/Mathf.Max(.7f,Vector3.Dot(_up,supportNormal)));
+                float climbSpeed=Mathf.Min(Mathf.Lerp(10f,4.5f,_heldPushReleasedCharge),Mathf.Max(0,-Vector3.Dot(tangentVelocity,supportNormal)/Mathf.Max(.7f,Vector3.Dot(_up,supportNormal))));
                 if(climbSpeed>.05f)
-                    supportAcceleration=Mathf.Max(supportAcceleration,Mathf.Clamp((climbSpeed-Vector3.Dot(velocity,_up))/Time.fixedDeltaTime,0,250));
+                    supportAcceleration=Mathf.Max(supportAcceleration,Mathf.Clamp((climbSpeed-Vector3.Dot(velocity,_up))/Time.fixedDeltaTime,0,Mathf.Lerp(250,140,_heldPushReleasedCharge)));
             }
+            supportAcceleration+=EarthWallPushMotion.GroundHoldAcceleration(_heldPushReleasedCharge,nearestGap,Vector3.Dot(velocity,_up));
             _body.AddForce(_up*supportAcceleration,ForceMode.Acceleration);
         }
     }

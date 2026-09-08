@@ -21,8 +21,14 @@ namespace Elemental.Simulation.Bending
         public float Release()
         {
             if(!Active)return 0;
-            float impulse=Math.Min(24000,_mass*18)*(1+1.5f*Charge01);
+            float impulse=Math.Min(24000,_mass*18)*(1+.8f*Charge01);
             Cancel();return impulse;
+        }
+        public static float GroundHoldAcceleration(float charge,float gap,float upwardSpeed)
+        {
+            float q=float.IsFinite(charge)?Math.Clamp(charge,0,1):0;
+            if(!float.IsFinite(gap))return -8*q;
+            return -q*Math.Min(40,4+Math.Max(0,gap)*60+Math.Max(0,upwardSpeed)*18);
         }
         public static int DustCount(float charge,bool launch)=>
             (launch?32:18)+(int)Math.Round(Math.Clamp(charge,0,1)*(launch?48:24));

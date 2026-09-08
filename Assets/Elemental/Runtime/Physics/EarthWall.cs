@@ -914,6 +914,7 @@ namespace Elemental.Runtime.Physics
 
         private void Update()
         {
+            TickCrackFeedback();
             if (_restoreCasterCollisionsAt >= 0f && Time.time >= _restoreCasterCollisionsAt)
                 SetMagicCasterCollisionIgnored(false);
             if (_fractured)
@@ -1119,9 +1120,9 @@ namespace Elemental.Runtime.Physics
             if (materialFeedback == null || elapsed < _nextEmergenceFeedback || _emergence >= 1f) return;
             bool initial = _nextEmergenceFeedback <= 0f;
             // A bounded line of contact plumes; no per-frame catch-up burst after a hitch.
-            _nextEmergenceFeedback = elapsed + 0.14f;
+            _nextEmergenceFeedback = elapsed + 0.09f;
             float length = Vector3.Distance(Start, End);
-            int stations = Mathf.Clamp(Mathf.CeilToInt(length / 1.8f), 2, 8);
+            int stations = Mathf.Clamp(Mathf.CeilToInt(length / 1.3f), 3, 8);
             float radius = Mathf.Clamp(length / stations * 0.65f, 0.45f, 1.8f);
             for (int i = 0; i < stations; i++)
             {
@@ -1135,8 +1136,8 @@ namespace Elemental.Runtime.Physics
                         Vector3.Distance(End, _planetCenter), fraction);
                     contact = _planetCenter + normal * radiusAtContact;
                 }
-                materialFeedback.Emit(EarthMaterialFeedbackKind.Emerge, contact, normal, 1f,
-                    radius, WallId, _generation, initial ? 24 : 12, initial ? 6 : 3);
+                materialFeedback.Emit(EarthMaterialFeedbackKind.Emerge, contact, normal, 1.15f,
+                    radius, WallId, _generation, initial ? 48 : 28, initial ? 10 : 6);
             }
         }
 
@@ -1230,9 +1231,8 @@ namespace Elemental.Runtime.Physics
         private void BeginCohesiveFracture()
         {
             if (_fractured) return;
-            materialFeedback?.Emit(EarthMaterialFeedbackKind.Fracture,
-                _renderer != null ? _renderer.bounds.center : transform.position,
-                _up, 1f, 1.4f, WallId, CurrentStructureTick, 140, 28);
+            RevealCracks();
+            BeginCrackFeedback();
             SetMagicCasterCollisionIgnored(false);
             _fractured = true;
             _cohesion?.BeginFracture();
@@ -1706,7 +1706,7 @@ namespace Elemental.Runtime.Physics
             EarthPieceDefinition definition = _structureRuntime.GetPieceDefinition(index);
             quaternion rest = definition.RestLocalRotation;
             float3 local = definition.RestLocalPosition;
-            body.MovePosition(transform.TransformPoint(new Vector3(local.x, local.y, local.z)));
+            body.MovePosition(transform.TransformPoint(new Vector3(local.x, local.y, local.z))+HeavyContactChipOffset(index));
             body.MoveRotation(transform.rotation * new Quaternion(rest.value.x, rest.value.y, rest.value.z, rest.value.w));
         }
 
@@ -1852,6 +1852,7 @@ namespace Elemental.Runtime.Physics
 
         private void OnCollisionEnter(Collision collision)
         {
+            if (TryChipAgainstHeavyObstacle(collision)) return;
             if (_fractured || collision.contactCount == 0 || collision.rigidbody == null) return;
             if (TryHandleOutgoingPushContact(collision)) return;
             if (collision.relativeVelocity.sqrMagnitude < .5625f) return;

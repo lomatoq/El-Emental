@@ -122,3 +122,7 @@ Authoring validation is loud and actionable. Runtime commands reject invalid inp
 ## No-warnings policy
 
 New compiler warnings, package resolution warnings, leaked native allocations, or unexpected test logs fail a task. A pre-existing warning must be documented with owner and removal milestone before work continues on the affected subsystem.
+
+## Shared material microshake rule (September 8, 2026)
+
+Large earth abilities, emergence/sliding, heavy contacts and high falls route subtle camera feedback through the explicitly bound EarthMaterialFeedbackHub. Presentation owns one bounded, distance-weighted envelope and restores the camera pose after rendering. Aggregate concurrent events by maximum rather than by particle count. Respect Reduced Motion, ShakeIntensity, pause and round reset. New large actions must use the shared material cue path instead of adding independent camera transform writers. See MATERIAL_MICRO_SHAKE_2026_09_08.md for limits and tests.

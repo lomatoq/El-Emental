@@ -28,6 +28,11 @@ namespace Elemental.Tests.PlayMode
             var director=Find<EarthCameraDirector>();var look=director.GetComponent<EarthChargeCameraLookdevV2>();
             var router=director.Player.GetComponent<EarthActionRouterBehaviour>();
             Assert.That(look,Is.Not.Null);look.BindDirector(director);
+            Assert.That(look.MaterialFeedback,Is.SameAs(Find<EarthMaterialFeedbackHub>()),"Saved scene must wire shared impact feedback.");
+            look.MaterialFeedback.Emit(Elemental.Simulation.Bending.EarthMaterialFeedbackKind.Emerge,director.Player.transform.position,Vector3.up,1.2f,1f,0xAA991);
+            look.MaterialFeedback.FlushPending();
+            yield return null;yield return null;
+            Assert.That(look.MaterialMicroShake01,Is.GreaterThan(0f),"Actual hub event must reach render camera envelope.");
             var pool=Find<EarthWallPool>();
             var wall=pool.Acquire(new Vector3(-3,120,15),new Vector3(3,120,15),Vector3.zero,2,.4f,0xAAF091,Vector3.up);
             Assert.That(wall,Is.Not.Null);deadline=Time.realtimeSinceStartupAsDouble+5;

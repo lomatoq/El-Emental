@@ -13,11 +13,18 @@ namespace Elemental.Tests.EditMode
                 Assert.That(EarthWallPushMotion.DustCount(10,launch),Is.EqualTo(EarthWallPushMotion.DustCount(1,launch)));
             }
         }
+        [Test] public void ChargedGroundHoldDampsLiftWithoutChangingTap()
+        {
+            Assert.That(EarthWallPushMotion.GroundHoldAcceleration(0,.5f,5),Is.Zero);
+            Assert.That(EarthWallPushMotion.GroundHoldAcceleration(1,.3f,2),Is.LessThan(-30));
+            Assert.That(EarthWallPushMotion.GroundHoldAcceleration(1,0,-2),Is.EqualTo(-4));
+            Assert.That(EarthWallPushMotion.GroundHoldAcceleration(1,float.PositiveInfinity,2),Is.EqualTo(-8));
+        }
         [Test] public void ChargeCannotProduceMotionBeforeRelease()
         {
             var p=new EarthWallPushMotion();Assert.That(p.Begin(1800),Is.Zero);
             for(int i=0;i<100;i++)Assert.That(p.Step(.02f),Is.Zero);
-            Assert.That(p.Charge01,Is.EqualTo(1));Assert.That(p.Release(),Is.EqualTo(60000));
+            Assert.That(p.Charge01,Is.EqualTo(1));Assert.That(p.Release(),Is.EqualTo(43200));
             Assert.That(p.Release(),Is.Zero);Assert.That(p.Active,Is.False);
         }
         [TestCase(120f)] [TestCase(800f)] [TestCase(1800f)]
@@ -27,7 +34,7 @@ namespace Elemental.Tests.EditMode
             tap.Begin(mass);hold.Begin(mass);tap.Step(.06f);hold.Step(1.5f);
             float ordinary=tap.Release();
             Assert.That(ordinary,Is.EqualTo(System.Math.Min(24000,mass*18)));
-            Assert.That(hold.Release(),Is.EqualTo(ordinary*2.5f).Within(.01f));
+            Assert.That(hold.Release(),Is.EqualTo(ordinary*1.8f).Within(.01f));
         }
         [Test] public void CancelDiscardsChargeAndRepeatedBeginDoesNotResetIt()
         {

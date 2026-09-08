@@ -22,12 +22,15 @@ namespace Elemental.Runtime.Physics
         {
             if (HasRevealedCracks || _fractured || _crackedShellMesh == null) return;
             HasRevealedCracks = true;
+            BeginCrackFeedback();
             if (_intactPresentationFilter != null) _intactPresentationFilter.sharedMesh = _crackedShellMesh;
         }
 
         internal void ResetIntactPresentation()
         {
             HasRevealedCracks = false;
+            ResetCrackFeedback();
+            ResetHeavyContactChips();
             if (_intactPresentationFilter != null && _freshShellMesh != null)
                 _intactPresentationFilter.sharedMesh = _freshShellMesh;
         }

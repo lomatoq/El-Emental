@@ -3,6 +3,9 @@ namespace Elemental.Simulation.Bending
 {
     public static class EarthWallPushContactPolicy
     {
+        public static float ChipDisplacement(float charge)=>math.lerp(.012f,.025f,math.saturate(charge));
+        public static bool ShouldChipHeavyObstacle(float wallMass,float otherMass,bool fixedObstacle,float forwardSpeed,float normalUp,float normalForward)=>
+            wallMass>0&&forwardSpeed>2&&normalUp<.65f&&normalForward<-.35f&&(fixedObstacle||otherMass>=wallMass*1.5f);
         public static bool IsOutgoingLooseStone(float wallMass,float stoneMass,float wallForwardSpeed,
             float stoneForwardSpeed,float impulse)
         {

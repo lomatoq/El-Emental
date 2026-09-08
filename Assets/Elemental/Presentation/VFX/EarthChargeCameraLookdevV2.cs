@@ -78,6 +78,27 @@ namespace Elemental.Presentation.VFX
         [SerializeField, Range(0f, .2f)] private float chargeVignettePulseDepth = .10f;
         [SerializeField, Range(.1f, 2f)] private float chargeVignettePulseHz = .85f;
         [SerializeField] private EarthMvpDuelController duel;
+        [SerializeField] private EarthMaterialFeedbackHub materialFeedback;
+        private EarthMaterialMicroShake _materialMicroShake;
+        private float _microShake;
+        public float MaterialMicroShake01 => _microShake;
+        public EarthMaterialFeedbackHub MaterialFeedback => materialFeedback;
+        public void ConfigureMicroShake(EarthMaterialFeedbackHub events)
+        {
+            if (materialFeedback != null) materialFeedback.Presented -= HandleMaterialMicroShake;
+            materialFeedback = events;
+            ResetMaterialMicroShake();
+            if (isActiveAndEnabled && materialFeedback != null) materialFeedback.Presented += HandleMaterialMicroShake;
+        }
+        private void ResetMaterialMicroShake() { _materialMicroShake = default; _microShake = 0; }
+        private void HandleMaterialMicroShake(EarthMaterialFeedbackCue cue)
+        {
+            if (Time.timeScale <= 0 || (duel != null && !duel.CombatAllowed)) return;
+            Transform subject = cameraDirector != null ? cameraDirector.Player : null;
+            if (subject == null) return;
+            _materialMicroShake.Observe(cue.Kind, cue.Strength, cue.Radius,
+                Vector3.Distance(subject.position, (Vector3)cue.Point));
+        }
         public float ChargeVignetteIntensity => _vignette != null ? _vignette.intensity.value : 0f;
         private UnityCamera _camera;
         private MagicInputController _input;
@@ -149,8 +170,11 @@ namespace Elemental.Presentation.VFX
         public void BindDuel(EarthMvpDuelController configuredDuel)
         {
             if (duel != null) duel.RoundRestarted -= ResetChargeFeedback;
+            if (duel != null) duel.RoundRestarted -= ResetMaterialMicroShake;
             duel = configuredDuel;
+            ResetMaterialMicroShake();
             if (duel != null && isActiveAndEnabled) duel.RoundRestarted += ResetChargeFeedback;
+            if (duel != null && isActiveAndEnabled) duel.RoundRestarted += ResetMaterialMicroShake;
         }
 
         public void ResetChargeFeedback()
@@ -185,6 +209,8 @@ namespace Elemental.Presentation.VFX
         private void OnEnable()
         {
             ResolveInput();
+            if (materialFeedback != null) materialFeedback.Presented += HandleMaterialMicroShake;
+            if (duel != null) duel.RoundRestarted += ResetMaterialMicroShake;
             if (duel != null) duel.RoundRestarted += ResetChargeFeedback;
             RenderPipelineManager.beginCameraRendering += HandleBeginCameraRendering;
             RenderPipelineManager.endCameraRendering += HandleEndCameraRendering;
@@ -192,6 +218,9 @@ namespace Elemental.Presentation.VFX
 
         private void OnDisable()
         {
+            if (materialFeedback != null) materialFeedback.Presented -= HandleMaterialMicroShake;
+            if (duel != null) duel.RoundRestarted -= ResetMaterialMicroShake;
+            ResetMaterialMicroShake();
             if (_input != null) _input.PushChargeChanged -= HandlePushCharge;
             _input = null;
             if (duel != null) duel.RoundRestarted -= ResetChargeFeedback;
@@ -228,6 +257,12 @@ namespace Elemental.Presentation.VFX
             _charge = EarthChargeFeedback.Step(_charge,
                 EarthChargeFeedback.Resolve(in chargeInput), Time.unscaledDeltaTime);
             EarthCameraProfile cameraProfile = cameraDirector != null ? cameraDirector.Profile : null;
+            // Ragdoll disables charging but must retain feedback from a genuine
+            // heavy landing. Only world pause/match gating suppresses this channel.
+            _microShake = _materialMicroShake.Step(Time.unscaledDeltaTime,
+                Time.timeScale > 0 && (duel == null || duel.CombatAllowed),
+                cameraProfile != null ? cameraProfile.ShakeIntensity : 1f,
+                cameraProfile != null && cameraProfile.ReducedMotion);
             _feedback = EarthChargeFeedback.Solve(_charge,
                 cameraProfile != null ? cameraProfile.ShakeIntensity : 1f,
                 cameraProfile != null ? cameraProfile.FieldOfViewMotion : 1f,
@@ -295,7 +330,7 @@ namespace Elemental.Presentation.VFX
             ScriptableRenderContext context,
             UnityCamera renderingCamera)
         {
-            if (renderingCamera != _camera || _charge <= 0.001f || _renderPoseSaved)
+            if (renderingCamera != _camera || (_charge <= 0.001f && _microShake <= .0001f) || _renderPoseSaved)
                 return;
             _renderPoseSaved = true;
             _savedRenderPosition = transform.position;
@@ -305,8 +340,12 @@ namespace Elemental.Presentation.VFX
             float x = Mathf.PerlinNoise(time, 13.7f) * 2f - 1f;
             float y = Mathf.PerlinNoise(7.3f, time * 1.07f) * 2f - 1f;
             float z = Mathf.PerlinNoise(time * 0.83f, 27.1f) * 2f - 1f;
-            float positionAmplitude = _feedback.PositionShake;
-            float rotationAmplitude = _feedback.RotationShake;
+            // Both channels share one pose owner. Concurrent charge and many
+            // contact stations can never sum into a larger shake.
+            float positionAmplitude = Mathf.Max(_feedback.PositionShake,
+                _microShake * EarthMaterialMicroShake.MaximumPositionMeters);
+            float rotationAmplitude = Mathf.Max(_feedback.RotationShake,
+                _microShake * EarthMaterialMicroShake.MaximumRotationDegrees);
             transform.position += transform.right * x * positionAmplitude +
                                   transform.up * y * positionAmplitude;
             transform.rotation = Quaternion.Euler(
