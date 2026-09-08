@@ -24,6 +24,10 @@ namespace Elemental.Simulation.Bending
             float impulse=Math.Min(24000,_mass*18)*(1+1.5f*Charge01);
             Cancel();return impulse;
         }
+        public static int DustCount(float charge,bool launch)=>
+            (launch?32:18)+(int)Math.Round(Math.Clamp(charge,0,1)*(launch?48:24));
+        public static int ChipCount(float charge,bool launch)=>
+            (launch?6:3)+(int)Math.Round(Math.Clamp(charge,0,1)*(launch?14:7));
         public void Cancel(){Active=false;_age=0;}
         public static float Drag(float mass)=>.30f*(.65f+SafeMass(mass)/1200f);
         private static float SafeMass(float mass)=>float.IsFinite(mass)?Math.Max(1,mass):1800;

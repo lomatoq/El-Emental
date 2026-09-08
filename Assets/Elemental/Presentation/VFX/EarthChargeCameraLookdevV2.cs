@@ -371,10 +371,13 @@ namespace Elemental.Presentation.VFX
                 (duel == null || duel.CombatAllowed);
             if (!allowed) return default;
             MagicExecutor executor = _input.EarthExecutor;
+            EarthWall heldWall = _router != null && _router.isActiveAndEnabled ? _router.HeldPushWall : null;
             return new EarthChargeFeedbackInput
             {
                 Allowed = true,
                 Accumulation = _input.AccumulationCharge01,
+                WallPush = heldWall != null && heldWall.isActiveAndEnabled && heldWall.IsHeldPushActive
+                    ? heldWall.HeldPushCharge01 : 0f,
                 Bend = _input.CurrentBendPhase == BendPhase.Charging ? _input.BendCharge01 : 0f,
                 // Push and directed ground-wave already publish each input frame.
                 // Expiration also clears an interrupted path that omitted its zero event.

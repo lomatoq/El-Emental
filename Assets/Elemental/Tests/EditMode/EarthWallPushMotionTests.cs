@@ -4,6 +4,15 @@ namespace Elemental.Tests.EditMode
 {
     public sealed class EarthWallPushMotionTests
     {
+        [Test] public void FullChargeHasLargerBoundedLaunchAndTrailFeedback()
+        {
+            foreach(bool launch in new[]{false,true})
+            {
+                Assert.That(EarthWallPushMotion.DustCount(1,launch),Is.GreaterThan(EarthWallPushMotion.DustCount(0,launch)*2));
+                Assert.That(EarthWallPushMotion.ChipCount(1,launch),Is.GreaterThan(EarthWallPushMotion.ChipCount(0,launch)*2));
+                Assert.That(EarthWallPushMotion.DustCount(10,launch),Is.EqualTo(EarthWallPushMotion.DustCount(1,launch)));
+            }
+        }
         [Test] public void ChargeCannotProduceMotionBeforeRelease()
         {
             var p=new EarthWallPushMotion();Assert.That(p.Begin(1800),Is.Zero);

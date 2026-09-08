@@ -34,7 +34,7 @@ namespace Elemental.Tests.PlayMode
             var hub=Find<EarthMaterialFeedbackHub>();wall.ConfigureMaterialFeedback(hub);
             int dust=0,chips=0;uint source=wall.WallId;
             void Observe(EarthMaterialFeedbackCue cue)
-            {if(cue.SourceId==source&&cue.Kind==EarthMaterialFeedbackKind.Friction){dust+=cue.DustCount;chips+=cue.ChipCount;}}
+            {if(cue.SourceId==source&&(cue.Kind==EarthMaterialFeedbackKind.Friction||cue.Kind==EarthMaterialFeedbackKind.Impact)){dust+=cue.DustCount;chips+=cue.ChipCount;}}
             hub.Presented+=Observe;
             try
             {
@@ -74,6 +74,8 @@ namespace Elemental.Tests.PlayMode
             floor.transform.position=new Vector3(0,119.5f,30);floor.transform.localScale=new Vector3(60,1,160);
             UnityEngine.Physics.SyncTransforms();
             var pool=Find<EarthWallPool>();var distances=new float[2];var report=new System.Text.StringBuilder();float expectedMass=0;
+            var launchDust=new int[2];var trailDust=new int[2];
+            var feedback=Find<EarthMaterialFeedbackHub>();
             for(int trial=0;trial<2;trial++)
             {
                 var wall=pool.Acquire(new Vector3(-3,120,0),new Vector3(3,120,0),Vector3.zero,2,.4f,0xAAF041u+(uint)trial,Vector3.up);
@@ -81,6 +83,14 @@ namespace Elemental.Tests.PlayMode
                 while(!wall.IsEmergenceComplete&&Time.realtimeSinceStartupAsDouble<deadline)yield return null;
                 Assert.That(wall.IsEmergenceComplete,Is.True);Assert.That(wall.IsCollapsing,Is.False);
                 if(trial==0)expectedMass=wall.Body.mass;else Assert.That(wall.Body.mass,Is.EqualTo(expectedMass).Within(.001f));
+                wall.ConfigureMaterialFeedback(feedback);
+                void Observe(EarthMaterialFeedbackCue cue)
+                {
+                    if(cue.SourceId!=wall.WallId)return;
+                    if(cue.Kind==EarthMaterialFeedbackKind.Impact)launchDust[trial]+=cue.DustCount;
+                    if(cue.Kind==EarthMaterialFeedbackKind.Friction)trailDust[trial]+=cue.DustCount;
+                }
+                feedback.Presented+=Observe;
                 var start=wall.Body.position;float driveSeconds=trial==0?.06f:1.5f;float elapsed=0;bool released=false;float peakSpeed=0;
                 Assert.That(wall.TryBeginHeldPush(Vector3.forward),Is.True);
                 for(int step=0;step<600;step++)
@@ -91,6 +101,8 @@ namespace Elemental.Tests.PlayMode
                     Assert.That(wall.IsCollapsing,Is.False,"Clear-floor comparison must not break either wall.");
                     if(released&&elapsed>driveSeconds+.5f&&wall.Body.linearVelocity.magnitude<.15f)break;
                 }
+                yield return null;feedback.Presented-=Observe;
+                report.AppendLine($"trial={trial};launchDust={launchDust[trial]};trailDust={trailDust[trial]}");
                 distances[trial]=Vector3.Dot(wall.Body.position-start,Vector3.forward);
                 report.AppendLine($"trial={trial};mass={wall.Body.mass};heldSeconds={driveSeconds};distance={distances[trial]};peakSpeed={peakSpeed};finalSpeed={wall.Body.linearVelocity.magnitude};gap={wall.HeldPushSupportGap}");
                 Assert.That(wall.Body.linearVelocity.magnitude,Is.LessThan(.2f),"Finite drive must settle after release.");
@@ -113,6 +125,9 @@ namespace Elemental.Tests.PlayMode
                 pool.ReleaseTransient(wall);yield return null;yield return new WaitForFixedUpdate();
             }
             System.IO.Directory.CreateDirectory("BuildReports/WallPushInput");System.IO.File.WriteAllText("BuildReports/WallPushInput/tap-hold-range.txt",report.ToString());
+            Assert.That(launchDust[0],Is.GreaterThan(0),"Tap needs an immediate grounded release burst.");
+            Assert.That(launchDust[1],Is.GreaterThan(launchDust[0]*1.5f),"Charged launch must visibly exceed tap.");
+            Assert.That(trailDust[1],Is.GreaterThan(trailDust[0]),"Charged motion needs more ground feedback.");
             Assert.That(distances[0],Is.GreaterThan(4f));
             Assert.That(distances[1],Is.GreaterThanOrEqualTo(distances[0]*2),report.ToString());
         }

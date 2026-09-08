@@ -8,7 +8,7 @@ namespace Elemental.Simulation.Rendering
         public bool Allowed;
         public float Bend, PushOrGroundWave, VectorField, GravityThrow, FractureThrow;
         public float Resonance, Pillar, PillarWave, PillarCrest;
-        public float Accumulation;
+        public float Accumulation, WallPush;
     }
 
     public readonly struct EarthChargeFeedbackOutput
@@ -32,7 +32,7 @@ namespace Elemental.Simulation.Rendering
             value = math.max(value, math.max(Unit(input.VectorField), Unit(input.GravityThrow)));
             value = math.max(value, math.max(Unit(input.FractureThrow), Unit(input.Resonance)));
             value = math.max(value, math.max(Unit(input.Pillar), Unit(input.PillarWave)));
-            return math.max(value, math.max(Unit(input.PillarCrest), Unit(input.Accumulation)));
+            return math.max(Unit(input.WallPush), math.max(value, math.max(Unit(input.PillarCrest), Unit(input.Accumulation))));
         }
 
         // Exponential response stays equivalent across 30/60/120 Hz and never overshoots.

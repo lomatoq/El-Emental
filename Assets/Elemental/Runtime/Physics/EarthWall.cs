@@ -650,6 +650,7 @@ namespace Elemental.Runtime.Physics
         public bool ApplyRockContact(Rigidbody source, Vector3 point, Vector3 direction, float impulse)
         {
             if (source == null || source == _body) return false;
+            if (TryHandleOutgoingPushStone(source, point, impulse)) return false;
             if (impulse > 0f) RevealCracks();
             if (impulse < MinimumRockImpactImpulse) return false;
             for (int i = 0; i < _impactSources.Length; i++)
@@ -937,6 +938,7 @@ namespace Elemental.Runtime.Physics
 
         private void FixedUpdate()
         {
+            CachePushContactVelocity();
             UpdateLaunchedCellCollisions();
             if (_pendingColliderActivation)
             {
@@ -1850,8 +1852,9 @@ namespace Elemental.Runtime.Physics
 
         private void OnCollisionEnter(Collision collision)
         {
-            if (_fractured || collision.contactCount == 0 || collision.rigidbody == null ||
-                collision.relativeVelocity.sqrMagnitude < .5625f) return;
+            if (_fractured || collision.contactCount == 0 || collision.rigidbody == null) return;
+            if (TryHandleOutgoingPushContact(collision)) return;
+            if (collision.relativeVelocity.sqrMagnitude < .5625f) return;
             EarthWall otherWall = collision.collider != null
                 ? collision.collider.GetComponentInParent<EarthWall>()
                 : null;

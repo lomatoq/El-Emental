@@ -8,7 +8,7 @@ namespace Elemental.Tests.EditMode
     public sealed class EarthChargeFeedbackTests
     {
         [TestCase(0)] [TestCase(1)] [TestCase(2)] [TestCase(3)]
-        [TestCase(4)] [TestCase(5)] [TestCase(6)] [TestCase(7)] [TestCase(8)] [TestCase(9)]
+        [TestCase(4)] [TestCase(5)] [TestCase(6)] [TestCase(7)] [TestCase(8)] [TestCase(9)] [TestCase(10)]
         public void EveryChargeOwnerProducesTheSameCompleteTensionEnvelope(int owner)
         {
             var input = new EarthChargeFeedbackInput { Allowed = true };
@@ -24,6 +24,7 @@ namespace Elemental.Tests.EditMode
                 case 7: input.PillarWave = .8f; break;
                 case 8: input.PillarCrest = .8f; break;
                 case 9: input.Accumulation = .8f; break;
+                case 10: input.WallPush = .8f; break;
             }
             float charge = EarthChargeFeedback.Resolve(in input);
             Assert.That(charge, Is.EqualTo(.8f));

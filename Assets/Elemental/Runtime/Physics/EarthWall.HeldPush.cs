@@ -10,14 +10,15 @@ namespace Elemental.Runtime.Physics
         private static readonly ProfilerMarker HeldPushMarker=new("Elemental.Earth.Wall.HeldPush");
         private EarthWallPushMotion _heldPush;
         private Vector3 _heldPushDirection;
-        private bool _heldPushCoasting;
+        private bool _heldPushCoasting, _heldPushFracturedFeedback;
         private bool _heldPushWasKinematic;
         private Vector3 _heldPushSavedDirection;
         private Vector3 _heldPushSavedVelocity, _heldPushSavedAngularVelocity, _heldPushChargePosition;
         private Quaternion _heldPushChargeRotation;
         private CollisionDetectionMode _heldPushChargeCollisionMode;
         private float _heldPushReleasedSpeedCap=14f;
-        private float _heldPushDustClock;
+        private float _heldPushDustClock, _heldPushReleasedCharge, _heldPushBurstClock;
+        private int _heldPushBurstPulses;
         private readonly RaycastHit[] _heldPushSupportHits=new RaycastHit[16];
         private float _heldPushSupportGap=float.PositiveInfinity;
         private CollisionDetectionMode _heldPushPreviousCollisionMode;
@@ -61,10 +62,14 @@ namespace Elemental.Runtime.Physics
             if(IsFracturedHeldPushActive)
             {
                 if(!isActiveAndEnabled){CancelHeldPush();return false;}
-                return ReleaseFracturedHeldPush(_heldPush.Release());
+                _heldPushReleasedCharge=_heldPush.Charge01;
+                bool released=ReleaseFracturedHeldPush(_heldPush.Release());
+                if(released){_heldPushFracturedFeedback=true;BeginHeldPushReleaseFeedback();}
+                return released;
             }
             if(_fractured||_body==null||!isActiveAndEnabled){CancelHeldPush();return false;}
             float charge=_heldPush.Charge01;
+            _heldPushReleasedCharge=charge;
             float impulse=_heldPush.Release();
             RestoreHeldPushChargeBody();
             OnEarthMagicGrabbed(EarthMagicGripKind.VectorField);
@@ -74,7 +79,9 @@ namespace Elemental.Runtime.Physics
             _heldPushReleasedSpeedCap=Mathf.Lerp(18f,45f,charge);
             _heldPushCoasting=true;_heldPushDustClock=0;
             _body.AddForce(_heldPushDirection*impulse,ForceMode.Impulse);
+            RecordHeldPushLaunch(impulse);
             OnEarthMagicReleased(EarthMagicGripKind.VectorField);
+            BeginHeldPushReleaseFeedback();
             return true;
         }
         private void RestoreHeldPushChargeBody()
@@ -96,7 +103,7 @@ namespace Elemental.Runtime.Physics
         }
         private void ResetHeldPushState()
         {
-            CancelHeldPush();StopHeldPushCoasting();_heldPushDirection=Vector3.zero;_heldPushDustClock=0;
+            CancelHeldPush();StopHeldPushCoasting();_heldPushFracturedFeedback=false;_heldPushBurstPulses=0;_heldPushDirection=Vector3.zero;_heldPushDustClock=0;
             _heldPushSupportGap=float.PositiveInfinity;
         }
         private void StopHeldPushCoasting()
@@ -108,8 +115,13 @@ namespace Elemental.Runtime.Physics
         private float RootSlideDrag=>_heldPushCoasting?EarthWallPushMotion.Drag(EstimatedMass):_magicFieldActive?MagicFieldSlideDrag:WallSlideDrag;
         private void TickHeldPush()
         {
-            if(!_heldPush.Active&&!_heldPushCoasting)return;
+            if(!_heldPush.Active&&!_heldPushCoasting&&!_heldPushFracturedFeedback&&_heldPushBurstPulses==0)return;
             using var marker=HeldPushMarker.Auto();
+            if(!_heldPush.Active&&_heldPushBurstPulses>0)
+            {
+                _heldPushBurstClock-=Time.fixedDeltaTime;
+                if(_heldPushBurstClock<=0){_heldPushBurstPulses--;_heldPushBurstClock=.07f;EmitHeldPushGroundFeedback(true,0);}
+            }
             if(_heldPush.Active)
             {
                 if(IsFracturedHeldPushActive)
@@ -124,31 +136,69 @@ namespace Elemental.Runtime.Physics
                 _heldPush.Step(Time.fixedDeltaTime);
                 return;
             }
+            if(_fractured&&(_heldPushCoasting||_heldPushFracturedFeedback))
+            {
+                StopHeldPushCoasting();
+                float total=0;int live=0;
+                for(int i=0;i<_pieceBodies.Length;i++)
+                    if(_pieceBodies[i]!=null&&!_pieceBodies[i].isKinematic&&_pieces[i].gameObject.activeInHierarchy)
+                    {total+=Vector3.ProjectOnPlane(_pieceBodies[i].linearVelocity,_up).magnitude;live++;}
+                float movingSpeed=live>0?total/live:0;
+                _heldPushFracturedFeedback=movingSpeed>.4f;
+                _heldPushDustClock-=Time.fixedDeltaTime;
+                if(_heldPushFracturedFeedback&&_heldPushDustClock<=0)
+                {_heldPushDustClock=Mathf.Lerp(.075f,.045f,_heldPushReleasedCharge);EmitHeldPushGroundFeedback(false,movingSpeed);}
+                return;
+            }
             if(!_heldPushCoasting)return;
             if(_fractured||_body==null||_body.isKinematic){CancelHeldPush();StopHeldPushCoasting();return;}
             float speed=Vector3.ProjectOnPlane(_body.linearVelocity,_up).magnitude;
             if(!_heldPush.Active&&speed<.15f&&float.IsFinite(_heldPushSupportGap)&&_heldPushSupportGap<.1f&&Mathf.Abs(Vector3.Dot(_body.linearVelocity,_up))<.15f){StopHeldPushCoasting();return;}
             _heldPushDustClock-=Time.fixedDeltaTime;
-            if(materialFeedback==null||speed<.4f||_heldPushDustClock>0||!float.IsFinite(_heldPushSupportGap)||_heldPushSupportGap>.2f)return;
-            _heldPushDustClock=.075f;
-            int stations=Mathf.Clamp(Mathf.CeilToInt(_finalScale.x/1.4f),3,8);
-            float radius=Mathf.Clamp(_finalScale.x/stations*.6f,.4f,1.4f);
-            var foot=_body.position-_up*(Height*.5f-_foundationEmbed);
-            float strength=Mathf.Lerp(.8f,1.7f,Mathf.Clamp01(speed/9));
-            for(int i=0;i<stations;i++)
-            {
-                var contact=foot+_tangent*((i+.5f)/stations-.5f)*_finalScale.x;
-                var normal=_up;
-                if(_orientationMode==ConstructionOrientationMode.FollowPlanetGravity)
-                {
-                    normal=(contact-_planetCenter).normalized;
-                    contact=_planetCenter+normal*(foot-_planetCenter).magnitude;
-                }
-                materialFeedback.Emit(EarthMaterialFeedbackKind.Friction,contact,normal,strength,radius,
-                    WallId,_generation,18,3);
-            }
+            if(materialFeedback==null||speed<.4f||_heldPushDustClock>0)return;
+            _heldPushDustClock=Mathf.Lerp(.075f,.045f,_heldPushReleasedCharge);
+            EmitHeldPushGroundFeedback(false,speed);
         }
-        private void StabilizeHeldPushBody()
+        private void BeginHeldPushReleaseFeedback()
+        {
+            _heldPushBurstPulses=Mathf.RoundToInt(_heldPushReleasedCharge*2);
+            _heldPushBurstClock=.07f;
+            EmitHeldPushGroundFeedback(true,0);
+        }
+        private void EmitHeldPushGroundFeedback(bool launch,float speed)
+        {
+            if(materialFeedback==null||_body==null)return;
+            int stations=Mathf.Clamp(Mathf.CeilToInt(_finalScale.x/1.4f),3,8);
+            float power=_heldPushReleasedCharge;
+            float radius=Mathf.Clamp(_finalScale.x/stations*.6f,.4f,1.4f)*Mathf.Lerp(1,1.5f,power);
+            Vector3 center=_body.position;
+            if(_fractured&&_pieceBodies!=null)
+            {
+                Vector3 sum=Vector3.zero;int live=0;
+                for(int i=0;i<_pieceBodies.Length;i++)
+                    if(_pieceBodies[i]!=null&&_pieces[i].gameObject.activeInHierarchy)
+                    {sum+=_pieceBodies[i].worldCenterOfMass;live++;}
+                if(live>0)center=sum/live;
+            }
+            var foot=center-_up*(Height*.5f-_foundationEmbed);
+            float strength=(launch?1.1f:Mathf.Lerp(.8f,1.4f,Mathf.Clamp01(speed/12)))*Mathf.Lerp(1,1.7f,power);
+            for(int station=0;station<stations;station++)
+            {
+                Vector3 point=foot+_tangent*((station+.5f)/stations-.5f)*_finalScale.x;
+                int count=UnityEngine.Physics.RaycastNonAlloc(point+_up*.6f,-_up,_heldPushSupportHits,1.35f,~0,QueryTriggerInteraction.Ignore);
+                float nearest=float.PositiveInfinity;RaycastHit ground=default;
+                for(int i=0;i<count;i++)
+                {
+                    var hit=_heldPushSupportHits[i];var other=hit.collider;
+                    if(other==null||other==_collider||other.transform.IsChildOf(transform)||Vector3.Dot(hit.normal,_up)<.55f)continue;
+                    if(hit.distance<nearest){nearest=hit.distance;ground=hit;}
+                }
+                if(!float.IsFinite(nearest))continue;
+                materialFeedback.Emit(launch?EarthMaterialFeedbackKind.Impact:EarthMaterialFeedbackKind.Friction,
+                    ground.point,ground.normal,strength,radius,WallId,_generation,
+                    EarthWallPushMotion.DustCount(power,launch),EarthWallPushMotion.ChipCount(power,launch));
+            }
+        }        private void StabilizeHeldPushBody()
         {
             using var marker=HeldPushMarker.Auto();
             Vector3 nextUp=_up;

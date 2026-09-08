@@ -23,8 +23,12 @@ namespace Elemental.Tests.PlayMode
         private Mouse _mouse;
         private EarthWall _wall;
         private GameObject _occluder;
+        private InputSettings.BackgroundBehavior _previousBackground;
+        private InputSettings.EditorInputBehaviorInPlayMode _previousEditorInput;
         [UnityTearDown] public IEnumerator Cleanup()
         {
+            InputSystem.settings.backgroundBehavior=_previousBackground;
+            InputSystem.settings.editorInputBehaviorInPlayMode=_previousEditorInput;
             if (_keyboard != null && _keyboard.added) InputSystem.RemoveDevice(_keyboard);
             if (_mouse != null && _mouse.added) InputSystem.RemoveDevice(_mouse);
             if (_occluder != null) Object.Destroy(_occluder);
@@ -35,6 +39,11 @@ namespace Elemental.Tests.PlayMode
 
         [UnityTest] public IEnumerator PairedControlForceTargetsGroundWallOnceAndRespectsOcclusion()
         {
+            _previousBackground=InputSystem.settings.backgroundBehavior;
+            _previousEditorInput=InputSystem.settings.editorInputBehaviorInPlayMode;
+            // Synthetic input must reach the real router even while the test runner has focus.
+            InputSystem.settings.backgroundBehavior=InputSettings.BackgroundBehavior.IgnoreFocus;
+            InputSystem.settings.editorInputBehaviorInPlayMode=InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
             _previous = SceneManager.GetActiveScene();
             const string path = "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
             yield return SceneManager.LoadSceneAsync(path, LoadSceneMode.Additive);
@@ -134,7 +143,7 @@ namespace Elemental.Tests.PlayMode
                 UnityEngine.Physics.SyncTransforms();
                 Aim(camera, true); InputSystem.QueueStateEvent(_keyboard, new KeyboardState(Key.LeftCtrl));
                 yield return null; yield return null;
-                Assert.That(router.Owner, Is.EqualTo(EarthActionOwner.WallPush));
+                Assert.That(router.Owner, Is.EqualTo(EarthActionOwner.WallPush), $"attempts={router.WallPushBeginCount}; rejection={router.LastWallPushRejection}; ctrl={_keyboard.leftCtrlKey.isPressed}/{_keyboard.rightCtrlKey.isPressed}; RMB={_mouse.rightButton.isPressed}; motor={motor.isActiveAndEnabled}; router={router.isActiveAndEnabled}");
                 Assert.That(router.LastWallPushAccepted, Is.False, "Nearest solid occluder must reject wall targeting.");
                 uint attempts = router.WallPushBeginCount;
                 Object.Destroy(_occluder); _occluder = null;
@@ -156,7 +165,7 @@ namespace Elemental.Tests.PlayMode
                 Directory.CreateDirectory("BuildReports/WallPushInput");
                 File.WriteAllText("BuildReports/WallPushInput/acquisition.txt",
                     $"owner={router.Owner}; accepted={router.LastWallPushAccepted}; rejection={router.LastWallPushRejection}; hit={router.LastWallPushHit}; target={router.LastWallPushTarget}; expectedWall={_wall}; fractured={_wall.IsCollapsing}; emerged={_wall.IsEmergenceComplete}; colliderEnabled={_wall.GetComponent<Collider>().enabled}; wallPosition={_wall.transform.position}; wallBounds={_wall.GetComponent<Collider>().bounds}; pointer={player.GetComponent<EarthInputAdapter>().PointerPixels}; ray={router.LastWallPushRay}; attempts={router.WallPushBeginCount}");
-                Assert.That(router.Owner, Is.EqualTo(EarthActionOwner.WallPush));
+                Assert.That(router.Owner, Is.EqualTo(EarthActionOwner.WallPush), $"attempts={router.WallPushBeginCount}; rejection={router.LastWallPushRejection}; ctrl={_keyboard.leftCtrlKey.isPressed}/{_keyboard.rightCtrlKey.isPressed}; RMB={_mouse.rightButton.isPressed}; motor={motor.isActiveAndEnabled}; router={router.isActiveAndEnabled}");
                 Assert.That(router.LastWallPushAccepted, Is.True, "Concurrent Ctrl+RMB must push this visible intact wall: " + router.LastWallPushRejection);
                 Assert.That(router.HeldPushWall, Is.SameAs(_wall));
                 Assert.That(_wall.IsHeldPushActive, Is.True);
