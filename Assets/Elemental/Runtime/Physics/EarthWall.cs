@@ -1680,6 +1680,7 @@ namespace Elemental.Runtime.Physics
             bool wasSupported = _pieceAnchored[index];
             bool supported = !held && _structureRuntime.IsPieceSupported(index);
             _pieceAnchored[index] = supported;
+            if (IsFracturedHeldPushActive && _fracturedPushPoses[index].Selected && !held) return;
             if (!supported)
             {
                 if (_pieceDetachedAt[index] < 0f) _pieceDetachedAt[index] = _fractureElapsed;

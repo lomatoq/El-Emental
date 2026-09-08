@@ -95,10 +95,25 @@ namespace Elemental.Tests.PlayMode
                 report.AppendLine($"trial={trial};mass={wall.Body.mass};heldSeconds={driveSeconds};distance={distances[trial]};peakSpeed={peakSpeed};finalSpeed={wall.Body.linearVelocity.magnitude};gap={wall.HeldPushSupportGap}");
                 Assert.That(wall.Body.linearVelocity.magnitude,Is.LessThan(.2f),"Finite drive must settle after release.");
                 Assert.That(float.IsFinite(wall.HeldPushSupportGap),Is.True,"Both runs must remain on the physical floor.");
+                for(int repeat=0;repeat<2;repeat++)
+                {
+                    var repeatStart=wall.Body.position;
+                    Assert.That(wall.TryBeginHeldPush(Vector3.forward),Is.True,"Settled wall must accept another charge.");
+                    yield return new WaitForFixedUpdate();
+                    Assert.That(wall.ReleaseHeldPush(),Is.True);
+                    for(int frame=0;frame<600;frame++)
+                    {
+                        yield return new WaitForFixedUpdate();
+                        if(frame>25&&wall.Body.linearVelocity.magnitude<.15f)break;
+                    }
+                    float repeatDistance=Vector3.Dot(wall.Body.position-repeatStart,Vector3.forward);
+                    report.AppendLine($"trial={trial};repeat={repeat};distance={repeatDistance}");
+                    Assert.That(repeatDistance,Is.GreaterThan(4f),"Second/third ordinary shove must retain useful travel.");
+                }
                 pool.ReleaseTransient(wall);yield return null;yield return new WaitForFixedUpdate();
             }
             System.IO.Directory.CreateDirectory("BuildReports/WallPushInput");System.IO.File.WriteAllText("BuildReports/WallPushInput/tap-hold-range.txt",report.ToString());
-            Assert.That(distances[0],Is.GreaterThan(.5f));
+            Assert.That(distances[0],Is.GreaterThan(4f));
             Assert.That(distances[1],Is.GreaterThanOrEqualTo(distances[0]*2),report.ToString());
         }
         private T Find<T>() where T:Component

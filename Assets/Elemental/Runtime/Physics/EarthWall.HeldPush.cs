@@ -28,11 +28,17 @@ namespace Elemental.Runtime.Physics
         public bool TryBeginHeldPush(Vector3 direction)
         {
             if(_heldPush.Active)return true;
-            if(!isActiveAndEnabled||!IsEmergenceComplete||_fractured||_body==null)return false;
+            if(!isActiveAndEnabled||!IsEmergenceComplete||_body==null)return false;
             var wallNormal=Vector3.ProjectOnPlane(_forward,_up).normalized;
             if(wallNormal.sqrMagnitude<.5f)return false;
             _heldPushSavedDirection=_heldPushDirection;
             _heldPushDirection=Vector3.Dot(direction,wallNormal)<0?-wallNormal:wallNormal;
+            if(_fractured)
+            {
+                if(!BeginFracturedHeldPush(_heldPushDirection))return false;
+                _heldPush.Begin(FracturedHeldPushMass);
+                return true;
+            }
             RevealCracks();
             _heldPushWasKinematic=_body.isKinematic;
             _heldPushSavedVelocity=_heldPushWasKinematic?Vector3.zero:_body.linearVelocity;
@@ -52,6 +58,11 @@ namespace Elemental.Runtime.Physics
         public bool ReleaseHeldPush()
         {
             if(!_heldPush.Active)return false;
+            if(IsFracturedHeldPushActive)
+            {
+                if(!isActiveAndEnabled){CancelHeldPush();return false;}
+                return ReleaseFracturedHeldPush(_heldPush.Release());
+            }
             if(_fractured||_body==null||!isActiveAndEnabled){CancelHeldPush();return false;}
             float charge=_heldPush.Charge01;
             float impulse=_heldPush.Release();
@@ -60,7 +71,7 @@ namespace Elemental.Runtime.Physics
             if(_body.isKinematic)return false;
             if(!_heldPushOwnsCollisionMode){_heldPushPreviousCollisionMode=_body.collisionDetectionMode;_heldPushOwnsCollisionMode=true;}
             _body.collisionDetectionMode=CollisionDetectionMode.ContinuousDynamic;
-            _heldPushReleasedSpeedCap=Mathf.Lerp(MaximumSlideSpeed,28f,charge);
+            _heldPushReleasedSpeedCap=Mathf.Lerp(18f,45f,charge);
             _heldPushCoasting=true;_heldPushDustClock=0;
             _body.AddForce(_heldPushDirection*impulse,ForceMode.Impulse);
             OnEarthMagicReleased(EarthMagicGripKind.VectorField);
@@ -80,7 +91,8 @@ namespace Elemental.Runtime.Physics
         public void CancelHeldPush()
         {
             if(!_heldPush.Active)return;
-            _heldPush.Cancel();if(!_fractured)RestoreHeldPushChargeBody();_heldPushDirection=_heldPushSavedDirection;
+            bool fracturedCharge=IsFracturedHeldPushActive;
+            _heldPush.Cancel();CancelFracturedHeldPush();if(!fracturedCharge&&!_fractured)RestoreHeldPushChargeBody();_heldPushDirection=_heldPushSavedDirection;
         }
         private void ResetHeldPushState()
         {
@@ -100,6 +112,13 @@ namespace Elemental.Runtime.Physics
             using var marker=HeldPushMarker.Auto();
             if(_heldPush.Active)
             {
+                if(IsFracturedHeldPushActive)
+                {
+                    TickFracturedHeldPush();
+                    if(!IsFracturedHeldPushActive){CancelHeldPush();return;}
+                    _heldPush.Step(Time.fixedDeltaTime);
+                    return;
+                }
                 if(_fractured||_body==null){CancelHeldPush();StopHeldPushCoasting();return;}
                 _body.position=_heldPushChargePosition;_body.rotation=_heldPushChargeRotation;
                 _heldPush.Step(Time.fixedDeltaTime);
@@ -162,9 +181,13 @@ namespace Elemental.Runtime.Physics
             float halfWidth=Mathf.Abs(_collider.size.x*scale.x)*.4f;
             var foot=colliderCenter-_up*halfHeight;
             float nearestGap=float.PositiveInfinity;
+            Vector3 supportNormal=_up;
+            float ahead=Mathf.Abs(_collider.size.z*scale.z)*.5f+
+                Mathf.Max(0,Vector3.Dot(tangentVelocity,_heldPushDirection))*Time.fixedDeltaTime;
+            for(int row=0;row<2;row++)
             for(int station=-1;station<=1;station++)
             {
-                Vector3 point=foot+_tangent*(station*halfWidth);
+                Vector3 point=foot+_tangent*(station*halfWidth)+_heldPushDirection*(row*ahead);
                 int count=UnityEngine.Physics.RaycastNonAlloc(point+_up*.35f,-_up,_heldPushSupportHits,1.4f,~0,QueryTriggerInteraction.Ignore);
                 for(int i=0;i<count;i++)
                 {
@@ -174,12 +197,20 @@ namespace Elemental.Runtime.Physics
                     if(Vector3.Dot(hit.normal,_up)<.7f)continue;
                     float gap=Vector3.Dot(point-hit.point,_up);
                     if(gap<-.18f)continue; // A tall obstacle remains a blocking collision, never a step/teleport.
-                    if(gap<nearestGap)nearestGap=gap;
+                    if(gap<nearestGap){nearestGap=gap;supportNormal=hit.normal;}
                 }
             }
             _heldPushSupportGap=nearestGap;
             float supportAcceleration=float.IsFinite(nearestGap)?
-                nearestGap<-.02f?Mathf.Min(12,-nearestGap*60): -Mathf.Min(8,2+Mathf.Max(0,nearestGap)*30):-8;
+                nearestGap<-.005f?Mathf.Clamp(-nearestGap*240-Vector3.Dot(velocity,_up)*14,-8,80): -Mathf.Min(8,2+Mathf.Max(0,nearestGap)*30):-8;
+            if(float.IsFinite(nearestGap)&&nearestGap<.12f)
+            {
+                // Follow a rising support plane before the leading bottom edge hits it.
+                // This supplies vertical velocity through force, without moving the body pose.
+                float climbSpeed=Mathf.Max(0,-Vector3.Dot(tangentVelocity,supportNormal)/Mathf.Max(.7f,Vector3.Dot(_up,supportNormal)));
+                if(climbSpeed>.05f)
+                    supportAcceleration=Mathf.Max(supportAcceleration,Mathf.Clamp((climbSpeed-Vector3.Dot(velocity,_up))/Time.fixedDeltaTime,0,250));
+            }
             _body.AddForce(_up*supportAcceleration,ForceMode.Acceleration);
         }
     }

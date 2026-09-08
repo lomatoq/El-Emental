@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-08 16:16:04Z" end-time="2026-09-08 16:16:24Z" duration="20.0831635">
+  <test-suite type="TestSuite" id="1443" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="322" result="Failed" site="Child" start-time="2026-09-08 16:16:04Z" end-time="2026-09-08 16:16:24Z" duration="20.083164" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1436" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="316" result="Failed" site="Child" start-time="2026-09-08 16:16:04Z" end-time="2026-09-08 16:16:24Z" duration="19.964723" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="11736" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1437" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="316" result="Failed" site="Child" start-time="2026-09-08 16:16:04Z" end-time="2026-09-08 16:16:24Z" duration="19.958615" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1438" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="316" result="Failed" site="Child" start-time="2026-09-08 16:16:04Z" end-time="2026-09-08 16:16:24Z" duration="19.940284" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1439" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="316" result="Failed" site="Child" start-time="2026-09-08 16:16:04Z" end-time="2026-09-08 16:16:24Z" duration="19.937375" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1289" name="EarthWallPushKeyboardProductionTests" fullname="Elemental.Tests.PlayMode.EarthWallPushKeyboardProductionTests" classname="Elemental.Tests.PlayMode.EarthWallPushKeyboardProductionTests" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2026-09-08 16:16:04Z" end-time="2026-09-08 16:16:24Z" duration="19.933251" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1290" name="PairedControlForceTargetsGroundWallOnceAndRespectsOcclusion" fullname="Elemental.Tests.PlayMode.EarthWallPushKeyboardProductionTests.PairedControlForceTargetsGroundWallOnceAndRespectsOcclusion" methodname="PairedControlForceTargetsGroundWallOnceAndRespectsOcclusion" classname="Elemental.Tests.PlayMode.EarthWallPushKeyboardProductionTests" runstate="Runnable" seed="164439725" result="Failed" start-time="2026-09-08 16:16:04Z" end-time="2026-09-08 16:16:24Z" duration="19.871288" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  No repeated backward collision jitter.
+  Expected: less than 0.0250000004f
+  But was:  0.0865748376f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.EarthWallPushKeyboardProductionTests+<PairedControlForceTargetsGroundWallOnceAndRespectsOcclusion>d__7.MoveNext () [0x017b4] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\EarthWallPushKeyboardProductionTests.cs:229
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 4796.20ms; ground=exact baked base, cacheLoad=10.94ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1611.20ms, peakCookingPoll=0.27ms; sync=ArenaInitialize=348.85ms/15;ArenaBevel=334.66ms/175;ArenaMeshPicking=1.62ms/175;WallAwake=89.86ms/1;WallPieceVisuals=53.02ms/40;PlatformPoolAwake=9.09ms/1;PlatformRuntimeMeshes=1.16ms/12;PillarPoolAwake=16.57ms/1;PillarMeshLibrary=3.38ms/1;PillarColumns=13.19ms/1;DebrisPoolAwake=120.59ms/1;HeroFragmentPoolAwake=11.94ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\WallPushInputPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

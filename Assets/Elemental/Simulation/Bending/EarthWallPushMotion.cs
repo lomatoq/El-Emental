@@ -21,7 +21,7 @@ namespace Elemental.Simulation.Bending
         public float Release()
         {
             if(!Active)return 0;
-            float impulse=Math.Min(12000,_mass*14)*(1+1.5f*Charge01);
+            float impulse=Math.Min(24000,_mass*18)*(1+1.5f*Charge01);
             Cancel();return impulse;
         }
         public void Cancel(){Active=false;_age=0;}

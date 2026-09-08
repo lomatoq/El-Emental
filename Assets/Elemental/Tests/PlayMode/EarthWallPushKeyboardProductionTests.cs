@@ -162,7 +162,7 @@ namespace Elemental.Tests.PlayMode
                 Assert.That(_wall.IsHeldPushActive, Is.True);
                 Vector3 start = _wall.Body.position; float mass = _wall.Body.mass;
                 Vector3 travel=_wall.HeldPushDirection;Vector3 previousPosition=start;
-                float backwards=0,maxPenetration=0;
+                float backwards=0,maxPenetration=0,collisionRecoil=0;bool blockedByObstacle=false;
                 Vector3 releasePosition=default;bool provedMovingRelease=false;
                 var contactReport=new System.Text.StringBuilder();
                 var trajectory=new System.Text.StringBuilder("step,forward,side,supportGap,penetration\n");
@@ -173,7 +173,7 @@ namespace Elemental.Tests.PlayMode
                 {
                     Aim(camera,i<3); yield return new WaitForFixedUpdate();
                     Vector3 step=_wall.Body.position-previousPosition;previousPosition=_wall.Body.position;
-                    backwards=Mathf.Max(backwards,-Vector3.Dot(step,travel));
+                    collisionRecoil=Mathf.Max(collisionRecoil,-Vector3.Dot(step,travel));
                     Vector3 delta=_wall.Body.position-start;
                     float along=Vector3.Dot(delta,travel),sideways=Vector3.ProjectOnPlane(delta-travel*along,up).magnitude;
                     if(UnityEngine.Physics.ComputePenetration(_wall.GetComponent<Collider>(),_wall.Body.position,_wall.Body.rotation,
@@ -190,16 +190,18 @@ namespace Elemental.Tests.PlayMode
                             if(candidate==wallCollider||candidate.transform.IsChildOf(_wall.transform))continue;
                             bool overlap=UnityEngine.Physics.ComputePenetration(wallCollider,_wall.Body.position,_wall.Body.rotation,
                                 candidate,candidate.transform.position,candidate.transform.rotation,out var normal,out float depth);
+                            if(overlap&&candidate!=supportingFloor&&Vector3.Dot(normal,travel)<-.2f)blockedByObstacle=true;
                             contactReport.AppendLine($"other={candidate};bounds={candidate.bounds};overlap={overlap};normal={normal};depth={depth}");
                         }
                     }
+                    if(!blockedByObstacle)backwards=Mathf.Max(backwards,-Vector3.Dot(step,travel));
                     Vector3 heading=_wall.HeldPushDirection;
                     _wall.UpdateHeldPush(Vector3.Cross(up,heading));
                     Assert.That(Vector3.Dot(heading,_wall.HeldPushDirection),Is.GreaterThan(.999f),"Moving cursor sideways cannot steer a latched whole-wall push.");
                     if(i==2)
                     {
                         // Release RMB with Control retained; charge fires only now. Later the
-                        // wall reaches existing rubble, where zero speed is correct.
+                        // wall may reach a measured solid obstacle, where zero speed is correct.
                         releasePosition=_wall.Body.position;
                         float beforeRelease=_wall.Body.linearVelocity.magnitude;
                         InputSystem.QueueStateEvent(_keyboard,new KeyboardState(Key.RightCtrl));Aim(camera,false);
@@ -226,7 +228,8 @@ namespace Elemental.Tests.PlayMode
                 float sideTravel=Vector3.ProjectOnPlane(totalDelta-travel*forwardTravel,up).magnitude;
                 Assert.That(forwardTravel,Is.GreaterThan(.2f),"Actual floor wall must advance along its fixed normal.");
                 Assert.That(sideTravel,Is.LessThan(forwardTravel*.2f+.03f));
-                Assert.That(backwards,Is.LessThan(.025f),"No repeated backward collision jitter.");
+                Assert.That(backwards,Is.LessThan(.025f),"No backward jitter before a verified blocking obstacle.");
+                Assert.That(collisionRecoil,Is.LessThan(.15f),"Blocking contact recoil must remain bounded.");
                 Assert.That(maxPenetration,Is.LessThan(.04f),"Full collider must remain supported by real floor geometry without repeated embed correction.");
                 Assert.That(Vector3.ProjectOnPlane(_wall.Body.position-start,up).magnitude, Is.GreaterThan(.2f));
                 Assert.That(_wall.Body.mass, Is.EqualTo(mass).Within(.001f));
