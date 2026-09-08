@@ -154,7 +154,7 @@ namespace MotionMatching
             string featuresPath = Path.Combine(path, fileName + ".mmfeatures");
             if (File.Exists(featuresPath))
             {
-                using (var stream = File.Open(featuresPath, FileMode.Open))
+                using (var stream = File.Open(featuresPath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
                     using (var reader = new BinaryReader(stream, System.Text.Encoding.UTF8))
                     {

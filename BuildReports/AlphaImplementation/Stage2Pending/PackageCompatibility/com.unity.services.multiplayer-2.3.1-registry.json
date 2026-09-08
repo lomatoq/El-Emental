@@ -1,0 +1,27 @@
+{
+  "_upm": {
+    "changelog": "### Changed\n\n- Clients joining a Distributed Authority session now wait up to 315 seconds (previously 120) for the host to publish the session's join code before the join fails.\n\n### Fixed\n\n- Renaming a Matchmaker Environment Config (`.mme`) or Queue Config (`.mmq`) asset in the Project window no longer duplicates it in the Deployment window or throws an `ArgumentException`.\n- Fixed Matchmaker config assets (`.mme` / `.mmq`) opening in the OS default application instead of the configured external script editor.\n- Restarting a Distributed Authority network after `StopNetworkAsync` no longer throws `SessionError.AllocationAlreadyExists`.\n- Fixed a `CS0619` compilation error on Unity 6000.4+ caused by an obsolete `int`-to-`EntityId` implicit cast in the Matchmaker config asset open handler.\n- Fixed a potential `NullReferenceException` that could occur when exiting play mode when using sessions with Netcode for GameObjects.\n- Fixed clients intermittently failing to connect to a Distributed Authority session when the host took more than a few seconds to publish the session's join code. The join now keeps waiting for the full timeout instead of giving up after roughly ten seconds.\n- Joining a Distributed Authority session no longer fails with a `NullReferenceException` or a JSON parsing error when the session metadata on the lobby is temporarily missing, empty, or malformed. These states are now treated as \"the join code has not been published yet\" and the join keeps waiting, failing with a `SessionException` if the timeout is reached.",
+    "gameService": {}
+  },
+  "unity": "6000.0",
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.services.multiplayer@2.3/manual/index.html",
+  "name": "com.unity.services.multiplayer",
+  "version": "2.3.1",
+  "displayName": "Multiplayer Services",
+  "description": "The Multiplayer Services package is a one-stop solution for adding multiplayer elements to a game developed in Unity. The Unity Gaming Services (UGS) Multiplayer services powers these capabilities to define how groups of players interact in your games.",
+  "dependencies": {
+    "com.unity.transport": "2.7.3",
+    "com.unity.collections": "2.6.7",
+    "com.unity.services.qos": "1.4.1",
+    "com.unity.services.core": "1.18.0",
+    "com.unity.services.wire": "1.4.4",
+    "com.unity.services.deployment": "1.7.2",
+    "com.unity.nuget.newtonsoft-json": "3.2.2",
+    "com.unity.modules.unitywebrequest": "1.0.0",
+    "com.unity.services.authentication": "3.7.0"
+  },
+  "dist": {
+    "shasum": "0a90950aff70c8c5fcecd208feb990badcdd9a89",
+    "tarball": "https://download.packages.unity.com/com.unity.services.multiplayer/-/com.unity.services.multiplayer-2.3.1.tgz"
+  }
+}

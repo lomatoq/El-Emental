@@ -152,6 +152,37 @@ namespace Elemental.Tests.PlayMode
                         row.leftTargetStep=Vector3.Distance(feet.LeftTargetWorld,run.previousLeftTarget);
                         row.rightTargetStep=Vector3.Distance(feet.RightTargetWorld,run.previousRightTarget);
                     }
+                    Animator visibleAnimator=actor.Presentation.GetComponentInChildren<Animator>();
+                    Transform visibleHips=visibleAnimator!=null?visibleAnimator.GetBoneTransform(HumanBodyBones.Hips):null;
+                    row.rootTrackLocal=track.transform.InverseTransformPoint(body.position);
+                    row.hipsTrackLocal=visibleHips!=null?track.transform.InverseTransformPoint(visibleHips.position):Vector3.zero;
+                    if(visibleAnimator!=null)
+                    {
+                        Transform leftThigh=visibleAnimator.GetBoneTransform(HumanBodyBones.LeftUpperLeg);
+                        Transform rightThigh=visibleAnimator.GetBoneTransform(HumanBodyBones.RightUpperLeg);
+                        Transform leftKnee=visibleAnimator.GetBoneTransform(HumanBodyBones.LeftLowerLeg);
+                        Transform rightKnee=visibleAnimator.GetBoneTransform(HumanBodyBones.RightLowerLeg);
+                        row.leftThighTrackLocal=track.transform.InverseTransformPoint(leftThigh.position);
+                        row.rightThighTrackLocal=track.transform.InverseTransformPoint(rightThigh.position);
+                        row.leftLegLength=Vector3.Distance(leftThigh.position,leftKnee.position)+Vector3.Distance(leftKnee.position,feet.LeftActualFootWorld);
+                        row.rightLegLength=Vector3.Distance(rightThigh.position,rightKnee.position)+Vector3.Distance(rightKnee.position,feet.RightActualFootWorld);
+                    }
+                    row.actualLeftTrackLocal=track.transform.InverseTransformPoint(feet.LeftActualFootWorld);
+                    row.actualRightTrackLocal=track.transform.InverseTransformPoint(feet.RightActualFootWorld);
+                    row.targetLeftTrackLocal=track.transform.InverseTransformPoint(feet.LeftTargetWorld);
+                    row.targetRightTrackLocal=track.transform.InverseTransformPoint(feet.RightTargetWorld);
+                    if(eamm!=null)
+                    {
+                        row.eammWeight=eamm.AppliedEammMasterWeight;
+                        row.idleKneeWeight=eamm.AppliedIdleKneeEammWeight;
+                        row.sourceLeftFootRelativeHips=eamm.SourceLeftFootHeight;
+                        row.sourceRightFootRelativeHips=eamm.SourceRightFootHeight;
+                        row.hasBaseLeft=eamm.TryGetBaseFootPosition(true,out Vector3 baseLeft);
+                        row.hasBaseRight=eamm.TryGetBaseFootPosition(false,out Vector3 baseRight);
+                        row.baseLeftTrackLocal=track.transform.InverseTransformPoint(baseLeft);
+                        row.baseRightTrackLocal=track.transform.InverseTransformPoint(baseRight);
+                    }
+                    row.continuousSourceFrame=eammSource!=null?eammSource.ContinuousFrame:-1f;
                     run.previousLeftTarget=feet.LeftTargetWorld;
                     run.previousRightTarget=feet.RightTargetWorld;
                     run.hasPreviousTargets=true;
@@ -368,6 +399,12 @@ namespace Elemental.Tests.PlayMode
             public uint leftSupportId,rightSupportId;
             public string leftSupportCollider,rightSupportCollider;
             public bool leftLocked,rightLocked,leftRawOnTrack,rightRawOnTrack;
+            public Vector3 rootTrackLocal,hipsTrackLocal,actualLeftTrackLocal,actualRightTrackLocal;
+            public Vector3 targetLeftTrackLocal,targetRightTrackLocal,baseLeftTrackLocal,baseRightTrackLocal;
+            public float eammWeight,idleKneeWeight,sourceLeftFootRelativeHips,sourceRightFootRelativeHips,continuousSourceFrame;
+            public bool hasBaseLeft,hasBaseRight;
+            public Vector3 leftThighTrackLocal,rightThighTrackLocal;
+            public float leftLegLength,rightLegLength;
         }
     }
 }

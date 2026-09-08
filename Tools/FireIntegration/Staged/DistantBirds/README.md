@@ -1,0 +1,13 @@
+# Distant decorative birds
+
+Stage only: four NEW C# files. No DistantBackdrop, camera, lighting, arena, physics or network edits. Reference `target-12-atmospheric-islands.png` reviewed; birds should be tiny supporting silhouettes, not foreground subjects.
+
+Menu: **Elemental/Environment/Install Or Update Distant Birds**, active EarthCoreSlice in Edit mode. The installer binds the existing authored planet frame and FrontendFlowController reduced-motion settings, creates only `EE_Distant_Birds` and its owned `DistantBirdSilhouette.mat` (URP Unlit, two-sided), and marks the scene dirty without saving. Run twice to check idempotence. It refuses ambiguous owners and a preexisting bird component on a foreign root.
+
+Default: 16 birds in four loose groups, two toward +Z Combat and two toward -Z Main. Authored distance780–1050m, width0.8–1.4m yields approximately1–3 pixels at1080 with the38-degree vertical FoV. Paths are smooth elliptical flights with formation offsets, gentle altitude changes and banking. Individual flap/glide rhythms vary. Reduced motion freezes flight and holds an open-wing glide pose. Motion uses unscaled time so the main menu remains alive while gameplay is paused. Geometry stays anchored in the planet's authored frame.
+
+One renderer, one dynamic mesh,128 vertices,96 triangles; hard maximum24birds/192vertices/144triangles. No objects per bird, colliders, rigidbodies, audio or networking. Geometry and index arrays allocate only on rebuild; each update writes the existing vertex array with a fixed conservative envelope. Mesh is owned and released on disable. Profiler marker: `DistantBirdFlock.UpdateMesh`.
+
+Validation: four Unity assemblies compile offline without warnings. Pure oracle passes8640 trajectory samples including orbital wraps; maximum displacement over1ms is0.005964m, maximum distance from flock center90.364m.100000 evaluations allocate0 managed bytes. Edit tests cover trajectory determinism, continuity, both viewing directions, reduced motion, one-mesh topology, rebuild and absence of physics. These tests compile; actual Unity execution and rendering/profile measurements remain pending.
+
+Next lease: import mapping entries; install twice; inspect both Main and Combat at1080. Birds should be noticeable only as tiny distant marks, with no large black flock or conspicuous synchronized flapping. Check day/night and reduced-motion toggling. Run DistantBirdFlightTests, measure actual UpdateMesh allocations/timing after warmup, verify console clean. Save only after the actual view passes. No claim of visual acceptance or measured Unity-frame cost from the offline oracle.

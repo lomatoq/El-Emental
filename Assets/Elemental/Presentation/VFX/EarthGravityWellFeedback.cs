@@ -15,7 +15,15 @@ namespace Elemental.Presentation.VFX
         [SerializeField] private Light focusLight;
         [SerializeField] private PlanetCameraRig cameraRig;
         [SerializeField] private Transform planetCenter;
+        [Header("Capture dust and stone chips")]
+        [SerializeField] private EarthMaterialFeedbackHub materialFeedback;
+        [SerializeField, Min(.1f), Tooltip("Seconds between cosmetic capture clouds. Pauses with the world.")]
+        private float captureCloudInterval = .32f;
+        [SerializeField, Range(.1f, 3f)] private float captureCloudStrength = .75f;
+        private float _nextCloud;
+        private bool _wasActive;
         private float _nextMote;
+        public void ConfigureMaterialFeedback(EarthMaterialFeedbackHub hub) => materialFeedback = hub;
         private float _nextCameraPulse;
         private uint _sequence;
 
@@ -42,7 +50,8 @@ namespace Elemental.Presentation.VFX
         {
             bool active = executor != null && executor.IsGravityWellActive;
             SetVisible(active);
-            if (!active) return;
+            if (!active) { _wasActive = false; return; }
+            if (Time.timeScale <= 0f) return;
             Vector3 focus = executor.GravityWellFocus;
             Vector3 center = planetCenter != null ? planetCenter.position : Vector3.zero;
             Vector3 up = focus - center;
@@ -52,6 +61,14 @@ namespace Elemental.Presentation.VFX
             float strength = intent == EarthGravityStructureIntent.Neutral
                 ? executor.GravityWellStrength
                 : executor.GravityStructurePhase;
+            if (intent != EarthGravityStructureIntent.Repair && (!_wasActive || Time.time >= _nextCloud))
+            {
+                _nextCloud = Time.time + Mathf.Max(.1f, captureCloudInterval);
+                materialFeedback?.Emit(EarthMaterialFeedbackKind.Extract, focus, up,
+                    captureCloudStrength * Mathf.Lerp(.65f, 1f, strength),
+                    Mathf.Clamp(executor.GravityWellRadius * .28f, .4f, 2.2f));
+            }
+            _wasActive = true;
             float rotationSign = intent == EarthGravityStructureIntent.Disassemble ? -1f : 1f;
             Color gestureColor = intent == EarthGravityStructureIntent.Repair
                 ? new Color(0.28f, 1f, 0.72f, 0.92f)
@@ -108,6 +125,8 @@ namespace Elemental.Presentation.VFX
             };
             motes.Emit(emit, 1);
         }
+
+        private void OnDisable() { _wasActive = false; SetVisible(false); }
 
         private void SetVisible(bool visible)
         {

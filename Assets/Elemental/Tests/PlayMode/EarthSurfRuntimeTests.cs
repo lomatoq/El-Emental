@@ -171,7 +171,10 @@ namespace Elemental.Tests.PlayMode
             PlanetMotor motor = surf != null ? surf.GetComponent<PlanetMotor>() : null;
             Rigidbody body = motor != null ? motor.GetComponent<Rigidbody>() : null;
             ActiveRagdollPuppet puppet = motor != null ? motor.GetComponent<ActiveRagdollPuppet>() : null;
-            Animator animator = motor != null ? motor.GetComponentInChildren<Animator>(true) : null;
+            var presentation = motor != null
+                ? motor.GetComponentInChildren<Elemental.Presentation.Animation.HumanoidCharacterPresentation>(true)
+                : null;
+            Animator animator = presentation != null ? presentation.Animator : null;
             Assert.That(surf, Is.Not.Null);
             Assert.That(motor, Is.Not.Null);
             Assert.That(body, Is.Not.Null);
@@ -190,9 +193,13 @@ namespace Elemental.Tests.PlayMode
                 $"integrity={surf.BoardIntegrity:F1} cells={surf.AttachedCellMask:X4} " +
                 $"acceptsSupport={motor.AcceptsMovingSupport} motorState={motor.MotionState} " +
                 $"lastTarget={surf.LastIntegrityTargetName}");
+            Assert.That(surf.RiderDriftMeters, Is.LessThan(0.6f),
+                "The board must wait for a blocked rider instead of escaping its carry range.");
+            Assert.That(surf.IsActive, Is.True);
             Assert.That(animator, Is.Not.Null);
-            Assert.That(animator.GetBool("Surfing"), Is.True);
-            AnimatorStateInfo surfState = animator.GetCurrentAnimatorStateInfo(0);
+            var driver = animator.GetComponent<Elemental.Presentation.Animation.EarthAnimationDriver>();
+            Assert.That(driver.GetBool(Animator.StringToHash("Surfing")), Is.True);
+            AnimatorStateInfo surfState = driver.GetCurrentAnimatorStateInfo(0);
             Assert.That(surfState.IsName("Surf Crouch") || surfState.IsName("Surf Enter") ||
                         surfState.IsName("Base Layer.Surf Crouch") || surfState.IsName("Base Layer.Surf Enter"),
                 Is.True, "The surf wedge must own a crouched base pose instead of a T-pose or walking legs.");
@@ -200,6 +207,10 @@ namespace Elemental.Tests.PlayMode
                 Assert.That(puppet.CurrentState.Mode, Is.Not.EqualTo(
                     Elemental.Simulation.Characters.CharacterPhysicalMode.FullRagdoll));
 
+            motor.enabled = false;
+            yield return new WaitForFixedUpdate();
+            Assert.That(surf.IsActive, Is.False, "A disabled/ragdolled rider cannot leave an autonomous board travelling.");
+            motor.enabled = true;
             surf.Cancel();
             yield return SceneManager.UnloadSceneAsync(scene);
             yield return null;

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-07 22:24:06Z" end-time="2026-09-07 22:24:22Z" duration="15.6716252">
+  <test-suite type="TestSuite" id="1394" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="289" result="Failed" site="Child" start-time="2026-09-07 22:24:06Z" end-time="2026-09-07 22:24:22Z" duration="15.671625" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1387" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="283" result="Failed" site="Child" start-time="2026-09-07 22:24:06Z" end-time="2026-09-07 22:24:22Z" duration="15.651333" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="7024" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1388" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="283" result="Failed" site="Child" start-time="2026-09-07 22:24:06Z" end-time="2026-09-07 22:24:22Z" duration="15.648188" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1389" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="283" result="Failed" site="Child" start-time="2026-09-07 22:24:06Z" end-time="2026-09-07 22:24:22Z" duration="15.644204" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1390" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="283" result="Failed" site="Child" start-time="2026-09-07 22:24:06Z" end-time="2026-09-07 22:24:22Z" duration="15.640113" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1023" name="SeptemberAnimationRescueRuntimeTests" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" testcasecount="46" result="Failed" site="Child" start-time="2026-09-07 22:24:06Z" end-time="2026-09-07 22:24:22Z" duration="15.636556" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1040" name="ProductionMirroredTurnRawPoseAndNamedContactCurvesProbe" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ProductionMirroredTurnRawPoseAndNamedContactCurvesProbe" methodname="ProductionMirroredTurnRawPoseAndNamedContactCurvesProbe" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1962448293" result="Failed" start-time="2026-09-07 22:24:06Z" end-time="2026-09-07 22:24:22Z" duration="15.618293" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Linebreaker Presentation, phase 0.05: physical foot heights swapped (0.0298/-0.0308m), but named contact curves stayed L 0.8133/0.8133, R 0.5410/0.5410.
+Linebreaker Presentation, phase 0.60: physical foot heights swapped (0.0414/-0.0339m), but named contact curves stayed L 0.6509/0.6509, R 0.8370/0.8370.
+Linebreaker Presentation, phase 0.65: physical foot heights swapped (0.0506/-0.0454m), but named contact curves stayed L 0.5741/0.5741, R 0.8811/0.8811.
+Linebreaker Presentation, phase 0.70: physical foot heights swapped (0.0615/-0.0582m), but named contact curves stayed L 0.5193/0.5193, R 0.8661/0.8661.
+Linebreaker Presentation, phase 0.75: physical foot heights swapped (0.0683/-0.0665m), but named contact curves stayed L 0.5286/0.5286, R 0.8448/0.8448.
+Linebreaker Presentation, phase 0.80: physical foot heights swapped (0.0697/-0.0691m), but named contact curves stayed L 0.6057/0.6057, R 0.8035/0.8035.
+Linebreaker Presentation, phase 0.85: physical foot heights swapped (0.0654/-0.0655m), but named contact curves stayed L 0.6024/0.6024, R 0.7701/0.7701.
+Linebreaker X Bot Presentation, phase 0.05: physical foot heights swapped (0.0298/-0.0308m), but named contact curves stayed L 0.8133/0.8133, R 0.5410/0.5410.
+Linebreaker X Bot Presentation, phase 0.60: physical foot heights swapped (0.0414/-0.0339m), but named contact curves stayed L 0.6509/0.6509, R 0.8370/0.8370.
+Linebreaker X Bot Presentation, phase 0.65: physical foot heights swapped (0.0506/-0.0454m), but named contact curves stayed L 0.5741/0.5741, R 0.8811/0.8811.
+Linebreaker X Bot Presentation, phase 0.70: physical foot heights swapped (0.0615/-0.0582m), but named contact curves stayed L 0.5193/0.5193, R 0.8661/0.8661.
+Linebreaker X Bot Presentation, phase 0.75: physical foot heights swapped (0.0683/-0.0665m), but named contact curves stayed L 0.5286/0.5286, R 0.8448/0.8448.
+Linebreaker X Bot Presentation, phase 0.80: physical foot heights swapped (0.0697/-0.0691m), but named contact curves stayed L 0.6057/0.6057, R 0.8035/0.8035.
+Linebreaker X Bot Presentation, phase 0.85: physical foot heights swapped (0.0654/-0.0655m), but named contact curves stayed L 0.6024/0.6024, R 0.7701/0.7701.
+  Expected: <empty>
+  But was:  < "Linebreaker Presentation, phase 0.05: physical foot heights swapped (0.0298/-0.0308m), but named contact curves stayed L 0.8133/0.8133, R 0.5410/0.5410.", "Linebreaker Presentation, phase 0.60: physical foot heights swapped (0.0414/-0.0339m), but named contact curves stayed L 0.6509/0.6509, R 0.8370/0.8370.", "Linebreaker Presentation, phase 0.65: physical foot heights swapped (0.0506/-0.0454m), but named contact curves stayed L 0.5741/0.5741, R 0.8811/0.8811.", "Linebreaker Presentation, phase 0.70: physical foot heights swapped (0.0615/-0.0582m), but named contact curves stayed L 0.5193/0.5193, R 0.8661/0.8661.", "Linebreaker Presentation, phase 0.75: physical foot heights swapped (0.0683/-0.0665m), but named contact curves stayed L 0.5286/0.5286, R 0.8448/0.8448.", "Linebreaker Presentation, phase 0.80: physical foot heights swapped (0.0697/-0.0691m), but named contact curves stayed L 0.6057/0.6057, R 0.8035/0.8035.", "Linebreaker Presentation, phase 0.85: physical foot heights swapped (0.0654/-0.0655m), but named contact curves stayed L 0.6024/0.6024, R 0.7701/0.7701.", "Linebreaker X Bot Presentation, phase 0.05: physical foot heights swapped (0.0298/-0.0308m), but named contact curves stayed L 0.8133/0.8133, R 0.5410/0.5410.", "Linebreaker X Bot Presentation, phase 0.60: physical foot heights swapped (0.0414/-0.0339m), but named contact curves stayed L 0.6509/0.6509, R 0.8370/0.8370.", "Linebreaker X Bot Presentation, phase 0.65: physical foot heights swapped (0.0506/-0.0454m), but named contact curves stayed L 0.5741/0.5741, R 0.8811/0.8811."... >
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+<ProductionMirroredTurnRawPoseAndNamedContactCurvesProbe>d__27.MoveNext () [0x00483] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\SeptemberAnimationRescueRuntimeTests.MirroredTurnProbe.cs:100
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Too many meshes passed to SetMeshes, size will be clamped (8, max 4)
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3350.65ms; ground=exact baked base, cacheLoad=10.52ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1026.91ms, peakCookingPoll=0.31ms; sync=ArenaInitialize=327.40ms/15;ArenaBevel=314.58ms/175;ArenaMeshPicking=1.40ms/175;WallAwake=83.28ms/1;WallPieceVisuals=51.48ms/40;PlatformPoolAwake=8.16ms/1;PlatformRuntimeMeshes=1.22ms/12;PillarPoolAwake=26.51ms/1;PillarMeshLibrary=5.16ms/1;PillarColumns=21.35ms/1;DebrisPoolAwake=53.46ms/1;HeroFragmentPoolAwake=14.02ms/1.
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.05, feet L=(-0.0676, 0.0331, 0.2034) R=(0.0926, 0.0033, -0.1506), contact L/R=0.8133/0.5410, phase L/R=0.0563/0.5563
+[Raw turn] Linebreaker Presentation sign=1, phase=0.05, feet L=(-0.0785, 0.0030, -0.1385) R=(0.0688, 0.0338, 0.2231), contact L/R=0.8133/0.5410, phase L/R=0.0563/0.5563
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.10, feet L=(-0.0622, 0.0302, 0.1966) R=(0.0923, 0.0131, -0.1629), contact L/R=0.8477/0.4002, phase L/R=0.1000/0.6000
+[Raw turn] Linebreaker Presentation sign=1, phase=0.10, feet L=(-0.0778, 0.0128, -0.1501) R=(0.0619, 0.0301, 0.2163), contact L/R=0.8477/0.4002, phase L/R=0.1000/0.6000
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.15, feet L=(-0.0597, 0.0282, 0.1910) R=(0.0959, 0.0248, -0.1727), contact L/R=0.8903/0.2768, phase L/R=0.1463/0.6463
+[Raw turn] Linebreaker Presentation sign=1, phase=0.15, feet L=(-0.0806, 0.0250, -0.1598) R=(0.0587, 0.0275, 0.2108), contact L/R=0.8903/0.2768, phase L/R=0.1463/0.6463
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.20, feet L=(-0.0597, 0.0282, 0.1871) R=(0.1062, 0.0277, -0.1627), contact L/R=0.9286/0.2199, phase L/R=0.1938/0.6938
+[Raw turn] Linebreaker Presentation sign=1, phase=0.20, feet L=(-0.0899, 0.0294, -0.1517) R=(0.0580, 0.0270, 0.2068), contact L/R=0.9286/0.2199, phase L/R=0.1938/0.6938
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.25, feet L=(-0.0602, 0.0285, 0.1837) R=(0.1236, 0.0212, -0.1312), contact L/R=0.9493/0.1924, phase L/R=0.2500/0.7500
+[Raw turn] Linebreaker Presentation sign=1, phase=0.25, feet L=(-0.1066, 0.0249, -0.1241) R=(0.0573, 0.0268, 0.2031), contact L/R=0.9493/0.1924, phase L/R=0.2500/0.7500
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.30, feet L=(-0.0609, 0.0284, 0.1807) R=(0.1432, 0.0152, -0.0927), contact L/R=1.0110/0.2676, phase L/R=0.3063/0.8063
+[Raw turn] Linebreaker Presentation sign=1, phase=0.30, feet L=(-0.1268, 0.0203, -0.0915) R=(0.0568, 0.0265, 0.1995), contact L/R=1.0110/0.2676, phase L/R=0.3063/0.8063
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.35, feet L=(-0.0605, 0.0290, 0.1807) R=(0.1557, 0.0132, -0.0628), contact L/R=0.9880/0.4974, phase L/R=0.3537/0.8537
+[Raw turn] Linebreaker Presentation sign=1, phase=0.35, feet L=(-0.1414, 0.0191, -0.0672) R=(0.0552, 0.0269, 0.1990), contact L/R=0.9880/0.4974, phase L/R=0.3537/0.8537
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.40, feet L=(-0.0601, 0.0297, 0.1822) R=(0.1565, 0.0106, -0.0499), contact L/R=0.9222/0.6380, phase L/R=0.4000/0.9000
+[Raw turn] Linebreaker Presentation sign=1, phase=0.40, feet L=(-0.1437, 0.0168, -0.0567) R=(0.0534, 0.0274, 0.1998), contact L/R=0.9222/0.6380, phase L/R=0.4000/0.9000
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.45, feet L=(-0.0583, 0.0320, 0.1858) R=(0.1482, 0.0063, -0.0482), contact L/R=0.8430/0.7102, phase L/R=0.4438/0.7875
+[Raw turn] Linebreaker Presentation sign=1, phase=0.45, feet L=(-0.1353, 0.0123, -0.0542) R=(0.0500, 0.0293, 0.2027), contact L/R=0.8430/0.7102, phase L/R=0.4438/0.7875
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.50, feet L=(-0.0556, 0.0368, 0.1910) R=(0.1393, 0.0056, -0.0479), contact L/R=0.7015/0.7468, phase L/R=0.5000/0.0000
+[Raw turn] Linebreaker Presentation sign=1, phase=0.50, feet L=(-0.1254, 0.0116, -0.0522) R=(0.0456, 0.0339, 0.2072), contact L/R=0.7015/0.7468, phase L/R=0.5000/0.0000
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.55, feet L=(-0.0536, 0.0415, 0.1997) R=(0.1316, 0.0054, -0.0478), contact L/R=0.7063/0.7821, phase L/R=0.5563/0.0563
+[Raw turn] Linebreaker Presentation sign=1, phase=0.55, feet L=(-0.1170, 0.0116, -0.0503) R=(0.0431, 0.0389, 0.2157), contact L/R=0.7063/0.7821, phase L/R=0.5563/0.0563
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.60, feet L=(-0.0533, 0.0460, 0.2113) R=(0.1265, 0.0046, -0.0479), contact L/R=0.6509/0.8370, phase L/R=0.6000/0.1000
+[Raw turn] Linebreaker Presentation sign=1, phase=0.60, feet L=(-0.1115, 0.0110, -0.0486) R=(0.0450, 0.0449, 0.2281), contact L/R=0.6509/0.8370, phase L/R=0.6000/0.1000
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.65, feet L=(-0.0587, 0.0540, 0.2285) R=(0.1253, 0.0033, -0.0506), contact L/R=0.5741/0.8811, phase L/R=0.6463/0.1463
+[Raw turn] Linebreaker Presentation sign=1, phase=0.65, feet L=(-0.1100, 0.0096, -0.0493) R=(0.0543, 0.0550, 0.2460), contact L/R=0.5741/0.8811, phase L/R=0.6463/0.1463
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.70, feet L=(-0.0702, 0.0631, 0.2437) R=(0.1270, 0.0016, -0.0572), contact L/R=0.5193/0.8661, phase L/R=0.6938/0.1938
+[Raw turn] Linebreaker Presentation sign=1, phase=0.70, feet L=(-0.1116, 0.0074, -0.0535) R=(0.0693, 0.0657, 0.2618), contact L/R=0.5193/0.8661, phase L/R=0.6938/0.1938
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.75, feet L=(-0.0846, 0.0686, 0.2498) R=(0.1280, 0.0003, -0.0670), contact L/R=0.5286/0.8448, phase L/R=0.7500/0.2500
+[Raw turn] Linebreaker Presentation sign=1, phase=0.75, feet L=(-0.1125, 0.0055, -0.0611) R=(0.0863, 0.0720, 0.2685), contact L/R=0.5286/0.8448, phase L/R=0.7500/0.2500
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.80, feet L=(-0.0920, 0.0689, 0.2503) R=(0.1264, -0.0008, -0.0797), contact L/R=0.6057/0.8035, phase L/R=0.8063/0.3063
+[Raw turn] Linebreaker Presentation sign=1, phase=0.80, feet L=(-0.1110, 0.0037, -0.0723) R=(0.0950, 0.0728, 0.2693), contact L/R=0.6057/0.8035, phase L/R=0.8063/0.3063
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.85, feet L=(-0.0924, 0.0639, 0.2455) R=(0.1223, -0.0015, -0.0940), contact L/R=0.6024/0.7701, phase L/R=0.8537/0.3537
+[Raw turn] Linebreaker Presentation sign=1, phase=0.85, feet L=(-0.1071, 0.0022, -0.0855) R=(0.0959, 0.0677, 0.2648), contact L/R=0.6024/0.7701, phase L/R=0.8537/0.3537
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.90, feet L=(-0.0903, 0.0547, 0.2348) R=(0.1158, -0.0013, -0.1096), contact L/R=0.6171/0.7379, phase L/R=0.9000/0.4000
+[Raw turn] Linebreaker Presentation sign=1, phase=0.90, feet L=(-0.1010, 0.0013, -0.1002) R=(0.0937, 0.0580, 0.2543), contact L/R=0.6171/0.7379, phase L/R=0.9000/0.4000
+[Raw turn] Linebreaker Presentation sign=-1, phase=0.95, feet L=(-0.0848, 0.0437, 0.2211) R=(0.1074, -0.0007, -0.1259), contact L/R=0.6634/0.7183, phase L/R=0.7875/0.4438
+[Raw turn] Linebreaker Presentation sign=1, phase=0.95, feet L=(-0.0930, 0.0008, -0.1155) R=(0.0880, 0.0461, 0.2406), contact L/R=0.6634/0.7183, phase L/R=0.7875/0.4438
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.05, feet L=(-0.0676, 0.0331, 0.2034) R=(0.0926, 0.0033, -0.1506), contact L/R=0.8133/0.5410, phase L/R=0.0563/0.5563
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.05, feet L=(-0.0785, 0.0030, -0.1385) R=(0.0688, 0.0338, 0.2231), contact L/R=0.8133/0.5410, phase L/R=0.0563/0.5563
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.10, feet L=(-0.0622, 0.0302, 0.1966) R=(0.0923, 0.0131, -0.1629), contact L/R=0.8477/0.4002, phase L/R=0.1000/0.6000
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.10, feet L=(-0.0778, 0.0128, -0.1501) R=(0.0619, 0.0301, 0.2163), contact L/R=0.8477/0.4002, phase L/R=0.1000/0.6000
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.15, feet L=(-0.0597, 0.0282, 0.1910) R=(0.0959, 0.0248, -0.1727), contact L/R=0.8903/0.2768, phase L/R=0.1463/0.6463
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.15, feet L=(-0.0806, 0.0250, -0.1598) R=(0.0587, 0.0275, 0.2108), contact L/R=0.8903/0.2768, phase L/R=0.1463/0.6463
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.20, feet L=(-0.0597, 0.0282, 0.1871) R=(0.1062, 0.0277, -0.1627), contact L/R=0.9286/0.2199, phase L/R=0.1938/0.6938
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.20, feet L=(-0.0899, 0.0294, -0.1517) R=(0.0580, 0.0270, 0.2068), contact L/R=0.9286/0.2199, phase L/R=0.1938/0.6938
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.25, feet L=(-0.0602, 0.0285, 0.1837) R=(0.1236, 0.0212, -0.1312), contact L/R=0.9493/0.1924, phase L/R=0.2500/0.7500
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.25, feet L=(-0.1066, 0.0249, -0.1241) R=(0.0573, 0.0268, 0.2031), contact L/R=0.9493/0.1924, phase L/R=0.2500/0.7500
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.30, feet L=(-0.0609, 0.0284, 0.1807) R=(0.1432, 0.0152, -0.0927), contact L/R=1.0110/0.2676, phase L/R=0.3063/0.8063
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.30, feet L=(-0.1268, 0.0203, -0.0915) R=(0.0568, 0.0265, 0.1995), contact L/R=1.0110/0.2676, phase L/R=0.3063/0.8063
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.35, feet L=(-0.0605, 0.0290, 0.1807) R=(0.1557, 0.0132, -0.0628), contact L/R=0.9880/0.4974, phase L/R=0.3537/0.8537
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.35, feet L=(-0.1414, 0.0191, -0.0672) R=(0.0552, 0.0269, 0.1990), contact L/R=0.9880/0.4974, phase L/R=0.3537/0.8537
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.40, feet L=(-0.0601, 0.0297, 0.1822) R=(0.1565, 0.0106, -0.0499), contact L/R=0.9222/0.6380, phase L/R=0.4000/0.9000
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.40, feet L=(-0.1437, 0.0168, -0.0567) R=(0.0534, 0.0274, 0.1998), contact L/R=0.9222/0.6380, phase L/R=0.4000/0.9000
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.45, feet L=(-0.0583, 0.0320, 0.1858) R=(0.1482, 0.0063, -0.0482), contact L/R=0.8430/0.7102, phase L/R=0.4438/0.7875
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.45, feet L=(-0.1353, 0.0123, -0.0542) R=(0.0500, 0.0293, 0.2027), contact L/R=0.8430/0.7102, phase L/R=0.4438/0.7875
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.50, feet L=(-0.0556, 0.0368, 0.1910) R=(0.1393, 0.0056, -0.0479), contact L/R=0.7015/0.7468, phase L/R=0.5000/0.0000
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.50, feet L=(-0.1254, 0.0116, -0.0522) R=(0.0456, 0.0339, 0.2072), contact L/R=0.7015/0.7468, phase L/R=0.5000/0.0000
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.55, feet L=(-0.0536, 0.0415, 0.1997) R=(0.1316, 0.0054, -0.0478), contact L/R=0.7063/0.7821, phase L/R=0.5563/0.0563
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.55, feet L=(-0.1170, 0.0116, -0.0503) R=(0.0431, 0.0389, 0.2157), contact L/R=0.7063/0.7821, phase L/R=0.5563/0.0563
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.60, feet L=(-0.0533, 0.0460, 0.2113) R=(0.1265, 0.0046, -0.0479), contact L/R=0.6509/0.8370, phase L/R=0.6000/0.1000
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.60, feet L=(-0.1115, 0.0110, -0.0486) R=(0.0450, 0.0449, 0.2281), contact L/R=0.6509/0.8370, phase L/R=0.6000/0.1000
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.65, feet L=(-0.0587, 0.0540, 0.2285) R=(0.1253, 0.0033, -0.0506), contact L/R=0.5741/0.8811, phase L/R=0.6463/0.1463
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.65, feet L=(-0.1100, 0.0096, -0.0493) R=(0.0543, 0.0550, 0.2460), contact L/R=0.5741/0.8811, phase L/R=0.6463/0.1463
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.70, feet L=(-0.0702, 0.0631, 0.2437) R=(0.1270, 0.0016, -0.0572), contact L/R=0.5193/0.8661, phase L/R=0.6938/0.1938
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.70, feet L=(-0.1116, 0.0074, -0.0535) R=(0.0693, 0.0657, 0.2618), contact L/R=0.5193/0.8661, phase L/R=0.6938/0.1938
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.75, feet L=(-0.0846, 0.0686, 0.2498) R=(0.1280, 0.0003, -0.0670), contact L/R=0.5286/0.8448, phase L/R=0.7500/0.2500
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.75, feet L=(-0.1125, 0.0055, -0.0611) R=(0.0863, 0.0720, 0.2685), contact L/R=0.5286/0.8448, phase L/R=0.7500/0.2500
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.80, feet L=(-0.0920, 0.0689, 0.2503) R=(0.1264, -0.0008, -0.0797), contact L/R=0.6057/0.8035, phase L/R=0.8063/0.3063
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.80, feet L=(-0.1110, 0.0037, -0.0723) R=(0.0950, 0.0728, 0.2693), contact L/R=0.6057/0.8035, phase L/R=0.8063/0.3063
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.85, feet L=(-0.0924, 0.0639, 0.2455) R=(0.1223, -0.0015, -0.0940), contact L/R=0.6024/0.7701, phase L/R=0.8537/0.3537
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.85, feet L=(-0.1071, 0.0022, -0.0855) R=(0.0959, 0.0677, 0.2648), contact L/R=0.6024/0.7701, phase L/R=0.8537/0.3537
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.90, feet L=(-0.0903, 0.0547, 0.2348) R=(0.1158, -0.0013, -0.1096), contact L/R=0.6171/0.7379, phase L/R=0.9000/0.4000
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.90, feet L=(-0.1010, 0.0013, -0.1002) R=(0.0937, 0.0580, 0.2543), contact L/R=0.6171/0.7379, phase L/R=0.9000/0.4000
+[Raw turn] Linebreaker X Bot Presentation sign=-1, phase=0.95, feet L=(-0.0848, 0.0437, 0.2211) R=(0.1074, -0.0007, -0.1259), contact L/R=0.6634/0.7183, phase L/R=0.7875/0.4438
+[Raw turn] Linebreaker X Bot Presentation sign=1, phase=0.95, feet L=(-0.0930, 0.0008, -0.1155) R=(0.0880, 0.0461, 0.2406), contact L/R=0.6634/0.7183, phase L/R=0.7875/0.4438
+[Raw mirrored turn probe] 76 samples, 20 observed asymmetric pose swaps, 14 confirmed unchanged-contact mismatches. Full foot positions and four parameters: BuildReports/GroundingAnimationFollowup/RawMirroredTurnProbe.json
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\RawMirroredTurnProbePlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -208,7 +208,17 @@ namespace Elemental.Simulation.Characters
                 if (leftWants && rightWants)
                 {
                     bool chooseLeft;
-                    if (left.Maintained != right.Maintained)
+                    // Authored pivot confidence is continuous: the actual turn
+                    // clip never drops its first foot below the generic .22
+                    // release threshold. Let an eligible, clearly stronger
+                    // opposite contact take over instead of pinning that foot
+                    // through the entire cycle and dragging the pelvis down.
+                    bool authoredPivotTransfer = leftInput.PivotingInPlace && rightInput.PivotingInPlace &&
+                        leftInput.HasAuthoredContact && rightInput.HasAuthoredContact &&
+                        math.abs(leftInput.AuthoredContact01 - rightInput.AuthoredContact01) >= .15f;
+                    if (authoredPivotTransfer)
+                        chooseLeft = leftInput.AuthoredContact01 > rightInput.AuthoredContact01;
+                    else if (left.Maintained != right.Maintained)
                         chooseLeft = left.Maintained;
                     else if (math.abs(leftInput.CapturePriority - rightInput.CapturePriority) > 0.0001f)
                         chooseLeft = leftInput.CapturePriority > rightInput.CapturePriority;
@@ -326,29 +336,21 @@ namespace Elemental.Simulation.Characters
 
             float stancePhase = (input.IsLeft ? 1f : -1f) *
                                 math.cos(input.GaitPhase01 * math.PI * 2f);
-            bool phaseAllowsStance = input.PivotingInPlace ||
-                                     (input.HasAuthoredContact
+            bool phaseAllowsStance = (input.HasAuthoredContact
                                          ? input.AuthoredContact01 >= 0.22f
-                                         : stancePhase >= -0.15f);
+                                         : input.PivotingInPlace || stancePhase >= -0.15f);
             float maximumLockReach = input.PivotingInPlace
-                // A 180-degree authored pivot moves the uncorrected Humanoid
-                // foot through a wide local arc even though the support anchor
-                // itself is valid. Releasing at the ordinary walk reach caused
-                // a 20 cm / 180 degree mid-turn foot swap in the live audit.
-                ? 0.80f
+                // Permit a small pivot arc, then transfer stance before the
+                // planted ankle crosses the other leg or straightens the knee.
+                ? 0.30f
                 : MaximumLockReach;
             bool anchorReachValid = math.distance(
                 input.FallbackTargetLocal,
                 previous.AnchorLocal) <= maximumLockReach;
-            // During an in-place pivot the authored swing arc is not evidence
-            // that the support anchor vanished. Once one foot owns the same
-            // support, retain it through the turn; releasing because the source
-            // clip lifts that foot created a visible 120 ms no-contact gap and
-            // then swapped the whole body to the other leg. Ordinary locomotion
-            // still releases by clearance/phase/reach exactly as before.
-            bool clearanceAllowsMaintenance = input.PivotingInPlace ||
-                                              input.SoleClearance <= ReleaseClearance;
-            bool reachAllowsMaintenance = input.PivotingInPlace || anchorReachValid;
+            // A pivot is still a sequence of steps. It must yield to authored
+            // swing and obey reach/clearance just like ordinary locomotion.
+            bool clearanceAllowsMaintenance = input.SoleClearance <= ReleaseClearance;
+            bool reachAllowsMaintenance = anchorReachValid;
             if (previous.Locked && sameSupport && phaseAllowsStance &&
                 reachAllowsMaintenance && clearanceAllowsMaintenance)
             {
@@ -510,6 +512,18 @@ namespace Elemental.Simulation.Characters
                     ReleaseHysteresisSeconds);
             }
             prepared.Reason = EarthFootContactReason.Swing;
+        }
+
+        public static EarthFootContactDecision ReleaseUnreachable(
+            in EarthFootContactDecision decision, in EarthFootContactInput input)
+        {
+            var prepared = new PreparedFoot();
+            EarthFootContactState state = decision.State;
+            Release(ref state, EarthFootContactReason.Swing, ref prepared);
+            state.HasFilteredTarget = false;
+            state.FilterVelocityLocal = float3.zero;
+            return new EarthFootContactDecision(in state, EarthFootContactReason.Swing,
+                0f, input.FallbackTargetLocal, input.ContactNormalLocal, false, false);
         }
 
         private static void Release(

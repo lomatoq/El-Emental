@@ -1,3 +1,5 @@
+using System;
+using Unity.Profiling;
 using Elemental.Runtime.Physics;
 using Elemental.Runtime.World;
 using Elemental.Simulation.Characters;
@@ -7,7 +9,7 @@ using UnityEngine;
 namespace Elemental.Runtime.Characters
 {
     [DisallowMultipleComponent]
-    public sealed class EarthMvpDuelController : MonoBehaviour
+    public sealed partial class EarthMvpDuelController : MonoBehaviour
     {
         [SerializeField] private ActiveRagdollPuppet playerPuppet;
         [SerializeField] private HumanoidRagdollRig playerHumanoidRagdoll;
@@ -24,6 +26,112 @@ namespace Elemental.Runtime.Characters
         [SerializeField] private EarthCharacterImpactTarget botCharacterImpactTarget;
         [SerializeField, Range(3f, 4f)] private float respawnSeconds = 3.5f;
         [SerializeField, Range(0f, 4f)] private float initialPlayerProtectionSeconds = 2.5f;
+
+        [SerializeField, Min(1f)] private float roundDurationSeconds = 300f;
+        [SerializeField, Min(1f)] private float maximumHealth = 100f;
+        [SerializeField] private EarthDuelDamageSettings damageSettings = EarthDuelDamageSettings.Default;
+        private static readonly ProfilerMarker MatchMarker = new ProfilerMarker("Elemental.Duel.MatchTick");
+        [SerializeField] private Behaviour[] roundInputBehaviours = Array.Empty<Behaviour>();
+        private bool[] _roundControlWasEnabled;
+        private bool _roundControlsSuspended;
+        private EarthDuelMatchState _match;
+        private EarthDuelMatchState Match => _match ??= new EarthDuelMatchState(
+            Mathf.Max(1f, roundDurationSeconds), Mathf.Max(1f, maximumHealth));
+        public float PlayerHealth => Match.PlayerHealth;
+        public float BotHealth => Match.BotHealth;
+        public float MaximumHealth => Match.MaximumHealth;
+        public int PlayerScore => Match.PlayerScore;
+        public int BotScore => Match.BotScore;
+        public float RoundRemainingSeconds => Match.RemainingSeconds;
+        public bool IsRoundOver => Match.IsOver;
+        public bool CombatAllowed => Match.CombatAllowed;
+        public Transform PlayerTransform => playerBody != null ? playerBody.transform : null;
+        public Transform BotTransform => botBody != null ? botBody.transform : null;
+        public event Action StateChanged;
+        public event Action RoundRestarted;
+
+        public void ConfigureRoundControls(params Behaviour[] controls)
+        {
+            SetRoundControlsSuspended(false);
+            roundInputBehaviours = controls ?? Array.Empty<Behaviour>();
+            _roundControlWasEnabled = new bool[roundInputBehaviours.Length];
+            if (Application.isPlaying) SetRoundControlsSuspended(!CombatAllowed);
+        }
+
+        private void SetRoundControlsSuspended(bool suspended)
+        {
+            if (_roundControlsSuspended == suspended) return;
+            if (_roundControlWasEnabled == null || _roundControlWasEnabled.Length != roundInputBehaviours.Length)
+                _roundControlWasEnabled = new bool[roundInputBehaviours.Length];
+            _roundControlsSuspended = suspended;
+            for (int index = 0; index < roundInputBehaviours.Length; index++)
+            {
+                Behaviour control = roundInputBehaviours[index];
+                if (control == null || control == this) continue;
+                if (suspended)
+                {
+                    _roundControlWasEnabled[index] = control.enabled;
+                    control.enabled = false;
+                }
+                else if (_roundControlWasEnabled[index]) control.enabled = true;
+            }
+            if (suspended && playerBody != null)
+            {
+                MagicExecutor executor = playerBody.GetComponent<MagicExecutor>();
+                executor?.CancelHeldEarthControl();
+                executor?.CancelVectorField();
+                executor?.CancelGravityWell();
+                playerBody.GetComponent<EarthSurfController>()?.Cancel();
+            }
+        }
+
+        public void SetRoundReady(bool ready)
+        {
+            if (ArenaResetInProgress) { _resumeAfterArenaRestore = ready; ready = false; }
+            if (ready) CaptureArenaBaselineIfReady();
+            Match.IsReady = ready;
+            SetRoundControlsSuspended(!CombatAllowed);
+            if (botController != null) botController.enabled = CombatAllowed && _botState.Phase == EarthDuelFighterPhase.Active;
+            StateChanged?.Invoke();
+        }
+
+        public void RestartRound()
+        {
+            if (!HasSimulationAuthority) return;
+            CaptureArenaBaselineIfReady();
+            bool resume = Match.IsReady;
+            RestoreArenaForMatchBoundary();
+            if (ArenaResetInProgress) _resumeAfterArenaRestore = resume;
+            MarkArenaMatchStarted();
+            Match.Restart();
+            PlayerKnockoutCount = BotKnockoutCount = 0;
+            _playerState = _botState = EarthDuelFighterState.Active;
+            if (ArenaResetInProgress) _respawnAfterArenaRestore = true;
+            else { RespawnPlayer(); RespawnBot(); }
+            if (botController != null) botController.enabled = CombatAllowed;
+            SetRoundControlsSuspended(!CombatAllowed);
+            RoundRestarted?.Invoke();
+            StateChanged?.Invoke();
+        }
+
+        public bool CanReceiveDamage(EarthDuelFighterId fighter) => HasSimulationAuthority && CombatAllowed &&
+            (fighter == EarthDuelFighterId.Player ? _playerState.Phase : _botState.Phase) == EarthDuelFighterPhase.Active;
+
+        public float ResolveDamage(EarthCharacterImpactSourceKind source, float reactionVelocity, float closingSpeed) =>
+            damageSettings.Resolve(source, reactionVelocity, closingSpeed);
+
+        public bool ApplyDamage(EarthDuelFighterId fighter, float amount, in RagdollHandoff handoff)
+        {
+            if (!CanReceiveDamage(fighter)) return false;
+            bool died = Match.Damage(fighter, amount);
+            if (died)
+            {
+                if (fighter == EarthDuelFighterId.Player) KnockoutPlayer(in handoff);
+                else KnockoutBot(in handoff);
+            }
+            StateChanged?.Invoke();
+            return died;
+        }
 
         private EarthDuelFighterState _playerState = EarthDuelFighterState.Active;
         private EarthDuelFighterState _botState = EarthDuelFighterState.Active;
@@ -93,6 +201,8 @@ namespace Elemental.Runtime.Characters
             CaptureSpawnPoses();
             _playerState = EarthDuelFighterState.Active;
             _botState = EarthDuelFighterState.Active;
+            Match.Restart();
+            SetRoundReady(true);
             Subscribe();
         }
 
@@ -102,6 +212,7 @@ namespace Elemental.Runtime.Characters
             float physicalSeconds = 0.72f,
             float recoverySeconds = 0.72f)
         {
+            if (!CanReceiveDamage(fighter)) return;
             if (fighter == EarthDuelFighterId.Player)
             {
                 if (_playerState.Phase != EarthDuelFighterPhase.Active ||
@@ -128,30 +239,29 @@ namespace Elemental.Runtime.Characters
 
         public void KnockoutPlayer(Vector3 launchVelocityChange)
         {
-            KnockoutPlayer(RagdollHandoff.Uniform(launchVelocityChange));
+            RequestKnockout(EarthDuelFighterId.Player, RagdollHandoff.Uniform(launchVelocityChange));
         }
 
         public void KnockoutBot(Vector3 launchVelocityChange)
         {
-            KnockoutBot(RagdollHandoff.Uniform(launchVelocityChange));
+            RequestKnockout(EarthDuelFighterId.Bot, RagdollHandoff.Uniform(launchVelocityChange));
         }
 
         public void RequestKnockout(EarthDuelFighterId fighter, in RagdollHandoff handoff)
         {
-            if (fighter == EarthDuelFighterId.Player) KnockoutPlayer(in handoff);
-            else KnockoutBot(in handoff);
+            ApplyDamage(fighter, Match.MaximumHealth, in handoff);
         }
 
         private void KnockoutPlayer(in RagdollHandoff handoff)
         {
-            if (_playerState.Phase != EarthDuelFighterPhase.Active || playerPuppet == null) return;
+            if (_playerState.Phase != EarthDuelFighterPhase.Active) return;
             _playerKnockdown = default;
             _playerState = EarthDuelRespawnSolver.KnockOut(respawnSeconds);
             PlayerKnockoutCount++;
             // The visible rig receives the handoff. Giving the same velocity to the
             // motor puppet first would make the rig inherit it and then apply it a
             // second time during the atomic bone handoff.
-            playerPuppet.ForceKnockout(
+            playerPuppet?.ForceKnockout(
                 playerHumanoidRagdoll != null ? Vector3.zero : handoff.VelocityChange,
                 respawnSeconds + 0.2f);
             playerHumanoidRagdoll?.BeginRagdoll(in handoff);
@@ -159,15 +269,16 @@ namespace Elemental.Runtime.Characters
 
         public void KnockoutBot()
         {
-            KnockoutBot(RagdollHandoff.Uniform(Vector3.zero));
+            RequestKnockout(EarthDuelFighterId.Bot, RagdollHandoff.Uniform(Vector3.zero));
         }
 
         private void KnockoutBot(in RagdollHandoff requestedHandoff)
         {
-            if (_botState.Phase != EarthDuelFighterPhase.Active || botBody == null) return;
+            if (_botState.Phase != EarthDuelFighterPhase.Active) return;
             _botKnockdown = default;
             _botState = EarthDuelRespawnSolver.KnockOut(respawnSeconds);
             BotKnockoutCount++;
+            if (botBody == null) return;
             botCombatBody?.ForceFullRagdoll(respawnSeconds + 0.2f);
             if (botController != null) botController.enabled = false;
             if (botMotor != null) botMotor.enabled = false;
@@ -196,6 +307,11 @@ namespace Elemental.Runtime.Characters
         private void Awake()
         {
             CaptureSpawnPoses();
+            playerCharacterImpactTarget?.BindDuel(this);
+            botCharacterImpactTarget?.BindDuel(this);
+            // HUD.OnEnable may already have captured these flags before this Awake.
+            if (_roundControlWasEnabled == null || _roundControlWasEnabled.Length != roundInputBehaviours.Length)
+                _roundControlWasEnabled = new bool[roundInputBehaviours.Length];
             float protection = Mathf.Clamp(initialPlayerProtectionSeconds, 0f, 4f);
             if (protection <= 0f) return;
 
@@ -212,6 +328,21 @@ namespace Elemental.Runtime.Characters
 
         private void FixedUpdate()
         {
+            if (!HasSimulationAuthority) return;
+            if (StepArenaMatchRestore()) return;
+            using (MatchMarker.Auto())
+            {
+                bool wasOver = Match.IsOver;
+                Match.Step(Time.fixedDeltaTime);
+                if (!wasOver && Match.IsOver)
+                {
+                    RestoreArenaForMatchBoundary();
+                    if (botController != null) botController.enabled = false;
+                    SetRoundControlsSuspended(true);
+                    StateChanged?.Invoke();
+                }
+            }
+            if (!CombatAllowed) return;
             StepRecoverableKnockdown(
                 EarthDuelFighterId.Player,
                 ref _playerKnockdown,
@@ -252,16 +383,21 @@ namespace Elemental.Runtime.Characters
 
         private void RespawnPlayer()
         {
+            Match.Respawn(EarthDuelFighterId.Player);
+            StateChanged?.Invoke();
             if (playerPuppet == null) return;
             _playerKnockdown = default;
             playerPuppet.ResetPhysicalState(_playerSpawnPosition, _playerSpawnRotation);
             playerHumanoidRagdoll?.ResetToAnimated();
+            playerBody?.GetComponent<PlanetMotor>()?.ResetAfterTeleport();
             playerImpactTarget?.SuppressImpacts(0.75f);
             playerCharacterImpactTarget?.SuppressImpacts(0.75f);
         }
 
         private void RespawnBot()
         {
+            Match.Respawn(EarthDuelFighterId.Bot);
+            StateChanged?.Invoke();
             if (botBody == null) return;
             _botKnockdown = default;
             botBody.position = _botSpawnPosition;
@@ -283,6 +419,7 @@ namespace Elemental.Runtime.Characters
                 botAnimator.Update(0f);
             }
             if (botMotor != null) botMotor.enabled = true;
+            botMotor?.ResetAfterTeleport();
             if (botController != null)
             {
                 botController.enabled = true;
@@ -297,11 +434,10 @@ namespace Elemental.Runtime.Characters
             Rigidbody body,
             HumanoidRagdollRig rig)
         {
-            if (!state.IsActive || rig == null) return;
+            if (!state.IsActive || rig == null || rig.ImpactReceiver != null && rig.ImpactReceiver.HasBlockingCrushContact) return;
             EarthRecoverableKnockdownStep step = EarthRecoverableKnockdownSolver.Step(
                 in state,
                 Time.fixedDeltaTime);
-            state = step.State;
             if (step.BeginAuthoredRecovery)
             {
                 Vector3 position = body != null ? body.position : rig.transform.position;
@@ -309,8 +445,9 @@ namespace Elemental.Runtime.Characters
                 Vector3 forward = body != null
                     ? Vector3.ProjectOnPlane(body.rotation * Vector3.forward, up)
                     : Vector3.ProjectOnPlane(rig.transform.forward, up);
-                rig.RecoverToAnimated(up, forward, false);
+                if (!rig.TryRecoverToAnimated(up, forward, false)) return;
             }
+            state = step.State;
             if (!step.Completed) return;
             rig.CompleteRecovery();
             if (fighter != EarthDuelFighterId.Bot) return;

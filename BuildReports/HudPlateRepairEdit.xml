@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="5" result="Passed" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-08 11:51:58Z" end-time="2026-09-08 11:51:59Z" duration="0.1529227">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="1275" result="Passed" start-time="2026-09-08 11:51:58Z" end-time="2026-09-08 11:51:59Z" duration="0.152923" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2602" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="1229" result="Passed" start-time="2026-09-08 11:51:59Z" end-time="2026-09-08 11:51:59Z" duration="0.128463" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="11736" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2603" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="1223" result="Passed" start-time="2026-09-08 11:51:59Z" end-time="2026-09-08 11:51:59Z" duration="0.127667" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2604" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="1223" result="Passed" start-time="2026-09-08 11:51:59Z" end-time="2026-09-08 11:51:59Z" duration="0.127162" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2605" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="1223" result="Passed" start-time="2026-09-08 11:51:59Z" end-time="2026-09-08 11:51:59Z" duration="0.126724" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="2261" name="HudMotionContractTests" fullname="Elemental.Tests.EditMode.HudMotionContractTests" classname="Elemental.Tests.EditMode.HudMotionContractTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-08 11:51:59Z" end-time="2026-09-08 11:51:59Z" duration="0.042084" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2264" name="ReducedVisibilityStillFadesAndSettlesQuickly" fullname="Elemental.Tests.EditMode.HudMotionContractTests.ReducedVisibilityStillFadesAndSettlesQuickly" methodname="ReducedVisibilityStillFadesAndSettlesQuickly" classname="Elemental.Tests.EditMode.HudMotionContractTests" runstate="Runnable" seed="800360298" result="Passed" start-time="2026-09-08 11:51:59Z" end-time="2026-09-08 11:51:59Z" duration="0.022794" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2263" name="ScaleCompositionPreservesAuthoredTransformAndLiveEdits" fullname="Elemental.Tests.EditMode.HudMotionContractTests.ScaleCompositionPreservesAuthoredTransformAndLiveEdits" methodname="ScaleCompositionPreservesAuthoredTransformAndLiveEdits" classname="Elemental.Tests.EditMode.HudMotionContractTests" runstate="Runnable" seed="869960944" result="Passed" start-time="2026-09-08 11:51:59Z" end-time="2026-09-08 11:51:59Z" duration="0.001822" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2262" name="VisibilityReversesWithoutJumpAndCompletesBothDirections" fullname="Elemental.Tests.EditMode.HudMotionContractTests.VisibilityReversesWithoutJumpAndCompletesBothDirections" methodname="VisibilityReversesWithoutJumpAndCompletesBothDirections" classname="Elemental.Tests.EditMode.HudMotionContractTests" runstate="Runnable" seed="1101162633" result="Passed" start-time="2026-09-08 11:51:59Z" end-time="2026-09-08 11:51:59Z" duration="0.002061" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="2265" name="HudNotificationPlateTests" fullname="Elemental.Tests.EditMode.HudNotificationPlateTests" classname="Elemental.Tests.EditMode.HudNotificationPlateTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-08 11:51:59Z" end-time="2026-09-08 11:51:59Z" duration="0.082610" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="2268" name="NotificationsUseWholeCreamPlateAndReturningIsCenteredTextOnly" fullname="Elemental.Tests.EditMode.HudNotificationPlateTests.NotificationsUseWholeCreamPlateAndReturningIsCenteredTextOnly" classname="Elemental.Tests.EditMode.HudNotificationPlateTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-08 11:51:59Z" end-time="2026-09-08 11:51:59Z" duration="0.082196" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2266" name="NotificationsUseWholeCreamPlateAndReturningIsCenteredTextOnly(Won)" fullname="Elemental.Tests.EditMode.HudNotificationPlateTests.NotificationsUseWholeCreamPlateAndReturningIsCenteredTextOnly(Won)" methodname="NotificationsUseWholeCreamPlateAndReturningIsCenteredTextOnly" classname="Elemental.Tests.EditMode.HudNotificationPlateTests" runstate="Runnable" seed="1362268713" result="Passed" start-time="2026-09-08 11:51:59Z" end-time="2026-09-08 11:51:59Z" duration="0.080827" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2267" name="NotificationsUseWholeCreamPlateAndReturningIsCenteredTextOnly(Lost)" fullname="Elemental.Tests.EditMode.HudNotificationPlateTests.NotificationsUseWholeCreamPlateAndReturningIsCenteredTextOnly(Lost)" methodname="NotificationsUseWholeCreamPlateAndReturningIsCenteredTextOnly" classname="Elemental.Tests.EditMode.HudNotificationPlateTests" runstate="Runnable" seed="332304475" result="Passed" start-time="2026-09-08 11:51:59Z" end-time="2026-09-08 11:51:59Z" duration="0.000587" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HudPlateRepairEdit.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

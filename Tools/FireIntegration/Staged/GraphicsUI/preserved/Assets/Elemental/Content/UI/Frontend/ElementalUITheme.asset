@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82606848dba29c94e9b95702a1e9168a, type: 3}
+  m_Name: ElementalUITheme
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.UI.ElementalUITheme
+  hudLayout: {fileID: 11400000, guid: 373ceaee55b6d9d419a33ce7bf2f6f1e, type: 2}
+  lifeResultSeconds: 2.4
+  simultaneousDeathWindow: 0.12
+  lifeResultFontSize: 37
+  ink: {r: 0.031, g: 0.082, b: 0.129, a: 0.94}
+  text: {r: 1, g: 0.957, b: 0.867, a: 1}
+  muted: {r: 0.69, g: 0.72, b: 0.71, a: 1}
+  accent: {r: 0.961, g: 0.843, b: 0.631, a: 1}
+  energy: {r: 0.255, g: 0.812, b: 1, a: 1}
+  damage: {r: 0.949, g: 0.318, b: 0.325, a: 1}
+  displayFont: {fileID: 11400000, guid: 73c26027bd0c68146858bd47f0d10880, type: 2}
+  labelFont: {fileID: 11400000, guid: fbe6f191b03478e45a5588742711ce26, type: 2}
+  readableFont: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  hudFont: {fileID: 12800000, guid: 4a0c10989fe14c9408c6ab5f51377531, type: 3}
+  logo: {fileID: 21300000, guid: 1b50086a045bbb04e8a1f8c0a24937a8, type: 3}
+  panelDetail: {fileID: 21300000, guid: e93c97ee7edf42d4ca5f547c8b75fd48, type: 3}
+  hover: {fileID: 8300000, guid: 1b11e5946e1494f4e96f49764ab792cc, type: 3}
+  press: {fileID: 8300000, guid: 5aa1907f167096249b0087508c4a9af1, type: 3}
+  confirm: {fileID: 8300000, guid: 42fd022baeb95d347a74090be8dfacc5, type: 3}
+  back: {fileID: 8300000, guid: ad5bf2ef47d065447b3c144950fe67ac, type: 3}
+  error: {fileID: 8300000, guid: 04656cb2bae730c458ac624532e60b5e, type: 3}
+  copy: {fileID: 8300000, guid: b990af6f46331cc4286d443a83046d7b, type: 3}
+  connect: {fileID: 8300000, guid: df514a459fe76b44eabcc2aeffd6f514, type: 3}
+  hoverSeconds: 0.1
+  pressSeconds: 0.07
+  releaseSeconds: 0.12
+  pressedScale: 0.98
+  transitionSeconds: 0.85
+  countdownSeconds: 4
+  countdownCameraBlendSeconds: 1.5
+  menuFontScale: 1
+  hudFontScale: 1
+  hudScoreSize: 51.5
+  hudTimerSize: 38.1
+  hudCaptionSize: 11.2
+  hudSymbolSize: 26.9
+  hudValueSize: 13.4
+  hudLegendSize: 10.1
+  hudRespawnSize: 17.9
+  hudResultSize: 37
+  hudButtonSize: 14

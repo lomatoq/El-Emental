@@ -43,6 +43,7 @@ namespace Elemental.Runtime.Physics
             in BendTuning tuning,
             IEarthPhysicalTarget earthTarget = null)
         {
+            if (EarthBodyTargetFilter.IsCharacterBody(body)) return false;
             earthTarget?.OnEarthMagicGrabbed(EarthMagicGripKind.Telekinesis);
             if (body == null || body.isKinematic || body.mass <= 0f || body.mass > maximumControllableMass)
             {

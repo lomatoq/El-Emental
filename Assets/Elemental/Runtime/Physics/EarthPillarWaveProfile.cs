@@ -7,6 +7,14 @@ namespace Elemental.Runtime.Physics
     [CreateAssetMenu(menuName = "Elemental/Magic/Earth Pillar Wave Profile", fileName = "EarthPillarWaveProfile")]
     public class EarthPillarWaveProfile : ScriptableObject
     {
+        [Header("LMB + RMB Line Pillars")]
+        [Tooltip("Maximum height in metres of the line created by holding both mouse buttons. Edge pillars are 65% of this height.")]
+        [InspectorName("Height"), SerializeField, Min(0.1f)] private float linePillarHeight = 3.15f;
+        public float LinePillarHeight => Mathf.Max(0.1f, linePillarHeight);
+        [Tooltip("Vertical placement of the held LMB + RMB line relative to its ground surface, in metres. Positive raises the line; negative buries it.")]
+        [SerializeField] private float lineGroundOffset;
+        public float LineGroundOffset => float.IsFinite(lineGroundOffset) ? lineGroundOffset : 0f;
+
         [Header("Motion mode")]
         [SerializeField] private WaveMotionMode motionMode = WaveMotionMode.Legacy;
         [SerializeField, Min(0.1f)] private float fullSectorChargeSeconds = 1.4f;

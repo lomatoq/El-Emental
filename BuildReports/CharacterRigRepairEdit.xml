@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="13" result="Passed" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-06 01:38:45Z" end-time="2026-09-06 01:38:46Z" duration="0.1806161">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="982" result="Passed" start-time="2026-09-06 01:38:45Z" end-time="2026-09-06 01:38:46Z" duration="0.180616" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2217" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="971" result="Passed" start-time="2026-09-06 01:38:45Z" end-time="2026-09-06 01:38:46Z" duration="0.166994" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="21092" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2218" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="971" result="Passed" start-time="2026-09-06 01:38:45Z" end-time="2026-09-06 01:38:46Z" duration="0.166267" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2219" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="971" result="Passed" start-time="2026-09-06 01:38:45Z" end-time="2026-09-06 01:38:46Z" duration="0.165941" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2220" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="971" result="Passed" start-time="2026-09-06 01:38:45Z" end-time="2026-09-06 01:38:46Z" duration="0.165647" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="2007" name="LinebreakerSecondaryMotionAssetTests" fullname="Elemental.Tests.EditMode.LinebreakerSecondaryMotionAssetTests" classname="Elemental.Tests.EditMode.LinebreakerSecondaryMotionAssetTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-06 01:38:45Z" end-time="2026-09-06 01:38:46Z" duration="0.149841" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="2011" name="ImportedCharacterHasMovingBoundedChainsAndRigidHairDuringAnchorTurns" fullname="Elemental.Tests.EditMode.LinebreakerSecondaryMotionAssetTests.ImportedCharacterHasMovingBoundedChainsAndRigidHairDuringAnchorTurns" classname="Elemental.Tests.EditMode.LinebreakerSecondaryMotionAssetTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-06 01:38:45Z" end-time="2026-09-06 01:38:46Z" duration="0.145590" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2008" name="ImportedCharacterHasMovingBoundedChainsAndRigidHairDuringAnchorTurns(30)" fullname="Elemental.Tests.EditMode.LinebreakerSecondaryMotionAssetTests.ImportedCharacterHasMovingBoundedChainsAndRigidHairDuringAnchorTurns(30)" methodname="ImportedCharacterHasMovingBoundedChainsAndRigidHairDuringAnchorTurns" classname="Elemental.Tests.EditMode.LinebreakerSecondaryMotionAssetTests" runstate="Runnable" seed="1656231285" result="Passed" start-time="2026-09-06 01:38:45Z" end-time="2026-09-06 01:38:45Z" duration="0.054841" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[[CharacterRig] 30 Hz: tail=5.043 belt=2.926, lengths preserved, rigid hair, reset accepted.
+]]></output>
+                </test-case>
+                <test-case id="2009" name="ImportedCharacterHasMovingBoundedChainsAndRigidHairDuringAnchorTurns(60)" fullname="Elemental.Tests.EditMode.LinebreakerSecondaryMotionAssetTests.ImportedCharacterHasMovingBoundedChainsAndRigidHairDuringAnchorTurns(60)" methodname="ImportedCharacterHasMovingBoundedChainsAndRigidHairDuringAnchorTurns" classname="Elemental.Tests.EditMode.LinebreakerSecondaryMotionAssetTests" runstate="Runnable" seed="1919122884" result="Passed" start-time="2026-09-06 01:38:45Z" end-time="2026-09-06 01:38:46Z" duration="0.030384" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[[CharacterRig] 60 Hz: tail=5.073 belt=2.945, lengths preserved, rigid hair, reset accepted.
+]]></output>
+                </test-case>
+                <test-case id="2010" name="ImportedCharacterHasMovingBoundedChainsAndRigidHairDuringAnchorTurns(120)" fullname="Elemental.Tests.EditMode.LinebreakerSecondaryMotionAssetTests.ImportedCharacterHasMovingBoundedChainsAndRigidHairDuringAnchorTurns(120)" methodname="ImportedCharacterHasMovingBoundedChainsAndRigidHairDuringAnchorTurns" classname="Elemental.Tests.EditMode.LinebreakerSecondaryMotionAssetTests" runstate="Runnable" seed="795316831" result="Passed" start-time="2026-09-06 01:38:46Z" end-time="2026-09-06 01:38:46Z" duration="0.049074" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[[CharacterRig] 120 Hz: tail=5.063 belt=2.951, lengths preserved, rigid hair, reset accepted.
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+            <test-suite type="TestFixture" id="2089" name="SecondaryBoneSpringSolverTests" fullname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests" classname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-09-06 01:38:46Z" end-time="2026-09-06 01:38:46Z" duration="0.014656" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2090" name="CapsuleProjectionPreservesExteriorAndClearsInterior" fullname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests.CapsuleProjectionPreservesExteriorAndClearsInterior" methodname="CapsuleProjectionPreservesExteriorAndClearsInterior" classname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests" runstate="Runnable" seed="1852695906" result="Passed" start-time="2026-09-06 01:38:46Z" end-time="2026-09-06 01:38:46Z" duration="0.008796" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2091" name="DegenerateHelmetCapsuleUsesStableOutwardFallback" fullname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests.DegenerateHelmetCapsuleUsesStableOutwardFallback" methodname="DegenerateHelmetCapsuleUsesStableOutwardFallback" classname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests" runstate="Runnable" seed="151240934" result="Passed" start-time="2026-09-06 01:38:46Z" end-time="2026-09-06 01:38:46Z" duration="0.000374" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2099" name="InvalidFrameDeltaCannotExplodeTheChain" fullname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests.InvalidFrameDeltaCannotExplodeTheChain" methodname="InvalidFrameDeltaCannotExplodeTheChain" classname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests" runstate="Runnable" seed="934970386" result="Passed" start-time="2026-09-06 01:38:46Z" end-time="2026-09-06 01:38:46Z" duration="0.000571" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2100" name="NonFiniteStateAndInputsResetToABoundedFinitePose" fullname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests.NonFiniteStateAndInputsResetToABoundedFinitePose" methodname="NonFiniteStateAndInputsResetToABoundedFinitePose" classname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests" runstate="Runnable" seed="648780354" result="Passed" start-time="2026-09-06 01:38:46Z" end-time="2026-09-06 01:38:46Z" duration="0.000890" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2092" name="SkirtPlaneClearsPenetrationWithoutChangingHeightOrSidewaysMotion" fullname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests.SkirtPlaneClearsPenetrationWithoutChangingHeightOrSidewaysMotion" methodname="SkirtPlaneClearsPenetrationWithoutChangingHeightOrSidewaysMotion" classname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests" runstate="Runnable" seed="1362589361" result="Passed" start-time="2026-09-06 01:38:46Z" end-time="2026-09-06 01:38:46Z" duration="0.000340" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2097" name="SpringMovesTowardTargetWithoutExceedingLimit" fullname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests.SpringMovesTowardTargetWithoutExceedingLimit" methodname="SpringMovesTowardTargetWithoutExceedingLimit" classname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests" runstate="Runnable" seed="124711164" result="Passed" start-time="2026-09-06 01:38:46Z" end-time="2026-09-06 01:38:46Z" duration="0.000341" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2098" name="SpringRecoversToBindPose" fullname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests.SpringRecoversToBindPose" methodname="SpringRecoversToBindPose" classname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests" runstate="Runnable" seed="1394031906" result="Passed" start-time="2026-09-06 01:38:46Z" end-time="2026-09-06 01:38:46Z" duration="0.000335" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="2096" name="WalkingOscillationProducesBoundedVisibleSecondaryMotion" fullname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests.WalkingOscillationProducesBoundedVisibleSecondaryMotion" classname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-06 01:38:46Z" end-time="2026-09-06 01:38:46Z" duration="0.000994" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2093" name="WalkingOscillationProducesBoundedVisibleSecondaryMotion(30)" fullname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests.WalkingOscillationProducesBoundedVisibleSecondaryMotion(30)" methodname="WalkingOscillationProducesBoundedVisibleSecondaryMotion" classname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests" runstate="Runnable" seed="688738583" result="Passed" start-time="2026-09-06 01:38:46Z" end-time="2026-09-06 01:38:46Z" duration="0.000288" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2094" name="WalkingOscillationProducesBoundedVisibleSecondaryMotion(60)" fullname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests.WalkingOscillationProducesBoundedVisibleSecondaryMotion(60)" methodname="WalkingOscillationProducesBoundedVisibleSecondaryMotion" classname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests" runstate="Runnable" seed="813088424" result="Passed" start-time="2026-09-06 01:38:46Z" end-time="2026-09-06 01:38:46Z" duration="0.000121" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2095" name="WalkingOscillationProducesBoundedVisibleSecondaryMotion(120)" fullname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests.WalkingOscillationProducesBoundedVisibleSecondaryMotion(120)" methodname="WalkingOscillationProducesBoundedVisibleSecondaryMotion" classname="Elemental.Tests.EditMode.SecondaryBoneSpringSolverTests" runstate="Runnable" seed="1215364070" result="Passed" start-time="2026-09-06 01:38:46Z" end-time="2026-09-06 01:38:46Z" duration="0.000133" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\CharacterRigRepairEdit.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

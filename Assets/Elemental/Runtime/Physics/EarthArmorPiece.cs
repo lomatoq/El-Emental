@@ -2,6 +2,7 @@ using Elemental.Runtime.Matter;
 using Elemental.Runtime.Characters;
 using Elemental.Simulation.Combat;
 using Elemental.Simulation.Matter;
+using Elemental.Simulation.Structures;
 using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine;
@@ -29,6 +30,8 @@ namespace Elemental.Runtime.Physics
         private int _defensiveCollisionStateChangeCount;
         private MaterialPropertyBlock _visualProperties;
         private EarthMatterIdentity _matterIdentity;
+        private EarthMatterMassProfile _massPolicy = EarthMatterMassProfile.ArenaStone;
+        public float SolidVolume => Mathf.Max(.000001f, _fullScale.x * _fullScale.y * _fullScale.z * .62f);
 
         public Rigidbody Body { get; private set; }
         public Mesh OwnedMesh { get; private set; }
@@ -115,7 +118,10 @@ namespace Elemental.Runtime.Physics
                 Mathf.Clamp(scale.z, 0.16f, 1.15f));
             transform.localScale = _fullScale;
             if (Body != null)
-                Body.mass = Mathf.Max(2f, _fullScale.x * _fullScale.y * _fullScale.z * 180f);
+            {
+                _massPolicy = _owner != null ? _owner.MassPolicy : EarthMatterMassProfile.ArenaStone;
+                Body.mass = EarthMatterMassPolicy.ResolveGameplayMass(SolidVolume, in _massPolicy);
+            }
         }
 
         public void RegisterMatter(
@@ -125,7 +131,9 @@ namespace Elemental.Runtime.Physics
             EarthOwnerId owner)
         {
             if (kernel == null || Body == null) return;
-            float volume = Mathf.Max(0.000001f, _fullScale.x * _fullScale.y * _fullScale.z * 0.62f);
+            float volume = SolidVolume;
+            _massPolicy = kernel.MassPolicy;
+            Body.mass = EarthMatterMassPolicy.ResolveGameplayMass(volume, in _massPolicy);
             var source = new EarthSourceProvenance(
                 EarthSourceKind.TerrainEdit,
                 1u,
@@ -210,7 +218,7 @@ namespace Elemental.Runtime.Physics
             Body.isKinematic = false;
             _owner?.ReapplyCasterCollisionIgnores(PieceCollider);
             Body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-            Body.mass = Mathf.Max(2f, _fullScale.x * _fullScale.y * _fullScale.z * 180f);
+            // Releasing existing matter preserves the mass registered at creation.
             Body.linearVelocity = velocity;
             Body.angularVelocity = Vector3.zero;
             Body.WakeUp();
@@ -316,6 +324,11 @@ namespace Elemental.Runtime.Physics
             if (shrink01 >= 1f) ResetToPool();
         }
 
+        private void OnCollisionStay(Collision collision)
+        {
+            if (_released && _gripCount == 0) EarthStoneCharacterContact.DeliverLoad(collision, Body);
+        }
+
         private void OnCollisionEnter(Collision collision)
         {
             if (collision == null || collision.contactCount == 0 || Body == null) return;
@@ -323,7 +336,7 @@ namespace Elemental.Runtime.Physics
             {
                 Collider controlledHit = collision.collider;
                 EarthCharacterImpactTarget controlledTarget = controlledHit != null
-                    ? controlledHit.GetComponentInParent<EarthCharacterImpactTarget>()
+                    ? EarthStoneCharacterContact.ResolveTarget(controlledHit)
                     : null;
                 Rigidbody targetBody = controlledTarget != null ? controlledTarget.Body : null;
                 float controlledSpeed = Mathf.Max(
@@ -338,17 +351,13 @@ namespace Elemental.Runtime.Physics
                     Vector3 controlledDirection = _controlledVelocity.sqrMagnitude > 0.0001f
                         ? _controlledVelocity.normalized
                         : -controlledContact.normal;
-                    float controlledImpulse = Mathf.Max(
-                        collision.impulse.magnitude,
-                        Mathf.Max(2f, Body.mass) * controlledSpeed);
-                    controlledTarget.ApplyImpact(
+                    controlledTarget.ApplyStoneImpact(
                         controlledContact.point,
                         controlledDirection,
-                        controlledImpulse,
+                        Body.mass,
+                        Mathf.Abs(Vector3.Dot(_controlledVelocity - targetBody.linearVelocity, controlledContact.normal)),
                         EarthCharacterImpactSourceKind.ArmorProjectile,
-                        ImpactSourceId,
-                        controlledSpeed,
-                        1f);
+                        ImpactSourceId);
                     return;
                 }
                 _owner?.ResolveDefensiveImpact(this, collision);
@@ -356,22 +365,23 @@ namespace Elemental.Runtime.Physics
             }
             Collider hit = collision.collider;
             EarthCharacterImpactTarget characterTarget = hit != null
-                ? hit.GetComponentInParent<EarthCharacterImpactTarget>()
+                ? EarthStoneCharacterContact.ResolveTarget(hit)
                 : null;
             ContactPoint contact = collision.GetContact(0);
             float relativeSpeed = collision.relativeVelocity.magnitude;
             float impulse = Mathf.Max(collision.impulse.magnitude, Body.mass * relativeSpeed);
-            Vector3 direction = Body.linearVelocity.sqrMagnitude > 0.0001f
-                ? Body.linearVelocity.normalized
-                : -contact.normal;
-            characterTarget?.ApplyImpact(
+            Vector3 direction = (Vector3)EarthCharacterImpactSolver.OrientIncomingContactVelocity(
+                (float3)collision.relativeVelocity, -(float3)contact.normal);
+            if (direction.sqrMagnitude < .0001f) direction = -contact.normal;
+            direction.Normalize();
+            EarthStoneCharacterContact.DeliverLoad(collision, Body);
+            characterTarget?.ApplyStoneImpact(
                 contact.point,
                 direction,
-                impulse,
+                Body.mass,
+                Mathf.Abs(Vector3.Dot(collision.relativeVelocity, contact.normal)),
                 EarthCharacterImpactSourceKind.ArmorProjectile,
-                ImpactSourceId,
-                relativeSpeed,
-                1f);
+                ImpactSourceId);
             if (relativeSpeed >= .75f)
             {
                 var structuralImpact = new EarthStructureImpact(contact.point, direction, impulse,

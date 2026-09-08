@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="4" result="Passed" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-06 22:22:47Z" end-time="2026-09-06 22:22:48Z" duration="0.5970608">
+  <test-suite type="TestSuite" id="1354" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="263" result="Passed" start-time="2026-09-06 22:22:47Z" end-time="2026-09-06 22:22:48Z" duration="0.597061" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1007" name="Elemental.Online.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Online.Tests.PlayMode.dll" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-06 22:22:47Z" end-time="2026-09-06 22:22:48Z" duration="0.293601" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="21092" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1008" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-06 22:22:47Z" end-time="2026-09-06 22:22:48Z" duration="0.284712" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1009" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-06 22:22:47Z" end-time="2026-09-06 22:22:48Z" duration="0.279448" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1010" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-06 22:22:47Z" end-time="2026-09-06 22:22:48Z" duration="0.276011" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1001" name="OnlineAuthorityGateTests" fullname="Elemental.Tests.PlayMode.OnlineAuthorityGateTests" classname="Elemental.Tests.PlayMode.OnlineAuthorityGateTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-06 22:22:47Z" end-time="2026-09-06 22:22:48Z" duration="0.233174" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1004" name="RepeatedJumpEdgeSurvivesLostInputWithoutRepeatingTheJump" fullname="Elemental.Tests.PlayMode.OnlineAuthorityGateTests.RepeatedJumpEdgeSurvivesLostInputWithoutRepeatingTheJump" methodname="RepeatedJumpEdgeSurvivesLostInputWithoutRepeatingTheJump" classname="Elemental.Tests.PlayMode.OnlineAuthorityGateTests" runstate="Runnable" seed="1070178846" result="Passed" start-time="2026-09-06 22:22:47Z" end-time="2026-09-06 22:22:47Z" duration="0.013157" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1002" name="ReplicaIgnoresLocalDamageRestartAndClockTick" fullname="Elemental.Tests.PlayMode.OnlineAuthorityGateTests.ReplicaIgnoresLocalDamageRestartAndClockTick" methodname="ReplicaIgnoresLocalDamageRestartAndClockTick" classname="Elemental.Tests.PlayMode.OnlineAuthorityGateTests" runstate="Runnable" seed="1620598521" result="Passed" start-time="2026-09-06 22:22:47Z" end-time="2026-09-06 22:22:48Z" duration="0.193069" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1003" name="ReplicaStoneImpactDoesNotApplyOutcomeOrImpulse" fullname="Elemental.Tests.PlayMode.OnlineAuthorityGateTests.ReplicaStoneImpactDoesNotApplyOutcomeOrImpulse" methodname="ReplicaStoneImpactDoesNotApplyOutcomeOrImpulse" classname="Elemental.Tests.PlayMode.OnlineAuthorityGateTests" runstate="Runnable" seed="1746919590" result="Passed" start-time="2026-09-06 22:22:48Z" end-time="2026-09-06 22:22:48Z" duration="0.009017" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1005" name="OnlineSemanticRoutingTests" fullname="Elemental.Tests.PlayMode.OnlineSemanticRoutingTests" classname="Elemental.Tests.PlayMode.OnlineSemanticRoutingTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-06 22:22:48Z" end-time="2026-09-06 22:22:48Z" duration="0.039130" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1006" name="HostHitchCoalescesContinuousFramesButRoutesPressAndReleaseSeparately" fullname="Elemental.Tests.PlayMode.OnlineSemanticRoutingTests.HostHitchCoalescesContinuousFramesButRoutesPressAndReleaseSeparately" methodname="HostHitchCoalescesContinuousFramesButRoutesPressAndReleaseSeparately" classname="Elemental.Tests.PlayMode.OnlineSemanticRoutingTests" runstate="Runnable" seed="1431014400" result="Passed" start-time="2026-09-06 22:22:48Z" end-time="2026-09-06 22:22:48Z" duration="0.034320" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\OnlineStage2Play.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

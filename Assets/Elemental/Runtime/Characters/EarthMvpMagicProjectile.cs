@@ -135,19 +135,17 @@ namespace Elemental.Runtime.Characters
                 }
                 if (impactTarget != null)
                 {
-                    float targetMass = impactTarget.Body != null ? impactTarget.Body.mass : 42f;
-                    impactTarget.ApplyImpact(
+                    impactTarget.ApplyStoneImpact(
                         point,
                         launch,
-                        Mathf.Max(0.01f, targetMass) * _knockoutVelocityChange,
+                        _fragment != null ? _fragment.Mass : 0f,
+                        Mathf.Abs(Vector3.Dot(impact.RelativeVelocity, impact.Normal)),
                         EarthCharacterImpactSourceKind.BotProjectile,
-                        _fragment != null ? _fragment.FragmentId : 0xB0700001u,
-                        _knockoutVelocityChange,
-                        1f);
+                        _fragment != null ? _fragment.FragmentId : 0xB0700001u);
                 }
                 else
                 {
-                    _duel?.KnockoutPlayer(launch);
+                    _duel?.ApplyDamage(EarthDuelFighterId.Player, 8f, RagdollHandoff.Uniform(launch));
                 }
                 _owner?.NotifyProjectileLanded(point);
             }

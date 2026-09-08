@@ -374,7 +374,7 @@ namespace Elemental.Authoring.Editor
                 return;
             }
             if (incoming.blendType != BlendTreeType.Direct || !IsDirectBlendNormalized(incoming) ||
-                incoming.children.Length != 11)
+                incoming.children.Length != tree.children.Length)
                 errors.Add("KayKitMage incoming magic buffer needs eleven normalized direct weights.");
             ChildMotion[] incomingChildren = incoming.children;
             for (int index = 0; index < incomingChildren.Length; index++)

@@ -1,6 +1,131 @@
 # El-Emental project technical state
 
-Updated: 2026-09-05
+**September 8 current-main snapshot, explicitly requested by user:** captures the accumulated project working state over `1235579`, including user-authored settings. Latest stone correction separates admitted health damage from flinch, restores armor attribution to detached ragdolls, and measures sustained pinning independently of recovery-timer blocking. Stone Edit **14/14**, final Play **5/5** at `2026-09-08T12:23:02.2237136Z`; real pile kills once, removal stops damage. Pin marker mean0.0281ms/peak0.2293ms in this focused fixture. [Physics evidence](STONE_LETHALITY_FOLLOWUP_2026_09_08.md). Debris closing momentum corrected; production/authoring pools enlarged72→256 with finite-budget and mass safeguards; fracture Edit **2/2**, Play **1/1** at `2026-09-08T12:23:57.1924010Z`. [Fracture details](DECOR_FRACTURE_FOLLOWUP_2026_09_08.md). UI final evidence below. Historical online/build/GPU limitations are not newly tested by this snapshot. Local backup archive and npm cache stay outside Git.
+
+**September 8 notification correction (working tree main `1235579`, pending user-authorized snapshot):** WIN/LOSS/DRAW all use the existing light plate and dark text, uniformly reduced 12%. Returning is now centered display-font text without a sprite, over a 48% dark scene veil. Complete sprite rendering preserves artwork proportions; actual layout centering prevents margin drift. Twelve user MenuLayouts assets unchanged. Edit **5/5**, final production Play **2/2** at `2026-09-08T12:02:00.9360617Z`, 27.6821s; final screenshot inspected. Earlier dark LOSS and Returning-plate descriptions are superseded. [Evidence](HUD_NOTIFICATION_PLATES_2026_09_08.md).
+
+**September 8 procedural dust revision (uncommitted main `1235579`):** user rejected static curved dust domes. Replaced them with shallow asymmetric deforming wisps, independent widths/lengths/speeds/lift and breathing, stable per-birth shader phases, two-phase UV advection, interpolated velocity/orientation/support, and alpha-only retirement without lifetime/atlas jumps. Surface probes no longer pull wisps onto abrupt obstacle tops. Removed hard-coded ordinary-dust tint; RumbleDustLit now drives live Tint/alpha/Brightness/night fill for mixed soft/impact/fracture layers. User's WallcoeurGroundDust.mat remains byte-identical. Edit **2/2** at `2026-09-08T11:18:55.7564446Z`; final Play **3/3** at `2026-09-08T11:23:49.3034901Z`, 24.4971s. Production sample: 352 wisps, speeds .376–2.741m/s, widths .431–4.377m, 42541 changed pixels; whole-adapter CPU .9973ms mean /1.6353ms peak, GPU unmeasured. Shader errors=false; no material assets edited. [Contract, superseded approach and evidence](CURVED_SURFACE_DUST_2026_09_08.md).
+
+**September 8 bot-start transition repair (uncommitted main `1235579`):** replaced the short sidebar drift plus fade with a complete opaque 0.54s departure. A brief dark cover conceals countdown-camera reframing; the local countdown begins after the 0.82s intro. User layout/material settings unchanged. Reduced Motion uses 0.18s fade. `BotStartTransitionPlay` **3/3 passed** at `2026-09-08T10:55:46.7301500Z`, 59.6992s; captures verify moving opaque sidebar, camera reveal and countdown, plus subsequent match results. The initial regression measured the sidebar before stagger completion; its settle wait was corrected. [Details](BOT_START_TRANSITION_2026_09_08.md).
+
+**September 8 dense dust/clouds and procedural UI (uncommitted main `1235579`):** sidebar panel-first reveal and staggered buttons/icons added, pause now presents pressed feedback before dispatch, Returning uses dark button art with reversible fade/scale, round and match results gain reveal/exit motion. Existing user layout ScriptableObjects and staircase remain intact. Ground dust profile is denser and larger, with seam wisps and soft alpha-only atlas interpolation/deformation; original contact dust mix retained. Fire gains bounded embers and 3px heat haze. Clouds: 22 banks, including 8 overhead, plus 52 image particles; soft proxy occlusion attenuates shafts. Edit **21/21** passed at `2026-09-08T10:34:37.6501386Z`; Play **11/11** passed at `2026-09-08T10:37:15.7131391Z` (95.0015s). Production dust: 286 alive, 113988 changed pixels, 431 gap births; CPU adapter mean **1.175ms**, peak **4.2314ms** (increased from prior .234ms; GPU transparency/raymarch cost unmeasured). UI layout-only mean .1871ms. Fire allocation sample 0 bytes/128 ticks. Final modified shader scan found no errors; EarthCoreSlice restored nonplaying/clean. Motion-vector atlas interpolation and exact volumetric cloud shadows are not implemented. [Research, settings, evidence and limits](DENSE_DUST_CLOUD_FIRE_RESEARCH_2026_09_08.md).
+
+**September 8 button-group rollback:** user reported coordinate jumps while moving the newly introduced whole-button group and requested reverting it. Removed the `Buttons` hierarchy wrapper, its quick Inspector controls and its five saved profile entries. Restored buttons directly under their original page; the authored staircase, readable labels and dust changes remain. The prior whole-group acceptance is superseded by this rollback.
+
+**September 8 dust/UI authoring follow-up (uncommitted main `1235579`):** replaced animated dust coverage with the real fire atlas, accelerated one-shot playback, retained the original soft dust, corrected black night shading and strengthened ground wind/stone wakes. Menu Inspector now has Russian labels and an independent whole-button-group transform for each sidebar page. Restored the user's required authored button staircase (`x=y/3`); earlier straight-row alignment is superseded. Edit **14/14**, combined production **6/6**, final staircase/group-scale Play **4/4** passed. [Evidence and tuning contract](DUST_FLOW_AND_MENU_NAMES_2026_09_08.md).
+
+**September 8 editable menu/result presentation (uncommitted main `1235579`):** installed 11 per-screen ScriptableObject profiles, including 43 live sidebar bindings and independent Victory/Defeat layouts. Added animation-composed transforms, dimensions, font/padding overrides and searchable Inspector. Removed duplicate result-button rim, corrected dimming layer over REMATCH, aligned sidebar rows and added overlay purple/green fringes with local emblem glow/motes. Focused Edit 3/3 and Play 4/4 checks passed; final padding reset rechecked in Edit. Screenshots and measured adapter-only CPU cost are recorded in [menu implementation report](MENU_LAYOUTS_AND_RESULT_POLISH_2026_09_08.md). Native Graphics Ring Buffer warning remains outside this change.
+
+**September 8 animation/UI/blue fog implementation (uncommitted main `1235579`):** fixed phase-clock braking, zero-slot cancel recovery, retained outgoing timing and moving A/B recovery; installed authored torso-only Living Hold additive on existing controller. UI panel/button retargets stay continuous and preserve paused input/Reduced Motion. Shared spatial gusts installed on existing ground dust. Fog uses protected1800–3200m closure, transmittance-attenuated far artwork, stronger saved blue palette, and exact clear-depth classification (the old1e-5 threshold misclassified far opaque stone as sky). Edit **27/27 +33/33**, Play **6/6 +5/5** passed; final Play00:23:41Z. Actual far black/white pixel difference0, hidden4000/4500m depth difference0; near contrast737960. Production scene restored nonplaying/clean; fog shader errors=false. Wind whole-adapter mean .2263ms/peak .9070ms in this capture; no GPU or added-effect-only budget claim. This is torso motion, not new authored hand choreography. [Implementation, evidence and limits](ANIMATION_MATERIAL_FOG_RESEARCH_2026_09_08.md).
+
+**September 8 Wallcoeur fire/dust and AO (uncommitted main `1235579`):** black atlas filtering edges removed and rendered; original soft dust now mixed with animated dust within the existing event budget. Fire combines authored3x3 shapes, opposing noise flow, core HDR emission1.4 and separate depth-aware2px heat haze after atmosphere. Image clouds16→28 across side/low/high views. Contact AO retains full resolution/geometry normals and bright material floors. Latest Edit23/23 at00:25:20Z, combined Play12/12 at00:21:14Z, final production2/2 at00:26:36Z. Heat on/off pixel difference93910; sonar heat difference0. Editor recovered, current error console empty. The earlier Graphics Ring Buffer warning is not claimed fixed; isolated heat-pass GPU cost remains unmeasured. [Details](WALLCOEUR_FIRE_DUST_AO_2026_09_08.md).
+
+**September 8 visual/physics follow-up (working tree main `1235579`):** reproduced and corrected buried-floor support selection, mirrored foot-channel mapping, pivot-anchor monopoly and ragdoll recovery escaping sustained load. Crush Edit38/38+Play5/5; footing/turn Edit50/50+Play5/5. Flame, dust, cloud/sonar, rock form-lighting and compact reference-art HUD changes pass final Edit22/22+Play10/10 (22:38:52 UTC); final visual evidence is recorded in [follow-up report](VISUAL_PHYSICS_FOLLOWUP_2026_09_08.md). GPU/full-game and arbitrary moving-pile acceptance are not implied. Earlier blanket turn acceptance is superseded by these reproduced defects and fresh focused results.
+
+**Fire / stone / graphics integration in progress (2026-09-07, uncommitted main1235579):** Fire Play4/4; eight-High1080p cosmetic CPU p95 .9711ms,0B GC still misses .8ms target; GPU unavailable. Stone physical4cm heavy-drop/compositing/wall contracts pass. Production arena restore2/2 and UI4/4 pass after scene ownership and baseline-before-physics fixes. Basic online Run-20260907T093340 passed; selected-stone combat remains partial, next build includes event attribution trace. Old main-menu Left veil removed in actual code and verified live (BuildReports/MenuBackingRemoval). Latest user requires reference matching, including UI animations and procedural valley: optional UI V2 is under actual Unity validation; original font/layout assets retained. Geometry refinement14/14 and atmosphere V2 equations12/12 pass Edit tests; combined visual/performance gates remain open. [Contracts, sources and evidence](FIRE_STONE_GRAPHICS_INTEGRATION.md).
+
+**Latest saved handoff:** corrected whole-match arena restore Play2/2 passed02:17:13; paired mouse Edit12/12+Play3/3 passed. Development build02:21:20 saved,0 errors/195 warnings. New protocol3 pair aborted before networking due D3D11 device removed; owned players closed and user restarting Unity. Further launches paused for recovery. No push. Details: [wall/wind/input/match follow-up](WALL_WIND_ROUND_FOLLOWUP.md).
+
+**Latest user correction (02:11 UTC): arena restoration is once per whole game/session, not after each life. Damage/debris must persist across ordinary KO/respawn; restore on full-match victory, return to Main, restart/new game. Earlier per-life reset acceptance below is historical and does not satisfy this corrected requirement. Corrected lifecycle Play2/2 passed02:17:13 UTC. Paired mouse Edit12/12 +actual row/RMB Play3/3 also passed. Fresh build/network run follows.**
+
+**September 7 wall/wind/round follow-up:** saved matching wall interior palette and sealed wide-bevel junctions; production depth-varying 3D partition rebaked without arena regeneration. Surface Edit 7/7, depth Edit 2/2, rise Play 1/1, wind Edit 2/2 + production Play 1/1, actual routed RMB launch Play 1/1, arena reset Play 2/2 and online Edit 35/35 passed. Protocol 3 requires a fresh built pair; current online acceptance pending. No push. [Evidence and settings](WALL_WIND_ROUND_FOLLOWUP.md).
+
+Updated: 2026-09-07
+
+**Permanent gameplay vignette, 00:42:57 UTC (uncommitted `1235579`):** independent of charge; soft peripheral blur plus darkness **0.20** after user requested a darker preview. Centre is unchanged in the same-frame production capture. Production visual Play **1/1** passed. **Elemental > VFX > Edit Gameplay Vignette** opens the saved material controls. [Evidence and limits](GAMEPLAY_VIGNETTE_REVIEW.md).
+
+**Online authority clock and impaired Combat, 00:48:21 UTC:** client tick observation is monotonic and does not advance from local physics; original authority window unchanged. Edit **35/35**, normal Relay Run004408 and actual 150 ms delay / 30 ms jitter / 3% send loss per peer Run004650 passed with zero command rejections, accepted movement/attack edges and normal host disconnect. Impairment begins after initial world/countdown readiness. Stone Run004924 did not verify a thrown hit: compensated shot aim left the camera frustum; observed Physics/source0 damage is not attributed to a stone. Possible camera/stone parallax requires a focused check. Processes closed; full combat acceptance and user review before push remain pending. [Latest reports and tested DLL hash](ONLINE_ALPHA_TESTING.md).
+
+**Per-life results and feel follow-up, 22:21 UTC (uncommitted `1235579`):** user HUD/theme edits were saved and old serialized settings compared unchanged. Added per-death Won/Lost/Draw with a 0.12 s simultaneous-death window and separate editable layout; menu press now scales only its centered visual and stays held. UI Edit **5/5**, production UI Play **2/2** passed. Capture/extraction smoke and chips, charge vignette and fake dusty sunlight installed and saved; VFX Edit **3/3**, particle Play **1/1**, production visual Play **1/1** passed at 22:18:37. Night shafts difference is zero; charge and arena frames inspected, decor capture partially occluded. [UI controls](FEEL_FOLLOWUP_UI.md), [VFX evidence and limits](POWER_VFX_FOLLOWUP.md).
+
+**Basic Relay scenario accepted, 23:57:42 UTC:** MPS 2.3.1 / NGO 2.13.2 / Transport 2.7.4 and the second actor graph remain installed in the saved arena without regeneration or animation reassignment. Edit **34/34**, Play **4/4**, Development build **0 errors / 188 warnings** (23:55:14 UTC). Shared dataset reads, countdown receive ordering and dynamic Earth collision-material replication are corrected. Run235548 completed actual Host/Join, world sync, countdown, sustained Combat, client movement (~3.3 m), two host-accepted primary presses/releases, matching observed health and host leave with client Main/disconnect message. Both processes closed. A retained command rejection status has no recorded timestamp/subreason; delay/loss, attributed hits/kills and full Stage 2 acceptance/commit remain pending. [Evidence and limits](ONLINE_ALPHA_TESTING.md).
+
+**Editable HUD layout, 20:55:57 UTC (uncommitted main `1235579`):** saved theme now references `ElementalHudLayout.asset`; **Elemental > UI > Edit HUD Layout** exposes separate screen groups and nested bar/readout/icon/value, navigation/globe and pause transforms. Live Inspector changes work while paused; entrance animation preserves authored pivots/rotation. Edit serialization **1/1** at 20:53:22 and isolated production-HUD Play **1/1** at 20:55:57 passed at three aspect ratios, including transformed pause pointer/picking. Captures inspected; one event-driven layout apply peaked at **0.1149 ms** in Editor (no claim about total UI renderer cost). Current online Host/Join remain disabled; pending Stage 2 is not integrated. [Settings and evidence](HUD_LAYOUT_TUNING.md).
+
+**Locomotion, turns and world contact accepted, 19:03:38 UTC (uncommitted):** user clip/controller assignments remain unchanged. Final cadence/clock Play 2/2 passed: ten-cycle mean actual/requested player 0.999379, bot 0.996191 (both inside 1%); both feet reach settled stance. Targeted Edit 32/32 passed at 18:59:00, including anatomical reach release and reload safety. Four turn scenarios passed strict whole-sequence floor gates and visual review at 18:50:13. The real pit/hump/slope matrix passed both actors at controlled 30/60/120 Hz at 19:01:18: maximum settled drift 13.090 mm and absolute normal gap 1.304 mm, under unchanged limits. The runtime reach-release counter is not serialized by the surface report; no exact count is claimed. This supersedes earlier pending locomotion/slope checkpoints; final build/commit remain coordinator-owned. [Final contract, menus, evidence and limitations](LOCOMOTION_RHYTHM_IMPLEMENTATION.md).
+
+**Shared editable stone mass policy, uncommitted main `1235579`:** initial mass
+creation now has one per-world immutable policy across decor, arena, hero/quick/
+bot stones, meteors and constructed physical earth. Canonical volume is stored
+separately; held/debris/wall/platform children inherit conserved parent shares.
+Coordinator compiled, installed and saved the asset/scene. **7/7 Edit** at
+15:42:36 UTC and **3/3 Play** at 15:44:36 UTC passed.
+[Contract and exact menus](SHARED_STONE_MASS_POLICY.md).
+
+**Local physical impacts, 14:33 UTC, uncommitted main `1235579`:** eleven-region
+prewarmed PhysX proxies now own flinch/stagger; medium hits cancel actions and
+gate movement for 0.24s. Heavy ragdoll preserves sampled physical pose/velocity.
+**24/24 Edit + 3/3 Play**, production captures inspected, local return measured
+at 0.574s. Additional **2/2 Play** passed at 16:11:46 UTC: actual head/both-arm/
+both-leg thrown contacts/recovery metrics, plus 96-frame profiling. Video review
+found incorrect capture bounds; corrected framing and footage acceptance remain
+pending. Mean
+step/pose cost across both fighters is 0.011976/0.087081ms; 96 fixed and 149 pose
+callback allocation brackets measured zero bytes. Regional footage uses a clear
+test-only physical platform in the production scene.
+[Physical impact contract and tuning](LOCAL_PHYSICAL_HIT_RESPONSE.md).
+
+**Readability correction, September 6:** restored the original HUD with 12%
+larger type; exact beveled cell assembly now supplies intact/cracked wall shape,
+and the paired-mouse pillar line is saved 0.35m lower. Fixed sonar's persistent
+five-entry GPU array truncation with versioned sixteen-entry globals; **3/3 Play**
+passes. Actual short turns and skinned accessory motion pass; authored locomotion
+is preserved. Charge includes live LMB accumulation with stronger visible lens
+feedback: **19/19 Edit + Space/LMB 2/2 Play**, actual URP output inspected.
+[Current repair contract](READABILITY_REPAIR_2026_09_06.md).
+Stone shove/presentation transfer is 40% stronger after mass normalization;
+the torso bends over spine/chest with slower viscous return. **53/53 Edit +
+6/6 Play** pass, including production stagger and recoverable heavy hits.
+
+**Character/premium repair, 02:04 UTC, uncommitted main `1235579`:** final
+`SeptemberPremiumPlay` **10/10 passed** (48.824 s): live/KO respawn for both actors,
+authored pivot, actual backward arena descent, three cancellable Mixamo transitions,
+HUD, charge camera and both coordinated cushion regressions. Edit evidence:
+37/37 support/pivot/respawn + 29/29 charge/short transitions. Costume evidence:
+13/13 Edit + 1/1 Play, repaired clothing/head weights and constrained belt/plume
+motion. Native HUD and actual transition captures inspected. Manual locomotion
+assignments and other-task wall/sonar changes preserved. [Contract, provenance and
+scoped measurements](SEPTEMBER_PREMIUM_ANIMATION_REPAIR.md).
+
+**Mobility/wall correction, 01:18 UTC, working tree on main `1235579`:** line
+placement offset is exposed separately from stone size. Held Space uses a live
+half-crouch; cushion/surf follow the rider; high-impact cushion breaks into visual
+stones. Long walls pass on actual uneven arena geometry, while finite source
+bounds remain enforced. Chipped matching wall cells stay rigid while supported,
+with stronger breakable source anchors. **30/30 Edit + 6/6 Play pass**, and charge,
+compression and breakup captures were inspected. [Contract/evidence](MOBILITY_WALL_FOLLOWUP.md).
+Concurrent locomotion/respawn/HUD/costume/camera work is a separate acceptance.
+
+**Gameplay follow-up, 00:43 UTC, uncommitted main `1235579`:** full 122-frame kick
+source, preserved user locomotion assignments, visible held-LMB+RMB line-height
+control, 40 m sonar, fitting connected wall fracture, finite-face wall bounds/MMB
+anchoring and mass/speed-scaled stone impacts are integrated. **64/64 Edit + 7/7
+Play**, with final finisher **1/1 Play**, pass. [Details](GAMEPLAY_TUNING_FOLLOWUP.md).
+
+**Seismic vision follow-up, uncommitted on main `1235579`:** one-second toggle
+fades, half-width/dimmer waves, 2 m running pulse spacing, and wave-timed brighter
+opponent silhouettes through occluders are implemented. Night fill/ambient are
+5% lower. Fresh **10/10 pure Edit + 5/5 GPU Edit + 2/2 production Play** pass;
+opaque-wall proof changes 4814 hostile pixels and remains byte-exact before the
+wave/when off. Captures inspected. [Contract and evidence](SEISMIC_VISION_POLISH.md).
+
+**Duel HUD / combo follow-up, working tree based on main `1235579`:** new HUD is
+installed in the saved scene with explicit references, real HP100 and a separate
+300-second round clock. Final EditMode passes **35/35** and production PlayMode
+passes **9/9**, including physical paired-input progression, contact-synced foot
+shots, visible bilateral kicks/spin, wall contact/release, health/scoring and
+round restart. Actual gameplay HUD and four resolution captures were inspected;
+HUD update CPU p95 is 0.04240ms (not total rendering cost). Canonical kick and
+spin retract to guard, and an independent full-body layer preserves leg motion.
+Runtime hips turns measure 350.06/360.04/361.18 degrees at 30/60/120 FPS targets,
+without rotating the gameplay root off aim. Wall bracing now aligns the spine
+before the existing arm solver, preserving the original 0.25m hand-contact gate.
+Final wall recapture also passes 1/1, with actual hand distances 0.02153/0.02907m;
+both contact/release images were inspected. Wall-step CPU averages 21.39 microseconds.
+Evidence: `DuelAcceptanceEditFinal.xml` / `DuelAcceptancePlay5.xml` under
+`TestResults`, at 23:27:58 / 23:24:29 UTC September 5 (September 6 locally).
+See [current implementation/evidence](DUEL_HUD_IMPLEMENTATION.md).
+Earlier outstanding mantle, armor and strict startup-cover gates remain separate.
 
 **Latest verified rescue evidence, 15:28 UTC:** the gameplay camera correction is
 active at runtime and saved in `EarthCoreSlice`. Focused camera/animation EditMode
@@ -797,3 +922,78 @@ connected Editor, missing desired actions and current download settings.
   supported hardware floor, store/business model, and release window.
 - Whether all present third-party/AI packages and generated/imported assets pass final licensing,
   provenance, build-size, and platform review.
+
+## Local alpha implementation checkpoint — 2026-09-06
+
+Working tree remains on main at 1235579; no stage commit yet. Saved production
+scene now includes local physical hit response, common editable mass policy,
+repaired boulders/wall bonds, current-controller EAMM metadata and uGUI/TMP frontend.
+Precise settings and current evidence: [ALPHA_SETTINGS_AND_ACCEPTANCE.md](ALPHA_SETTINGS_AND_ACCEPTANCE.md).
+
+Regional actual-contact + performance acceptance passed 2/2 (16:19:49 UTC),
+local hit/ragdoll Play passed 3/3, mass Edit/Play passed 7/3 cases, four wall/boulder
+Play cases passed, frontend passed at all three target aspect ratios. The latest
+cadence run has both feet accepted, player ten-cycle speed in tolerance; bot speed
+still fails (~0.9465 actual/requested), so locomotion and Stage 1 remain incomplete.
+A Windows local build succeeded (464 MB, zero errors); final incremental rebuild
+and standalone smoke remain pending. Computer Use app authorization timed out
+before standalone launch. A separate baseline checkpoint permission is pending
+because substantial pre-existing uncommitted user work overlaps required files.
+
+Stage 2 source remains outside Assets in Stage2Pending. Sessions/Relay/NGO code,
+actor/world/terrain replication and explicit frontend/camera ownership are prepared;
+SDK compilation, saved production integration and two actual processes have not
+been accepted. Host/Join remain unavailable in the local alpha. No online completion
+or fictitious room claims.
+
+## Alpha steering checkpoint — 2026-09-06 17:08 UTC
+
+Supersedes the earlier cadence-failure checkpoint: AlphaCadencePlay is now 2/2 PASS (16:51:11 UTC), player mean ratio 0.999438 and bot 0.999798 over ten cycles. Slope and visible turn-in-place remain open. AlphaFrontendPlay 1/1 PASS (17:08:19 UTC): 4–3–2–1, side/elevated framing with last 1.5-second gameplay blend, all-HUD Varose, local pause/resume/Settings/end-match. Profiles/scene saved. Wall bevel target 52.5 mm saved; latest sequential-repair/heavy-crush/Earth-body-filter requests in progress. Final build and Git commits pending; Stage 2 SDK and real-online acceptance remain pending. HEAD is still 1235579b36960e340211e52b81a17ae8dc5e32e2; no new commit claimed.
+
+## Repair and actual large-stone contact checkpoint — 2026-09-06
+
+Working tree, no new commit claimed. Initial repair/crush pure cases passed within
+AlphaLatestEdit 26/26 at 17:29:44 UTC. The subsequent manual huge-piece report led
+to a source-first character contact route for actual structural/decor fragments,
+pre-rebound MagicExecutor direction, and explicit cancelled-quick-stone lifetime
+retirement plus destroyed-kernel reference handling. The added actual large-cell
+throws, falling-rock frame captures, sequential repair and lifecycle regressions
+are awaiting the coordinator's Unity acceptance. Exact contracts, settings and
+scope: [SEQUENTIAL_REPAIR_AND_HEAVY_CRUSH.md](SEQUENTIAL_REPAIR_AND_HEAVY_CRUSH.md).
+
+## Countdown dolly checkpoint — 2026-09-06 18:15 UTC
+
+Working tree only, HEAD unchanged. AlphaFrontendPlay 1/1 PASS at 18:15:09 UTC. Countdown starts at 150 mm, moves continuously inward for all four seconds, and aligns to gameplay over the last 1.5 s. Actual output lens, inward distance, visible alpha of 4/3/2/1, fighter viewport bounds, pointer pause and reentry are checked. Initial 17:08 text-only countdown acceptance missed inherited CanvasGroup visibility and is superseded. Fixed legacy camera FOV ownership and additive legacy-charge installer; inspected updated countdown screenshots with both fighters visible after foreground-occluder handling. Stage 1 remains open for repair, latest turn/slope validation, final build and commit; Stage 2 SDK/real-online acceptance remains pending.
+
+
+### Sequential repair and real stone damage acceptance — 2026-09-06 18:37 UTC
+
+Repair2 restored both arena and wall completion, held waiting material under one
+repair owner, retained physical final wall seating, and kept detached ragdoll bone
+contacts connected to the explicit health receiver. Destroyed-skeleton local
+physics teardown and explicit rebind passed. Real large authored arena/wall pieces
+at 25 m/s inflicted Bot HP loss (100→76 and 100→77.92); actual heavy falling sources
+handed both fighters to eleven dynamic colliders with downward displacement.
+The repeated physical source acceptance killed the bot in six contacts, HP100→0,
+with one KO/point and detached-rig ownership throughout (AlphaRepairVisualPlay4/4,
+18:30:59 UTC). The separate full MMB disassembly/reassembly capture passed1/1 at
+18:37:48 UTC,40/40 cells in20.433 simulation seconds; inspected individual flight,
+closed caps and restored wall extent. Video: BuildReports/SequentialRepair/Wall/
+SequentialWallRepair.mp4. Cropped Preview footage excludes some initial airborne
+starts and does not establish final gameplay colour grading. See
+Docs/SEQUENTIAL_REPAIR_AND_HEAVY_CRUSH.md for exact evidence, limits and settings.
+
+
+2026-09-07 15:12 UTC visual follow-up (shared main, original baseline HEAD1235579): actual menu alignment/footer selected segment and result styling imported. Main/Victory/Defeat/Draw screenshots refreshed in BuildReports/StoneSkin. UI Play4/4 passed46.05s after fixing culled result darkening and 28px caption sizing. Earlier geometry20/20, currentvisualcontracts10/10, winddustEdit5/5+Play1/1. Exact painted cracked defeat emblem/reference flame trails and fresh standalone GPU/network acceptance remain outstanding; no full visual-identity or performance claim. Neighbor status message rejected by automatic approval review; not sent.
+
+
+2026-09-07 16:43 UTC continuation (shared main, baseline HEAD1235579): SidebarIconEffects, actual centered RectTransform pivots for preserveAspect sprites, card y154 / symbolx65, staircase y/3 and footer opaque diamond OVER selected segment are actual. Original root button sprite is cleared while retaining transparent raycast surface; passive-shaped rim/glints are suppressed when cream selected artwork is active. User rejected sparse contour bloom artifacts; dense Gaussian soft field replaced rings/core-subtraction. Actual StoneSkin Play4/4 passed16:38:57UTC46.302s; fresh Main/Pause/Settings/Host/Join/Combat/results frames in BuildReports/StoneSkin. Actual pointer raycast hit PLAY VS BOT and dispatched click -> Combat/HasEnteredCombattrue, menu CanvasGroupalpha0 observed; no claim about every physical-device focus condition.
+IslandPerpendicularOverhead adds12 actual renderers (55generated,0rejected,worldUpDot1), saved and verified original9983scene records preserved. Actual East/West/Overhead screenshots in BuildReports/IslandPerpendicularOverhead. UIcard/icon geometry reviewed on freshMain. CloudFluffCompanions10analyticbanks+16imageclouds, ColumnFireArtFollowup, groundmeshwindwisps imported. NewDustPlay1/1passed16:40:33UTC21.911s BUT visually weakgroundwisps remain under dedicateddiagnosis; functional pass is notartacceptance. User now reports ordinaryimpactdustregression and requests coherent sunset/nightcloud+lowerfogtints; those are ACTIVE work. Geometry rerun didnotstart whilePlay; prior20/20 remains latest. No fresh standaloneGPU/network acceptance. SourceChatGPT read-onlycheck unchanged updatedAt1788765643.181653.
+
+2026-09-07 17:30Z checkpoint: root owns Unity, but MCP relay disconnected and shut down. No active editor restart or alternate control attempted. Latest actual changes/tests/pending checks: Tools/FireIntegration/Reports/SoftStoneAndCinematicAtmosphere.md. Second ArenaFractureShadingEdit run has no result; do not repeat while unknown. First run14/16 stale expectations now updated. WindPlay1/1 fresh17:12, VisualContracts15/15, Valley20/20. Latest fog/fire/art revisions require fresh captures after reconnect; assets saved, preservationPASS.
+
+2026-09-07 fine halftone follow-up (user reference9f4686b0): actual ValleyAtmosphereV2.hlsl now uses a4px-at1080p staggered grid instead of13.5px random dots. Dot diameter varies continuously .56–2.32px with pre-fog lit-source luminance (smaller in light, larger in shade). Removed arbitrary screen sine and random positive/negative polarity. Low-contrast multiplicative tone retains scene hue; far-depth/near/UI guards unchanged. No new texture samples or render passes. Still before DOF; final visibility and shader compilation require restored Unity MCP and are not claimed verified.
+
+2026-09-07 face-oriented halftone follow-up: rows now rotate with the camera projection of a face tangent derived from reconstructed world-position derivatives. Horizontal faces use a forward tangent fallback; derivatives evaluated before divergent masks. Fine4px grid retained. Bright lit areas gain pale tiny dots while shadows retain tonal dark ink. Far chromatic shift strengthened3.9→5.85px at1080p (cap6), positive-edge mix .72→.95; near/planet/depth guards retained. No extra texture reads or passes. Source applied; Unity shader/runtime verification still pending restored MCP. Grid phase remains screen-space; face orientation follows geometry, not UVs.
+
+**September 8 blue fog / separate-agent research (working tree main 1235579):** saved stronger blue day palette in profile/defaults/installer; added 1800–3200m protected distance closure and attenuated post-fog rock artwork by transmittance. Actual ValleyAtmosphereMath.cs compiled with Add-Type; 12001 distance samples pass monotonicity/exact plateaus, three distant heights become opaque, reverse-view playable planet stays protected. Eight Unity EditMode regression cases added; Unity import timed out after successful initial editor status, focused BlueFogClosureEdit result absent at checkpoint. No fresh shader/PlayMode/capture/GPU acceptance; do not count requested test run as passed or rerun blindly while status unknown. Animation and material/dust recommendations are research, not integrated features. [Research, patch and limits](ANIMATION_MATERIAL_FOG_RESEARCH_2026_09_08.md).

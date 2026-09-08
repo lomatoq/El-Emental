@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.IO;
 using Elemental.Runtime.World;
+using Elemental.Presentation.VFX;
+using Elemental.Simulation.Bending;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -16,6 +18,65 @@ namespace Elemental.Tests.PlayMode
     /// <summary>Actual URP pixels: cosmetic fragments do not hide dust, opaque matter does.</summary>
     public sealed class EarthDustCompositingRuntimeTests
     {
+        [UnityTest]
+        public IEnumerator ContactBurstMixesOriginalDustAndAtlasWithinOneBudget()
+        {
+#if UNITY_EDITOR
+            var profile = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<EarthEffectsTuningProfile>(ProfilePath));
+            var tintSource=new Material(profile.Materials.SurfDust);
+            var serialized=new SerializedObject(profile);
+            serialized.FindProperty("materials.surfDust").objectReferenceValue=tintSource;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            var root = new GameObject("Mixed dust event contract");
+            root.SetActive(false);
+            try
+            {
+                var dustObject = new GameObject("Atlas dust");
+                dustObject.transform.SetParent(root.transform);
+                var dust = dustObject.AddComponent<ParticleSystem>();
+                var chipsObject = new GameObject("Chips");
+                chipsObject.transform.SetParent(root.transform);
+                var chips = chipsObject.AddComponent<ParticleSystem>();
+                var fractureObject=new GameObject("Fracture dust");fractureObject.transform.SetParent(root.transform);
+                var fracture=fractureObject.AddComponent<ParticleSystem>();
+                var hub = root.AddComponent<EarthMaterialFeedbackHub>();
+                hub.Configure(profile, null);
+                var presenter = root.AddComponent<EarthMaterialFeedbackPresenter>();
+                presenter.Configure(hub, profile, null, dust, chips, null,fracture);
+                root.SetActive(true);
+                var soft = root.transform.Find("Original Soft Contact Dust").GetComponent<ParticleSystem>();
+                Assert.That(soft.GetComponent<ParticleSystemRenderer>().sharedMaterial,
+                    Is.SameAs(profile.Materials.SurfDust));
+                Assert.That(soft.textureSheetAnimation.enabled, Is.False);
+                Assert.That(dust.textureSheetAnimation.enabled, Is.True);
+                hub.Emit(EarthMaterialFeedbackKind.Impact, Vector3.up * 100f, Vector3.up,
+                    dustCount: 20, chipCount: 0);
+                yield return null;
+                yield return null;
+                Assert.That(soft.particleCount, Is.GreaterThan(0));
+                Assert.That(dust.particleCount, Is.GreaterThan(0));
+                Assert.That(soft.particleCount + dust.particleCount, Is.EqualTo(20),
+                    "Mixing must split the event budget rather than double it.");
+                Color editedTint=new Color(.12f,.35f,.72f,.57f);
+                tintSource.SetColor("_BaseColor",editedTint);tintSource.SetFloat("_Brightness",.73f);
+                yield return null;yield return null;
+                foreach(var layer in new[]{soft,dust,fracture})
+                {
+                    var block=new MaterialPropertyBlock();layer.GetComponent<ParticleSystemRenderer>().GetPropertyBlock(block);
+                    Assert.That(block.GetColor("_BaseColor"),Is.EqualTo(editedTint),"All ordinary dust follows live RumbleDustLit tint, including alpha.");
+                    Assert.That(block.GetFloat("_Brightness"),Is.EqualTo(.73f));
+                }
+                root.SetActive(false);
+                Assert.That(soft.particleCount + dust.particleCount, Is.Zero,
+                    "Disabling the presenter must also clear the original dust layer.");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root);UnityEngine.Object.DestroyImmediate(profile);UnityEngine.Object.DestroyImmediate(tintSource); }
+#else
+            Assert.Ignore("Requires the authored editor profile asset.");
+            yield break;
+#endif
+        }
+
         private const string ProfilePath = "Assets/Elemental/Content/Profiles/EarthEffectsTuningProfile.asset";
         private const string ReportFolder = "BuildReports/DustCompositing";
         private const int Resolution = 96;
@@ -112,6 +173,7 @@ namespace Elemental.Tests.PlayMode
             Color savedAmbientGround = RenderSettings.ambientGroundColor;
             float savedAmbientIntensity = RenderSettings.ambientIntensity;
             Light savedSun = RenderSettings.sun;
+            float savedNight=Shader.GetGlobalFloat("_ElementalNight01");
             try
             {
                 root = new GameObject("Dust compositing regression") { hideFlags = HideFlags.DontSave };
@@ -253,14 +315,20 @@ namespace Elemental.Tests.PlayMode
                 yield return null;
                 Shader unlitShader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
                 Assert.That(unlitShader, Is.Not.Null);
+                // The single-sprite layer retains the legacy RGB contract. The
+                // animated atlas intentionally removes black padding from RGB.
+                dust.Clear();
+                dustRenderer.sharedMaterial = profile.Materials.SurfDust;
+                EarthParticleSystemTuningApplier.ConfigureDustFlipbook(dust);
+                EmitStationary(dust, new Vector3(0f, 0f, .5f), 2.5f);
                 neutralUnlitReference = CreateLegacyUnlitReference(
-                    unlitShader, profile.Materials.ImpactDust);
+                    unlitShader, profile.Materials.SurfDust);
                 dustRenderer.enabled = false;
                 Color[] neutralBackground = Capture(camera, "Neutral-Background");
                 dustRenderer.enabled = true;
                 dustRenderer.sharedMaterial = neutralUnlitReference;
                 Color[] neutralLegacy = Capture(camera, "Neutral-LegacyUnlit");
-                dustRenderer.sharedMaterial = profile.Materials.ImpactDust;
+                dustRenderer.sharedMaterial = profile.Materials.SurfDust;
                 Color[] neutralPatched = Capture(camera, "Neutral-PatchedLitDust");
                 report.neutralLegacyPixels = CenterMean(neutralLegacy);
                 report.neutralPatchedPixels = CenterMean(neutralPatched);
@@ -286,6 +354,9 @@ namespace Elemental.Tests.PlayMode
 
                 // The same particles must derive their radiance from the real key
                 // light and ambient probe. Counts, density and alpha remain untouched.
+                dust.Clear();
+                dustRenderer.sharedMaterial = profile.Materials.ImpactDust;
+                EarthParticleSystemTuningApplier.ConfigureDustFlipbook(dust);
                 camera.backgroundColor = new Color(.035f, .04f, .05f, 1f);
                 RenderSettings.ambientMode = AmbientMode.Trilight;
                 RenderSettings.sun = light;
@@ -296,6 +367,7 @@ namespace Elemental.Tests.PlayMode
                 ApplyLighting(light, 1.55f, new Color(1f, .9f, .74f),
                     new Color(.18f, .23f, .31f), new Color(.12f, .105f, .10f),
                     new Color(.045f, .035f, .03f), .82f);
+                Shader.SetGlobalFloat("_ElementalNight01",0);
                 yield return null;
                 Color[] denseDay = Capture(camera, "DenseDust-Day");
 
@@ -306,6 +378,7 @@ namespace Elemental.Tests.PlayMode
                 Color[] denseDusk = Capture(camera, "DenseDust-Dusk");
 
                 light.intensity = 0;
+                Shader.SetGlobalFloat("_ElementalNight01",1);
                 // Exact current production night ambient base/factors.
                 Color productionNightAmbient = new Color(.05f, .07f, .12f);
                 RenderSettings.ambientSkyColor = productionNightAmbient * 1.55f;
@@ -345,6 +418,7 @@ namespace Elemental.Tests.PlayMode
                 RenderSettings.ambientGroundColor = savedAmbientGround;
                 RenderSettings.ambientIntensity = savedAmbientIntensity;
                 RenderSettings.sun = savedSun;
+                Shader.SetGlobalFloat("_ElementalNight01",savedNight);
                 DynamicGI.UpdateEnvironment();
                 if (root != null) UnityEngine.Object.DestroyImmediate(root);
                 if (chipMaterial != null) UnityEngine.Object.DestroyImmediate(chipMaterial);

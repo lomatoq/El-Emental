@@ -1,0 +1,18 @@
+{
+    "unityVersion": "6000.5.7f1",
+    "utc": "2026-09-06T08:39:47.1824227Z",
+    "mode": "PlayMode",
+    "result": "Failed",
+    "total": 8,
+    "passed": 4,
+    "failed": 4,
+    "skipped": 0,
+    "inconclusive": 0,
+    "durationSeconds": 4.2827899,
+    "failures": [
+        "Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests.SurfWaveAndBotProjectileUseTheSharedVisibleKnockoutPipeline:   One heavy stone must knock the fighter down without ending the round.\r\n  Expected: RecoverableKnockdown\r\n  But was:  Ignore\r\n",
+        "Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.RunningKeepsSeismicReadabilityWithoutDensePulseSpam: SetUp :   Use the focused launcher so production scene can be restored safely.\r\n  Expected: False\r\n  But was:  True\r\n",
+        "Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.SeismicEnemyWaitsForWaveAndRendersThroughOpaqueWall: SetUp :   Use the focused launcher so production scene can be restored safely.\r\n  Expected: False\r\n  But was:  True\r\n",
+        "Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.SeismicVisionRevealsNightGeometryAndImmediatelyLosesAirborneSupport: SetUp :   Use the focused launcher so production scene can be restored safely.\r\n  Expected: False\r\n  But was:  True\r\n"
+    ]
+}

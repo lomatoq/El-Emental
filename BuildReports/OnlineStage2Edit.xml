@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="35" result="Passed" total="35" passed="35" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.090428">
+  <test-suite type="TestSuite" id="1364" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="1118" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.090428" total="35" passed="35" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1432" name="Elemental.Online.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Online.Tests.EditMode.dll" runstate="Runnable" testcasecount="35" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.088251" total="35" passed="35" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="1564" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1433" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="35" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.088175" total="35" passed="35" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1434" name="Online" fullname="Elemental.Online" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.027987" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1435" name="Tests" fullname="Elemental.Online.Tests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.027894" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1385" name="OnlineArenaIdentityTests" fullname="Elemental.Online.Tests.OnlineArenaIdentityTests" classname="Elemental.Online.Tests.OnlineArenaIdentityTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.023790" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1386" name="SceneEmbeddedMeshesHashByGeometryRatherThanTransientIdentity" fullname="Elemental.Online.Tests.OnlineArenaIdentityTests.SceneEmbeddedMeshesHashByGeometryRatherThanTransientIdentity" methodname="SceneEmbeddedMeshesHashByGeometryRatherThanTransientIdentity" classname="Elemental.Online.Tests.OnlineArenaIdentityTests" runstate="Runnable" seed="974490435" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.017700" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1387" name="WorldIdentityTracksSeedAndActualGeometryPoseButNotItsOwnStamp" fullname="Elemental.Online.Tests.OnlineArenaIdentityTests.WorldIdentityTracksSeedAndActualGeometryPoseButNotItsOwnStamp" methodname="WorldIdentityTracksSeedAndActualGeometryPoseButNotItsOwnStamp" classname="Elemental.Online.Tests.OnlineArenaIdentityTests" runstate="Runnable" seed="1478255059" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.003446" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1388" name="OnlineLaunchProfileTests" fullname="Elemental.Online.Tests.OnlineLaunchProfileTests" classname="Elemental.Online.Tests.OnlineLaunchProfileTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.003874" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1393" name="InvalidProfileCannotAliasAnotherProcessStorage" fullname="Elemental.Online.Tests.OnlineLaunchProfileTests.InvalidProfileCannotAliasAnotherProcessStorage" classname="Elemental.Online.Tests.OnlineLaunchProfileTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.002278" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1390" name="InvalidProfileCannotAliasAnotherProcessStorage(&quot;bad/profile&quot;)" fullname="Elemental.Online.Tests.OnlineLaunchProfileTests.InvalidProfileCannotAliasAnotherProcessStorage(&quot;bad/profile&quot;)" methodname="InvalidProfileCannotAliasAnotherProcessStorage" classname="Elemental.Online.Tests.OnlineLaunchProfileTests" runstate="Runnable" seed="887677459" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.001388" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1391" name="InvalidProfileCannotAliasAnotherProcessStorage(&quot;a profile&quot;)" fullname="Elemental.Online.Tests.OnlineLaunchProfileTests.InvalidProfileCannotAliasAnotherProcessStorage(&quot;a profile&quot;)" methodname="InvalidProfileCannotAliasAnotherProcessStorage" classname="Elemental.Online.Tests.OnlineLaunchProfileTests" runstate="Runnable" seed="1319988172" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000138" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1392" name="InvalidProfileCannotAliasAnotherProcessStorage(&quot;&quot;)" fullname="Elemental.Online.Tests.OnlineLaunchProfileTests.InvalidProfileCannotAliasAnotherProcessStorage(&quot;&quot;)" methodname="InvalidProfileCannotAliasAnotherProcessStorage" classname="Elemental.Online.Tests.OnlineLaunchProfileTests" runstate="Runnable" seed="1427451590" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000101" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1394" name="MissingOrDuplicateProfileFailsExplicitly" fullname="Elemental.Online.Tests.OnlineLaunchProfileTests.MissingOrDuplicateProfileFailsExplicitly" methodname="MissingOrDuplicateProfileFailsExplicitly" classname="Elemental.Online.Tests.OnlineLaunchProfileTests" runstate="Runnable" seed="935650580" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000464" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1389" name="TwoProcessesCanSelectIndependentProfiles" fullname="Elemental.Online.Tests.OnlineLaunchProfileTests.TwoProcessesCanSelectIndependentProfiles" methodname="TwoProcessesCanSelectIndependentProfiles" classname="Elemental.Online.Tests.OnlineLaunchProfileTests" runstate="Runnable" seed="676523072" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000279" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+        <test-suite type="TestSuite" id="1436" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="28" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.060096" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1437" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="28" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.059957" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1395" name="OnlineActorGraphAuthoringTests" fullname="Elemental.Tests.EditMode.OnlineActorGraphAuthoringTests" classname="Elemental.Tests.EditMode.OnlineActorGraphAuthoringTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.009221" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1396" name="CrossRootOwnerReferencesPointToTheSameCloneGraph" fullname="Elemental.Tests.EditMode.OnlineActorGraphAuthoringTests.CrossRootOwnerReferencesPointToTheSameCloneGraph" methodname="CrossRootOwnerReferencesPointToTheSameCloneGraph" classname="Elemental.Tests.EditMode.OnlineActorGraphAuthoringTests" runstate="Runnable" seed="1792536861" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.006660" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1397" name="RetainedWorldServiceReplacesItsCopyInBothInternalAndCrossRootReferences" fullname="Elemental.Tests.EditMode.OnlineActorGraphAuthoringTests.RetainedWorldServiceReplacesItsCopyInBothInternalAndCrossRootReferences" methodname="RetainedWorldServiceReplacesItsCopyInBothInternalAndCrossRootReferences" classname="Elemental.Tests.EditMode.OnlineActorGraphAuthoringTests" runstate="Runnable" seed="770697929" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.001892" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1398" name="OnlineGeometryTests" fullname="Elemental.Tests.EditMode.OnlineGeometryTests" classname="Elemental.Tests.EditMode.OnlineGeometryTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.026190" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1403" name="BeveledCellChannelsAndInteriorMaterialSubmeshesSurviveTransfer" fullname="Elemental.Tests.EditMode.OnlineGeometryTests.BeveledCellChannelsAndInteriorMaterialSubmeshesSurviveTransfer" methodname="BeveledCellChannelsAndInteriorMaterialSubmeshesSurviveTransfer" classname="Elemental.Tests.EditMode.OnlineGeometryTests" runstate="Runnable" seed="1749804189" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.006437" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1402" name="GeneratedEarthContactMaterialSurvivesRealWireWithoutAnAssetId" fullname="Elemental.Tests.EditMode.OnlineGeometryTests.GeneratedEarthContactMaterialSurvivesRealWireWithoutAnAssetId" classname="Elemental.Tests.EditMode.OnlineGeometryTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.012967" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1399" name="GeneratedEarthContactMaterialSurvivesRealWireWithoutAnAssetId(LightStone)" fullname="Elemental.Tests.EditMode.OnlineGeometryTests.GeneratedEarthContactMaterialSurvivesRealWireWithoutAnAssetId(LightStone)" methodname="GeneratedEarthContactMaterialSurvivesRealWireWithoutAnAssetId" classname="Elemental.Tests.EditMode.OnlineGeometryTests" runstate="Runnable" seed="1696968113" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.011502" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1400" name="GeneratedEarthContactMaterialSurvivesRealWireWithoutAnAssetId(HeavyBlock)" fullname="Elemental.Tests.EditMode.OnlineGeometryTests.GeneratedEarthContactMaterialSurvivesRealWireWithoutAnAssetId(HeavyBlock)" methodname="GeneratedEarthContactMaterialSurvivesRealWireWithoutAnAssetId" classname="Elemental.Tests.EditMode.OnlineGeometryTests" runstate="Runnable" seed="1270958855" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000441" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1401" name="GeneratedEarthContactMaterialSurvivesRealWireWithoutAnAssetId(Structure)" fullname="Elemental.Tests.EditMode.OnlineGeometryTests.GeneratedEarthContactMaterialSurvivesRealWireWithoutAnAssetId(Structure)" methodname="GeneratedEarthContactMaterialSurvivesRealWireWithoutAnAssetId" classname="Elemental.Tests.EditMode.OnlineGeometryTests" runstate="Runnable" seed="1030527045" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000364" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1404" name="GeometryChecksumAndDeclaredLengthAreEnforced" fullname="Elemental.Tests.EditMode.OnlineGeometryTests.GeometryChecksumAndDeclaredLengthAreEnforced" methodname="GeometryChecksumAndDeclaredLengthAreEnforced" classname="Elemental.Tests.EditMode.OnlineGeometryTests" runstate="Runnable" seed="1979222930" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.001220" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1405" name="ShaderOverridesPreserveFractureMappingAndIndependentPiecePalette" fullname="Elemental.Tests.EditMode.OnlineGeometryTests.ShaderOverridesPreserveFractureMappingAndIndependentPiecePalette" methodname="ShaderOverridesPreserveFractureMappingAndIndependentPiecePalette" classname="Elemental.Tests.EditMode.OnlineGeometryTests" runstate="Runnable" seed="1694633412" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.004598" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1406" name="OnlineMatchReplicaTests" fullname="Elemental.Tests.EditMode.OnlineMatchReplicaTests" classname="Elemental.Tests.EditMode.OnlineMatchReplicaTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.002086" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1412" name="InvalidReplicaDoesNotPartiallyChangeMatch" fullname="Elemental.Tests.EditMode.OnlineMatchReplicaTests.InvalidReplicaDoesNotPartiallyChangeMatch" classname="Elemental.Tests.EditMode.OnlineMatchReplicaTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.001267" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1408" name="InvalidReplicaDoesNotPartiallyChangeMatch(float.NaN,100,100)" fullname="Elemental.Tests.EditMode.OnlineMatchReplicaTests.InvalidReplicaDoesNotPartiallyChangeMatch(float.NaN,100,100)" methodname="InvalidReplicaDoesNotPartiallyChangeMatch" classname="Elemental.Tests.EditMode.OnlineMatchReplicaTests" runstate="Runnable" seed="1467004663" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000569" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1409" name="InvalidReplicaDoesNotPartiallyChangeMatch(-1,100,100)" fullname="Elemental.Tests.EditMode.OnlineMatchReplicaTests.InvalidReplicaDoesNotPartiallyChangeMatch(-1,100,100)" methodname="InvalidReplicaDoesNotPartiallyChangeMatch" classname="Elemental.Tests.EditMode.OnlineMatchReplicaTests" runstate="Runnable" seed="1882569537" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000108" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1410" name="InvalidReplicaDoesNotPartiallyChangeMatch(101,100,100)" fullname="Elemental.Tests.EditMode.OnlineMatchReplicaTests.InvalidReplicaDoesNotPartiallyChangeMatch(101,100,100)" methodname="InvalidReplicaDoesNotPartiallyChangeMatch" classname="Elemental.Tests.EditMode.OnlineMatchReplicaTests" runstate="Runnable" seed="2104265384" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000084" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1411" name="InvalidReplicaDoesNotPartiallyChangeMatch(100,100,301)" fullname="Elemental.Tests.EditMode.OnlineMatchReplicaTests.InvalidReplicaDoesNotPartiallyChangeMatch(100,100,301)" methodname="InvalidReplicaDoesNotPartiallyChangeMatch" classname="Elemental.Tests.EditMode.OnlineMatchReplicaTests" runstate="Runnable" seed="1300653183" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000076" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1407" name="ReplicaReplacementDoesNotReplayDamageOrIncrementScore" fullname="Elemental.Tests.EditMode.OnlineMatchReplicaTests.ReplicaReplacementDoesNotReplayDamageOrIncrementScore" methodname="ReplicaReplacementDoesNotReplayDamageOrIncrementScore" classname="Elemental.Tests.EditMode.OnlineMatchReplicaTests" runstate="Runnable" seed="572127295" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000309" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1413" name="OnlinePauseInputTests" fullname="Elemental.Tests.EditMode.OnlinePauseInputTests" classname="Elemental.Tests.EditMode.OnlinePauseInputTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.005887" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1415" name="ContinuedPausedTrafficCarriesNoReplayedCancelReleaseOrMovement" fullname="Elemental.Tests.EditMode.OnlinePauseInputTests.ContinuedPausedTrafficCarriesNoReplayedCancelReleaseOrMovement" methodname="ContinuedPausedTrafficCarriesNoReplayedCancelReleaseOrMovement" classname="Elemental.Tests.EditMode.OnlinePauseInputTests" runstate="Runnable" seed="1908777053" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.004174" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1414" name="OpeningPauseReleasesHeldControlsAndCancelsWithoutTurningReleaseIntoTapJump" fullname="Elemental.Tests.EditMode.OnlinePauseInputTests.OpeningPauseReleasesHeldControlsAndCancelsWithoutTurningReleaseIntoTapJump" methodname="OpeningPauseReleasesHeldControlsAndCancelsWithoutTurningReleaseIntoTapJump" classname="Elemental.Tests.EditMode.OnlinePauseInputTests" runstate="Runnable" seed="1769036888" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.001180" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1416" name="OnlineProtocolTests" fullname="Elemental.Tests.EditMode.OnlineProtocolTests" classname="Elemental.Tests.EditMode.OnlineProtocolTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.010304" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1421" name="CanonicalCommandRoundTripsAndRetimesWithoutChangingGeometry" fullname="Elemental.Tests.EditMode.OnlineProtocolTests.CanonicalCommandRoundTripsAndRetimesWithoutChangingGeometry" methodname="CanonicalCommandRoundTripsAndRetimesWithoutChangingGeometry" classname="Elemental.Tests.EditMode.OnlineProtocolTests" runstate="Runnable" seed="307232038" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.004509" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1428" name="ClientAllowedMessageKindsExcludeDamageBodiesAndGeometry" fullname="Elemental.Tests.EditMode.OnlineProtocolTests.ClientAllowedMessageKindsExcludeDamageBodiesAndGeometry" methodname="ClientAllowedMessageKindsExcludeDamageBodiesAndGeometry" classname="Elemental.Tests.EditMode.OnlineProtocolTests" runstate="Runnable" seed="1365175062" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000352" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1426" name="ClientCommandCannotSpoofActorOrEscapeTickWindow" fullname="Elemental.Tests.EditMode.OnlineProtocolTests.ClientCommandCannotSpoofActorOrEscapeTickWindow" classname="Elemental.Tests.EditMode.OnlineProtocolTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.001387" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1422" name="ClientCommandCannotSpoofActorOrEscapeTickWindow(1,100,False)" fullname="Elemental.Tests.EditMode.OnlineProtocolTests.ClientCommandCannotSpoofActorOrEscapeTickWindow(1,100,False)" methodname="ClientCommandCannotSpoofActorOrEscapeTickWindow" classname="Elemental.Tests.EditMode.OnlineProtocolTests" runstate="Runnable" seed="2039341565" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000522" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1423" name="ClientCommandCannotSpoofActorOrEscapeTickWindow(2,281,False)" fullname="Elemental.Tests.EditMode.OnlineProtocolTests.ClientCommandCannotSpoofActorOrEscapeTickWindow(2,281,False)" methodname="ClientCommandCannotSpoofActorOrEscapeTickWindow" classname="Elemental.Tests.EditMode.OnlineProtocolTests" runstate="Runnable" seed="1587525011" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000128" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1424" name="ClientCommandCannotSpoofActorOrEscapeTickWindow(2,87,False)" fullname="Elemental.Tests.EditMode.OnlineProtocolTests.ClientCommandCannotSpoofActorOrEscapeTickWindow(2,87,False)" methodname="ClientCommandCannotSpoofActorOrEscapeTickWindow" classname="Elemental.Tests.EditMode.OnlineProtocolTests" runstate="Runnable" seed="1373994122" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000105" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1425" name="ClientCommandCannotSpoofActorOrEscapeTickWindow(2,100,True)" fullname="Elemental.Tests.EditMode.OnlineProtocolTests.ClientCommandCannotSpoofActorOrEscapeTickWindow(2,100,True)" methodname="ClientCommandCannotSpoofActorOrEscapeTickWindow" classname="Elemental.Tests.EditMode.OnlineProtocolTests" runstate="Runnable" seed="726289017" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000087" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1418" name="CountdownRetainsReliableHitAndMatchInOrderAndClearsOnDisconnect" fullname="Elemental.Tests.EditMode.OnlineProtocolTests.CountdownRetainsReliableHitAndMatchInOrderAndClearsOnDisconnect" methodname="CountdownRetainsReliableHitAndMatchInOrderAndClearsOnDisconnect" classname="Elemental.Tests.EditMode.OnlineProtocolTests" runstate="Runnable" seed="870611496" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.001370" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1427" name="InvalidFloatingPointCommandIsRejectedBeforeConstructingSimulationCommand" fullname="Elemental.Tests.EditMode.OnlineProtocolTests.InvalidFloatingPointCommandIsRejectedBeforeConstructingSimulationCommand" methodname="InvalidFloatingPointCommandIsRejectedBeforeConstructingSimulationCommand" classname="Elemental.Tests.EditMode.OnlineProtocolTests" runstate="Runnable" seed="1773298380" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000225" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1419" name="ReadyRequiresBothPeersSameEpochBuildWorldAndCompleteBindings" fullname="Elemental.Tests.EditMode.OnlineProtocolTests.ReadyRequiresBothPeersSameEpochBuildWorldAndCompleteBindings" methodname="ReadyRequiresBothPeersSameEpochBuildWorldAndCompleteBindings" classname="Elemental.Tests.EditMode.OnlineProtocolTests" runstate="Runnable" seed="241629308" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000503" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1417" name="ReplicaClockCannotOutrunStalledHostOrRewindAcrossSnapshotChannels" fullname="Elemental.Tests.EditMode.OnlineProtocolTests.ReplicaClockCannotOutrunStalledHostOrRewindAcrossSnapshotChannels" methodname="ReplicaClockCannotOutrunStalledHostOrRewindAcrossSnapshotChannels" classname="Elemental.Tests.EditMode.OnlineProtocolTests" runstate="Runnable" seed="882117840" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000361" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1420" name="SequenceRejectsDuplicatesAndReorderingWithoutBlockingOtherChannels" fullname="Elemental.Tests.EditMode.OnlineProtocolTests.SequenceRejectsDuplicatesAndReorderingWithoutBlockingOtherChannels" methodname="SequenceRejectsDuplicatesAndReorderingWithoutBlockingOtherChannels" classname="Elemental.Tests.EditMode.OnlineProtocolTests" runstate="Runnable" seed="1300950645" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.000280" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1429" name="OnlineSemanticInputTests" fullname="Elemental.Tests.EditMode.OnlineSemanticInputTests" classname="Elemental.Tests.EditMode.OnlineSemanticInputTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.005714" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1431" name="BinaryGeometryPacketFitsTransportBudgetAndCannotCarryHiddenCommandPath" fullname="Elemental.Tests.EditMode.OnlineSemanticInputTests.BinaryGeometryPacketFitsTransportBudgetAndCannotCarryHiddenCommandPath" methodname="BinaryGeometryPacketFitsTransportBudgetAndCannotCarryHiddenCommandPath" classname="Elemental.Tests.EditMode.OnlineSemanticInputTests" runstate="Runnable" seed="1703987879" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.001665" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1430" name="ContinuousHeldReleaseModifierAndCameraRoundTripThroughActualWire" fullname="Elemental.Tests.EditMode.OnlineSemanticInputTests.ContinuousHeldReleaseModifierAndCameraRoundTripThroughActualWire" methodname="ContinuousHeldReleaseModifierAndCameraRoundTripThroughActualWire" classname="Elemental.Tests.EditMode.OnlineSemanticInputTests" runstate="Runnable" seed="1520977043" result="Passed" start-time="2026-09-07 01:52:34Z" end-time="2026-09-07 01:52:34Z" duration="0.003499" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\OnlineStage2Edit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

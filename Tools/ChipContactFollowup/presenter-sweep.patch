@@ -1,0 +1,15 @@
+--- Assets\Elemental\Presentation\VFX\EarthMaterialFeedbackPresenter.cs
++++ Assets\Elemental\Presentation\VFX\EarthMaterialFeedbackPresenter.cs
+@@ -228,9 +228,10 @@
+                     float speed = velocity.magnitude;
+                     float radius = Mathf.Max(.012f, particle.startSize * .3f);
+                     // Sweep the step already advanced by ParticleSystem to avoid tunnelling.
+-                    Vector3 start = particle.position - velocity * dt;
++                    float sweepDt = Mathf.Max(0f, Time.deltaTime) * ps.main.simulationSpeed;
++                    Vector3 start = particle.position - velocity * sweepDt;
+                     if (speed > .01f && UnityEngine.Physics.Raycast(start, velocity / speed, out RaycastHit hit,
+-                        speed * dt + radius, chipSurfaceMask, QueryTriggerInteraction.Ignore) &&
++                        speed * sweepDt + radius, chipSurfaceMask, QueryTriggerInteraction.Ignore) &&
+                         Vector3.Dot(velocity, hit.normal) < 0f)
+                     {
+                         float impact = -Vector3.Dot(velocity, hit.normal);

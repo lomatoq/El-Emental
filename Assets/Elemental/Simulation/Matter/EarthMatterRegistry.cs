@@ -31,6 +31,17 @@ namespace Elemental.Simulation.Matter
             _occupied = new bool[Capacity];
         }
 
+        /// <summary>Canonical arena replacement retires every old lifetime, including dormant dust.
+        /// Slots/IDs are retained; normal registration increments generations when they are reused.</summary>
+        public void RetireForArenaRestore()
+        {
+            for (int i = 0; i < _records.Length; i++)
+            {
+                if (!_occupied[i]) continue;
+                EarthMatterRecord record = _records[i]; record.Phase = EarthMatterPhase.Consumed; _records[i] = record;
+            }
+        }
+
         public int Capacity { get; }
         public int ActiveCount { get; private set; }
         public EarthMatterRegistryFailure LastFailure { get; private set; }
@@ -182,6 +193,28 @@ namespace Elemental.Simulation.Matter
             }
             EarthMatterRecord record = _records[slot];
             record.Source = source;
+            _records[slot] = record;
+            LastFailure = EarthMatterRegistryFailure.None;
+            return true;
+        }
+
+        public bool TryAccreteTerrain(EarthMatterId id, float addedVolume, float addedMass)
+        {
+            int slot = FindSlot(id);
+            if (slot < 0) { LastFailure = EarthMatterRegistryFailure.StaleHandle; return false; }
+            EarthMatterRecord record = _records[slot];
+            if (!(addedVolume > 0f) || addedMass < 0f || !math.isfinite(addedVolume) || !math.isfinite(addedMass) ||
+                record.Phase == EarthMatterPhase.Consumed || record.Phase == EarthMatterPhase.TerrainAttached)
+            { LastFailure = EarthMatterRegistryFailure.InvalidRecord; return false; }
+            record.Volume += addedVolume;
+            record.Mass += addedMass;
+            EarthSourceProvenance source = record.Source;
+            // Accreted material came from additional terrain cuts. Preserve the
+            // reserved volume without pretending it all belongs to the first cavity.
+            record.Source = new EarthSourceProvenance(source.Kind, source.SourceStableId, source.SourceGeneration,
+                source.SourceCellIndex, source.SourceRevision, source.SourceLocalPoint, source.ReservedVolume + addedVolume,
+                (source.Flags | EarthProvenanceFlags.VolumeReserved) &
+                ~(EarthProvenanceFlags.ExactReturnSupported | EarthProvenanceFlags.SourceCavityValid));
             _records[slot] = record;
             LastFailure = EarthMatterRegistryFailure.None;
             return true;

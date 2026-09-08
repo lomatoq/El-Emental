@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="12" result="Passed" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-08 00:20:16Z" end-time="2026-09-08 00:21:14Z" duration="58.4374036">
+  <test-suite type="TestSuite" id="1403" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="296" result="Passed" start-time="2026-09-08 00:20:16Z" end-time="2026-09-08 00:21:14Z" duration="58.437404" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1396" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="290" result="Passed" start-time="2026-09-08 00:20:16Z" end-time="2026-09-08 00:21:14Z" duration="58.422082" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="11736" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1397" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="290" result="Passed" start-time="2026-09-08 00:20:16Z" end-time="2026-09-08 00:21:14Z" duration="58.419618" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1398" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="290" result="Passed" start-time="2026-09-08 00:20:16Z" end-time="2026-09-08 00:21:14Z" duration="58.417918" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1399" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="290" result="Passed" start-time="2026-09-08 00:20:16Z" end-time="2026-09-08 00:21:14Z" duration="58.416294" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1158" name="EarthDustCompositingRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthDustCompositingRuntimeTests" classname="Elemental.Tests.PlayMode.EarthDustCompositingRuntimeTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-08 00:20:16Z" end-time="2026-09-08 00:20:17Z" duration="0.524362" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1159" name="ContactBurstMixesOriginalDustAndAtlasWithinOneBudget" fullname="Elemental.Tests.PlayMode.EarthDustCompositingRuntimeTests.ContactBurstMixesOriginalDustAndAtlasWithinOneBudget" methodname="ContactBurstMixesOriginalDustAndAtlasWithinOneBudget" classname="Elemental.Tests.PlayMode.EarthDustCompositingRuntimeTests" runstate="Runnable" seed="202854194" result="Passed" start-time="2026-09-08 00:20:16Z" end-time="2026-09-08 00:20:16Z" duration="0.077871" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1160" name="ProductionDustOverlaysCosmeticChipsAndOpaqueWallsOccludeBoth" fullname="Elemental.Tests.PlayMode.EarthDustCompositingRuntimeTests.ProductionDustOverlaysCosmeticChipsAndOpaqueWallsOccludeBoth" methodname="ProductionDustOverlaysCosmeticChipsAndOpaqueWallsOccludeBoth" classname="Elemental.Tests.PlayMode.EarthDustCompositingRuntimeTests" runstate="Runnable" seed="452673147" result="Passed" start-time="2026-09-08 00:20:16Z" end-time="2026-09-08 00:20:17Z" duration="0.433284" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1248" name="EarthStoneImpactDustRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthStoneImpactDustRuntimeTests" classname="Elemental.Tests.PlayMode.EarthStoneImpactDustRuntimeTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-08 00:20:17Z" end-time="2026-09-08 00:20:17Z" duration="0.103190" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1249" name="ActualFloorMakesCosmeticChipBounceThenStopAtSixtyHz" fullname="Elemental.Tests.PlayMode.EarthStoneImpactDustRuntimeTests.ActualFloorMakesCosmeticChipBounceThenStopAtSixtyHz" methodname="ActualFloorMakesCosmeticChipBounceThenStopAtSixtyHz" classname="Elemental.Tests.PlayMode.EarthStoneImpactDustRuntimeTests" runstate="Runnable" seed="1595682609" result="Passed" start-time="2026-09-08 00:20:17Z" end-time="2026-09-08 00:20:17Z" duration="0.051138" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1251" name="ProductionPresenterUsesFourMeshesAndPreservesHeavyDropResponse" fullname="Elemental.Tests.PlayMode.EarthStoneImpactDustRuntimeTests.ProductionPresenterUsesFourMeshesAndPreservesHeavyDropResponse" methodname="ProductionPresenterUsesFourMeshesAndPreservesHeavyDropResponse" classname="Elemental.Tests.PlayMode.EarthStoneImpactDustRuntimeTests" runstate="Runnable" seed="1387685131" result="Passed" start-time="2026-09-08 00:20:17Z" end-time="2026-09-08 00:20:17Z" duration="0.013605" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1250" name="SlowFrameSweepDoesNotTunnelThroughThinFloor" fullname="Elemental.Tests.PlayMode.EarthStoneImpactDustRuntimeTests.SlowFrameSweepDoesNotTunnelThroughThinFloor" methodname="SlowFrameSweepDoesNotTunnelThroughThinFloor" classname="Elemental.Tests.PlayMode.EarthStoneImpactDustRuntimeTests" runstate="Runnable" seed="1785388009" result="Passed" start-time="2026-09-08 00:20:17Z" end-time="2026-09-08 00:20:17Z" duration="0.035061" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1252" name="EarthStonePhysicalDropProductionTests" fullname="Elemental.Tests.PlayMode.EarthStonePhysicalDropProductionTests" classname="Elemental.Tests.PlayMode.EarthStonePhysicalDropProductionTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-08 00:20:17Z" end-time="2026-09-08 00:20:33Z" duration="16.677536" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1253" name="EqualLowDropsProduceMassAwareDustFromActualContactsAndVisibleChips" fullname="Elemental.Tests.PlayMode.EarthStonePhysicalDropProductionTests.EqualLowDropsProduceMassAwareDustFromActualContactsAndVisibleChips" methodname="EqualLowDropsProduceMassAwareDustFromActualContactsAndVisibleChips" classname="Elemental.Tests.PlayMode.EarthStonePhysicalDropProductionTests" runstate="Runnable" seed="1285283566" result="Passed" start-time="2026-09-08 00:20:17Z" end-time="2026-09-08 00:20:33Z" duration="16.673444" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 2973.03ms; ground=exact baked base, cacheLoad=10.17ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=951.07ms, peakCookingPoll=0.26ms; sync=ArenaInitialize=317.67ms/15;ArenaBevel=306.37ms/175;ArenaMeshPicking=1.24ms/175;WallAwake=79.80ms/1;WallPieceVisuals=50.75ms/40;PlatformPoolAwake=7.61ms/1;PlatformRuntimeMeshes=1.12ms/12;PillarPoolAwake=35.93ms/1;PillarMeshLibrary=4.32ms/1;PillarColumns=31.60ms/1;DebrisPoolAwake=42.95ms/1;HeroFragmentPoolAwake=12.30ms/1.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1300" name="FeelFollowupUiPlayTests" fullname="Elemental.Tests.PlayMode.FeelFollowupUiPlayTests" classname="Elemental.Tests.PlayMode.FeelFollowupUiPlayTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-08 00:20:33Z" end-time="2026-09-08 00:20:51Z" duration="17.755181" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1302" name="ActualLifeLossesDisplayWinLoseAndMutualDrawBeforeRespawn" fullname="Elemental.Tests.PlayMode.FeelFollowupUiPlayTests.ActualLifeLossesDisplayWinLoseAndMutualDrawBeforeRespawn" methodname="ActualLifeLossesDisplayWinLoseAndMutualDrawBeforeRespawn" classname="Elemental.Tests.PlayMode.FeelFollowupUiPlayTests" runstate="Runnable" seed="600004412" result="Passed" start-time="2026-09-08 00:20:33Z" end-time="2026-09-08 00:20:51Z" duration="17.740547" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 2201.71ms; ground=exact baked base, cacheLoad=6.15ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=543.40ms, peakCookingPoll=0.00ms; sync=ArenaInitialize=317.67ms/15;ArenaBevel=306.37ms/175;ArenaMeshPicking=1.24ms/175;WallAwake=79.80ms/1;WallPieceVisuals=50.75ms/40;PlatformPoolAwake=7.61ms/1;PlatformRuntimeMeshes=1.12ms/12;PillarPoolAwake=35.93ms/1;PillarMeshLibrary=4.32ms/1;PillarColumns=31.60ms/1;DebrisPoolAwake=42.95ms/1;HeroFragmentPoolAwake=12.30ms/1.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1307" name="FireLabPresentationTests" fullname="Elemental.Tests.PlayMode.FireLabPresentationTests" classname="Elemental.Tests.PlayMode.FireLabPresentationTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-08 00:20:51Z" end-time="2026-09-08 00:21:03Z" duration="11.977950" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1308" name="BackendPublishesContactsAndKeepsScaledClock" fullname="Elemental.Tests.PlayMode.FireLabPresentationTests.BackendPublishesContactsAndKeepsScaledClock" methodname="BackendPublishesContactsAndKeepsScaledClock" classname="Elemental.Tests.PlayMode.FireLabPresentationTests" runstate="Runnable" seed="1271475674" result="Passed" start-time="2026-09-08 00:20:51Z" end-time="2026-09-08 00:20:53Z" duration="1.641079" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1309" name="CaptureContactScenariosAndGeometryInvalidation" fullname="Elemental.Tests.PlayMode.FireLabPresentationTests.CaptureContactScenariosAndGeometryInvalidation" methodname="CaptureContactScenariosAndGeometryInvalidation" classname="Elemental.Tests.PlayMode.FireLabPresentationTests" runstate="Runnable" seed="613642714" result="Passed" start-time="2026-09-08 00:20:53Z" end-time="2026-09-08 00:21:01Z" duration="7.969913" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1311" name="CpuMeshHasNoSteadyStateManagedAllocation" fullname="Elemental.Tests.PlayMode.FireLabPresentationTests.CpuMeshHasNoSteadyStateManagedAllocation" methodname="CpuMeshHasNoSteadyStateManagedAllocation" classname="Elemental.Tests.PlayMode.FireLabPresentationTests" runstate="Runnable" seed="155540338" result="Passed" start-time="2026-09-08 00:21:01Z" end-time="2026-09-08 00:21:01Z" duration="0.338921" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1310" name="StopDrainsBeforeReuse" fullname="Elemental.Tests.PlayMode.FireLabPresentationTests.StopDrainsBeforeReuse" methodname="StopDrainsBeforeReuse" classname="Elemental.Tests.PlayMode.FireLabPresentationTests" runstate="Runnable" seed="91528276" result="Passed" start-time="2026-09-08 00:21:01Z" end-time="2026-09-08 00:21:03Z" duration="2.016504" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1391" name="VisualPolishAtmosphereTests" fullname="Elemental.Tests.PlayMode.VisualPolishAtmosphereTests" classname="Elemental.Tests.PlayMode.VisualPolishAtmosphereTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-08 00:21:03Z" end-time="2026-09-08 00:21:14Z" duration="11.374403" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1392" name="ProductionCloudsFadeOutOfSonarAndSunsetWarmsFog" fullname="Elemental.Tests.PlayMode.VisualPolishAtmosphereTests.ProductionCloudsFadeOutOfSonarAndSunsetWarmsFog" methodname="ProductionCloudsFadeOutOfSonarAndSunsetWarmsFog" classname="Elemental.Tests.PlayMode.VisualPolishAtmosphereTests" runstate="Runnable" seed="1295577319" result="Passed" start-time="2026-09-08 00:21:03Z" end-time="2026-09-08 00:21:14Z" duration="11.372545" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 2262.25ms; ground=exact baked base, cacheLoad=6.38ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=600.48ms, peakCookingPoll=0.00ms; sync=ArenaInitialize=317.67ms/15;ArenaBevel=306.37ms/175;ArenaMeshPicking=1.24ms/175;WallAwake=79.80ms/1;WallPieceVisuals=50.75ms/40;PlatformPoolAwake=7.61ms/1;PlatformRuntimeMeshes=1.12ms/12;PillarPoolAwake=35.93ms/1;PillarMeshLibrary=4.32ms/1;PillarColumns=31.60ms/1;DebrisPoolAwake=42.95ms/1;HeroFragmentPoolAwake=12.30ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\VisualResearchPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

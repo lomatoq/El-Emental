@@ -5,6 +5,7 @@ using Elemental.Runtime.Diagnostics;
 using Elemental.Runtime.World;
 using Elemental.Simulation.Bending;
 using Elemental.Simulation.Matter;
+using Elemental.Simulation.Structures;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -28,6 +29,8 @@ namespace Elemental.Runtime.Physics
         [SerializeField] private EarthSurfaceQueryService surfaceQueries;
         [SerializeField] private EarthStructureFractureProfile fractureProfile;
         [SerializeField] private EarthMatterKernelBehaviour matterKernel;
+        public void ConfigureMatterKernel(EarthMatterKernelBehaviour kernel) => matterKernel = kernel;
+        public EarthMatterMassProfile MassPolicy => matterKernel != null ? matterKernel.MassPolicy : EarthMatterMassProfile.ArenaStone;
         [SerializeField] private GravityWorldBehaviour gravityWorld;
 
         private readonly List<EarthPlatform> _platforms = new List<EarthPlatform>(6);
@@ -139,6 +142,8 @@ namespace Elemental.Runtime.Physics
             if (selected != null)
             {
                 double acquireStarted = Time.realtimeSinceStartupAsDouble;
+                EarthMatterMassProfile policy = MassPolicy;
+                selected.ConfigureMassPolicy(in policy);
                 selected.Initialize(_nextId++, in geometry, height, embedDepth);
                 LastAcquireSolidMilliseconds =
                     (Time.realtimeSinceStartupAsDouble - acquireStarted) * 1000.0;
@@ -146,7 +151,7 @@ namespace Elemental.Runtime.Physics
                     PeakAcquireSolidMilliseconds,
                     LastAcquireSolidMilliseconds);
                 float volume = Mathf.Max(0.000001f, selected.Area * (selected.Height + Mathf.Max(0.08f, embedDepth)));
-                float mass = Mathf.Max(1f, volume * 170f);
+                float mass = selected.EarthMass;
                 var source = new EarthSourceProvenance(
                     EarthSourceKind.TerrainEdit,
                     selected.PlatformId,

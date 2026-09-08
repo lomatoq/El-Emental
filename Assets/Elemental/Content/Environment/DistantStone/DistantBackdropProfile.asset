@@ -1,0 +1,314 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f546c9e9e0caeeb41ae914357ed38d6a, type: 3}
+  m_Name: DistantBackdropProfile
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.DistantScenery.DistantBackdropProfile
+  proceduralValley: 1
+  viewComposition: 1
+  viewGroundPillars:
+  - {fileID: 4300000, guid: 62c8bc0b00c9445489222363e84cd787, type: 2}
+  - {fileID: 4300000, guid: 26eae3576ab30884f87f5ac8a59efe46, type: 2}
+  - {fileID: 4300000, guid: 5c3afa08709b5d84d8f0aa478f950fa9, type: 2}
+  - {fileID: 4300000, guid: 48767e251a4a4e047ab43b8986926b83, type: 2}
+  - {fileID: 4300000, guid: 91c167aa5ad3b8441837dea18aa7fe3b, type: 2}
+  - {fileID: 4300000, guid: a334e96104a4c864d8714e6202aca0fa, type: 2}
+  viewLandmarks:
+  - name: MainGround0
+    airborne: 0
+    variant: 0
+    position: {x: 157.1664, y: -155, z: -358.26}
+    scale: 56.0281
+  - name: MainGround1
+    airborne: 0
+    variant: 1
+    position: {x: -247.99, y: -155, z: -657.9805}
+    scale: 101.159
+  - name: MainGround2
+    airborne: 0
+    variant: 2
+    position: {x: 34.4868, y: -155, z: -768.638}
+    scale: 60.3472
+  - name: CombatGround0
+    airborne: 0
+    variant: 3
+    position: {x: -220.2358, y: -155, z: 370.4188}
+    scale: 53.582
+  - name: CombatGround1
+    airborne: 0
+    variant: 4
+    position: {x: 347.4264, y: -155, z: 553.7343}
+    scale: 74.9388
+  - name: CombatGround2
+    airborne: 0
+    variant: 5
+    position: {x: -116.1746, y: -155, z: 744.4065}
+    scale: 114.6714
+  - name: MainIsland0
+    airborne: 1
+    variant: 0
+    position: {x: 140.563, y: 66.8802, z: -405.5129}
+    scale: 171.3115
+  - name: MainIsland1
+    airborne: 1
+    variant: 2
+    position: {x: -124.4791, y: 120.1317, z: -654.7544}
+    scale: 165.7306
+  - name: MainIsland2
+    airborne: 1
+    variant: 5
+    position: {x: 47.5211, y: 206.1625, z: -828.7792}
+    scale: 136.6577
+  - name: CombatIsland0
+    airborne: 1
+    variant: 1
+    position: {x: -140.3138, y: 96.7112, z: 416.2799}
+    scale: 276.9792
+  - name: CombatIsland1
+    airborne: 1
+    variant: 3
+    position: {x: 360.2105, y: 98.3501, z: 476.6869}
+    scale: 255.0571
+  - name: CombatIsland2
+    airborne: 1
+    variant: 4
+    position: {x: 181.3395, y: 261.1755, z: 728.2286}
+    scale: 247.5061
+  - name: MainUpper0
+    airborne: 1
+    variant: 1
+    position: {x: -114.0955, y: 342.4973, z: -1094.5269}
+    scale: 112.3731
+  - name: MainUpper1
+    airborne: 1
+    variant: 4
+    position: {x: 348.0581, y: 233.1568, z: -835.4612}
+    scale: 97.7483
+  - name: MainUpper2
+    airborne: 1
+    variant: 2
+    position: {x: 207.0483, y: 333.7051, z: -1155.487}
+    scale: 80.7586
+  - name: CombatUpper0
+    airborne: 1
+    variant: 3
+    position: {x: -612.4834, y: 375.2778, z: 862.6918}
+    scale: 150.5546
+  - name: CombatUpper1
+    airborne: 1
+    variant: 0
+    position: {x: 890.8893, y: 413.3853, z: 967.3301}
+    scale: 198.3166
+  - name: CombatUpper2
+    airborne: 1
+    variant: 5
+    position: {x: -102.0821, y: 471.0462, z: 1070.2539}
+    scale: 150.3733
+  - name: MainInfill0
+    airborne: 0
+    variant: 4
+    position: {x: 225, y: -155, z: -655}
+    scale: 65
+  - name: MainInfill1
+    airborne: 0
+    variant: 1
+    position: {x: 465, y: -155, z: -820}
+    scale: 86
+  - name: MainInfill2
+    airborne: 0
+    variant: 3
+    position: {x: -30, y: -155, z: -930}
+    scale: 73
+  - name: MainInfill3
+    airborne: 0
+    variant: 5
+    position: {x: 650, y: -155, z: -1070}
+    scale: 95
+  - name: MainInfill4
+    airborne: 0
+    variant: 2
+    position: {x: 260, y: -155, z: -1210}
+    scale: 84
+  - name: MainInfill5
+    airborne: 0
+    variant: 0
+    position: {x: -340, y: -155, z: -1350}
+    scale: 108
+  - name: MainSideSmall0
+    airborne: 1
+    variant: 3
+    position: {x: -174.4232, y: 185.0647, z: -631.9514}
+    scale: 74.699
+  - name: MainSideSmall1
+    airborne: 1
+    variant: 1
+    position: {x: 234.8135, y: 80.8381, z: -462.0616}
+    scale: 85.9654
+  - name: CombatSideSmall0
+    airborne: 1
+    variant: 4
+    position: {x: -373.8883, y: 122.6047, z: 464.1638}
+    scale: 126.9451
+  - name: CombatSideSmall1
+    airborne: 1
+    variant: 2
+    position: {x: 589.2595, y: 97.1114, z: 523.4536}
+    scale: 145.6166
+  - name: MainSatellite0
+    airborne: 1
+    variant: 4
+    position: {x: 175.9102, y: 113.2992, z: -377.1155}
+    scale: 24.0161
+  - name: MainSatellite1
+    airborne: 1
+    variant: 2
+    position: {x: 101.6117, y: 85.8656, z: -433.9462}
+    scale: 24.3056
+  - name: CombatSatellite0
+    airborne: 1
+    variant: 0
+    position: {x: -203.053, y: 171.2482, z: 394.8752}
+    scale: 50.101
+  - name: CombatSatellite1
+    airborne: 1
+    variant: 5
+    position: {x: -81.1244, y: 115.2416, z: 431.1316}
+    scale: 39.9086
+  - name: EastIslandNear
+    airborne: 1
+    variant: 0
+    position: {x: 680, y: 165, z: -200}
+    scale: 300
+  - name: EastIslandFar
+    airborne: 1
+    variant: 3
+    position: {x: 980, y: 270, z: 230}
+    scale: 270
+  - name: EastSatellite0
+    airborne: 1
+    variant: 4
+    position: {x: 620, y: 255, z: -265}
+    scale: 52
+  - name: EastSatellite1
+    airborne: 1
+    variant: 2
+    position: {x: 745, y: 180, z: -115}
+    scale: 38
+  - name: WestIslandNear
+    airborne: 1
+    variant: 1
+    position: {x: -680, y: 170, z: 210}
+    scale: 300
+  - name: WestIslandFar
+    airborne: 1
+    variant: 5
+    position: {x: -960, y: 250, z: -190}
+    scale: 230
+  - name: WestSatellite0
+    airborne: 1
+    variant: 0
+    position: {x: -620, y: 255, z: 275}
+    scale: 50
+  - name: WestSatellite1
+    airborne: 1
+    variant: 3
+    position: {x: -745, y: 180, z: 125}
+    scale: 36
+  - name: OverheadIslandNear
+    airborne: 1
+    variant: 2
+    position: {x: 70, y: 360, z: 80}
+    scale: 130
+  - name: OverheadIslandFar
+    airborne: 1
+    variant: 4
+    position: {x: -170, y: 500, z: -90}
+    scale: 95
+  - name: OverheadIslandAccent
+    airborne: 1
+    variant: 1
+    position: {x: 230, y: 630, z: -130}
+    scale: 160
+  - name: OverheadSatellite
+    airborne: 1
+    variant: 5
+    position: {x: -260, y: 410, z: 120}
+    scale: 70
+  rearContinuation: 1
+  geometrySeed: 13771
+  motionSeed: 24611
+  rockShape:
+    asymmetry: 0.18
+    bevelInset: 0.04
+    chipDepth: 0.1
+    chips: 3
+  valleyGroups: 10
+  floatingGroups: 5
+  pillarsPerGroup: 5
+  valleyWidth: 660
+  valleyLength: 1050
+  valleyFloorBelowCenter: 155
+  valleyGroupHeight: {x: 220, y: 380}
+  floatingGroupHeight: {x: 55, y: 100}
+  floatingPillarScale: {x: 220, y: 380}
+  arenaExclusionPadding: 120
+  exclusionVolumes: []
+  levitationAmplitude: {x: 0.08, y: 0.4}
+  levitationPeriod: {x: 10, y: 22}
+  horizontalMotionFraction: 0.3
+  rockingDegrees: {x: 0.3, y: 1.2}
+  seed: 4471
+  planetRadius: 55.1
+  material: {fileID: 2100000, guid: 91fc0cc0e76ed8348bf172edefa7fd44, type: 2}
+  silhouettes:
+  - {fileID: 4300000, guid: 02f7d81a18f76234b9c692acb72ab7d8, type: 2}
+  - {fileID: 4300000, guid: 54a3d245994eb2746b07f6cb9c3d3634, type: 2}
+  - {fileID: 4300000, guid: dde3da27ffe474747981306a6d12e94f, type: 2}
+  - {fileID: 4300000, guid: 5b613829e9a1b6d43a88374fba30a134, type: 2}
+  - {fileID: 4300000, guid: 6afa191bcfb55df4cbb6445d1b8562bb, type: 2}
+  - {fileID: 4300000, guid: 56d6e1ab359de1e43957a456e71eddc1, type: 2}
+  lodSilhouettes:
+  - {fileID: 4300000, guid: 664b366dd4ded69419f2bbfd60244cdc, type: 2}
+  - {fileID: 4300000, guid: 0e50119355d5d2c469c2f1afd7ce04c5, type: 2}
+  - {fileID: 4300000, guid: 38a2ea8a0c33d6848875186cb67acaaf, type: 2}
+  - {fileID: 4300000, guid: 13188934862fc7e4794b74a3f3ed3233, type: 2}
+  - {fileID: 4300000, guid: 1caf70f9178515c49b008688fa7bff55, type: 2}
+  - {fileID: 4300000, guid: 390b2ea2a66c5b94bb275fe7cfdda687, type: 2}
+  islandSilhouettes:
+  - {fileID: 4300000, guid: c79b40a54d5c9d34b8abcea24a6af639, type: 2}
+  - {fileID: 4300000, guid: fe429c08b2b77e540adde1d9b2463ad6, type: 2}
+  - {fileID: 4300000, guid: c5444f28b255c41439259163d145de8f, type: 2}
+  - {fileID: 4300000, guid: 612e0b054f92b4c47845caba1de8235c, type: 2}
+  - {fileID: 4300000, guid: a802d242bd914b04a9d58adfe2fa0fcd, type: 2}
+  - {fileID: 4300000, guid: 7167ad9f02d72434aab851fac5b88aae, type: 2}
+  islandLodSilhouettes:
+  - {fileID: 4300000, guid: 74f5492f55f8c214285017c04c6cc134, type: 2}
+  - {fileID: 4300000, guid: df8990a176e91dd4783a2df18880a01d, type: 2}
+  - {fileID: 4300000, guid: dad41948b2813f74faed575a49a09714, type: 2}
+  - {fileID: 4300000, guid: e736110a563b5a742bd4590a7bf9eabc, type: 2}
+  - {fileID: 4300000, guid: 71e8b6cfe243df54ea3e5e95f48ed4f7, type: 2}
+  - {fileID: 4300000, guid: 85e01d0ab397f03468cafb85644f4702, type: 2}
+  layer: 0
+  midMassifs: 12
+  farMassifs: 14
+  floatingIslands: 8
+  midDistance: {x: 460, y: 850}
+  farDistance: {x: 1250, y: 2300}
+  islandDistance: {x: 320, y: 740}
+  midHeight: {x: 105, y: 230}
+  farHeight: {x: 340, y: 680}
+  islandHeight: {x: 24, y: 66}
+  massifWidthAspect: {x: 2.2, y: 4}
+  ridgeOverlap: 1.65
+  ridgeBuriedFraction: {x: 0.28, y: 0.42}
+  clearViewHalfAngle: 14
+  heroViewDirection: {x: 0, y: 0, z: 1}
+  suggestedFarClip: 3000

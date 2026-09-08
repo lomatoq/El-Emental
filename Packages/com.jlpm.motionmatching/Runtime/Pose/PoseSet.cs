@@ -295,6 +295,13 @@ namespace MotionMatching
             return Tags[TagNameToIndex[name]];
         }
 
+        public bool TryGetTag(string name, out Tag tag)
+        {
+            if (name != null && TagNameToIndex.TryGetValue(name, out int index))
+            { tag = Tags[index]; return true; }
+            tag = default; return false;
+        }
+
         /// <summary>
         /// Returns the animation clip at the given index
         /// </summary>

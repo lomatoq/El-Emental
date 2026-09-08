@@ -1,0 +1,16 @@
+{
+    "unityVersion": "6000.5.7f1",
+    "utc": "2026-09-07T08:10:24.3315477Z",
+    "mode": "PlayMode",
+    "result": "Failed",
+    "total": 14,
+    "passed": 12,
+    "failed": 2,
+    "skipped": 0,
+    "inconclusive": 0,
+    "durationSeconds": 24.3845266,
+    "failures": [
+        "Elemental.Tests.PlayMode.EarthPhysicsRegressionTests.EqualMagicImpulseSlidesSmallWallFartherThanHeavyWall:   Expected: greater than 4.30000019f\r\n  But was:  2.74708962f\r\n",
+        "Elemental.Tests.PlayMode.EarthPhysicsRegressionTests.WallPoolRaisesRectangularCollidersWithoutGrowingTerrainEditCost:   Expected: 3\r\n  But was:  1\r\n"
+    ]
+}

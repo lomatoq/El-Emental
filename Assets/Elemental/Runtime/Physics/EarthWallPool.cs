@@ -31,8 +31,6 @@ namespace Elemental.Runtime.Physics
         [SerializeField] private EarthStoneBevelProfile stoneBevelProfile;
         [SerializeField] private EarthRockDebrisPool rockDebrisPool;
         public void ConfigureNaturalFracture(EarthRockDebrisPool pool) => rockDebrisPool = pool;
-        private readonly Dictionary<Mesh, Mesh> _naturalFractureMeshes = new();
-        private readonly Dictionary<Mesh, Mesh> _matchedNaturalColliders = new();
         [SerializeField] private Material fractureInteriorMaterial;
         [SerializeField] private EarthWallProfile wallProfile;
         [SerializeField] private EarthPhysicsFeelProfile physicsFeelProfile;
@@ -42,6 +40,8 @@ namespace Elemental.Runtime.Physics
         [SerializeField] private EarthSurfaceQueryService surfaceQueries;
         [SerializeField] private EarthStructureFractureProfile structureFractureProfile;
         [SerializeField] private EarthMatterKernelBehaviour matterKernel;
+        public void ConfigureMatterKernel(EarthMatterKernelBehaviour kernel) => matterKernel = kernel;
+        public EarthMatterMassProfile MassPolicy => matterKernel != null ? matterKernel.MassPolicy : EarthMatterMassProfile.ArenaStone;
         [SerializeField] private EarthShapeGrammarProfile shapeGrammarProfile;
         [SerializeField] private GravityWorldBehaviour gravityWorld;
 
@@ -49,6 +49,9 @@ namespace Elemental.Runtime.Physics
         private readonly Dictionary<EarthWall, MeshFilter> _wallFilters = new Dictionary<EarthWall, MeshFilter>(8);
         private readonly Dictionary<EarthWall, Mesh> _runtimeWallMeshes = new Dictionary<EarthWall, Mesh>(8);
         private readonly List<Mesh> _runtimeFractureMeshes = new List<Mesh>(64);
+        private readonly Dictionary<EarthWall, Vector3> _metricDimensions = new();
+        private readonly Dictionary<EarthWall, Mesh[]> _metricMeshes = new();
+        private static readonly Unity.Profiling.ProfilerMarker MetricVisualMarker = new("Elemental.Earth.Wall.MetricVisuals");
         private EarthWallShapeDiversityTracker _wallShapeDiversity;
         private uint _nextId = 1u;
         private readonly Collider[] _constructionHits = new Collider[48];
@@ -177,6 +180,10 @@ namespace Elemental.Runtime.Physics
                 else DestroyImmediate(mesh);
             }
             _runtimeFractureMeshes.Clear();
+            foreach (Mesh[] meshes in _metricMeshes.Values)
+                foreach (Mesh mesh in meshes)
+                    if (mesh != null) { if (Application.isPlaying) Destroy(mesh); else DestroyImmediate(mesh); }
+            _metricMeshes.Clear(); _metricDimensions.Clear();
             _wallFilters.Clear();
         }
 
@@ -188,7 +195,8 @@ namespace Elemental.Runtime.Physics
             float thickness,
             uint sourceTick = 0u,
             Vector3 supportNormal = default,
-            uint excludedSupportId = 0u)
+            uint excludedSupportId = 0u,
+            float foundationEmbed = -1f)
         {
             EarthWall wall = null;
             for (int index = 0; index < _walls.Count; index++)
@@ -210,6 +218,8 @@ namespace Elemental.Runtime.Physics
             }
 
             ApplyVisualShapeVariant(wall, sourceTick);
+            PrepareMetricCellVisuals(wall, new Vector3(Mathf.Max(.25f, Vector3.Distance(start, end)),
+                Mathf.Max(.1f, height), Mathf.Max(.05f, thickness)));
             ApplyConstructionIntersection(
                 wall,
                 start,
@@ -220,8 +230,10 @@ namespace Elemental.Runtime.Physics
                 supportNormal,
                 sourceTick,
                 excludedSupportId);
-            wall.Initialize(_nextId++, start, end, planetCenter, height, thickness, sourceTick, supportNormal);
-            float volume = Mathf.Max(0.000001f, Vector3.Distance(start, end) * height * thickness);
+            EarthMatterMassProfile policy = MassPolicy;
+            wall.ConfigureMassPolicy(in policy);
+            wall.Initialize(_nextId++, start, end, planetCenter, height, thickness, sourceTick, supportNormal, foundationEmbed);
+            float volume = wall.SolidVolume;
             var source = new EarthSourceProvenance(
                 EarthSourceKind.TerrainEdit,
                 wall.WallId,
@@ -419,8 +431,52 @@ namespace Elemental.Runtime.Physics
             }
         }
 
+        private void PrepareMetricCellVisuals(EarthWall wall, Vector3 dimensions)
+        {
+            if (!wall.UsesBakedFracture || fractureAsset is not IEarthFractureAssetRuntimeData data) return;
+            if (_metricDimensions.TryGetValue(wall, out Vector3 previous) && previous == dimensions) return;
+            using var metricSample = MetricVisualMarker.Auto();
+            EarthStructureRuntime runtime = wall.StructureRuntime;
+            var pieces = new Transform[runtime.PieceCount];
+            var owned = new Mesh[runtime.PieceCount + 1];
+            for (int i = 0; i < pieces.Length; i++)
+            {
+                EarthPieceRuntime piece = runtime.GetPieceRuntime(i);
+                EarthPieceDefinition definition = runtime.GetPieceDefinition(i);
+                pieces[i] = piece.transform;
+                pieces[i].localPosition = ToVector3(definition.RestLocalPosition);
+                quaternion rest = definition.RestLocalRotation;
+                pieces[i].localRotation = new Quaternion(rest.value.x, rest.value.y, rest.value.z, rest.value.w);
+                pieces[i].localScale = ToVector3(definition.RestLocalScale);
+                owned[i] = EarthWallFractureVisual.Create(data.GetPieceRenderMesh(i),
+                    data.GetPieceColliderMesh(i), stoneBevelProfile, definition.Id.Value,
+                    Vector3.Scale(dimensions, pieces[i].localScale));
+                Mesh openChamfer = owned[i];
+                owned[i] = EarthWallFractureVisual.SealChamferJunctions(openChamfer,
+                    data.GetPieceRenderMesh(i), wall.transform.worldToLocalMatrix * pieces[i].localToWorldMatrix,
+                    dimensions.z, stoneBevelProfile != null ? stoneBevelProfile.WallWidthMeters : EarthStoneBevelProfile.DefaultWallWidthMeters);
+                if (Application.isPlaying) Destroy(openChamfer); else DestroyImmediate(openChamfer);
+                piece.GetComponent<MeshFilter>().sharedMesh = owned[i];
+                piece.GetComponent<MeshRenderer>().sharedMaterials = new[] {
+                    rockDebrisPool != null ? rockDebrisPool.StoneMaterial : wallMaterial };
+            }
+            owned[pieces.Length] = EarthWallFractureVisual.CombineIntact(pieces, wall.transform);
+            _wallFilters[wall].sharedMesh = owned[pieces.Length];
+            _wallFilters[wall].GetComponent<MeshRenderer>().sharedMaterials =
+                pieces[0].GetComponent<MeshRenderer>().sharedMaterials;
+            if (_metricMeshes.TryGetValue(wall, out Mesh[] retired))
+                foreach (Mesh mesh in retired)
+                    if (mesh != null) { if (Application.isPlaying) Destroy(mesh); else DestroyImmediate(mesh); }
+            _metricMeshes[wall] = owned;
+            _metricDimensions[wall] = dimensions;
+        }
+
         private void ApplyVisualShapeVariant(EarthWall wall, uint sourceTick)
         {
+            // A baked wall's intact proxy is the exact rendered cell assembly.
+            // Replacing only that proxy with a decorative crest changes its shape
+            // on fracture and stretches the crest into teeth on narrow walls.
+            if (wall != null && wall.UsesBakedFracture) return;
             if (wall == null || !_wallFilters.TryGetValue(wall, out MeshFilter filter) || filter == null)
                 return;
             _wallShapeDiversity ??= new EarthWallShapeDiversityTracker(
@@ -587,7 +643,8 @@ namespace Elemental.Runtime.Physics
                         0,
                         1,
                         $"{renderMesh.name} Hard {pieceIndex + 1:000}");
-                    beveled = EarthFractureBevelMeshBuilder.Create(hardRenderMesh, stoneBevelProfile);
+                    beveled = EarthWallFractureVisual.Create(hardRenderMesh, colliderMesh,
+                        stoneBevelProfile, definition.Id.Value);
                     pieceFilter.sharedMesh = beveled;
                     _runtimeFractureMeshes.Add(beveled);
                     _runtimeFractureMeshes.Add(hardRenderMesh);
@@ -598,25 +655,12 @@ namespace Elemental.Runtime.Physics
                     : new[] { wallMaterial };
                 if (rockDebrisPool != null)
                 {
-                    if (!_naturalFractureMeshes.TryGetValue(colliderMesh, out Mesh natural))
-                    {
-                        natural = EarthNaturalFractureVisual.Create(rockDebrisPool.ResolveShapeVariant(pieceIndex), colliderMesh);
-                        _naturalFractureMeshes.Add(colliderMesh, natural);
-                        _runtimeFractureMeshes.Add(natural);
-                    }
-                    pieceFilter.sharedMesh = natural;
-                    // The fitted stone is smaller than its old structural cell.
-                    // Its collision hull must follow the displayed geometry too.
-                    if (!_matchedNaturalColliders.TryGetValue(natural, out Mesh matched))
-                    {
-                        matched = EarthStoneColliderMesh.Create(natural);
-                        _matchedNaturalColliders.Add(natural, matched);
-                        _runtimeFractureMeshes.Add(matched);
-                    }
-                    colliderMesh = matched;
-                    // The natural stone has one submesh. Retaining the old interior
-                    // slot makes Unity redraw that submesh with the clay material.
-                    pieceRenderer.sharedMaterials = new[] { rockDebrisPool.StoneMaterial };
+                    // Keep the matched partition: inscribed loose-stone variants
+                    // leave holes throughout the wall as soon as it cracks.
+                    // Both exterior and cut faces retain the shipping sandstone.
+                    pieceRenderer.sharedMaterials = hardRenderMesh.subMeshCount > 1
+                        ? new[] { rockDebrisPool.StoneMaterial, rockDebrisPool.StoneMaterial }
+                        : new[] { rockDebrisPool.StoneMaterial };
                 }
                 MeshCollider pieceCollider = piece.AddComponent<MeshCollider>();
                 pieceCollider.sharedMesh = colliderMesh;
@@ -650,6 +694,10 @@ namespace Elemental.Runtime.Physics
             wall.ConfigureCollapsePieces(pieces, volumeFractions, bonds);
             if (!wall.ConfigureBakedRuntime(data, repairProfile))
                 throw new InvalidOperationException("The baked Earth runtime adapter rejected validated data.");
+            Mesh intactAssembly = EarthWallFractureVisual.CombineIntact(pieces, wallObject.transform);
+            _runtimeFractureMeshes.Add(intactAssembly);
+            intactFilter.sharedMesh = intactAssembly;
+            intactFilter.GetComponent<MeshRenderer>().sharedMaterials = pieces[0].GetComponent<MeshRenderer>().sharedMaterials;
             return true;
         }
 

@@ -24,6 +24,15 @@ namespace Elemental.Tests.PlayMode
 {
     public sealed class EarthMvpEncounterRuntimeTests
     {
+        private AsyncOperation _impactSceneUnload;
+
+        [UnityTearDown]
+        public IEnumerator FinishImpactSceneCleanup()
+        {
+            if (_impactSceneUnload != null) yield return _impactSceneUnload;
+            _impactSceneUnload = null;
+        }
+
         [UnityTest]
         public IEnumerator ZzzAcceptedMvpEvidenceCompletesWithProfilerAndCaptures()
         {
@@ -606,243 +615,427 @@ namespace Elemental.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator ProductionStoneStaggerBendsAndRecoversWithCaptures()
+        {
+            const string scenePath = "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
+            Assert.That(SceneManager.GetSceneByPath(scenePath).isLoaded, Is.False);
+            yield return SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
+            Scene scene = SceneManager.GetSceneByPath(scenePath);
+            GameObject captureHost = null;
+            try
+            {
+                EarthSceneReadinessGate gate = FindInScene<EarthSceneReadinessGate>(scene);
+                Assert.That(gate, Is.Not.Null);
+                double deadline = Time.realtimeSinceStartupAsDouble + 125d;
+                while (!gate.IsReady && !gate.Failed && Time.realtimeSinceStartupAsDouble < deadline)
+                    yield return null;
+                Assert.That(gate.IsReady, Is.True, gate.Status);
+                yield return ProductionCombatTestFlow.BeginBotAfterReadiness(scene);
+                EarthMvpDuelController duel = FindInScene<EarthMvpDuelController>(scene);
+                while (!duel.CombatAllowed && Time.realtimeSinceStartupAsDouble < deadline)
+                    yield return null;
+                Assert.That(duel.CombatAllowed, Is.True);
+                EarthMvpBotController bot = FindInScene<EarthMvpBotController>(scene);
+                if (bot != null) bot.enabled = false;
+                EarthCharacterImpactTarget target = FindImpactTarget(scene, EarthDuelFighterId.Bot);
+                Assert.That(target, Is.Not.Null);
+                HumanoidCharacterPresentation presentation =
+                    target.GetComponentInChildren<HumanoidCharacterPresentation>(true);
+                HumanoidProceduralBodyResponse bodyResponse = presentation.ProceduralBodyResponse;
+                HumanoidRagdollRig rig = target.GetComponentInChildren<HumanoidRagdollRig>(true);
+                Assert.That(bodyResponse, Is.Not.Null);
+                yield return new WaitForSeconds(1.5f);
+                captureHost = new GameObject("Stone stagger evidence camera");
+                Camera capture = captureHost.AddComponent<Camera>();
+                capture.enabled = false;
+                capture.fieldOfView = 35f;
+                capture.nearClipPlane = 0.05f;
+                capture.farClipPlane = 1000f;
+                Vector3 up = target.transform.up;
+                Vector3 focus = target.transform.position + up;
+                Vector3 cameraOffset = target.transform.forward * 3.8f + target.transform.right * 2.2f;
+                capture.transform.position = focus + cameraOffset;
+                capture.transform.rotation = Quaternion.LookRotation(focus - capture.transform.position, up);
+                // Isolate the rendered actor so orbiting arena stones cannot
+                // occlude the recovery proof; gameplay/physics layers stay intact.
+                Renderer[] actorRenderers = presentation.GetComponentsInChildren<Renderer>(true);
+                foreach (Renderer actorRenderer in actorRenderers)
+                {
+                    if (actorRenderer.GetComponent<Collider>() == null)
+                        actorRenderer.gameObject.layer = 22;
+                }
+                capture.cullingMask = 1 << 22;
+                capture.clearFlags = CameraClearFlags.SolidColor;
+                capture.backgroundColor = new Color(.08f, .10f, .13f);
+                Animator actorAnimator = presentation.Animator;
+                Vector3 headPoint = actorAnimator.GetBoneTransform(HumanBodyBones.Head).position;
+                Vector3 footPoint = actorAnimator.GetBoneTransform(HumanBodyBones.LeftFoot).position;
+                Vector3 visualFocus = (headPoint + footPoint) * .5f;
+                capture.transform.position = visualFocus + cameraOffset.normalized *
+                    Mathf.Max(4f, Vector3.Distance(headPoint, footPoint) * 2.6f);
+                capture.transform.rotation = Quaternion.LookRotation(visualFocus - capture.transform.position, up);
+                string folder = Path.GetFullPath("BuildReports/StoneStagger");
+                Directory.CreateDirectory(folder);
+                CaptureCushionCamera(capture, Path.Combine(folder, "Before.png"));
+                int previousCount = rig.LocalizedPhysics.AcceptedImpactCount;
+                float previousHealth = duel.BotHealth;
+                EarthCharacterImpactResponse response = target.ApplyImpact(
+                    focus, target.transform.right, target.Body.mass * 3f,
+                    EarthCharacterImpactSourceKind.LooseStone, 0x57009101u,
+                    20f, 0f, 991u, damageOverride: 0f, calibratedStone: true);
+                Assert.That(response, Is.EqualTo(EarthCharacterImpactResponse.Stagger));
+                float elapsed = 0f;
+                float peak = 0f;
+                float recoveryAngle = 0f;
+                bool capturedPeak = false;
+                bool capturedRecovery = false;
+                var evidence = new StringBuilder("seconds,impact_angle_degrees\n");
+                while (elapsed < 1.2f)
+                {
+                    yield return null;
+                    elapsed += Time.deltaTime;
+                    float angle = rig.LocalizedPhysics.CurrentMaximumAngle;
+                    peak = Mathf.Max(peak, angle);
+                    evidence.Append(elapsed.ToString("F4", CultureInfo.InvariantCulture)).Append(',')
+                        .Append(angle.ToString("F4", CultureInfo.InvariantCulture)).AppendLine();
+                    if (!capturedPeak && elapsed >= 0.10f)
+                    {
+                        CaptureCushionCamera(capture, Path.Combine(folder, "Peak.png"));
+                        capturedPeak = true;
+                    }
+                    if (!capturedRecovery && elapsed >= 0.30f)
+                    {
+                        recoveryAngle = angle;
+                        CaptureCushionCamera(capture, Path.Combine(folder, "Recovery.png"));
+                        capturedRecovery = true;
+                    }
+                }
+                CaptureCushionCamera(capture, Path.Combine(folder, "Settled.png"));
+                File.WriteAllText(Path.Combine(folder, "Angles.csv"), evidence.ToString());
+                Assert.That(rig.LocalizedPhysics.AcceptedImpactCount, Is.EqualTo(previousCount + 1));
+                Assert.That(peak, Is.GreaterThan(2f));
+                Assert.That(recoveryAngle, Is.GreaterThan(0.15f));
+                Assert.That(rig.LocalizedPhysics.CurrentMaximumAngle, Is.LessThan(0.05f));
+                Assert.That(rig.IsRagdollActive, Is.False);
+                Assert.That(duel.BotHealth, Is.EqualTo(previousHealth));
+                // A heavy transition must retain the pose and velocity actually
+                // produced by the local physical hit, without resampling Animator.
+                target.ApplyImpact(focus, target.transform.right, target.Body.mass * 3f,
+                    EarthCharacterImpactSourceKind.LooseStone, 0x57009102u,
+                    20f, 0f, 992u, damageOverride: 0f, calibratedStone: true);
+                yield return new WaitForSeconds(.08f);
+                yield return new WaitForEndOfFrame();
+                int hitRegion = rig.LocalizedPhysics.LastHitRegion;
+                Transform struckBone = rig.LocalizedPhysics.Bone(hitRegion);
+                Vector3 physicalPose = struckBone.position;
+                Quaternion physicalRotation = struckBone.rotation;
+                rig.BeginRagdoll(RagdollHandoff.Uniform(Vector3.zero));
+                Assert.That(Vector3.Distance(struckBone.position, physicalPose), Is.LessThan(.001f));
+                Assert.That(Quaternion.Angle(struckBone.rotation, physicalRotation), Is.LessThan(.1f));
+                Assert.That(struckBone.GetComponent<Rigidbody>().linearVelocity.magnitude, Is.GreaterThan(.01f));
+                Assert.That(rig.DynamicBodyCount, Is.EqualTo(11));
+                Assert.That(rig.LocalizedPhysics.HasActiveResponse, Is.False);
+                CaptureCushionCamera(capture, Path.Combine(folder, "HeavyHandoff.png"));
+            }
+            finally
+            {
+                if (captureHost != null) UnityEngine.Object.Destroy(captureHost);
+                if (scene.IsValid() && scene.isLoaded)
+                    _impactSceneUnload = SceneManager.UnloadSceneAsync(scene);
+            }
+            if (_impactSceneUnload != null) yield return _impactSceneUnload;
+            _impactSceneUnload = null;
+        }
+
+        [UnityTest]
         public IEnumerator SurfWaveAndBotProjectileUseTheSharedVisibleKnockoutPipeline()
         {
             const string scenePath = "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
+            Assert.That(SceneManager.GetSceneByPath(scenePath).isLoaded, Is.False,
+                "Run through the focused launcher so the production scene can be restored safely.");
             AsyncOperation load = SceneManager.LoadSceneAsync(scenePath, LoadSceneMode.Additive);
             Assert.That(load, Is.Not.Null);
             yield return load;
 
             Scene scene = SceneManager.GetSceneByPath(scenePath);
-            EarthMvpDuelController duel = FindInScene<EarthMvpDuelController>(scene);
-            EarthCharacterImpactTarget botImpact = FindImpactTarget(scene, EarthDuelFighterId.Bot);
-            EarthCharacterImpactTarget playerImpact = FindImpactTarget(scene, EarthDuelFighterId.Player);
-            HumanoidRagdollRig botRig = botImpact != null
-                ? botImpact.GetComponentInChildren<HumanoidRagdollRig>(true)
-                : null;
-            HumanoidRagdollRig playerRig = playerImpact != null
-                ? playerImpact.GetComponentInChildren<HumanoidRagdollRig>(true)
-                : null;
-            HumanoidCharacterPresentation botPresentation = botImpact != null
-                ? botImpact.GetComponentInChildren<HumanoidCharacterPresentation>(true)
-                : null;
-            HumanoidCharacterPresentation playerPresentation = playerImpact != null
-                ? playerImpact.GetComponentInChildren<HumanoidCharacterPresentation>(true)
-                : null;
-
-            Assert.That(duel, Is.Not.Null);
-            Assert.That(botImpact, Is.Not.Null);
-            Assert.That(playerImpact, Is.Not.Null);
-            Assert.That(botRig, Is.Not.Null);
-            Assert.That(playerRig, Is.Not.Null);
-            Assert.That(botPresentation, Is.Not.Null);
-            Assert.That(playerPresentation, Is.Not.Null);
-            HumanoidProceduralBodyResponse botBodyResponse =
-                botPresentation.ProceduralBodyResponse;
-            Assert.That(botBodyResponse, Is.Not.Null);
-
-            int botKnockoutsBeforeStone = duel.BotKnockoutCount;
-            int worldResponses = 0;
-            EarthWorldResponseEvent singleStoneWorldResponse = default;
-            botImpact.WorldResponseRequested += response =>
+            try
             {
-                worldResponses++;
-                singleStoneWorldResponse = response;
-            };
-            EarthCharacterImpactResponse singleStoneResponse = botImpact.ApplyImpact(
-                botImpact.transform.position,
-                botImpact.transform.right + botImpact.transform.up * 0.15f,
-                botImpact.Body.mass * 8.2f,
-                EarthCharacterImpactSourceKind.LooseStone,
-                0x57000100u,
-                8.2f,
-                1f,
-                100u);
-            yield return new WaitForFixedUpdate();
-            yield return new WaitForFixedUpdate();
+                EarthSceneReadinessGate gate = FindInScene<EarthSceneReadinessGate>(scene);
+                Assert.That(gate, Is.Not.Null);
+                double readyDeadline = Time.realtimeSinceStartupAsDouble + 125d;
+                while (!gate.IsReady && !gate.Failed && Time.realtimeSinceStartupAsDouble < readyDeadline)
+                    yield return null;
+                Assert.That(gate.IsReady, Is.True, $"Production readiness: {gate.Status}");
+                yield return ProductionCombatTestFlow.BeginBotAfterReadiness(scene);
+                EarthMvpDuelController duel = FindInScene<EarthMvpDuelController>(scene);
+                EarthCharacterImpactTarget botImpact = FindImpactTarget(scene, EarthDuelFighterId.Bot);
+                EarthCharacterImpactTarget playerImpact = FindImpactTarget(scene, EarthDuelFighterId.Player);
+                HumanoidRagdollRig botRig = botImpact != null
+                    ? botImpact.GetComponentInChildren<HumanoidRagdollRig>(true)
+                    : null;
+                HumanoidRagdollRig playerRig = playerImpact != null
+                    ? playerImpact.GetComponentInChildren<HumanoidRagdollRig>(true)
+                    : null;
+                HumanoidCharacterPresentation botPresentation = botImpact != null
+                    ? botImpact.GetComponentInChildren<HumanoidCharacterPresentation>(true)
+                    : null;
+                HumanoidCharacterPresentation playerPresentation = playerImpact != null
+                    ? playerImpact.GetComponentInChildren<HumanoidCharacterPresentation>(true)
+                    : null;
 
-            Assert.That(singleStoneResponse,
-                Is.EqualTo(EarthCharacterImpactResponse.RecoverableKnockdown),
-                "One heavy stone must knock the fighter down without ending the round.");
-            Assert.That(duel.BotPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
-            Assert.That(duel.BotKnockoutCount, Is.EqualTo(botKnockoutsBeforeStone));
-            Assert.That(duel.IsRecoverablyKnockedDown(EarthDuelFighterId.Bot), Is.True);
-            Assert.That(botRig.IsRagdollActive, Is.True);
-            Assert.That(worldResponses, Is.EqualTo(1),
-                "One accepted impact must emit one canonical world response.");
-            Assert.That(singleStoneWorldResponse.ResponseId, Is.Not.EqualTo(0u));
-            Assert.That(singleStoneWorldResponse.Kind, Is.EqualTo(EarthWorldResponseKind.Knockdown));
+                Assert.That(duel, Is.Not.Null);
+                Assert.That(botImpact, Is.Not.Null);
+                Assert.That(playerImpact, Is.Not.Null);
+                Assert.That(botRig, Is.Not.Null);
+                Assert.That(playerRig, Is.Not.Null);
+                Assert.That(botPresentation, Is.Not.Null);
+                Assert.That(playerPresentation, Is.Not.Null);
+                HumanoidProceduralBodyResponse botBodyResponse =
+                    botPresentation.ProceduralBodyResponse;
+                Assert.That(botBodyResponse, Is.Not.Null);
 
-            yield return new WaitForSeconds(0.80f);
-            Assert.That(botRig.IsRecoveringToAnimation, Is.True,
-                "Physical knockdown must hand off once into authored recovery.");
-            Assert.That(botPresentation.CurrentAuthoredAction,
-                Is.EqualTo(EarthAuthoredActionId.RecoverableKnockdownRecovery));
-            Assert.That(botPresentation.CurrentFootPolicy,
-                Is.EqualTo(EarthAuthoredFootPolicy.AuthoredContact),
-                "Get-up must own its contact window before Animator evaluates the recovery clip.");
-            yield return new WaitForSeconds(0.67f);
-            yield return new WaitForFixedUpdate();
-            Assert.That(duel.IsRecoverablyKnockedDown(EarthDuelFighterId.Bot), Is.False);
-            Assert.That(duel.BotPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
-            Assert.That(duel.BotKnockoutCount, Is.EqualTo(botKnockoutsBeforeStone),
-                "Recoverable knockdown must not increment KO or enter respawn.");
-            Assert.That(botRig.IsRagdollActive, Is.False);
-            Assert.That(botRig.IsRecoveringToAnimation, Is.False);
-            Assert.That(botRig.GetComponentInChildren<Animator>(true).enabled, Is.True);
+                while (!duel.CombatAllowed && Time.realtimeSinceStartupAsDouble < readyDeadline)
+                    yield return null;
+                Assert.That(duel.CombatAllowed, Is.True);
+                EarthMvpBotController controlledBot = FindInScene<EarthMvpBotController>(scene);
+                if (controlledBot != null) controlledBot.enabled = false;
 
-            EarthCharacterImpactResponse authoredRecoilResponse = botImpact.ApplyImpact(
-                botImpact.transform.position + botImpact.transform.up * 0.9f,
-                botImpact.transform.right,
-                botImpact.Body.mass * 2.4f,
-                EarthCharacterImpactSourceKind.LooseStone,
-                0x57000101u,
-                2.4f,
-                0.55f,
-                101u);
-            yield return null;
-            int impactLayer = botPresentation.Animator.GetLayerIndex("Impact Additive");
-            Assert.That(authoredRecoilResponse, Is.EqualTo(EarthCharacterImpactResponse.Stagger));
-            Assert.That(botPresentation.CurrentAuthoredAction,
-                Is.EqualTo(EarthAuthoredActionId.HitRecoil),
-                "The bot must expose the same semantic hit-recoil lane as the player.");
-            Assert.That(impactLayer, Is.GreaterThanOrEqualTo(0));
-            Assert.That(botPresentation.Animator.GetLayerWeight(impactLayer), Is.Zero.Within(0.001f),
-                "The Animator additive layer must not duplicate the procedural spring owner.");
-            Assert.That(math.cmax(math.abs(botBodyResponse.CurrentImpactAnglesDegrees)),
-                Is.GreaterThan(0f));
-            yield return new WaitForSeconds(0.55f);
+                int botKnockoutsBeforeStone = duel.BotKnockoutCount;
+                int worldResponses = 0;
+                EarthWorldResponseEvent singleStoneWorldResponse = default;
+                botImpact.WorldResponseRequested += response =>
+                {
+                    worldResponses++;
+                    singleStoneWorldResponse = response;
+                };
+                EarthCharacterImpactResponse singleStoneResponse = botImpact.ApplyImpact(
+                    botImpact.transform.position,
+                    botImpact.transform.right + botImpact.transform.up * 0.15f,
+                    botImpact.Body.mass * 8.2f,
+                    EarthCharacterImpactSourceKind.LooseStone,
+                    0x57000100u,
+                    8.2f,
+                    1f,
+                    100u);
+                yield return new WaitForFixedUpdate();
+                yield return new WaitForFixedUpdate();
 
-            EarthCharacterImpactResponse surfResponse = botImpact.ApplyImpact(
-                botImpact.transform.position,
-                botImpact.transform.forward + botImpact.transform.up * 0.08f,
-                botImpact.Body.mass * 8.1f,
-                EarthCharacterImpactSourceKind.SurfNose,
-                0x5F000101u,
-                8.1f,
-                1f,
-                101u);
-            yield return new WaitForFixedUpdate();
-            yield return new WaitForFixedUpdate();
+                Assert.That(singleStoneResponse,
+                    Is.EqualTo(EarthCharacterImpactResponse.RecoverableKnockdown),
+                    "One heavy stone must knock the fighter down without ending the round.");
+                Assert.That(duel.BotPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
+                Assert.That(duel.BotKnockoutCount, Is.EqualTo(botKnockoutsBeforeStone));
+                Assert.That(duel.IsRecoverablyKnockedDown(EarthDuelFighterId.Bot), Is.True);
+                Assert.That(botRig.IsRagdollActive, Is.True);
+                Assert.That(worldResponses, Is.EqualTo(1),
+                    "One accepted impact must emit one canonical world response.");
+                Assert.That(singleStoneWorldResponse.ResponseId, Is.Not.EqualTo(0u));
+                Assert.That(singleStoneWorldResponse.Kind, Is.EqualTo(EarthWorldResponseKind.Knockdown));
 
-            Assert.That(surfResponse, Is.EqualTo(EarthCharacterImpactResponse.Knockout));
-            Assert.That(duel.BotPhase, Is.EqualTo(EarthDuelFighterPhase.KnockedOut));
-            Assert.That(botRig.IsRagdollActive, Is.True);
-            Assert.That(botRig.DynamicBodyCount, Is.EqualTo(11));
+                yield return new WaitForSeconds(0.80f);
+                Assert.That(botRig.IsRecoveringToAnimation, Is.True,
+                    "Physical knockdown must hand off once into authored recovery.");
+                Assert.That(botPresentation.CurrentAuthoredAction,
+                    Is.EqualTo(EarthAuthoredActionId.RecoverableKnockdownRecovery));
+                float botContactDeadline = Time.time + 0.3f;
+                while (botRig.IsRecoveringToAnimation &&
+                       botPresentation.CurrentFootPolicy != EarthAuthoredFootPolicy.AuthoredContact &&
+                       Time.time < botContactDeadline)
+                    yield return null;
+                Assert.That(botPresentation.CurrentFootPolicy,
+                    Is.EqualTo(EarthAuthoredFootPolicy.AuthoredContact),
+                    "Get-up must own its contact window before Animator evaluates the recovery clip.");
+                yield return new WaitForSeconds(0.67f);
+                yield return new WaitForFixedUpdate();
+                Assert.That(duel.IsRecoverablyKnockedDown(EarthDuelFighterId.Bot), Is.False);
+                Assert.That(duel.BotPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
+                Assert.That(duel.BotKnockoutCount, Is.EqualTo(botKnockoutsBeforeStone),
+                    "Recoverable knockdown must not increment KO or enter respawn.");
+                Assert.That(botRig.IsRagdollActive, Is.False);
+                Assert.That(botRig.IsRecoveringToAnimation, Is.False);
+                Assert.That(botRig.GetComponentInChildren<Animator>(true).enabled, Is.True);
+                if (controlledBot != null) controlledBot.enabled = false;
 
-            yield return new WaitForSeconds(3.7f);
-            yield return new WaitForFixedUpdate();
-            Assert.That(duel.BotPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
-            Assert.That(botRig.IsRagdollActive, Is.False);
-            yield return new WaitForSeconds(0.8f);
+                EarthCharacterImpactResponse authoredRecoilResponse = botImpact.ApplyImpact(
+                    botImpact.transform.position + botImpact.transform.up * 0.9f,
+                    botImpact.transform.right,
+                    botImpact.Body.mass * 2.4f,
+                    EarthCharacterImpactSourceKind.LooseStone,
+                    0x57000101u,
+                    2.4f,
+                    0.55f,
+                    101u);
+                yield return null;
+                int impactLayer = botPresentation.Animator.GetLayerIndex("Impact Additive");
+                Assert.That(authoredRecoilResponse, Is.EqualTo(EarthCharacterImpactResponse.Stagger));
+                Assert.That(botPresentation.CurrentAuthoredAction,
+                    Is.EqualTo(EarthAuthoredActionId.HitRecoil),
+                    "The bot must expose the same semantic hit-recoil lane as the player.");
+                Assert.That(impactLayer, Is.GreaterThanOrEqualTo(0));
+                Assert.That(botPresentation.Animator.GetLayerWeight(impactLayer), Is.Zero.Within(0.001f),
+                    "The Animator additive layer must not duplicate the local physical owner.");
+                Assert.That(botRig.LocalizedPhysics.CurrentMaximumAngle,
+                    Is.GreaterThan(0f));
+                float recoilPeak = 0f;
+                float recoilElapsed = 0f;
+                while (recoilElapsed < 0.55f)
+                {
+                    recoilPeak = Mathf.Max(recoilPeak,
+                        botRig.LocalizedPhysics.CurrentMaximumAngle);
+                    yield return null;
+                    recoilElapsed += Time.deltaTime;
+                }
+                Assert.That(recoilPeak, Is.GreaterThan(1.5f),
+                    "A real stagger must bend the torso visibly through the production physical owner.");
 
-            EarthCharacterImpactResponse waveResponse = botImpact.ApplyImpact(
-                botImpact.transform.position,
-                botImpact.transform.up + botImpact.transform.right,
-                botImpact.Body.mass * 4.2f,
-                EarthCharacterImpactSourceKind.PillarWave,
-                0xA7000102u,
-                0f,
-                0.9f,
-                202u);
-            yield return new WaitForFixedUpdate();
-            yield return new WaitForFixedUpdate();
+                // These branches exercise finishing-hit presentation. Current combat
+                // lets health decide death; high physical severity alone is recoverable.
+                duel.ApplyDamage(EarthDuelFighterId.Bot, Mathf.Max(0f, duel.BotHealth - 20f), default);
+                EarthCharacterImpactResponse surfResponse = botImpact.ApplyImpact(
+                    botImpact.transform.position,
+                    botImpact.transform.forward + botImpact.transform.up * 0.08f,
+                    botImpact.Body.mass * 8.1f,
+                    EarthCharacterImpactSourceKind.SurfNose,
+                    0x5F000101u,
+                    8.1f,
+                    1f,
+                    101u);
+                yield return new WaitForFixedUpdate();
+                yield return new WaitForFixedUpdate();
 
-            Assert.That(waveResponse, Is.EqualTo(EarthCharacterImpactResponse.Knockout));
-            Assert.That(duel.BotPhase, Is.EqualTo(EarthDuelFighterPhase.KnockedOut));
-            Assert.That(botRig.IsRagdollActive, Is.True);
+                Assert.That(surfResponse, Is.EqualTo(EarthCharacterImpactResponse.Knockout));
+                Assert.That(duel.BotPhase, Is.EqualTo(EarthDuelFighterPhase.KnockedOut));
+                Assert.That(botRig.IsRagdollActive, Is.True);
+                Assert.That(botRig.DynamicBodyCount, Is.EqualTo(11));
 
-            yield return new WaitForSeconds(3.7f);
-            yield return new WaitForFixedUpdate();
-            Assert.That(duel.BotPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
-            Assert.That(botRig.IsRagdollActive, Is.False);
-            yield return new WaitForSeconds(0.8f);
+                yield return new WaitForSeconds(3.7f);
+                yield return new WaitForFixedUpdate();
+                Assert.That(duel.BotPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
+                Assert.That(botRig.IsRagdollActive, Is.False);
+                yield return new WaitForSeconds(0.8f);
 
-            int playerKnockoutsBeforeStone = duel.PlayerKnockoutCount;
-            EarthCharacterImpactResponse playerSingleStoneResponse = playerImpact.ApplyImpact(
-                playerImpact.transform.position,
-                playerImpact.transform.right + playerImpact.transform.up * 0.15f,
-                playerImpact.Body.mass * 8.2f,
-                EarthCharacterImpactSourceKind.LooseStone,
-                0x57000200u,
-                8.2f,
-                1f,
-                210u);
-            yield return new WaitForFixedUpdate();
-            yield return new WaitForFixedUpdate();
-            Assert.That(playerSingleStoneResponse,
-                Is.EqualTo(EarthCharacterImpactResponse.RecoverableKnockdown));
-            Assert.That(duel.PlayerPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
-            Assert.That(duel.PlayerKnockoutCount, Is.EqualTo(playerKnockoutsBeforeStone));
-            Assert.That(playerRig.IsRagdollActive, Is.True);
-            yield return new WaitForSeconds(0.80f);
-            Assert.That(playerRig.IsRecoveringToAnimation, Is.True);
-            Assert.That(playerPresentation.CurrentAuthoredAction,
-                Is.EqualTo(EarthAuthoredActionId.RecoverableKnockdownRecovery));
-            Assert.That(playerPresentation.CurrentFootPolicy,
-                Is.EqualTo(EarthAuthoredFootPolicy.AuthoredContact));
-            yield return new WaitForSeconds(0.67f);
-            yield return new WaitForFixedUpdate();
-            Assert.That(duel.IsRecoverablyKnockedDown(EarthDuelFighterId.Player), Is.False);
-            Assert.That(duel.PlayerPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
-            Assert.That(duel.PlayerKnockoutCount, Is.EqualTo(playerKnockoutsBeforeStone));
-            Assert.That(playerRig.IsRagdollActive, Is.False);
-            Assert.That(playerRig.IsRecoveringToAnimation, Is.False);
-            PlanetMotor recoveredPlayerMotor = playerImpact.GetComponent<PlanetMotor>();
-            Assert.That(recoveredPlayerMotor, Is.Not.Null);
-            Assert.That(recoveredPlayerMotor.enabled, Is.True,
-                "Player movement authority must return after authored recovery.");
-            yield return new WaitForSeconds(0.20f);
+                if (controlledBot != null) controlledBot.enabled = false;
+                duel.ApplyDamage(EarthDuelFighterId.Bot, Mathf.Max(0f, duel.BotHealth - 16f), default);
+                EarthCharacterImpactResponse waveResponse = botImpact.ApplyImpact(
+                    botImpact.transform.position,
+                    botImpact.transform.up + botImpact.transform.right,
+                    botImpact.Body.mass * 4.2f,
+                    EarthCharacterImpactSourceKind.PillarWave,
+                    0xA7000102u,
+                    0f,
+                    0.9f,
+                    202u);
+                yield return new WaitForFixedUpdate();
+                yield return new WaitForFixedUpdate();
 
-            int localizedBefore = playerRig.LocalizedRagdollHitCount;
-            HumanoidProceduralBodyResponse playerBodyResponse =
-                playerPresentation.ProceduralBodyResponse;
-            Assert.That(playerBodyResponse, Is.Not.Null);
-            int proceduralBefore = playerBodyResponse.AcceptedProceduralImpactCount;
-            EarthCharacterImpactResponse firstProjectileResponse = playerImpact.ApplyImpact(
-                playerImpact.transform.position,
-                playerImpact.transform.up + playerImpact.transform.right,
-                playerImpact.Body.mass * 2f,
-                EarthCharacterImpactSourceKind.BotProjectile,
-                0xB0700103u,
-                0f,
-                1f,
-                303u);
-            EarthCharacterImpactResponse secondProjectileResponse = playerImpact.ApplyImpact(
-                playerImpact.transform.position + playerImpact.transform.right * 0.12f,
-                playerImpact.transform.up + playerImpact.transform.right,
-                playerImpact.Body.mass * 2f,
-                EarthCharacterImpactSourceKind.BotProjectile,
-                0xB0700104u,
-                0f,
-                1f,
-                304u);
-            EarthCharacterImpactResponse thirdProjectileResponse = playerImpact.ApplyImpact(
-                playerImpact.transform.position + playerImpact.transform.right * 0.18f,
-                playerImpact.transform.up + playerImpact.transform.right,
-                playerImpact.Body.mass * 2f,
-                EarthCharacterImpactSourceKind.BotProjectile,
-                0xB0700105u,
-                0f,
-                1f,
-                305u);
-            yield return new WaitForFixedUpdate();
-            yield return new WaitForFixedUpdate();
+                Assert.That(waveResponse, Is.EqualTo(EarthCharacterImpactResponse.Knockout));
+                Assert.That(duel.BotPhase, Is.EqualTo(EarthDuelFighterPhase.KnockedOut));
+                Assert.That(botRig.IsRagdollActive, Is.True);
 
-            Assert.That(firstProjectileResponse, Is.EqualTo(EarthCharacterImpactResponse.Stagger));
-            Assert.That(secondProjectileResponse, Is.EqualTo(EarthCharacterImpactResponse.Stagger));
-            Assert.That(thirdProjectileResponse, Is.EqualTo(EarthCharacterImpactResponse.Knockout));
-            Assert.That(playerRig.LocalizedRagdollHitCount, Is.EqualTo(localizedBefore),
-                "The legacy localized-bone path must not duplicate the procedural spring.");
-            Assert.That(playerBodyResponse.AcceptedProceduralImpactCount,
-                Is.EqualTo(proceduralBefore + 2),
-                "Two staggers use the spring; the knockout belongs only to full ragdoll.");
-            Assert.That(duel.PlayerPhase, Is.EqualTo(EarthDuelFighterPhase.KnockedOut));
-            Assert.That(playerRig.IsRagdollActive, Is.True);
-            Assert.That(playerRig.DynamicBodyCount, Is.EqualTo(11));
+                yield return new WaitForSeconds(3.7f);
+                yield return new WaitForFixedUpdate();
+                Assert.That(duel.BotPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
+                Assert.That(botRig.IsRagdollActive, Is.False);
+                yield return new WaitForSeconds(0.8f);
 
-            AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
-            if (unload != null) yield return unload;
+                int playerKnockoutsBeforeStone = duel.PlayerKnockoutCount;
+                if (controlledBot != null) controlledBot.enabled = false;
+                EarthCharacterImpactResponse playerSingleStoneResponse = playerImpact.ApplyImpact(
+                    playerImpact.transform.position,
+                    playerImpact.transform.right + playerImpact.transform.up * 0.15f,
+                    playerImpact.Body.mass * 8.2f,
+                    EarthCharacterImpactSourceKind.LooseStone,
+                    0x57000200u,
+                    8.2f,
+                    1f,
+                    210u);
+                yield return new WaitForFixedUpdate();
+                yield return new WaitForFixedUpdate();
+                Assert.That(playerSingleStoneResponse,
+                    Is.EqualTo(EarthCharacterImpactResponse.RecoverableKnockdown));
+                Assert.That(duel.PlayerPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
+                Assert.That(duel.PlayerKnockoutCount, Is.EqualTo(playerKnockoutsBeforeStone));
+                Assert.That(playerRig.IsRagdollActive, Is.True);
+                yield return new WaitForSeconds(0.80f);
+                Assert.That(playerRig.IsRecoveringToAnimation, Is.True);
+                Assert.That(playerPresentation.CurrentAuthoredAction,
+                    Is.EqualTo(EarthAuthoredActionId.RecoverableKnockdownRecovery));
+                float playerContactDeadline = Time.time + 0.3f;
+                while (playerRig.IsRecoveringToAnimation &&
+                       playerPresentation.CurrentFootPolicy != EarthAuthoredFootPolicy.AuthoredContact &&
+                       Time.time < playerContactDeadline)
+                    yield return null;
+                Assert.That(playerPresentation.CurrentFootPolicy,
+                    Is.EqualTo(EarthAuthoredFootPolicy.AuthoredContact));
+                yield return new WaitForSeconds(0.67f);
+                yield return new WaitForFixedUpdate();
+                Assert.That(duel.IsRecoverablyKnockedDown(EarthDuelFighterId.Player), Is.False);
+                Assert.That(duel.PlayerPhase, Is.EqualTo(EarthDuelFighterPhase.Active));
+                Assert.That(duel.PlayerKnockoutCount, Is.EqualTo(playerKnockoutsBeforeStone));
+                Assert.That(playerRig.IsRagdollActive, Is.False);
+                Assert.That(playerRig.IsRecoveringToAnimation, Is.False);
+                PlanetMotor recoveredPlayerMotor = playerImpact.GetComponent<PlanetMotor>();
+                Assert.That(recoveredPlayerMotor, Is.Not.Null);
+                Assert.That(recoveredPlayerMotor.enabled, Is.True,
+                    "Player movement authority must return after authored recovery.");
+                yield return new WaitForSeconds(0.20f);
+
+                int localizedBefore = playerRig.LocalizedRagdollHitCount;
+                HumanoidProceduralBodyResponse playerBodyResponse =
+                    playerPresentation.ProceduralBodyResponse;
+                Assert.That(playerBodyResponse, Is.Not.Null);
+                int proceduralBefore = playerBodyResponse.AcceptedProceduralImpactCount;
+                duel.ApplyDamage(EarthDuelFighterId.Player, Mathf.Max(0f, duel.PlayerHealth - 20f), default);
+                EarthCharacterImpactResponse firstProjectileResponse = playerImpact.ApplyImpact(
+                    playerImpact.transform.position,
+                    playerImpact.transform.up + playerImpact.transform.right,
+                    playerImpact.Body.mass * 2f,
+                    EarthCharacterImpactSourceKind.BotProjectile,
+                    0xB0700103u,
+                    0f,
+                    1f,
+                    303u);
+                EarthCharacterImpactResponse secondProjectileResponse = playerImpact.ApplyImpact(
+                    playerImpact.transform.position + playerImpact.transform.right * 0.12f,
+                    playerImpact.transform.up + playerImpact.transform.right,
+                    playerImpact.Body.mass * 2f,
+                    EarthCharacterImpactSourceKind.BotProjectile,
+                    0xB0700104u,
+                    0f,
+                    1f,
+                    304u);
+                EarthCharacterImpactResponse thirdProjectileResponse = playerImpact.ApplyImpact(
+                    playerImpact.transform.position + playerImpact.transform.right * 0.18f,
+                    playerImpact.transform.up + playerImpact.transform.right,
+                    playerImpact.Body.mass * 2f,
+                    EarthCharacterImpactSourceKind.BotProjectile,
+                    0xB0700105u,
+                    0f,
+                    1f,
+                    305u);
+                yield return new WaitForFixedUpdate();
+                yield return new WaitForFixedUpdate();
+
+                Assert.That(firstProjectileResponse, Is.EqualTo(EarthCharacterImpactResponse.Stagger));
+                Assert.That(secondProjectileResponse, Is.EqualTo(EarthCharacterImpactResponse.Stagger));
+                Assert.That(thirdProjectileResponse, Is.EqualTo(EarthCharacterImpactResponse.Knockout));
+                Assert.That(playerRig.LocalizedRagdollHitCount, Is.EqualTo(localizedBefore + 2),
+                    "Exactly two local physical responses precede the heavy handoff.");
+                Assert.That(playerBodyResponse.AcceptedProceduralImpactCount,
+                    Is.EqualTo(proceduralBefore),
+                    "The retired torso spring receives no hits; the knockout belongs only to full ragdoll.");
+                Assert.That(duel.PlayerPhase, Is.EqualTo(EarthDuelFighterPhase.KnockedOut));
+                Assert.That(playerRig.IsRagdollActive, Is.True);
+                Assert.That(playerRig.DynamicBodyCount, Is.EqualTo(11));
+
+            }
+            finally
+            {
+                if (scene.IsValid() && scene.isLoaded)
+                    _impactSceneUnload = SceneManager.UnloadSceneAsync(scene);
+            }
+            if (_impactSceneUnload != null) yield return _impactSceneUnload;
+            _impactSceneUnload = null;
         }
 
         [UnityTest]
@@ -937,12 +1130,26 @@ namespace Elemental.Tests.PlayMode
             yield return new WaitForFixedUpdate();
             Assert.That(cushion.BeginHold(), Is.True);
 
+            Camera cushionCamera = player.GetComponent<MagicInputController>()?.CastCamera;
+            Assert.That(cushionCamera, Is.Not.Null);
+            string cushionCaptureFolder = Path.GetFullPath("BuildReports/LandingCushion");
+            Directory.CreateDirectory(cushionCaptureFolder);
+            bool compressionCaptured = false;
             for (int tick = 0; tick < 180; tick++)
             {
                 yield return new WaitForFixedUpdate();
+                if (!compressionCaptured && cushion.IsHolding && cushion.IsCushioning)
+                {
+                    CaptureCushionCamera(cushionCamera, Path.Combine(cushionCaptureFolder, "Compression.png"));
+                    compressionCaptured = true;
+                }
                 if (tick > 12 && motor.HasStableSupport && !cushion.IsHolding) break;
             }
 
+            Assert.That(compressionCaptured, Is.True);
+            Assert.That(cushion.HasFractured, Is.True);
+            yield return new WaitForSeconds(0.1f);
+            CaptureCushionCamera(cushionCamera, Path.Combine(cushionCaptureFolder, "BrokenStones.png"));
             Assert.That(cushion.SuppressesHardLanding, Is.True);
             Assert.That(motor.LandingRollActive, Is.False, "The receiving pillar absorbs this landing.");
             Assert.That(motor.LastLandingWasRoll, Is.False, "A cushioned landing must not start the roll animation.");
@@ -951,6 +1158,31 @@ namespace Elemental.Tests.PlayMode
 
             AsyncOperation unload = SceneManager.UnloadSceneAsync(scene);
             if (unload != null) yield return unload;
+        }
+
+        private static void CaptureCushionCamera(Camera camera, string path)
+        {
+            RenderTexture previousTarget = camera.targetTexture;
+            RenderTexture previousActive = RenderTexture.active;
+            RenderTexture target = RenderTexture.GetTemporary(1280, 720, 24, RenderTextureFormat.ARGB32);
+            Texture2D image = null;
+            try
+            {
+                camera.targetTexture = target;
+                camera.Render();
+                RenderTexture.active = target;
+                image = new Texture2D(1280, 720, TextureFormat.RGB24, false);
+                image.ReadPixels(new Rect(0, 0, 1280, 720), 0, 0);
+                image.Apply();
+                File.WriteAllBytes(path, image.EncodeToPNG());
+            }
+            finally
+            {
+                camera.targetTexture = previousTarget;
+                RenderTexture.active = previousActive;
+                if (image != null) UnityEngine.Object.Destroy(image);
+                RenderTexture.ReleaseTemporary(target);
+            }
         }
 
         private static void RecordFrameDelta(

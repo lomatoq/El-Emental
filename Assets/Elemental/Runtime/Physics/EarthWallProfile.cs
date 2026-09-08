@@ -27,6 +27,12 @@ namespace Elemental.Runtime.Physics
         [SerializeField, Min(0f)] private float impactDamageMultiplier = 0.92f;
         [SerializeField, Min(0f)] private float excessImpulseRelease = 0.18f;
         [SerializeField, Min(0f)] private float foundationStrengthMultiplier = 1.45f;
+        [SerializeField, Range(0.01f, 1f)] private float maximumImpactBondDamage = 0.45f;
+        [SerializeField, Range(0.01f, 1f)] private float maximumFoundationImpactDamage = 0.16f;
+        [SerializeField, Min(0.1f)] private float localBondImpulsePerMass = 0.8f;
+        [SerializeField, Min(0.1f)] private float impactRadiusMeters = 1.6f;
+        [SerializeField, Range(0f, 1f)] private float detachedImpulseTransfer = 0.55f;
+        [SerializeField, Min(0f)] private float maximumDetachedSpeed = 5f;
         [SerializeField, Min(0f)] private float planetaryDebrisAcceleration = 11.5f;
         [SerializeField, Min(0f)] private float minimumChordEmbedDepth = 0.42f;
         [SerializeField, Min(0f)] private float surfaceTolerance = 0.06f;
@@ -50,6 +56,12 @@ namespace Elemental.Runtime.Physics
         public float ImpactDamageMultiplier => impactDamageMultiplier;
         public float ExcessImpulseRelease => excessImpulseRelease;
         public float FoundationStrengthMultiplier => foundationStrengthMultiplier;
+        public float MaximumImpactBondDamage => maximumImpactBondDamage;
+        public float MaximumFoundationImpactDamage => maximumFoundationImpactDamage;
+        public float LocalBondImpulsePerMass => localBondImpulsePerMass;
+        public float ImpactRadiusMeters => impactRadiusMeters;
+        public float DetachedImpulseTransfer => detachedImpulseTransfer;
+        public float MaximumDetachedSpeed => maximumDetachedSpeed;
         public float PlanetaryDebrisAcceleration => planetaryDebrisAcceleration;
         public float MinimumChordEmbedDepth => minimumChordEmbedDepth;
         public float SurfaceTolerance => surfaceTolerance;

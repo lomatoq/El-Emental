@@ -1,13 +1,15 @@
 {
     "unityVersion": "6000.5.7f1",
-    "utc": "2026-09-03T18:16:10.1968255Z",
+    "utc": "2026-09-07T21:00:56.1042673Z",
     "mode": "EditMode",
-    "result": "Passed",
+    "result": "Failed",
     "total": 16,
-    "passed": 16,
-    "failed": 0,
+    "passed": 15,
+    "failed": 1,
     "skipped": 0,
     "inconclusive": 0,
-    "durationSeconds": 21.4399766,
-    "failures": []
+    "durationSeconds": 31.3325643,
+    "failures": [
+        "Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.NativeArenaLookdevUsesAuthoredNormalsHighShadowFilteringAndCleanContactAo:   Fresh fracture interiors must sit below the weathered exterior in value while staying in the same palette.\r\n  Expected: less than 0.441239536f\r\n  But was:  0.441239536f\r\n"
+    ]
 }

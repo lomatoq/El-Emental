@@ -1,0 +1,260 @@
+--- a/Assets/Elemental/Authoring/Editor/StoneUI/ElementalStoneSkinInstaller.cs
++++ b/Assets/Elemental/Authoring/Editor/StoneUI/ElementalStoneSkinInstaller.cs
+@@ -103,15 +103,26 @@
+             var importer=(TextureImporter)AssetImporter.GetAtPath(texturePath);
+             string before=EditorJsonUtility.ToJson(importer);
+             importer.textureType=TextureImporterType.Default;importer.sRGBTexture=true;
++            importer.npotScale=TextureImporterNPOTScale.None;
+             importer.alphaIsTransparency=true;importer.mipmapEnabled=false;importer.isReadable=false;
+             importer.wrapMode=TextureWrapMode.Clamp;importer.filterMode=FilterMode.Bilinear;
+             importer.textureCompression=TextureImporterCompression.Uncompressed;importer.maxTextureSize=2048;
+             if(before!=EditorJsonUtility.ToJson(importer))importer.SaveAndReimport();
+-            var existing=AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);if(existing!=null)return existing;
++            var existing=AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+             var texture=AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
++            if(texture.width!=2007||texture.height!=783)throw new InvalidOperationException("Reference selected texture must retain native2007x783 pixels before applying its crop.");
+             // Crop transparent delivery padding via sprite metadata; original raster stays untouched.
+             var sprite=UnityEngine.Sprite.Create(texture,new Rect(27,273,1952,290),new Vector2(.5f,.5f),100,0,SpriteMeshType.FullRect,new Vector4(180,16,180,16));
+-            sprite.name="Reference Selected";AssetDatabase.CreateAsset(sprite,spritePath);return sprite;
++            sprite.name="Reference Selected";
++            if(existing!=null)
++            {
++                bool same=existing.rect==sprite.rect&&existing.border==sprite.border&&existing.texture==texture;
++                var a=existing.uv;var b=sprite.uv;same&=a.Length==b.Length;
++                for(int i=0;same&&i<a.Length;i++)same=a[i]==b[i];
++                if(!same){EditorUtility.CopySerialized(sprite,existing);EditorUtility.SetDirty(existing);AssetDatabase.SaveAssetIfDirty(existing);}
++                UnityEngine.Object.DestroyImmediate(sprite);return existing;
++            }
++            AssetDatabase.CreateAsset(sprite,spritePath);return sprite;
+         }
+         private static TMP_FontAsset PrepareReferenceFont(TMP_FontAsset fallback)
+         {
+--- a/Assets/Elemental/Presentation/UI/FrontendButton.cs
++++ b/Assets/Elemental/Presentation/UI/FrontendButton.cs
+@@ -22,7 +22,7 @@
+         private Image _halo, _shine, _focusMark;
+         private float _focusProgress;
+         private float _shineAge;
+-        private bool _focused;
++        private bool _focused, _pointerInside;
+         private TMPro.TMP_Text[] _captions;
+         private Image _roleIcon;
+         private ElementalStoneReferenceProfile Reference => _theme?.stoneSkin?.referenceProfile;
+@@ -116,12 +116,12 @@
+             float scaleT = Mathf.Clamp01(_scaleElapsed / Mathf.Max(.001f, scaleDuration));
+             _visual.localScale = Vector3.one * Mathf.Lerp(_scaleStart, _scaleTarget, ReferenceActive?Reference.Evaluate(scaleTrack,scaleT):scaleT * scaleT * (3 - 2 * scaleT));
+         }
+-        public void OnPointerEnter(PointerEventData e) { _shineAge=0; _hot = true; if (_button.IsInteractable()) _audio?.Play(UIAudioCue.Hover); }
+-        public void OnPointerExit(PointerEventData e) { _hot = _focused; }
++        public void OnPointerEnter(PointerEventData e) { _pointerInside=true; _shineAge=0; _hot = true; if (_button.IsInteractable()) _audio?.Play(UIAudioCue.Hover); }
++        public void OnPointerExit(PointerEventData e) { _pointerInside=false; _hot = _focused; }
+         public void OnPointerDown(PointerEventData e) { if (e.button != PointerEventData.InputButton.Left || !_button.IsInteractable()) return; _submitReleaseAt = 0; _pressed = true; _audio?.Play(UIAudioCue.Press); }
+         public void OnPointerUp(PointerEventData e) { if (e.button == PointerEventData.InputButton.Left) _pressed = false; }
+         public void OnSelect(BaseEventData e) { _focused=true; _shineAge=0; _hot = true; if (_button.IsInteractable()) _audio?.Play(UIAudioCue.Hover); }
+-        public void OnDeselect(BaseEventData e) { _focused=false; _hot = false; _pressed = false; }
++        public void OnDeselect(BaseEventData e) { _focused=false; _hot = _pointerInside; _pressed = false; }
+         public void OnSubmit(BaseEventData e)
+         {
+             if (!_button.IsInteractable()) return;
+@@ -135,7 +135,7 @@
+             var image=go.GetComponent<Image>();image.sprite=sprite;image.raycastTarget=false;image.color=Color.clear;return image;
+         }
+         private void OnDisable()
+-        { _focused=false;_focusProgress=0;_hot = _pressed = false; _submitReleaseAt = 0; _scaleStart = _scaleTarget = 1; if (_visual != null) _visual.localScale = Vector3.one; }
++        { _focused=_pointerInside=false;_focusProgress=0;_hot = _pressed = false; _submitReleaseAt = 0; _scaleStart = _scaleTarget = 1; if (_visual != null) _visual.localScale = Vector3.one; }
+         private void OnApplicationFocus(bool focused) { if (!focused) { _pressed = false; _submitReleaseAt = 0; } }
+     }
+ }
+--- a/Assets/Elemental/Presentation/UI/FrontendMenuView.cs
++++ b/Assets/Elemental/Presentation/UI/FrontendMenuView.cs
+@@ -35,6 +35,8 @@
+         private ElementalStoneReferenceProfile Reference => _theme?.stoneSkin?.referenceProfile;
+         private bool ReferenceActive => Reference != null && Reference.enabled;
+         private Vector2 _panelBasePosition;
++        private Vector2 _curtainBasePosition;
++        private TMP_Text _footerText;
+         private RectTransform _curtainRect;
+         private string _panelTrack="panel_enter";
+         private float _panelTrackAge;
+@@ -42,6 +44,7 @@
+         private RectTransform _activePage;
+         private Vector2 _pageBasePosition;
+         private float _pageAge, _statusAge, _visibleTarget, _visibleAlpha;
++        private float _menuElementAge;
+         private bool _connecting, _statusError, _statusLeaving;
+         private Vector2 _statusBasePosition;
+         private readonly Image[] _elementFrames = new Image[4];
+@@ -72,9 +75,14 @@
+                 curtain.rectTransform.anchorMin = Vector2.zero; curtain.rectTransform.anchorMax = Vector2.up;
+                 curtain.rectTransform.pivot = new Vector2(0,.5f);
+                 curtain.rectTransform.sizeDelta = new Vector2(ReferenceActive && _theme.stoneSkin.referenceCurtain != null ? 900 : 1080f * curtain.sprite.rect.width / curtain.sprite.rect.height,0);
++                if(ReferenceActive)
++                {
++                    _curtainBasePosition=new Vector2(-130,0);_curtainRect.anchoredPosition=_curtainBasePosition;
++                    _curtainRect.localScale=Vector3.one*1.3f;
++                }
+             }
+             _panel = Rect(menuContents,"Menu column");
+-            if (ReferenceActive) Place(_panel,84,32,570,1020);
++            if (ReferenceActive) Place(_panel,54,32,570,1020);
+             else Stretch(_panel,new Vector2(.04f,.10f),new Vector2(.31f,.90f));
+             _panelBasePosition = _panel.anchoredPosition;
+             if (_theme.logo != null)
+@@ -107,14 +115,17 @@
+             _status.textWrappingMode = TextWrappingModes.Normal; _statusBasePosition=_status.rectTransform.anchoredPosition;
+             var footer = Label(menuContents, "EARTH  /  FIRE  /  WATER  /  AIR", 16, _theme.muted); Stretch(footer.rectTransform, new Vector2(.70f, .025f), new Vector2(.97f, .065f));
+             footer.alignment = TextAlignmentOptions.Right;
++            _footerText=footer;
+             if (ReferenceActive && divider != null)
+             {
+-                var footerRule=Image(menuContents,"Element footer rule",_theme.accent); footerRule.raycastTarget=false;
+-                Stretch(footerRule.rectTransform,new Vector2(.81f,.018f),new Vector2(.97f,.019f));
+-                var footerDiamond=Image(menuContents,"Element footer diamond",_theme.accent); footerDiamond.raycastTarget=false;
+-                footerDiamond.sprite=_theme.stoneSkin.diamond; footerDiamond.preserveAspect=true;
+-                footerDiamond.rectTransform.anchorMin=footerDiamond.rectTransform.anchorMax=new Vector2(.83f,.0185f);
+-                footerDiamond.rectTransform.sizeDelta=new Vector2(20,20);
++                var footerBlock=Rect(menuContents,"Element footer");footerBlock.anchorMin=footerBlock.anchorMax=new Vector2(1,0);
++                footerBlock.pivot=new Vector2(1,0);footerBlock.anchoredPosition=new Vector2(-42,24);footerBlock.sizeDelta=new Vector2(430,68);
++                footer.rectTransform.SetParent(footerBlock,false);Place(footer.rectTransform,0,0,430,30);footer.characterSpacing=2;
++                var footerRule=Image(footerBlock,"Element footer rule",_theme.accent); footerRule.raycastTarget=false;Place(footerRule.rectTransform,0,46,430,1);
++                var halo=Image(footerBlock,"Element footer glow",new Color(1,.91f,.58f,.5f));halo.sprite=_theme.stoneSkin.halo;halo.raycastTarget=false;Place(halo.rectTransform,9,23,46,46);
++                var footerDiamond=Image(footerBlock,"Element footer diamond",_theme.accent); footerDiamond.raycastTarget=false;
++                footerDiamond.sprite=_theme.stoneSkin.diamond; footerDiamond.preserveAspect=true;Place(footerDiamond.rectTransform,21,35,22,22);
++                var core=Image(footerDiamond.transform,"Light core",_theme.accent);core.raycastTarget=false;core.rectTransform.anchorMin=core.rectTransform.anchorMax=new Vector2(.5f,.5f);core.rectTransform.sizeDelta=new Vector2(6,6);core.rectTransform.localRotation=Quaternion.Euler(0,0,45);
+             }
+             _countdown = Label(transform, "4", 160, _theme.text);
+             Stretch(_countdown.rectTransform, new Vector2(.35f, .30f), new Vector2(.65f, .70f));
+@@ -349,7 +360,7 @@
+             _group.alpha=_visibleAlpha;
+             float panelX=reduced?0:Reference.Sample(_panelTrack,"x",panelT);
+             _panel.anchoredPosition=_panelBasePosition+new Vector2(panelX,0);
+-            if(_curtainRect!=null)_curtainRect.anchoredPosition=new Vector2(panelX,0);
++            if(_curtainRect!=null)_curtainRect.anchoredPosition=_curtainBasePosition+new Vector2(panelX,0);
+             _pageAge+=dt;
+             if(_pageGroup!=null)
+             {
+@@ -372,10 +383,15 @@
+             }
+             if(_activeElementLabel!=null)
+             {
++                _menuElementAge+=dt;
+                 var selected=_flow.SelectedElement;
+                 if(selected!=_lastStatusElement)
+                 {
++                    _menuElementAge=0;
+                     _lastStatusElement=selected;_activeElementLabel.text=selected.ToString().ToUpperInvariant()+" ELEMENT ACTIVE";
++                    string[] footerElements={"EARTH","FIRE","WATER","AIR"};
++                    for(int i=0;i<footerElements.Length;i++)if(footerElements[i]==selected.ToString().ToUpperInvariant())footerElements[i]="<color=#FFF2C7><b>"+footerElements[i]+"</b></color>";
++                    _footerText.text=string.Join("  /  ",footerElements);
+                     var skin=_theme.stoneSkin;
+                     _activeElementGlyph.sprite=selected==Elemental.Simulation.Magic.ElementId.Fire?skin.fire:selected==Elemental.Simulation.Magic.ElementId.Water?skin.water:selected==Elemental.Simulation.Magic.ElementId.Air?skin.air:skin.earth;
+                     _activeElementTraits.text=selected==Elemental.Simulation.Magic.ElementId.Earth?"STRENGTH  /  BALANCE  /  ENDURANCE":"";
+@@ -383,7 +399,9 @@
+                 for(int i=0;i<4;i++) if(_elementFrames[i]!=null)
+                 {
+                     bool active=ElementOrder[i]==selected;
+-                    _elementFrames[i].transform.localScale=Vector3.one*(active?1.24f:1);
++                    float selectionT=_menuElementAge/Reference.Duration("element_select",.22f,reduced);
++                    float selectionScale=active&&!reduced?Reference.Sample("element_select","scale",selectionT,1):1;
++                    _elementFrames[i].transform.localScale=Vector3.one*(active?1.24f*selectionScale:1);
+                     _elementGlows[i].color=new Color(.75f,.98f,.38f,active?(reduced?.65f:.3f+Reference.LoopSample("selected_breath","opacity",Time.unscaledTime,.35f)):0);
+                 }
+             }
+--- a/Assets/Elemental/Presentation/UI/StoneReferenceHudPresentation.cs
++++ b/Assets/Elemental/Presentation/UI/StoneReferenceHudPresentation.cs
+@@ -16,6 +16,7 @@
+         private bool _wasOver;
+         private float _resultAge, _elementAge;
+         private ElementId _selected;
++        private readonly System.Collections.Generic.Dictionary<VisualElement,StyleEnum<Visibility>> _combatVisibility=new System.Collections.Generic.Dictionary<VisualElement,StyleEnum<Visibility>>();
+         public StoneReferenceHudPresentation(VisualElement root, ElementalUITheme theme, VisualElement result, Label title, Button restart, System.Action menu)
+         {
+             _root=root; _skin=theme.stoneSkin; _profile=_skin.referenceProfile; _result=result; _title=title;
+@@ -87,6 +88,7 @@
+             foreach(var child in decorative)_resultVisual.Add(child);
+             // Button hit rectangles stay outside the moving visual group.
+             root.Query<TextElement>().ForEach(e=>{ if(_profile.hudFont!=null){e.style.unityFont=_profile.hudFont;e.style.unityFontDefinition=FontDefinition.FromFont(_profile.hudFont);} });
++            foreach(var child in root.Children()) if(child!=result) _combatVisibility.Add(child,child.style.visibility);
+         }
+         public void Refresh()
+         {
+@@ -109,6 +111,9 @@
+         public void Tick(ElementId selected, bool reduced, bool over, bool localWon, bool draw, int localScore, int opponentScore, bool restartAllowed)
+         {
+             float dt=Time.unscaledDeltaTime;
++            // Real round-end presentation takes precedence over per-life toast and combat ornaments.
++            // Keep their data, authored layout and display state; restore original visibility on restart.
++            foreach(var pair in _combatVisibility) pair.Key.style.visibility=over?new StyleEnum<Visibility>(Visibility.Hidden):pair.Value;
+             if(selected!=_selected){_selected=selected;_elementAge=0;} _elementAge+=dt;
+             for(int i=0;i<4;i++)
+             {
+--- a/Assets/Elemental/Tests/PlayMode/StoneSkinPlayTests.cs
++++ b/Assets/Elemental/Tests/PlayMode/StoneSkinPlayTests.cs
+@@ -49,12 +49,28 @@
+             string savedLayout = EditorJsonUtility.ToJson(theme.hudLayout);
+             Assert.That(theme.stoneSkin.referenceProfile,Is.Not.Null);
+             Assert.That(theme.stoneSkin.referenceProfile.PresetCount,Is.EqualTo(20));
++            Assert.That(theme.stoneSkin.referenceSelected,Is.Not.Null);
++            var cream=theme.stoneSkin.referenceSelected;
++            Assert.That(cream.texture.width,Is.EqualTo(2007),"NPOT importer must not rescale native cropped artwork.");
++            Assert.That(cream.texture.height,Is.EqualTo(783));
++            Vector2 uvMin=Vector2.one,uvMax=Vector2.zero;
++            foreach(var uv in cream.uv){uvMin=Vector2.Min(uvMin,uv);uvMax=Vector2.Max(uvMax,uv);}
++            Assert.That(uvMin.y,Is.EqualTo(cream.rect.yMin/cream.texture.height).Within(.0001f));
++            Assert.That(uvMax.y,Is.EqualTo(cream.rect.yMax/cream.texture.height).Within(.0001f),"Sprite UVs must be rebuilt after fixing NPOT import.");
+             Assert.That(view.transform.Find("Menu contents/Left veil"),Is.Null,"Reference curtain must not retain rectangular veil.");
+             Directory.CreateDirectory("BuildReports/StoneSkin");
+             foreach (var page in new[] { FrontendPage.Main, FrontendPage.Settings, FrontendPage.Host, FrontendPage.Join })
+             {
+                 // Presentation page inspection only; no fake network codes or service calls.
+-                view.Show(page); yield return new WaitForSecondsRealtime(.35f);
++                if(flow.State==FrontendState.Settings)flow.Back();
++                if(page==FrontendPage.Settings)flow.OpenSettings();else view.Show(page);
++                yield return new WaitForSecondsRealtime(.35f);
++                Assert.That(view.GetComponent<UnityEngine.Rendering.Volume>().weight,Is.EqualTo(page==FrontendPage.Settings?0:1));
++                Assert.That(view.transform.Find("Menu contents/Menu column/Elemental logo"),Is.Not.Null,"Latest user request retains the colored brand emblem.");
++                Assert.That(view.transform.Find("Menu contents/Stone curtain").localScale.x,Is.EqualTo(1.3f).Within(.001f));
++                var mainButton=view.transform.Find("Menu contents/Menu column/Main/PLAY VS BOT").GetComponent<RectTransform>();
++                var hostButton=view.transform.Find("Menu contents/Menu column/Main/HOST GAME").GetComponent<RectTransform>();
++                Assert.That(mainButton.anchoredPosition.y-hostButton.anchoredPosition.y-mainButton.sizeDelta.y,Is.EqualTo(12).Within(.01f),"Compact rows keep a stable 12px gap.");
+                 var wordmark = view.transform.Find("Menu contents/Menu column/Stone wordmark").GetComponent<Image>();
+                 Assert.That(wordmark.gameObject.activeInHierarchy, Is.True, "Header remains outside page-specific visibility.");
+                 Assert.That(wordmark.sprite, Is.SameAs(theme.stoneSkin.wordmark));
+@@ -81,7 +97,11 @@
+             Assert.That(role.sprite, Is.SameAs(theme.stoneSkin.botIcon)); Assert.That(role.raycastTarget, Is.False);
+             Assert.That(rect.sizeDelta, Is.EqualTo(new Vector2(560, 78)));
+             var pointer = new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left };
+-            effect.OnPointerEnter(pointer); yield return null;
++            effect.OnPointerEnter(pointer); yield return new WaitForSecondsRealtime(.2f);
++            if(!flow.Preferences.ReducedMotion) Assert.That(graphic.transform.localScale.x,Is.EqualTo(1.04f).Within(.002f));
++            Assert.That(rect.anchoredPosition,Is.EqualTo(position));Assert.That(rect.sizeDelta,Is.EqualTo(size));
++            effect.OnDeselect(new BaseEventData(EventSystem.current));yield return new WaitForSecondsRealtime(.2f);
++            if(!flow.Preferences.ReducedMotion)Assert.That(graphic.transform.localScale.x,Is.EqualTo(1.04f).Within(.002f),"Pointer hover survives keyboard focus moving away.");
+             Assert.That(graphic.overrideSprite, Is.SameAs(theme.stoneSkin.referenceSelected != null ? theme.stoneSkin.referenceSelected : theme.stoneSkin.hover));
+             effect.OnPointerDown(pointer); yield return new WaitForSecondsRealtime(.15f);
+             Assert.That(graphic.overrideSprite, Is.SameAs(theme.stoneSkin.referenceSelected != null ? theme.stoneSkin.referenceSelected : theme.stoneSkin.pressed));
+@@ -95,6 +115,7 @@
+             var health = hudRoot.Q("health-icon"); var gauge = hudRoot.Q("health-gauge"); var globe = hudRoot.Q("planet-globe");
+             yield return ProductionCombatTestFlow.BeginBotAfterReadiness(_scene);
+             yield return new WaitForSecondsRealtime(.8f);
++            Assert.That(view.GetComponent<UnityEngine.Rendering.Volume>().weight,Is.Zero,"Main-only vignette must not darken combat.");
+             Assert.That(hudRoot.Q("health-icon"), Is.SameAs(health));
+             Assert.That(hudRoot.Q("health-gauge"), Is.SameAs(gauge));
+             Assert.That(hudRoot.Q("planet-globe"), Is.SameAs(globe));
+@@ -115,6 +136,7 @@
+                 double readyDeadline=Time.realtimeSinceStartupAsDouble+30;
+                 while(duel.ArenaResetInProgress&&Time.realtimeSinceStartupAsDouble<readyDeadline)yield return null;
+                 Assert.That(duel.ArenaResetInProgress,Is.False);duel.SetRoundReady(true);yield return null;
++                Assert.That(hudRoot.Q("reference-element-wheel").resolvedStyle.visibility,Is.EqualTo(Visibility.Visible),"Restart restores combat decorations.");
+                 hud.SetLocalPerspective(EarthDuelFighterId.Player,true);
+                 if(outcome!="Draw")
+                 {
+@@ -126,6 +148,8 @@
+                 match.Step(Mathf.Max(0,match.RemainingSeconds-.03f));yield return new WaitForSeconds(.08f);
+                 Assert.That(duel.IsRoundOver,Is.True);yield return new WaitForSecondsRealtime(.6f);
+                 Assert.That(hudRoot.Q<Label>(className:"duel-result-title").text,Is.EqualTo(outcome.ToUpperInvariant()));
++                Assert.That(hudRoot.Q("reference-element-wheel").resolvedStyle.visibility,Is.EqualTo(Visibility.Hidden),"Combat wheel must not cover result actions.");
++                Assert.That(hudRoot.Q("life-result").resolvedStyle.visibility,Is.EqualTo(Visibility.Hidden),"Per-life notice must not duplicate full round result.");
+                 yield return Capture(outcome);
+                 hud.SetLocalPerspective(EarthDuelFighterId.Player,false);yield return null;
+                 Assert.That(hudRoot.Q<UnityEngine.UIElements.Button>("restart-round").enabledSelf,Is.False);

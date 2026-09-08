@@ -1,0 +1,13 @@
+# Cumulus cloud-bank art v1 — not integrated
+
+Generated using the built-in image_gen tool (not CLI/API fallback), 2026-09-07. Exact prompt: prompt.txt. Style reference images: Tools/FireIntegration/Reference/UserVisualTargets/target-1.png and target-3.png, user supplied. These were used only for the soft substantial cloud style; no UI, characters, rocks or sky were copied into the output.
+
+Saved output: reference-bank-v1.png, exact original PNG copied without pixel processing from C:/Users/nirrt/.codex/generated_images/01a079a5-6e45-7651-acbb-59c4083038f3/exec-7938cd7d-8357-402f-8244-f6f13d880cce.png. Original retained. Generated content/provenance metadata preserved byte-for-byte.
+
+Alpha evidence: 1536x1024 RGBA; alpha range0–254, 874805 fully transparent pixels, 698059 partial-alpha pixels, no fully opaque255 pixels. See alpha-evidence.json for full hash and bounds. This is actual alpha transparency, not a checkerboard or solid background. No Python image editing was performed; Pillow only read metadata/histograms.
+
+Visual inspection: three uneven clustered cumulus towers joined by smaller dense billows; much more readable soft 3D lobes than current procedural volume. White/near-neutral body with faint warm highlights and cool gray recesses. No sky, text, terrain, UI or characters. Wispy fringe touches left/right canvas edges (alpha bounds x0–1536) despite requested padding; integration must fade those lateral edges or use overlap. Lighting is mildly directional and the sprite is still only a single view, so this is not a physically relightable volumetric replacement. Alpha max254 should be retained, not forcibly made opaque.
+
+Optional supplement proposal only: one shared transparent unlit tintable material with straight-alpha blending, ZWriteOff, scene-depth testing and a soft alpha/padding fade; 8–12 fixed world-oriented cards in two irregular rings among the distant valley pillars, parented to planet with authored stagingUp. Place below planet bottom, away from gameplay camera range, and vary size modestly/seeded; no camera-facing Update, camera follow, collision, network state or per-frame allocation. Use two or three fixed azimuth orientations for silhouette diversity and keep a hard card-count bound. Reuse the existing volume only as distant haze beneath cards. First validate one card against noon/dusk/night screenshots before expanding. Existing daytime/nighttime tint may read solar/ambient lighting without mutating sky ownership. Test occlusion and texture-edge seams and measure GPU overdraw before acceptance. Do not integrate until root explicitly assigns another asset integration window.
+
+No Unity calls, actual Assets edits, scene changes or runtime code changes in this task.

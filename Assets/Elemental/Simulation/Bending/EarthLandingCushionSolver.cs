@@ -53,5 +53,33 @@ namespace Elemental.Simulation.Bending
             float target = -math.max(0f, maximumLandingSpeed);
             return currentUpSpeed < target ? target - currentUpSpeed : 0f;
         }
+
+        public static float BrakingAcceleration(float downwardSpeed, float clearance,
+            float maximumLandingSpeed, float compressionSeconds)
+        {
+            float safeSpeed = math.max(0f, maximumLandingSpeed);
+            float speed = math.max(safeSpeed, downwardSpeed);
+            float byDistance = (speed * speed - safeSpeed * safeSpeed) /
+                               (2f * math.max(0.15f, clearance - 0.2f));
+            float byDuration = (speed - safeSpeed) / math.max(0.05f, compressionSeconds);
+            return math.max(byDistance, byDuration);
+        }
+
+        public static float CompressionVelocityChange(float currentUpSpeed, float clearance,
+            float maximumLandingSpeed, float acceleration, float gravity, float deltaSeconds)
+        {
+            float safeSpeed = math.max(0f, maximumLandingSpeed);
+            float downSpeed = math.max(0f, -currentUpSpeed);
+            if (downSpeed <= safeSpeed) return 0f;
+            float dt = math.max(0f, deltaSeconds);
+            float distanceSpeed = math.sqrt(safeSpeed * safeSpeed +
+                2f * math.max(0f, acceleration) * math.max(0f, clearance - 0.2f));
+            float nextSpeed = math.min(distanceSpeed,
+                math.max(safeSpeed, downSpeed - math.max(0f, acceleration) * dt));
+            return math.max(0f, downSpeed - nextSpeed) + math.max(0f, gravity) * dt;
+        }
+
+        public static float CompressionHeight(float feetClearance, float maximumHeight) =>
+            math.clamp(feetClearance, 0.05f, math.max(0.05f, maximumHeight));
     }
 }

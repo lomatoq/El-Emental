@@ -31,15 +31,16 @@ namespace Elemental.Simulation.Characters
     }
 
     /// <summary>
-    /// Upper-body-only critically damped presentation. It has no sine/rebound
-    /// term and never writes hips, knees, feet, movement or gameplay state.
+    /// Upper-body-only presentation: critically damped locomotion and a slower,
+    /// viscous impact spring with one small balance correction. Never writes
+    /// hips, knees, feet, movement or gameplay state.
     /// </summary>
     public static class EarthInertialBodyMotionSolver
     {
-        public const float MaximumImpactAngleDegrees = 9f;
+        public const float MaximumImpactAngleDegrees = 18f;
         public const float MaximumImpactAngularVelocityDegrees = 200f;
-        private const float ImpactAngularFrequency = 30f;
-        private const float ImpactDampingRatio = 0.72f;
+        private const float ImpactAngularFrequency = 11f;
+        private const float ImpactDampingRatio = 0.78f;
         private const float MaximumImpactSubstep = 1f / 240f;
 
         public static EarthInertialBodySample Step(

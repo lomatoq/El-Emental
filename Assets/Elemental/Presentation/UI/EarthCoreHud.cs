@@ -17,6 +17,7 @@ namespace Elemental.Presentation.UI
         [SerializeField] private MagicExecutor executor;
         [SerializeField] private EarthPillarMobility pillarMobility;
         [SerializeField] private EarthLandingCushion landingCushion;
+        public bool ShowDiagnostics { get; set; } = true;
 
         private Label _ability;
         private Label _status;
@@ -74,6 +75,11 @@ namespace Elemental.Presentation.UI
 
         private void Update()
         {
+            if (!ShowDiagnostics)
+            {
+                if (input != null) UpdateReticleState(input.ReticleState);
+                return;
+            }
             if (input != null && _ability != null)
             {
                 _ability.text = input.ActiveActionOwner == EarthActionOwner.Resonance || input.IsResonanceVolleyActive

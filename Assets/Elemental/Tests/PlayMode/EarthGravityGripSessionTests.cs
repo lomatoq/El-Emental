@@ -1,4 +1,5 @@
 using Elemental.Runtime.Physics;
+using Elemental.Runtime.World;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -6,6 +7,26 @@ namespace Elemental.Tests.PlayMode
 {
     public sealed class EarthGravityGripSessionTests
     {
+        [Test]
+        public void MiddleMouseKeepsWholeWallAnchoredAndStillAllowsStructureGestures()
+        {
+            var wallObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var caster = new GameObject("Wall gravity caster");
+            try
+            {
+                var wall = wallObject.AddComponent<EarthWall>();
+                wall.Initialize(801, new Vector3(-1f, 10f, 0f), new Vector3(1f, 10f, 0f), Vector3.zero, 2f, 0.4f);
+                wall.SurfaceCollider.enabled = true;
+                var executor = caster.AddComponent<MagicExecutor>();
+                Physics.SyncTransforms();
+                Assert.That(executor.TryBeginGravityWell(wall.SurfaceCollider, wall.transform.position, Vector3.up, true), Is.True);
+                Assert.That(executor.GravityWellCapturedCount, Is.Zero);
+                Assert.That(wall.Body.isKinematic, Is.True, "A structure gesture must not turn the entire attached wall into a movable stone.");
+                executor.CancelGravityWell();
+            }
+            finally { Object.DestroyImmediate(caster); Object.DestroyImmediate(wallObject); }
+        }
+
         [Test]
         public void SessionKeepsFortyTargetsAndRejectsReusedGeneration()
         {

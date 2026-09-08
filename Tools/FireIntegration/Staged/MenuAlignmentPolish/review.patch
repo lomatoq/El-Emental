@@ -1,0 +1,110 @@
+--- before/Assets/Elemental/Presentation/UI/FrontendMenuView.cs
++++ after/Assets/Elemental/Presentation/UI/FrontendMenuView.cs
+@@ -37,6 +37,11 @@
+         private Vector2 _panelBasePosition;
+         private Vector2 _curtainBasePosition;
+         private TMP_Text _footerText;
++        private readonly TMP_Text[] _footerLabels = new TMP_Text[4];
++        private RectTransform _footerMarker;
++        private Graphic _footerMarkerGlow;
++        private float _footerMarkerFrom = 50, _footerMarkerTo = 50;
++        private static readonly string[] FooterNames = { "EARTH", "FIRE", "WATER", "AIR" };
+         private RectTransform _curtainRect;
+         private string _panelTrack="panel_enter";
+         private float _panelTrackAge;
+@@ -120,11 +125,21 @@
+             {
+                 var footerBlock=Rect(menuContents,"Element footer");footerBlock.anchorMin=footerBlock.anchorMax=new Vector2(1,0);
+                 footerBlock.pivot=new Vector2(1,0);footerBlock.anchoredPosition=new Vector2(-42,24);footerBlock.sizeDelta=new Vector2(430,68);
+-                footer.rectTransform.SetParent(footerBlock,false);Place(footer.rectTransform,0,0,430,30);footer.characterSpacing=2;
+-                var footerRule=Image(footerBlock,"Element footer rule",_theme.accent); footerRule.raycastTarget=false;Place(footerRule.rectTransform,44,46,386,1);
+-                var halo=StoneReferenceGlyph.Create(footerBlock,"Element footer glow",StoneReferenceGlyph.Shape.DiamondGlow,new Color(1,.91f,.58f,.8f));Place(halo.rectTransform,17,31,30,30);
+-                var footerDiamond=StoneReferenceGlyph.Create(footerBlock,"Element footer diamond",StoneReferenceGlyph.Shape.DiamondGlow,_theme.accent);
+-                Place(footerDiamond.rectTransform,21,35,22,22);
++                footer.gameObject.SetActive(false);
++                for (int i=0;i<FooterNames.Length;i++)
++                {
++                    var word=Label(footerBlock,FooterNames[i],16,_theme.muted);
++                    Place(word.rectTransform,i*110,0,100,30);word.fontSize=16;word.characterSpacing=2;
++                    word.alignment=TextAlignmentOptions.Center;_footerLabels[i]=word;
++                    if(i<3){var slash=Label(footerBlock,"/",14,_theme.muted);Place(slash.rectTransform,100+i*110,0,10,30);slash.alignment=TextAlignmentOptions.Center;}
++                }
++                var footerRule=StoneReferenceGlyph.Create(footerBlock,"Element footer rule",StoneReferenceGlyph.Shape.Rule,_theme.accent);
++                Place(footerRule.rectTransform,0,45,430,2);
++                _footerMarker=Rect(footerBlock,"Selected element footer marker");Place(_footerMarker,50,46,0,0);
++                _footerMarkerGlow=StoneReferenceGlyph.Create(_footerMarker,"Element footer glow",StoneReferenceGlyph.Shape.DiamondGlow,new Color(1,.91f,.58f,.8f));
++                Place(_footerMarkerGlow.rectTransform,-15,-15,30,30);
++                var footerDiamond=StoneReferenceGlyph.Create(_footerMarker,"Element footer diamond",StoneReferenceGlyph.Shape.DiamondGlow,_theme.accent);
++                Place(footerDiamond.rectTransform,-10,-10,20,20);
+             }
+             _countdown = Label(transform, "4", 160, _theme.text);
+             Stretch(_countdown.rectTransform, new Vector2(.35f, .30f), new Vector2(.65f, .70f));
+@@ -348,16 +363,16 @@
+                 var frame=StoneReferenceGlyph.Create(parent,"Element status "+ElementOrder[i],StoneReferenceGlyph.Shape.Diamond,colors[i]);
+                 frame.raycastTarget=false; Place(frame.rectTransform,53+i*128,0,70,70);
+                 frame.rectTransform.pivot=new Vector2(.5f,.5f);frame.rectTransform.anchoredPosition+=new Vector2(35,-35);_elementFrames[i]=frame;
+-                if(sprites[i]!=null) { Ornament(frame.transform,"Element glyph",sprites[i],15,15,40,40); frame.transform.Find("Element glyph").GetComponent<Image>().color=Color.white; }
++                if(sprites[i]!=null) { Ornament(frame.transform,"Element glyph",sprites[i],i==2?16.8f:15,i==0?16:15,40,40); frame.transform.Find("Element glyph").GetComponent<Image>().color=Color.white; }
+                 var name=Label(parent,ElementOrder[i].ToString().ToUpperInvariant(),18,colors[i]);
+-                Place(name.rectTransform,38+i*128,84,102,30); name.alignment=TextAlignmentOptions.Center;
++                Place(name.rectTransform,37+i*128,84,102,30); name.alignment=TextAlignmentOptions.Center;
+             }
+             var ribbon=Image(parent,"Active element ribbon",Color.white); ribbon.sprite=skin.referenceCard!=null?skin.referenceCard:skin.ribbon; ribbon.type=UnityEngine.UI.Image.Type.Simple;
+             ribbon.raycastTarget=false; Place(ribbon.rectTransform,-12,122,594,133);
+-            _activeElementGlyph=Image(ribbon.transform,"Active element glyph",Color.white); _activeElementGlyph.preserveAspect=true; _activeElementGlyph.raycastTarget=false; Place(_activeElementGlyph.rectTransform,58,8,68,68);
+-            _activeElementLabel=Label(ribbon.transform,"",21,_theme.accent); Place(_activeElementLabel.rectTransform,168,8,366,34);
++            _activeElementGlyph=Image(ribbon.transform,"Active element glyph",Color.white); _activeElementGlyph.preserveAspect=true; _activeElementGlyph.raycastTarget=false; Place(_activeElementGlyph.rectTransform,85,18,68,68);
++            _activeElementLabel=Label(ribbon.transform,"",21,_theme.accent); Place(_activeElementLabel.rectTransform,180,8,348,34);
+             _activeElementLabel.alignment=TextAlignmentOptions.Center;
+-            _activeElementTraits=Label(ribbon.transform,"",13,_theme.text); Place(_activeElementTraits.rectTransform,156,48,366,26);
++            _activeElementTraits=Label(ribbon.transform,"",13,_theme.text); Place(_activeElementTraits.rectTransform,180,48,348,26);
+             _activeElementTraits.fontSize=13; _activeElementTraits.characterSpacing=2; _activeElementTraits.alignment=TextAlignmentOptions.Center;
+             _lastStatusElement=(Elemental.Simulation.Magic.ElementId)byte.MaxValue;
+         }
+@@ -404,12 +419,22 @@
+                 {
+                     _menuElementAge=0;
+                     _lastStatusElement=selected;_activeElementLabel.text=selected.ToString().ToUpperInvariant()+" ELEMENT ACTIVE";
+-                    string[] footerElements={"EARTH","FIRE","WATER","AIR"};
+-                    for(int i=0;i<footerElements.Length;i++)if(footerElements[i]==selected.ToString().ToUpperInvariant())footerElements[i]="<color=#FFF2C7><b>"+footerElements[i]+"</b></color>";
+-                    _footerText.text=string.Join("  /  ",footerElements);
++                    _footerMarkerFrom=_footerMarker!=null?_footerMarker.anchoredPosition.x:50;
++                    for(int i=0;i<FooterNames.Length;i++)
++                    {
++                        bool active=FooterNames[i]==selected.ToString().ToUpperInvariant();
++                        if(_footerLabels[i]!=null){_footerLabels[i].color=active?new Color(1,.95f,.78f):_theme.muted;_footerLabels[i].fontStyle=active?FontStyles.Bold:FontStyles.Normal;}
++                        if(active)_footerMarkerTo=50+i*110;
++                    }
+                     var skin=_theme.stoneSkin;
+                     _activeElementGlyph.sprite=selected==Elemental.Simulation.Magic.ElementId.Fire?skin.fire:selected==Elemental.Simulation.Magic.ElementId.Water?skin.water:selected==Elemental.Simulation.Magic.ElementId.Air?skin.air:skin.earth;
+                     _activeElementTraits.text=selected==Elemental.Simulation.Magic.ElementId.Earth?"STRENGTH  /  BALANCE  /  ENDURANCE":"";
++                }
++                if(_footerMarker!=null)
++                {
++                    float t=reduced?1:Mathf.SmoothStep(0,1,Mathf.Clamp01(_menuElementAge/.22f));
++                    _footerMarker.anchoredPosition=new Vector2(Mathf.Lerp(_footerMarkerFrom,_footerMarkerTo,t),-46);
++                    _footerMarkerGlow.canvasRenderer.SetAlpha(reduced?.65f:.48f+.12f*Mathf.Sin(Time.unscaledTime*1.6f));
+                 }
+                 for(int i=0;i<4;i++) if(_elementFrames[i]!=null)
+                 {
+--- before/Assets/Elemental/Presentation/UI/StoneReferenceGlyph.cs
++++ after/Assets/Elemental/Presentation/UI/StoneReferenceGlyph.cs
+@@ -6,7 +6,7 @@
+     /// <summary>Small reference silhouettes and rim-local light. No texture backdrop or input surface.</summary>
+     public sealed class StoneReferenceGlyph : MaskableGraphic
+     {
+-        public enum Shape { Diamond, DiamondGlow, ButtonGlow, People, PersonPlus, Gear, Door, Target }
++        public enum Shape { Diamond, DiamondGlow, ButtonGlow, People, PersonPlus, Gear, Door, Target, Rule }
+         public Shape shape;
+         public static StoneReferenceGlyph Create(Transform parent, string name, Shape shape, Color color)
+         {
+@@ -51,6 +51,9 @@
+             }
+             switch(shape)
+             {
++                case Shape.Rule:
++                    // Geometry remains visible at fractional CanvasScaler ratios; no texture sampling.
++                    Box(0,0,1,1,color); break;
+                 case Shape.Diamond:
+                     Poly(new Color(.035f,.06f,.055f,color.a*.88f),new Vector2(.5f,.98f),new Vector2(.98f,.5f),new Vector2(.5f,.02f),new Vector2(.02f,.5f));
+                     Ring(.47f,.016f,color);Ring(.425f,.008f,new Color(color.r,color.g,color.b,color.a*.5f)); break;

@@ -1,0 +1,419 @@
+{
+  "schema": 1,
+  "screens": [
+    {
+      "id": "MainMenu",
+      "uxml": "UI/Screens/MainMenu.uxml",
+      "layout": "left-curtain",
+      "blocksGameplayInput": true,
+      "nodes": [
+        "screen-root",
+        "demo-background",
+        "safe-root",
+        "brand",
+        "content",
+        "bot",
+        "practice",
+        "multiplayer",
+        "settings",
+        "exit",
+        "status-label",
+        "demo-badge"
+      ],
+      "buttons": [
+        "bot",
+        "practice",
+        "multiplayer",
+        "settings",
+        "exit"
+      ],
+      "logo": "wordmark_master",
+      "priority": "core"
+    },
+    {
+      "id": "ModeSelect",
+      "uxml": "UI/Screens/ModeSelect.uxml",
+      "layout": "left-curtain",
+      "blocksGameplayInput": true,
+      "nodes": [
+        "screen-root",
+        "demo-background",
+        "safe-root",
+        "brand",
+        "content",
+        "practice",
+        "bot",
+        "multiplayer",
+        "back",
+        "status-label",
+        "demo-badge"
+      ],
+      "buttons": [
+        "practice",
+        "bot",
+        "multiplayer",
+        "back"
+      ],
+      "logo": "wordmark_master",
+      "priority": "support"
+    },
+    {
+      "id": "Multiplayer",
+      "uxml": "UI/Screens/Multiplayer.uxml",
+      "layout": "left-curtain",
+      "blocksGameplayInput": true,
+      "nodes": [
+        "screen-root",
+        "demo-background",
+        "safe-root",
+        "brand",
+        "content",
+        "host",
+        "guest",
+        "back",
+        "status-label",
+        "demo-badge"
+      ],
+      "buttons": [
+        "host",
+        "guest",
+        "back"
+      ],
+      "logo": "wordmark_master",
+      "priority": "core"
+    },
+    {
+      "id": "Host",
+      "uxml": "UI/Screens/Host.uxml",
+      "layout": "left-curtain",
+      "blocksGameplayInput": true,
+      "nodes": [
+        "screen-root",
+        "demo-background",
+        "safe-root",
+        "brand",
+        "content",
+        "room-code",
+        "copy",
+        "connection-status",
+        "occupancy",
+        "back",
+        "status-label",
+        "demo-badge"
+      ],
+      "buttons": [
+        "copy",
+        "back"
+      ],
+      "logo": "wordmark_master",
+      "priority": "core"
+    },
+    {
+      "id": "Guest",
+      "uxml": "UI/Screens/Guest.uxml",
+      "layout": "left-curtain",
+      "blocksGameplayInput": true,
+      "nodes": [
+        "screen-root",
+        "demo-background",
+        "safe-root",
+        "brand",
+        "content",
+        "room-input",
+        "validation",
+        "join",
+        "back",
+        "status-label",
+        "demo-badge"
+      ],
+      "buttons": [
+        "join",
+        "back"
+      ],
+      "logo": "wordmark_master",
+      "priority": "core"
+    },
+    {
+      "id": "Connecting",
+      "uxml": "UI/Screens/Connecting.uxml",
+      "layout": "left-curtain",
+      "blocksGameplayInput": true,
+      "nodes": [
+        "screen-root",
+        "demo-background",
+        "safe-root",
+        "brand",
+        "content",
+        "connection-status",
+        "cancel",
+        "status-label",
+        "demo-badge"
+      ],
+      "buttons": [
+        "cancel"
+      ],
+      "logo": "wordmark_master",
+      "priority": "core"
+    },
+    {
+      "id": "Settings",
+      "uxml": "UI/Screens/Settings.uxml",
+      "layout": "left-curtain",
+      "blocksGameplayInput": true,
+      "nodes": [
+        "screen-root",
+        "demo-background",
+        "safe-root",
+        "brand",
+        "content",
+        "element-fire",
+        "element-earth",
+        "element-water",
+        "element-air",
+        "active-element-label",
+        "master",
+        "master-value",
+        "ui",
+        "ui-value",
+        "sensitivity",
+        "sensitivity-value",
+        "reduced-motion",
+        "back",
+        "status-label",
+        "demo-badge"
+      ],
+      "buttons": [
+        "element-fire",
+        "element-earth",
+        "element-water",
+        "element-air",
+        "back"
+      ],
+      "logo": "wordmark_master",
+      "priority": "core"
+    },
+    {
+      "id": "Pause",
+      "uxml": "UI/Screens/Pause.uxml",
+      "layout": "left-curtain",
+      "blocksGameplayInput": true,
+      "nodes": [
+        "screen-root",
+        "demo-background",
+        "safe-root",
+        "brand",
+        "content",
+        "resume",
+        "settings",
+        "controls",
+        "menu",
+        "status-label",
+        "demo-badge"
+      ],
+      "buttons": [
+        "resume",
+        "settings",
+        "controls",
+        "menu"
+      ],
+      "logo": "wordmark_master",
+      "priority": "core"
+    },
+    {
+      "id": "ConnectionError",
+      "uxml": "UI/Screens/ConnectionError.uxml",
+      "layout": "left-curtain",
+      "blocksGameplayInput": true,
+      "nodes": [
+        "screen-root",
+        "demo-background",
+        "safe-root",
+        "brand",
+        "content",
+        "error-message",
+        "retry-connect",
+        "menu",
+        "status-label",
+        "demo-badge"
+      ],
+      "buttons": [
+        "retry-connect",
+        "menu"
+      ],
+      "logo": "wordmark_master",
+      "priority": "core"
+    },
+    {
+      "id": "ConfirmExit",
+      "uxml": "UI/Screens/ConfirmExit.uxml",
+      "layout": "left-curtain",
+      "blocksGameplayInput": true,
+      "nodes": [
+        "screen-root",
+        "demo-background",
+        "safe-root",
+        "brand",
+        "content",
+        "confirm-exit",
+        "back",
+        "status-label",
+        "demo-badge"
+      ],
+      "buttons": [
+        "confirm-exit",
+        "back"
+      ],
+      "logo": "wordmark_master",
+      "priority": "core"
+    },
+    {
+      "id": "Loading",
+      "uxml": "UI/Screens/Loading.uxml",
+      "layout": "left-curtain",
+      "blocksGameplayInput": true,
+      "nodes": [
+        "screen-root",
+        "demo-background",
+        "safe-root",
+        "brand",
+        "content",
+        "loading-label",
+        "loading-fill",
+        "loading-progress",
+        "status-label",
+        "demo-badge"
+      ],
+      "buttons": [],
+      "logo": "wordmark_master",
+      "priority": "core"
+    },
+    {
+      "id": "Controls",
+      "uxml": "UI/Screens/Controls.uxml",
+      "layout": "left-curtain",
+      "blocksGameplayInput": true,
+      "nodes": [
+        "screen-root",
+        "demo-background",
+        "safe-root",
+        "brand",
+        "content",
+        "controls-text",
+        "back",
+        "status-label",
+        "demo-badge"
+      ],
+      "buttons": [
+        "back"
+      ],
+      "logo": "wordmark_master",
+      "priority": "support"
+    },
+    {
+      "id": "Victory",
+      "uxml": "UI/Screens/Victory.uxml",
+      "layout": "result",
+      "blocksGameplayInput": true,
+      "nodes": [
+        "screen-root",
+        "demo-background",
+        "scrim",
+        "safe-root",
+        "brand",
+        "result-content",
+        "result-title",
+        "result-score",
+        "rematch",
+        "menu",
+        "demo-badge"
+      ],
+      "buttons": [
+        "rematch",
+        "menu"
+      ],
+      "logo": "wordmark_master",
+      "priority": "core"
+    },
+    {
+      "id": "Defeat",
+      "uxml": "UI/Screens/Defeat.uxml",
+      "layout": "result",
+      "blocksGameplayInput": true,
+      "nodes": [
+        "screen-root",
+        "demo-background",
+        "scrim",
+        "safe-root",
+        "brand",
+        "result-content",
+        "result-title",
+        "result-score",
+        "rematch",
+        "menu",
+        "demo-badge"
+      ],
+      "buttons": [
+        "rematch",
+        "menu"
+      ],
+      "logo": "wordmark_master",
+      "priority": "core"
+    },
+    {
+      "id": "Draw",
+      "uxml": "UI/Screens/Draw.uxml",
+      "layout": "result",
+      "blocksGameplayInput": true,
+      "nodes": [
+        "screen-root",
+        "demo-background",
+        "scrim",
+        "safe-root",
+        "brand",
+        "result-content",
+        "result-title",
+        "result-score",
+        "rematch",
+        "menu",
+        "demo-badge"
+      ],
+      "buttons": [
+        "rematch",
+        "menu"
+      ],
+      "logo": "wordmark_master",
+      "priority": "support"
+    },
+    {
+      "id": "HUD",
+      "uxml": "UI/Screens/HUD.uxml",
+      "layout": "hud",
+      "blocksGameplayInput": false,
+      "nodes": [
+        "screen-root",
+        "demo-background",
+        "safe-root",
+        "red-score",
+        "mode-label",
+        "timer-value",
+        "blue-score",
+        "pause",
+        "hp-meter",
+        "hp-clip",
+        "hp-value",
+        "mp-meter",
+        "mp-clip",
+        "mp-value",
+        "minimap",
+        "minimap-data",
+        "game-status",
+        "demo-badge"
+      ],
+      "buttons": [
+        "pause"
+      ],
+      "logo": "wordmark_master",
+      "priority": "core"
+    }
+  ]
+}

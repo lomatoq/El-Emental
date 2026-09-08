@@ -1,0 +1,287 @@
+{
+    "utc": "2026-09-08T09:34:03.3105275Z",
+    "completedUtc": "2026-09-08T09:34:03.9058783Z",
+    "unityVersion": "6000.5.7f1",
+    "scene": "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity",
+    "status": "Captured",
+    "error": "",
+    "scope": "Actual saved EarthCoreSlice, production Main Camera/Game view, live production ParticleSystem instances and materials. One deterministic impact/fracture/mote layout is paused at a fixed age for all three celestial phases. No gameplay damage, asset/profile/light tuning or scene save.",
+    "productionMainCamera": true,
+    "sameParticleLayout": true,
+    "restored": true,
+    "sceneWasDirty": false,
+    "originalPhase": 0.2100333273410797,
+    "originalTimeScale": 1.0,
+    "originalCameraPosition": {
+        "x": 0.4802362620830536,
+        "y": 59.50674819946289,
+        "z": -7.62799072265625
+    },
+    "captureCameraPosition": {
+        "x": 1.563906192779541,
+        "y": 57.45142364501953,
+        "z": -1.2606472969055176
+    },
+    "captureTarget": {
+        "x": 6.4697265625,
+        "y": 56.43142318725586,
+        "z": -1.971577525138855
+    },
+    "impactWorld": {
+        "x": 5.8001275062561039,
+        "y": 55.651424407958987,
+        "z": -1.767526388168335
+    },
+    "temporarilyDisabled": [
+        "Elemental.Input.Gestures.MagicInputController @ Planet Character",
+        "Elemental.Presentation.VFX.EarthChargeCameraLookdevV2 @ Gravity Toy Camera [Online Two]",
+        "Unity.Cinemachine.CinemachineBrain @ Gravity Toy Camera",
+        "Elemental.Presentation.Rendering.VisualQaCaptureBehaviour @ Gravity Toy Camera",
+        "Elemental.Presentation.Camera.PlanetCameraRig @ Gravity Toy Camera [Online Two]",
+        "UnityEngine.UIElements.UIDocument @ Earth Core HUD",
+        "Elemental.Input.Actions.PlanetInputReader @ Planet Character",
+        "Elemental.Presentation.VFX.EarthArenaFractureDustPresenter @ Outer Column Fracture Dust",
+        "Elemental.Presentation.VFX.EarthArenaFractureDustPresenter @ Arena Fracture Dust",
+        "Elemental.Presentation.Camera.EarthCinemachineCameraController @ Gravity Toy Camera [Online Two]",
+        "Elemental.Presentation.Camera.EarthCameraDirector @ Gravity Toy Camera",
+        "Elemental.Input.Actions.PlanetInputReader @ Planet Character [Online Two]",
+        "Elemental.Presentation.Camera.EarthCinemachineCameraController @ Gravity Toy Camera",
+        "Elemental.Presentation.VFX.EarthMaterialFeedbackPresenter @ Earth Material Feedback",
+        "Elemental.Input.Gestures.MagicInputController @ Planet Character [Online Two]",
+        "Elemental.Presentation.Camera.EarthCameraDirector @ Gravity Toy Camera [Online Two]",
+        "Elemental.Presentation.Camera.PlanetCameraRig @ Gravity Toy Camera",
+        "Unity.Cinemachine.CinemachineBrain @ Gravity Toy Camera [Online Two]"
+    ],
+    "sources": [
+        {
+            "objectPath": "Earth Material Feedback/Material Contact Dust",
+            "material": "WallcoeurEarthDust",
+            "shader": "Elemental/Light Dust Mote",
+            "layoutHash": "B164938954FBA403",
+            "particles": 96
+        },
+        {
+            "objectPath": "Broken Crown Arena/Arena Fracture Dust",
+            "material": "WallcoeurEarthDust",
+            "shader": "Elemental/Light Dust Mote",
+            "layoutHash": "DF11E4EF2D81ABE5",
+            "particles": 180
+        },
+        {
+            "objectPath": "Gravity Toy Camera/Sunlit Air Motes",
+            "material": "LightDustMote",
+            "shader": "Elemental/Light Dust Mote",
+            "layoutHash": "4B04DFB9993F060D",
+            "particles": 42
+        }
+    ],
+    "captures": [
+        {
+            "name": "Day",
+            "path": "C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\BuildReports\\DustProductionVisualQa\\20260908-093403-309\\Day.png",
+            "utc": "2026-09-08T09:34:03.5365217Z",
+            "impactLayoutHash": "B164938954FBA403",
+            "fractureLayoutHash": "DF11E4EF2D81ABE5",
+            "moteLayoutHash": "4B04DFB9993F060D",
+            "requestedPhase": 0.25,
+            "actualPhase": 0.25,
+            "sunIntensity": 1.5499999523162842,
+            "moonIntensity": 0.0,
+            "nightFraction": 0.0,
+            "sunColor": {
+                "r": 1.0,
+                "g": 0.8999999761581421,
+                "b": 0.7400000095367432,
+                "a": 1.0
+            },
+            "moonColor": {
+                "r": 0.41999998688697817,
+                "g": 0.5199999809265137,
+                "b": 0.75,
+                "a": 1.0
+            },
+            "ambientSky": {
+                "r": 0.18000000715255738,
+                "g": 0.23000000417232514,
+                "b": 0.3100000023841858,
+                "a": 1.0
+            },
+            "ambientEquator": {
+                "r": 0.11999999731779099,
+                "g": 0.10499999672174454,
+                "b": 0.10000000149011612,
+                "a": 1.0
+            },
+            "ambientGround": {
+                "r": 0.04500000178813934,
+                "g": 0.03500000014901161,
+                "b": 0.029999999329447748,
+                "a": 1.0
+            },
+            "cameraPosition": {
+                "x": 1.563906192779541,
+                "y": 57.45142364501953,
+                "z": -1.2606472969055176
+            },
+            "cameraEuler": {
+                "x": 11.627294540405274,
+                "y": 98.24565124511719,
+                "z": -8.716605748304573e-7
+            },
+            "impactWorld": {
+                "x": 5.8001275062561039,
+                "y": 55.651424407958987,
+                "z": -1.767526388168335
+            },
+            "impactViewport": {
+                "x": 0.4821145534515381,
+                "y": 0.2598084807395935,
+                "z": 4.540380001068115
+            },
+            "impactParticles": 96,
+            "fractureParticles": 180,
+            "moteParticles": 42,
+            "screenWidth": 1250,
+            "screenHeight": 794,
+            "pngBytes": 1293922
+        },
+        {
+            "name": "Dusk",
+            "path": "C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\BuildReports\\DustProductionVisualQa\\20260908-093403-309\\Dusk.png",
+            "utc": "2026-09-08T09:34:03.7251686Z",
+            "impactLayoutHash": "B164938954FBA403",
+            "fractureLayoutHash": "DF11E4EF2D81ABE5",
+            "moteLayoutHash": "4B04DFB9993F060D",
+            "requestedPhase": 0.49000000953674319,
+            "actualPhase": 0.49000000953674319,
+            "sunIntensity": 0.6755863428115845,
+            "moonIntensity": 0.14052358269691468,
+            "nightFraction": 0.1848994493484497,
+            "sunColor": {
+                "r": 1.0,
+                "g": 0.6542479395866394,
+                "b": 0.4310545325279236,
+                "a": 1.0
+            },
+            "moonColor": {
+                "r": 0.41999998688697817,
+                "g": 0.5199999809265137,
+                "b": 0.75,
+                "a": 1.0
+            },
+            "ambientSky": {
+                "r": 0.16033132374286652,
+                "g": 0.20653164386749268,
+                "b": 0.2853529155254364,
+                "a": 1.1016947031021119
+            },
+            "ambientEquator": {
+                "r": 0.10703392326831818,
+                "g": 0.09849616140127182,
+                "b": 0.10364251583814621,
+                "a": 1.0092449188232422
+            },
+            "ambientGround": {
+                "r": 0.042388297617435458,
+                "g": 0.03652079775929451,
+                "b": 0.03815406560897827,
+                "a": 0.935285210609436
+            },
+            "cameraPosition": {
+                "x": 1.563906192779541,
+                "y": 57.45142364501953,
+                "z": -1.2606472969055176
+            },
+            "cameraEuler": {
+                "x": 11.627294540405274,
+                "y": 98.24565124511719,
+                "z": -8.716605748304573e-7
+            },
+            "impactWorld": {
+                "x": 5.8001275062561039,
+                "y": 55.651424407958987,
+                "z": -1.767526388168335
+            },
+            "impactViewport": {
+                "x": 0.4821145534515381,
+                "y": 0.2598084807395935,
+                "z": 4.540380001068115
+            },
+            "impactParticles": 96,
+            "fractureParticles": 180,
+            "moteParticles": 42,
+            "screenWidth": 1250,
+            "screenHeight": 794,
+            "pngBytes": 1279655
+        },
+        {
+            "name": "Night",
+            "path": "C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\BuildReports\\DustProductionVisualQa\\20260908-093403-309\\Night.png",
+            "utc": "2026-09-08T09:34:03.8991614Z",
+            "impactLayoutHash": "B164938954FBA403",
+            "fractureLayoutHash": "DF11E4EF2D81ABE5",
+            "moteLayoutHash": "4B04DFB9993F060D",
+            "requestedPhase": 0.75,
+            "actualPhase": 0.75,
+            "sunIntensity": 0.0,
+            "moonIntensity": 0.7599999904632568,
+            "nightFraction": 1.0,
+            "sunColor": {
+                "r": 1.0,
+                "g": 0.8999999761581421,
+                "b": 0.7400000095367432,
+                "a": 1.0
+            },
+            "moonColor": {
+                "r": 0.41999998688697817,
+                "g": 0.5199999809265137,
+                "b": 0.75,
+                "a": 1.0
+            },
+            "ambientSky": {
+                "r": 0.07362499833106995,
+                "g": 0.10307499766349793,
+                "b": 0.17669999599456788,
+                "a": 1.5499999523162842
+            },
+            "ambientEquator": {
+                "r": 0.04987499862909317,
+                "g": 0.06982500106096268,
+                "b": 0.11969999223947525,
+                "a": 1.0499999523162842
+            },
+            "ambientGround": {
+                "r": 0.03087499924004078,
+                "g": 0.04322499781847,
+                "b": 0.07409999519586563,
+                "a": 0.6499999761581421
+            },
+            "cameraPosition": {
+                "x": 1.563906192779541,
+                "y": 57.45142364501953,
+                "z": -1.2606472969055176
+            },
+            "cameraEuler": {
+                "x": 11.627294540405274,
+                "y": 98.24565124511719,
+                "z": -8.716605748304573e-7
+            },
+            "impactWorld": {
+                "x": 5.8001275062561039,
+                "y": 55.651424407958987,
+                "z": -1.767526388168335
+            },
+            "impactViewport": {
+                "x": 0.4821145534515381,
+                "y": 0.2598084807395935,
+                "z": 4.540380001068115
+            },
+            "impactParticles": 96,
+            "fractureParticles": 180,
+            "moteParticles": 42,
+            "screenWidth": 1250,
+            "screenHeight": 794,
+            "pngBytes": 1195263
+        }
+    ]
+}

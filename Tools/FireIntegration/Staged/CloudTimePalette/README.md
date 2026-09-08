@@ -1,0 +1,9 @@
+# Coherent cloud / lower-fog time palette
+
+All current 10 procedural banks, 16 particle-image banks, optional analytical image fallback, and lower fog consume one CPU-evaluated palette. Authored daylight blue bottom / white-blue top remains exactly unchanged. Procedural geometry/density/folds/samples/positions and image alpha/depth handling are untouched; no extra pass.
+
+Sunset weight follows the actual `_ElementalSolarAltitude` (published by CelestialSystemBehaviour), not time fraction alone: fade in −.22→−.04, full near horizon, fade out+.08→+.35. This covers both dawn and dusk and turns off in true deep night. Snapshot Night01 supplies overall day/night weight. Horizon cloud tops become peach/amber with lavender-grey bases; lower fog follows matching warm upper/lavender lower colours. Night becomes desaturated blue-grey with visible lower veil, not saturated cobalt or black. Four global float4 colors are published with the existing controller; no frame allocations.
+
+New palette deliberately defines unified dusk/night colors in ValleyTimePalette rather than the old fog-only NightFog/DuskFog fields. DayFog/DayFogBottom remain authored controls. If further dusk/night authoring is wanted, expose the shared palette fields rather than separately tinting each cloud material.
+
+Root import only; no geometry installer rerun needed. Refresh C# and shaders, enter Play; existing controller publishes palette. For QA, set celestial phase, evaluate celestial presentation, then call ValleyAtmosphereController.Publish before manual Camera.Render to prevent stale one-frame globals. Capture noon / sunset / night with identical camera; include horizon clouds and lookdown lower fog. Validate no daytime color drift and continuous timing. Three pure EditMode tests cover exact day endpoints, solar sunset/midnight and finite bounded continuity. Offline compilation is not visual approval.

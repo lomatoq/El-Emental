@@ -175,6 +175,29 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
+        public void CushionBrakesOverAvailableTravelAndItsTopMatchesTheFeet()
+        {
+            float clearance = 2.4f;
+            float speed = 18f;
+            const float delta = 1f / 60f;
+            float acceleration = EarthLandingCushionSolver.BrakingAcceleration(speed, clearance, 4f, 0.28f);
+            float firstChange = EarthLandingCushionSolver.CompressionVelocityChange(-speed,
+                clearance, 4f, acceleration, 14f, delta);
+            Assert.That(firstChange, Is.GreaterThan(0f).And.LessThan(4f),
+                "The cushion must visibly compress instead of snapping directly from 18 to 4 m/s.");
+            for (int tick = 0; tick < 60 && clearance > 0.2f; tick++)
+            {
+                float change = EarthLandingCushionSolver.CompressionVelocityChange(-speed,
+                    clearance, 4f, acceleration, 14f, delta);
+                speed = Mathf.Max(0f, speed - change + 14f * delta);
+                clearance -= speed * delta;
+            }
+            Assert.That(speed, Is.LessThanOrEqualTo(4.25f));
+            Assert.That(EarthLandingCushionSolver.CompressionHeight(0.8f, 2.4f), Is.EqualTo(0.8f));
+            Assert.That(EarthLandingCushionSolver.CompressionHeight(-0.1f, 2.4f), Is.GreaterThan(0f));
+        }
+
+        [Test]
         public void FullWaveFormsContiguousVoronoiCellsAndACompactSmoothCrest()
         {
             EarthPillarWaveSample[] samples = EarthPillarWaveSolver.Build(1f, 1f);

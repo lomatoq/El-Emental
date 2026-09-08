@@ -131,13 +131,17 @@ namespace Elemental.Runtime.Physics
 
         protected virtual void OnCollisionEnter(Collision collision)
         {
+            Elemental.Runtime.Characters.EarthStoneCharacterContact.Deliver(collision, Body, StableEarthId);
             if (Owner == null || Time.frameCount - _lastImpactFrame < 2) return;
             _lastImpactFrame = Time.frameCount;
             Owner.HandlePieceCollision(PieceIndex, collision);
         }
 
-        protected virtual void OnCollisionStay(Collision collision) =>
+        protected virtual void OnCollisionStay(Collision collision)
+        {
+            Elemental.Runtime.Characters.EarthStoneCharacterContact.DeliverLoad(collision, Body);
             Owner?.ReportPieceFriction(PieceIndex, collision);
+        }
 
         private static Vector3 ToVector3(float3 value) => new Vector3(value.x, value.y, value.z);
     }

@@ -1,0 +1,11 @@
+FrameTimingManager whole-frame GPU comparison; actual production camera at1280x720.
+Editor=True; device=NVIDIA GeForce RTX 4070; API=Direct3D11
+Scope includes other rendering/editor overhead; this is not an isolated SSAO GPU marker. No CPU/wall-clock substitution.
+Order full/half/full/half;15warmup+60attempts per run. Scaled simulation frozen; production postprocessing restored for measurement.
+run=1;mode=full;valid=60/60
+run=2;mode=half;valid=60/60
+run=3;mode=full;valid=60/60
+run=4;mode=half;valid=60/60
+full:n=120;medianGPUms=3.7796;p95GPUms=3.9864
+half:n=120;medianGPUms=3.9762;p95GPUms=4.3633
+full-minus-half median GPUms=-0.1966; diagnostic comparison only, not an isolated pass cost.

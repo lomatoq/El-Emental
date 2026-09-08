@@ -12,7 +12,8 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
-  m_InvalidKeywords: []
+  m_InvalidKeywords:
+  - _MATCHFRACTURESURFACE_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
@@ -29,18 +30,21 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AmbientStrength: 0.86
+    - _AmbientStrength: 0.8
     - _BevelLight: 0.42
     - _Cutoff: 0.5
     - _DebugMode: 0
-    - _FacetContrast: 0.34
+    - _FacetContrast: 0.24
     - _Fade: 1
+    - _FormLightStrength: 0.25
     - _FractureInteriorDepth: 0
     - _FractureMappingEnabled: 0
     - _MacroScale: 3.5
     - _MacroStrength: 0.085
+    - _MatchFractureSurface: 1
+    - _OcclusionStrength: 1
     - _Roughness: 0.82
-    - _ShadowFloor: 0.56
+    - _ShadowFloor: 0.66
     - _SideShadingSmoothness: 1
     - _SideShadowFade: 0
     - _StableSideFormOcclusion: 0
@@ -49,6 +53,7 @@ Material:
     - _TextureScale: 0.22
     - _TextureStrength: 0
     - _TriplanarSharpness: 4
+    - _TwilightFill: 0.55
     - _UsePlanetFrame: 0
     - _VertexFaceTone: 1
     - _ZWrite: 1

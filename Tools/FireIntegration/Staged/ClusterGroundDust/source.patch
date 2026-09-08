@@ -1,0 +1,366 @@
+--- a/Assets/Elemental/Authoring/Editor/ClusterGroundDustSetup.cs
++++ b/Assets/Elemental/Authoring/Editor/ClusterGroundDustSetup.cs
+@@ -0,0 +1,51 @@
++using System;
++using Elemental.Presentation.UI;
++using Elemental.Presentation.VFX;
++using UnityEditor;
++using UnityEditor.SceneManagement;
++using UnityEngine;
++using UnityEngine.SceneManagement;
++
++namespace Elemental.Authoring.Editor
++{
++    public static class ClusterGroundDustSetup
++    {
++        public const string Path="Assets/Elemental/Content/Profiles/EarthClusterGroundDustProfile.asset";
++        [MenuItem("Elemental/VFX/Install Cluster Ground Wisps")]
++        public static void Install()
++        {
++            if(EditorApplication.isPlayingOrWillChangePlaymode)throw new InvalidOperationException("Stop Play before binding clustered ground wisps.");
++            var scene=SceneManager.GetActiveScene();
++            if(scene.name!="EarthCoreSlice")throw new InvalidOperationException("Open saved EarthCoreSlice first.");
++            EarthSurfaceWindDust dust=null;FrontendFlowController frontend=null;int count=0;
++            foreach(var root in scene.GetRootGameObjects())
++            {
++                foreach(var value in root.GetComponentsInChildren<EarthSurfaceWindDust>(true)){dust=value;count++;}
++                if(frontend==null)frontend=root.GetComponentInChildren<FrontendFlowController>(true);
++            }
++            if(count!=1||dust.Profile==null||frontend==null)throw new InvalidOperationException("Expected one existing bound Surface Wind Dust and real frontend; no duplicate emitter will be created.");
++            var saved=new SerializedObject(dust);
++            var planet=saved.FindProperty("planet").objectReferenceValue as Transform;
++            var material=saved.FindProperty("dustMaterial").objectReferenceValue as Material;
++            int mask=saved.FindProperty("surfaceMask").intValue;
++            if(planet==null||material==null||dust.ArenaAnchor==null)throw new InvalidOperationException("Existing dust material/arena/planet binding is missing.");
++            var profile=AssetDatabase.LoadAssetAtPath<EarthSurfaceWindDustProfile>(Path);
++            if(profile==null)
++            {
++                profile=UnityEngine.Object.Instantiate(dust.Profile);profile.name="EarthClusterGroundDustProfile";
++                profile.clusteredWisps=true;profile.enabledEffect=true;profile.maximumParticles=192;
++                profile.groundRate=4;profile.stoneRate=24;profile.speed=.6f;
++                profile.sizeMetres=new Vector2(.45f,1.1f);profile.lifetimeSeconds=new Vector2(2.8f,4.2f);
++                profile.opacity=.18f;profile.hoverHeight=.12f;profile.stoneScanSeconds=.8f;
++                profile.clusterRadius=3.5f;profile.saturatedNeighbours=4;profile.isolatedStoneWeight=.2f;
++                profile.clusteredRateMultiplier=1.6f;profile.gapEmissionChance=.65f;
++                profile.reducedMotionRate=.3f;profile.reducedMotionSpeed=.35f;
++                AssetDatabase.CreateAsset(profile,Path);
++            }
++            Undo.RecordObject(dust,"Bind quiet clustered ground dust");
++            dust.Configure(profile,dust.ArenaAnchor,planet,mask,material,frontend);
++            EditorUtility.SetDirty(dust);EditorSceneManager.MarkSceneDirty(scene);EditorSceneManager.SaveScene(scene);
++            Debug.Log("Cluster ground wisps bound to the existing single emitter. Original surface profile/material and impact bursts preserved.");
++        }
++    }
++}
+--- a/Assets/Elemental/Presentation/VFX/EarthGroundDustDensity.cs
++++ b/Assets/Elemental/Presentation/VFX/EarthGroundDustDensity.cs
+@@ -0,0 +1,38 @@
++using UnityEngine;
++
++namespace Elemental.Presentation.VFX
++{
++    /// <summary>Bounded local cosmetic weighting; no physics or gameplay writes.</summary>
++    public static class EarthGroundDustDensity
++    {
++        public static float Evaluate(Vector3[] bases,int count,Vector3 up,float radius,float isolatedWeight,
++            int saturatedNeighbours,int[] neighbours,int[] nearest,float[] weights,out float meanNeighbours)
++        {
++            count=Mathf.Clamp(count,0,Mathf.Min(96,Mathf.Min(bases.Length,Mathf.Min(neighbours.Length,Mathf.Min(nearest.Length,weights.Length)))));
++            radius=Mathf.Clamp(radius,.5f,8f);up=up.sqrMagnitude>.5f?up.normalized:Vector3.up;
++            float total=0;int sum=0;
++            for(int i=0;i<count;i++)
++            {
++                neighbours[i]=0;nearest[i]=-1;float best=radius*radius;
++                for(int j=0;j<count;j++)
++                {
++                    if(i==j)continue;var delta=bases[j]-bases[i];float height=Vector3.Dot(delta,up);
++                    float d=(delta-up*height).sqrMagnitude;
++                    if(Mathf.Abs(height)>1.5f||d>radius*radius)continue;
++                    neighbours[i]++;if(d<best){best=d;nearest[i]=j;}
++                }
++                weights[i]=Mathf.Lerp(Mathf.Clamp(isolatedWeight,.05f,1),1,Mathf.Clamp01(neighbours[i]/(float)Mathf.Max(1,saturatedNeighbours)));
++                total+=weights[i];sum+=neighbours[i];
++            }
++            meanNeighbours=count>0?sum/(float)count:0;return total;
++        }
++        public static int Select(float[] weights,int count,float unitSample)
++        {
++            count=Mathf.Clamp(count,0,Mathf.Min(96,weights.Length));float total=0;
++            for(int i=0;i<count;i++)total+=Mathf.Max(0,weights[i]);
++            if(total<=0)return -1;float target=Mathf.Clamp01(unitSample)*total;
++            for(int i=0;i<count;i++){target-=Mathf.Max(0,weights[i]);if(target<=0&&weights[i]>0)return i;}
++            return count-1;
++        }
++    }
++}
+--- a/Assets/Elemental/Presentation/VFX/EarthSurfaceWindDust.cs
++++ b/Assets/Elemental/Presentation/VFX/EarthSurfaceWindDust.cs
+@@ -1,4 +1,5 @@
+ using System;
++using Elemental.Presentation.UI;
+ using Elemental.Runtime.Physics;
+ using Elemental.Runtime.World;
+ using Elemental.Simulation.Rendering;
+@@ -17,7 +18,19 @@
+         [SerializeField] private Transform arenaAnchor, planet;
+         [SerializeField] private LayerMask surfaceMask = ~0;
+         [SerializeField] private Material dustMaterial;
++        [SerializeField] private FrontendFlowController frontend;
++        private readonly Vector3[] stoneBases=new Vector3[96];
++        private readonly UnityEngine.Object[] stoneOwners=new UnityEngine.Object[96];
++        private readonly int[] neighbours=new int[96],nearest=new int[96];
++        private readonly float[] densityWeights=new float[96];
++        public int ClusteredStoneCandidates { get; private set; }
++        public int GapEmitted { get; private set; }
++        public float MeanStoneNeighbours { get; private set; }
++        public float EffectiveStoneRate { get; private set; }
++        private bool Reduced => profile.clusteredWisps && frontend!=null && frontend.Preferences.ReducedMotion;
+         private ParticleSystem particles;
++        private MaterialPropertyBlock previousRendererProperties;
++        private bool shortenedDepthFade;
+         private readonly ParticleSystem.Particle[] buffer = new ParticleSystem.Particle[256];
+         private readonly Vector3[] ground = new Vector3[256], normals = new Vector3[256];
+         private readonly bool[] occupied = new bool[256];
+@@ -34,8 +47,8 @@
+         public Transform ArenaAnchor => arenaAnchor;
+         public ParticleSystem System => particles;
+ 
+-        public void Configure(EarthSurfaceWindDustProfile tuning, Transform anchor, Transform planetCenter, LayerMask mask, Material material)
+-        { profile = tuning; arenaAnchor = anchor; planet = planetCenter; surfaceMask = mask; dustMaterial = material; if (Application.isPlaying) Initialize(); }
++        public void Configure(EarthSurfaceWindDustProfile tuning, Transform anchor, Transform planetCenter, LayerMask mask, Material material, FrontendFlowController flow=null)
++        { profile = tuning; arenaAnchor = anchor; planet = planetCenter; surfaceMask = mask; dustMaterial = material; frontend=flow; if (Application.isPlaying) Initialize(); }
+         private void Awake() => Initialize();
+         private void Initialize()
+         {
+@@ -60,9 +73,18 @@
+             size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0,.65f,1,1.3f));
+             var renderer = particles.GetComponent<ParticleSystemRenderer>();
+             renderer.sharedMaterial = dustMaterial; renderer.renderMode = ParticleSystemRenderMode.Stretch;
+-            renderer.lengthScale = 1.7f; renderer.velocityScale = .18f; renderer.cameraVelocityScale = 0f;
++            renderer.lengthScale = profile.clusteredWisps ? 2.1f : 1.7f; renderer.velocityScale = profile.clusteredWisps ? .08f : .18f; renderer.cameraVelocityScale = 0f;
+             renderer.shadowCastingMode = ShadowCastingMode.Off; renderer.receiveShadows = false;
+             EarthParticleSystemTuningApplier.UseMaterialDustColor(particles);
++            if(profile.clusteredWisps)
++            {
++                // This low ambient renderer needs a shorter depth fade than metre-scale fracture smoke.
++                if(!shortenedDepthFade){previousRendererProperties=new MaterialPropertyBlock();renderer.GetPropertyBlock(previousRendererProperties);}
++                var properties=new MaterialPropertyBlock();renderer.GetPropertyBlock(properties);
++                properties.SetVector("_SoftParticleFadeParams",new Vector4(.025f,1f/.475f,0,0));renderer.SetPropertyBlock(properties);shortenedDepthFade=true;
++            }
++            else if(shortenedDepthFade){renderer.SetPropertyBlock(previousRendererProperties);shortenedDepthFade=false;}
++            groundBudget=stoneBudget=0;GroundEmitted=StoneEmitted=GapEmitted=0;
+             Array.Clear(occupied, 0, occupied.Length); nextScan = 0f;
+             if (gameObject.activeInHierarchy && enabled) particles.Play(true);
+         }
+@@ -97,13 +119,16 @@
+                     Vector3 normal = normals[slot];
+                     float height = Vector3.Dot(buffer[i].position - ground[slot], normal);
+                     buffer[i].position += normal * (Mathf.Clamp(profile.hoverHeight, .02f, .4f) - height);
+-                    float gust = .9f + .1f * Mathf.Sin(Time.time * .8f + slot * .41f);
+-                    buffer[i].velocity = EarthSurfaceWindPolicy.TangentVelocity(profile.worldWind, normal, profile.speed * gust);
++                    float gust = Reduced ? 1 : .9f + .1f * Mathf.Sin(Time.time * .8f + slot * .41f);
++                    buffer[i].velocity = EarthSurfaceWindPolicy.TangentVelocity(profile.worldWind, normal, profile.speed * gust * (Reduced ? Mathf.Clamp01(profile.reducedMotionSpeed) : 1));
+                 }
+                 probeCursor = count > 0 ? (probeCursor + probes) % count : 0;
+                 particles.SetParticles(buffer, count);
+-                groundBudget = Mathf.Min(4f, groundBudget + Mathf.Clamp(profile.groundRate,0,48) * dt);
+-                stoneBudget = Mathf.Min(4f, stoneBudget + (stoneCount > 0 ? Mathf.Clamp(profile.stoneRate,0,48) : 0f) * dt);
++                float rateScale=Reduced?Mathf.Clamp01(profile.reducedMotionRate):1;
++                float densityScale=profile.clusteredWisps?Mathf.Lerp(profile.isolatedStoneWeight,profile.clusteredRateMultiplier,Mathf.Clamp01(MeanStoneNeighbours/Mathf.Max(1,profile.saturatedNeighbours))):1;
++                EffectiveStoneRate=stoneCount>0?Mathf.Clamp(profile.stoneRate*densityScale,0,48)*rateScale:0;
++                groundBudget = Mathf.Min(4f, groundBudget + Mathf.Clamp(profile.groundRate,0,48)*rateScale * dt);
++                stoneBudget = Mathf.Min(4f, stoneBudget + EffectiveStoneRate * dt);
+                 int remaining = capacity - count;
+                 for (int i = 0; i < 4 && remaining > 0; i++)
+                 {
+@@ -123,10 +148,24 @@
+                 Collider value = overlaps[i]; if (value == null || !value.enabled) continue;
+                 Rigidbody body = value.attachedRigidbody;
+                 if (body != null && !body.isKinematic && body.linearVelocity.sqrMagnitude > profile.maximumSettledSpeed * profile.maximumSettledSpeed) continue;
+-                bool rock = value.GetComponentInParent<EarthDestructibleDecorRock>() != null ||
+-                    value.GetComponentInParent<EarthRockDebris>() != null || value.GetComponentInParent<EarthArenaPiece>() != null ||
+-                    value.GetComponentInParent<EarthFragment>() != null || value.GetComponentInParent<EarthWallPiece>() != null;
+-                if (rock) stones[stoneCount++] = value;
++                UnityEngine.Object owner=value.GetComponentInParent<EarthDestructibleDecorRock>();
++                if(owner==null)owner=value.GetComponentInParent<EarthRockDebris>();
++                if(owner==null)owner=value.GetComponentInParent<EarthArenaPiece>();
++                if(owner==null)owner=value.GetComponentInParent<EarthFragment>();
++                if(owner==null)owner=value.GetComponentInParent<EarthWallPiece>();
++                if(owner==null)continue;
++                bool duplicate=false;if(profile.clusteredWisps)for(int j=0;j<stoneCount;j++)if(stoneOwners[j]==owner){duplicate=true;break;}
++                if(duplicate)continue;
++                stones[stoneCount]=value;stoneOwners[stoneCount]=owner;
++                var bounds=value.bounds;var up=(bounds.center-planet.position).normalized;
++                float verticalExtent=Mathf.Abs(up.x)*bounds.extents.x+Mathf.Abs(up.y)*bounds.extents.y+Mathf.Abs(up.z)*bounds.extents.z;
++                stoneBases[stoneCount]=bounds.center-up*verticalExtent;stoneCount++;
++            }
++            MeanStoneNeighbours=0;ClusteredStoneCandidates=0;
++            if(profile.clusteredWisps)
++            {
++                EarthGroundDustDensity.Evaluate(stoneBases,stoneCount,(arenaAnchor.position-planet.position).normalized,profile.clusterRadius,profile.isolatedStoneWeight,profile.saturatedNeighbours,neighbours,nearest,densityWeights,out float mean);
++                MeanStoneNeighbours=mean;for(int i=0;i<stoneCount;i++)if(neighbours[i]>0)ClusteredStoneCandidates++;
+             }
+         }
+         private bool Emit(bool nearStone)
+@@ -135,16 +174,31 @@
+             Vector3 up = (point - planet.position).normalized;
+             Vector3 wind = EarthSurfaceWindPolicy.TangentVelocity(profile.worldWind, up, 1f);
+             Vector3 side = Vector3.Cross(up, wind);
+-            Collider ignore = null;
++            Collider ignore = null;bool gap=false;
+             if (nearStone)
+             {
+                 if (stoneCount == 0) return false;
+-                ignore = stones[(scanCursor++) % stoneCount]; if (ignore == null || !ignore.enabled || !ignore.gameObject.activeInHierarchy) return false;
++                int selected=profile.clusteredWisps?EarthGroundDustDensity.Select(densityWeights,stoneCount,Next()):(scanCursor++)%stoneCount;
++                if(selected<0)return false;ignore = stones[selected]; if (ignore == null || !ignore.enabled || !ignore.gameObject.activeInHierarchy) return false;
+                 Rigidbody body = ignore.attachedRigidbody;
+                 if (body != null && !body.isKinematic && body.linearVelocity.sqrMagnitude > profile.maximumSettledSpeed * profile.maximumSettledSpeed) return false;
+                 Bounds bounds = ignore.bounds;
+                 float extent = Mathf.Abs(wind.x) * bounds.extents.x + Mathf.Abs(wind.y) * bounds.extents.y + Mathf.Abs(wind.z) * bounds.extents.z;
+                 point = bounds.center + wind * (extent + profile.stoneMargin) + side * ((Next()-.5f) * .8f);
++                if(profile.clusteredWisps)
++                {
++                    point=stoneBases[selected]+wind*(extent+profile.stoneMargin)+side*((Next()-.5f)*.8f);
++                    int partner=nearest[selected];
++                    if(partner>=0 && Next()<profile.gapEmissionChance && stones[partner]!=null && stones[partner].enabled)
++                    {
++                        var other=stones[partner];var otherBody=other.attachedRigidbody;
++                        if(otherBody==null || otherBody.isKinematic || otherBody.linearVelocity.sqrMagnitude<=profile.maximumSettledSpeed*profile.maximumSettledSpeed)
++                        {
++                            Vector3 a=bounds.ClosestPoint(stoneBases[partner]),b=other.bounds.ClosestPoint(stoneBases[selected]);
++                            if((b-a).sqrMagnitude>.04f){point=Vector3.Lerp(a,b,.3f+.4f*Next())+side*((Next()-.5f)*.3f);gap=true;}
++                        }
++                    }
++                }
+             }
+             else
+             {
+@@ -157,16 +211,16 @@
+             int slot = 0; while (slot < appliedCapacity && occupied[slot]) slot++;
+             if (slot >= appliedCapacity) return false;
+             occupied[slot] = true; ground[slot] = hit.point; normals[slot] = hit.normal;
+-            float size = Mathf.Clamp(Mathf.Lerp(profile.sizeMetres.x, profile.sizeMetres.y, Next()),.1f,2.5f);
++            float size = Mathf.Clamp(Mathf.Lerp(profile.sizeMetres.x, profile.sizeMetres.y, profile.clusteredWisps?Next()*Next():Next()),.1f,2.5f);
+             var emit = new ParticleSystem.EmitParams
+             {
+                 position = hit.point + hit.normal * Mathf.Clamp(profile.hoverHeight,.02f,.4f),
+-                velocity = EarthSurfaceWindPolicy.TangentVelocity(profile.worldWind, hit.normal, profile.speed),
++                velocity = EarthSurfaceWindPolicy.TangentVelocity(profile.worldWind, hit.normal, profile.speed * (Reduced?Mathf.Clamp01(profile.reducedMotionSpeed):1)),
+                 startSize = size, startLifetime = Mathf.Clamp(Mathf.Lerp(profile.lifetimeSeconds.x,profile.lifetimeSeconds.y,Next()),.5f,6f),
+                 startColor = new Color(1,1,1,Mathf.Clamp(profile.opacity,.03f,.6f)), randomSeed = (uint)slot + 1,
+                 rotation3D = Vector3.zero
+             };
+-            particles.Emit(emit,1); if (nearStone) StoneEmitted++; else GroundEmitted++;
++            particles.Emit(emit,1); if(gap)GapEmitted++; if (nearStone) StoneEmitted++; else GroundEmitted++;
+             return true;
+         }
+         private bool TryGround(Vector3 origin, Vector3 up, float distance, Collider ignore, out RaycastHit support)
+--- a/Assets/Elemental/Presentation/VFX/EarthSurfaceWindDustProfile.cs
++++ b/Assets/Elemental/Presentation/VFX/EarthSurfaceWindDustProfile.cs
+@@ -7,6 +7,15 @@
+     {
+         [Header("Low wind across the arena")]
+         public bool enabledEffect = true;
++        [Header("Optional quiet clustered ground wisps")]
++        public bool clusteredWisps;
++        [Range(.5f,8f)] public float clusterRadius=3.5f;
++        [Range(1,12)] public int saturatedNeighbours=4;
++        [Range(.05f,1f)] public float isolatedStoneWeight=.2f;
++        [Range(1f,2f)] public float clusteredRateMultiplier=1.6f;
++        [Range(0f,1f)] public float gapEmissionChance=.65f;
++        [Range(0f,1f)] public float reducedMotionRate=.3f;
++        [Range(0f,1f)] public float reducedMotionSpeed=.35f;
+         [Range(32, 256)] public int maximumParticles = 192;
+         [Range(2f, 30f), Tooltip("Radius around the arena anchor, metres.")] public float areaRadius = 16f;
+         [Range(0f, 48f), Tooltip("Particles per second across open ground.")] public float groundRate = 12f;
+--- a/Assets/Elemental/Tests/EditMode/EarthGroundDustDensityTests.cs
++++ b/Assets/Elemental/Tests/EditMode/EarthGroundDustDensityTests.cs
+@@ -0,0 +1,39 @@
++using NUnit.Framework;
++using UnityEngine;
++using Elemental.Presentation.VFX;
++
++namespace Elemental.Tests.EditMode
++{
++    public sealed class EarthGroundDustDensityTests
++    {
++        [Test]
++        public void NeighbourhoodWeightsPreferGapsOverAnIsolatedStone()
++        {
++            var p=new[]{Vector3.zero,Vector3.right,Vector3.forward,new Vector3(12,0,0)};
++            var n=new int[4];var nearest=new int[4];var w=new float[4];
++            EarthGroundDustDensity.Evaluate(p,4,Vector3.up,3.5f,.2f,4,n,nearest,w,out float mean);
++            Assert.That(n,Is.EqualTo(new[]{2,2,2,0}));Assert.That(nearest[3],Is.EqualTo(-1));
++            Assert.That(mean,Is.EqualTo(1.5f));Assert.That(w[0],Is.GreaterThan(w[3]*2));
++            int clustered=0,isolated=0;
++            for(int i=0;i<1000;i++){int index=EarthGroundDustDensity.Select(w,4,(i+.5f)/1000);if(index==3)isolated++;else clustered++;}
++            Assert.That(clustered,Is.GreaterThan(isolated*5));
++        }
++        [Test]
++        public void OverheadStonesDoNotCreateFalseGroundDensityAndEmptySelectionIsSafe()
++        {
++            var p=new[]{Vector3.zero,new Vector3(0,5,0)};var n=new int[2];var nearest=new int[2];var w=new float[2];
++            EarthGroundDustDensity.Evaluate(p,2,Vector3.up,3.5f,.2f,4,n,nearest,w,out float mean);
++            Assert.That(mean,Is.Zero);Assert.That(nearest,Is.EqualTo(new[]{-1,-1}));
++            Assert.That(EarthGroundDustDensity.Select(w,0,.5f),Is.EqualTo(-1));
++        }
++        [Test]
++        public void RotatingTheGroundFrameKeepsDensityEquivalent()
++        {
++            var p=new[]{Vector3.zero,Vector3.right,Vector3.forward};var n=new int[3];var nearest=new int[3];var w=new float[3];
++            EarthGroundDustDensity.Evaluate(p,3,Vector3.up,3,.2f,4,n,nearest,w,out float a);
++            var q=Quaternion.Euler(37,51,23);for(int i=0;i<p.Length;i++)p[i]=q*p[i]+new Vector3(300,-40,90);
++            EarthGroundDustDensity.Evaluate(p,3,q*Vector3.up,3,.2f,4,n,nearest,w,out float b);
++            Assert.That(b,Is.EqualTo(a));Assert.That(n,Is.EqualTo(new[]{2,2,2}));
++        }
++    }
++}
+--- a/Assets/Elemental/Tests/EditMode/EarthSurfaceWindDustTestLauncher.cs
++++ b/Assets/Elemental/Tests/EditMode/EarthSurfaceWindDustTestLauncher.cs
+@@ -6,7 +6,7 @@
+     public static class EarthSurfaceWindDustTestLauncher
+     {
+         [MenuItem("Elemental/QA/Surface Wind Dust Edit")]
+-        public static void RunEdit() => Run(TestMode.EditMode, "SurfaceWindDustEdit", "Elemental.Tests.EditMode.EarthSurfaceWindPolicyTests");
++        public static void RunEdit() => Run(TestMode.EditMode, "SurfaceWindDustEdit", "Elemental.Tests.EditMode.EarthSurfaceWindPolicyTests", "Elemental.Tests.EditMode.EarthGroundDustDensityTests");
+         [MenuItem("Elemental/QA/Surface Wind Dust Visual Play")]
+         public static void RunPlay() => Run(TestMode.PlayMode, "SurfaceWindDustPlay", "Elemental.Tests.PlayMode.EarthSurfaceWindDustProductionTests");
+         private static void Run(TestMode mode, string report, params string[] fixtures) =>
+--- a/Assets/Elemental/Tests/PlayMode/EarthSurfaceWindDustProductionTests.cs
++++ b/Assets/Elemental/Tests/PlayMode/EarthSurfaceWindDustProductionTests.cs
+@@ -29,7 +29,8 @@
+             public string utc;
+             public Vector3 anchor;
+             public int particles, stoneCandidates, groundEmitted, stoneEmitted, changedPixels, movingSamples;
+-            public float meanTravelMetres;
++            public float meanTravelMetres,meanStoneNeighbours,effectiveStoneRate;
++            public int clusteredCandidates,gapEmitted;
+             public double markerMeanMs, markerPeakMs;
+             public bool markerValid;
+         }
+@@ -65,6 +66,24 @@
+                 report.stoneCandidates = dust.SettledStoneCandidates; report.groundEmitted = dust.GroundEmitted; report.stoneEmitted = dust.StoneEmitted;
+                 Assert.That(report.particles, Is.InRange(12, dust.Profile.maximumParticles));
+                 Assert.That(report.stoneCandidates, Is.GreaterThan(0));
++                if(dust.Profile.clusteredWisps)
++                {
++                    report.meanStoneNeighbours=dust.MeanStoneNeighbours;report.effectiveStoneRate=dust.EffectiveStoneRate;
++                    report.clusteredCandidates=dust.ClusteredStoneCandidates;report.gapEmitted=dust.GapEmitted;
++                    Assert.That(report.effectiveStoneRate,Is.InRange(0,48));
++                    Assert.That(dust.Profile.maximumParticles,Is.LessThanOrEqualTo(192));
++                    // Neighboring bounds may touch with no true gap; record gap counts for rendered-scene review.
++                    var pref=flow.Preferences;bool savedReduced=pref.ReducedMotion;
++                    try
++                    {
++                        pref.Set(pref.MasterVolume,pref.UIVolume,pref.Sensitivity,false);yield return null;yield return null;
++                        float fullRate=dust.EffectiveStoneRate;
++                        pref.Set(pref.MasterVolume,pref.UIVolume,pref.Sensitivity,true);yield return null;yield return null;
++                        Assert.That(dust.EffectiveStoneRate,Is.LessThanOrEqualTo(fullRate*dust.Profile.reducedMotionRate+.01f));
++                    }
++                    finally{pref.Set(pref.MasterVolume,pref.UIVolume,pref.Sensitivity,savedReduced);}
++                    yield return null;
++                }
+                 Assert.That(report.stoneEmitted, Is.GreaterThan(report.groundEmitted), "Settled stones must receive a denser persistent wind layer.");
+                 Assert.That(dust.GetComponentsInChildren<Rigidbody>().Length, Is.Zero);
+                 var before = new ParticleSystem.Particle[256]; int beforeCount = dust.System.GetParticles(before);

@@ -1,0 +1,158 @@
+--- a/Assets/Elemental/NetworkingStage2/OnlineDevelopmentProbe.cs
++++ b/Assets/Elemental/NetworkingStage2/OnlineDevelopmentProbe.cs
+@@ -5,6 +5,7 @@
+ #if UNITY_EDITOR || DEVELOPMENT_BUILD
+ using Elemental.Simulation.Networking;
+ using Elemental.Simulation.Combat;
++using Elemental.Simulation.Magic;
+ using System.Collections.Generic;
+ using Unity.Netcode.Transports.UTP;
+ using Unity.Networking.Transport;
+@@ -44,6 +45,19 @@
+             public Vector2 screenPoint;
+             public float sourceMass, parallelMissMeters, targetDistanceAlongRay;
+             public bool visible, hasHeldBody, quickPrimed;
++            public bool pendingExtraction, magicEnabled, routerEnabled, combatAllowed;
++            public string bendPhase, routeOwner, firstRayCollider, lastMagicStatus;
++            public Vector3 firstRayPoint;
++            public float stunRemaining;
++        }
++        [Serializable]
++        private sealed class AbilityEvidence
++        {
++            public string stage, message, bendPhase, routeOwner;
++            public uint sequence, sourceId, tick;
++            public float realtime, mass, speed, stunRemaining;
++            public Vector3 position, direction;
++            public bool pendingExtraction, primed, magicEnabled, routerEnabled, combatAllowed;
+         }
+         [Serializable]
+         private sealed class Report
+@@ -64,6 +78,7 @@
+             public NgoGameplayTransport.InputDiagnostics inputs;
+             public List<ImpactEvidence> impacts = new List<ImpactEvidence>();
+             public List<ShotEvidence> shots = new List<ShotEvidence>();
++            public List<AbilityEvidence> abilities = new List<AbilityEvidence>();
+             public int unavailableAimCount;
+             public ulong localClientId;
+             public int connectedPeerCount;
+@@ -78,6 +93,8 @@
+         private string _role, _resultPath, _joinFile, _peerFile, _pendingJson;
+         private float _nextPublish, _nextIoWarning, _scenarioAt, _leaveAt;
+         private int _scenarioStep, _shotStep;
++        private uint _lastRemotePrimarySequence;
++        private string _lastMagicStatus = "";
+         private float _shotAt, _resetWaitDeadline;
+         private int _offlineResetCountAtCombat;
+         // Read-only development diagnostics; no world state is injected or changed.
+@@ -202,7 +219,12 @@
+                     binding.ActorOne.Impact.WorldResponseRequested += ObserveImpact;
+                     binding.ActorTwo.Impact.WorldResponseRequested += ObserveImpact;
+                     _actorOneStart = binding.ActorOne.Body.position; _actorTwoStart = binding.ActorTwo.Body.position;
+-                    binding.ActorTwo.SemanticInput.RemoteFrameApplied += ObserveRemoteInput; _observing = true;
++                    binding.ActorTwo.SemanticInput.RemoteFrameApplied += ObserveRemoteInput;
++                    binding.ActorTwo.MagicInput.StatusChanged += ObserveMagicStatus;
++                    binding.ActorTwo.Executor.Events.AbilityRejected += ObserveAbilityRejected;
++                    binding.ActorTwo.Executor.Events.FragmentSpawned += ObserveFragmentSpawned;
++                    binding.ActorTwo.Executor.Events.FragmentLaunched += ObserveFragmentLaunched;
++                    _observing = true;
+                 }
+                 if (!_report.combatStable10s && Time.realtimeSinceStartup - _combatAt >= 10f)
+                 {
+@@ -290,20 +312,54 @@
+         }
+         private void ObserveRemoteInput(EarthSemanticInputFrame frame)
+         {
+-            if ((frame.Pressed & EarthInputBits.Primary) != 0)
++            bool press = (frame.Pressed & EarthInputBits.Primary) != 0;
++            bool release = (frame.Released & EarthInputBits.Primary) != 0;
++            if (press)
+             {
+                 _report.acceptedPrimaryPresses++; _report.acceptedPrimarySequence = frame.Sequence;
++                _lastRemotePrimarySequence = frame.Sequence;
++            }
++            if (release) _report.acceptedPrimaryReleases++;
++            if (_stoneScenario && (press || release))
++            {
+                 var selected = binding.ActorTwo.Executor.ReservedOrHeldFragment;
+-                if (binding.ActorTwo.MagicInput.IsQuickStonePrimed && selected != null)
+-                {
+-                    _selectedShotSources.Add(selected.FragmentId);
+-                    Vector2 screen = new Vector2(frame.PointerViewport.x * Screen.width, frame.PointerViewport.y * Screen.height);
+-                    RecordShot("host-selected-fire", binding.ActorOne.Collider.bounds.center, screen,
+-                        true, selected.Body, selected.FragmentId, frame.Sequence);
+-                }
+-            }
+-            if ((frame.Released & EarthInputBits.Primary) != 0) _report.acceptedPrimaryReleases++;
++                Vector2 screen = new Vector2(frame.PointerViewport.x * Screen.width, frame.PointerViewport.y * Screen.height);
++                // This callback precedes the action router. Record every edge,
++                // including failures to prime, rather than dropping the evidence.
++                RecordShot(press ? "host-primary-press" : "host-primary-release",
++                    binding.ActorOne.Collider.bounds.center, screen, true,
++                    selected != null ? selected.Body : binding.ActorTwo.Executor.HeldBody,
++                    selected != null ? selected.FragmentId : 0, frame.Sequence);
++            }
+             _report.inputAcceptedByHost = _report.acceptedPrimaryPresses >= 2 && _report.acceptedPrimaryReleases >= 2;
++        }
++        private void ObserveMagicStatus(string status)
++        { _lastMagicStatus = status; RecordAbility("status", status); }
++        private void ObserveAbilityRejected(AbilityRejectedEvent rejected)
++        { RecordAbility("rejected", rejected.Reason, tick: rejected.Tick); }
++        private void ObserveFragmentSpawned(FragmentSpawnedEvent spawned)
++        { RecordAbility("spawned", "", spawned.FragmentId, spawned.Tick, spawned.Mass, (Vector3)spawned.Position); }
++        private void ObserveFragmentLaunched(FragmentLaunchedEvent launched)
++        {
++            // Attribute only an actual launch emitted by actor two's authoritative
++            // executor, not the pre-router primed state or a source-zero collision.
++            if (_role == "host" && _lastRemotePrimarySequence != 0 && launched.FragmentId != 0)
++                _selectedShotSources.Add(launched.FragmentId);
++            RecordAbility("launched", launched.PresentationStyle.ToString(), launched.FragmentId,
++                launched.Tick, launched.Mass, (Vector3)launched.Position, (Vector3)launched.Direction, launched.VelocityChange);
++        }
++        private void RecordAbility(string stage, string message, uint sourceId = 0, uint tick = 0,
++            float mass = 0, Vector3 position = default, Vector3 direction = default, float speed = 0)
++        {
++            if (!_stoneScenario || _role != "host" || _report.abilities.Count >= 256) return;
++            var actor = binding.ActorTwo;
++            _report.abilities.Add(new AbilityEvidence { stage = stage, message = message,
++                sourceId = sourceId, tick = tick, sequence = _lastRemotePrimarySequence,
++                realtime = Time.realtimeSinceStartup, mass = mass, position = position, direction = direction, speed = speed,
++                pendingExtraction = actor.Executor.HasPendingExtraction, primed = actor.MagicInput.IsQuickStonePrimed,
++                magicEnabled = actor.MagicInput.isActiveAndEnabled, routerEnabled = actor.ActionRouter.isActiveAndEnabled,
++                combatAllowed = binding.OnlineDuel.CombatAllowed, bendPhase = actor.MagicInput.CurrentBendPhase.ToString(),
++                routeOwner = actor.ActionRouter.Owner.ToString(), stunRemaining = actor.Motor.ImpactStunRemaining });
+         }
+         private void AdvanceScenario()
+         {
+@@ -444,12 +500,19 @@
+         }
+         private void RecordShot(string stage, Vector3 target, Vector2 screen, bool visible, Rigidbody source, uint id, uint sequence)
+         {
+-            if (_report.shots.Count >= 40) return;
++            if (_report.shots.Count >= 128) return;
+             Ray ray = binding.ActorTwo.EarthInput.CastCamera.ScreenPointToRay(screen);
+             Vector3 origin = source != null ? source.worldCenterOfMass : binding.ActorTwo.Body.worldCenterOfMass;
+             Vector3 offset = target - origin;
+             float along = Vector3.Dot(offset, ray.direction);
++            bool hitSurface = Physics.Raycast(ray, out RaycastHit firstHit, 100f, ~0, QueryTriggerInteraction.Ignore);
++            var actor = binding.ActorTwo;
+             _report.shots.Add(new ShotEvidence { stage = stage, sequence = sequence, sourceId = id,
++                pendingExtraction = actor.Executor.HasPendingExtraction, magicEnabled = actor.MagicInput.isActiveAndEnabled,
++                routerEnabled = actor.ActionRouter.isActiveAndEnabled, combatAllowed = binding.OnlineDuel.CombatAllowed,
++                bendPhase = actor.MagicInput.CurrentBendPhase.ToString(), routeOwner = actor.ActionRouter.Owner.ToString(),
++                firstRayCollider = hitSurface ? firstHit.collider.name : "<none>", firstRayPoint = hitSurface ? firstHit.point : default,
++                stunRemaining = actor.Motor.ImpactStunRemaining, lastMagicStatus = _lastMagicStatus,
+                 sourcePosition = origin, sourceMass = source != null ? source.mass : 0, hasHeldBody = source != null,
+                 targetPosition = target, targetExtents = binding.ActorOne.Collider.bounds.extents,
+                 screenPoint = screen, visible = visible, quickPrimed = binding.ActorTwo.MagicInput.IsQuickStonePrimed,
+@@ -516,6 +579,10 @@
+             if (_observing && binding != null && binding.ActorTwo?.SemanticInput != null)
+             {
+                 binding.ActorTwo.SemanticInput.RemoteFrameApplied -= ObserveRemoteInput;
++                binding.ActorTwo.MagicInput.StatusChanged -= ObserveMagicStatus;
++                binding.ActorTwo.Executor.Events.AbilityRejected -= ObserveAbilityRejected;
++                binding.ActorTwo.Executor.Events.FragmentSpawned -= ObserveFragmentSpawned;
++                binding.ActorTwo.Executor.Events.FragmentLaunched -= ObserveFragmentLaunched;
+                 binding.ActorOne.Impact.WorldResponseRequested -= ObserveImpact;
+                 binding.ActorTwo.Impact.WorldResponseRequested -= ObserveImpact;
+             }

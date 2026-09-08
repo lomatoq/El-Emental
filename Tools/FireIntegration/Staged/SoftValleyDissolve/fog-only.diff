@@ -1,0 +1,17 @@
+--- a/Assets/Elemental/Content/Shaders/ValleyAtmosphereV2.hlsl
++++ b/Assets/Elemental/Content/Shaders/ValleyAtmosphereV2.hlsl
+@@ -99,8 +99,12 @@
+         // spherical underside. Lower terrain joins the opaque veil continuously.
+         float playableWindow=smoothstep(radius*0.45,radius*0.75,surfaceLocal.y);
+         cloudProtection=lerp(1,protect*planetProtect,playableWindow);
+-        float lowerTerrain=1-smoothstep(-radius*0.25,radius*0.60,surfaceLocal.y);
+-        alpha=max(lowerTerrain,min(_ElementalValleyFar.z,1-(1-veil)*(1-aerial)))*cloudProtection;
++        // The forced underside seal belongs only to the planet. Applying it to
++        // all distant columns painted a shared narrow horizontal opacity band.
++        float lowerTerrain=(1-smoothstep(-radius*0.25,radius*0.60,surfaceLocal.y))*(1-planetProtect);
++        // Only aerial haze is capped. Physical height fog must reach full opacity
++        // continuously below the sea instead of stopping at the aerial cap.
++        alpha=max(lowerTerrain,1-(1-veil)*(1-aerial))*cloudProtection;
+         farArtMask=smoothstep(_ElementalValleyFarArt.y,_ElementalValleyFarArt.z,distanceMetres)*protect*planetProtect*_ElementalValleyFarArt.x;
+         farLightDiffusion=(1-exp(-max(0,distanceMetres-400)/1400))*0.24*cloudProtection*playableWindow;
+     }

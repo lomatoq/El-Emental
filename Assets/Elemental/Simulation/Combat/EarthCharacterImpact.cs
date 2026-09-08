@@ -178,7 +178,62 @@ namespace Elemental.Simulation.Combat
 
     public static class EarthCharacterImpactSolver
     {
+        public static float3 OrientIncomingRelativeVelocity(float3 reportedRelativeVelocity,
+            float3 projectileBeforePhysics, float3 receiverBeforePhysics)
+        {
+            float3 expected = projectileBeforePhysics - receiverBeforePhysics;
+            return math.lengthsq(expected) > .000001f && math.dot(reportedRelativeVelocity, expected) < 0f
+                ? -reportedRelativeVelocity : reportedRelativeVelocity;
+        }
+
+        // Crushing is a directional load case, not extra damage or a bigger
+        // ordinary stone impulse. A massive rock landing above the centre of mass
+        // transfers support to the full dynamic body even below the throw KO gate.
+        public static bool IsHeavyCrush(float sourceMass, float targetMass, float closingSpeed,
+            float3 incomingDirection, float3 up, float contactHeight)
+        {
+            if (!float.IsFinite(sourceMass) || !float.IsFinite(targetMass) ||
+                !float.IsFinite(closingSpeed) || !float.IsFinite(contactHeight) ||
+                targetMass <= 0f || sourceMass < math.max(100f, targetMass * 2f) || contactHeight < 0f)
+                return false;
+            float downward = -math.dot(math.normalizesafe(incomingDirection), math.normalizesafe(up));
+            return downward >= .65f && closingSpeed * downward >= 2.5f;
+        }
+
+        public static float3 OrientIncomingContactVelocity(float3 reported, float3 receiverContactNormal) =>
+            math.dot(reported, receiverContactNormal) < 0f ? -reported : reported;
+
         public const uint DefaultDuplicateWindowTicks = 3u;
+
+        // Applied only after normalized contact/outcome resolution. It increases
+        // displacement and visual inertia without increasing damage or promoting
+        // a pebble into a knockdown. Runtime launch budgets still apply afterward.
+        public static float WeightTransferMultiplier(EarthCharacterImpactSourceKind source) =>
+            source is EarthCharacterImpactSourceKind.LooseStone or
+                EarthCharacterImpactSourceKind.ArmorProjectile or
+                EarthCharacterImpactSourceKind.BotProjectile or
+                EarthCharacterImpactSourceKind.StonePunch ? 1.4f : 1f;
+
+        // A finite fraction of a stone's momentum reaches the fighter. Reduced
+        // mass keeps a huge boulder bounded by contact speed instead of mass alone.
+        public static float StoneImpulse(float sourceMass, float targetMass, float closingSpeed)
+        {
+            if (!float.IsFinite(sourceMass) || !float.IsFinite(targetMass) ||
+                !float.IsFinite(closingSpeed) || sourceMass <= 0f ||
+                targetMass <= 0f || closingSpeed <= 0.75f) return 0f;
+            float reducedMass = targetMass / (1f + targetMass / sourceMass);
+            return reducedMass * math.min(closingSpeed, 60f) * 0.3f;
+        }
+
+        // A visible flinch is not the threshold for losing health. Accepted
+        // low-energy stone contacts retain bounded chip damage below that gate.
+        public static bool ResolvesHealthDamage(EarthCharacterImpactSourceKind source,
+            EarthCharacterImpactResponse response) => response != EarthCharacterImpactResponse.Ignore ||
+            source is EarthCharacterImpactSourceKind.LooseStone or EarthCharacterImpactSourceKind.ArmorProjectile or
+                EarthCharacterImpactSourceKind.BotProjectile or EarthCharacterImpactSourceKind.StonePunch;
+
+        public static float StoneDamage(float baseDamage, float reactionVelocityChange) =>
+            math.max(0f, baseDamage) * math.clamp(reactionVelocityChange / 2f, 0f, 3f);
 
         public static EarthCharacterImpactResolution Resolve(
             in EarthCharacterImpact impact,

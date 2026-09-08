@@ -1,0 +1,225 @@
+--- a/Assets/Elemental/Authoring/Editor/StoneUI/ElementalStoneSkinInstaller.cs
++++ b/Assets/Elemental/Authoring/Editor/StoneUI/ElementalStoneSkinInstaller.cs
+@@ -60,6 +60,13 @@
+             skin.codeField = Sprite("Panels/code_field"); skin.health = Sprite("Icons/icon_health");
+             skin.mana = Sprite("Icons/icon_mana"); skin.pause = Sprite("Icons/icon_pause");
+             skin.window = Sprite("Panels/window_body"); skin.ribbon = Sprite("Panels/ribbon");
++            skin.wordmark = Sprite("Brand/wordmark_master"); skin.divider = Sprite("Segments/divider");
++            skin.botIcon = Sprite("Icons/icon_swords"); skin.hostIcon = Sprite("Icons/icon_host");
++            skin.joinIcon = Sprite("Icons/icon_join"); skin.settingsIcon = Sprite("Icons/icon_settings");
++            skin.exitIcon = Sprite("Icons/icon_exit"); skin.backIcon = Sprite("Icons/icon_back");
++            skin.playIcon = Sprite("Icons/icon_play"); skin.copyIcon = Sprite("Icons/icon_copy");
++            skin.checkIcon = Sprite("Icons/icon_check"); skin.volumeIcon = Sprite("Icons/icon_volume");
++            skin.sensitivityIcon = Sprite("Icons/icon_crosshair"); skin.sliderDiamond = Sprite("Frames/diamond_active");
+             if (oldSkin != EditorJsonUtility.ToJson(skin)) { EditorUtility.SetDirty(skin); AssetDatabase.SaveAssetIfDirty(skin); }
+             if (theme.stoneSkin != skin) { Undo.RecordObject(theme, "Assign stone artwork"); theme.stoneSkin = skin; EditorUtility.SetDirty(theme); AssetDatabase.SaveAssetIfDirty(theme); }
+             Debug.Log("Stone artwork installed on existing theme. Existing layout/fonts/input/network/scene are preserved.");
+--- a/Assets/Elemental/Presentation/UI/ElementalStoneSkin.cs
++++ b/Assets/Elemental/Presentation/UI/ElementalStoneSkin.cs
+@@ -9,6 +9,8 @@
+     {
+         public Sprite curtain, normal, primary, hover, pressed, disabled, codeField;
+         public Sprite health, mana, pause, window, ribbon;
++        public Sprite wordmark, divider, botIcon, hostIcon, joinIcon, settingsIcon, exitIcon;
++        public Sprite backIcon, playIcon, copyIcon, checkIcon, volumeIcon, sensitivityIcon, sliderDiamond;
+ 
+         public Sprite Button(bool active, bool down, bool hot, Sprite resting)
+             => !active && disabled != null ? disabled : down && pressed != null ? pressed : hot && hover != null ? hover : resting;
+--- a/Assets/Elemental/Presentation/UI/FrontendMenuView.cs
++++ b/Assets/Elemental/Presentation/UI/FrontendMenuView.cs
+@@ -28,6 +28,7 @@
+         public string CountdownText => _countdown != null && _countdown.gameObject.activeSelf ? _countdown.text : "";
+         private TMP_InputField _codeInput;
+         private Slider _master, _ui, _sensitivity;
++        private TMP_Text _masterValue, _uiValue, _sensitivityValue;
+         private Toggle _reduced;
+         private FrontendButton[] _buttons;
+         private bool _built;
+@@ -57,11 +58,15 @@
+             var logo = Image(_panel, "Elemental logo", Color.white); logo.sprite = _theme.logo; logo.preserveAspect = true; logo.raycastTarget = false;
+             Place(logo.rectTransform, 0, 0, 90, 90);
+             var eyebrow = Label(_panel, "LOCAL ALPHA  /  01", 18, _theme.accent); Place(eyebrow.rectTransform, 112, 23, 390, 36);
+-            var title = Label(_panel, "EL EMENTAL", 70, _theme.text, true); Place(title.rectTransform, 0, 110, 530, 110);
++            if (_theme.stoneSkin != null && _theme.stoneSkin.wordmark != null)
++                Ornament(_panel, "Stone wordmark", _theme.stoneSkin.wordmark, 0, 110, 470, 110);
++            else
++            { var title = Label(_panel, "EL EMENTAL", 70, _theme.text, true); Place(title.rectTransform, 0, 110, 530, 110); }
+             var subtitle = Label(_panel, "SHAPE THE WORLD.\nHOLD YOUR GROUND.", 19, _theme.muted); Place(subtitle.rectTransform, 0, 225, 480, 64);
+-            if (_theme.panelDetail != null)
+-            {
+-                var detail = Image(_panel, "CraftPix separator", _theme.accent); detail.sprite = _theme.panelDetail;
++            var divider = _theme.stoneSkin != null && _theme.stoneSkin.divider != null ? _theme.stoneSkin.divider : _theme.panelDetail;
++            if (divider != null)
++            {
++                var detail = Image(_panel, "Menu separator", _theme.accent); detail.sprite = divider;
+                 detail.preserveAspect = true; detail.raycastTarget = false; Place(detail.rectTransform, 0, 308, 470, 12);
+             }
+             _pages = new GameObject[5];
+@@ -86,42 +91,44 @@
+ 
+         private void BuildMain(Transform parent)
+         {
+-            _play = Button(parent, "PLAY VS BOT", 0, 0, () => _flow.BeginBot());
+-            _host = Button(parent, "HOST GAME", 92, 1, () => _flow.OpenHost());
+-            _join = Button(parent, "JOIN GAME", 176, 1, () => _flow.OpenJoin());
+-            Button(parent, "SETTINGS", 284, 2, () => _flow.OpenSettings());
+-            Button(parent, "QUIT", 364, 2, () => _flow.Quit());
++            _play = Button(parent, "PLAY VS BOT", 0, 0, () => _flow.BeginBot(), _theme.stoneSkin?.botIcon);
++            _host = Button(parent, "HOST GAME", 92, 1, () => _flow.OpenHost(), _theme.stoneSkin?.hostIcon);
++            _join = Button(parent, "JOIN GAME", 176, 1, () => _flow.OpenJoin(), _theme.stoneSkin?.joinIcon);
++            Button(parent, "SETTINGS", 284, 2, () => _flow.OpenSettings(), _theme.stoneSkin?.settingsIcon);
++            Button(parent, "QUIT", 364, 2, () => _flow.Quit(), _theme.stoneSkin?.exitIcon);
+         }
+ 
+         private void BuildPause(Transform parent)
+         {
+             var label = Label(parent, "PAUSED", 34, _theme.accent); Place(label.rectTransform, 0, 0, 470, 50);
+-            _resume = Button(parent, "RESUME", 82, 0, () => _flow.Resume());
+-            Button(parent, "SETTINGS", 178, 1, () => _flow.OpenSettings());
+-            Button(parent, "END MATCH - MAIN MENU", 292, 2, () => _flow.EndMatch());
++            _resume = Button(parent, "RESUME", 82, 0, () => _flow.Resume(), _theme.stoneSkin?.playIcon);
++            Button(parent, "SETTINGS", 178, 1, () => _flow.OpenSettings(), _theme.stoneSkin?.settingsIcon);
++            Button(parent, "END MATCH - MAIN MENU", 292, 2, () => _flow.EndMatch(), _theme.stoneSkin?.exitIcon);
+         }
+         private void BuildSettings(Transform parent)
+         {
+-            _master = Slider(parent, "MASTER VOLUME", 0, 0, 1);
+-            _ui = Slider(parent, "UI VOLUME", 92, 0, 1);
+-            _sensitivity = Slider(parent, "CAMERA SENSITIVITY", 184, .25f, 2f);
++            _master = Slider(parent, "MASTER VOLUME", 0, 0, 1, _theme.stoneSkin?.volumeIcon, out _masterValue);
++            _ui = Slider(parent, "UI VOLUME", 92, 0, 1, _theme.stoneSkin?.settingsIcon, out _uiValue);
++            _sensitivity = Slider(parent, "CAMERA SENSITIVITY", 184, .25f, 2f, _theme.stoneSkin?.sensitivityIcon, out _sensitivityValue);
+             _reduced = Rect(parent, "Reduced motion", typeof(Toggle)).GetComponent<Toggle>();
+             Place((RectTransform)_reduced.transform, 0, 281, 470, 48);
+             var box = Image(_reduced.transform, "Box", _theme.ink); Place(box.rectTransform, 0, 4, 32, 32);
+             var mark = Image(box.transform, "Mark", _theme.accent); Stretch(mark.rectTransform, Vector2.one * .2f, Vector2.one * .8f);
++            if (_theme.stoneSkin != null && _theme.stoneSkin.checkIcon != null)
++            { mark.sprite = _theme.stoneSkin.checkIcon; mark.preserveAspect = true; mark.raycastTarget = false; }
+             _reduced.targetGraphic = box; _reduced.graphic = mark;
+             var label = Label(_reduced.transform, "REDUCED MOTION", 24, _theme.text); Place(label.rectTransform, 52, 0, 410, 44);
+             _master.onValueChanged.AddListener(_ => SaveSettings()); _ui.onValueChanged.AddListener(_ => SaveSettings());
+             _sensitivity.onValueChanged.AddListener(_ => SaveSettings()); _reduced.onValueChanged.AddListener(_ => SaveSettings());
+-            Button(parent, "BACK", 376, 2, () => _flow.Back());
++            Button(parent, "BACK", 376, 2, () => _flow.Back(), _theme.stoneSkin?.backIcon);
+         }
+         private void BuildHost(Transform parent)
+         {
+             var label = Label(parent, "ROOM CODE", 22, _theme.muted); Place(label.rectTransform, 0, 0, 470, 42);
+             _roomCode = Label(parent, "—", 56, _theme.text, readable: true); Place(_roomCode.rectTransform, 0, 52, 470, 90);
+-            Button(parent, "COPY CODE", 156, 1, () => _flow.CopyRoomCode());
+-            _hostReady = Button(parent, "READY", 248, 0, () => _flow.SetNetworkReady());
+-            Button(parent, "BACK", 364, 2, () => _flow.Back());
++            Button(parent, "COPY CODE", 156, 1, () => _flow.CopyRoomCode(), _theme.stoneSkin?.copyIcon);
++            _hostReady = Button(parent, "READY", 248, 0, () => _flow.SetNetworkReady(), _theme.stoneSkin?.checkIcon);
++            Button(parent, "BACK", 364, 2, () => _flow.Back(), _theme.stoneSkin?.backIcon);
+         }
+         private void BuildJoin(Transform parent)
+         {
+@@ -136,8 +143,8 @@
+             _codeInput.textViewport = viewport; _codeInput.textComponent = text; _codeInput.placeholder = hint;
+             _codeInput.characterLimit = 16; _codeInput.lineType = TMP_InputField.LineType.SingleLine;
+             _codeInput.onSubmit.AddListener(_ => _flow.JoinRoom(_codeInput.text));
+-            _joinSubmit = Button(parent, "CONNECT", 176, 0, () => _flow.JoinRoom(_codeInput.text));
+-            Button(parent, "BACK", 284, 2, () => _flow.Back());
++            _joinSubmit = Button(parent, "CONNECT", 176, 0, () => _flow.JoinRoom(_codeInput.text), _theme.stoneSkin?.joinIcon);
++            Button(parent, "BACK", 284, 2, () => _flow.Back(), _theme.stoneSkin?.backIcon);
+         }
+         public void SetNetworkAvailable(bool available) { _host.interactable = _join.interactable = available; }
+         public void SetPlayAvailable(bool available) => _play.interactable = available;
+@@ -187,6 +194,9 @@
+             var p = _flow.Preferences;
+             _master.SetValueWithoutNotify(p.MasterVolume); _ui.SetValueWithoutNotify(p.UIVolume);
+             _sensitivity.SetValueWithoutNotify(p.Sensitivity); _reduced.SetIsOnWithoutNotify(p.ReducedMotion);
++            _masterValue.text = Mathf.RoundToInt(p.MasterVolume * 100f).ToString() + "%";
++            _uiValue.text = Mathf.RoundToInt(p.UIVolume * 100f).ToString() + "%";
++            _sensitivityValue.text = p.Sensitivity.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "x";
+             if (_buttons != null) foreach (var button in _buttons) button.ReducedMotion = p.ReducedMotion;
+         }
+         private void SaveSettings()
+@@ -194,27 +204,36 @@
+             _flow.Preferences.Set(_master.value, _ui.value, _sensitivity.value, _reduced.isOn);
+             _flow.ApplyPreferences(); _flow.Preferences.Save(); RefreshSettings();
+         }
+-        private Button Button(Transform parent, string text, float y, int tier, UnityAction action)
++        private Button Button(Transform parent, string text, float y, int tier, UnityAction action, Sprite roleIcon = null)
+         {
+             RectTransform r = Rect(parent, text, typeof(Image), typeof(Button), typeof(FrontendButton)); Place(r, 0, y, 470, 70);
+             Color normal = tier == 0 ? _theme.accent : tier == 1 ? new Color(.11f, .19f, .23f, .9f) : new Color(.08f, .13f, .17f, .35f);
+             var graphic = r.GetComponent<Image>(); graphic.color = normal;
+             var skin = _theme.stoneSkin;
+             bool skinned = skin != null && skin.normal != null;
+-            if (skinned) { graphic.sprite = tier == 0 && skin.primary != null ? skin.primary : skin.normal; graphic.type = UnityEngine.UI.Image.Type.Sliced; graphic.color = Color.white; }
++            if (skinned) { graphic.sprite = tier == 0 && skin.primary != null ? skin.primary : skin.normal; graphic.type = UnityEngine.UI.Image.Type.Sliced; graphic.color = Color.white;
++                // Scale border pixels uniformly with the 136px source height; leave the hit rect unchanged.
++                graphic.pixelsPerUnitMultiplier = graphic.sprite.rect.height / 70f;
++            }
+             var b = r.GetComponent<Button>(); b.targetGraphic = graphic; b.onClick.AddListener(action);
+             var caption = Label(r, text, tier == 0 ? 30 : 27, tier == 0 && !skinned ? _theme.ink : _theme.text);
+             Stretch(caption.rectTransform, Vector2.zero, Vector2.one); caption.margin = new Vector4(skinned ? 72 : 24, 0, 16, 0); caption.alignment = TextAlignmentOptions.MidlineLeft;
++            if (skinned && roleIcon != null) Ornament(r, "Button role icon", roleIcon, 28, 17, 36, 36);
+             r.GetComponent<FrontendButton>().Configure(_theme, _audio, normal, Color.Lerp(normal, _theme.accent, tier == 0 ? .28f : .3f)); return b;
+         }
+-        private Slider Slider(Transform parent, string name, float y, float min, float max)
+-        {
+-            var label = Label(parent, name, 22, _theme.text); Place(label.rectTransform, 0, y, 470, 40);
++        private Slider Slider(Transform parent, string name, float y, float min, float max, Sprite icon, out TMP_Text valueLabel)
++        {
++            var label = Label(parent, name, 22, _theme.text); Place(label.rectTransform, icon != null ? 44 : 0, y, icon != null ? 330 : 374, 40);
++            if (icon != null) Ornament(parent, name + " icon", icon, 0, y + 4, 30, 30);
++            valueLabel = Label(parent, "", 22, _theme.text, readable: true); valueLabel.name = name + " value";
++            Place(valueLabel.rectTransform, 384, y, 86, 40); valueLabel.alignment = TextAlignmentOptions.Right;
+             RectTransform r = Rect(parent, name + " slider", typeof(Slider)); Place(r, 0, y + 44, 470, 30);
+             var track = Image(r, "Track", new Color(.18f, .25f, .29f)); Stretch(track.rectTransform, new Vector2(0, .4f), new Vector2(1, .6f));
+             var fill = Image(track.transform, "Fill", _theme.accent); Stretch(fill.rectTransform, Vector2.zero, Vector2.one);
+             var handleArea = Rect(r, "Handle area"); Stretch(handleArea, Vector2.zero, Vector2.one); handleArea.offsetMin = new Vector2(10, 0); handleArea.offsetMax = new Vector2(-10, 0);
+             var handle = Image(handleArea, "Handle", _theme.text); handle.rectTransform.anchorMin = new Vector2(.5f, 0); handle.rectTransform.anchorMax = new Vector2(.5f, 1); handle.rectTransform.sizeDelta = new Vector2(18, -4);
++            if (_theme.stoneSkin != null && _theme.stoneSkin.sliderDiamond != null)
++            { handle.sprite = _theme.stoneSkin.sliderDiamond; handle.preserveAspect = true; handle.rectTransform.sizeDelta = new Vector2(26, -4); }
+             var slider = r.GetComponent<Slider>(); slider.minValue = min; slider.maxValue = max; slider.fillRect = fill.rectTransform; slider.handleRect = handle.rectTransform; slider.targetGraphic = handle;
+             return slider;
+         }
+@@ -224,6 +243,11 @@
+             var label = r.GetComponent<TextMeshProUGUI>(); label.font = display ? _theme.displayFont : readable ? _theme.readableFont : _theme.labelFont;
+             label.text = text; label.fontSize = size * _theme.menuFontScale; label.color = color; label.raycastTarget = false; label.textWrappingMode = TextWrappingModes.NoWrap;
+             return label;
++        }
++        private static void Ornament(Transform parent, string name, Sprite sprite, float x, float y, float width, float height)
++        {
++            var image = Image(parent, name, Color.white); image.sprite = sprite; image.preserveAspect = true;
++            image.raycastTarget = false; Place(image.rectTransform, x, y, width, height);
+         }
+         private static Image Image(Transform parent, string name, Color color)
+         { var r = Rect(parent, name, typeof(Image)); var image = r.GetComponent<Image>(); image.color = color; return image; }
+--- a/Assets/Elemental/Tests/PlayMode/StoneSkinPlayTests.cs
++++ b/Assets/Elemental/Tests/PlayMode/StoneSkinPlayTests.cs
+@@ -46,6 +46,20 @@
+             {
+                 // Presentation page inspection only; no fake network codes or service calls.
+                 view.Show(page); yield return null;
++                var wordmark = view.transform.Find("Menu contents/Menu column/Stone wordmark").GetComponent<Image>();
++                Assert.That(wordmark.gameObject.activeInHierarchy, Is.True, "Header remains outside page-specific visibility.");
++                Assert.That(wordmark.sprite, Is.SameAs(theme.stoneSkin.wordmark));
++                Assert.That(wordmark.raycastTarget, Is.False);
++                if (page == FrontendPage.Settings)
++                {
++                    var settings = view.transform.Find("Menu contents/Menu column/Settings");
++                    Assert.That(settings.Find("MASTER VOLUME value").GetComponent<TMPro.TMP_Text>().text,
++                        Is.EqualTo(Mathf.RoundToInt(flow.Preferences.MasterVolume * 100f) + "%"));
++                    Assert.That(settings.Find("CAMERA SENSITIVITY value").GetComponent<TMPro.TMP_Text>().text,
++                        Is.EqualTo(flow.Preferences.Sensitivity.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "x"));
++                    var slider = settings.Find("MASTER VOLUME slider").GetComponent<UnityEngine.UI.Slider>();
++                    Assert.That(slider.handleRect.GetComponent<Image>().sprite, Is.SameAs(theme.stoneSkin.sliderDiamond));
++                }
+                 yield return Capture(page.ToString());
+             }
+             view.Show(FrontendPage.Main);
+@@ -54,6 +68,9 @@
+             var effect = play.GetComponent<FrontendButton>(); var graphic = (Image)play.targetGraphic;
+             Assert.That(graphic.transform.name, Is.EqualTo("Press Visual"));
+             Assert.That(graphic.sprite, Is.Not.Null);
++            var role = graphic.transform.Find("Button role icon").GetComponent<Image>();
++            Assert.That(role.sprite, Is.SameAs(theme.stoneSkin.botIcon)); Assert.That(role.raycastTarget, Is.False);
++            Assert.That(rect.sizeDelta, Is.EqualTo(new Vector2(470, 70)));
+             var pointer = new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left };
+             effect.OnPointerEnter(pointer); yield return null;
+             Assert.That(graphic.overrideSprite, Is.SameAs(theme.stoneSkin.hover));

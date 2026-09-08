@@ -102,6 +102,9 @@ namespace Elemental.Simulation.Bending
         }
 
         public bool OwnsInput => _state != State.Idle;
+        public float CrestCharge01 => _state == State.Chord &&
+            math.length(_crestDelta) >= CrestMinimumTravelViewport
+            ? math.saturate(math.length(_crestDelta) / 0.23f) : 0f;
 
         public DualMouseEarthGestureResult Step(in DualMouseEarthGestureFrame frame)
         {
@@ -116,7 +119,8 @@ namespace Elemental.Simulation.Bending
 
             if (_state == State.Idle)
             {
-                if (frame.PrimaryPressed && frame.ForcePressed)
+                if ((frame.PrimaryPressed && frame.ForcePressed) ||
+                    (frame.PrimaryHeld && frame.ForceHeld && (frame.PrimaryPressed || frame.ForcePressed)))
                 {
                     Begin(State.Chord, frame.Time, frame.PointerViewport);
                     return new DualMouseEarthGestureResult(DualMouseEarthResultKind.Tracking, true);

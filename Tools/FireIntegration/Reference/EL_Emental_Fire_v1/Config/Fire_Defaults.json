@@ -1,0 +1,55 @@
+{
+  "schema": "el-emental.fire.reference.v1",
+  "status": "proposed starting values; not profiled in Unity",
+  "units": "metres, seconds, radians; colours are linear RGB",
+  "group": {
+    "maxLiveGroupsHigh": 8, "maxLiveGroupsLow": 4,
+    "maxNodes": 6, "maxContactPatches": 8,
+    "baseProbes": 6, "maxExtraQueriesPerTick": 6,
+    "physicsHz": 60, "slowFieldHz": 20,
+    "maxParticleLifetime": 0.85, "retireGraceSeconds": 0.1
+  },
+  "flow": {
+    "radius": 0.45, "speed": 12.0, "responsePerSecond": 10.0,
+    "liftSpeed": 1.5, "swirlRadiansPerSecond": 1.5,
+    "noiseSpeed": 0.9, "noiseFrequencyRadiansPerMetre": 2.3,
+    "freeLiftAcceleration": 2.0, "freeDragPerSecond": 1.2,
+    "maxParticleSpeed": 24.0, "shellHalfThickness": 0.15
+  },
+  "contact": {
+    "skin": 0.015, "particleRadius": 0.035,
+    "steeringDistance": 0.35, "recoveryDepth": 0.08,
+    "spreadFraction": 0.8, "steeringResponsePerSecond": 22.0,
+    "projectionPasses": 3, "defaultSubsteps": 2, "maxSubsteps": 4,
+    "revalidateEveryPhysicsTick": true,
+    "maxUnconfirmedContactSeconds": 0.05,
+    "rotationSweepWarningRadiansPerSubstep": 0.1
+  },
+  "particles": {
+    "capacityHigh": 512, "capacityLow": 256,
+    "spawnRatePerGroup": 320.0,
+    "minLifetime": 0.45, "maxLifetime": 0.85,
+    "minWidth": 0.14, "maxWidth": 0.28,
+    "aspectRange": [1.8, 3.0], "sparkCapacity": 64
+  },
+  "shader": {
+    "edgeLinear": [0.65, 0.018, 0.003],
+    "bodyLinear": [1.0, 0.19, 0.008],
+    "coreLinear": [1.0, 0.72, 0.19],
+    "coreEmission": 3.0, "opacity": 0.9,
+    "distortion": 1.0, "shapeFPS": 0.0,
+    "softDepthMetres": 0.08, "nearStart": 0.12, "nearRange": 0.16,
+    "blend": "Alpha; straight HDR RGB; no manual premultiplication"
+  },
+  "lighting": {
+    "sharedBloomRequired": true,
+    "bloomThreshold": 1.1, "bloomIntensity": 0.35, "bloomScatter": 0.6,
+    "maxAdditionalUnshadowedLightsHigh": 2, "maxAdditionalUnshadowedLightsLow": 0
+  },
+  "performanceTargetsNotMeasurements": {
+    "resolution": "1920x1080; standalone player; fixed camera route",
+    "fireCPUmsP95": 0.8,
+    "fireGPUmsP95ExcludingExistingBloom": 2.0,
+    "steadyStateManagedAllocationBytesPerFrame": 0
+  }
+}

@@ -1,0 +1,20 @@
+# Fire, stone and graphics coordination — 2026-09-07
+
+Actual repo: nested El-Emental, shared main, HEAD1235579 with existing uncommitted work. No reset, mass-stage, broad installers or push.
+Neighbor task01a07400-1981-7410-83f6-58f1e0d88e51 owns prior wall/input/sonar/online context. Exactly one owner may refresh actual Assets and run Unity.
+
+Current Unity owner: ROOT exclusively. All three delegated lanes are integrated. SidebarIconEffects, actual center-pivot correction, card y154/card symbolx65, passive hit-source sprite cleared plus old rim disabled on cream state. UiContourBloom ring shader rejected visually by user; root replaced with dense Gaussian soft field, pending fresh UI screenshots. IslandPerpendicularOverhead actual12/12 new renderers,55generated0rejected, worldUpDot1. GroundWispSurfaceProjection, ColumnFireArtFollowup, CloudFluffCompanions imported/installed; fresh FX visual acceptance pending. Stone Skin Play running; no overlapping Unity commands. Native computer interaction remains stopped.
+
+Fire actual final evidence: Play4/4; 1080p eightHigh cosmetic CPU p95 .9711ms,0GC; still misses .8ms even before additional world/adapter costs; GPU unavailable. Native Gamma fallback explicit. No invented gameplay casts. Stone heavy physical4cm drop test and final wall contracts pass; dust compositing fixed. Details in integration document.
+
+Graphics user local ZIP SHA45C59D2DE36BA89C1657E92DE51CAD6709F4F61AB284030B353E471B59A4DF88;90/90RGBA atlas matches,89 runtime art textures installed. Original source preserved. UI theme skin installed without HUDLayout/font changes; current combined UI Play3/4 exposed actual arena restore exception. Distant backdrop functional7/7Edit+1Play; existing RumbleArenaSandstone exact material now bound. Visual shapes are placeholders pending user's functions; DO_NOT_APPLY ValleyArt independent shapes/palette. Clouds imported and under validation. Five visual targets preserved Reference/UserVisualTargets.
+
+Verified follow-up: ProductionArenaRestorePlay2/2 (09:28:30), StoneSkinPlay4/4 (09:30:10). Startup readiness now captures the authored baseline before releasing physics. Saved-arena build09:33 succeeded. Basic online Run-20260907T093340 passed movement/input/disconnect and menu restoration on both peers. Stone-combat Run-20260907T093755 remains partial: no attributed selected-stone kill. Both pairs closed. OnlineStoneTrace is imported for the next fresh build; do not rerun the old binary as new evidence.
+
+Next: actual twelve-form preview, optional reference UI profile and full menu/HUD/animation visual review, then analytic atmosphere V2 and combined scene review. Latest user-provided procedural specification now authorizes replacing placeholder rock forms. Preserve original font/layout assets through separate reference profile; Cinzel source and OFL imported. Old menu backing must be absent in the actual skinned path. Functional tests alone do not meet user visual acceptance. Save only owned scene additions and verify preservation, then fresh build and sequential network checks with recorded process IDs.
+
+Monitoring automation el-emental remains20min, quiet unchanged. Browser download denial prevents attempts/workarounds without new authorization; explicitly user-supplied local ZIP processing is authorized and already complete. Final source status check read-only.
+
+Detailed evidence and unresolved acceptance: Docs/FIRE_STONE_GRAPHICS_INTEGRATION.md. No overall graphics/performance/network completion claimed before final tests.
+
+2026-09-07 17:30Z checkpoint: root owns Unity, but MCP relay disconnected and shut down. No active editor restart or alternate control attempted. Latest actual changes/tests/pending checks: Tools/FireIntegration/Reports/SoftStoneAndCinematicAtmosphere.md. Second ArenaFractureShadingEdit run has no result; do not repeat while unknown. First run14/16 stale expectations now updated. WindPlay1/1 fresh17:12, VisualContracts15/15, Valley20/20. Latest fog/fire/art revisions require fresh captures after reconnect; assets saved, preservationPASS.

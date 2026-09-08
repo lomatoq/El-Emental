@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 447b99d1e5020d54a8495a59d8e6d9ee, type: 3}
+  m_Name: ValleyAtmosphereV2
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.Rendering.ValleyAtmosphereProfile
+  PlaneClearance: 15
+  HeightFalloff: 45
+  VeilDensity: 0.018
+  SkyDistance: 12000
+  NearClearRange: 300
+  FarHazeDistance: 450
+  MaximumOpaqueOpacity: 0.78
+  DayFog: {r: 0.78, g: 0.88, b: 0.98, a: 1}
+  DayFogBottom: {r: 0.659, g: 0.78, b: 0.875, a: 1}
+  NightFog: {r: 0.08, g: 0.11, b: 0.16, a: 1}
+  DuskFog: {r: 0.5, g: 0.36, b: 0.33, a: 1}
+  FarChromaticPixels: 0.65
+  CloudArt: {fileID: 2800000, guid: 313ea21355a393c42927c7d2fba6c970, type: 3}
+  CloudOpacity: 0.95
+  CloudDriftMetres: 8
+  CloudDriftPeriod: 160
+  Bank3: {x: -150, y: 140, z: -1500}
+  Bank3Size: {x: 2100, y: 900}
+  Bank0: {x: -600, y: 135, z: 1000}
+  Bank1: {x: 750, y: 170, z: 1600}
+  Bank2: {x: -150, y: 90, z: 2400}
+  Bank0Size: {x: 1300, y: 700}
+  Bank1Size: {x: 1700, y: 710}
+  Bank2Size: {x: 2500, y: 700}

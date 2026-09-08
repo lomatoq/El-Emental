@@ -1,0 +1,3079 @@
+{
+  "schema_version": 1,
+  "coordinate_system": "top-left pixels; x,y,w,h; no trimming or rotation",
+  "atlas_size": [
+    2048,
+    2048
+  ],
+  "gutter": 12,
+  "source_color_space": "sRGB art; linear data masks",
+  "assets": [
+    {
+      "id": "curtain_left",
+      "category": "Panels",
+      "file": "Assets/ElEmentalStoneUI/Art/Panels/curtain_left.png",
+      "width": 768,
+      "height": 1056,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Menu background; uniform scaling only. No 9-slice.",
+      "provenance": "User reference: retained stone perimeter + reconstructed clean center",
+      "atlas": "atlas_02.png",
+      "rect_top_left": [
+        664,
+        12,
+        768,
+        1056
+      ],
+      "rect_unity_bottom_left": [
+        664,
+        980,
+        768,
+        1056
+      ]
+    },
+    {
+      "id": "curtain_right",
+      "category": "Panels",
+      "file": "Assets/ElEmentalStoneUI/Art/Panels/curtain_right.png",
+      "width": 768,
+      "height": 1056,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Right-sided menu/inspector; uniform scaling only.",
+      "provenance": "Mirrored clean reference-derived left curtain",
+      "atlas": "atlas_03.png",
+      "rect_top_left": [
+        792,
+        12,
+        768,
+        1056
+      ],
+      "rect_unity_bottom_left": [
+        792,
+        980,
+        768,
+        1056
+      ]
+    },
+    {
+      "id": "curtain_quiet",
+      "category": "Panels",
+      "file": "Assets/ElEmentalStoneUI/Art/Panels/curtain_quiet.png",
+      "width": 768,
+      "height": 1056,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Compact / accessibility variant. Same silhouette as curtain_left.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_03.png",
+      "rect_top_left": [
+        12,
+        12,
+        768,
+        1056
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        980,
+        768,
+        1056
+      ]
+    },
+    {
+      "id": "curtain_cap_top",
+      "category": "Segments",
+      "file": "Assets/ElEmentalStoneUI/Art/Segments/curtain_cap_top.png",
+      "width": 768,
+      "height": 224,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Top cap; fixed aspect.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_04.png",
+      "rect_top_left": [
+        792,
+        12,
+        768,
+        224
+      ],
+      "rect_unity_bottom_left": [
+        792,
+        1812,
+        768,
+        224
+      ]
+    },
+    {
+      "id": "curtain_cap_bottom",
+      "category": "Segments",
+      "file": "Assets/ElEmentalStoneUI/Art/Segments/curtain_cap_bottom.png",
+      "width": 768,
+      "height": 224,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Bottom cap; fixed aspect.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_04.png",
+      "rect_top_left": [
+        12,
+        12,
+        768,
+        224
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        1812,
+        768,
+        224
+      ]
+    },
+    {
+      "id": "stone_center_tile",
+      "category": "Segments",
+      "file": "Assets/ElEmentalStoneUI/Art/Segments/stone_center_tile.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Quiet fill texture. Repeat; no alpha required.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_03.png",
+      "rect_top_left": [
+        1296,
+        1512,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1296,
+        280,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "wordmark_master",
+      "category": "Brand",
+      "file": "Assets/ElEmentalStoneUI/Art/Brand/wordmark_master.png",
+      "width": 386,
+      "height": 87,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Use this single immutable master on every screen. Native extracted raster; replace with approved higher-res original if available.",
+      "provenance": "User settings reference, original lettering extracted, not retyped",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        12,
+        12,
+        386,
+        87
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        1949,
+        386,
+        87
+      ]
+    },
+    {
+      "id": "emblem_master",
+      "category": "Brand",
+      "file": "Assets/ElEmentalStoneUI/Art/Brand/emblem_master.png",
+      "width": 70,
+      "height": 78,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Original four-element emblem. Native small screenshot extraction; 64-80 display px maximum.",
+      "provenance": "User reference emblem; silhouette alpha reconstruction",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        410,
+        12,
+        70,
+        78
+      ],
+      "rect_unity_bottom_left": [
+        410,
+        1958,
+        70,
+        78
+      ]
+    },
+    {
+      "id": "button_normal",
+      "category": "Buttons",
+      "file": "Assets/ElEmentalStoneUI/Art/Buttons/button_normal.png",
+      "width": 640,
+      "height": 136,
+      "border_lbrt": [
+        64,
+        25,
+        64,
+        25
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Text and icon live as children; fixed caps, scale quiet center only.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        664,
+        308,
+        640,
+        136
+      ],
+      "rect_unity_bottom_left": [
+        664,
+        1604,
+        640,
+        136
+      ]
+    },
+    {
+      "id": "button_hover",
+      "category": "Buttons",
+      "file": "Assets/ElEmentalStoneUI/Art/Buttons/button_hover.png",
+      "width": 640,
+      "height": 136,
+      "border_lbrt": [
+        64,
+        25,
+        64,
+        25
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Text and icon live as children; fixed caps, scale quiet center only.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        12,
+        308,
+        640,
+        136
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        1604,
+        640,
+        136
+      ]
+    },
+    {
+      "id": "button_pressed",
+      "category": "Buttons",
+      "file": "Assets/ElEmentalStoneUI/Art/Buttons/button_pressed.png",
+      "width": 640,
+      "height": 136,
+      "border_lbrt": [
+        64,
+        25,
+        64,
+        25
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Text and icon live as children; fixed caps, scale quiet center only.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        1316,
+        308,
+        640,
+        136
+      ],
+      "rect_unity_bottom_left": [
+        1316,
+        1604,
+        640,
+        136
+      ]
+    },
+    {
+      "id": "button_disabled",
+      "category": "Buttons",
+      "file": "Assets/ElEmentalStoneUI/Art/Buttons/button_disabled.png",
+      "width": 640,
+      "height": 136,
+      "border_lbrt": [
+        64,
+        25,
+        64,
+        25
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Text and icon live as children; fixed caps, scale quiet center only.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        12,
+        160,
+        640,
+        136
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        1752,
+        640,
+        136
+      ]
+    },
+    {
+      "id": "button_earth",
+      "category": "Buttons",
+      "file": "Assets/ElEmentalStoneUI/Art/Buttons/button_earth.png",
+      "width": 640,
+      "height": 136,
+      "border_lbrt": [
+        64,
+        25,
+        64,
+        25
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Text and icon live as children; fixed caps, scale quiet center only.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        664,
+        160,
+        640,
+        136
+      ],
+      "rect_unity_bottom_left": [
+        664,
+        1752,
+        640,
+        136
+      ]
+    },
+    {
+      "id": "button_water",
+      "category": "Buttons",
+      "file": "Assets/ElEmentalStoneUI/Art/Buttons/button_water.png",
+      "width": 640,
+      "height": 136,
+      "border_lbrt": [
+        64,
+        25,
+        64,
+        25
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Text and icon live as children; fixed caps, scale quiet center only.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        12,
+        456,
+        640,
+        136
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        1456,
+        640,
+        136
+      ]
+    },
+    {
+      "id": "button_fire",
+      "category": "Buttons",
+      "file": "Assets/ElEmentalStoneUI/Art/Buttons/button_fire.png",
+      "width": 640,
+      "height": 136,
+      "border_lbrt": [
+        64,
+        25,
+        64,
+        25
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Text and icon live as children; fixed caps, scale quiet center only.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        1316,
+        160,
+        640,
+        136
+      ],
+      "rect_unity_bottom_left": [
+        1316,
+        1752,
+        640,
+        136
+      ]
+    },
+    {
+      "id": "button_air",
+      "category": "Buttons",
+      "file": "Assets/ElEmentalStoneUI/Art/Buttons/button_air.png",
+      "width": 640,
+      "height": 136,
+      "border_lbrt": [
+        64,
+        25,
+        64,
+        25
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Text and icon live as children; fixed caps, scale quiet center only.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        492,
+        12,
+        640,
+        136
+      ],
+      "rect_unity_bottom_left": [
+        492,
+        1900,
+        640,
+        136
+      ]
+    },
+    {
+      "id": "button_danger",
+      "category": "Buttons",
+      "file": "Assets/ElEmentalStoneUI/Art/Buttons/button_danger.png",
+      "width": 640,
+      "height": 136,
+      "border_lbrt": [
+        64,
+        25,
+        64,
+        25
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Text and icon live as children; fixed caps, scale quiet center only.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        1144,
+        12,
+        640,
+        136
+      ],
+      "rect_unity_bottom_left": [
+        1144,
+        1900,
+        640,
+        136
+      ]
+    },
+    {
+      "id": "window_body",
+      "category": "Panels",
+      "file": "Assets/ElEmentalStoneUI/Art/Panels/window_body.png",
+      "width": 640,
+      "height": 420,
+      "border_lbrt": [
+        40,
+        40,
+        40,
+        40
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Reusable 9-sliced surface; contents never baked.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_03.png",
+      "rect_top_left": [
+        12,
+        1080,
+        640,
+        420
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        548,
+        640,
+        420
+      ]
+    },
+    {
+      "id": "tooltip_body",
+      "category": "Panels",
+      "file": "Assets/ElEmentalStoneUI/Art/Panels/tooltip_body.png",
+      "width": 384,
+      "height": 192,
+      "border_lbrt": [
+        28,
+        28,
+        28,
+        28
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Reusable 9-sliced surface; contents never baked.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_03.png",
+      "rect_top_left": [
+        664,
+        1080,
+        384,
+        192
+      ],
+      "rect_unity_bottom_left": [
+        664,
+        776,
+        384,
+        192
+      ]
+    },
+    {
+      "id": "code_field",
+      "category": "Panels",
+      "file": "Assets/ElEmentalStoneUI/Art/Panels/code_field.png",
+      "width": 640,
+      "height": 136,
+      "border_lbrt": [
+        30,
+        30,
+        30,
+        30
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Reusable 9-sliced surface; contents never baked.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_03.png",
+      "rect_top_left": [
+        1060,
+        1080,
+        640,
+        136
+      ],
+      "rect_unity_bottom_left": [
+        1060,
+        832,
+        640,
+        136
+      ]
+    },
+    {
+      "id": "ribbon",
+      "category": "Panels",
+      "file": "Assets/ElEmentalStoneUI/Art/Panels/ribbon.png",
+      "width": 640,
+      "height": 96,
+      "border_lbrt": [
+        46,
+        46,
+        46,
+        46
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Reusable 9-sliced surface; contents never baked.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_03.png",
+      "rect_top_left": [
+        504,
+        1512,
+        640,
+        96
+      ],
+      "rect_unity_bottom_left": [
+        504,
+        440,
+        640,
+        96
+      ]
+    },
+    {
+      "id": "toast_body",
+      "category": "Panels",
+      "file": "Assets/ElEmentalStoneUI/Art/Panels/toast_body.png",
+      "width": 480,
+      "height": 128,
+      "border_lbrt": [
+        32,
+        32,
+        32,
+        32
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Reusable 9-sliced surface; contents never baked.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_03.png",
+      "rect_top_left": [
+        12,
+        1512,
+        480,
+        128
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        408,
+        480,
+        128
+      ]
+    },
+    {
+      "id": "edge_slant",
+      "category": "Segments",
+      "file": "Assets/ElEmentalStoneUI/Art/Segments/edge_slant.png",
+      "width": 128,
+      "height": 448,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Attach at computed slope; do not stretch independently",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_03.png",
+      "rect_top_left": [
+        1156,
+        1512,
+        128,
+        448
+      ],
+      "rect_unity_bottom_left": [
+        1156,
+        88,
+        128,
+        448
+      ]
+    },
+    {
+      "id": "corner_cut",
+      "category": "Segments",
+      "file": "Assets/ElEmentalStoneUI/Art/Segments/corner_cut.png",
+      "width": 176,
+      "height": 144,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Fixed corner with gold outer hairline",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_04.png",
+      "rect_top_left": [
+        1572,
+        12,
+        176,
+        144
+      ],
+      "rect_unity_bottom_left": [
+        1572,
+        1892,
+        176,
+        144
+      ]
+    },
+    {
+      "id": "divider",
+      "category": "Segments",
+      "file": "Assets/ElEmentalStoneUI/Art/Segments/divider.png",
+      "width": 576,
+      "height": 48,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Header / result separator",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_04.png",
+      "rect_top_left": [
+        12,
+        248,
+        576,
+        48
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        1752,
+        576,
+        48
+      ]
+    },
+    {
+      "id": "edge_horizontal",
+      "category": "Segments",
+      "file": "Assets/ElEmentalStoneUI/Art/Segments/edge_horizontal.png",
+      "width": 512,
+      "height": 48,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Straight edge, 3-slice horizontally",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_04.png",
+      "rect_top_left": [
+        600,
+        248,
+        512,
+        48
+      ],
+      "rect_unity_bottom_left": [
+        600,
+        1752,
+        512,
+        48
+      ]
+    },
+    {
+      "id": "element_earth",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/element_earth.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Element glyph; no surrounding frame / label",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        1676,
+        1644,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1676,
+        148,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "element_fire",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/element_fire.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Element glyph; no surrounding frame / label",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        12,
+        12,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        1780,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "element_water",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/element_water.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Element glyph; no surrounding frame / label",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        280,
+        12,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        280,
+        1780,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "element_air",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/element_air.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Element glyph; no surrounding frame / label",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        1408,
+        1644,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1408,
+        148,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_play",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_play.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: play",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        12,
+        1084,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        708,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_pause",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_pause.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: pause",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        1352,
+        816,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1352,
+        976,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_back",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_back.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: back",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        816,
+        12,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        816,
+        1780,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_next",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_next.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: next",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        1084,
+        816,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1084,
+        976,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_close",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_close.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: close",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        12,
+        280,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        1512,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_check",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_check.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: check",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        1352,
+        12,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1352,
+        1780,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_plus",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_plus.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: plus",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        548,
+        1084,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        548,
+        708,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_minus",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_minus.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: minus",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        12,
+        816,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        976,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_copy",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_copy.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: copy",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        548,
+        280,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        548,
+        1512,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_host",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_host.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: host",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        280,
+        548,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        280,
+        1244,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_join",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_join.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: join",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        816,
+        548,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        816,
+        1244,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_volume",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_volume.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: volume",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        280,
+        1352,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        280,
+        440,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_mute",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_mute.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: mute",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        548,
+        816,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        548,
+        976,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_settings",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_settings.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: settings",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        1084,
+        1084,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1084,
+        708,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_crosshair",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_crosshair.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: crosshair",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        816,
+        280,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        816,
+        1512,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_health",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_health.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: health",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        12,
+        548,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        1244,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_mana",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_mana.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: mana",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        1620,
+        548,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1620,
+        1244,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_lock",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_lock.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: lock",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        1352,
+        548,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1352,
+        1244,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_unlock",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_unlock.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: unlock",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        12,
+        1352,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        440,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_info",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_info.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: info",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        548,
+        548,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        548,
+        1244,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_warning",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_warning.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: warning",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        548,
+        1352,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        548,
+        440,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_refresh",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_refresh.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: refresh",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        816,
+        1084,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        816,
+        708,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_exit",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_exit.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: exit",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        1084,
+        280,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1084,
+        1512,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_expand",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_expand.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: expand",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        1352,
+        280,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1352,
+        1512,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_motion",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_motion.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: motion",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        280,
+        816,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        280,
+        976,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_keyboard",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_keyboard.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: keyboard",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        1084,
+        548,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1084,
+        1244,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_network",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_network.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: network",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        816,
+        816,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        816,
+        976,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_eye",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_eye.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: eye",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        1620,
+        280,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1620,
+        1512,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_swords",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_swords.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: swords",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        1352,
+        1084,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1352,
+        708,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_players",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_players.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: players",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        280,
+        1084,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        280,
+        708,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_trophy",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_trophy.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: trophy",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        1620,
+        1084,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1620,
+        708,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_bot",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_bot.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: bot",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        1084,
+        12,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1084,
+        1780,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_pin",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_pin.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: pin",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        1620,
+        816,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1620,
+        976,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_compass",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_compass.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: compass",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        280,
+        280,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        280,
+        1512,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_arrow_player",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_arrow_player.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: arrow_player",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        548,
+        12,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        548,
+        1780,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "icon_clock",
+      "category": "Icons",
+      "file": "Assets/ElEmentalStoneUI/Art/Icons/icon_clock.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "UI action: clock",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        1620,
+        12,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1620,
+        1780,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "diamond_normal",
+      "category": "Frames",
+      "file": "Assets/ElEmentalStoneUI/Art/Frames/diamond_normal.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Element selector frame; color is not the only selected indicator",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        548,
+        1644,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        548,
+        148,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "diamond_active",
+      "category": "Frames",
+      "file": "Assets/ElEmentalStoneUI/Art/Frames/diamond_active.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Element selector frame; color is not the only selected indicator",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        12,
+        1644,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        148,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "diamond_locked",
+      "category": "Frames",
+      "file": "Assets/ElEmentalStoneUI/Art/Frames/diamond_locked.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Element selector frame; color is not the only selected indicator",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        280,
+        1644,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        280,
+        148,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "circle_frame",
+      "category": "Frames",
+      "file": "Assets/ElEmentalStoneUI/Art/Frames/circle_frame.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        1468,
+        992,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1468,
+        800,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "circle_ring",
+      "category": "Frames",
+      "file": "Assets/ElEmentalStoneUI/Art/Frames/circle_ring.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        1736,
+        992,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1736,
+        800,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "minimap_frame",
+      "category": "Frames",
+      "file": "Assets/ElEmentalStoneUI/Art/Frames/minimap_frame.png",
+      "width": 384,
+      "height": 384,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Map data is a separate layer. No invented tactical information.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        1072,
+        992,
+        384,
+        384
+      ],
+      "rect_unity_bottom_left": [
+        1072,
+        672,
+        384,
+        384
+      ]
+    },
+    {
+      "id": "timer_plate",
+      "category": "Frames",
+      "file": "Assets/ElEmentalStoneUI/Art/Frames/timer_plate.png",
+      "width": 352,
+      "height": 132,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Timer text is live; red/blue team wings are separate.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        816,
+        1644,
+        352,
+        132
+      ],
+      "rect_unity_bottom_left": [
+        816,
+        272,
+        352,
+        132
+      ]
+    },
+    {
+      "id": "team_wing",
+      "category": "Frames",
+      "file": "Assets/ElEmentalStoneUI/Art/Frames/team_wing.png",
+      "width": 216,
+      "height": 64,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Tint red/blue beside the timer, never beside the score digits.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        1180,
+        1644,
+        216,
+        64
+      ],
+      "rect_unity_bottom_left": [
+        1180,
+        340,
+        216,
+        64
+      ]
+    },
+    {
+      "id": "meter_frame_left",
+      "category": "Frames",
+      "file": "Assets/ElEmentalStoneUI/Art/Frames/meter_frame_left.png",
+      "width": 192,
+      "height": 640,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Frame for clipped-bottom vertical meter.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        664,
+        992,
+        192,
+        640
+      ],
+      "rect_unity_bottom_left": [
+        664,
+        416,
+        192,
+        640
+      ]
+    },
+    {
+      "id": "meter_fill_left",
+      "category": "Masks",
+      "file": "Assets/ElEmentalStoneUI/Art/Masks/meter_fill_left.png",
+      "width": 192,
+      "height": 640,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "White alpha fill. Tint red / blue; clip, never squash fill to change value.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        816,
+        1352,
+        192,
+        640
+      ],
+      "rect_unity_bottom_left": [
+        816,
+        56,
+        192,
+        640
+      ]
+    },
+    {
+      "id": "meter_frame_right",
+      "category": "Frames",
+      "file": "Assets/ElEmentalStoneUI/Art/Frames/meter_frame_right.png",
+      "width": 192,
+      "height": 640,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Frame for clipped-bottom vertical meter.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        868,
+        992,
+        192,
+        640
+      ],
+      "rect_unity_bottom_left": [
+        868,
+        416,
+        192,
+        640
+      ]
+    },
+    {
+      "id": "meter_fill_right",
+      "category": "Masks",
+      "file": "Assets/ElEmentalStoneUI/Art/Masks/meter_fill_right.png",
+      "width": 192,
+      "height": 640,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "White alpha fill. Tint red / blue; clip, never squash fill to change value.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        1020,
+        1352,
+        192,
+        640
+      ],
+      "rect_unity_bottom_left": [
+        1020,
+        56,
+        192,
+        640
+      ]
+    },
+    {
+      "id": "glow_soft",
+      "category": "FX",
+      "file": "Assets/ElEmentalStoneUI/Art/FX/glow_soft.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Independent tintable effect. Never baked into text or base art.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        1468,
+        456,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1468,
+        1336,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "glow_ring",
+      "category": "FX",
+      "file": "Assets/ElEmentalStoneUI/Art/FX/glow_ring.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Independent tintable effect. Never baked into text or base art.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        1200,
+        456,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1200,
+        1336,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "spark_diamond",
+      "category": "FX",
+      "file": "Assets/ElEmentalStoneUI/Art/FX/spark_diamond.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Independent tintable effect. Never baked into text or base art.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        1736,
+        456,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1736,
+        1336,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "dust_soft",
+      "category": "FX",
+      "file": "Assets/ElEmentalStoneUI/Art/FX/dust_soft.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Independent tintable effect. Never baked into text or base art.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        932,
+        456,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        932,
+        1336,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "button_halo",
+      "category": "FX",
+      "file": "Assets/ElEmentalStoneUI/Art/FX/button_halo.png",
+      "width": 640,
+      "height": 128,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Independent tintable effect. Never baked into text or base art.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        280,
+        724,
+        640,
+        128
+      ],
+      "rect_unity_bottom_left": [
+        280,
+        1196,
+        640,
+        128
+      ]
+    },
+    {
+      "id": "line_glint",
+      "category": "FX",
+      "file": "Assets/ElEmentalStoneUI/Art/FX/line_glint.png",
+      "width": 640,
+      "height": 128,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Independent tintable effect. Never baked into text or base art.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        932,
+        724,
+        640,
+        128
+      ],
+      "rect_unity_bottom_left": [
+        932,
+        1196,
+        640,
+        128
+      ]
+    },
+    {
+      "id": "sweep_band",
+      "category": "FX",
+      "file": "Assets/ElEmentalStoneUI/Art/FX/sweep_band.png",
+      "width": 640,
+      "height": 128,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Independent tintable effect. Never baked into text or base art.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        12,
+        992,
+        640,
+        128
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        928,
+        640,
+        128
+      ]
+    },
+    {
+      "id": "vignette",
+      "category": "FX",
+      "file": "Assets/ElEmentalStoneUI/Art/FX/vignette.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Independent tintable effect. Never baked into text or base art.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        12,
+        724,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        1068,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "noise_soft",
+      "category": "Masks",
+      "file": "Assets/ElEmentalStoneUI/Art/Masks/noise_soft.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": false,
+      "alpha": "straight",
+      "usage": "Independent tintable effect. Never baked into text or base art.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_01.png",
+      "rect_top_left": [
+        1224,
+        1352,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        1224,
+        440,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "button_fx_packed",
+      "category": "Masks",
+      "file": "Assets/ElEmentalStoneUI/Art/Masks/button_fx_packed.png",
+      "width": 640,
+      "height": 136,
+      "border_lbrt": [
+        64,
+        25,
+        64,
+        25
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": false,
+      "alpha": "straight",
+      "usage": "R rim / G crack / B macro noise / A silhouette. Linear data, uncompressed.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_02.png",
+      "rect_top_left": [
+        12,
+        12,
+        640,
+        136
+      ],
+      "rect_unity_bottom_left": [
+        12,
+        1900,
+        640,
+        136
+      ]
+    },
+    {
+      "id": "distant_stone_detail",
+      "category": "Environment",
+      "file": "Assets/ElEmentalStoneUI/Art/Environment/distant_stone_detail.png",
+      "width": 256,
+      "height": 256,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "Low-contrast tri-planar detail for the URP distant-rock shader.",
+      "provenance": "Procedural, authored for this pack",
+      "atlas": "atlas_00.png",
+      "rect_top_left": [
+        664,
+        456,
+        256,
+        256
+      ],
+      "rect_unity_bottom_left": [
+        664,
+        1336,
+        256,
+        256
+      ]
+    },
+    {
+      "id": "generated_stone_swatch",
+      "category": "SourceOnly",
+      "file": "Assets/ElEmentalStoneUI/Art/SourceOnly/generated_stone_swatch.png",
+      "width": 256,
+      "height": 128,
+      "border_lbrt": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "sRGB": true,
+      "alpha": "straight",
+      "usage": "AI material swatch only; not loaded by the runtime library.",
+      "provenance": "AI board, extraction rectangle [1244,93,116,54] at 1536x1024",
+      "atlas": "atlas_04.png",
+      "rect_top_left": [
+        1124,
+        248,
+        256,
+        128
+      ],
+      "rect_unity_bottom_left": [
+        1124,
+        1672,
+        256,
+        128
+      ]
+    }
+  ],
+  "pages": [
+    "atlas_00.png",
+    "atlas_01.png",
+    "atlas_02.png",
+    "atlas_03.png",
+    "atlas_04.png"
+  ]
+}

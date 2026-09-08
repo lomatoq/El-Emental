@@ -1,64 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
-<test-run id="2" testcasecount="7" result="Passed" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-05 09:30:22Z" end-time="2026-09-05 09:30:22Z" duration="0.0068087">
-  <test-suite type="TestSuite" id="2015" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="817" result="Passed" start-time="2026-09-05 09:30:22Z" end-time="2026-09-05 09:30:22Z" duration="0.006809" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+<test-run id="2" testcasecount="10" result="Passed" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.0402505">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="934" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.040251" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
     <properties>
       <property name="platform" value="EditMode" />
     </properties>
-    <test-suite type="Assembly" id="2001" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="817" result="Passed" start-time="2026-09-05 09:30:22Z" end-time="2026-09-05 09:30:22Z" duration="0.006488" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <test-suite type="Assembly" id="2155" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="923" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.033445" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
       <properties>
-        <property name="_PID" value="56680" />
+        <property name="_PID" value="21092" />
         <property name="_APPDOMAIN" value="Unity Child Domain" />
         <property name="platform" value="EditMode" />
         <property name="EditorOnly" value="True" />
       </properties>
-      <test-suite type="TestSuite" id="2002" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="817" result="Passed" start-time="2026-09-05 09:30:22Z" end-time="2026-09-05 09:30:22Z" duration="0.006272" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <test-suite type="TestSuite" id="2156" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="923" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.033018" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-suite type="TestSuite" id="2003" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="817" result="Passed" start-time="2026-09-05 09:30:22Z" end-time="2026-09-05 09:30:22Z" duration="0.006095" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <test-suite type="TestSuite" id="2157" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="923" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.032871" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
           <properties />
-          <test-suite type="TestSuite" id="2004" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="817" result="Passed" start-time="2026-09-05 09:30:22Z" end-time="2026-09-05 09:30:22Z" duration="0.005905" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <test-suite type="TestSuite" id="2158" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="923" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.032669" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
             <properties />
-            <test-suite type="TestFixture" id="1702" name="EarthSeismicPerceptionTests" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-05 09:30:22Z" end-time="2026-09-05 09:30:22Z" duration="0.005540" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <test-suite type="TestFixture" id="1808" name="EarthSeismicPerceptionTests" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.031842" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
               <properties />
-              <test-suite type="ParameterizedMethod" id="1709" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-05 09:30:22Z" end-time="2026-09-05 09:30:22Z" duration="0.003931" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <test-suite type="ParameterizedMethod" id="1812" name="FadeHasIntermediateFramesAndReversesWithoutReset" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.FadeHasIntermediateFramesAndReversesWithoutReset" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.021619" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
                 <properties />
-                <test-case id="1703" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,True,False,True)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,True,False,True)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="475879682" result="Passed" start-time="2026-09-05 09:30:22Z" end-time="2026-09-05 09:30:22Z" duration="0.001027" asserts="0">
+                <test-case id="1809" name="FadeHasIntermediateFramesAndReversesWithoutReset(30)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.FadeHasIntermediateFramesAndReversesWithoutReset(30)" methodname="FadeHasIntermediateFramesAndReversesWithoutReset" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="2008205914" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.015940" asserts="0">
                   <properties>
                     <property name="retryIteration" value="0" />
                     <property name="repeatIteration" value="0" />
                   </properties>
                 </test-case>
-                <test-case id="1704" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(False,True,True,True,False,False)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(False,True,True,True,False,False)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="477846236" result="Passed" start-time="2026-09-05 09:30:22Z" end-time="2026-09-05 09:30:22Z" duration="0.000375" asserts="0">
+                <test-case id="1810" name="FadeHasIntermediateFramesAndReversesWithoutReset(60)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.FadeHasIntermediateFramesAndReversesWithoutReset(60)" methodname="FadeHasIntermediateFramesAndReversesWithoutReset" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="1100077067" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.000112" asserts="0">
                   <properties>
                     <property name="retryIteration" value="0" />
                     <property name="repeatIteration" value="0" />
                   </properties>
                 </test-case>
-                <test-case id="1705" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,False,True,True,False,False)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,False,True,True,False,False)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="652330025" result="Passed" start-time="2026-09-05 09:30:22Z" end-time="2026-09-05 09:30:22Z" duration="0.000192" asserts="0">
-                  <properties>
-                    <property name="retryIteration" value="0" />
-                    <property name="repeatIteration" value="0" />
-                  </properties>
-                </test-case>
-                <test-case id="1706" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,False,True,False,False)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,False,True,False,False)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="1441356594" result="Passed" start-time="2026-09-05 09:30:22Z" end-time="2026-09-05 09:30:22Z" duration="0.000149" asserts="0">
-                  <properties>
-                    <property name="retryIteration" value="0" />
-                    <property name="repeatIteration" value="0" />
-                  </properties>
-                </test-case>
-                <test-case id="1707" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,False,False,False)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,False,False,False)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="610226132" result="Passed" start-time="2026-09-05 09:30:22Z" end-time="2026-09-05 09:30:22Z" duration="0.000125" asserts="0">
-                  <properties>
-                    <property name="retryIteration" value="0" />
-                    <property name="repeatIteration" value="0" />
-                  </properties>
-                </test-case>
-                <test-case id="1708" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,True,True,False)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,True,True,False)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="832173022" result="Passed" start-time="2026-09-05 09:30:22Z" end-time="2026-09-05 09:30:22Z" duration="0.000115" asserts="0">
+                <test-case id="1811" name="FadeHasIntermediateFramesAndReversesWithoutReset(120)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.FadeHasIntermediateFramesAndReversesWithoutReset(120)" methodname="FadeHasIntermediateFramesAndReversesWithoutReset" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="58626362" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.000052" asserts="0">
                   <properties>
                     <property name="retryIteration" value="0" />
                     <property name="repeatIteration" value="0" />
                   </properties>
                 </test-case>
               </test-suite>
-              <test-case id="1710" name="WaveExpiresAndTravelsAtPredictableWorldSpeed" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.WaveExpiresAndTravelsAtPredictableWorldSpeed" methodname="WaveExpiresAndTravelsAtPredictableWorldSpeed" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="506349699" result="Passed" start-time="2026-09-05 09:30:22Z" end-time="2026-09-05 09:30:22Z" duration="0.000781" asserts="0">
+              <test-suite type="ParameterizedMethod" id="1819" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.002456" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1813" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,True,False,True)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,True,False,True)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="383853678" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.001525" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1814" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(False,True,True,True,False,False)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(False,True,True,True,False,False)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="1821657964" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.000047" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1815" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,False,True,True,False,False)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,False,True,True,False,False)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="833859401" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.000035" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1816" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,False,True,False,False)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,False,True,False,False)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="1289513234" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.000037" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1817" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,False,False,False)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,False,False,False)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="1525223562" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.000031" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1818" name="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,True,True,False)" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.VisionRequiresRequestedEarthAndActualUnbrokenFootSupport(True,True,True,True,True,False)" methodname="VisionRequiresRequestedEarthAndActualUnbrokenFootSupport" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="1858887897" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.000034" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1820" name="WaveExpiresAndTravelsAtPredictableWorldSpeed" fullname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests.WaveExpiresAndTravelsAtPredictableWorldSpeed" methodname="WaveExpiresAndTravelsAtPredictableWorldSpeed" classname="Elemental.Tests.EditMode.EarthSeismicPerceptionTests" runstate="Runnable" seed="1952662593" result="Passed" start-time="2026-09-06 00:04:25Z" end-time="2026-09-06 00:04:25Z" duration="0.000544" asserts="0">
                 <properties>
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />

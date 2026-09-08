@@ -15,7 +15,7 @@ namespace Elemental.Runtime.Physics
     [DisallowMultipleComponent]
     public sealed class EarthRockDebrisPool : MonoBehaviour
     {
-        [SerializeField, Range(16, 128)] private int capacity = 72;
+        [SerializeField, Range(16, 512)] private int capacity = 256;
         [SerializeField] private Material material;
         [SerializeField] private Mesh mesh;
         [SerializeField] private Mesh[] meshVariants;
@@ -29,6 +29,7 @@ namespace Elemental.Runtime.Physics
         public int RejectedBreakCount { get; private set; }
         public string LastBreakRejection { get; private set; } = "None";
         public void ConfigureMatterKernel(EarthMatterKernelBehaviour kernel) => matterKernel = kernel;
+        public EarthMatterMassProfile MassPolicy => matterKernel != null ? matterKernel.MassPolicy : EarthMatterMassProfile.ArenaStone;
         public EarthRockBreakDecision ResolveBreak(float radius, float mass, float impulse,
             bool controlled = false, int depth = 0) => profile != null
                 ? profile.ResolveBreak(radius, mass, impulse, controlled, depth)
@@ -36,7 +37,7 @@ namespace Elemental.Runtime.Physics
         public EarthMaterialFeedbackHub MaterialFeedback => materialFeedback;
         public void ConfigureMaterialFeedback(EarthMaterialFeedbackHub hub) => materialFeedback = hub;
 
-        private readonly List<EarthRockDebris> _pieces = new List<EarthRockDebris>(72);
+        private readonly List<EarthRockDebris> _pieces = new List<EarthRockDebris>(256);
         private Mesh _fallbackMesh;
         private Mesh[] _runtimeShapeVariants;
         private readonly EarthRockDebris[] _breakPieces = new EarthRockDebris[4];
@@ -127,7 +128,7 @@ namespace Elemental.Runtime.Physics
             GravityWorldBehaviour configuredGravityWorld,
             EarthRockProfile configuredProfile)
         {
-            capacity = Mathf.Clamp(configuredCapacity, 16, 128);
+            capacity = Mathf.Clamp(configuredCapacity, 16, 512);
             material = configuredMaterial;
             mesh = configuredMesh;
             meshVariants = configuredMesh != null ? new[] { configuredMesh } : null;
@@ -298,11 +299,17 @@ namespace Elemental.Runtime.Physics
         internal bool HandleDebrisImpact(EarthRockDebris piece, Collision collision, float radius, uint seed, int depth)
         {
             if (collision == null || collision.contactCount == 0 || collision.collider.isTrigger) return false;
-            if (collision.relativeVelocity.sqrMagnitude < .5625f) return false;
+            if (collision.relativeVelocity.sqrMagnitude < .5625f)
+            {
+                ContactPoint quietContact = collision.GetContact(0);
+                materialFeedback?.EmitStoneImpact(quietContact.point, quietContact.normal, piece.EarthMass,
+                    Mathf.Max(0f, Vector3.Dot(collision.relativeVelocity, quietContact.normal)), radius, piece.StableEarthId, piece.TargetHandle.Generation);
+                return false;
+            }
             ContactPoint contact = collision.GetContact(0);
             Rigidbody body = piece.GetComponent<Rigidbody>();
-            float approach = Mathf.Max(0f, -Vector3.Dot(collision.relativeVelocity, contact.normal));
-            float impulse = Mathf.Max(collision.impulse.magnitude, approach * body.mass);
+            float impulse = EarthRockBreakPolicy.ContactImpulse((float3)collision.relativeVelocity,
+                (float3)contact.normal, body.mass, collision.impulse.magnitude);
             var hit = new EarthStructureImpact(contact.point, -contact.normal, impulse,
                 EarthStructureImpactKind.Projectile, piece.StableEarthId);
             EarthStructureImpactRouter.Apply(collision.collider, in hit);
@@ -310,8 +317,9 @@ namespace Elemental.Runtime.Physics
             EarthRockBreakDecision decision = ResolveBreak(radius, body.mass, impulse, false, depth);
             if (!decision.Breaks)
             {
-                if (approach >= 0.75f) materialFeedback?.Emit(EarthMaterialFeedbackKind.Impact,
-                    contact.point, contact.normal, 0.4f, radius, seed);
+                // Same closing convention as decor; presentation does not change the damage policy.
+                materialFeedback?.EmitStoneImpact(contact.point, contact.normal, body.mass,
+                    Mathf.Max(0f, Vector3.Dot(collision.relativeVelocity, contact.normal)), radius, piece.StableEarthId, piece.TargetHandle.Generation);
                 return false;
             }
             return TryEmitBreak(contact.point, contact.normal, body.linearVelocity, radius, body.mass,
@@ -551,9 +559,12 @@ namespace Elemental.Runtime.Physics
         private float _breakRadius;
         private float _breakArmedAt;
         private readonly EarthContactFrictionFeedback _frictionFeedback = new();
-        private void OnCollisionStay(Collision collision) =>
+        private void OnCollisionStay(Collision collision)
+        {
+            Elemental.Runtime.Characters.EarthStoneCharacterContact.DeliverLoad(collision, _body);
             _frictionFeedback.Emit(_breakOwner != null ? _breakOwner.MaterialFeedback : null,
                 collision, StableEarthId != 0u ? StableEarthId : _breakSeed, TargetHandle.Generation);
+        }
         private readonly Collider[] _splitIgnores = new Collider[4];
         private int _splitIgnoreCount;
         private EarthMatterIdentity _matterIdentity;
@@ -663,6 +674,8 @@ namespace Elemental.Runtime.Physics
 
         private void OnCollisionEnter(Collision collision)
         {
+            if (!_accreting && _gripCount == 0)
+                Elemental.Runtime.Characters.EarthStoneCharacterContact.Deliver(collision, _body, StableEarthId);
             if (_accreting || _gripCount > 0 || _breakOwner == null || Time.fixedTime < _breakArmedAt) return;
             if (_breakOwner.HandleDebrisImpact(this, collision, _breakRadius, _breakSeed, _breakDepth))
                 ResetPiece();

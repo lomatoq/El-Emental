@@ -31,7 +31,7 @@ namespace Elemental.Runtime.Physics
         [SerializeField, Min(0.05f)] private float accretionIntervalSeconds = 0.25f;
         [SerializeField, Min(0.001f)] private float accretionVolumePerPulse = 0.12f;
         [SerializeField, Min(0.1f)] private float maximumRadius = 2.4f;
-        [SerializeField, Min(1f)] private float materialDensity = 120f;
+        [SerializeField, HideInInspector, Min(1f)] private float materialDensity = 120f;
         [SerializeField, Range(2, 8)] private int accretionChipCount = 4;
 
         [Header("Cosmetic debris lifecycle (persistent split stones do not expire)")]

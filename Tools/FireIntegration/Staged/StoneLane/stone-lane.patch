@@ -1,0 +1,400 @@
+--- /dev/null
++++ b/Assets/Elemental/Presentation/VFX/EarthCosmeticChipLibrary.cs
+@@ -0,0 +1,28 @@
++using Elemental.Presentation.Rendering;
++using UnityEngine;
++
++namespace Elemental.Presentation.VFX
++{
++    /// <summary>Four cold-created cosmetic silhouettes. Never used for repairable matter or colliders.</summary>
++    internal static class EarthCosmeticChipLibrary
++    {
++        public static Mesh[] Build(Mesh authoredChip = null)
++        {
++            var meshes = new Mesh[4];
++            for (int i = 0; i < meshes.Length; i++)
++            {
++                RumbleRockFamily family = i == 0 ? RumbleRockFamily.Slab :
++                    i < 3 ? RumbleRockFamily.Wedge : RumbleRockFamily.Pebble;
++                Mesh mesh = i == 0 && authoredChip != null ? Object.Instantiate(authoredChip) : RumbleRockMeshFactory.Build(
++                    RumbleRockMeshFactory.CreateDefaultRecipe(1847 + i * 997, family), "Cosmetic Chip " + i);
++                // Center the particle pivot and normalize only the longest axis; preserve aspect ratios.
++                Vector3 center = mesh.bounds.center, size = mesh.bounds.size;
++                float longest = Mathf.Max(size.x, Mathf.Max(size.y, size.z));
++                Vector3[] vertices = mesh.vertices;
++                for (int v = 0; v < vertices.Length; v++) vertices[v] = (vertices[v] - center) / longest;
++                mesh.vertices = vertices; mesh.RecalculateBounds(); meshes[i] = mesh;
++            }
++            return meshes;
++        }
++    }
++}
+--- a/Assets/Elemental/Presentation/VFX/EarthMaterialFeedbackPresenter.cs
++++ b/Assets/Elemental/Presentation/VFX/EarthMaterialFeedbackPresenter.cs
+@@ -18,7 +18,14 @@
+         private ParticleSystem.Particle[] dustBuffer, chipBuffer, fractureBuffer;
+         private uint seed = 7919;
+         private readonly EarthCosmeticMaterialCache cosmeticMaterials = new();
+-        private void OnDestroy() => cosmeticMaterials.Dispose();
++        private Mesh[] cosmeticChipMeshes;
++        private void OnDestroy()
++        {
++            cosmeticMaterials.Dispose();
++            if (cosmeticChipMeshes == null) return;
++            foreach (Mesh owned in cosmeticChipMeshes)
++                if (owned != null) { if (Application.isPlaying) Destroy(owned); else DestroyImmediate(owned); }
++        }
+         public void Configure(EarthMaterialFeedbackHub events, EarthEffectsTuningProfile tuning, Transform planet,
+             ParticleSystem dustSystem, ParticleSystem chipSystem, Mesh mesh, ParticleSystem fractureSystem = null)
+         {
+@@ -74,7 +81,12 @@
+             var renderer = ps.GetComponent<ParticleSystemRenderer>();
+             renderer.shadowCastingMode = ShadowCastingMode.Off;
+             renderer.receiveShadows = rubble;
+-            if (rubble) { renderer.renderMode = ParticleSystemRenderMode.Mesh; renderer.mesh = chipMesh; }
++            if (rubble)
++            {
++                renderer.renderMode = ParticleSystemRenderMode.Mesh;
++                cosmeticChipMeshes ??= EarthCosmeticChipLibrary.Build(chipMesh);
++                renderer.SetMeshes(cosmeticChipMeshes, cosmeticChipMeshes.Length);
++            }
+             else
+             {
+                 renderer.renderMode = ParticleSystemRenderMode.Billboard;
+@@ -91,7 +103,7 @@
+             if (dust == null || chips == null || profile == null) return;
+             using (Marker.Auto())
+             {
+-                seed ^= cue.SourceId ^ cue.Generation;
++                seed = EarthStoneImpactDust.CueSeed(cue.SourceId, cue.Generation, cue.Kind, cue.Point);
+                 Vector3 up = cue.Normal, point = cue.Point;
+                 Vector3 right = Vector3.Cross(up, Mathf.Abs(up.y) < .9f ? Vector3.up : Vector3.forward).normalized;
+                 Vector3 forward = Vector3.Cross(right, up);
+@@ -112,20 +124,33 @@
+             EarthParticleLayerTuning tuning = rubble ? profile.Impact.Rubble :
+                 UsesBroadDust(cue.Kind) ? profile.Fracture.Dust : profile.Impact.Dust;
+             if (!tuning.Enabled) return;
++            float lobeAxis = Next() * Mathf.PI * 2f;
+             for (int i = 0; i < count; i++)
+             {
+                 float angle = Next() * Mathf.PI * 2f;
++                if (cue.Kind == EarthMaterialFeedbackKind.Impact && Next() < .55f)
++                    angle = lobeAxis + (Next() < .68f ? 0f : Mathf.PI) + (Next() - .5f) * 1.5f;
+                 Vector3 radial = right * Mathf.Cos(angle) + forward * Mathf.Sin(angle);
+                 float energy = Mathf.Sqrt(Mathf.Max(.1f, cue.Strength));
+-                float size = Mathf.Lerp(tuning.Size.x,tuning.Size.y,Next()) * cue.ParticleSizeScale;
++                float sizeSample = EarthStoneImpactDust.FineBiasedSize(Next());
++                float size = Mathf.Lerp(tuning.Size.x,tuning.Size.y,sizeSample) * cue.ParticleSizeScale;
++                bool impactDust = !rubble && cue.Kind == EarthMaterialFeedbackKind.Impact;
++                // Majority stays near the contact; fewer slow lofted puffs supply volume.
++                bool lofted = impactDust && Next() < .24f;
++                if (impactDust) size *= lofted ? 1.35f : .7f;
+                 if (!rubble && UsesBroadDust(cue.Kind) && cue.Kind != EarthMaterialFeedbackKind.Fracture) size *= 1.45f;
++                float speed = Mathf.Lerp(tuning.Speed.x,tuning.Speed.y,Next()) * energy;
++                float lift = impactDust ? (lofted ? Mathf.Lerp(.55f,1.05f,Next()) : Mathf.Lerp(.08f,.28f,Next())) : Mathf.Lerp(.4f,1.2f,Next());
++                float lifetime = Mathf.Lerp(tuning.Lifetime.x,tuning.Lifetime.y,Next());
++                if (impactDust) { speed *= lofted ? .45f : .9f; lifetime *= lofted ? 1.2f : .7f; }
+                 var p = new ParticleSystem.EmitParams
+                 {
+                     // A billboard centered at the contact has half its area buried.
+                     // Lift its center by half its own size, keeping the lower edge at the contact.
+                     position = point + up * (rubble ? .04f : Mathf.Max(.04f, size * .5f)) + radial * (Mathf.Sqrt(Next()) * cue.Radius * .35f),
+-                    velocity = (radial + up * Mathf.Lerp(.4f,1.2f,Next())).normalized * (Mathf.Lerp(tuning.Speed.x,tuning.Speed.y,Next()) * energy),
+-                    startLifetime = Mathf.Lerp(tuning.Lifetime.x,tuning.Lifetime.y,Next()),
++                    velocity = (radial + up * lift).normalized * speed,
++                    startLifetime = lifetime,
++                    randomSeed = seed == 0u ? 1u : seed,
+                     startSize = size,
+                     startColor = new Color(1f, 1f, 1f, Mathf.Lerp(tuning.ColorA.a,tuning.ColorB.a,Next())),
+                     rotation3D = rubble ? new Vector3(Next(),Next(),Next()) * 360f : Vector3.forward * (Next() * 360f)
+--- a/Assets/Elemental/Runtime/Physics/EarthDestructibleDecorRock.cs
++++ b/Assets/Elemental/Runtime/Physics/EarthDestructibleDecorRock.cs
+@@ -249,9 +249,9 @@
+                     ? -collision.relativeVelocity.normalized : -contact.normal;
+                 ApplyImpact(contact.point, direction, impulse);
+             }
+-            if (!_shattered && !breakAttempted && approach >= 0.75f)
+-                materialFeedback?.Emit(EarthMaterialFeedbackKind.Impact, contact.point, contact.normal,
+-                    Mathf.Clamp(approach / 8f, 0.4f, 1f), visualRadius, StableEarthId, _generation);
++            if (!_shattered && !breakAttempted)
++                materialFeedback?.EmitStoneImpact(contact.point, contact.normal,
++                    EarthMass, approach, visualRadius, StableEarthId, _generation);
+         }
+ 
+         private void Anchor()
+--- a/Assets/Elemental/Runtime/Physics/EarthFragmentPool.cs
++++ b/Assets/Elemental/Runtime/Physics/EarthFragmentPool.cs
+@@ -260,9 +260,8 @@
+         private void PresentLooseImpact(EarthFragment fragment, Vector3 point, Vector3 normal, float impulse)
+         {
+             float specificImpulse = impulse / Mathf.Max(0.01f, fragment.Mass);
+-            if (specificImpulse < 0.75f) return;
+-            materialFeedback?.Emit(EarthMaterialFeedbackKind.Impact, point, normal,
+-                Mathf.Clamp(specificImpulse / 8f, 0.4f, 1f), fragment.Radius, fragment.FragmentId);
++            materialFeedback?.EmitStoneImpact(point, normal, fragment.Mass,
++                specificImpulse, fragment.Radius, fragment.FragmentId, fragment.TargetHandle.Generation);
+         }
+ 
+         public void ResetForArenaRestore()
+--- a/Assets/Elemental/Runtime/Physics/EarthRockDebrisPool.cs
++++ b/Assets/Elemental/Runtime/Physics/EarthRockDebrisPool.cs
+@@ -299,7 +299,13 @@
+         internal bool HandleDebrisImpact(EarthRockDebris piece, Collision collision, float radius, uint seed, int depth)
+         {
+             if (collision == null || collision.contactCount == 0 || collision.collider.isTrigger) return false;
+-            if (collision.relativeVelocity.sqrMagnitude < .5625f) return false;
++            if (collision.relativeVelocity.sqrMagnitude < .5625f)
++            {
++                ContactPoint quietContact = collision.GetContact(0);
++                materialFeedback?.EmitStoneImpact(quietContact.point, quietContact.normal, piece.EarthMass,
++                    Mathf.Max(0f, Vector3.Dot(collision.relativeVelocity, quietContact.normal)), radius, piece.StableEarthId, piece.TargetHandle.Generation);
++                return false;
++            }
+             ContactPoint contact = collision.GetContact(0);
+             Rigidbody body = piece.GetComponent<Rigidbody>();
+             float approach = Mathf.Max(0f, -Vector3.Dot(collision.relativeVelocity, contact.normal));
+@@ -311,8 +317,9 @@
+             EarthRockBreakDecision decision = ResolveBreak(radius, body.mass, impulse, false, depth);
+             if (!decision.Breaks)
+             {
+-                if (approach >= 0.75f) materialFeedback?.Emit(EarthMaterialFeedbackKind.Impact,
+-                    contact.point, contact.normal, 0.4f, radius, seed);
++                // Same closing convention as decor; presentation does not change the damage policy.
++                materialFeedback?.EmitStoneImpact(contact.point, contact.normal, body.mass,
++                    Mathf.Max(0f, Vector3.Dot(collision.relativeVelocity, contact.normal)), radius, piece.StableEarthId, piece.TargetHandle.Generation);
+                 return false;
+             }
+             return TryEmitBreak(contact.point, contact.normal, body.linearVelocity, radius, body.mass,
+--- a/Assets/Elemental/Runtime/World/EarthMaterialFeedbackHub.cs
++++ b/Assets/Elemental/Runtime/World/EarthMaterialFeedbackHub.cs
+@@ -56,6 +56,32 @@
+         private int surfaceCount, surfaceCursor;
+         private readonly EarthMaterialEventsTuning defaults = new EarthMaterialEventsTuning();
+         private int count;
++        private readonly uint[] impactSources = new uint[32], impactGenerations = new uint[32];
++        private readonly float[] impactTimes = new float[32];
++        private int impactSlots, impactCursor;
++        public void EmitStoneImpact(Vector3 point, Vector3 normal, float mass, float closingSpeed,
++            float radius, uint sourceId, uint generation = 0)
++        {
++            float strength = EarthStoneImpactDust.Strength(mass, closingSpeed);
++            if (!isActiveAndEnabled || strength <= 0f || !IsFinite(point) || !IsFinite(normal) ||
++                !float.IsFinite(radius)) return;
++            float now = Time.fixedTime;
++            // Unknown sources must not suppress other independent contacts.
++            if (sourceId != 0u)
++            {
++                int slot = -1;
++                for (int i = 0; i < impactSlots; i++)
++                    if (impactSources[i] == sourceId && impactGenerations[i] == generation) { slot = i; break; }
++                if (slot >= 0 && now >= impactTimes[slot] && now - impactTimes[slot] < EarthStoneImpactDust.CooldownSeconds) return;
++                if (slot < 0)
++                {
++                    slot = impactCursor; impactCursor = (impactCursor + 1) % impactSources.Length;
++                    impactSlots = Mathf.Min(impactSlots + 1, impactSources.Length);
++                }
++                impactSources[slot] = sourceId; impactGenerations[slot] = generation; impactTimes[slot] = now;
++            }
++            Emit(EarthMaterialFeedbackKind.Impact, point, normal, strength, radius, sourceId, generation);
++        }
+         public event Action<EarthMaterialFeedbackCue> Presented;
+         public int CoalescedEvents { get; private set; }
+         public int DroppedEvents { get; private set; }
+@@ -157,7 +183,7 @@
+                 surfaceCursor = (surfaceCursor + 1) % surfacePending.Length; surfaceCount = 0;
+             }
+         }
+-        private void OnDisable() { count = 0; surfaceCount = 0; }
++        private void OnDisable() { count = 0; surfaceCount = 0; impactSlots = 0; impactCursor = 0; }
+         private static float FiniteGain(float value) => float.IsFinite(value) ? Mathf.Clamp(value, 0f, 3f) : 0f;
+         private static bool IsFinite(Vector3 value) => float.IsFinite(value.x) && float.IsFinite(value.y) && float.IsFinite(value.z);
+     }
+--- /dev/null
++++ b/Assets/Elemental/Simulation/Bending/EarthStoneImpactDust.cs
+@@ -0,0 +1,32 @@
++using Unity.Mathematics;
++
++namespace Elemental.Simulation.Bending
++{
++    /// <summary>Cosmetic impact response only. Mass is supplied by the canonical body owner.</summary>
++    public static class EarthStoneImpactDust
++    {
++        public const float MinimumClosingSpeed = .25f;
++        public const float CooldownSeconds = .12f;
++        public static float Strength(float mass, float closingSpeed)
++        {
++            if (!math.isfinite(mass) || !math.isfinite(closingSpeed) || mass <= 0f ||
++                closingSpeed < MinimumClosingSpeed) return 0f;
++            // Normal kinetic energy distinguishes a heavy short drop from a light tap.
++            // Log compression bounds count/velocity growth without scaling every mote.
++            float speed = math.min(closingSpeed, 100f);
++            float energy = .5f * math.min(mass, 1000000f) * speed * speed;
++            return math.clamp(.25f + .32f * math.log2(1f + energy / 12f), .25f, 2.4f);
++        }
++        public static float FineBiasedSize(float unitSample)
++        {
++            float u = math.saturate(unitSample);
++            return u * u * u;
++        }
++        public static uint CueSeed(uint source, uint generation, EarthMaterialFeedbackKind kind, float3 point)
++        {
++            uint h = math.hash(new uint4(source, generation, (uint)kind,
++                math.hash(math.asuint(math.round(point * 64f)))));
++            return h == 0u ? 7919u : h;
++        }
++    }
++}
+--- /dev/null
++++ b/Assets/Elemental/Tests/EditMode/EarthStoneImpactDustTests.cs
+@@ -0,0 +1,88 @@
++using System.Reflection;
++using Elemental.Presentation.Rendering;
++using Elemental.Presentation.VFX;
++using Elemental.Runtime.World;
++using Elemental.Simulation.Bending;
++using NUnit.Framework;
++using Unity.Mathematics;
++using UnityEngine;
++
++namespace Elemental.Tests.EditMode
++{
++    public sealed class EarthStoneImpactDustTests
++    {
++        [Test]
++        public void HeavyShortDropExceedsLightTapButRemainsBounded()
++        {
++            Assert.That(EarthStoneImpactDust.Strength(1000f, .6f), Is.GreaterThan(EarthStoneImpactDust.Strength(2f, .6f) * 3f));
++            Assert.That(EarthStoneImpactDust.Strength(float.MaxValue, float.MaxValue), Is.LessThanOrEqualTo(2.4f));
++            Assert.That(EarthStoneImpactDust.Strength(1000f, 2f), Is.GreaterThan(EarthStoneImpactDust.Strength(1000f, .6f)));
++        }
++        [TestCase(1000000f, .24f)]
++        [TestCase(1000f, -2f)]
++        [TestCase(0f, 2f)]
++        [TestCase(float.NaN, 2f)]
++        [TestCase(1000f, float.PositiveInfinity)]
++        public void RestingSeparatingAndInvalidInputsCannotEmit(float mass, float speed)
++        { Assert.That(EarthStoneImpactDust.Strength(mass, speed), Is.Zero); }
++        [Test]
++        public void SizeDistributionHasManyFinesAndFewLargeChips()
++        {
++            int fines=0, large=0;
++            for(int i=0;i<1000;i++)
++            {
++                float sample=EarthStoneImpactDust.FineBiasedSize((i+.5f)/1000f);
++                if(sample<.25f) fines++;
++                if(sample>.75f) large++;
++            }
++            Assert.That(fines, Is.InRange(620,640)); Assert.That(large, Is.InRange(85,100));
++        }
++        [Test]
++        public void CosmeticReplayDependsOnCueNotPreviousEvents()
++        {
++            uint first=EarthStoneImpactDust.CueSeed(17,2,EarthMaterialFeedbackKind.Impact,new float3(1,2,3));
++            EarthStoneImpactDust.CueSeed(992,77,EarthMaterialFeedbackKind.Fracture,new float3(90));
++            Assert.That(EarthStoneImpactDust.CueSeed(17,2,EarthMaterialFeedbackKind.Impact,new float3(1,2,3)),Is.EqualTo(first));
++            Assert.That(EarthStoneImpactDust.CueSeed(17,3,EarthMaterialFeedbackKind.Impact,new float3(1,2,3)),Is.Not.EqualTo(first));
++        }
++        [Test]
++        public void CooldownSeparatesSourcesAndGenerationsAndResetsOnDisable()
++        {
++            var go=new GameObject("Impact dust cooldown");
++            try
++            {
++                var hub=go.AddComponent<EarthMaterialFeedbackHub>(); int events=0;
++                hub.Presented+=_=>events++;
++                hub.EmitStoneImpact(Vector3.zero,Vector3.up,1000,.6f,1,17,1); hub.FlushPending();
++                hub.EmitStoneImpact(Vector3.zero,Vector3.up,1000,.6f,1,17,1); hub.FlushPending();
++                Assert.That(events,Is.EqualTo(1));
++                hub.EmitStoneImpact(Vector3.right*5,Vector3.up,1000,.6f,1,18,1); hub.FlushPending();
++                hub.EmitStoneImpact(Vector3.zero,Vector3.up,1000,.6f,1,17,2); hub.FlushPending();
++                Assert.That(events,Is.EqualTo(3));
++                go.SetActive(false); go.SetActive(true);
++                hub.EmitStoneImpact(Vector3.zero,Vector3.up,1000,.6f,1,17,2); hub.FlushPending();
++                Assert.That(events,Is.EqualTo(4));
++            }
++            finally { Object.DestroyImmediate(go); }
++        }
++        [Test]
++        public void CosmeticLibraryHasDistinctCenteredNormalizedValidSilhouettes()
++        {
++            var type=typeof(EarthMaterialFeedbackPresenter).Assembly.GetType("Elemental.Presentation.VFX.EarthCosmeticChipLibrary",true);
++            var meshes=(Mesh[])type.GetMethod("Build",BindingFlags.Public|BindingFlags.Static).Invoke(null,new object[] { null });
++            try
++            {
++                Assert.That(meshes.Length,Is.EqualTo(4));
++                for(int i=0;i<meshes.Length;i++)
++                {
++                    Assert.That(RumbleRockMeshFactory.Validate(meshes[i],out string reason),Is.True,reason);
++                    Assert.That(meshes[i].bounds.center.magnitude,Is.LessThan(.0001f));
++                    Vector3 s=meshes[i].bounds.size;
++                    Assert.That(Mathf.Max(s.x,Mathf.Max(s.y,s.z)),Is.EqualTo(1f).Within(.0001f));
++                    if(i>0) Assert.That((meshes[i].bounds.size-meshes[i-1].bounds.size).sqrMagnitude,Is.GreaterThan(.000001f));
++                }
++            }
++            finally { foreach(var mesh in meshes) Object.DestroyImmediate(mesh); }
++        }
++    }
++}
+--- /dev/null
++++ b/Assets/Elemental/Tests/PlayMode/EarthStoneImpactDustRuntimeTests.cs
+@@ -0,0 +1,60 @@
++using System.Collections;
++using Elemental.Presentation.VFX;
++using Elemental.Runtime.World;
++using NUnit.Framework;
++using UnityEngine;
++using UnityEngine.TestTools;
++#if UNITY_EDITOR
++using UnityEditor;
++#endif
++
++namespace Elemental.Tests.PlayMode
++{
++    public sealed class EarthStoneImpactDustRuntimeTests
++    {
++        [UnityTest]
++        public IEnumerator ProductionPresenterUsesFourMeshesAndPreservesHeavyDropResponse()
++        {
++#if UNITY_EDITOR
++            var source=AssetDatabase.LoadAssetAtPath<EarthEffectsTuningProfile>("Assets/Elemental/Content/Profiles/EarthEffectsTuningProfile.asset");
++            Assert.That(source,Is.Not.Null);
++            var profile=Object.Instantiate(source);
++            var go=new GameObject("Stone impact dust runtime proof"); go.SetActive(false);
++            try
++            {
++                var hub=go.AddComponent<EarthMaterialFeedbackHub>(); hub.Configure(profile,null);
++                var dustGo=new GameObject("Dust"); dustGo.transform.SetParent(go.transform);
++                var chipGo=new GameObject("Chips"); chipGo.transform.SetParent(go.transform);
++                var dust=dustGo.AddComponent<ParticleSystem>(); var chips=chipGo.AddComponent<ParticleSystem>();
++                var presenter=go.AddComponent<EarthMaterialFeedbackPresenter>();
++                presenter.Configure(hub,profile,null,dust,chips,null);
++                go.SetActive(true);
++                var renderer=chips.GetComponent<ParticleSystemRenderer>();
++                Assert.That(renderer.meshCount,Is.EqualTo(4));
++                hub.EmitStoneImpact(Vector3.zero,Vector3.up,2,.6f,1,1,1); hub.FlushPending();
++                int lightDust=dust.particleCount;
++                dust.Clear(); chips.Clear();
++                hub.EmitStoneImpact(Vector3.zero,Vector3.up,1000,.6f,1,2,1); hub.FlushPending();
++                Assert.That(dust.particleCount,Is.GreaterThan(lightDust),"Production tuning must preserve mass response.");
++                // Several separated identities sample actual native mesh selection, without bypassing the hub.
++                for(uint i=3;i<12;i++)
++                { hub.EmitStoneImpact(Vector3.right*i,Vector3.up,1000,1.5f,1,i,1); hub.FlushPending(); }
++                var particles=new ParticleSystem.Particle[chips.main.maxParticles];
++                int count=chips.GetParticles(particles), mask=0;
++                Assert.That(count,Is.GreaterThan(16));
++                for(int i=0;i<count;i++)
++                {
++                    int index=particles[i].GetMeshIndex(chips);
++                    Assert.That(index,Is.InRange(0,3)); mask|=1<<index;
++                }
++                Assert.That(mask,Is.EqualTo(15),"All four silhouettes must actually be selected by emitted particles.");
++                yield return null;
++            }
++            finally { Object.Destroy(go); Object.Destroy(profile); }
++#else
++            Assert.Ignore("Production asset proof requires Editor PlayMode.");
++            yield break;
++#endif
++        }
++    }
++}

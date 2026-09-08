@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="5" result="Passed" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-08 12:21:53Z" end-time="2026-09-08 12:23:02Z" duration="68.7520573">
+  <test-suite type="TestSuite" id="1412" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="303" result="Passed" start-time="2026-09-08 12:21:53Z" end-time="2026-09-08 12:23:02Z" duration="68.752057" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1405" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="297" result="Passed" start-time="2026-09-08 12:21:53Z" end-time="2026-09-08 12:23:02Z" duration="68.717279" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="11736" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1406" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="297" result="Passed" start-time="2026-09-08 12:21:53Z" end-time="2026-09-08 12:23:02Z" duration="68.714614" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1407" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="297" result="Passed" start-time="2026-09-08 12:21:53Z" end-time="2026-09-08 12:23:02Z" duration="68.712397" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1408" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="297" result="Passed" start-time="2026-09-08 12:21:53Z" end-time="2026-09-08 12:23:02Z" duration="68.710469" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1328" name="LocalPhysicsProductionAcceptanceTests" fullname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests" classname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-09-08 12:21:53Z" end-time="2026-09-08 12:23:02Z" duration="68.706736" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1341" name="ActualLooseRockPileKillsProductionBotAndAwardsExactlyOnePoint" fullname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests.ActualLooseRockPileKillsProductionBotAndAwardsExactlyOnePoint" methodname="ActualLooseRockPileKillsProductionBotAndAwardsExactlyOnePoint" classname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests" runstate="Runnable" seed="538399990" result="Passed" start-time="2026-09-08 12:21:53Z" end-time="2026-09-08 12:22:18Z" duration="25.411431" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 4001.68ms; ground=exact baked base, cacheLoad=10.76ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1347.35ms, peakCookingPoll=0.27ms; sync=ArenaInitialize=361.27ms/15;ArenaBevel=346.58ms/175;ArenaMeshPicking=1.73ms/175;WallAwake=91.99ms/1;WallPieceVisuals=54.09ms/40;PlatformPoolAwake=10.62ms/1;PlatformRuntimeMeshes=1.35ms/12;PillarPoolAwake=16.24ms/1;PillarMeshLibrary=3.15ms/1;PillarColumns=13.09ms/1;DebrisPoolAwake=120.72ms/1;HeroFragmentPoolAwake=12.16ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1339" name="HeldTypedStonePhysicallyContactsWithoutHealthDamage" fullname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests.HeldTypedStonePhysicallyContactsWithoutHealthDamage" methodname="HeldTypedStonePhysicallyContactsWithoutHealthDamage" classname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests" runstate="Runnable" seed="2041712990" result="Passed" start-time="2026-09-08 12:22:18Z" end-time="2026-09-08 12:22:29Z" duration="10.411948" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 2774.15ms; ground=exact baked base, cacheLoad=6.03ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=753.82ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=361.27ms/15;ArenaBevel=346.58ms/175;ArenaMeshPicking=1.73ms/175;WallAwake=91.99ms/1;WallPieceVisuals=54.09ms/40;PlatformPoolAwake=10.62ms/1;PlatformRuntimeMeshes=1.35ms/12;PillarPoolAwake=16.24ms/1;PillarMeshLibrary=3.15ms/1;PillarColumns=13.09ms/1;DebrisPoolAwake=120.72ms/1;HeroFragmentPoolAwake=12.16ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1340" name="ReleasedArmorDamagesDetachedProductionRagdoll" fullname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests.ReleasedArmorDamagesDetachedProductionRagdoll" methodname="ReleasedArmorDamagesDetachedProductionRagdoll" classname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests" runstate="Runnable" seed="1156893008" result="Passed" start-time="2026-09-08 12:22:29Z" end-time="2026-09-08 12:22:40Z" duration="10.729710" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 2963.72ms; ground=exact baked base, cacheLoad=6.06ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=737.39ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=361.27ms/15;ArenaBevel=346.58ms/175;ArenaMeshPicking=1.73ms/175;WallAwake=91.99ms/1;WallPieceVisuals=54.09ms/40;PlatformPoolAwake=10.62ms/1;PlatformRuntimeMeshes=1.35ms/12;PillarPoolAwake=16.24ms/1;PillarMeshLibrary=3.15ms/1;PillarColumns=13.09ms/1;DebrisPoolAwake=120.72ms/1;HeroFragmentPoolAwake=12.16ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1342" name="RemovingActualLooseRockPileStopsPinnedDamage" fullname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests.RemovingActualLooseRockPileStopsPinnedDamage" methodname="RemovingActualLooseRockPileStopsPinnedDamage" classname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests" runstate="Runnable" seed="133135523" result="Passed" start-time="2026-09-08 12:22:40Z" end-time="2026-09-08 12:22:52Z" duration="12.534072" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 2723.11ms; ground=exact baked base, cacheLoad=5.98ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=703.23ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=361.27ms/15;ArenaBevel=346.58ms/175;ArenaMeshPicking=1.73ms/175;WallAwake=91.99ms/1;WallPieceVisuals=54.09ms/40;PlatformPoolAwake=10.62ms/1;PlatformRuntimeMeshes=1.35ms/12;PillarPoolAwake=16.24ms/1;PillarMeshLibrary=3.15ms/1;PillarColumns=13.09ms/1;DebrisPoolAwake=120.72ms/1;HeroFragmentPoolAwake=12.16ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1338" name="WeakStoneHealthDamageKeepsNoFlinchAndDedupeGuards" fullname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests.WeakStoneHealthDamageKeepsNoFlinchAndDedupeGuards" methodname="WeakStoneHealthDamageKeepsNoFlinchAndDedupeGuards" classname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests" runstate="Runnable" seed="1995452301" result="Passed" start-time="2026-09-08 12:22:52Z" end-time="2026-09-08 12:23:02Z" duration="9.581879" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 2745.13ms; ground=exact baked base, cacheLoad=6.13ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=719.83ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=361.27ms/15;ArenaBevel=346.58ms/175;ArenaMeshPicking=1.73ms/175;WallAwake=91.99ms/1;WallPieceVisuals=54.09ms/40;PlatformPoolAwake=10.62ms/1;PlatformRuntimeMeshes=1.35ms/12;PillarPoolAwake=16.24ms/1;PillarMeshLibrary=3.15ms/1;PillarColumns=13.09ms/1;DebrisPoolAwake=120.72ms/1;HeroFragmentPoolAwake=12.16ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\StoneLethalityPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

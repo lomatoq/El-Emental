@@ -19,13 +19,24 @@ namespace Elemental.Input.Gestures
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PlayerInput))]
-    public sealed class MagicInputController : MonoBehaviour
+    public sealed partial class MagicInputController : MonoBehaviour
     {
         private static readonly ProfilerMarker PreviewMarker =
             new ProfilerMarker("Elemental.Platform.Preview");
         private static readonly ProfilerMarker GravityAcquireMarker =
             new ProfilerMarker("Elemental.Input.GravityAcquire");
         private const int ProjectionHitCapacity = 16;
+
+        [SerializeField] private EarthMvpDuelController duelController;
+        private Elemental.Simulation.Combat.EarthDuelFighterId _boundDuelFighter;
+        public EarthMvpDuelController BoundDuel => duelController;
+        public Elemental.Simulation.Combat.EarthDuelFighterId BoundDuelFighter => _boundDuelFighter;
+        public void BindDuel(EarthMvpDuelController duel, Elemental.Simulation.Combat.EarthDuelFighterId fighter = Elemental.Simulation.Combat.EarthDuelFighterId.Player)
+        { duelController = duel; _boundDuelFighter = fighter; }
+        private bool AcceptsDuelCommands => (_motor == null || !_motor.IsImpactStunned) &&
+            (duelController == null ||
+            (duelController.HasSimulationAuthority && duelController.CombatAllowed && (_boundDuelFighter == Elemental.Simulation.Combat.EarthDuelFighterId.Bot ? duelController.BotPhase : duelController.PlayerPhase) == Elemental.Simulation.Combat.EarthDuelFighterPhase.Active));
+        private bool _impactStunBlocked;
 
         [SerializeField] private PlayerInput playerInput;
         [SerializeField] private EarthInputAdapter inputAdapter;
@@ -84,6 +95,8 @@ namespace Elemental.Input.Gestures
         private bool _pushCharging;
         private float _pushStartedAt;
         private bool _pushTargetLocked;
+        private EarthWall _pushWall;
+        private Vector3 _pushWallPoint;
         private float2 _pushPreviousPointer;
         private float _pushTravelViewport;
         private float2 _pushVelocityViewportPerSecond;
@@ -153,23 +166,29 @@ namespace Elemental.Input.Gestures
         private EarthGestureTargetContext _gesturePointerDownTarget;
         private int _rankedIntentCount;
 
-        public AbilityId SelectedAbility => _selectedAbility;
+        public AbilityId SelectedAbility => _onlineReplicaPresentation ? new AbilityId((ushort)_onlineView.Ability) : _selectedAbility;
         public ElementId SelectedElement => selectedElement;
-        public BendPhase CurrentBendPhase => _bendSession != null
+        public BendPhase CurrentBendPhase => _onlineReplicaPresentation ? _onlineView.Phase : _bendSession != null
             ? _bendSession.Phase
             : Elemental.Simulation.Bending.BendPhase.Idle;
-        public BendOriginMode BendOriginMode => _bendSession != null
+        public BendOriginMode BendOriginMode => _onlineReplicaPresentation ? _onlineView.Origin : _bendSession != null
             ? _bendSession.OriginMode
             : BendOriginMode.Aim;
-        public float BendAmount01 => _bendSession != null
+        public float BendAmount01 => _onlineReplicaPresentation ? _onlineView.Amount : _bendSession != null
             ? Mathf.Max(_bendSession.Amount01, _formingAmount01)
             : _formingAmount01;
-        public float BendCharge01 => _bendSession != null ? _bendSession.Charge01 : 0f;
-        public float BendFocus01 => _bendSession != null ? _bendSession.Focus01 : 0f;
+        public float BendCharge01 => _onlineReplicaPresentation ? _onlineView.Charge : _bendSession != null ? _bendSession.Charge01 : 0f;
+        // Forming matter and holding a wall/platform stroke accumulate power
+        // without entering the RMB-only BendPhase.Charging state.
+        public float AccumulationCharge01 => isActiveAndEnabled &&
+            _bendSession != null && _bendSession.IsActive &&
+            (_earthAcquirePending || _wallGesturePending || _pluckPending)
+                ? PushCharge(Time.unscaledTime - _bendStartedAt) : 0f;
+        public float BendFocus01 => _onlineReplicaPresentation ? _onlineView.Focus : _bendSession != null ? _bendSession.Focus01 : 0f;
         public BendGestureIntent CurrentGestureIntent => _bendSession != null
             ? _bendSession.GestureIntent
             : BendGestureIntent.None;
-        public Vector3 BendTargetPosition => _previousBendTarget;
+        public Vector3 BendTargetPosition => _onlineReplicaPresentation ? (Vector3)_onlineView.Target : _previousBendTarget;
         public Vector3 BendTargetVelocity => _smoothedBendTargetVelocity;
         public bool IsFormingEarth => _earthAcquirePending && _formingSourceValid;
         public UnityEngine.Camera CastCamera => castCamera;
@@ -201,17 +220,17 @@ namespace Elemental.Input.Gestures
         public int RankedIntentCount => _rankedIntentCount;
         public EarthIntentCandidate GetRankedIntentCandidate(int index) =>
             index >= 0 && index < _rankedIntentCount ? _rankedIntentCandidates[index] : default;
-        public bool IsQuickStonePrimed => _quickStoneSession != null && _quickStoneSession.IsPrimed;
-        public float QuickStonePrime01 => _quickStoneSession != null
+        public bool IsQuickStonePrimed => _onlineReplicaPresentation ? _onlineView.QuickPrimed : _quickStoneSession != null && _quickStoneSession.IsPrimed;
+        public float QuickStonePrime01 => _onlineReplicaPresentation ? _onlineView.QuickPrime : _quickStoneSession != null
             ? _quickStoneSession.Remaining01(Time.unscaledTime)
             : 0f;
-        public bool IsArmorActive => _armorController != null && _armorController.IsActive;
-        public EarthActionOwner ActiveActionOwner => actionRouter != null ? actionRouter.Owner : EarthActionOwner.None;
-        public float ResonanceCharge01 => actionRouter != null ? actionRouter.ResonanceCharge01 : 0f;
+        public bool IsArmorActive => _onlineReplicaPresentation ? _onlineView.ArmorActive : _armorController != null && _armorController.IsActive;
+        public EarthActionOwner ActiveActionOwner => _onlineReplicaPresentation ? _onlineView.Owner : actionRouter != null ? actionRouter.Owner : EarthActionOwner.None;
+        public float ResonanceCharge01 => _onlineReplicaPresentation ? _onlineView.ResonanceCharge : actionRouter != null ? actionRouter.ResonanceCharge01 : 0f;
         public int ResonanceStoneCount => actionRouter != null ? actionRouter.ResonanceStoneCount : 0;
         public bool IsResonanceVolleyActive => actionRouter != null && actionRouter.ResonanceVolleyActive;
-        public float SurfSpeed => actionRouter != null ? actionRouter.SurfSpeed : 0f;
-        public float ArmorPhase01 => _armorController != null ? _armorController.Phase01 : 0f;
+        public float SurfSpeed => _onlineReplicaPresentation ? _onlineView.SurfSpeed : actionRouter != null ? actionRouter.SurfSpeed : 0f;
+        public float ArmorPhase01 => _onlineReplicaPresentation ? _onlineView.ArmorPhase : _armorController != null ? _armorController.Phase01 : 0f;
         public int ArmorOverscrollSteps => _armorController != null ? _armorController.OverscrollSteps : 0;
         public string BendParameterLabel => IsArmorActive
             ? "ARMOR PHASE"
@@ -255,6 +274,7 @@ namespace Elemental.Input.Gestures
             BendOriginMode originMode,
             float amount01)
         {
+            if (!AcceptsDuelCommands) return false;
             EnsureBendSession();
             if (!_bendSession.BeginAcquire(originMode)) return false;
             _earthAcquirePending = true;
@@ -272,6 +292,7 @@ namespace Elemental.Input.Gestures
 
         public bool TrySetEarthBendTargetAtScreenPoint(float2 pointer, float deltaSeconds)
         {
+            if (!AcceptsDuelCommands) return false;
             Rigidbody held = executor != null ? executor.HeldBody : null;
             if (held == null || castCamera == null) return false;
             UpdateHeldBendTarget(held, pointer, Mathf.Max(0.0001f, deltaSeconds), false);
@@ -285,6 +306,7 @@ namespace Elemental.Input.Gestures
             out Vector3 releaseVelocity)
         {
             releaseVelocity = Vector3.zero;
+            if (!AcceptsDuelCommands) return false;
             Rigidbody held = executor != null ? executor.HeldBody : null;
             if (held == null || castCamera == null || _bendSession == null) return false;
             if (!_bendSession.Commit(intent)) return false;
@@ -311,6 +333,7 @@ namespace Elemental.Input.Gestures
         /// </summary>
         public bool TryQuickStoneTapAtScreenPoint(float2 pointer)
         {
+            if (!AcceptsDuelCommands) return false;
             EnsureBendSession();
             EnsureEarthFeatureSessions();
             if (selectedElement != ElementId.Earth || executor == null || castCamera == null)
@@ -413,7 +436,7 @@ namespace Elemental.Input.Gestures
             _pushPreviousPointer = point;
             _pushTravelViewport = 0f;
             _pushVelocityViewportPerSecond = float2.zero;
-            _pushTargetLocked = TryBeginPushAtScreenPoint(point);
+            _pushTargetLocked = BeginStandalonePushTarget(point);
             if (!_pushTargetLocked)
                 StatusChanged?.Invoke("No pushable rock, fragment or wall near the cursor.");
         }
@@ -741,6 +764,15 @@ namespace Elemental.Input.Gestures
             if (!_armorController.IsActive) _armorOwnsField = false;
             bool ownsThisFrame = _armorOwnsField;
             if (!ownsThisFrame) return false;
+            // Holding MMB owns armor. Reconcile the level as well as the one-frame
+            // edge so an input-update hitch cannot leave a released hold latched.
+            if (!inputAdapter.BendFieldHeld || inputAdapter.BendFieldReleased)
+            {
+                _armorController.EndArmor(EarthArmorEndReason.InputReleased);
+                _armorOwnsField = false;
+                StatusChanged?.Invoke("Earth armor released as physical debris.");
+                return true;
+            }
             _armorController.SetAimDirection(ArmorAimDirection());
             if (_armorController.Phase01 > 0.30f && inputAdapter.BendForcePressed)
             {
@@ -838,10 +870,6 @@ namespace Elemental.Input.Gestures
                         _armorController.Phase01);
                 }
             }
-            if (!inputAdapter.BendFieldReleased) return true;
-            _armorController.EndArmor(EarthArmorEndReason.InputReleased);
-            _armorOwnsField = false;
-            StatusChanged?.Invoke("Earth armor released as physical debris.");
             return true;
         }
 
@@ -894,6 +922,8 @@ namespace Elemental.Input.Gestures
             ClearPreview();
         }
 
+        public void CancelForImpactStun() => CancelInteraction();
+
         private void CancelInteraction()
         {
             executor?.CancelHeldEarthControl();
@@ -905,6 +935,7 @@ namespace Elemental.Input.Gestures
             _gravityWellHeld = false;
             _pushCharging = false;
             _pushTargetLocked = false;
+            _pushWall = null;
             _earthAcquirePending = false;
             _pluckPending = false;
             _pluckSource = null;
@@ -928,6 +959,11 @@ namespace Elemental.Input.Gestures
 
         private void FixedUpdate()
         {
+            if (!AcceptsDuelCommands)
+            {
+                _quickStoneSession?.Reset();
+                return;
+            }
             // A buffered second tap is a physics promise: fire as soon as the
             // extraction clears, even when input routing has no Update between two
             // fixed steps (batch tests, a hitch, or a low rendering frame rate).
@@ -937,6 +973,15 @@ namespace Elemental.Input.Gestures
 
         public void ProcessRoutedInput()
         {
+            if (_motor != null && _motor.IsImpactStunned)
+            {
+                if (!_impactStunBlocked) { CancelForImpactStun(); _impactStunBlocked = true; }
+                return;
+            }
+            _impactStunBlocked = false;
+            // Physical recovery may re-enable this component. Match permission is
+            // independent of enabled state and is checked before reading any input.
+            if (!AcceptsDuelCommands) return;
             if (_lastRoutedInputFrame == Time.frameCount) return;
             _lastRoutedInputFrame = Time.frameCount;
             if (inputAdapter == null) return;
@@ -1128,6 +1173,53 @@ namespace Elemental.Input.Gestures
                 _wallHeight01 = Mathf.Clamp01(_wallHeight01 + delta);
         }
 
+        internal bool TryYieldPendingMouseToDualChord()
+        {
+            // A late second button may replace only an undecided single-button
+            // gesture. A held stone, charged cast or drawn structure keeps its owner.
+            if (selectedElement != ElementId.Earth || executor == null ||
+                (!_pushCharging && !_earthAcquirePending) || IsQuickStonePrimed ||
+                IsArmorActive || _gravityWellHeld || _gravityThrowOwned ||
+                _wallGesturePending || _groundWaveGesturePending || _pluckPending ||
+                executor.HeldBody != null || executor.HasPendingExtraction ||
+                executor.HasHeldFractureCluster || executor.IsVectorFieldActive) return false;
+            CancelInteraction();
+            return true;
+        }
+
+        private bool BeginStandalonePushTarget(float2 pointer)
+        {
+            _pushWall = null;
+            if (!AcceptsDuelCommands || castCamera == null || executor == null) return false;
+            executor.CancelVectorField();
+            Ray ray = castCamera.ScreenPointToRay(new Vector2(pointer.x, pointer.y));
+            if (!TryFindPushTarget(ray, out RaycastHit hit, out Rigidbody body)) return false;
+            EarthPieceRuntime piece = hit.collider.GetComponent<EarthPieceRuntime>();
+            EarthWall wall = piece != null ? piece.Owner : hit.collider.GetComponentInParent<EarthWall>();
+            bool supportedCell = piece == null || (wall != null && wall.IsPieceStructurallySupported(piece.PieceIndex));
+            if (wall != null && wall.IsEmergenceComplete && supportedCell)
+            {
+                // Wait for tap versus hold/flick. A dual-button chord can still
+                // take ownership without prematurely plucking or moving the wall.
+                _pushWall = wall;
+                _pushWallPoint = hit.point;
+                return true;
+            }
+            return executor.TryBeginVectorField(hit.collider, body, hit.point, ray.direction);
+        }
+
+        private bool BeginWallCellVectorField(float2 pointer)
+        {
+            EarthWall wall = _pushWall;
+            _pushWall = null;
+            if (wall == null || !wall.TryPluckCell(_pushWallPoint, out IEarthPhysicalTarget cell) ||
+                cell?.Body == null || castCamera == null) return false;
+            Ray ray = castCamera.ScreenPointToRay(new Vector2(pointer.x, pointer.y));
+            _pushTargetLocked = executor.TryBeginVectorField(cell.Body.GetComponent<Collider>(),
+                cell.Body, _pushWallPoint, ray.direction);
+            return _pushTargetLocked;
+        }
+
         private void UpdateStandalonePush(float2 pointer)
         {
             if (inputAdapter.BendForcePressed)
@@ -1137,7 +1229,7 @@ namespace Elemental.Input.Gestures
                 _pushPreviousPointer = pointer;
                 _pushTravelViewport = 0f;
                 _pushVelocityViewportPerSecond = float2.zero;
-                _pushTargetLocked = TryBeginPushAtScreenPoint(pointer);
+                _pushTargetLocked = BeginStandalonePushTarget(pointer);
                 if (!_pushTargetLocked)
                     StatusChanged?.Invoke("No pushable rock, fragment or wall near the cursor.");
             }
@@ -1154,7 +1246,9 @@ namespace Elemental.Input.Gestures
                 _pushPreviousPointer = pointer;
                 float charge = PushCharge(Time.unscaledTime - _pushStartedAt);
                 PushChargeChanged?.Invoke(charge);
-                if (_pushTargetLocked && castCamera != null)
+                if (_pushWall != null && (Time.unscaledTime - _pushStartedAt > .22f ||
+                    _pushTravelViewport >= .018f)) BeginWallCellVectorField(pointer);
+                if (_pushTargetLocked && _pushWall == null && castCamera != null)
                 {
                     Ray ray = castCamera.ScreenPointToRay(new Vector2(pointer.x, pointer.y));
                     executor.UpdateVectorField(ray.direction, charge);
@@ -1181,16 +1275,32 @@ namespace Elemental.Input.Gestures
                                            castCamera.transform.up * release.ScreenDirection.y;
                     releaseDirection = (screenVector + ray.direction * 0.38f).normalized;
                 }
-                executor.ReleaseVectorField(release.Intent, releaseDirection, release.Strength01);
-                StatusChanged?.Invoke(release.Intent switch
+                bool wallTap = _pushWall != null && release.Intent == EarthVectorReleaseIntent.QuickPulse;
+                if (wallTap)
                 {
-                    EarthVectorReleaseIntent.ProjectileFlick => "PROJECTILE FLICK — Earth launched along the swipe.",
-                    EarthVectorReleaseIntent.QuickPulse => "QUICK PULSE — compact reactive shove.",
-                    _ => "VECTOR HOLD RELEASED — momentum preserved without a blast."
-                });
+                    EarthQuickCastProfileData quick = quickCastProfile != null
+                        ? quickCastProfile.Data : EarthQuickCastProfileData.Default;
+                    float speed = quick.ResolveLaunchSpeed(Mathf.Max(heldSeconds, quick.ExtractionSeconds));
+                    bool launched = executor.TryLaunchWallCell(_pushWall, _pushWallPoint,
+                        releaseDirection, speed, _tick++, out _);
+                    StatusChanged?.Invoke(launched ? $"WALL CELL FIRE - {speed:0.0} m/s." :
+                        "Selected wall cell could not be released.");
+                }
+                else
+                {
+                    if (_pushWall != null) BeginWallCellVectorField(pointer);
+                    executor.ReleaseVectorField(release.Intent, releaseDirection, release.Strength01);
+                    StatusChanged?.Invoke(release.Intent switch
+                    {
+                        EarthVectorReleaseIntent.ProjectileFlick => "PROJECTILE FLICK — Earth launched along the swipe.",
+                        EarthVectorReleaseIntent.QuickPulse => "QUICK PULSE — compact reactive shove.",
+                        _ => "VECTOR HOLD RELEASED — momentum preserved without a blast."
+                    });
+                }
             }
             _pushCharging = false;
             _pushTargetLocked = false;
+            _pushWall = null;
             _pushTravelViewport = 0f;
             _pushVelocityViewportPerSecond = float2.zero;
             PushChargeChanged?.Invoke(0f);
@@ -1353,6 +1463,7 @@ namespace Elemental.Input.Gestures
 
         public bool TryBeginGravityWellAtScreenPoint(float2 screenPoint)
         {
+            if (!AcceptsDuelCommands) return false;
             using var marker = GravityAcquireMarker.Auto();
             if (executor == null) return false;
             if (!TryFindGravityFocus(screenPoint, out RaycastHit hit)) return false;
@@ -1369,6 +1480,7 @@ namespace Elemental.Input.Gestures
 
         public bool TryUpdateGravityWellAtScreenPoint(float2 screenPoint)
         {
+            if (!AcceptsDuelCommands) return false;
             if (executor == null || !executor.IsGravityWellActive || castCamera == null) return false;
             Vector3 center = planetCollider != null ? planetCollider.bounds.center : Vector3.zero;
             if (executor.GravityWellCapturedCount > 0)
@@ -1474,6 +1586,7 @@ namespace Elemental.Input.Gestures
             executor?.CancelVectorField();
             _pushCharging = false;
             _pushTargetLocked = false;
+            _pushWall = null;
             _groundWaveGesturePending = true;
             _waveSector01 = 0.32f;
             _bendStartedAt = Time.unscaledTime;
@@ -1776,6 +1889,7 @@ namespace Elemental.Input.Gestures
             {
                 RaycastHit hit = _projectionHits[index];
                 Rigidbody body = hit.rigidbody;
+                if (EarthBodyTargetFilter.IsCharacterBody(body)) continue;
                 IEarthPhysicalTarget earthTarget = ResolveEarthTarget(hit.collider);
                 bool releasablePiece = earthTarget is EarthWallPiece || earthTarget is EarthPlatformPiece;
                 if (_casterBody != null && hit.collider != null &&
@@ -2206,6 +2320,7 @@ namespace Elemental.Input.Gestures
 
         public bool TryCommitScreenPath(IReadOnlyList<float2> screenPath, float durationSeconds)
         {
+            if (!AcceptsDuelCommands) return false;
             if (screenPath == null || screenPath.Count == 0)
             {
                 StatusChanged?.Invoke("Hold LMB and drag over the planet.");
@@ -2271,7 +2386,11 @@ namespace Elemental.Input.Gestures
                     _drawSurface.Handle.StableId,
                     _drawSurface.Handle.Kind,
                     _drawSurface.Handle.Generation,
-                    ToVector3(_drawSurface.Tangent));
+                    ToVector3(_drawSurface.Tangent),
+                    surfaceQueries,
+                    _drawSurface);
+                if (!executed)
+                    StatusChanged?.Invoke("Not enough room on this face for the wall base. Draw a shorter line farther from the edge.");
             }
             else if (_selectedAbility == EarthAbilityIds.RaisePlatform && _drawSurfaceLocked &&
                      IsConstructedDrawSurface(_drawSurface.Handle.Kind))
@@ -2503,7 +2622,7 @@ namespace Elemental.Input.Gestures
                     : 0u;
             return new MagicCommand(
                 tick,
-                1u,
+                _boundDuelFighter == Elemental.Simulation.Combat.EarthDuelFighterId.Bot ? 2u : 1u,
                 selectedElement,
                 ability,
                 new float3(origin.x, origin.y, origin.z),
@@ -2647,6 +2766,7 @@ namespace Elemental.Input.Gestures
 
         public bool TryReleasePushAtScreenPoint(float2 screenPoint, float heldSeconds)
         {
+            if (!AcceptsDuelCommands) return false;
             if (castCamera == null || executor == null || heldSeconds < 0f) return false;
             Ray ray = castCamera.ScreenPointToRay(new Vector2(screenPoint.x, screenPoint.y));
             if (!TryFindPushTarget(ray, out RaycastHit selected, out Rigidbody selectedBody)) return false;
@@ -2663,6 +2783,7 @@ namespace Elemental.Input.Gestures
 
         public bool TryBeginPushAtScreenPoint(float2 screenPoint)
         {
+            if (!AcceptsDuelCommands) return false;
             if (castCamera == null || executor == null) return false;
             Ray ray = castCamera.ScreenPointToRay(new Vector2(screenPoint.x, screenPoint.y));
             if (!TryFindPushTarget(ray, out RaycastHit selected, out Rigidbody selectedBody)) return false;

@@ -284,7 +284,7 @@ public struct CrowdMotionMatchingSearchBurst : IJob
                     }
                 }
             }
-            if (consts.VarianceFactor > 1.0f)
+            if (consts.VarianceFactor > 1.0f && BestIndex[0] >= 0)
             {
                 jump = VarianceJump(i, BestIndex[0], minDistance, consts);
             }
@@ -329,6 +329,15 @@ public struct CrowdMotionMatchingSearchBurst : IJob
             int aStart = math.max(0, BestIndex[1] - (int)math.floor(AdaptativeFeaturesIndices.Length * 0.01f));
             minDistance = Search(aStart, AdaptativeFeaturesIndices.Length, minDistance, DynamicAccelerationConsts);
             minDistance = Search(0, math.max(0, aStart), minDistance, DynamicAccelerationConsts);
+            // Global adaptive sampling can omit every frame of a short clip tag.
+            // Complete the SAME constrained environment search before declaring
+            // the query empty; do not switch to another clip or ignore obstacles.
+            if (BestIndex[0] < 0)
+            {
+                for (int i = 0; i < Valid.Length; i++)
+                    if (Valid[i] && TagMask[i])
+                        minDistance = FeatureCheck(i, minDistance, StaticSqrDistance(i), false);
+            }
         }
     }
 }

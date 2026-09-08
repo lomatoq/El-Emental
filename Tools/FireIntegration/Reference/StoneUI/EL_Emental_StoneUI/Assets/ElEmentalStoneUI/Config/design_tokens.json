@@ -1,0 +1,90 @@
+{
+  "version": "1.0.0",
+  "referenceResolution": [
+    1920,
+    1080
+  ],
+  "spacing": [
+    4,
+    8,
+    12,
+    16,
+    24,
+    32,
+    48,
+    64
+  ],
+  "colors": {
+    "ink": "#0B1417",
+    "surface": "#152022",
+    "gold": "#CCB77D",
+    "ivory": "#F2E6C7",
+    "muted": "#9DA8A7",
+    "earth": "#B9DB74",
+    "water": "#72C5E8",
+    "fire": "#F49A68",
+    "air": "#C3CDD0",
+    "danger": "#F17668",
+    "disabled": "#5C6767"
+  },
+  "fonts": {
+    "brand": "immutable wordmark_master texture",
+    "displayLatin": "Cinzel Regular / Semibold",
+    "displayCyrillic": "Forum Regular",
+    "body": "Manrope Regular / Medium",
+    "numbers": "Manrope Semibold; reserve fixed digit widths"
+  },
+  "fontSizes": {
+    "result": 112,
+    "screenTitle": 30,
+    "button": 29,
+    "body": 21,
+    "hint": 17,
+    "micro": 15,
+    "timer": 48,
+    "meter": 30
+  },
+  "layout": {
+    "curtain": [
+      0,
+      0,
+      784,
+      1080
+    ],
+    "brand": [
+      87,
+      150,
+      460,
+      112
+    ],
+    "menuContent": [
+      87,
+      380,
+      570,
+      602
+    ],
+    "settingsContent": [
+      87,
+      324,
+      570,
+      674
+    ],
+    "hudSafeInset": 24,
+    "minButtonHeight": 56,
+    "minimumContrastBody": 4.5
+  },
+  "implementation": {
+    "renderer": "UI Toolkit",
+    "panelScaleMode": "ScaleWithScreenSize",
+    "screenMatchMode": "MatchWidthOrHeight",
+    "match": 1,
+    "sortingOrder": 100,
+    "doNotChange": [
+      "physics",
+      "network protocol",
+      "planet radius",
+      "live camera",
+      "live render pipeline"
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83274e4aa259fad4e86f106b121e6f02, type: 3}
+  m_Name: Fire_ColumnDecor
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.Fire.FireVisualProfile
+  Backend: 2
+  CpuMaterial: {fileID: 2100000, guid: b7762775841060b4fb00a590b22485f3, type: 2}
+  CoherentBody: 0
+  CoherentBodyShader: {fileID: 0}
+  CpuCapacity: 256
+  Graph: {fileID: 8926484042661614526, guid: 1adcbf7fb0d907e4bb764becb03563ac, type: 3}
+  NativeBackendEnabled: 1
+  SpawnRate: 28
+  FlameMinWidth: 1.1
+  FlameMaxWidth: 1.65
+  FlameMinAspect: 1.1
+  FlameMaxAspect: 1.45
+  MinLifetime: 0.6
+  MaxLifetime: 0.9
+  ParticleRadius: 0.035
+  FreeDrag: 1.2
+  FreeLift: 1.5
+  MaximumSpeed: 4
+  Substeps: 1
+  LowDetailDistance: 25
+  LowDetailRate: 0.5
+  LightIntensity: 2
+  LightRange: 5

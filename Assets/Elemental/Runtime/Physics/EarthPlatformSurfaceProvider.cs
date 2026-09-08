@@ -4,10 +4,11 @@ using UnityEngine;
 namespace Elemental.Runtime.Physics
 {
     [DisallowMultipleComponent]
-    public sealed class EarthPlatformSurfaceProvider : MonoBehaviour, IEarthSurfaceProvider
+    public sealed class EarthPlatformSurfaceProvider : MonoBehaviour, IEarthSurfaceProvider, IEarthSurfaceColliderProvider
     {
         [SerializeField] private EarthPlatform platform;
         [SerializeField] private EarthSurfaceQueryService queryService;
+        public Collider ConstructionCollider => platform != null ? platform.SurfaceCollider : null;
 
         public void Configure(EarthPlatform configuredPlatform, EarthSurfaceQueryService configuredService)
         {

@@ -25,9 +25,8 @@ namespace Elemental.Presentation.Animation
         [SerializeField] private HumanoidRagdollRig ragdoll;
         [SerializeField] private HumanoidCharacterPresentation presentation;
         [SerializeField] private EarthCharacterImpactTarget impactTarget;
-        [SerializeField, Range(0.25f, 1f)] private float impactTransferWeight = 0.88f;
-        [SerializeField, Range(60f, 200f)] private float impactAngularVelocityCap = 170f;
 
+        private Transform _spine;
         private Transform _chest;
         private Transform _neck;
         private Transform _head;
@@ -103,34 +102,13 @@ namespace Elemental.Presentation.Animation
 
         private void OnWorldResponse(EarthWorldResponseEvent response)
         {
-            if (impactTarget == null || response.TargetStableId != impactTarget.StableFighterId)
+            if (impactTarget == null || response.TargetStableId != impactTarget.StableFighterId ||
+                EarthImpactPresentationOwnership.Resolve(response.Response) != EarthImpactPresentationOwner.LocalizedPhysics)
                 return;
-            if (EarthImpactPresentationOwnership.Resolve(response.Response) !=
-                EarthImpactPresentationOwner.ProceduralAngularSpring)
-                return;
+            // Gameplay already delivered this response ID to the local PhysX
+            // owner. Keep semantic state notification, never add a torso kick.
             presentation?.NotifyImpactResponse(response.Response);
-            Vector3 worldDirection = new Vector3(
-                response.Direction.x,
-                response.Direction.y,
-                response.Direction.z);
-            Vector3 local = transform.InverseTransformDirection(worldDirection);
-            bool headHit = _head != null && _chest != null &&
-                           Vector3.SqrMagnitude(ToVector3(response.Point) - _head.position) <
-                           Vector3.SqrMagnitude(ToVector3(response.Point) - _chest.position);
-            _impactChestTransfer = headHit ? 0.62f : 1f;
-            _impactHeadTransfer = headHit ? 0.78f : 0.30f;
-            _pendingImpactKick += EarthInertialBodyMotionSolver.ResolveDirectionalAngularVelocity(
-                new float3(local.x, local.y, local.z),
-                math.lerp(0.8f, 4.6f, response.Intensity01),
-                impactTransferWeight,
-                impactAngularVelocityCap);
-            _pendingImpactKick = math.clamp(
-                _pendingImpactKick,
-                new float3(-impactAngularVelocityCap),
-                new float3(impactAngularVelocityCap));
-            AcceptedProceduralImpactCount++;
         }
-
         private void LateUpdate()
         {
             if (animator == null || motor == null || rootBody == null ||
@@ -170,7 +148,11 @@ namespace Elemental.Presentation.Animation
                     return;
                 }
                 Vector3 acceleration = Vector3.zero;
-                if (_hasVelocity)
+                bool localPhysicalHit = ragdoll != null && ragdoll.LocalizedPhysics != null &&
+                                        ragdoll.LocalizedPhysics.HasActiveResponse;
+                // A hit's motor shove is not locomotion acceleration. Otherwise
+                // an arm/leg impulse would also add the retired global torso kick.
+                if (_hasVelocity && !localPhysicalHit)
                     acceleration = Vector3.ClampMagnitude(
                         (tangentVelocity - _previousTangentVelocity) / dt,
                         26f);
@@ -209,7 +191,15 @@ namespace Elemental.Presentation.Animation
                     -sample.LocomotionAnglesDegrees.y * 0.28f,
                     -sample.LocomotionAnglesDegrees.z * 0.32f) +
                     sample.ImpactAnglesDegrees * _impactHeadTransfer;
-                _chest.localRotation *= Quaternion.Euler(ToVector3(chestAngles));
+                // Spread impact flexion along the torso instead of rotating the
+                // entire upper body as a rigid block at one chest joint. Keep
+                // locomotion at its existing owner and leave pelvis/feet alone.
+                float spineShare = _spine != null ? 0.38f : 0f;
+                float3 spineImpact = sample.ImpactAnglesDegrees *
+                                     (_impactChestTransfer * spineShare);
+                if (_spine != null)
+                    _spine.localRotation *= Quaternion.Euler(ToVector3(spineImpact));
+                _chest.localRotation *= Quaternion.Euler(ToVector3(chestAngles - spineImpact));
                 _head.localRotation *= Quaternion.Euler(ToVector3(headAngles));
                 if (presentation != null &&
                     presentation.CurrentAuthoredAction == EarthAuthoredActionId.MagicCast)
@@ -244,6 +234,9 @@ namespace Elemental.Presentation.Animation
             if (animator == null || !animator.isHuman) return;
             _chest = animator.GetBoneTransform(HumanBodyBones.UpperChest) ??
                      animator.GetBoneTransform(HumanBodyBones.Chest);
+            _spine = animator.GetBoneTransform(HumanBodyBones.Spine);
+            if (_spine == _chest || _chest == null ||
+                (_spine != null && !_chest.IsChildOf(_spine))) _spine = null;
             _neck = animator.GetBoneTransform(HumanBodyBones.Neck);
             _head = animator.GetBoneTransform(HumanBodyBones.Head);
             if (_head == null || animator.avatar == null) return;

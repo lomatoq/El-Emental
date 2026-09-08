@@ -1,0 +1,109 @@
+--- a/Assets/Elemental/Tests/PlayMode/ProductionArenaRestoreTests.cs
++++ b/Assets/Elemental/Tests/PlayMode/ProductionArenaRestoreTests.cs
+@@ -38,6 +38,7 @@
+             public float authoredMass, authoredVolume;
+             public List<string> restoredMatterIds = new();
+             public List<int> registeredArmorPieces = new();
++            public List<int> preservedFamilyRecords = new();
+         }
+         [UnityTearDown] public IEnumerator Cleanup()
+         {
+@@ -97,7 +98,7 @@
+                 if (surf.BoardTransform != null) Assert.That(surf.BoardTransform.gameObject.scene, Is.EqualTo(_arena));
+             AssertSceneOwnership();
+             yield return ProductionCombatTestFlow.BeginBotAfterReadiness(_arena);
+-            TraceCanonicalMatter("after-first-countdown");
++            AssertAuthoredFamily("after-first-countdown");
+             for (int cycle = 0; cycle < 2; cycle++)
+             {
+                 DisableBots();
+@@ -125,8 +126,8 @@
+                 Assert.That(source.ReleasedPieceCount, Is.GreaterThanOrEqualTo(released));
+                 Assert.That(planet.State.EditCount, Is.EqualTo(damagedEdits));
+                 evidence.persistentReleasedPieces.Add(source.ReleasedPieceCount);
+-                Assert.That(_canonicalIdentity.MatterId, Is.EqualTo(authoredBeforeReset));
+-                AssertAuthoredMatter();
++                // A legal split consumes the parent; preserve its complete source family.
++                evidence.preservedFamilyRecords.Add(AssertAuthoredFamily("after-life-respawn"));
+                 // Exercise real armor preparation and launch: matter registration
+                 // occurs only when a prepared plate becomes a physical projectile.
+                 EarthArmorController armor = null;
+@@ -175,12 +176,8 @@
+                 Assert.That(retained.Mass, Is.EqualTo(100));
+                 Assert.That(foreignKernel.ActiveRecordCount, Is.EqualTo(sentinelCount));
+                 evidence.resetCounts.Add(duel.ArenaResetCount); evidence.restoredTerrainEdits.Add(planet.State.EditCount);
+-                yield return ProductionCombatTestFlow.BeginBotAfterReadiness(_arena);
+-                DisableBots();
+-                Assert.That(duel.CombatAllowed, Is.True); Assert.That(duel.ArenaResetError, Is.Null);
+-                Assert.That(duel.PlayerHealth, Is.EqualTo(100)); Assert.That(duel.BotHealth, Is.EqualTo(100));
+-                Assert.That(duel.PlayerScore, Is.Zero); Assert.That(duel.BotScore, Is.Zero);
+-                AssertAuthoredMatter();
++                // Verify the restored original through the real grip adapter before
++                // another countdown permits a new, legitimate floor collision.
+                 var executor = armor.GetComponent<MagicExecutor>();
+                 Assert.That(executor, Is.Not.Null);
+                 var authoredCollider = _canonicalDecor.GetComponent<Collider>();
+@@ -188,6 +185,12 @@
+                     authoredCollider.bounds.center, Vector3.up), Is.True, "The restored canonical rock must remain usable by the real grip path.");
+                 executor.CancelVectorField();
+                 AssertAuthoredMatter();
++                yield return ProductionCombatTestFlow.BeginBotAfterReadiness(_arena);
++                DisableBots();
++                Assert.That(duel.CombatAllowed, Is.True); Assert.That(duel.ArenaResetError, Is.Null);
++                Assert.That(duel.PlayerHealth, Is.EqualTo(100)); Assert.That(duel.BotHealth, Is.EqualTo(100));
++                Assert.That(duel.PlayerScore, Is.Zero); Assert.That(duel.BotScore, Is.Zero);
++                AssertAuthoredFamily("after-new-game-countdown");
+                 ScreenCapture.CaptureScreenshot(Output + "/cycle-" + cycle + "-new-game.png");
+                 yield return new WaitForEndOfFrame();
+                 evidence.completedCycles++;
+@@ -265,6 +268,42 @@
+             Directory.CreateDirectory(Output);
+             File.AppendAllText(Output + "/canonical-trace.txt", DateTime.UtcNow.ToString("O") + " " + trace + Environment.NewLine);
+             return trace;
++        }
++        private int AssertAuthoredFamily(string checkpoint)
++        {
++            string trace = TraceCanonicalMatter(checkpoint);
++            var kernel = _canonicalIdentity.Kernel;
++            Assert.That(kernel.gameObject.scene, Is.EqualTo(_arena), trace);
++            var records = new EarthMatterRecord[kernel.Registry.Capacity];
++            int count = kernel.Registry.CopyActiveNonAlloc(records);
++            int familyCount = 0;
++            double mass = 0, volume = 0, reservedVolume = 0;
++            var source = _canonicalBaseline.Source;
++            for (int i = 0; i < count; i++)
++            {
++                var record = records[i];
++                if (record.Source.Kind != source.Kind || record.Source.SourceStableId != source.SourceStableId) continue;
++                Assert.That(record.Phase, Is.Not.EqualTo(EarthMatterPhase.Consumed), trace);
++                Assert.That(record.IsFiniteAndPhysical, Is.True, trace);
++                Assert.That(record.Mass, Is.GreaterThan(0), trace);
++                Assert.That(record.Volume, Is.GreaterThan(0), trace);
++                Assert.That(record.Material, Is.EqualTo(_canonicalBaseline.Material), trace);
++                Assert.That(record.Shape, Is.EqualTo(_canonicalBaseline.Shape), trace);
++                Assert.That(record.Source.SourceGeneration, Is.EqualTo(source.SourceGeneration), trace);
++                Assert.That(record.Source.SourceCellIndex, Is.EqualTo(source.SourceCellIndex), trace);
++                Assert.That(record.Source.SourceRevision, Is.EqualTo(source.SourceRevision), trace);
++                Assert.That(record.Source.SourceLocalPoint, Is.EqualTo(source.SourceLocalPoint), trace);
++                Assert.That(record.Source.Flags, Is.EqualTo(source.Flags), trace);
++                mass += record.Mass; volume += record.Volume; reservedVolume += record.Source.ReservedVolume;
++                familyCount++;
++            }
++            // Include non-consumed dormant matter: retiring a physical cache does
++            // not erase canonical mass. Missing or duplicated family must fail.
++            Assert.That(familyCount, Is.GreaterThan(0), trace);
++            Assert.That(mass, Is.EqualTo((double)_canonicalBaseline.Mass).Within(.001), trace);
++            Assert.That(volume, Is.EqualTo((double)_canonicalBaseline.Volume).Within(.000001), trace);
++            Assert.That(reservedVolume, Is.EqualTo((double)source.ReservedVolume).Within(.000001), trace);
++            return familyCount;
+         }
+         private void AssertAuthoredMatter()
+         {
+@@ -282,6 +321,7 @@
+             Assert.That(_canonicalDecor.IsEarthTargetValid, Is.True);
+             Assert.That(_canonicalDecor.GetComponent<Collider>().enabled, Is.True);
+             Assert.That(_canonicalIdentity.Kernel.gameObject.scene, Is.EqualTo(_arena));
++            AssertAuthoredFamily("restored-original-and-family");
+         }
+         private IEnumerator WaitForMain(FrontendFlowController flow, EarthMvpDuelController duel)
+         {

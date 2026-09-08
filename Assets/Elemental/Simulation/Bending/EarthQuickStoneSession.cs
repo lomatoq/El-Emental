@@ -28,6 +28,12 @@ namespace Elemental.Simulation.Bending
         public float MinimumSpeed { get; }
         public float MaximumSpeed { get; }
         public float ExtractionSeconds { get; }
+        public float ResolveLaunchSpeed(float secondsSincePrime)
+        {
+            float phase = secondsSincePrime / DoubleClickSeconds;
+            phase = phase < 0f ? 0f : phase > 1f ? 1f : phase;
+            return MinimumSpeed + (MaximumSpeed - MinimumSpeed) * (1f - phase);
+        }
         public static EarthQuickCastProfileData Default =>
             new EarthQuickCastProfileData(0.42f, 60f, 76f, 0.15f);
     }
@@ -112,8 +118,7 @@ namespace Elemental.Simulation.Bending
 
         private float LaunchSpeed(float now)
         {
-            float urgency01 = 1f - Clamp01((now - _primedAt) / _profile.DoubleClickSeconds);
-            return Lerp(_profile.MinimumSpeed, _profile.MaximumSpeed, urgency01);
+            return _profile.ResolveLaunchSpeed(now - _primedAt);
         }
 
         public bool ExpireIfNeeded(float now)
@@ -141,6 +146,5 @@ namespace Elemental.Simulation.Bending
         }
 
         private static float Clamp01(float value) => value < 0f ? 0f : value > 1f ? 1f : value;
-        private static float Lerp(float a, float b, float t) => a + ((b - a) * Clamp01(t));
     }
 }

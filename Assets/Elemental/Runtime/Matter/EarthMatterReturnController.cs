@@ -93,6 +93,9 @@ namespace Elemental.Runtime.Matter
 
         private void OnDestroy() => DetachPlanetEvent();
 
+        public void CancelForArenaRestore()
+        { foreach (ReturnSlot slot in _slots) { if (slot.Active) RestoreDynamicBody(slot); slot.Clear(); } }
+
         public bool TryBeginReturn(EarthMatterIdentity identity, Vector3 fallbackSurfaceWorld)
         {
             if (identity == null || voxelPlanet == null || FindSlot(identity) >= 0 ||

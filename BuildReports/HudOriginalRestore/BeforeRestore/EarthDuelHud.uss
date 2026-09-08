@@ -1,0 +1,97 @@
+/* Duel design tokens. UI Toolkit owns text/layout; Painter2D reads the same palette.
+   Reference canvas: 1920 x 1080, height matched by the existing PanelSettings. */
+.duel-hud {
+    --duel-ink: rgb(255, 246, 224);
+    --duel-muted: rgb(215, 211, 194);
+    --duel-gold: rgb(219, 186, 127);
+    --duel-line: rgba(219, 186, 127, .42);
+    --duel-surface: rgba(12, 23, 30, .90);
+    --duel-red: rgb(255, 102, 108);
+    --duel-blue: rgb(82, 213, 246);
+    --duel-caption-size: 16px;
+    --duel-value-size: 38px;
+    --duel-radius: 8px;
+    position: absolute;
+    left: 0; right: 0; top: 0; bottom: 0;
+    color: var(--duel-ink);
+    -unity-font-style: bold;
+}
+.duel-hud Label { flex-shrink: 0; }
+.duel-caption, .duel-score, .duel-time, .duel-vital-value, .duel-legend { margin: 0; padding: 0; }
+.duel-scoreboard {
+    position: absolute; top: 24px; left: 50%; translate: -50% 0;
+    width: 432px; height: 118px; flex-direction: row;
+    justify-content: center; align-items: flex-start;
+}
+.duel-team {
+    width: 106px; height: 98px; align-items: center; justify-content: center;
+    background-color: var(--duel-surface);
+    border-width: 1px; border-color: var(--duel-line); border-bottom-width: 3px;
+    margin-top: 8px;
+}
+.duel-red { border-bottom-color: var(--duel-red); border-top-left-radius: var(--duel-radius); border-bottom-left-radius: var(--duel-radius); }
+.duel-blue { border-bottom-color: var(--duel-blue); border-top-right-radius: var(--duel-radius); border-bottom-right-radius: var(--duel-radius); }
+.duel-score { font-size: 48px; height: 56px; -unity-text-align: middle-center; -unity-text-outline-width: .4px; -unity-text-outline-color: var(--duel-ink); }
+.duel-caption { font-size: var(--duel-caption-size); letter-spacing: 1px; color: var(--duel-muted); -unity-text-align: middle-center; }
+.duel-red .duel-caption { color: var(--duel-red); }
+.duel-blue .duel-caption { color: var(--duel-blue); }
+.duel-clock {
+    width: 220px; height: 118px; align-items: center; justify-content: center;
+    background-color: var(--duel-surface);
+    border-width: 1px; border-color: var(--duel-line);
+    border-top-width: 3px; border-top-color: var(--duel-gold);
+    border-bottom-width: 3px; border-bottom-color: var(--duel-gold);
+    border-radius: var(--duel-radius);
+}
+.duel-time { font-size: 52px; height: 66px; letter-spacing: 1px; -unity-text-align: middle-center; -unity-text-outline-width: .4px; -unity-text-outline-color: var(--duel-ink); }
+.duel-clock-urgent { border-top-color: var(--duel-red); border-bottom-color: var(--duel-red); }
+.duel-clock-urgent .duel-time { color: var(--duel-red); -unity-text-outline-color: var(--duel-red); }
+.duel-side { position: absolute; top: 35%; width: 92px; align-items: center; }
+.duel-left { left: 24px; }
+.duel-right { right: 24px; }
+.duel-gauge { width: 64px; height: 252px; --duel-gauge-outline: var(--duel-gold); }
+.duel-health-gauge { --duel-gauge-accent: var(--duel-red); }
+.duel-mana-gauge { --duel-gauge-accent: var(--duel-blue); }
+.duel-readout {
+    width: 92px; height: 86px; align-items: center; justify-content: center;
+    margin-top: 8px; padding-bottom: 6px;
+    background-color: var(--duel-surface);
+    border-width: 1px; border-color: var(--duel-line); border-bottom-width: 3px;
+    border-radius: var(--duel-radius);
+}
+.duel-left .duel-readout { border-bottom-color: var(--duel-red); }
+.duel-right .duel-readout { border-bottom-color: var(--duel-blue); }
+.duel-vital-value { font-size: var(--duel-value-size); height: 48px; -unity-text-align: middle-center; -unity-text-outline-width: .4px; -unity-text-outline-color: var(--duel-ink); }
+.duel-critical .duel-vital-value { color: var(--duel-red); -unity-text-outline-color: var(--duel-red); }
+.duel-critical .duel-readout { border-color: var(--duel-red); }
+.duel-navigation {
+    position: absolute; right: 24px; bottom: 24px; width: 230px;
+    padding-top: 12px; padding-bottom: 12px; align-items: center;
+    background-color: var(--duel-surface);
+    border-width: 1px; border-color: var(--duel-line); border-radius: var(--duel-radius);
+}
+.duel-globe { width: 210px; height: 210px; }
+.duel-legend { font-size: var(--duel-caption-size); letter-spacing: .3px; color: var(--duel-muted); -unity-text-align: middle-center; }
+.duel-respawn {
+    position: absolute; bottom: 18%; left: 50%; translate: -50% 0;
+    -unity-text-align: middle-center; font-size: 22px; letter-spacing: 1px;
+    padding: 14px 24px; background-color: var(--duel-surface);
+    border-width: 1px; border-color: var(--duel-gold); border-radius: var(--duel-radius);
+}
+.duel-result {
+    position: absolute; left: 50%; top: 38%; translate: -50% 0;
+    width: 420px; padding: 32px; align-items: center;
+    background-color: var(--duel-surface);
+    border-width: 1px; border-color: var(--duel-line);
+    border-top-width: 3px; border-top-color: var(--duel-gold); border-radius: var(--duel-radius);
+}
+.duel-result-title { font-size: 42px; -unity-text-outline-width: .35px; -unity-text-outline-color: var(--duel-ink); margin-top: 12px; margin-bottom: 24px; }
+.duel-restart {
+    width: 268px; height: 54px; margin: 0;
+    color: var(--duel-ink); font-size: 18px; -unity-font-style: bold;
+    background-color: rgb(32, 73, 86); border-width: 2px; border-color: var(--duel-blue);
+    border-radius: var(--duel-radius); letter-spacing: 1px;
+}
+.duel-restart:hover { background-color: rgb(42, 100, 115); }
+.duel-restart:focus { border-color: var(--duel-ink); }
+.duel-restart:active { background-color: rgb(23, 55, 66); }

@@ -11,6 +11,21 @@ namespace Elemental.Runtime.Physics
         bool IsCurrent(in EarthSurfaceHandle handle);
     }
 
+    public interface IEarthSurfaceColliderProvider
+    {
+        Collider ConstructionCollider { get; }
+    }
+
+    public interface IEarthContinuousConstructionProvider
+    {
+        bool AllowsTopConstructionContinuation { get; }
+    }
+
+    public interface IEarthConstructionTopProvider
+    {
+        bool TrySampleConstructionTop(in EarthSurfaceQuery query, out EarthSurfaceSample sample);
+    }
+
     [DisallowMultipleComponent]
     public sealed class EarthSurfaceQueryService : MonoBehaviour
     {
@@ -79,6 +94,78 @@ namespace Elemental.Runtime.Physics
             {
                 IEarthSurfaceProvider provider = _providers[index];
                 if (provider != null && provider.IsCurrent(in handle)) return true;
+            }
+            return false;
+        }
+
+        // Construction must stay on its original face even when another collider
+        // overlaps the probe. Do not let a nearest-surface query change ownership.
+        public bool TrySampleOnSurface(in EarthSurfaceHandle handle,
+            in EarthSurfaceQuery query, out EarthSurfaceSample sample)
+        {
+            sample = default;
+            for (int index = 0; index < _providerCount; index++)
+            {
+                IEarthSurfaceProvider provider = _providers[index];
+                if (provider == null || (provider is Object unityObject && unityObject == null) ||
+                    !provider.IsCurrent(in handle) ||
+                    !provider.TrySample(in query, out EarthSurfaceSample candidate) ||
+                    candidate.Handle != handle || !candidate.Supports(query.RequiredCapabilities)) continue;
+                sample = candidate;
+                return true;
+            }
+            return false;
+        }
+
+        public Collider GetConstructionCollider(in EarthSurfaceHandle handle)
+        {
+            for (int index = 0; index < _providerCount; index++)
+                if (_providers[index] is IEarthSurfaceColliderProvider colliderProvider &&
+                    _providers[index].IsCurrent(in handle)) return colliderProvider.ConstructionCollider;
+            return null;
+        }
+
+        public bool AllowsTopConstructionContinuation(in EarthSurfaceSample surface)
+        {
+            if (surface.Handle.Kind != EarthSurfaceKind.Platform ||
+                !surface.Supports(EarthSurfaceCapabilities.Support)) return false;
+            EarthSurfaceHandle handle = surface.Handle;
+            for (int index = 0; index < _providerCount; index++)
+                if (_providers[index] is IEarthContinuousConstructionProvider continuation &&
+                    continuation.AllowsTopConstructionContinuation && _providers[index].IsCurrent(in handle)) return true;
+            return false;
+        }
+
+        public bool TrySampleConstructionSupport(in EarthSurfaceSample source, in EarthSurfaceQuery query,
+            out EarthSurfaceSample sample)
+        {
+            EarthSurfaceHandle handle = source.Handle;
+            bool continuesTop = AllowsTopConstructionContinuation(in source);
+            if (continuesTop)
+                for (int index = 0; index < _providerCount; index++)
+                    if (_providers[index].IsCurrent(in handle) &&
+                        _providers[index] is IEarthConstructionTopProvider sourceTopProvider &&
+                        sourceTopProvider.TrySampleConstructionTop(in query, out sample) && sample.Handle == handle)
+                        return true;
+            if (TrySampleOnSurface(in handle, in query, out sample)) return true;
+            if (!continuesTop) return false;
+            // Only explicitly registered static arena top providers can continue
+            // a floor stroke. Side faces and unrelated/moving platforms stay locked.
+            for (int index = 0; index < _providerCount; index++)
+            {
+                if (_providers[index] is not IEarthContinuousConstructionProvider continuation ||
+                    !continuation.AllowsTopConstructionContinuation) continue;
+                EarthSurfaceSample candidate;
+                bool found = _providers[index] is IEarthConstructionTopProvider candidateTopProvider
+                    ? candidateTopProvider.TrySampleConstructionTop(in query, out candidate)
+                    : _providers[index].TrySample(in query, out candidate);
+                if (!found ||
+                    candidate.Handle.Kind != EarthSurfaceKind.Platform ||
+                    !candidate.Supports(EarthSurfaceCapabilities.Support | EarthSurfaceCapabilities.Draw) ||
+                    math.dot(candidate.Normal, source.Normal) < 0.995f ||
+                    math.abs(math.dot(candidate.Point - source.Point, source.Normal)) > 0.025f) continue;
+                sample = candidate;
+                return true;
             }
             return false;
         }

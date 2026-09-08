@@ -899,9 +899,10 @@ namespace Elemental.Tests.PlayMode
             actor.transform.position = new Vector3(0f, 32f, 0f);
             Rigidbody body = actor.AddComponent<Rigidbody>();
             body.useGravity = false;
-            body.linearVelocity = new Vector3(0f, -18f, 0f);
+            body.linearVelocity = new Vector3(4f, -18f, 0f);
             PlanetMotor motor = actor.AddComponent<PlanetMotor>();
             motor.enabled = false;
+            EarthCharacterImpactTarget characterImpact = actor.AddComponent<EarthCharacterImpactTarget>();
             PhysicalImpactTarget impact = actor.AddComponent<PhysicalImpactTarget>();
             impact.Configure(body);
             GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -911,13 +912,33 @@ namespace Elemental.Tests.PlayMode
             cushion.Configure(body, motor, null, planet.GetComponent<Collider>(), profile, visual.transform);
 
             Assert.That(cushion.BeginHold(), Is.True);
-            yield return new WaitForSeconds(0.75f);
+            float landingDeadline = Time.time + 0.75f;
+            bool checkedMovingFootprint = false;
+            while (Time.time < landingDeadline)
+            {
+                yield return new WaitForFixedUpdate();
+                if (!cushion.IsHolding || !cushion.IsCushioning) continue;
+                // This fixture disables the motor, so its LocalUp is stale.
+                // The cushion uses the actual radial normal of its sphere contact.
+                Vector3 contactUp = visual.transform.up;
+                float horizontalError = Vector3.ProjectOnPlane(
+                    motor.SupportFeetPoint(contactUp) - cushion.PredictedLandingPoint,
+                    contactUp).magnitude;
+                Assert.That(horizontalError, Is.LessThan(0.15f),
+                    "Slower descent must not leave the cushion at a stale ballistic landing point.");
+                checkedMovingFootprint = true;
+            }
 
             float downSpeed = -Vector3.Dot(body.linearVelocity, Vector3.up);
             Assert.That(downSpeed, Is.LessThanOrEqualTo(4.1f));
             Assert.That(impact.AccumulatedImpulse, Is.EqualTo(0f).Within(0.001f));
             Assert.That(visual.activeSelf, Is.True);
             Assert.That(cushion.SuppressesHardLanding, Is.True);
+            Assert.That(cushion.HasFractured, Is.True, "The fast landing must break the compressed stones apart.");
+            Assert.That(cushion.VisibleChunkCount, Is.EqualTo(12));
+            Assert.That(cushion.IncomingLandingSpeed, Is.GreaterThan(12f));
+            Assert.That(checkedMovingFootprint, Is.True);
+            Assert.That(characterImpact.IsRecoverablyKnockedDown, Is.False);
 
             Object.Destroy(planet);
             Object.Destroy(actor);

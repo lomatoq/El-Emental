@@ -9,13 +9,19 @@ namespace Elemental.Simulation.Structures
             float3 localImpulse,
             float radius,
             float materialResponse,
-            uint tick)
+            uint tick,
+            float maximumDamagePerBond = 1f,
+            float maximumFoundationDamagePerBond = 1f,
+            float3 localMetricScale = default)
         {
             LocalPoint = localPoint;
             LocalImpulse = localImpulse;
             Radius = radius;
             MaterialResponse = materialResponse;
             Tick = tick;
+            MaximumDamagePerBond = maximumDamagePerBond;
+            MaximumFoundationDamagePerBond = maximumFoundationDamagePerBond;
+            LocalMetricScale = math.all(localMetricScale == float3.zero) ? new float3(1f) : localMetricScale;
         }
 
         public float3 LocalPoint { get; }
@@ -23,6 +29,9 @@ namespace Elemental.Simulation.Structures
         public float Radius { get; }
         public float MaterialResponse { get; }
         public uint Tick { get; }
+        public float MaximumDamagePerBond { get; }
+        public float MaximumFoundationDamagePerBond { get; }
+        public float3 LocalMetricScale { get; }
     }
 
     public enum EarthBondDamageStatus : byte
@@ -183,12 +192,12 @@ namespace Elemental.Simulation.Structures
                     continue;
                 }
 
-                float3 toBond = definition.LocalCentroid - impact.LocalPoint;
+                float3 toBond = (definition.LocalCentroid - impact.LocalPoint) * impact.LocalMetricScale;
                 float distanceSq = math.lengthsq(toBond);
                 if (distanceSq >= radiusSq)
                     continue;
 
-                float3 normal = math.normalizesafe(definition.LocalNormalA);
+                float3 normal = math.normalizesafe(definition.LocalNormalA / impact.LocalMetricScale);
                 if (math.lengthsq(normal) <= 0f)
                     continue;
 
@@ -216,6 +225,10 @@ namespace Elemental.Simulation.Structures
                                       impact.MaterialResponse * directionalDamage;
                 if (!math.isfinite(appliedDamage) || appliedDamage <= 0f)
                     continue;
+                float cap = definition.PieceB == EarthBondGraph.WorldPieceIndex
+                    ? math.min(impact.MaximumDamagePerBond, impact.MaximumFoundationDamagePerBond)
+                    : impact.MaximumDamagePerBond;
+                appliedDamage = math.min(appliedDamage, cap);
 
                 float previousDamage = math.saturate(state.AccumulatedDamage);
                 state.AccumulatedDamage = math.saturate(previousDamage + appliedDamage);
@@ -257,9 +270,12 @@ namespace Elemental.Simulation.Structures
         private static bool IsValid(in EarthBondImpact impact)
         {
             return math.all(math.isfinite(impact.LocalPoint)) &&
+                   math.all(math.isfinite(impact.LocalMetricScale)) && math.all(impact.LocalMetricScale > 0f) &&
                    math.all(math.isfinite(impact.LocalImpulse)) &&
                    math.isfinite(impact.Radius) && impact.Radius > 0f &&
-                   math.isfinite(impact.MaterialResponse) && impact.MaterialResponse > 0f;
+                   math.isfinite(impact.MaterialResponse) && impact.MaterialResponse > 0f &&
+                   math.isfinite(impact.MaximumDamagePerBond) && impact.MaximumDamagePerBond > 0f &&
+                   math.isfinite(impact.MaximumFoundationDamagePerBond) && impact.MaximumFoundationDamagePerBond > 0f;
         }
 
         private static EarthBondDamageResult InvalidResult(EarthBondDamageStatus status)

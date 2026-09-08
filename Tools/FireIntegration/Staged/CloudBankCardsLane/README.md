@@ -1,0 +1,18 @@
+# Optional cumulus art banks — staged only
+
+Root owns Unity; no actual Assets/scene/volume/rock edits or Unity calls were made. Four deliverables under after/Assets: CloudBankCards component, CloudBankCards shader, typed installer/QA menus and original generated reference-bank-v1.png. Artwork exact prompt/provenance/alpha evidence remain Tools/FireIntegration/Staged/CloudArt; copied PNG is byte-identical.
+
+Ten fixed upright cards in uneven azimuths, distances1100/1460/1820m, widths610–950m and original3:2 aspect. Each card's top stays at least30m below the planet bottom (more for alternate strata). Parent is a typed cloud-art root under planet, rotated to authored DistantBackdrop.stagingUp; no camera following, Update, per-frame GC, wind animation, physics or network objects. Single shared material/quad, ten renderers for normal transparency ordering. Modest alternating mirror/yaw/size variation and staggered radii avoid a single continuous wall. Existing cloud volume and backdrop are untouched.
+
+URP Gamma transparent shader: original straight RGBA, depth test, soft scene-depth intersection, transparent border feather that hides the image's left/right wispy crop. Current sun and SH tint provide day/night appearance without modifying lighting state. Texture importer retains input alpha, clamp + mips, max2048 and high-quality compression. No hard alpha clip. Added GPU cost is ten bounded card draws/overdraw, not yet measured. Fixed cards are view-dependent by design, so steep side views can expose their flatness; one art source may remain recognizably repeated. Do not claim volumetric quality or runtime acceptance before actual capture.
+
+Offline current Unity Roslyn Presentation and Authoring compilation both zero errors. See Reports/compile.json and logs. No shader import/test/capture/GPU evidence yet.
+
+Integration after exclusive handoff: copy after/Assets; refresh and verify shader/console. Execute Elemental/Graphics/Install Cumulus Art Banks twice; require one typed root/ten children, no colliders, no near-arena intrusion. Installer leaves EarthCoreSlice dirty for review, does not save scene or alter volume. Execute Elemental/Graphics/Capture Cumulus Banks Current View for exact camera on/off pairs in Logs/CloudBankCards; all enabled/targetTexture state restored. That menu does not move camera or change lighting/postprocess. Parent's existing QA may choose gameplay/lookdown/distant day/night frames before calling it. Save only after review, check scene delta ownership. Compare performance on/off at1080p, inspect alpha rectangle edges and day/night tint. No gate passed from staging alone.
+
+
+## Actual bounded integration 2026-09-07 09:10 UTC
+
+Imported and installed twice successfully, exactly1 typed root,10 renderers,0colliders. Shader/C# console zero errors. QA menu now captures production-camera gameplay plus temporary lookdown/overview frames for day/night on/off, restoring pose/time/authority/targetTexture in finally. Evidence Logs/CloudBankCards/qa.txt at09:08:43Z and12PNGs.
+
+Actual visual assessment: cloud artwork appears as extra distant patterned banks in overview (stronger at night), but daytime remains flat/blurred and gameplay largely occludes this lower layer. Fine generated cumulus lobes do not read well through current presentation. Additional draws/GPU not measured and quality benefit insufficient to accept. Therefore ONLY the new Valley Cumulus Art Banks root was disabled in saved EarthCoreSlice. Retained as reversible optional content; existing volume, rock, camera and global light settings remain unchanged. No new shipping blur edits. Scene clean outsidePlay at handoff.

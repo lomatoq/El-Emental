@@ -1,0 +1,1 @@
+ARCHIVED / NOT APPROVED. User steering requires the SAME actual arena material; final mesh functions will arrive from user. All contents in this ValleyArt folder are abandoned, unapplied proposals. Do not import them. Use ArenaMaterialBinding instead.

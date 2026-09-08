@@ -29,6 +29,26 @@ namespace Elemental.Presentation.Camera
         [SerializeField] private ActiveRagdollPuppet puppet;
         [SerializeField] private EarthCameraProfile profile;
 
+        private EarthCameraProfile _authoredProfile;
+        private EarthCameraProfile _preferencesProfile;
+        private float _userSensitivity = 1f;
+        public void ApplyUserPreferences(float sensitivity, bool reduced)
+        {
+            _userSensitivity = Mathf.Clamp(sensitivity, .25f, 2f);
+            if (profile == null) return;
+            if (_preferencesProfile == null)
+            {
+                _authoredProfile = profile;
+                _preferencesProfile = Instantiate(profile);
+                _preferencesProfile.hideFlags = HideFlags.DontSave;
+                profile = _preferencesProfile;
+            }
+            _preferencesProfile.SetUserReducedMotion(reduced);
+        }
+        private void OnDestroy()
+        {
+            if (_preferencesProfile != null) { profile = _authoredProfile; Destroy(_preferencesProfile); }
+        }
         private EarthCameraState _state;
         private EarthCameraState _candidate;
         private float _candidateSince;
@@ -110,7 +130,7 @@ namespace Elemental.Presentation.Camera
             Vector2 pointerTarget = Vector2.Lerp(
                 new Vector2(0.5f, 0.5f),
                 viewport,
-                LastPointerInfluence);
+                Mathf.Clamp01(LastPointerInfluence * _userSensitivity));
             _smoothedPointerViewport = Vector2.SmoothDamp(
                 _smoothedPointerViewport,
                 pointerTarget,

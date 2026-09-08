@@ -1,0 +1,233 @@
+--- Assets/Elemental/Presentation/Fire/Shaders/FireCpuMesh.shader
++++ Assets/Elemental/Presentation/Fire/Shaders/FireCpuMesh.shader
+@@ -35,6 +35,7 @@
+             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+             #include "Assets/Elemental/Presentation/Fire/Shaders/FireCpuFlame.hlsl"
++            #include "Assets/Elemental/Presentation/Fire/Shaders/FireAuthoredFlipbook.hlsl"
+             CBUFFER_START(UnityPerMaterial)
+             float4 _EdgeColor,_BodyColor,_CoreColor;
+             float4 _FlameAtlas_TexelSize;
+@@ -43,13 +44,6 @@
+             CBUFFER_END
+             TEXTURE2D(_FlameAtlas); SAMPLER(sampler_FlameAtlas);
+             float _EarthSeismicVision;
+-            float FlameFrame(float2 uv,float frame)
+-            {
+-                float2 cell=float2(fmod(frame,3),2-floor(frame/3));
+-                uv=clamp(uv,_FlameAtlas_TexelSize.xy*1.5,1-_FlameAtlas_TexelSize.xy*1.5);
+-                float4 texel=SAMPLE_TEXTURE2D(_FlameAtlas,sampler_FlameAtlas,(cell+uv)/3);
+-                return texel.r*texel.a;
+-            }
+             struct Attributes
+             {
+                 float3 centreWS:POSITION;
+@@ -76,7 +70,7 @@
+                 right=normalize(cross(up,viewAxis));
+                 // Expand softly as a parcel cools. Padding remains below the CPU width*aspect bound.
+                 float expansion=lerp(0.85,1.12,smoothstep(0,0.75,input.fire.y));
+-                if(_UseFlipbook>0.5) expansion*=lerp(1,.55,smoothstep(.35,1,input.fire.y));
++                if(_UseFlipbook>0.5) expansion=EF_AuthoredFlameExpansion(input.fire.y);
+                 float width=input.fire.w*expansion;
+                 output.positionWS=input.centreWS+right*(input.uv.x-0.5)*width
+                     +up*(input.uv.y-0.5)*width*input.extent.x;
+@@ -89,18 +83,9 @@
+                 float3 color; float alpha;
+                 if(_UseFlipbook>0.5)
+                 {
+-                    // One authored dissipating animation over each physical parcel's life.
+-                    // Phase only mirrors the drawing, never jumps a newborn to a dying frame.
+-                    float2 uv=input.uv;
+-                    if(sin(input.fire.x)>0) uv.x=1-uv.x;
+-                    float frame=saturate(input.fire.y)*8.999;
+-                    float first=floor(frame);
+-                    float mask=lerp(FlameFrame(uv,first),FlameFrame(uv,min(first+1,8)),smoothstep(0,1,frac(frame)));
+-                    float heat=saturate((1-input.fire.y)*input.fire.z);
+-                    float core=(1-smoothstep(.16,.48,abs(uv.x-.5)))*(1-smoothstep(.2,.83,uv.y));
+-                    color=lerp(_EdgeColor.rgb,_BodyColor.rgb,smoothstep(.08,.55,heat));
+-                    color=lerp(color,_CoreColor.rgb*(1+_CoreEmission),core*smoothstep(.25,.8,heat));
+-                    alpha=mask*_Opacity*smoothstep(0,.06,input.fire.y)*pow(1-smoothstep(.3,.88,input.fire.y),2);
++                    EF_AuthoredFlame_float(TEXTURE2D_ARGS(_FlameAtlas, sampler_FlameAtlas),
++                        _FlameAtlas_TexelSize.xy, input.uv, input.fire.x, input.fire.y, input.fire.z,
++                        _Opacity, _EdgeColor.rgb, _BodyColor.rgb, _CoreColor.rgb, _CoreEmission, color, alpha);
+                 }
+                 else EF_Flame_float(input.uv,_FireTime,input.fire.x,input.fire.y,input.fire.z,_Opacity,_ShapeFPS,_Distortion,
+                     _EdgeColor.rgb,_BodyColor.rgb,_CoreColor.rgb,_CoreEmission,color,alpha);
+--- Assets/Elemental/Presentation/Fire/Shaders/ColumnDecorFlame.shader
++++ Assets/Elemental/Presentation/Fire/Shaders/ColumnDecorFlame.shader
+@@ -2,6 +2,8 @@
+ {
+     Properties
+     {
++        _FlameAtlas("Wallcoeur 3x3 flame animation",2D)="white" {}
++        _UseFlipbook("Use authored flame animation",Float)=0
+         [HDR] _EdgeColor("Edge",Color)=(0.65,0.018,0.003,1)
+         [HDR] _BodyColor("Body",Color)=(1,0.19,0.008,1)
+         [HDR] _CoreColor("Core",Color)=(1,0.72,0.19,1)
+@@ -33,10 +35,14 @@
+             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+             #include "Assets/Elemental/Presentation/Fire/Shaders/FireCpuFlame.hlsl"
++            #include "Assets/Elemental/Presentation/Fire/Shaders/FireAuthoredFlipbook.hlsl"
+             CBUFFER_START(UnityPerMaterial)
+             float4 _EdgeColor,_BodyColor,_CoreColor;
++            float4 _FlameAtlas_TexelSize;
++            float _UseFlipbook;
+             float _CoreEmission,_FireTime,_Opacity,_ShapeFPS,_Distortion,_SoftDistance,_NearStart,_NearRange;
+             CBUFFER_END
++            TEXTURE2D(_FlameAtlas); SAMPLER(sampler_FlameAtlas);
+             float _EarthSeismicVision;
+             struct Attributes
+             {
+@@ -65,12 +71,20 @@
+                 // Expand softly as a parcel cools; fit the final billboard to the CPU's per-axis bound below.
+                 float expansion=lerp(0.85,1.12,smoothstep(0,0.75,input.fire.y));
+                 float width=input.fire.w*expansion;
+-                float role=frac(input.fire.x*2.173);
+-                float ember=step(.96,role);
+-                float body=1-step(.66,role);
+-                width*=lerp(1,1.12,body);
+-                width*=lerp(1,.13,ember);
+-                float aspect=input.extent.x*lerp(1.3,1.0,body);
++                float aspect=input.extent.x;
++                if(_UseFlipbook>0.5)
++                {
++                    width=input.fire.w*EF_AuthoredFlameExpansion(input.fire.y);
++                }
++                else
++                {
++                    float role=frac(input.fire.x*2.173);
++                    float ember=step(.96,role);
++                    float body=1-step(.66,role);
++                    width*=lerp(1,1.12,body);
++                    width*=lerp(1,.13,ember);
++                    aspect*=lerp(1.3,1.0,body);
++                }
+                 float3 axisExtent=.5*width*(abs(right)+abs(up)*aspect);
+                 float largestExtent=max(axisExtent.x,max(axisExtent.y,axisExtent.z));
+                 width*=min(1,.99*input.fire.w*input.extent.x/max(largestExtent,1e-6));
+@@ -83,40 +97,49 @@
+             float4 frag(Varyings input):SV_Target
+             {
+                 float3 color; float alpha;
+-                float role=frac(input.fire.x*2.173);
+-                if(role<.66)
++                if(_UseFlipbook>0.5)
+                 {
+-                    // Most parcels form a connected luminous body, not dozens of separate spear icons.
+-                    float2 q=input.uv-float2(.5,.38);
+-                    float coherent=EF_Noise2(input.positionWS.xz*1.15+float2(_FireTime*.27,-_FireTime*.19));
+-                    q.x+=(coherent-.5)*.22*saturate(input.uv.y);
+-                    float width=lerp(.43,.07,smoothstep(.2,.95,input.uv.y));
+-                    float egg=1-dot(q/float2(width,.57),q/float2(width,.57));
+-                    egg+=(EF_Noise2(input.positionWS.xy*1.7+float2(0,-_FireTime*1.7))-.5)*.22;
+-                    float edge=max(fwidth(egg),.035);
+-                    float coverage=smoothstep(-edge,.24+edge,egg);
+-                    float age=saturate(input.fire.y);
+-                    alpha=coverage*smoothstep(0,.06,age)*(1-smoothstep(.62,1,age))*_Opacity*.9;
+-                    alpha*=smoothstep(0,.08,input.uv.y)*(1-smoothstep(.93,1,input.uv.y));
+-                    // Body parcels merge in colour instead of painting a red
+-                    // ring around every egg. Only minority tongues own an edge.
+-                    float core=(1-smoothstep(.16,.70,input.uv.y))*.70*saturate(input.fire.z);
+-                    color=lerp(_BodyColor.rgb,_CoreColor.rgb,core);
+-                    color+=_CoreColor.rgb*core*_CoreEmission*saturate(input.fire.z);
++                    EF_AuthoredFlame_float(TEXTURE2D_ARGS(_FlameAtlas, sampler_FlameAtlas),
++                        _FlameAtlas_TexelSize.xy, input.uv, input.fire.x, input.fire.y, input.fire.z,
++                        _Opacity, _EdgeColor.rgb, _BodyColor.rgb, _CoreColor.rgb, _CoreEmission, color, alpha);
+                 }
+                 else
+                 {
+-                    EF_Flame_float(input.uv,_FireTime,input.fire.x,input.fire.y,input.fire.z,_Opacity,_ShapeFPS,_Distortion,
+-                        _EdgeColor.rgb,_BodyColor.rgb,_CoreColor.rgb,_CoreEmission,color,alpha);
+-                    // The minority of tapered tongues remains brighter, but no white vertical stripe cores.
+-                    color=min(color,_CoreColor.rgb*(1+_CoreEmission));
+-                    alpha*=.85;
+-                }
+-                if(role>.96)
+-                {
+-                    float2 q=(input.uv-.5)*2;
+-                    alpha=(1-smoothstep(.15,1,dot(q,q)))*sin(saturate(input.fire.y)*3.14159)*.8;
+-                    color=lerp(_CoreColor.rgb,_BodyColor.rgb,saturate(input.fire.y));
++                    float role=frac(input.fire.x*2.173);
++                    if(role<.66)
++                    {
++                        // Most parcels form a connected luminous body, not dozens of separate spear icons.
++                        float2 q=input.uv-float2(.5,.38);
++                        float coherent=EF_Noise2(input.positionWS.xz*1.15+float2(_FireTime*.27,-_FireTime*.19));
++                        q.x+=(coherent-.5)*.22*saturate(input.uv.y);
++                        float width=lerp(.43,.07,smoothstep(.2,.95,input.uv.y));
++                        float egg=1-dot(q/float2(width,.57),q/float2(width,.57));
++                        egg+=(EF_Noise2(input.positionWS.xy*1.7+float2(0,-_FireTime*1.7))-.5)*.22;
++                        float edge=max(fwidth(egg),.035);
++                        float coverage=smoothstep(-edge,.24+edge,egg);
++                        float age=saturate(input.fire.y);
++                        alpha=coverage*smoothstep(0,.06,age)*(1-smoothstep(.62,1,age))*_Opacity*.9;
++                        alpha*=smoothstep(0,.08,input.uv.y)*(1-smoothstep(.93,1,input.uv.y));
++                        // Body parcels merge in colour instead of painting a red
++                        // ring around every egg. Only minority tongues own an edge.
++                        float core=(1-smoothstep(.16,.70,input.uv.y))*.70*saturate(input.fire.z);
++                        color=lerp(_BodyColor.rgb,_CoreColor.rgb,core);
++                        color+=_CoreColor.rgb*core*_CoreEmission*saturate(input.fire.z);
++                    }
++                    else
++                    {
++                        EF_Flame_float(input.uv,_FireTime,input.fire.x,input.fire.y,input.fire.z,_Opacity,_ShapeFPS,_Distortion,
++                            _EdgeColor.rgb,_BodyColor.rgb,_CoreColor.rgb,_CoreEmission,color,alpha);
++                        // The minority of tapered tongues remains brighter, but no white vertical stripe cores.
++                        color=min(color,_CoreColor.rgb*(1+_CoreEmission));
++                        alpha*=.85;
++                    }
++                    if(role>.96)
++                    {
++                        float2 q=(input.uv-.5)*2;
++                        alpha=(1-smoothstep(.15,1,dot(q,q)))*sin(saturate(input.fire.y)*3.14159)*.8;
++                        color=lerp(_CoreColor.rgb,_BodyColor.rgb,saturate(input.fire.y));
++                    }
+                 }
+                 float eye=-TransformWorldToView(input.positionWS).z;
+                 // Mandatory depth rejection for the post-fog decorative pass.
+--- /dev/null
++++ Assets/Elemental/Presentation/Fire/Shaders/FireAuthoredFlipbook.hlsl
+@@ -0,0 +1,42 @@
++#ifndef EL_ELEMENTAL_FIRE_AUTHORED_FLIPBOOK_INCLUDED
++#define EL_ELEMENTAL_FIRE_AUTHORED_FLIPBOOK_INCLUDED
++
++// Shared Wallcoeur3x3 animation. All material inputs stay explicit so this
++// include can be used by both normal transparent and post-fog decorative passes.
++float EF_AuthoredFlameFrame(TEXTURE2D_PARAM(atlas, atlasSampler),
++    float2 atlasTexelSize, float2 uv, float frame)
++{
++    float2 cell = float2(fmod(frame, 3), 2 - floor(frame / 3));
++    uv = clamp(uv, atlasTexelSize * 1.5, 1 - atlasTexelSize * 1.5);
++    float4 texel = SAMPLE_TEXTURE2D(atlas, atlasSampler, (cell + uv) / 3);
++    return texel.r * texel.a;
++}
++
++float EF_AuthoredFlameExpansion(float age)
++{
++    return lerp(.85, 1.12, smoothstep(0, .75, age))
++        * lerp(1, .55, smoothstep(.35, 1, age));
++}
++
++void EF_AuthoredFlame_float(TEXTURE2D_PARAM(atlas, atlasSampler),
++    float2 atlasTexelSize, float2 uv, float phase, float age, float heat01,
++    float opacity, float3 edgeColor, float3 bodyColor, float3 coreColor,
++    float coreEmission, out float3 color, out float alpha)
++{
++    // Physical parcel age selects the dissipating sequence. A persistent phase
++    // only mirrors the drawing; newborn parcels never jump to a dying frame.
++    if (sin(phase) > 0) uv.x = 1 - uv.x;
++    float frame = saturate(age) * 8.999;
++    float first = floor(frame);
++    float mask = lerp(
++        EF_AuthoredFlameFrame(TEXTURE2D_ARGS(atlas, atlasSampler), atlasTexelSize, uv, first),
++        EF_AuthoredFlameFrame(TEXTURE2D_ARGS(atlas, atlasSampler), atlasTexelSize, uv, min(first + 1, 8)),
++        smoothstep(0, 1, frac(frame)));
++    float heat = saturate((1 - age) * heat01);
++    float core = (1 - smoothstep(.16, .48, abs(uv.x - .5))) * (1 - smoothstep(.2, .83, uv.y));
++    color = lerp(edgeColor, bodyColor, smoothstep(.08, .55, heat));
++    color = lerp(color, coreColor * (1 + coreEmission), core * smoothstep(.25, .8, heat));
++    alpha = mask * opacity * smoothstep(0, .06, age) * pow(1 - smoothstep(.3, .88, age), 2);
++}
++
++#endif

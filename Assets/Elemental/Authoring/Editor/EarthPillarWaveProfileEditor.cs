@@ -10,6 +10,14 @@ namespace Elemental.Authoring.Editor
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
+            EditorGUILayout.LabelField("Линия столбиков — ЛКМ + ПКМ", EditorStyles.boldLabel);
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("lineGroundOffset"),
+                new GUIContent("Смещение от земли, м", "Положение всей линии по высоте: плюс — выше земли, минус — глубже в землю. Размер камней не меняется."));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("linePillarHeight"),
+                new GUIContent("Размер столбиков по высоте, м", "Размер камней линии при удержании левой и правой кнопок мыши. Крайние столбики — 65% этой высоты."));
+            if (EditorGUI.EndChangeCheck()) serializedObject.ApplyModifiedProperties();
+            EditorGUILayout.Space(12);
             EditorGUILayout.LabelField("Волна", EditorStyles.boldLabel);
             DrawWaveLength();
             EditorGUILayout.HelpBox("Кривые: X — время фазы от 0 до 1, Y — высота относительно максимума. Концы фаз соединяются автоматически.", MessageType.None);

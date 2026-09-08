@@ -1,0 +1,5 @@
+Unhandled exception. System.InvalidOperationException: Floating end facet failed closed-solid validation.
+   at Elemental.Presentation.DistantScenery.RockShapeBuilder.TaperEnd(RockShapeData shape, float3 normal, Single distance)
+   at Elemental.Presentation.DistantScenery.RockShapeBuilder.FloatingBody(Int32 seed, Boolean low, RockShapeSettings settings)
+   at Elemental.Presentation.DistantScenery.RockShapeBuilder.FloatingPillar(Int32 seed, Int32 family, Boolean lowDetail, RockShapeSettings settings)
+   at Oracle.Main()

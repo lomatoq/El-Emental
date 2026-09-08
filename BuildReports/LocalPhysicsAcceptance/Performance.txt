@@ -1,0 +1,7 @@
+Production EarthCoreSlice; prewarmed actual thrown stones; 96 normal fixed/render frames; no PNG/readback/file I/O in measured window.
+activeResponseFrames=91/96, acceptedPhysicalHitEvents=5, captureFramerate=0
+LocalPhysicsStep/all fighters CPU ns: n=96, mean=8851.0, p95=36200, max=52400
+LocalPhysicsPose/all fighters CPU ns: n=96, mean=80746.9, p95=110300, max=130800
+Whole frame GC bytes (includes editor, test runner and all systems; not attributed to local physics): n=96, mean=14587.3, p95=22497, max=133142
+Execution-order2499→2501 current-thread GC window: fixedSamples=96, fixedTotalBytes=0, fixedMaxBytes=0, poseSamples=162, poseTotalBytes=0, poseMaxBytes=0
+The bracket contains all order2500 callbacks (currently only HumanoidLocalizedPhysicsResponse) plus Unity callback dispatch. It does not include unrelated earlier/later game systems.

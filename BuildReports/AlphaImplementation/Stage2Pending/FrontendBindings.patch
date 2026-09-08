@@ -1,0 +1,164 @@
+--- a/Assets/Elemental/Presentation/UI/FrontendFlowController.cs
++++ b/Assets/Elemental/Presentation/UI/FrontendFlowController.cs
+@@ -21,6 +21,14 @@
+         [SerializeField] private EarthSceneReadinessGate readiness;
+         [SerializeField] private EarthCameraDirector cameraDirector;
+         [SerializeField] private Behaviour[] debugOverlays = Array.Empty<Behaviour>();
++        public float PresentationTransitionSeconds => theme.transitionSeconds;
++        public float CountdownDurationSeconds => Mathf.Max(1f, theme.countdownSeconds);
++        private Func<float> _networkCountdownRemaining;
++        public void SetPresentationCameraDirector(EarthCameraDirector director)
++        {
++            cameraDirector = director;
++            cameraDirector?.ApplyUserPreferences(Preferences.Sensitivity, Preferences.ReducedMotion);
++        }
+         public void ConfigureDebugOverlays(Behaviour[] overlays) => debugOverlays = overlays ?? Array.Empty<Behaviour>();
+         private void HideDebugOverlays() { foreach (var overlay in debugOverlays) if (overlay != null) overlay.enabled = false; }
+         private InputAction _back;
+@@ -34,6 +42,7 @@
+         private bool _networkRound;
+         public FrontendPreferences Preferences { get; } = new FrontendPreferences();
+         public FrontendState State { get; private set; } = FrontendState.Loading;
++        public bool HasEnteredCombat { get; private set; }
+         public bool IsWorldReady => readiness == null || readiness.IsReady;
+         public event Action HostRequested, NetworkReadyRequested, NetworkCancelRequested;
+         public event Action<string> JoinRequested;
+@@ -67,7 +76,8 @@
+                 _transition += Time.unscaledDeltaTime;
+                 float duration = Mathf.Max(1f, theme.countdownSeconds);
+                 float blendDuration = Mathf.Clamp(theme.countdownCameraBlendSeconds, .1f, duration);
+-                float remaining = Mathf.Max(0f, duration - _transition);
++                float remaining = _networkRound && _networkCountdownRemaining != null
++                    ? _networkCountdownRemaining() : Mathf.Max(0f, duration - _transition);
+                 view.SetCountdown(Mathf.CeilToInt(remaining));
+                 float menuFade = Mathf.Clamp01(_transition / theme.transitionSeconds);
+                 view.SetVisibility(1f - menuFade * menuFade * (3f - 2f * menuFade), false);
+@@ -81,7 +91,9 @@
+                 {
+                     view.SetCountdown(0);
+                     menuCamera.FinishCombatTransition(); State = FrontendState.Combat;
+-                    duel.SetRoundReady(true); hud?.SetFrontendPresentation(theme, true);
++                    HasEnteredCombat = true;
++                    if (!_networkRound) { duel.SetRoundReady(true); }
++                    hud?.SetFrontendPresentation(theme, true);
+                     view.SetVisibility(0, false);
+                 }
+             }
+@@ -90,6 +102,7 @@
+         public bool BeginBot()
+         {
+             if (!_built || !IsWorldReady || State != FrontendState.Main) return false;
++            _networkRound = false;
+             audioFeedback.Play(UIAudioCue.Confirm); State = FrontendState.Starting; _transition = 0;
+             duel.SetRoundReady(false); duel.RestartRound();
+             StartCountdownPresentation(); return true;
+@@ -103,7 +116,9 @@
+         public void ShowMain(string message = null)
+         {
+             if (!_built) return;
+-            RestorePauseState(); _networkRound = false;
++            RestorePauseState();
++            _networkCountdownRemaining = null;
++            _networkRound = false;
+             duel.SetRoundReady(false); hud?.SetFrontendPresentation(theme, false);
+             view.SetCountdown(0);
+             State = FrontendState.Main; menuCamera.Enter(Preferences.ReducedMotion, theme.transitionSeconds);
+@@ -189,6 +204,19 @@
+         public void JoinRoom(string code)
+         { if (!OnlineAvailable || State != FrontendState.Join) return; JoinRequested?.Invoke(code.Trim().ToUpperInvariant()); }
+         public void SetNetworkReady() => NetworkReadyRequested?.Invoke();
++        public bool BeginOnlineMatch(Func<float> countdownRemaining)
++        {
++            if (!_built || !IsWorldReady || State is not (FrontendState.Host or FrontendState.Join)) return false;
++            _networkCountdownRemaining = countdownRemaining ?? throw new ArgumentNullException(nameof(countdownRemaining));
++            _networkRound = true; State = FrontendState.Starting; _transition = 0;
++            audioFeedback.Play(UIAudioCue.Connect); view.SetVisibility(1, false);
++            StartCountdownPresentation(); return true;
++        }
++        public void ShowConnectedRoom(string code, string status)
++        {
++            if (State is not (FrontendState.Host or FrontendState.Join)) return;
++            State = FrontendState.Host; view.Show(FrontendPage.Host); UpdateRoom(code, status);
++        }
+         public void UpdateRoom(string code, string status)
+         { RoomCode = code; view.SetRoomCode(code); view.SetStatus(status); }
+         public void SetNetworkStatus(string status, bool error = false)
+@@ -210,3 +238,4 @@
+         }
+     }
+ }
++
+--- a/Assets/Elemental/Presentation/UI/EarthDuelHud.cs
++++ b/Assets/Elemental/Presentation/UI/EarthDuelHud.cs
+@@ -41,6 +41,19 @@
+         private Vector3 _arenaRadial;
+         private EarthCoreHud _legacyHud;
+         private bool _combatVisible = true;
++        private EarthDuelFighterId _localFighter = EarthDuelFighterId.Player;
++        private bool _restartAllowed = true;
++        public void SetLocalPerspective(EarthDuelFighterId fighter, bool canRestart)
++        {
++            _localFighter = fighter; _restartAllowed = canRestart;
++            _lastHealth = _lastRespawn = -1;
++            ResetLifeResult();
++            if (_restart != null) { _restart.SetEnabled(canRestart); _restart.text = canRestart ? "NEW ROUND" : "WAITING FOR HOST"; }
++        }
++        private int LocalDeaths => duel == null ? 0 : _localFighter == EarthDuelFighterId.Player ? duel.BotScore : duel.PlayerScore;
++        private int OpponentDeaths => duel == null ? 0 : _localFighter == EarthDuelFighterId.Player ? duel.PlayerScore : duel.BotScore;
++        private float LocalHealth => _localFighter == EarthDuelFighterId.Player ? duel.PlayerHealth : duel.BotHealth;
++        private float LocalRespawn => _localFighter == EarthDuelFighterId.Player ? duel.PlayerRespawnRemaining : duel.BotRespawnRemaining;
+         private ElementalUITheme _theme;
+         private EarthLifeResultState _lifeResultState;
+         private Label _lifeResultLabel;
+@@ -171,13 +184,13 @@
+         private void OnRestarted() { _mana.Reset(); _lastSeconds = -1; _healthGauge.Trail = 1; ResetLifeResult(); }
+         private void ResetLifeResult()
+         {
+-            _lifeResultState.Reset(duel != null ? duel.BotScore : 0, duel != null ? duel.PlayerScore : 0);
++            _lifeResultState.Reset(LocalDeaths, OpponentDeaths);
+             _lastLifeResult = EarthLifeResult.None;
+             if (_lifeResultLabel != null) _lifeResultLabel.style.display = DisplayStyle.None;
+         }
+         private void UpdateLifeResult()
+         {
+-            _lifeResultState.Step(duel.BotScore, duel.PlayerScore, Time.deltaTime,
++            _lifeResultState.Step(LocalDeaths, OpponentDeaths, Time.deltaTime,
+                 _theme != null ? _theme.simultaneousDeathWindow : .12f, _theme != null ? _theme.lifeResultSeconds : 2.4f);
+             var outcome = _lifeResultState.Result;
+             if (_lastLifeResult != outcome)
+@@ -230,7 +243,7 @@
+                     if (continuous) _mana.Spend(8f * Time.deltaTime);
+                     _mana.Step(Time.deltaTime);
+                 }
+-                float health = Mathf.Clamp01(duel.PlayerHealth / Mathf.Max(1, duel.MaximumHealth));
++                float health = Mathf.Clamp01(LocalHealth / Mathf.Max(1, duel.MaximumHealth));
+                 _healthGauge.Fill = health;
+                 _healthGauge.Trail = health > _healthGauge.Trail ? health : Mathf.MoveTowards(_healthGauge.Trail, health, Time.deltaTime * .28f);
+                 _manaGauge.Fill = Mathf.Lerp(_manaGauge.Fill, _mana.Value / 100, 1 - Mathf.Exp(-14 * Time.unscaledDeltaTime));
+@@ -238,7 +251,7 @@
+                 _healthGauge.MarkDirtyRepaint(); _manaGauge.MarkDirtyRepaint();
+                 _healthGauge.Flash = Mathf.MoveTowards(_healthGauge.Flash, 0, Time.unscaledDeltaTime / .2f);
+                 _manaGauge.Flash = Mathf.MoveTowards(_manaGauge.Flash, 0, Time.unscaledDeltaTime / .18f);
+-                int healthValue = Mathf.CeilToInt(duel.PlayerHealth);
++                int healthValue = Mathf.CeilToInt(LocalHealth);
+                 if (_lastHealth >= 0 && healthValue < _lastHealth) _healthGauge.Flash = 1f;
+                 if (healthValue != _lastHealth) _left.EnableInClassList("duel-critical", health > 0f && health <= .25f);
+                 UpdateNumber(_healthText, healthValue, ref _lastHealth);
+@@ -257,7 +270,7 @@
+                     }
+                     _lastSeconds = seconds;
+                 }
+-                int respawn = Mathf.CeilToInt(duel.PlayerRespawnRemaining);
++                int respawn = Mathf.CeilToInt(LocalRespawn);
+                 if (respawn != _lastRespawn)
+                 {
+                     _respawn.text = respawn > 0 ? $"RETURNING IN  {respawn}" : "";
+@@ -374,7 +387,7 @@
+ 
+             _result.Add(Text("ROUND COMPLETE", "duel-caption")); _resultText = Text("", "duel-result-title"); _result.Add(_resultText);
+ 
+-            _restart = new Button(() => duel.RestartRound()) { text = "NEW ROUND", name = "restart-round" }; _restart.AddToClassList("duel-restart"); _result.Add(_restart);
++            _restart = new Button(() => { if (_restartAllowed) duel.RestartRound(); }) { text = "NEW ROUND", name = "restart-round" }; _restart.AddToClassList("duel-restart"); _result.Add(_restart);
+             SetFrontendPresentation(_theme, _combatVisible);
+         }
+ 

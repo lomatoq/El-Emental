@@ -1,0 +1,2 @@
+from pathlib import Path
+p=Path('Assets/Elemental/Tests/EditMode/GameplayTuningTestLauncher.cs');s=p.read_text(encoding='utf-8-sig').replace('"Elemental.Tests.EditMode.EarthRepairCrushTests");','"Elemental.Tests.EditMode.EarthRepairCrushTests",\n            "Elemental.Tests.EditMode.EarthCharacterFeelTests.TrailingStanceRequestsGeometricReachWithoutMovingAnchorOrExceedingPelvisBudget");');p.write_text(s,encoding='utf-8')

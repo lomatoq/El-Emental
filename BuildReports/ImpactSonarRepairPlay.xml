@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="8" result="Failed(Child)" total="8" passed="4" failed="4" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-06 08:39:42Z" end-time="2026-09-06 08:39:47Z" duration="4.2827899">
+  <test-suite type="TestSuite" id="1307" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="232" result="Failed" site="Child" start-time="2026-09-06 08:39:42Z" end-time="2026-09-06 08:39:47Z" duration="4.282790" total="8" passed="4" failed="4" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1300" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="232" result="Failed" site="Child" start-time="2026-09-06 08:39:42Z" end-time="2026-09-06 08:39:47Z" duration="4.254695" total="8" passed="4" failed="4" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="21092" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1301" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="232" result="Failed" site="Child" start-time="2026-09-06 08:39:42Z" end-time="2026-09-06 08:39:47Z" duration="4.252077" total="8" passed="4" failed="4" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1302" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="232" result="Failed" site="Child" start-time="2026-09-06 08:39:42Z" end-time="2026-09-06 08:39:47Z" duration="4.250128" total="8" passed="4" failed="4" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1303" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="232" result="Failed" site="Child" start-time="2026-09-06 08:39:42Z" end-time="2026-09-06 08:39:47Z" duration="4.248152" total="8" passed="4" failed="4" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1127" name="EarthDuelHealthPlayTests" fullname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests" classname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-06 08:39:42Z" end-time="2026-09-06 08:39:43Z" duration="0.138585" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1131" name="AcceptedStoneDamageDeduplicatesAndDeathScoresOnce" fullname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests.AcceptedStoneDamageDeduplicatesAndDeathScoresOnce" methodname="AcceptedStoneDamageDeduplicatesAndDeathScoresOnce" classname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests" runstate="Runnable" seed="754814945" result="Passed" start-time="2026-09-06 08:39:42Z" end-time="2026-09-06 08:39:42Z" duration="0.051002" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1130" name="ReadinessCapturedBeforeAwakeStillRestoresControls" fullname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests.ReadinessCapturedBeforeAwakeStillRestoresControls" methodname="ReadinessCapturedBeforeAwakeStillRestoresControls" classname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests" runstate="Runnable" seed="1876738693" result="Passed" start-time="2026-09-06 08:39:42Z" end-time="2026-09-06 08:39:43Z" duration="0.026807" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1129" name="SharedStoneRouteKeepsPebbleLocalAndLetsBoulderKnockDown" fullname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests.SharedStoneRouteKeepsPebbleLocalAndLetsBoulderKnockDown" methodname="SharedStoneRouteKeepsPebbleLocalAndLetsBoulderKnockDown" classname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests" runstate="Runnable" seed="451565645" result="Passed" start-time="2026-09-06 08:39:43Z" end-time="2026-09-06 08:39:43Z" duration="0.012625" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1128" name="StoneWeightAddsFortyPercentShoveWithoutChangingNormalizedSeverity" fullname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests.StoneWeightAddsFortyPercentShoveWithoutChangingNormalizedSeverity" methodname="StoneWeightAddsFortyPercentShoveWithoutChangingNormalizedSeverity" classname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests" runstate="Runnable" seed="1954013018" result="Passed" start-time="2026-09-06 08:39:43Z" end-time="2026-09-06 08:39:43Z" duration="0.030191" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1171" name="EarthMvpEncounterRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests" classname="Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests" runstate="Runnable" testcasecount="7" result="Failed" site="Child" start-time="2026-09-06 08:39:43Z" end-time="2026-09-06 08:39:47Z" duration="3.998698" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1176" name="SurfWaveAndBotProjectileUseTheSharedVisibleKnockoutPipeline" fullname="Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests.SurfWaveAndBotProjectileUseTheSharedVisibleKnockoutPipeline" methodname="SurfWaveAndBotProjectileUseTheSharedVisibleKnockoutPipeline" classname="Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests" runstate="Runnable" seed="904241189" result="Failed" start-time="2026-09-06 08:39:43Z" end-time="2026-09-06 08:39:47Z" duration="3.995264" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  One heavy stone must knock the fighter down without ending the round.
+  Expected: RecoverableKnockdown
+  But was:  Ignore
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests+<SurfWaveAndBotProjectileUseTheSharedVisibleKnockoutPipeline>d__4.MoveNext () [0x0034c] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\EarthMvpEncounterRuntimeTests.cs:664
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[[StartupCache] Scene ready in 2039.95ms; ground=exact baked base, cacheLoad=24.41ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1015.93ms, peakCookingPoll=0.54ms; sync=ArenaInitialize=371.31ms/15;ArenaBevel=348.90ms/175;ArenaMeshPicking=2.44ms/175;WallAwake=87.46ms/1;WallPieceVisuals=43.76ms/40;PlatformPoolAwake=11.27ms/1;PlatformRuntimeMeshes=1.65ms/12;PillarPoolAwake=20.28ms/1;PillarMeshLibrary=3.97ms/1;PillarColumns=14.72ms/1;DebrisPoolAwake=97.47ms/1;HeroFragmentPoolAwake=13.58ms/1.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1010" name="SeptemberAnimationRescueRuntimeTests" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" testcasecount="42" result="Failed" site="Child" start-time="2026-09-06 08:39:47Z" end-time="2026-09-06 08:39:47Z" duration="0.106850" total="3" passed="0" failed="3" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1023" name="RunningKeepsSeismicReadabilityWithoutDensePulseSpam" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.RunningKeepsSeismicReadabilityWithoutDensePulseSpam" methodname="RunningKeepsSeismicReadabilityWithoutDensePulseSpam" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="984616757" result="Failed" start-time="2026-09-06 08:39:47Z" end-time="2026-09-06 08:39:47Z" duration="0.025957" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp :   Use the focused launcher so production scene can be restored safely.
+  Expected: False
+  But was:  True
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+<Load>d__31.MoveNext () [0x00071] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\SeptemberAnimationRescueRuntimeTests.cs:49
+at UnityEngine.TestTools.EnumeratorHelper+<ProgressOnEnumerator>d__5.MoveNext () [0x00017] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\EnumeratorHelper.cs:35
+at UnityEngine.TestTools.BeforeAfterTestCommandBase`1+<ExecuteEnumerable>d__16[T].MoveNext () [0x00132] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\BeforeAfterTestCommandBase.cs:155
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1022" name="SeismicEnemyWaitsForWaveAndRendersThroughOpaqueWall" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.SeismicEnemyWaitsForWaveAndRendersThroughOpaqueWall" methodname="SeismicEnemyWaitsForWaveAndRendersThroughOpaqueWall" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1037379433" result="Failed" start-time="2026-09-06 08:39:47Z" end-time="2026-09-06 08:39:47Z" duration="0.018315" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp :   Use the focused launcher so production scene can be restored safely.
+  Expected: False
+  But was:  True
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+<Load>d__31.MoveNext () [0x00071] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\SeptemberAnimationRescueRuntimeTests.cs:49
+at UnityEngine.TestTools.EnumeratorHelper+<ProgressOnEnumerator>d__5.MoveNext () [0x00017] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\EnumeratorHelper.cs:35
+at UnityEngine.TestTools.BeforeAfterTestCommandBase`1+<ExecuteEnumerable>d__16[T].MoveNext () [0x00132] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\BeforeAfterTestCommandBase.cs:155
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1024" name="SeismicVisionRevealsNightGeometryAndImmediatelyLosesAirborneSupport" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.SeismicVisionRevealsNightGeometryAndImmediatelyLosesAirborneSupport" methodname="SeismicVisionRevealsNightGeometryAndImmediatelyLosesAirborneSupport" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1860939738" result="Failed" start-time="2026-09-06 08:39:47Z" end-time="2026-09-06 08:39:47Z" duration="0.017932" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp :   Use the focused launcher so production scene can be restored safely.
+  Expected: False
+  But was:  True
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+<Load>d__31.MoveNext () [0x00071] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\SeptemberAnimationRescueRuntimeTests.cs:49
+at UnityEngine.TestTools.EnumeratorHelper+<ProgressOnEnumerator>d__5.MoveNext () [0x00017] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\EnumeratorHelper.cs:35
+at UnityEngine.TestTools.BeforeAfterTestCommandBase`1+<ExecuteEnumerable>d__16[T].MoveNext () [0x00132] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\BeforeAfterTestCommandBase.cs:155
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\ImpactSonarRepairPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -1,8 +1,8 @@
 {
-    "utc": "2026-09-05T10:25:56.3450516Z",
+    "utc": "2026-09-08T11:23:25.0054826Z",
     "graphicsDevice": "Direct3D11",
     "renderPipeline": "ElEmentalURP",
-    "dustMaterial": "RumbleDustLit",
+    "dustMaterial": "WallcoeurEarthDust",
     "ambientMoteMaterial": "LightDustMote",
     "passed": true,
     "captureResolution": 96,
@@ -16,20 +16,20 @@
             "sourceMaterial": "LooseEarthChipVfx",
             "shader": "Elemental/Graphics V5/Rumble Rock Lit",
             "chipOnly": {
-                "r": 0.9827616214752197,
-                "g": 0.7017421126365662,
-                "b": 0.5082243084907532,
+                "r": 0.9254909157752991,
+                "g": 0.6541118621826172,
+                "b": 0.4632629156112671,
                 "a": 1.0
             },
             "chipWithDust": {
-                "r": 0.8921034932136536,
-                "g": 0.5916115045547485,
-                "b": 0.37418249249458315,
+                "r": 0.7594772577285767,
+                "g": 0.6439268589019775,
+                "b": 0.5200433135032654,
                 "a": 1.0
             },
-            "chipVisibleDelta": 0.5583611726760864,
-            "dustVisibleDelta": 0.2528235912322998,
-            "dustOverChipDelta": 0.1116103008389473,
+            "chipVisibleDelta": 0.508406937122345,
+            "dustVisibleDelta": 0.33462220430374148,
+            "dustOverChipDelta": 0.07765979319810868,
             "opaqueWallOcclusionDelta": 0.0
         },
         {
@@ -37,50 +37,50 @@
             "sourceMaterial": "RumbleSandstone",
             "shader": "Elemental/Graphics V5/Rumble Rock Lit",
             "chipOnly": {
-                "r": 0.8069999814033508,
-                "g": 0.509803831577301,
-                "b": 0.3047928810119629,
+                "r": 0.7372535467147827,
+                "g": 0.4630995988845825,
+                "b": 0.2725487947463989,
                 "a": 1.0
             },
             "chipWithDust": {
-                "r": 0.8276153802871704,
-                "g": 0.5212416052818298,
-                "b": 0.2996727526187897,
+                "r": 0.7098574638366699,
+                "g": 0.5944980978965759,
+                "b": 0.4708608090877533,
                 "a": 1.0
             },
-            "chipVisibleDelta": 0.3810543715953827,
-            "dustVisibleDelta": 0.2528235912322998,
-            "dustOverChipDelta": 0.017819548025727273,
+            "chipVisibleDelta": 0.3510981798171997,
+            "dustVisibleDelta": 0.3366556465625763,
+            "dustOverChipDelta": 0.11903604120016098,
             "opaqueWallOcclusionDelta": 0.0
         }
     ],
-    "denseDustLightingDelta": 0.3961959481239319,
+    "denseDustLightingDelta": 0.5334792733192444,
     "denseDustUnlitPixels": {
-        "r": 0.18940669298171998,
-        "g": 0.15261417627334596,
-        "b": 0.13161757588386537,
+        "r": 0.08706418424844742,
+        "g": 0.09319186210632324,
+        "b": 0.09858402609825134,
         "a": 1.0
     },
     "denseDustDayPixels": {
-        "r": 0.8390803933143616,
-        "g": 0.5271510481834412,
-        "b": 0.2959963381290436,
+        "r": 0.6997813582420349,
+        "g": 0.6399781107902527,
+        "b": 0.5395147800445557,
         "a": 1.0
     },
     "denseDustDuskPixels": {
-        "r": 0.3424832820892334,
-        "g": 0.13169926404953004,
-        "b": 0.05683557316660881,
+        "r": 0.28592023253440859,
+        "g": 0.15961326658725739,
+        "b": 0.10465697944164276,
         "a": 1.0
     },
     "denseDustNightPixels": {
-        "r": 0.18940669298171998,
-        "g": 0.15261417627334596,
-        "b": 0.13161757588386537,
+        "r": 0.08706418424844742,
+        "g": 0.09319186210632324,
+        "b": 0.09858402609825134,
         "a": 1.0
     },
-    "dayNightLightingDelta": 0.3961959481239319,
-    "nightDustVisibilityDelta": 0.11604925990104675,
+    "dayNightLightingDelta": 0.5334792733192444,
+    "nightDustVisibilityDelta": 0.051116496324539188,
     "neutralLegacyPixels": {
         "r": 0.5915024280548096,
         "g": 0.40503862500190737,

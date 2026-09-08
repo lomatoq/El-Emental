@@ -1,0 +1,7 @@
+from pathlib import Path
+p=Path('Assets/Elemental/Presentation/UI/FrontendMenuView.cs');s=p.read_text(encoding='utf-8-sig')
+s=s.replace('        public string CountdownText =>','        public float CountdownRenderedAlpha => _countdown != null && _countdown.gameObject.activeInHierarchy ? _countdown.canvasRenderer.GetInheritedAlpha() : 0f;\n        public string CountdownText =>')
+s=s.replace('            gameObject.AddComponent<GraphicRaycaster>(); _group = gameObject.AddComponent<CanvasGroup>();','            gameObject.AddComponent<GraphicRaycaster>();\n            var menuContents = Rect(transform, "Menu contents"); Stretch(menuContents, Vector2.zero, Vector2.one);\n            _group = menuContents.gameObject.AddComponent<CanvasGroup>();')
+s=s.replace('Image(transform, "Left veil"','Image(menuContents, "Left veil"').replace('Rect(transform, "Menu column")','Rect(menuContents, "Menu column")').replace('_status = Label(transform,','_status = Label(menuContents,').replace('var footer = Label(transform,','var footer = Label(menuContents,')
+p.write_text(s,encoding='utf-8')
+p=Path('Assets/Elemental/Tests/PlayMode/AlphaFrontendPlayTests.cs');s=p.read_text(encoding='utf-8-sig').replace('                    yield return Capture($"Countdown-{digit}.png");','                    Assert.That(view.CountdownRenderedAlpha, Is.GreaterThan(.7f), digit + ": countdown was hidden by fading menu ancestry.");\n                    yield return Capture($"Countdown-{digit}.png");');p.write_text(s,encoding='utf-8')

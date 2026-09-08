@@ -2,6 +2,14 @@ using Unity.Mathematics;
 
 namespace Elemental.Simulation.Combat
 {
+    public enum EarthHitRegion : byte
+    {
+        Hips = 0, Chest = 1, Head = 2,
+        LeftUpperArm = 3, LeftLowerArm = 4, RightUpperArm = 5, RightLowerArm = 6,
+        LeftUpperLeg = 7, LeftLowerLeg = 8, RightUpperLeg = 9, RightLowerLeg = 10,
+        Unspecified = 255
+    }
+
     public enum EarthWorldResponseKind : byte
     {
         CharacterImpact = 0,
@@ -29,7 +37,8 @@ namespace Elemental.Simulation.Combat
             float3 direction,
             float impulse,
             float kineticEnergy,
-            float intensity01)
+            float intensity01,
+            EarthHitRegion hitRegion = EarthHitRegion.Unspecified)
         {
             ResponseId = responseId != 0u ? responseId : 1u;
             Tick = tick;
@@ -44,6 +53,7 @@ namespace Elemental.Simulation.Combat
             Impulse = math.max(0f, impulse);
             KineticEnergy = math.max(0f, kineticEnergy);
             Intensity01 = math.saturate(intensity01);
+            HitRegion = (byte)hitRegion <= (byte)EarthHitRegion.RightLowerLeg ? hitRegion : EarthHitRegion.Unspecified;
         }
 
         public uint ResponseId { get; }
@@ -59,6 +69,7 @@ namespace Elemental.Simulation.Combat
         public float Impulse { get; }
         public float KineticEnergy { get; }
         public float Intensity01 { get; }
+        public EarthHitRegion HitRegion { get; }
     }
 
     public static class EarthWorldResponseId

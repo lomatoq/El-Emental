@@ -17,7 +17,10 @@ namespace Elemental.Simulation.Characters
         Pillar = 8,
         ArmorAssemble = 9,
         ArmorBarrage = 10,
-        GenericCast = 11
+        GenericCast = 11,
+        LeftKick = 12,
+        RightKick = 13,
+        SpinKick = 14
     }
 
     public static class EarthHumanoidMotionResolver
@@ -50,6 +53,9 @@ namespace Elemental.Simulation.Characters
                 EarthTechniqueId.ArmorRepack => EarthHumanoidPoseSlot.ArmorAssemble,
             EarthTechniqueId.ArmorBarrage => EarthHumanoidPoseSlot.ArmorBarrage,
             EarthTechniqueId.QuickStonePunch => EarthHumanoidPoseSlot.GenericCast,
+            EarthTechniqueId.QuickStoneLeftKick => EarthHumanoidPoseSlot.LeftKick,
+            EarthTechniqueId.QuickStoneRightKick => EarthHumanoidPoseSlot.RightKick,
+            EarthTechniqueId.QuickStoneSpinKick => EarthHumanoidPoseSlot.SpinKick,
             EarthTechniqueId.None or EarthTechniqueId.Surf => EarthHumanoidPoseSlot.None,
             _ => EarthHumanoidPoseSlot.GenericCast
         };

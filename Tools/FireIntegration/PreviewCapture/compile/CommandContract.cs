@@ -1,0 +1,1 @@
+internal interface IRunCommand{void Execute(ExecutionResult result);} internal class ExecutionResult{public void RegisterObjectCreation(UnityEngine.Object o){} public void DestroyObject(UnityEngine.Object o){} public void Log(string text,params object[] args){}}

@@ -25,4 +25,21 @@ The release-only RMB shove did not communicate stored force and could barely tra
 
 ## Consequences
 
+### Landing compression follow-up, 2026-09-06 (working tree)
+
+The landing cushion now locks its support plane when braking starts, advances
+that plane by support velocity, and solves bounded braking over the remaining
+foot clearance and authored compression time. It no longer repeatedly marks the
+motor as externally launched. Its visible height is the actual foot-to-support
+clearance, so the descending body and compressing stone share the same distance.
+During compression its cosmetic footprint stays below the actual feet on this
+plane; the slower descent therefore cannot leave it at a stale horizontal
+ballistic prediction. An invalid new prediction cannot interrupt active braking.
+Eight irregular cells are prepared once using the existing wave stone factory.
+Incoming landings above 12 m/s scatter these same visual cells after cushioning,
+with existing fracture dust/chips. These cells are bounded cosmetic presentation,
+as are surf release cells; this does not create independent terrain/matter bodies.
+The final health/fall authority remains unchanged. Pure compression and focused
+runtime regressions are added; fresh Unity execution is pending integration.
+
 RMB now has continuous readable force without teleportation, small structures move farther than heavy ones, and fragmented Earth remains interactable. MMB adds an explicit Earth-only gravity verb without turning the physics world into an unbounded overlap field. Platforms and the moving wave add no per-frame voxel rebuild. Platform collider cooking occurs only once at a bounded cast event; wave, wall and landing-cushion updates reuse pre-created objects. The platform hull intentionally fills concavities so self-crossing input always produces one stable walkable top.

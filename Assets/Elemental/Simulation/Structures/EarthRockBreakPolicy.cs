@@ -16,6 +16,15 @@ namespace Elemental.Simulation.Structures
     /// <summary>Physical loose-stone break policy; never consumes repairable structure cells.</summary>
     public static class EarthRockBreakPolicy
     {
+        // Unity's other-relative-to-self velocity closes along the contact normal.
+        // Retain the incoming momentum when the solver reports only a small impulse.
+        public static float ContactImpulse(float3 relativeVelocity, float3 normal, float mass, float solverImpulse)
+        {
+            if (!math.all(math.isfinite(relativeVelocity)) || !math.all(math.isfinite(normal)) ||
+                !math.isfinite(mass) || mass <= 0f || !math.isfinite(solverImpulse)) return 0f;
+            return math.max(math.max(0f, solverImpulse), math.max(0f, math.dot(relativeVelocity, normal)) * mass);
+        }
+
         public static EarthMatterRecord PartitionChild(in EarthMatterRecord parent, int count,
             in EarthMatterPose pose, float3 velocity)
             => PartitionChild(parent, 1f / math.max(1, count), pose, velocity);

@@ -226,6 +226,17 @@ namespace Elemental.Presentation.MotionMatching
                 ? _controller.GetCurrentAnimatorClipInfo(layer)
                 : Array.Empty<AnimatorClipInfo>();
 
+        public void GetCurrentAnimatorClipInfo(int layer, System.Collections.Generic.List<AnimatorClipInfo> clips)
+        {
+            if (_controller.IsValid()) _controller.GetCurrentAnimatorClipInfo(layer, clips);
+        }
+
+        public void SetPresentationClockMultiplier(float value)
+        {
+            if (_controller.IsValid()) _controller.SetSpeed(value);
+            if (_neutralController.IsValid()) _neutralController.SetSpeed(value);
+        }
+
         public void CrossFade(int stateHash, float duration, int layer, float normalizedTime)
         {
             if (_controller.IsValid())

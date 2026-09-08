@@ -7,6 +7,27 @@ namespace Elemental.Tests.EditMode
 {
     public sealed class EarthVolumetricFractureTests
     {
+        [Test]
+        public void SharedCrownPlanesClipEveryCellAndPreserveTheActualSourceVolume()
+        {
+            float2[] boundary = {
+                new float2(-4f, -.275f), new float2(4f, -.275f),
+                new float2(4f, .275f), new float2(-4f, .275f) };
+            float4[] planes = {
+                new float4(.10f / 8f, 1f / 4f, 0f, .5f),
+                new float4(-.08f / 8f, 1f / 4f, 0f, .49f) };
+            EarthVolumetricFracturePlan plan = EarthVolumetricFractureSolver.BuildConvexPrism(
+                0xE17F1002u, boundary, -2f, 2f, 40, planes);
+            Assert.That(plan.IsValid, Is.True);
+            Assert.That(plan.SourceVolume, Is.LessThan(8f * 4f * .55f));
+            Assert.That(plan.RelativeVolumeError, Is.LessThan(.005f));
+            foreach (EarthVolumetricFractureCell cell in plan.Cells)
+                foreach (float3 vertex in cell.Vertices)
+                    foreach (float4 plane in planes)
+                        Assert.That(math.dot(plane.xyz, vertex), Is.LessThanOrEqualTo(plane.w + .0001f),
+                            "No cell may extend through the same visible crown used by the intact wall.");
+        }
+
         private static readonly float2[] WallBoundary =
         {
             new float2(-4.5f, -0.38f),

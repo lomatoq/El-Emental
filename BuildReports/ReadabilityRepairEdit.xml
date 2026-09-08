@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="6" result="Passed" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-06 08:32:44Z" end-time="2026-09-06 08:33:14Z" duration="29.3791909">
+  <test-suite type="TestSuite" id="1307" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="995" result="Passed" start-time="2026-09-06 08:32:44Z" end-time="2026-09-06 08:33:14Z" duration="29.379191" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2542" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="984" result="Passed" start-time="2026-09-06 08:32:44Z" end-time="2026-09-06 08:33:14Z" duration="29.378404" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="21092" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2543" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="984" result="Passed" start-time="2026-09-06 08:32:44Z" end-time="2026-09-06 08:33:14Z" duration="29.377915" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2544" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="984" result="Passed" start-time="2026-09-06 08:32:44Z" end-time="2026-09-06 08:33:14Z" duration="29.377733" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2545" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="984" result="Passed" start-time="2026-09-06 08:32:44Z" end-time="2026-09-06 08:33:14Z" duration="29.377544" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="2229" name="EarthVolumetricFractureTests" fullname="Elemental.Tests.EditMode.EarthVolumetricFractureTests" classname="Elemental.Tests.EditMode.EarthVolumetricFractureTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-06 08:32:44Z" end-time="2026-09-06 08:33:14Z" duration="29.377120" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2235" name="CantileverOutlineProducesOnlyClosedCellsAcrossSeedSweep" fullname="Elemental.Tests.EditMode.EarthVolumetricFractureTests.CantileverOutlineProducesOnlyClosedCellsAcrossSeedSweep" methodname="CantileverOutlineProducesOnlyClosedCellsAcrossSeedSweep" classname="Elemental.Tests.EditMode.EarthVolumetricFractureTests" runstate="Runnable" seed="1303433330" result="Passed" start-time="2026-09-06 08:32:44Z" end-time="2026-09-06 08:33:13Z" duration="28.457105" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2233" name="CellsOccupyThreeDimensionsAndHaveAHeavyTail" fullname="Elemental.Tests.EditMode.EarthVolumetricFractureTests.CellsOccupyThreeDimensionsAndHaveAHeavyTail" methodname="CellsOccupyThreeDimensionsAndHaveAHeavyTail" classname="Elemental.Tests.EditMode.EarthVolumetricFractureTests" runstate="Runnable" seed="1450141951" result="Passed" start-time="2026-09-06 08:33:13Z" end-time="2026-09-06 08:33:13Z" duration="0.194939" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2231" name="ConvexCellsPartitionTheWholeSourceVolume" fullname="Elemental.Tests.EditMode.EarthVolumetricFractureTests.ConvexCellsPartitionTheWholeSourceVolume" methodname="ConvexCellsPartitionTheWholeSourceVolume" classname="Elemental.Tests.EditMode.EarthVolumetricFractureTests" runstate="Runnable" seed="2103900152" result="Passed" start-time="2026-09-06 08:33:13Z" end-time="2026-09-06 08:33:13Z" duration="0.189072" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2234" name="InteriorFacesArePairedWithTheOppositeSharedPlane" fullname="Elemental.Tests.EditMode.EarthVolumetricFractureTests.InteriorFacesArePairedWithTheOppositeSharedPlane" methodname="InteriorFacesArePairedWithTheOppositeSharedPlane" classname="Elemental.Tests.EditMode.EarthVolumetricFractureTests" runstate="Runnable" seed="1141125004" result="Passed" start-time="2026-09-06 08:33:13Z" end-time="2026-09-06 08:33:13Z" duration="0.128318" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2230" name="SharedCrownPlanesClipEveryCellAndPreserveTheActualSourceVolume" fullname="Elemental.Tests.EditMode.EarthVolumetricFractureTests.SharedCrownPlanesClipEveryCellAndPreserveTheActualSourceVolume" methodname="SharedCrownPlanesClipEveryCellAndPreserveTheActualSourceVolume" classname="Elemental.Tests.EditMode.EarthVolumetricFractureTests" runstate="Runnable" seed="1404451557" result="Passed" start-time="2026-09-06 08:33:13Z" end-time="2026-09-06 08:33:13Z" duration="0.215260" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2232" name="ThinProductionWallCellsRemainClosed" fullname="Elemental.Tests.EditMode.EarthVolumetricFractureTests.ThinProductionWallCellsRemainClosed" methodname="ThinProductionWallCellsRemainClosed" classname="Elemental.Tests.EditMode.EarthVolumetricFractureTests" runstate="Runnable" seed="309276244" result="Passed" start-time="2026-09-06 08:33:13Z" end-time="2026-09-06 08:33:14Z" duration="0.188609" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\ReadabilityRepairEdit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

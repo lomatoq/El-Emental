@@ -12,7 +12,7 @@ namespace Elemental.Runtime.Characters
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Rigidbody))]
-    public sealed class EarthCharacterImpactTarget : MonoBehaviour
+    public sealed partial class EarthCharacterImpactTarget : MonoBehaviour
     {
         private const int DedupeCapacity = 8;
         private static readonly ProfilerMarker ResolveMarker =
@@ -35,6 +35,17 @@ namespace Elemental.Runtime.Characters
         private EarthRecoverableKnockdownState _localKnockdown;
         private EarthWorldResponseFanoutAdapter _worldResponseFanout;
         private PlanetMotor _motor;
+        private Vector3 _prePhysicsVelocity;
+
+        public Vector3 OrientIncomingStoneVelocity(Vector3 reportedRelativeVelocity, Vector3 projectileBeforePhysics) =>
+            (Vector3)EarthCharacterImpactSolver.OrientIncomingRelativeVelocity(
+                (float3)reportedRelativeVelocity, (float3)projectileBeforePhysics, (float3)_prePhysicsVelocity);
+
+        private void FixedUpdate()
+        {
+            if (targetBody != null) _prePhysicsVelocity = targetBody.linearVelocity;
+            StepSustainedCrush();
+        }
 
         public EarthDuelFighterId FighterId => fighterId;
         public uint StableFighterId => stableFighterId;
@@ -64,6 +75,7 @@ namespace Elemental.Runtime.Characters
             fighterId = configuredFighterId;
             stableFighterId = configuredStableFighterId != 0u ? configuredStableFighterId : 1u;
             targetBody = configuredBody;
+            if (targetBody != null) _prePhysicsVelocity = targetBody.linearVelocity;
             duelController = configuredDuel;
             responseProfile = configuredProfile != null ? configuredProfile : responseProfile;
             _tuning = responseProfile != null ? responseProfile.Tuning : EarthCharacterImpactTuning.Default;
@@ -89,6 +101,8 @@ namespace Elemental.Runtime.Characters
             float fallDistance,
             float downwardImpactSpeed)
         {
+            if (!HasSimulationAuthority || duelController != null && !duelController.CanReceiveDamage(fighterId))
+                return CharacterOutcome.Ignore;
             var input = new CharacterOutcomeInput(
                 EarthCharacterImpactSourceKind.FallLanding,
                 fallDistance,
@@ -97,9 +111,7 @@ namespace Elemental.Runtime.Characters
             CharacterOutcome outcome = CharacterOutcomeResolver.Resolve(in input);
             if (outcome == CharacterOutcome.Knockout)
             {
-                Vector3 up = transform.position.sqrMagnitude > 0.1f
-                    ? transform.position.normalized
-                    : transform.up;
+                Vector3 up = _motor != null ? _motor.LocalUp : transform.up;
                 duelController?.RequestKnockout(
                     fighterId,
                     new RagdollHandoff(point, up * Mathf.Min(4.5f, downwardImpactSpeed * 0.25f), true));
@@ -118,6 +130,21 @@ namespace Elemental.Runtime.Characters
             return outcome;
         }
 
+        public EarthCharacterImpactResponse ApplyStoneImpact(
+            Vector3 point, Vector3 direction, float sourceMass, float closingSpeed,
+            EarthCharacterImpactSourceKind sourceKind, uint sourceStableId,
+            float damageOverride = -1f)
+        {
+            if (targetBody == null) return EarthCharacterImpactResponse.Ignore;
+            float impulse = EarthCharacterImpactSolver.StoneImpulse(
+                sourceMass, targetBody.mass, closingSpeed);
+            Vector3 up = _motor != null ? _motor.LocalUp : transform.up;
+            bool crush = EarthCharacterImpactSolver.IsHeavyCrush(sourceMass, targetBody.mass, closingSpeed,
+                ToFloat3(direction), ToFloat3(up), Vector3.Dot(point - targetBody.worldCenterOfMass, up));
+            return ApplyImpact(point, direction, impulse, sourceKind, sourceStableId,
+                closingSpeed, damageOverride: damageOverride, calibratedStone: true, heavyCrush: crush);
+        }
+
         public EarthCharacterImpactResponse ApplyImpact(
             Vector3 point,
             Vector3 direction,
@@ -126,10 +153,15 @@ namespace Elemental.Runtime.Characters
             uint sourceStableId,
             float closingSpeed = 0f,
             float strength01 = 0f,
-            uint tick = 0u)
+            uint tick = 0u,
+            float damageOverride = -1f,
+            bool calibratedStone = false,
+            bool heavyCrush = false)
         {
             using (ResolveMarker.Auto())
             {
+                if (!HasSimulationAuthority || duelController != null && !duelController.CanReceiveDamage(fighterId))
+                    return EarthCharacterImpactResponse.Ignore;
                 if (Time.time < _suppressUntil || targetBody == null || impulse <= 0f)
                     return EarthCharacterImpactResponse.Ignore;
                 if (tick == 0u) tick = CurrentPhysicsTick;
@@ -150,11 +182,17 @@ namespace Elemental.Runtime.Characters
                     Mathf.Max(0.01f, targetBody.mass),
                     closingSpeed,
                     strength01);
-                ImpactResponseMode responseMode = responseProfile != null
+                ImpactResponseMode responseMode = calibratedStone ? ImpactResponseMode.Calibrated : responseProfile != null
                     ? responseProfile.ResponseMode
                     : ImpactResponseMode.Legacy;
                 EarthCharacterImpactResolution resolution;
-                if (responseProfile != null && responseMode == ImpactResponseMode.Calibrated)
+                if (calibratedStone)
+                {
+                    var calibration = new EarthCharacterImpactCalibration(1f, 0.65f, 3f);
+                    resolution = EarthCharacterImpactSolver.Resolve(
+                        in impact, in _tuning, responseMode, in calibration);
+                }
+                else if (responseProfile != null && responseMode == ImpactResponseMode.Calibrated)
                 {
                     EarthCharacterImpactCalibration calibration =
                         responseProfile.CalibrationFor(sourceKind);
@@ -169,11 +207,11 @@ namespace Elemental.Runtime.Characters
                     resolution = EarthCharacterImpactSolver.Resolve(
                         in impact,
                         in _tuning,
-                        ImpactResponseMode.Legacy);
+                        responseMode);
                 }
                 bool stoneImpact = IsStoneImpact(sourceKind);
                 bool clusteredStoneRagdoll = false;
-                if (stoneImpact)
+                if (stoneImpact && resolution.ReactionVelocityChange >= 0.65f)
                     clusteredStoneRagdoll = RegisterStoneCluster(
                         point,
                         sourceStableId,
@@ -193,13 +231,16 @@ namespace Elemental.Runtime.Characters
                     CharacterOutcome outcome = CharacterOutcomeResolver.Resolve(in outcomeInput);
                     response = ToImpactResponse(outcome);
                 }
+                if (heavyCrush && stoneImpact)
+                    response = EarthCharacterImpactResponse.RecoverableKnockdown;
                 Remember(sourceStableId, tick, impactTime);
                 AcceptedImpactCount++;
-                LastResponse = response;
+
                 LastReactionVelocityChange = resolution.ReactionVelocityChange;
                 LastEffectiveVelocityChange = resolution.EffectiveVelocityChange;
 
-                Vector3 requestedVelocityChange = safeDirection * resolution.AppliedVelocityChange;
+                Vector3 requestedVelocityChange = safeDirection * resolution.AppliedVelocityChange *
+                    EarthCharacterImpactSolver.WeightTransferMultiplier(sourceKind);
                 Vector3 up = transform.position.sqrMagnitude > 0.1f
                     ? transform.position.normalized
                     : transform.up;
@@ -224,19 +265,41 @@ namespace Elemental.Runtime.Characters
                     velocityChange = Vector3.ClampMagnitude(
                         velocityChange,
                         responseProfile != null ? responseProfile.SingleStoneRootVelocity : 0.8f);
+                if (duelController != null && EarthCharacterImpactSolver.ResolvesHealthDamage(sourceKind, response))
+                {
+                    float damage = damageOverride >= 0f && float.IsFinite(damageOverride)
+                        ? stoneImpact
+                            ? EarthCharacterImpactSolver.StoneDamage(damageOverride, resolution.ReactionVelocityChange)
+                            : damageOverride
+                        : duelController.ResolveDamage(sourceKind, resolution.ReactionVelocityChange, closingSpeed);
+                    bool died = duelController.ApplyDamage(fighterId, damage,
+                        new RagdollHandoff(point, velocityChange, true));
+                    if (died) response = EarthCharacterImpactResponse.Knockout;
+                    else if (response == EarthCharacterImpactResponse.Knockout)
+                        response = EarthCharacterImpactResponse.RecoverableKnockdown;
+                }
+                LastResponse = response;
                 EarthWorldResponseEvent worldResponse = CreateWorldResponse(
                     in impact,
                     response,
                     safeDirection,
                     resolution.ReactionVelocityChange);
+                if (EarthLocalizedPhysicsResponse.IsLocal(response))
+                {
+                    _visibleRagdoll?.ApplyLocalizedPhysicalResponse(in worldResponse, resolution.ReactionVelocityChange);
+                    EarthLocalizedPhysicsTuning physicalTuning = responseProfile != null
+                        ? responseProfile.PhysicalTuning : EarthLocalizedPhysicsTuning.Default;
+                    _motor?.BeginImpactStun(EarthLocalizedPhysicsResponse.StunSeconds(response, in physicalTuning));
+                }
                 WorldResponseRequested?.Invoke(worldResponse);
                 _worldResponseFanout?.Publish(in worldResponse);
 
                 if (response == EarthCharacterImpactResponse.Knockout)
                 {
-                    duelController?.RequestKnockout(
-                        fighterId,
-                        new RagdollHandoff(point, velocityChange, true));
+                    // Match.ApplyDamage already performed the single death handoff.
+                    // A scene without a duel retains physical response only.
+                    if (duelController == null)
+                        BeginRecoverableKnockdown(new RagdollHandoff(point, velocityChange, true));
                 }
                 else if (response == EarthCharacterImpactResponse.RecoverableKnockdown)
                 {
@@ -249,6 +312,7 @@ namespace Elemental.Runtime.Characters
                     targetBody.AddForceAtPosition(velocityChange, point, ForceMode.VelocityChange);
                 }
 
+                PublishAuthorityImpact(in worldResponse, resolution.ReactionVelocityChange, velocityChange);
                 ImpactResolved?.Invoke(response);
                 return response;
             }
@@ -285,10 +349,28 @@ namespace Elemental.Runtime.Characters
                     FilteredSupportContactCount++;
                     continue;
                 }
-                float closingSpeed = otherBody != null
-                    ? (otherBody.linearVelocity - targetBody.linearVelocity).magnitude
-                    : collision.relativeVelocity.magnitude;
-                return ApplyImpact(contact.point, -contact.normal, impulse, sourceKind, sourceId, closingSpeed);
+                // Collision.relativeVelocity preserves the incoming contact velocity;
+                // the bodies' current velocities may already have been stopped by PhysX.
+                float closingSpeed = Mathf.Abs(Vector3.Dot(collision.relativeVelocity, contact.normal));
+                EarthTypedCombatProjectile typedProjectile = otherBody != null
+                    ? otherBody.GetComponent<EarthTypedCombatProjectile>() : null;
+                if (typedProjectile != null && !typedProjectile.IsArmed) typedProjectile = null;
+                if (IsStoneImpact(sourceKind) && otherBody != null && !otherBody.isKinematic)
+                {
+                    // Callback contact ordering can reverse relative velocity.
+                    // Orient it from pre-physics travel, never post-bounce bodies.
+                    Vector3 incoming = fragment != null
+                        ? OrientIncomingStoneVelocity(collision.relativeVelocity, fragment.IncomingPhysicsVelocity)
+                        : (Vector3)EarthCharacterImpactSolver.OrientIncomingContactVelocity(
+                            ToFloat3(collision.relativeVelocity), ToFloat3(contact.normal));
+                    if (incoming.sqrMagnitude < .0001f) incoming = contact.normal;
+                    return ApplyStoneImpact(contact.point, incoming.normalized, otherBody.mass, closingSpeed,
+                        typedProjectile != null ? typedProjectile.SourceKind : sourceKind, sourceId,
+                        typedProjectile != null ? typedProjectile.DamageOverride : -1f);
+                }
+                return ApplyImpact(contact.point, -contact.normal, impulse,
+                    typedProjectile != null ? typedProjectile.SourceKind : sourceKind, sourceId, closingSpeed,
+                    damageOverride: typedProjectile != null ? typedProjectile.DamageOverride : -1f);
             }
             return EarthCharacterImpactResponse.Ignore;
         }
@@ -296,6 +378,7 @@ namespace Elemental.Runtime.Characters
         private void Awake()
         {
             if (targetBody == null) targetBody = GetComponent<Rigidbody>();
+            if (targetBody != null) _prePhysicsVelocity = targetBody.linearVelocity;
             _motor = GetComponent<PlanetMotor>();
             if (_visibleRagdoll == null)
                 _visibleRagdoll = GetComponentInChildren<HumanoidRagdollRig>(true);
@@ -306,21 +389,19 @@ namespace Elemental.Runtime.Characters
 
         private void Update()
         {
-            if (!_localKnockdown.IsActive) return;
+            if (!_localKnockdown.IsActive || HasBlockingCrushContact) return;
             EarthRecoverableKnockdownStep step = EarthRecoverableKnockdownSolver.Step(
                 in _localKnockdown,
                 Time.deltaTime);
-            _localKnockdown = step.State;
             if (step.BeginAuthoredRecovery)
             {
                 Vector3 up = transform.position.sqrMagnitude > 0.1f
                     ? transform.position.normalized
                     : transform.up;
-                _visibleRagdoll?.RecoverToAnimated(
-                    up,
-                    Vector3.ProjectOnPlane(transform.forward, up),
-                    false);
+                if (_visibleRagdoll != null && !_visibleRagdoll.TryRecoverToAnimated(
+                    up, Vector3.ProjectOnPlane(transform.forward, up), false)) return;
             }
+            _localKnockdown = step.State;
             if (step.Completed) _visibleRagdoll?.CompleteRecovery();
         }
 
@@ -380,6 +461,7 @@ namespace Elemental.Runtime.Characters
 
         private void ClearDedupe()
         {
+            ClearCrushingLoad();
             Array.Clear(_recentSourceIds, 0, _recentSourceIds.Length);
             Array.Clear(_recentTicks, 0, _recentTicks.Length);
             Array.Clear(_recentTimes, 0, _recentTimes.Length);
@@ -439,7 +521,11 @@ namespace Elemental.Runtime.Characters
                 impact.Direction,
                 impact.Impulse,
                 energy,
-                Mathf.InverseLerp(0.65f, _tuning.MaximumVelocityChange, reactionVelocityChange));
+                Mathf.InverseLerp(0.65f, _tuning.MaximumVelocityChange, reactionVelocityChange),
+                _visibleRagdoll?.LocalizedPhysics != null
+                    ? _visibleRagdoll.LocalizedPhysics.ResolveHitRegion(
+                        new Vector3(impact.Point.x, impact.Point.y, impact.Point.z), safeDirection)
+                    : EarthHitRegion.Unspecified);
         }
 
         private static EarthCharacterImpactResponse ToImpactResponse(CharacterOutcome outcome) =>
@@ -481,6 +567,29 @@ namespace Elemental.Runtime.Characters
             {
                 sourceKind = EarthCharacterImpactSourceKind.LooseStone;
                 sourceStableId = fragment.FragmentId;
+                return;
+            }
+            EarthDestructibleDecorRock decor = collider.GetComponentInParent<EarthDestructibleDecorRock>();
+            if (decor != null && decor.Body != null && !decor.Body.isKinematic)
+            {
+                sourceKind = EarthCharacterImpactSourceKind.LooseStone;
+                sourceStableId = decor.StableEarthId;
+                return;
+            }
+            EarthRockDebris debris = collider.GetComponentInParent<EarthRockDebris>();
+            if (debris != null)
+            {
+                sourceKind = EarthCharacterImpactSourceKind.LooseStone;
+                sourceStableId = debris.StableEarthId;
+                return;
+            }
+            IEarthPhysicalTarget structural = collider.GetComponentInParent<EarthArenaPiece>();
+            structural ??= collider.GetComponentInParent<EarthPieceRuntime>();
+            structural ??= collider.GetComponentInParent<EarthPlatformPiece>();
+            if (structural != null && structural.Body != null && !structural.Body.isKinematic)
+            {
+                sourceKind = EarthCharacterImpactSourceKind.LooseStone;
+                sourceStableId = structural.StableEarthId;
                 return;
             }
             EarthMatterIdentity matter = collider.GetComponentInParent<EarthMatterIdentity>();

@@ -12,6 +12,20 @@ namespace Elemental.Tests.EditMode
     internal static class Mvp01FocusedTestLauncher
     {
         private const string ReportDirectory = "BuildReports";
+        [MenuItem("Elemental/QA/Motion Fog Wind Edit")]
+        public static void RunMotionFogWindEdit() => Run(TestMode.EditMode, "MotionFogWindEdit",
+            "Elemental.Tests.EditMode.ValleyFogClosureTests",
+            "Elemental.Tests.EditMode.ValleyDissolveContinuityTests",
+            "Elemental.Tests.EditMode.ValleyAtmosphereV2Tests",
+            "Elemental.Tests.EditMode.ValleyTimePaletteTests",
+            "Elemental.Tests.EditMode.EarthSurfaceWindPolicyTests");
+
+        [MenuItem("Elemental/QA/Motion Fog Wind Play")]
+        public static void RunMotionFogWindPlay() => Run(TestMode.PlayMode, "MotionFogWindPlay",
+            "Elemental.Tests.PlayMode.FrontendMotionContinuityTests",
+            "Elemental.Tests.PlayMode.FeelFollowupUiPlayTests.ButtonHoldsCenteredPressWithoutChangingAuthoredAnchorOrScale",
+            "Elemental.Tests.PlayMode.ValleyFogClosureRuntimeTests",
+            "Elemental.Tests.PlayMode.EarthSurfaceWindDustProductionTests");
         private const string PlayPendingKey = "Elemental.Mvp01Qa.PlayPending";
         private const string PlayXmlPathKey = "Elemental.Mvp01Qa.PlayXmlPath";
         private const string PlayJsonPathKey = "Elemental.Mvp01Qa.PlayJsonPath";
@@ -546,7 +560,7 @@ namespace Elemental.Tests.EditMode
             Run(
                 TestMode.PlayMode,
                 "ProductionCameraPushPlay",
-                "Elemental.Tests.PlayMode.EarthCoreV2FoundationTests.ProductionCameraRayLocksAndQuicklyShovesVisibleWall");
+                "Elemental.Tests.PlayMode.EarthCoreV2FoundationTests.ProductionCameraRmbTapLaunchesVisibleWallCell");
         }
 
         [MenuItem("Elemental/QA/Run Production Armor Camera PlayMode Tests")]

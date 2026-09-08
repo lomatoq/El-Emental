@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="33" result="Passed" total="33" passed="33" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.2289614">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="1262" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.228961" total="33" passed="33" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2583" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="1216" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.221953" total="33" passed="33" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="11736" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2584" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="1210" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.221280" total="33" passed="33" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2585" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="1210" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.221008" total="33" passed="33" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2586" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="1210" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.220446" total="33" passed="33" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="2093" name="EarthSurfaceWindPolicyTests" fullname="Elemental.Tests.EditMode.EarthSurfaceWindPolicyTests" classname="Elemental.Tests.EditMode.EarthSurfaceWindPolicyTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.033088" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2098" name="GustFrontTravelsDownwindInsteadOfFollowingParticleSlots" fullname="Elemental.Tests.EditMode.EarthSurfaceWindPolicyTests.GustFrontTravelsDownwindInsteadOfFollowingParticleSlots" methodname="GustFrontTravelsDownwindInsteadOfFollowingParticleSlots" classname="Elemental.Tests.EditMode.EarthSurfaceWindPolicyTests" runstate="Runnable" seed="323033501" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.012190" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2096" name="GustRemainsTangentAndBoundedAcrossCurvedGround" fullname="Elemental.Tests.EditMode.EarthSurfaceWindPolicyTests.GustRemainsTangentAndBoundedAcrossCurvedGround" methodname="GustRemainsTangentAndBoundedAcrossCurvedGround" classname="Elemental.Tests.EditMode.EarthSurfaceWindPolicyTests" runstate="Runnable" seed="1994276926" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.006496" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2097" name="NearbyWispsShareContinuousMotion" fullname="Elemental.Tests.EditMode.EarthSurfaceWindPolicyTests.NearbyWispsShareContinuousMotion" methodname="NearbyWispsShareContinuousMotion" classname="Elemental.Tests.EditMode.EarthSurfaceWindPolicyTests" runstate="Runnable" seed="1024916280" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.001190" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2095" name="ParallelWindHasStableTangentFallback" fullname="Elemental.Tests.EditMode.EarthSurfaceWindPolicyTests.ParallelWindHasStableTangentFallback" methodname="ParallelWindHasStableTangentFallback" classname="Elemental.Tests.EditMode.EarthSurfaceWindPolicyTests" runstate="Runnable" seed="863573248" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000419" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2094" name="WindRemainsTangentOnDifferentPlanetNormals" fullname="Elemental.Tests.EditMode.EarthSurfaceWindPolicyTests.WindRemainsTangentOnDifferentPlanetNormals" methodname="WindRemainsTangentOnDifferentPlanetNormals" classname="Elemental.Tests.EditMode.EarthSurfaceWindPolicyTests" runstate="Runnable" seed="1835115265" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000376" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2099" name="ZeroStrengthRestoresSteadyBaseline" fullname="Elemental.Tests.EditMode.EarthSurfaceWindPolicyTests.ZeroStrengthRestoresSteadyBaseline" methodname="ZeroStrengthRestoresSteadyBaseline" classname="Elemental.Tests.EditMode.EarthSurfaceWindPolicyTests" runstate="Runnable" seed="1241575676" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000249" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="2495" name="ValleyAtmosphereV2Tests" fullname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests" classname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.052860" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2507" name="CloudTransmissionMatchesOneMinusVeilOpacity" fullname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests.CloudTransmissionMatchesOneMinusVeilOpacity" methodname="CloudTransmissionMatchesOneMinusVeilOpacity" classname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests" runstate="Runnable" seed="1464420160" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.001341" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2505" name="ExteriorReverseViewStillProtectsPlanetFromCloudArtwork" fullname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests.ExteriorReverseViewStillProtectsPlanetFromCloudArtwork" methodname="ExteriorReverseViewStillProtectsPlanetFromCloudArtwork" classname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests" runstate="Runnable" seed="280821720" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000343" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2504" name="FarStonePerspectiveIsContinuousMonotonicAndNearClear" fullname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests.FarStonePerspectiveIsContinuousMonotonicAndNearClear" methodname="FarStonePerspectiveIsContinuousMonotonicAndNearClear" classname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests" runstate="Runnable" seed="1456783743" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.026183" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="2502" name="IntegralMatchesIndependentNumericalQuadrature" fullname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests.IntegralMatchesIndependentNumericalQuadrature" classname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.003707" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2496" name="IntegralMatchesIndependentNumericalQuadrature(150,150)" fullname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests.IntegralMatchesIndependentNumericalQuadrature(150,150)" methodname="IntegralMatchesIndependentNumericalQuadrature" classname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests" runstate="Runnable" seed="23323138" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000716" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2497" name="IntegralMatchesIndependentNumericalQuadrature(150,-120)" fullname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests.IntegralMatchesIndependentNumericalQuadrature(150,-120)" methodname="IntegralMatchesIndependentNumericalQuadrature" classname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests" runstate="Runnable" seed="161337919" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000278" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2498" name="IntegralMatchesIndependentNumericalQuadrature(-150,120)" fullname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests.IntegralMatchesIndependentNumericalQuadrature(-150,120)" methodname="IntegralMatchesIndependentNumericalQuadrature" classname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests" runstate="Runnable" seed="1620472507" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000286" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2499" name="IntegralMatchesIndependentNumericalQuadrature(-150,-120)" fullname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests.IntegralMatchesIndependentNumericalQuadrature(-150,-120)" methodname="IntegralMatchesIndependentNumericalQuadrature" classname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests" runstate="Runnable" seed="555326824" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000233" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2500" name="IntegralMatchesIndependentNumericalQuadrature(0,0)" fullname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests.IntegralMatchesIndependentNumericalQuadrature(0,0)" methodname="IntegralMatchesIndependentNumericalQuadrature" classname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests" runstate="Runnable" seed="1670514239" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000224" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2501" name="IntegralMatchesIndependentNumericalQuadrature(130,130.00001d)" fullname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests.IntegralMatchesIndependentNumericalQuadrature(130,130.00001d)" methodname="IntegralMatchesIndependentNumericalQuadrature" classname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests" runstate="Runnable" seed="1258396219" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000339" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="2509" name="InvalidInputsDoNotLeakNanIntoShaderParameters" fullname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests.InvalidInputsDoNotLeakNanIntoShaderParameters" methodname="InvalidInputsDoNotLeakNanIntoShaderParameters" classname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests" runstate="Runnable" seed="978657786" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.001639" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2508" name="LowerPlanetIsOpaqueButPlayableUpperCapRemainsProtected" fullname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests.LowerPlanetIsOpaqueButPlayableUpperCapRemainsProtected" methodname="LowerPlanetIsOpaqueButPlayableUpperCapRemainsProtected" classname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests" runstate="Runnable" seed="157767691" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.016174" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2503" name="NoBlueHoleForShallowDownwardSkyAndNoFarClipDependency" fullname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests.NoBlueHoleForShallowDownwardSkyAndNoFarClipDependency" methodname="NoBlueHoleForShallowDownwardSkyAndNoFarClipDependency" classname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests" runstate="Runnable" seed="622704486" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000687" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2506" name="SubmergedObserverCannotSeeBrightArtThroughOpaqueVeil" fullname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests.SubmergedObserverCannotSeeBrightArtThroughOpaqueVeil" methodname="SubmergedObserverCannotSeeBrightArtThroughOpaqueVeil" classname="Elemental.Tests.EditMode.ValleyAtmosphereV2Tests" runstate="Runnable" seed="1038926889" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000246" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="2515" name="ValleyDissolveContinuityTests" fullname="Elemental.Tests.EditMode.ValleyDissolveContinuityTests" classname="Elemental.Tests.EditMode.ValleyDissolveContinuityTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.042729" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2516" name="DistantColumnsDoNotInheritPlanetUndersideHeightBand" fullname="Elemental.Tests.EditMode.ValleyDissolveContinuityTests.DistantColumnsDoNotInheritPlanetUndersideHeightBand" methodname="DistantColumnsDoNotInheritPlanetUndersideHeightBand" classname="Elemental.Tests.EditMode.ValleyDissolveContinuityTests" runstate="Runnable" seed="245738349" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.001565" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2517" name="HeightFogCanBecomeOpaqueAndPlanetBottomRemainsSealed" fullname="Elemental.Tests.EditMode.ValleyDissolveContinuityTests.HeightFogCanBecomeOpaqueAndPlanetBottomRemainsSealed" methodname="HeightFogCanBecomeOpaqueAndPlanetBottomRemainsSealed" classname="Elemental.Tests.EditMode.ValleyDissolveContinuityTests" runstate="Runnable" seed="813319335" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000195" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2518" name="RevisedWorldMetreFalloffChangesSmoothlyAcrossEntireColumn" fullname="Elemental.Tests.EditMode.ValleyDissolveContinuityTests.RevisedWorldMetreFalloffChangesSmoothlyAcrossEntireColumn" methodname="RevisedWorldMetreFalloffChangesSmoothlyAcrossEntireColumn" classname="Elemental.Tests.EditMode.ValleyDissolveContinuityTests" runstate="Runnable" seed="1558824348" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.039549" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="2519" name="ValleyFogClosureTests" fullname="Elemental.Tests.EditMode.ValleyFogClosureTests" classname="Elemental.Tests.EditMode.ValleyFogClosureTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.044373" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2525" name="ClosingDistanceCannotWashOutProtectedPlayablePlanetInReverseView" fullname="Elemental.Tests.EditMode.ValleyFogClosureTests.ClosingDistanceCannotWashOutProtectedPlayablePlanetInReverseView" methodname="ClosingDistanceCannotWashOutProtectedPlayablePlanetInReverseView" classname="Elemental.Tests.EditMode.ValleyFogClosureTests" runstate="Runnable" seed="1884519042" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000392" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2526" name="ClosureAttenuatesResidualTransmissionWithoutChangingEarlierFog" fullname="Elemental.Tests.EditMode.ValleyFogClosureTests.ClosureAttenuatesResidualTransmissionWithoutChangingEarlierFog" methodname="ClosureAttenuatesResidualTransmissionWithoutChangingEarlierFog" classname="Elemental.Tests.EditMode.ValleyFogClosureTests" runstate="Runnable" seed="340905102" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000565" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2520" name="ClosureHasExactClearAndOpaquePlateausAndNoBoundaryPop" fullname="Elemental.Tests.EditMode.ValleyFogClosureTests.ClosureHasExactClearAndOpaquePlateausAndNoBoundaryPop" methodname="ClosureHasExactClearAndOpaquePlateausAndNoBoundaryPop" classname="Elemental.Tests.EditMode.ValleyFogClosureTests" runstate="Runnable" seed="904456393" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.031360" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="2524" name="DistantStoneFullyClosesEvenWithoutPhysicalHeightFog" fullname="Elemental.Tests.EditMode.ValleyFogClosureTests.DistantStoneFullyClosesEvenWithoutPhysicalHeightFog" classname="Elemental.Tests.EditMode.ValleyFogClosureTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.001740" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2521" name="DistantStoneFullyClosesEvenWithoutPhysicalHeightFog(-200)" fullname="Elemental.Tests.EditMode.ValleyFogClosureTests.DistantStoneFullyClosesEvenWithoutPhysicalHeightFog(-200)" methodname="DistantStoneFullyClosesEvenWithoutPhysicalHeightFog" classname="Elemental.Tests.EditMode.ValleyFogClosureTests" runstate="Runnable" seed="1031834181" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000440" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2522" name="DistantStoneFullyClosesEvenWithoutPhysicalHeightFog(0)" fullname="Elemental.Tests.EditMode.ValleyFogClosureTests.DistantStoneFullyClosesEvenWithoutPhysicalHeightFog(0)" methodname="DistantStoneFullyClosesEvenWithoutPhysicalHeightFog" classname="Elemental.Tests.EditMode.ValleyFogClosureTests" runstate="Runnable" seed="1991781702" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000053" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2523" name="DistantStoneFullyClosesEvenWithoutPhysicalHeightFog(500)" fullname="Elemental.Tests.EditMode.ValleyFogClosureTests.DistantStoneFullyClosesEvenWithoutPhysicalHeightFog(500)" methodname="DistantStoneFullyClosesEvenWithoutPhysicalHeightFog" classname="Elemental.Tests.EditMode.ValleyFogClosureTests" runstate="Runnable" seed="1715647893" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000043" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="2527" name="InvalidClosureRangesRejectNanInfinityAndReversedDistances" fullname="Elemental.Tests.EditMode.ValleyFogClosureTests.InvalidClosureRangesRejectNanInfinityAndReversedDistances" methodname="InvalidClosureRangesRejectNanInfinityAndReversedDistances" classname="Elemental.Tests.EditMode.ValleyFogClosureTests" runstate="Runnable" seed="1041964941" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000803" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2528" name="SavedProfileAndFreshDefaultsHaveBlueFogAndClosureBeyondGameplay" fullname="Elemental.Tests.EditMode.ValleyFogClosureTests.SavedProfileAndFreshDefaultsHaveBlueFogAndClosureBeyondGameplay" methodname="SavedProfileAndFreshDefaultsHaveBlueFogAndClosureBeyondGameplay" classname="Elemental.Tests.EditMode.ValleyFogClosureTests" runstate="Runnable" seed="592366071" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.004327" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="2529" name="ValleyTimePaletteTests" fullname="Elemental.Tests.EditMode.ValleyTimePaletteTests" classname="Elemental.Tests.EditMode.ValleyTimePaletteTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.042504" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2532" name="CurveIsFiniteBoundedAndContinuousAcrossHorizon" fullname="Elemental.Tests.EditMode.ValleyTimePaletteTests.CurveIsFiniteBoundedAndContinuousAcrossHorizon" methodname="CurveIsFiniteBoundedAndContinuousAcrossHorizon" classname="Elemental.Tests.EditMode.ValleyTimePaletteTests" runstate="Runnable" seed="1817499063" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.040053" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2530" name="NoonPreservesUserDayRampAndCloudMaterialColors" fullname="Elemental.Tests.EditMode.ValleyTimePaletteTests.NoonPreservesUserDayRampAndCloudMaterialColors" methodname="NoonPreservesUserDayRampAndCloudMaterialColors" classname="Elemental.Tests.EditMode.ValleyTimePaletteTests" runstate="Runnable" seed="390312970" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000674" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2531" name="SunsetIsSolarDrivenAndMidnightIsCoolGrey" fullname="Elemental.Tests.EditMode.ValleyTimePaletteTests.SunsetIsSolarDrivenAndMidnightIsCoolGrey" methodname="SunsetIsSolarDrivenAndMidnightIsCoolGrey" classname="Elemental.Tests.EditMode.ValleyTimePaletteTests" runstate="Runnable" seed="1153860579" result="Passed" start-time="2026-09-08 00:16:08Z" end-time="2026-09-08 00:16:08Z" duration="0.000435" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\MotionFogWindEdit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

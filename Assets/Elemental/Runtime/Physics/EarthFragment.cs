@@ -2,9 +2,11 @@ using System;
 using Elemental.Runtime.World;
 using Elemental.Runtime.Matter;
 using Elemental.Runtime.Geometry;
+using Elemental.Runtime.Characters;
 using Elemental.Simulation.Bending;
 using Elemental.Simulation.Combat;
 using Elemental.Simulation.Matter;
+using Elemental.Simulation.Structures;
 using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine;
@@ -86,12 +88,28 @@ namespace Elemental.Runtime.Physics
         private MaterialPropertyBlock _visualProperties;
         private readonly EarthContactFrictionFeedback _frictionFeedback = new();
 
-        private void OnCollisionStay(Collision collision) =>
+        private void OnCollisionStay(Collision collision)
+        {
+            if (!IsHeld) Elemental.Runtime.Characters.EarthStoneCharacterContact.DeliverLoad(collision, targetBody);
             _frictionFeedback.Emit(_sourcePool != null ? _sourcePool.MaterialFeedback : null,
                 collision, FragmentId, _generation);
+        }
 
         public uint FragmentId { get; private set; }
         public Rigidbody Body => targetBody;
+        public Vector3 IncomingPhysicsVelocity => _prePhysicsVelocity;
+        public bool CanReuseInactiveRepresentation
+        {
+            get
+            {
+                EarthMatterIdentity identity = _matterIdentity != null ? _matterIdentity : GetComponent<EarthMatterIdentity>();
+                return !gameObject.activeSelf && (identity == null || !identity.TryRead(out EarthMatterRecord record) ||
+                    record.Phase == EarthMatterPhase.Consumed);
+            }
+        }
+        private float _solidVolume, _reservedAccretionVolume;
+        private EarthMatterMassProfile _massPolicy = EarthMatterMassProfile.ArenaStone;
+        public float SolidVolume => _solidVolume;
         public float Mass => targetBody != null ? targetBody.mass : 0f;
         public float Radius => _radius;
         public EarthRockProfile Profile => _profile;
@@ -147,6 +165,9 @@ namespace Elemental.Runtime.Physics
             if (executor == null) _matterIdentity?.ReleaseRetiredRepresentation();
             _profile = profile;
             _radius = Mathf.Max(0.05f, radius);
+            _solidVolume = EarthMatterMassRuntime.SphereSolidVolume(_radius);
+            _reservedAccretionVolume = 0f;
+            _massPolicy = executor != null ? executor.MassPolicy : sourcePool != null ? sourcePool.MassPolicy : EarthMatterMassProfile.ArenaStone;
             _surfaceContactState = default;
             _prePhysicsVelocity = Vector3.zero;
             _nextAccretionAt = Time.fixedTime + 0.65f;
@@ -188,7 +209,7 @@ namespace Elemental.Runtime.Physics
                 0.65f);
             if (executor != null && executor.MatterKernel != null)
             {
-                float volume = Mathf.Max(0.000001f, mass / executor.EarthMaterialDensity);
+                float volume = _solidVolume;
                 var source = new EarthSourceProvenance(
                     EarthSourceKind.TerrainEdit,
                     id,
@@ -422,6 +443,19 @@ namespace Elemental.Runtime.Physics
             gameObject.SetActive(false);
         }
 
+        public void BindPartition(MagicExecutor executor, EarthMatterKernelBehaviour kernel,
+            EarthMatterId id, float volume, float mass, float radius)
+        {
+            _executor = executor;
+            _matterIdentity.AcceptRegistration(kernel, id);
+            _matterIdentity.BindBody(targetBody);
+            _solidVolume = volume;
+            float scale = radius / Mathf.Max(.000001f, _radius);
+            transform.localScale *= scale;
+            _radius = radius;
+            targetBody.mass = mass;
+        }
+
         public void MarkConsumedForPool()
         {
             if (_matterIdentity == null || !_matterIdentity.TryRead(out EarthMatterRecord record)) return;
@@ -461,28 +495,30 @@ namespace Elemental.Runtime.Physics
             float currentVolume = (4f / 3f) * Mathf.PI * _radius * _radius * _radius;
             float maximumVolume = (4f / 3f) * Mathf.PI *
                                   _profile.MaximumRadius * _profile.MaximumRadius * _profile.MaximumRadius;
-            volume = Mathf.Min(_profile.AccretionVolumePerPulse, maximumVolume - currentVolume);
+            volume = Mathf.Min(_profile.AccretionVolumePerPulse, maximumVolume - currentVolume - _reservedAccretionVolume);
             if (volume <= 0.0001f) return false;
+            _reservedAccretionVolume += volume;
             _nextAccretionAt = now + _profile.AccretionIntervalSeconds;
             return true;
         }
 
         public void AccreteVolume(float volume)
         {
-            if (volume <= 0f) return;
-            float currentVolume = (4f / 3f) * Mathf.PI * _radius * _radius * _radius;
-            float maximumRadius = _profile != null ? _profile.MaximumRadius : 2.4f;
-            float maximumVolume = (4f / 3f) * Mathf.PI *
-                                  maximumRadius * maximumRadius * maximumRadius;
-            float nextVolume = Mathf.Min(maximumVolume, currentVolume + volume);
+            if (volume <= 0f || !float.IsFinite(volume)) return;
+            float currentVolume = _solidVolume;
+            float nextVolume = currentVolume + volume;
+            float addedMass = EarthMatterMassPolicy.AccretedMass(currentVolume, volume, in _massPolicy);
+            if (_matterIdentity != null && _matterIdentity.IsRegistered &&
+                !_matterIdentity.Kernel.Registry.TryAccreteTerrain(_matterIdentity.MatterId, volume, addedMass)) return;
+            _reservedAccretionVolume = Mathf.Max(0f, _reservedAccretionVolume - volume);
+            _solidVolume = nextVolume;
             _radius = Mathf.Pow((nextVolume * 3f) / (4f * Mathf.PI), 1f / 3f);
             Vector3 proportions = transform.localScale.normalized;
             float average = Mathf.Max(0.0001f,
                 (transform.localScale.x + transform.localScale.y + transform.localScale.z) / 3f);
             proportions = transform.localScale / average;
             transform.localScale = proportions * (_radius * 2f * visualDiameterFactor);
-            float density = _profile != null ? _profile.MaterialDensity : 120f;
-            targetBody.mass = Mathf.Max(0.01f, targetBody.mass + (volume * density));
+            targetBody.mass += addedMass;
         }
 
         private void FixedUpdate()
@@ -630,10 +666,15 @@ namespace Elemental.Runtime.Physics
             if (collision == null || collision.contactCount == 0 || targetBody == null) return;
             ContactPoint contact = collision.GetContact(0);
             Vector3 surfaceVelocity = SurfaceVelocity(collision.rigidbody, contact.point);
-            Vector3 projectileVelocity = _prePhysicsVelocity;
-            if ((projectileVelocity - surfaceVelocity).sqrMagnitude < 0.000001f &&
-                collision.relativeVelocity.sqrMagnitude > 0.000001f)
-                projectileVelocity = surfaceVelocity + collision.relativeVelocity;
+            // Collision keeps the incoming relative velocity. Mixing a cached
+            // projectile velocity with the target's post-solver GetPointVelocity
+            // bends head contacts downward after the capsule has already recoiled.
+            EarthCharacterImpactTarget receiver = EarthStoneCharacterContact.ResolveTarget(collision.collider);
+            Vector3 incomingRelativeVelocity = receiver != null
+                ? receiver.OrientIncomingStoneVelocity(collision.relativeVelocity, _prePhysicsVelocity)
+                : (Vector3)EarthCharacterImpactSolver.OrientIncomingRelativeVelocity(
+                    (float3)collision.relativeVelocity, (float3)_prePhysicsVelocity, float3.zero);
+            Vector3 projectileVelocity = surfaceVelocity + incomingRelativeVelocity;
             EarthProjectileSurfaceContactResult result = ResolveSurfaceContact(
                 collision.collider,
                 projectileVelocity,
@@ -655,10 +696,11 @@ namespace Elemental.Runtime.Physics
                 collision.collider,
                 contact.point,
                 contact.normal,
-                projectileVelocity - surfaceVelocity,
+                incomingRelativeVelocity,
                 impulse,
                 result.ApproachSpeed,
                 false);
+            if (!IsHeld) EarthStoneCharacterContact.Deliver(collision, targetBody, FragmentId);
             _executor?.HandleFragmentImpact(this, collision, impulse);
             if (_executor == null && !IsHeld)
                 _sourcePool?.TryShatter(this, contact.point, contact.normal, impulse, true);

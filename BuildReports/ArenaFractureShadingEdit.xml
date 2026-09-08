@@ -1,31 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<test-run id="2" testcasecount="16" result="Passed" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:16:10Z" duration="21.4399766">
-  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="633" result="Passed" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:16:10Z" duration="21.439977" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+<test-run id="2" testcasecount="16" result="Failed(Child)" total="16" passed="15" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-07 21:00:24Z" end-time="2026-09-07 21:00:56Z" duration="31.3325643">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="1223" result="Failed" site="Child" start-time="2026-09-07 21:00:24Z" end-time="2026-09-07 21:00:56Z" duration="31.332564" total="16" passed="15" failed="1" inconclusive="0" skipped="0" asserts="0">
     <properties>
       <property name="platform" value="EditMode" />
     </properties>
-    <test-suite type="Assembly" id="1767" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="633" result="Passed" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:16:10Z" duration="21.433171" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="2534" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="1177" result="Failed" site="Child" start-time="2026-09-07 21:00:24Z" end-time="2026-09-07 21:00:56Z" duration="31.304374" total="16" passed="15" failed="1" inconclusive="0" skipped="0" asserts="0">
       <properties>
-        <property name="_PID" value="26692" />
+        <property name="_PID" value="37060" />
         <property name="_APPDOMAIN" value="Unity Child Domain" />
         <property name="platform" value="EditMode" />
         <property name="EditorOnly" value="True" />
       </properties>
-      <test-suite type="TestSuite" id="1768" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="633" result="Passed" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:16:10Z" duration="21.432897" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="2535" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="1171" result="Failed" site="Child" start-time="2026-09-07 21:00:24Z" end-time="2026-09-07 21:00:56Z" duration="31.303747" total="16" passed="15" failed="1" inconclusive="0" skipped="0" asserts="0">
         <properties />
-        <test-suite type="TestSuite" id="1769" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="633" result="Passed" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:16:10Z" duration="21.432831" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="2536" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="1171" result="Failed" site="Child" start-time="2026-09-07 21:00:24Z" end-time="2026-09-07 21:00:56Z" duration="31.303553" total="16" passed="15" failed="1" inconclusive="0" skipped="0" asserts="0">
           <properties />
-          <test-suite type="TestSuite" id="1770" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="633" result="Passed" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:16:10Z" duration="21.432707" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="2537" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="1171" result="Failed" site="Child" start-time="2026-09-07 21:00:24Z" end-time="2026-09-07 21:00:56Z" duration="31.303311" total="16" passed="15" failed="1" inconclusive="0" skipped="0" asserts="0">
             <properties />
-            <test-suite type="TestFixture" id="1012" name="BrokenCrownArenaImporterTests" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:16:09Z" duration="21.140591" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1105" name="BrokenCrownArenaImporterTests" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" testcasecount="9" result="Failed" site="Child" start-time="2026-09-07 21:00:24Z" end-time="2026-09-07 21:00:55Z" duration="31.051835" total="9" passed="8" failed="1" inconclusive="0" skipped="0" asserts="0">
               <properties />
-              <test-case id="1017" name="FloorSeatingOnlyOverridesAPropWhenTheFloorWasActuallyHit" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.FloorSeatingOnlyOverridesAPropWhenTheFloorWasActuallyHit" methodname="FloorSeatingOnlyOverridesAPropWhenTheFloorWasActuallyHit" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="442892531" result="Passed" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:15:48Z" duration="0.013592" asserts="0">
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1110" name="FloorSeatingOnlyOverridesAPropWhenTheFloorWasActuallyHit" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.FloorSeatingOnlyOverridesAPropWhenTheFloorWasActuallyHit" methodname="FloorSeatingOnlyOverridesAPropWhenTheFloorWasActuallyHit" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="1081736284" result="Passed" start-time="2026-09-07 21:00:24Z" end-time="2026-09-07 21:00:24Z" duration="0.029110" asserts="0">
                 <properties>
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />
                 </properties>
               </test-case>
-              <test-case id="1014" name="ModelImporterKeepsMeshesReadableWithoutAnimationOrMaterials" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.ModelImporterKeepsMeshesReadableWithoutAnimationOrMaterials" methodname="ModelImporterKeepsMeshesReadableWithoutAnimationOrMaterials" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="1531576342" result="Passed" start-time="2026-09-03 18:15:48Z" end-time="2026-09-03 18:15:49Z" duration="0.323136" asserts="0">
+              <test-case id="1107" name="ModelImporterKeepsMeshesReadableWithoutAnimationOrMaterials" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.ModelImporterKeepsMeshesReadableWithoutAnimationOrMaterials" methodname="ModelImporterKeepsMeshesReadableWithoutAnimationOrMaterials" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="40059277" result="Passed" start-time="2026-09-07 21:00:24Z" end-time="2026-09-07 21:00:26Z" duration="1.236559" asserts="0">
                 <properties>
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />
@@ -230,21 +248,30 @@ Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P010' does
 Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P011' doesn't have any.
 Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P012' doesn't have any.
 
+Importer(FBXImporter) generated inconsistent result for asset(guid:f69e60c4c194a2648a804484ba1ab563) "Assets/Elemental/Content/Arena/BrokenCrown/BrokenCrownArena.fbx"
 ]]></output>
               </test-case>
-              <test-case id="1021" name="NativeArenaLookdevUsesAuthoredNormalsHighShadowFilteringAndCleanContactAo" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.NativeArenaLookdevUsesAuthoredNormalsHighShadowFilteringAndCleanContactAo" methodname="NativeArenaLookdevUsesAuthoredNormalsHighShadowFilteringAndCleanContactAo" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="37659604" result="Passed" start-time="2026-09-03 18:15:49Z" end-time="2026-09-03 18:15:49Z" duration="0.012145" asserts="0">
+              <test-case id="1114" name="NativeArenaLookdevUsesAuthoredNormalsHighShadowFilteringAndCleanContactAo" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.NativeArenaLookdevUsesAuthoredNormalsHighShadowFilteringAndCleanContactAo" methodname="NativeArenaLookdevUsesAuthoredNormalsHighShadowFilteringAndCleanContactAo" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="1119369965" result="Failed" start-time="2026-09-07 21:00:26Z" end-time="2026-09-07 21:00:26Z" duration="0.014490" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Fresh fracture interiors must sit below the weathered exterior in value while staying in the same palette.
+  Expected: less than 0.441239536f
+  But was:  0.441239536f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.NativeArenaLookdevUsesAuthoredNormalsHighShadowFilteringAndCleanContactAo () [0x0014e] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\EditMode\BrokenCrownArenaImporterTests.cs:349
+]]></stack-trace>
+                </failure>
+              </test-case>
+              <test-case id="1109" name="OrdinaryCombatUsesBoundedLocalReleaseWhileMeteorOwnsTheFloorSwap" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.OrdinaryCombatUsesBoundedLocalReleaseWhileMeteorOwnsTheFloorSwap" methodname="OrdinaryCombatUsesBoundedLocalReleaseWhileMeteorOwnsTheFloorSwap" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="2070704718" result="Passed" start-time="2026-09-07 21:00:26Z" end-time="2026-09-07 21:00:26Z" duration="0.001089" asserts="0">
                 <properties>
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />
                 </properties>
               </test-case>
-              <test-case id="1016" name="OrdinaryCombatUsesBoundedLocalReleaseWhileMeteorOwnsTheFloorSwap" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.OrdinaryCombatUsesBoundedLocalReleaseWhileMeteorOwnsTheFloorSwap" methodname="OrdinaryCombatUsesBoundedLocalReleaseWhileMeteorOwnsTheFloorSwap" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="602456208" result="Passed" start-time="2026-09-03 18:15:49Z" end-time="2026-09-03 18:15:49Z" duration="0.000478" asserts="0">
-                <properties>
-                  <property name="retryIteration" value="0" />
-                  <property name="repeatIteration" value="0" />
-                </properties>
-              </test-case>
-              <test-case id="1013" name="RebuildProducesValidatedCauseDrivenCatalog" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.RebuildProducesValidatedCauseDrivenCatalog" methodname="RebuildProducesValidatedCauseDrivenCatalog" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="280610471" result="Passed" start-time="2026-09-03 18:15:49Z" end-time="2026-09-03 18:16:09Z" duration="20.480361" asserts="0">
+              <test-case id="1106" name="RebuildProducesValidatedCauseDrivenCatalog" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.RebuildProducesValidatedCauseDrivenCatalog" methodname="RebuildProducesValidatedCauseDrivenCatalog" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="774038764" result="Passed" start-time="2026-09-07 21:00:26Z" end-time="2026-09-07 21:00:55Z" duration="29.367756" asserts="0">
                 <properties>
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />
@@ -449,93 +476,84 @@ Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P010' does
 Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P011' doesn't have any.
 Can't import tangents and binormals, because mesh 'FR_arena_wall_west_P012' doesn't have any.
 
-Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
-Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
-Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
-Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
-Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
-Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
-Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
-Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
+Importer(FBXImporter) generated inconsistent result for asset(guid:f69e60c4c194a2648a804484ba1ab563) "Assets/Elemental/Content/Arena/BrokenCrown/BrokenCrownArena.fbx"
+There are inconsistent line endings in the 'Assets/Elemental/Content/Shaders/ValleyAtmosphereV2.hlsl' shader include file. Some are Mac OS X (UNIX) and some are Windows.
+This might lead to incorrect line numbers in stacktraces and compiler errors. Many text editors can fix this using Convert Line Endings menu commands.
+There are inconsistent line endings in the 'Assets/Elemental/Content/Shaders/AtmosphereFullscreen.shader' script. Some are Mac OS X (UNIX) and some are Windows.
+This might lead to incorrect line numbers in stacktraces and compiler errors. Many text editors can fix this using Convert Line Endings menu commands.
+There are inconsistent line endings in the 'Assets/Elemental/Presentation/Fire/Shaders/ColumnDecorFlame.shader' script. Some are Mac OS X (UNIX) and some are Windows.
+This might lead to incorrect line numbers in stacktraces and compiler errors. Many text editors can fix this using Convert Line Endings menu commands.
 [Elemental] Broken Crown import ready: 8 structures, 90 fracture pieces, catalog Assets/Elemental/Content/Arena/BrokenCrown/Generated/BrokenCrownArenaCatalog.asset.
+Ran out of Graphics Ring Buffer space. Consider using the -gfx-ring-buffer-size command line option to increase the size.
 ]]></output>
               </test-case>
-              <test-case id="1015" name="SavedArenaPreservesEveryAuthoredChildTransform" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.SavedArenaPreservesEveryAuthoredChildTransform" methodname="SavedArenaPreservesEveryAuthoredChildTransform" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="1515412520" result="Passed" start-time="2026-09-03 18:16:09Z" end-time="2026-09-03 18:16:09Z" duration="0.292502" asserts="0">
-                <properties>
-                  <property name="retryIteration" value="0" />
-                  <property name="repeatIteration" value="0" />
-                </properties>
-                <output><![CDATA[Script 'EarthArmorPiece' on GameObject Earth Armor Piece 54 has possibly missing Required Components!
-Script 'EarthArmorPiece' on GameObject Earth Armor Piece 02 has possibly missing Required Components!
-Script 'EarthArmorPiece' on GameObject Earth Armor Piece 41 has possibly missing Required Components!
-Script 'EarthArmorPiece' on GameObject Earth Armor Piece 04 has possibly missing Required Components!
-Script 'EarthArmorPiece' on GameObject Earth Armor Piece 40 has possibly missing Required Components!
-Script 'EarthArmorPiece' on GameObject Earth Armor Piece 96 has possibly missing Required Components!
-Script 'EarthArmorPiece' on GameObject Earth Armor Piece 20 has possibly missing Required Components!
-Script 'EarthArmorPiece' on GameObject Earth Armor Piece 92 has possibly missing Required Components!
-]]></output>
-              </test-case>
-              <test-case id="1020" name="SupportPatchCapsSamplesAndRejectsMoreThanOneCentimetreBurial" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.SupportPatchCapsSamplesAndRejectsMoreThanOneCentimetreBurial" methodname="SupportPatchCapsSamplesAndRejectsMoreThanOneCentimetreBurial" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="130838705" result="Passed" start-time="2026-09-03 18:16:09Z" end-time="2026-09-03 18:16:09Z" duration="0.001739" asserts="0">
+              <test-case id="1108" name="SavedArenaPreservesEveryAuthoredChildTransform" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.SavedArenaPreservesEveryAuthoredChildTransform" methodname="SavedArenaPreservesEveryAuthoredChildTransform" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="167905279" result="Passed" start-time="2026-09-07 21:00:55Z" end-time="2026-09-07 21:00:55Z" duration="0.379404" asserts="0">
                 <properties>
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />
                 </properties>
               </test-case>
-              <test-case id="1019" name="SupportPatchRequiresThreeUniqueWitnessesAroundCenterOfMass" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.SupportPatchRequiresThreeUniqueWitnessesAroundCenterOfMass" methodname="SupportPatchRequiresThreeUniqueWitnessesAroundCenterOfMass" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="984131753" result="Passed" start-time="2026-09-03 18:16:09Z" end-time="2026-09-03 18:16:09Z" duration="0.001046" asserts="0">
+              <test-case id="1113" name="SupportPatchCapsSamplesAndRejectsMoreThanOneCentimetreBurial" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.SupportPatchCapsSamplesAndRejectsMoreThanOneCentimetreBurial" methodname="SupportPatchCapsSamplesAndRejectsMoreThanOneCentimetreBurial" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="1169891258" result="Passed" start-time="2026-09-07 21:00:55Z" end-time="2026-09-07 21:00:55Z" duration="0.002095" asserts="0">
                 <properties>
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />
                 </properties>
               </test-case>
-              <test-case id="1018" name="VisibleSupportPatchUsesMedianWitnessWithoutExceedingControlledInset" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.VisibleSupportPatchUsesMedianWitnessWithoutExceedingControlledInset" methodname="VisibleSupportPatchUsesMedianWitnessWithoutExceedingControlledInset" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="403856375" result="Passed" start-time="2026-09-03 18:16:09Z" end-time="2026-09-03 18:16:09Z" duration="0.000495" asserts="0">
+              <test-case id="1112" name="SupportPatchRequiresThreeUniqueWitnessesAroundCenterOfMass" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.SupportPatchRequiresThreeUniqueWitnessesAroundCenterOfMass" methodname="SupportPatchRequiresThreeUniqueWitnessesAroundCenterOfMass" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="1244121854" result="Passed" start-time="2026-09-07 21:00:55Z" end-time="2026-09-07 21:00:55Z" duration="0.001157" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1111" name="VisibleSupportPatchUsesMedianWitnessWithoutExceedingControlledInset" fullname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests.VisibleSupportPatchUsesMedianWitnessWithoutExceedingControlledInset" methodname="VisibleSupportPatchUsesMedianWitnessWithoutExceedingControlledInset" classname="Elemental.Tests.EditMode.BrokenCrownArenaImporterTests" runstate="Runnable" seed="669227064" result="Passed" start-time="2026-09-07 21:00:55Z" end-time="2026-09-07 21:00:55Z" duration="0.000296" asserts="0">
                 <properties>
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />
                 </properties>
               </test-case>
             </test-suite>
-            <test-suite type="TestFixture" id="1131" name="EarthArenaFractureShadingTests" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-03 18:16:09Z" end-time="2026-09-03 18:16:10Z" duration="0.286028" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <test-suite type="TestFixture" id="1276" name="EarthArenaFractureShadingTests" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-07 21:00:55Z" end-time="2026-09-07 21:00:56Z" duration="0.239395" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
               <properties />
-              <test-case id="1137" name="ArenaExteriorAndInteriorShareStableReceiverContract" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.ArenaExteriorAndInteriorShareStableReceiverContract" methodname="ArenaExteriorAndInteriorShareStableReceiverContract" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="1608709507" result="Passed" start-time="2026-09-03 18:16:09Z" end-time="2026-09-03 18:16:09Z" duration="0.000830" asserts="0">
+              <test-case id="1282" name="ArenaExteriorAndInteriorShareStableReceiverContract" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.ArenaExteriorAndInteriorShareStableReceiverContract" methodname="ArenaExteriorAndInteriorShareStableReceiverContract" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="342079086" result="Passed" start-time="2026-09-07 21:00:55Z" end-time="2026-09-07 21:00:55Z" duration="0.002499" asserts="0">
                 <properties>
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />
                 </properties>
               </test-case>
-              <test-case id="1136" name="BrokenCrownPiecesKeepRestFramesFiniteNormalsAndOptionalValidTangents" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.BrokenCrownPiecesKeepRestFramesFiniteNormalsAndOptionalValidTangents" methodname="BrokenCrownPiecesKeepRestFramesFiniteNormalsAndOptionalValidTangents" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="565048951" result="Passed" start-time="2026-09-03 18:16:09Z" end-time="2026-09-03 18:16:10Z" duration="0.272592" asserts="0">
+              <test-case id="1281" name="BrokenCrownPiecesKeepRestFramesFiniteNormalsAndOptionalValidTangents" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.BrokenCrownPiecesKeepRestFramesFiniteNormalsAndOptionalValidTangents" methodname="BrokenCrownPiecesKeepRestFramesFiniteNormalsAndOptionalValidTangents" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="783396042" result="Passed" start-time="2026-09-07 21:00:55Z" end-time="2026-09-07 21:00:56Z" duration="0.197623" asserts="0">
                 <properties>
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />
                 </properties>
               </test-case>
-              <test-case id="1133" name="InvalidOrSingularMappingFrameIsRejected" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.InvalidOrSingularMappingFrameIsRejected" methodname="InvalidOrSingularMappingFrameIsRejected" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="531777425" result="Passed" start-time="2026-09-03 18:16:10Z" end-time="2026-09-03 18:16:10Z" duration="0.000625" asserts="0">
+              <test-case id="1278" name="InvalidOrSingularMappingFrameIsRejected" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.InvalidOrSingularMappingFrameIsRejected" methodname="InvalidOrSingularMappingFrameIsRejected" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="1725419998" result="Passed" start-time="2026-09-07 21:00:56Z" end-time="2026-09-07 21:00:56Z" duration="0.001346" asserts="0">
                 <properties>
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />
                 </properties>
               </test-case>
-              <test-case id="1134" name="RendererAdapterMergesMappingWithoutClearingExistingOverrides" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.RendererAdapterMergesMappingWithoutClearingExistingOverrides" methodname="RendererAdapterMergesMappingWithoutClearingExistingOverrides" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="1060611752" result="Passed" start-time="2026-09-03 18:16:10Z" end-time="2026-09-03 18:16:10Z" duration="0.002295" asserts="0">
+              <test-case id="1279" name="RendererAdapterMergesMappingWithoutClearingExistingOverrides" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.RendererAdapterMergesMappingWithoutClearingExistingOverrides" methodname="RendererAdapterMergesMappingWithoutClearingExistingOverrides" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="1325561633" result="Passed" start-time="2026-09-07 21:00:56Z" end-time="2026-09-07 21:00:56Z" duration="0.008483" asserts="0">
                 <properties>
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />
                 </properties>
               </test-case>
-              <test-case id="1132" name="RestPieceFrameContinuesTheIntactMappingAfterCentroidRecentering" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.RestPieceFrameContinuesTheIntactMappingAfterCentroidRecentering" methodname="RestPieceFrameContinuesTheIntactMappingAfterCentroidRecentering" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="1103443601" result="Passed" start-time="2026-09-03 18:16:10Z" end-time="2026-09-03 18:16:10Z" duration="0.004706" asserts="0">
+              <test-case id="1277" name="RestPieceFrameContinuesTheIntactMappingAfterCentroidRecentering" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.RestPieceFrameContinuesTheIntactMappingAfterCentroidRecentering" methodname="RestPieceFrameContinuesTheIntactMappingAfterCentroidRecentering" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="409538321" result="Passed" start-time="2026-09-07 21:00:56Z" end-time="2026-09-07 21:00:56Z" duration="0.006946" asserts="0">
                 <properties>
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />
                 </properties>
               </test-case>
-              <test-case id="1135" name="RuntimeCapturesRestFramesAndProxyCyclesPreservePropertyBlocks" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.RuntimeCapturesRestFramesAndProxyCyclesPreservePropertyBlocks" methodname="RuntimeCapturesRestFramesAndProxyCyclesPreservePropertyBlocks" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="1698880730" result="Passed" start-time="2026-09-03 18:16:10Z" end-time="2026-09-03 18:16:10Z" duration="0.003583" asserts="0">
+              <test-case id="1280" name="RuntimeCapturesRestFramesAndProxyCyclesPreservePropertyBlocks" fullname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests.RuntimeCapturesRestFramesAndProxyCyclesPreservePropertyBlocks" methodname="RuntimeCapturesRestFramesAndProxyCyclesPreservePropertyBlocks" classname="Elemental.Tests.EditMode.EarthArenaFractureShadingTests" runstate="Runnable" seed="1562562394" result="Passed" start-time="2026-09-07 21:00:56Z" end-time="2026-09-07 21:00:56Z" duration="0.020553" asserts="0">
                 <properties>
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />
                 </properties>
               </test-case>
             </test-suite>
-            <test-suite type="TestFixture" id="1347" name="EarthHardSurfaceMeshUtilityTests" fullname="Elemental.Tests.EditMode.EarthHardSurfaceMeshUtilityTests" classname="Elemental.Tests.EditMode.EarthHardSurfaceMeshUtilityTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-03 18:16:10Z" end-time="2026-09-03 18:16:10Z" duration="0.004218" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <test-suite type="TestFixture" id="1662" name="EarthHardSurfaceMeshUtilityTests" fullname="Elemental.Tests.EditMode.EarthHardSurfaceMeshUtilityTests" classname="Elemental.Tests.EditMode.EarthHardSurfaceMeshUtilityTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-07 21:00:56Z" end-time="2026-09-07 21:00:56Z" duration="0.008721" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
               <properties />
-              <test-case id="1348" name="FractureCopyPreservesAuthoredExteriorAndHardensOnlyFreshInterior" fullname="Elemental.Tests.EditMode.EarthHardSurfaceMeshUtilityTests.FractureCopyPreservesAuthoredExteriorAndHardensOnlyFreshInterior" methodname="FractureCopyPreservesAuthoredExteriorAndHardensOnlyFreshInterior" classname="Elemental.Tests.EditMode.EarthHardSurfaceMeshUtilityTests" runstate="Runnable" seed="2090154785" result="Passed" start-time="2026-09-03 18:16:10Z" end-time="2026-09-03 18:16:10Z" duration="0.003774" asserts="0">
+              <test-case id="1663" name="FractureCopyPreservesAuthoredExteriorAndHardensOnlyFreshInterior" fullname="Elemental.Tests.EditMode.EarthHardSurfaceMeshUtilityTests.FractureCopyPreservesAuthoredExteriorAndHardensOnlyFreshInterior" methodname="FractureCopyPreservesAuthoredExteriorAndHardensOnlyFreshInterior" classname="Elemental.Tests.EditMode.EarthHardSurfaceMeshUtilityTests" runstate="Runnable" seed="1194002782" result="Passed" start-time="2026-09-07 21:00:56Z" end-time="2026-09-07 21:00:56Z" duration="0.008063" asserts="0">
                 <properties>
                   <property name="retryIteration" value="0" />
                   <property name="repeatIteration" value="0" />

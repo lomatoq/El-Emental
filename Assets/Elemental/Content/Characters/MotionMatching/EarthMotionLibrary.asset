@@ -15,7 +15,7 @@ MonoBehaviour:
   sourceRig: {fileID: 919132149155446097, guid: 768c61288998aaf42ac2dcbe0e55b8db, type: 3}
   databaseRate: 30
   clips:
-  - stableId: idle.guard
+  - stableId: user.locomotion.0060e550909a38045aa6a4ecedaf535b.-203655887218126122
     clip: {fileID: -203655887218126122, guid: 0060e550909a38045aa6a4ecedaf535b, type: 3}
     role: 0
     semantic: 1
@@ -27,11 +27,23 @@ MonoBehaviour:
     cancelStart: 0.15
     recoveryStart: 0.65
     loop: 1
-  - stableId: walk.forward.mixamo
+  - stableId: user.locomotion.c176941c479712644b92427776f667b4.-203655887218126122
+    clip: {fileID: -203655887218126122, guid: c176941c479712644b92427776f667b4, type: 3}
+    role: 2
+    semantic: 4
+    nominalSpeed: 1.3873131
+    nominalYaw: 0
+    nominalDirection: 180
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 1
+  - stableId: user.locomotion.c8a08dc7258efb94a96bf23b6e661e2c.-203655887218126122
     clip: {fileID: -203655887218126122, guid: c8a08dc7258efb94a96bf23b6e661e2c, type: 3}
     role: 2
     semantic: 3
-    nominalSpeed: 2.4
+    nominalSpeed: 1.7423196
     nominalYaw: 0
     nominalDirection: 0
     contactStart: 0
@@ -39,13 +51,73 @@ MonoBehaviour:
     cancelStart: 0.15
     recoveryStart: 0.65
     loop: 1
-  - stableId: walk.backward.mixamo
-    clip: {fileID: -203655887218126122, guid: c176941c479712644b92427776f667b4, type: 3}
+  - stableId: user.locomotion.df21b61b2cf01fb4d90477dfc3dc7182.-203655887218126122
+    clip: {fileID: -203655887218126122, guid: df21b61b2cf01fb4d90477dfc3dc7182, type: 3}
     role: 2
-    semantic: 4
-    nominalSpeed: 1.8
+    semantic: 5
+    nominalSpeed: 4.482218
+    nominalYaw: 0
+    nominalDirection: 0
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 1
+  - stableId: user.locomotion.6a3ff49f14639af4eb07b32cbf8b9dc4.-203655887218126122
+    clip: {fileID: -203655887218126122, guid: 6a3ff49f14639af4eb07b32cbf8b9dc4, type: 3}
+    role: 2
+    semantic: 6
+    nominalSpeed: 0.75237197
+    nominalYaw: 0
+    nominalDirection: -90
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 1
+  - stableId: user.locomotion.05977e00586c2934e8d7d730d2360d31.-203655887218126122
+    clip: {fileID: -203655887218126122, guid: 05977e00586c2934e8d7d730d2360d31, type: 3}
+    role: 2
+    semantic: 7
+    nominalSpeed: 0.6736271
+    nominalYaw: 0
+    nominalDirection: 90
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 1
+  - stableId: user.locomotion.4bb129aee2a524f4195deb39be9d37b8.-203655887218126122
+    clip: {fileID: -203655887218126122, guid: 4bb129aee2a524f4195deb39be9d37b8, type: 3}
+    role: 2
+    semantic: 29
+    nominalSpeed: 2.421416
     nominalYaw: 0
     nominalDirection: 180
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 1
+  - stableId: user.locomotion.8d69800c20d235e4aa6784bd0b3d0fdf.-203655887218126122
+    clip: {fileID: -203655887218126122, guid: 8d69800c20d235e4aa6784bd0b3d0fdf, type: 3}
+    role: 2
+    semantic: 6
+    nominalSpeed: 3.282266
+    nominalYaw: 0
+    nominalDirection: -90
+    contactStart: 0
+    contactEnd: 1
+    cancelStart: 0.15
+    recoveryStart: 0.65
+    loop: 1
+  - stableId: user.locomotion.42ac8b14f9560894eaacccfc73cee6c7.-203655887218126122
+    clip: {fileID: -203655887218126122, guid: 42ac8b14f9560894eaacccfc73cee6c7, type: 3}
+    role: 2
+    semantic: 7
+    nominalSpeed: 3.5053213
+    nominalYaw: 0
+    nominalDirection: 90
     contactStart: 0
     contactEnd: 1
     cancelStart: 0.15
@@ -63,54 +135,6 @@ MonoBehaviour:
     cancelStart: 0.15
     recoveryStart: 0.65
     loop: 0
-  - stableId: run.forward.a
-    clip: {fileID: 3543698089625107784, guid: f3ac93fd0c8293d4e8705a58f24c8b09, type: 3}
-    role: 2
-    semantic: 5
-    nominalSpeed: 5
-    nominalYaw: 0
-    nominalDirection: 0
-    contactStart: 0
-    contactEnd: 1
-    cancelStart: 0.15
-    recoveryStart: 0.65
-    loop: 1
-  - stableId: run.forward.b
-    clip: {fileID: -1640158340307531623, guid: f3ac93fd0c8293d4e8705a58f24c8b09, type: 3}
-    role: 2
-    semantic: 5
-    nominalSpeed: 4.6
-    nominalYaw: 0
-    nominalDirection: 0
-    contactStart: 0
-    contactEnd: 1
-    cancelStart: 0.15
-    recoveryStart: 0.65
-    loop: 1
-  - stableId: run.left
-    clip: {fileID: -1640272175068026219, guid: 39622de824361bc419432198cf839a5f, type: 3}
-    role: 2
-    semantic: 6
-    nominalSpeed: 4
-    nominalYaw: 0
-    nominalDirection: -90
-    contactStart: 0
-    contactEnd: 1
-    cancelStart: 0.15
-    recoveryStart: 0.65
-    loop: 1
-  - stableId: run.right
-    clip: {fileID: -6877218540166537120, guid: 39622de824361bc419432198cf839a5f, type: 3}
-    role: 2
-    semantic: 7
-    nominalSpeed: 4
-    nominalYaw: 0
-    nominalDirection: 90
-    contactStart: 0
-    contactEnd: 1
-    cancelStart: 0.15
-    recoveryStart: 0.65
-    loop: 1
   - stableId: jump.start
     clip: {fileID: -6402709644054655732, guid: f3ac93fd0c8293d4e8705a58f24c8b09, type: 3}
     role: 5
@@ -363,18 +387,6 @@ MonoBehaviour:
     cancelStart: 0.15
     recoveryStart: 0.65
     loop: 0
-  - stableId: run.backward.mixamo
-    clip: {fileID: -203655887218126122, guid: 4bb129aee2a524f4195deb39be9d37b8, type: 3}
-    role: 2
-    semantic: 29
-    nominalSpeed: 6
-    nominalYaw: 0
-    nominalDirection: 180
-    contactStart: 0
-    contactEnd: 1
-    cancelStart: 0.15
-    recoveryStart: 0.65
-    loop: 1
   transitionOverrides:
   - from: 5
     to: 1

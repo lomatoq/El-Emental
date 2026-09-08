@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="5" result="Passed" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-08 09:36:15Z" end-time="2026-09-08 09:36:16Z" duration="0.8130053">
+  <test-suite type="TestSuite" id="1405" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="297" result="Passed" start-time="2026-09-08 09:36:15Z" end-time="2026-09-08 09:36:16Z" duration="0.813005" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1398" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="291" result="Passed" start-time="2026-09-08 09:36:15Z" end-time="2026-09-08 09:36:16Z" duration="0.784344" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="11736" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1399" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="291" result="Passed" start-time="2026-09-08 09:36:15Z" end-time="2026-09-08 09:36:16Z" duration="0.781483" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1400" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="291" result="Passed" start-time="2026-09-08 09:36:15Z" end-time="2026-09-08 09:36:16Z" duration="0.779553" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1401" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="291" result="Passed" start-time="2026-09-08 09:36:15Z" end-time="2026-09-08 09:36:16Z" duration="0.777299" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1158" name="EarthDustCompositingRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthDustCompositingRuntimeTests" classname="Elemental.Tests.PlayMode.EarthDustCompositingRuntimeTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-08 09:36:15Z" end-time="2026-09-08 09:36:16Z" duration="0.651132" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1159" name="ContactBurstMixesOriginalDustAndAtlasWithinOneBudget" fullname="Elemental.Tests.PlayMode.EarthDustCompositingRuntimeTests.ContactBurstMixesOriginalDustAndAtlasWithinOneBudget" methodname="ContactBurstMixesOriginalDustAndAtlasWithinOneBudget" classname="Elemental.Tests.PlayMode.EarthDustCompositingRuntimeTests" runstate="Runnable" seed="104593189" result="Passed" start-time="2026-09-08 09:36:15Z" end-time="2026-09-08 09:36:15Z" duration="0.216062" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1160" name="ProductionDustOverlaysCosmeticChipsAndOpaqueWallsOccludeBoth" fullname="Elemental.Tests.PlayMode.EarthDustCompositingRuntimeTests.ProductionDustOverlaysCosmeticChipsAndOpaqueWallsOccludeBoth" methodname="ProductionDustOverlaysCosmeticChipsAndOpaqueWallsOccludeBoth" classname="Elemental.Tests.PlayMode.EarthDustCompositingRuntimeTests" runstate="Runnable" seed="907584723" result="Passed" start-time="2026-09-08 09:36:15Z" end-time="2026-09-08 09:36:16Z" duration="0.418514" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1248" name="EarthStoneImpactDustRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthStoneImpactDustRuntimeTests" classname="Elemental.Tests.PlayMode.EarthStoneImpactDustRuntimeTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-08 09:36:16Z" end-time="2026-09-08 09:36:16Z" duration="0.122414" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1249" name="ActualFloorMakesCosmeticChipBounceThenStopAtSixtyHz" fullname="Elemental.Tests.PlayMode.EarthStoneImpactDustRuntimeTests.ActualFloorMakesCosmeticChipBounceThenStopAtSixtyHz" methodname="ActualFloorMakesCosmeticChipBounceThenStopAtSixtyHz" classname="Elemental.Tests.PlayMode.EarthStoneImpactDustRuntimeTests" runstate="Runnable" seed="2049016633" result="Passed" start-time="2026-09-08 09:36:16Z" end-time="2026-09-08 09:36:16Z" duration="0.066602" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1251" name="ProductionPresenterUsesFourMeshesAndPreservesHeavyDropResponse" fullname="Elemental.Tests.PlayMode.EarthStoneImpactDustRuntimeTests.ProductionPresenterUsesFourMeshesAndPreservesHeavyDropResponse" methodname="ProductionPresenterUsesFourMeshesAndPreservesHeavyDropResponse" classname="Elemental.Tests.PlayMode.EarthStoneImpactDustRuntimeTests" runstate="Runnable" seed="660711894" result="Passed" start-time="2026-09-08 09:36:16Z" end-time="2026-09-08 09:36:16Z" duration="0.017087" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1250" name="SlowFrameSweepDoesNotTunnelThroughThinFloor" fullname="Elemental.Tests.PlayMode.EarthStoneImpactDustRuntimeTests.SlowFrameSweepDoesNotTunnelThroughThinFloor" methodname="SlowFrameSweepDoesNotTunnelThroughThinFloor" classname="Elemental.Tests.PlayMode.EarthStoneImpactDustRuntimeTests" runstate="Runnable" seed="337484698" result="Passed" start-time="2026-09-08 09:36:16Z" end-time="2026-09-08 09:36:16Z" duration="0.033891" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\StoneContactCompositingPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

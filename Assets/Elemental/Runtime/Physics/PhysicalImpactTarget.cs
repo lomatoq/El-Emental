@@ -43,7 +43,9 @@ namespace Elemental.Runtime.Physics
         public EarthPhysicalTargetHandle TargetHandle => new EarthPhysicalTargetHandle(StableEarthId, 1u);
         public float EarthMass => targetBody != null ? targetBody.mass : 0f;
         public EarthPhysicalTargetKind TargetKind => EarthPhysicalTargetKind.Rock;
-        public bool IsEarthTargetValid => targetBody != null && !targetBody.isKinematic && gameObject.activeInHierarchy;
+        public bool HasCharacterImpactReceiver => characterImpactTarget != null;
+        public bool IsEarthTargetValid => targetBody != null && !targetBody.isKinematic &&
+            gameObject.activeInHierarchy && !EarthBodyTargetFilter.IsCharacterBody(targetBody);
 
         public void Configure(Rigidbody body, float configuredImpulseScale = 1f)
         {

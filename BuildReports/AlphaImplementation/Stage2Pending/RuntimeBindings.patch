@@ -1,0 +1,533 @@
+diff --git a/Assets/Elemental/Runtime/Physics/EarthSurfController.cs b/Assets/Elemental/Runtime/Physics/EarthSurfController.cs
+index 06cfcfb..0b5dc33 100644
+--- a/Assets/Elemental/Runtime/Physics/EarthSurfController.cs
++++ b/Assets/Elemental/Runtime/Physics/EarthSurfController.cs
+@@ -14,7 +14,7 @@
+ namespace Elemental.Runtime.Physics
+ {
+     [DisallowMultipleComponent]
+-    public sealed class EarthSurfController : MonoBehaviour, IMovingSurface
++    public sealed partial class EarthSurfController : MonoBehaviour, IMovingSurface
+     {
+         private readonly RaycastHit[] _impactHits = new RaycastHit[16];
+         private readonly RaycastHit[] _supportHits = new RaycastHit[8];
+diff --git a/Assets/Elemental/Runtime/Physics/EarthPlanetRockScatter.cs b/Assets/Elemental/Runtime/Physics/EarthPlanetRockScatter.cs
+index a6ab88a..66ef3a4 100644
+--- a/Assets/Elemental/Runtime/Physics/EarthPlanetRockScatter.cs
++++ b/Assets/Elemental/Runtime/Physics/EarthPlanetRockScatter.cs
+@@ -41,6 +41,7 @@ public sealed class EarthPlanetRockScatter : MonoBehaviour
+         public int RejectedOverlap { get; private set; }
+         public int RejectedSlots { get; private set; }
+         public bool IsComplete => completed;
++        public Transform GeneratedRoot => generatedRoot;
+ 
+         public void Configure(EarthPlanetRockScatterProfile configuredProfile, VoxelPlanetBehaviour configuredPlanet,
+             EarthSurfaceQueryService configuredSurfaces, GravityWorldBehaviour configuredGravity,
+diff --git a/Assets/Elemental/Input/Actions/PlanetInputReader.cs b/Assets/Elemental/Input/Actions/PlanetInputReader.cs
+index f7a381b..9ee36dd 100644
+--- a/Assets/Elemental/Input/Actions/PlanetInputReader.cs
++++ b/Assets/Elemental/Input/Actions/PlanetInputReader.cs
+@@ -22,6 +22,7 @@ public sealed class PlanetInputReader : MonoBehaviour, IPlanetMotorInputSource
+         private float _jumpStartedAt;
+ 
+         public bool UsesEarthPillarMobility => earthPillarMobility != null;
++        public float TapJumpThresholdSeconds => tapJumpThresholdSeconds;
+ 
+         public void ConfigureActionRouter(EarthActionRouterBehaviour configuredActionRouter) =>
+             actionRouter = configuredActionRouter;
+diff --git a/Assets/Elemental/Runtime/Physics/EarthDualMouseAbilityController.cs b/Assets/Elemental/Runtime/Physics/EarthDualMouseAbilityController.cs
+index 29a6528..a9be16a 100644
+--- a/Assets/Elemental/Runtime/Physics/EarthDualMouseAbilityController.cs
++++ b/Assets/Elemental/Runtime/Physics/EarthDualMouseAbilityController.cs
+@@ -20,7 +20,11 @@ public sealed class EarthDualMouseAbilityController : MonoBehaviour
+ 
+         [SerializeField] private MagicExecutor executor;
+         [SerializeField] private EarthMvpDuelController duelController;
+-        public void BindDuel(EarthMvpDuelController duel) => duelController = duel;
++        private EarthDuelFighterId _boundDuelFighter;
++        public EarthMvpDuelController BoundDuel => duelController;
++        public EarthDuelFighterId BoundDuelFighter => _boundDuelFighter;
++        public void BindDuel(EarthMvpDuelController duel, EarthDuelFighterId fighter = EarthDuelFighterId.Player)
++        { duelController = duel; _boundDuelFighter = fighter; }
+         [SerializeField] private EarthPillarWavePool wavePool;
+         [SerializeField] private PlanetMotor motor;
+         [SerializeField] private UnityEngine.Camera castCamera;
+@@ -96,8 +100,8 @@ private bool BeginStompStone(Vector2 initialAim, bool liveAim)
+             using (StompMarker.Auto())
+             {
+                 Resolve();
+-                if (duelController != null && (!duelController.CombatAllowed ||
+-                    duelController.PlayerPhase != EarthDuelFighterPhase.Active)) return false;
++                if (duelController != null && (!duelController.HasSimulationAuthority || !duelController.CombatAllowed ||
++                    (_boundDuelFighter == EarthDuelFighterId.Bot ? duelController.BotPhase : duelController.PlayerPhase) != EarthDuelFighterPhase.Active)) return false;
+                 if (executor == null || executor.FragmentPool == null || casterBody == null) return false;
+                 if (_shotCombo.Active)
+                 {
+@@ -240,8 +244,8 @@ public bool CastPillarCrest(Vector2 startViewport, Vector2 endViewport, int requ
+ 
+         private void FixedUpdate()
+         {
+-            if (duelController != null && (!duelController.CombatAllowed ||
+-                duelController.PlayerPhase != EarthDuelFighterPhase.Active))
++            if (duelController != null && (!duelController.HasSimulationAuthority || !duelController.CombatAllowed ||
++                (_boundDuelFighter == EarthDuelFighterId.Bot ? duelController.BotPhase : duelController.PlayerPhase) != EarthDuelFighterPhase.Active))
+             {
+                 if (_shotCombo.Active) CancelStompStone();
+                 return;
+diff --git a/Assets/Elemental/Input/Gestures/MagicInputController.cs b/Assets/Elemental/Input/Gestures/MagicInputController.cs
+index 5284378..a05b1b0 100644
+--- a/Assets/Elemental/Input/Gestures/MagicInputController.cs
++++ b/Assets/Elemental/Input/Gestures/MagicInputController.cs
+@@ -19,7 +19,7 @@ namespace Elemental.Input.Gestures
+ {
+     [DisallowMultipleComponent]
+     [RequireComponent(typeof(PlayerInput))]
+-    public sealed class MagicInputController : MonoBehaviour
++    public sealed partial class MagicInputController : MonoBehaviour
+     {
+         private static readonly ProfilerMarker PreviewMarker =
+             new ProfilerMarker("Elemental.Platform.Preview");
+@@ -28,10 +28,14 @@ public sealed class MagicInputController : MonoBehaviour
+         private const int ProjectionHitCapacity = 16;
+ 
+         [SerializeField] private EarthMvpDuelController duelController;
+-        public void BindDuel(EarthMvpDuelController duel) => duelController = duel;
++        private Elemental.Simulation.Combat.EarthDuelFighterId _boundDuelFighter;
++        public EarthMvpDuelController BoundDuel => duelController;
++        public Elemental.Simulation.Combat.EarthDuelFighterId BoundDuelFighter => _boundDuelFighter;
++        public void BindDuel(EarthMvpDuelController duel, Elemental.Simulation.Combat.EarthDuelFighterId fighter = Elemental.Simulation.Combat.EarthDuelFighterId.Player)
++        { duelController = duel; _boundDuelFighter = fighter; }
+         private bool AcceptsDuelCommands => (_motor == null || !_motor.IsImpactStunned) &&
+             (duelController == null ||
+-            (duelController.CombatAllowed && duelController.PlayerPhase == Elemental.Simulation.Combat.EarthDuelFighterPhase.Active));
++            (duelController.HasSimulationAuthority && duelController.CombatAllowed && (_boundDuelFighter == Elemental.Simulation.Combat.EarthDuelFighterId.Bot ? duelController.BotPhase : duelController.PlayerPhase) == Elemental.Simulation.Combat.EarthDuelFighterPhase.Active));
+         private bool _impactStunBlocked;
+ 
+         [SerializeField] private PlayerInput playerInput;
+@@ -160,29 +164,29 @@ public sealed class MagicInputController : MonoBehaviour
+         private EarthGestureTargetContext _gesturePointerDownTarget;
+         private int _rankedIntentCount;
+ 
+-        public AbilityId SelectedAbility => _selectedAbility;
++        public AbilityId SelectedAbility => _onlineReplicaPresentation ? new AbilityId((ushort)_onlineView.Ability) : _selectedAbility;
+         public ElementId SelectedElement => selectedElement;
+-        public BendPhase CurrentBendPhase => _bendSession != null
++        public BendPhase CurrentBendPhase => _onlineReplicaPresentation ? _onlineView.Phase : _bendSession != null
+             ? _bendSession.Phase
+             : Elemental.Simulation.Bending.BendPhase.Idle;
+-        public BendOriginMode BendOriginMode => _bendSession != null
++        public BendOriginMode BendOriginMode => _onlineReplicaPresentation ? _onlineView.Origin : _bendSession != null
+             ? _bendSession.OriginMode
+             : BendOriginMode.Aim;
+-        public float BendAmount01 => _bendSession != null
++        public float BendAmount01 => _onlineReplicaPresentation ? _onlineView.Amount : _bendSession != null
+             ? Mathf.Max(_bendSession.Amount01, _formingAmount01)
+             : _formingAmount01;
+-        public float BendCharge01 => _bendSession != null ? _bendSession.Charge01 : 0f;
++        public float BendCharge01 => _onlineReplicaPresentation ? _onlineView.Charge : _bendSession != null ? _bendSession.Charge01 : 0f;
+         // Forming matter and holding a wall/platform stroke accumulate power
+         // without entering the RMB-only BendPhase.Charging state.
+         public float AccumulationCharge01 => isActiveAndEnabled &&
+             _bendSession != null && _bendSession.IsActive &&
+             (_earthAcquirePending || _wallGesturePending || _pluckPending)
+                 ? PushCharge(Time.unscaledTime - _bendStartedAt) : 0f;
+-        public float BendFocus01 => _bendSession != null ? _bendSession.Focus01 : 0f;
++        public float BendFocus01 => _onlineReplicaPresentation ? _onlineView.Focus : _bendSession != null ? _bendSession.Focus01 : 0f;
+         public BendGestureIntent CurrentGestureIntent => _bendSession != null
+             ? _bendSession.GestureIntent
+             : BendGestureIntent.None;
+-        public Vector3 BendTargetPosition => _previousBendTarget;
++        public Vector3 BendTargetPosition => _onlineReplicaPresentation ? (Vector3)_onlineView.Target : _previousBendTarget;
+         public Vector3 BendTargetVelocity => _smoothedBendTargetVelocity;
+         public bool IsFormingEarth => _earthAcquirePending && _formingSourceValid;
+         public UnityEngine.Camera CastCamera => castCamera;
+@@ -214,17 +218,17 @@ public sealed class MagicInputController : MonoBehaviour
+         public int RankedIntentCount => _rankedIntentCount;
+         public EarthIntentCandidate GetRankedIntentCandidate(int index) =>
+             index >= 0 && index < _rankedIntentCount ? _rankedIntentCandidates[index] : default;
+-        public bool IsQuickStonePrimed => _quickStoneSession != null && _quickStoneSession.IsPrimed;
+-        public float QuickStonePrime01 => _quickStoneSession != null
++        public bool IsQuickStonePrimed => _onlineReplicaPresentation ? _onlineView.QuickPrimed : _quickStoneSession != null && _quickStoneSession.IsPrimed;
++        public float QuickStonePrime01 => _onlineReplicaPresentation ? _onlineView.QuickPrime : _quickStoneSession != null
+             ? _quickStoneSession.Remaining01(Time.unscaledTime)
+             : 0f;
+-        public bool IsArmorActive => _armorController != null && _armorController.IsActive;
+-        public EarthActionOwner ActiveActionOwner => actionRouter != null ? actionRouter.Owner : EarthActionOwner.None;
+-        public float ResonanceCharge01 => actionRouter != null ? actionRouter.ResonanceCharge01 : 0f;
++        public bool IsArmorActive => _onlineReplicaPresentation ? _onlineView.ArmorActive : _armorController != null && _armorController.IsActive;
++        public EarthActionOwner ActiveActionOwner => _onlineReplicaPresentation ? _onlineView.Owner : actionRouter != null ? actionRouter.Owner : EarthActionOwner.None;
++        public float ResonanceCharge01 => _onlineReplicaPresentation ? _onlineView.ResonanceCharge : actionRouter != null ? actionRouter.ResonanceCharge01 : 0f;
+         public int ResonanceStoneCount => actionRouter != null ? actionRouter.ResonanceStoneCount : 0;
+         public bool IsResonanceVolleyActive => actionRouter != null && actionRouter.ResonanceVolleyActive;
+-        public float SurfSpeed => actionRouter != null ? actionRouter.SurfSpeed : 0f;
+-        public float ArmorPhase01 => _armorController != null ? _armorController.Phase01 : 0f;
++        public float SurfSpeed => _onlineReplicaPresentation ? _onlineView.SurfSpeed : actionRouter != null ? actionRouter.SurfSpeed : 0f;
++        public float ArmorPhase01 => _onlineReplicaPresentation ? _onlineView.ArmorPhase : _armorController != null ? _armorController.Phase01 : 0f;
+         public int ArmorOverscrollSteps => _armorController != null ? _armorController.OverscrollSteps : 0;
+         public string BendParameterLabel => IsArmorActive
+             ? "ARMOR PHASE"
+@@ -2549,7 +2553,7 @@ private MagicCommand CreateCommand(
+                     : 0u;
+             return new MagicCommand(
+                 tick,
+-                1u,
++                _boundDuelFighter == Elemental.Simulation.Combat.EarthDuelFighterId.Bot ? 2u : 1u,
+                 selectedElement,
+                 ability,
+                 new float3(origin.x, origin.y, origin.z),
+diff --git a/Assets/Elemental/Input/Actions/EarthActionRouterBehaviour.cs b/Assets/Elemental/Input/Actions/EarthActionRouterBehaviour.cs
+index 8804ce1..ee9c9e3 100644
+--- a/Assets/Elemental/Input/Actions/EarthActionRouterBehaviour.cs
++++ b/Assets/Elemental/Input/Actions/EarthActionRouterBehaviour.cs
+@@ -28,7 +28,11 @@ public sealed class EarthActionRouterBehaviour : MonoBehaviour
+         [SerializeField] private EarthMvpDuelController duel;
+         private bool _matchBlocked;
+         private bool _impactBlocked;
+-        public void BindDuel(EarthMvpDuelController match) => duel = match;
++        private EarthDuelFighterId _boundDuelFighter;
++        public EarthMvpDuelController BoundDuel => duel;
++        public EarthDuelFighterId BoundDuelFighter => _boundDuelFighter;
++        public void BindDuel(EarthMvpDuelController match, EarthDuelFighterId fighter = EarthDuelFighterId.Player)
++        { duel = match; _boundDuelFighter = fighter; }
+ 
+         private readonly EarthActionRouter _router = new EarthActionRouter();
+         private readonly DualMouseEarthGestureSolver _dualMouse = new DualMouseEarthGestureSolver();
+@@ -144,7 +148,7 @@ private void Update()
+                 return;
+             }
+             _impactBlocked = false;
+-            if (duel != null && (!duel.CombatAllowed || duel.PlayerPhase != EarthDuelFighterPhase.Active))
++            if (duel != null && (!duel.HasSimulationAuthority || !duel.CombatAllowed || (_boundDuelFighter == EarthDuelFighterId.Bot ? duel.BotPhase : duel.PlayerPhase) != EarthDuelFighterPhase.Active))
+             {
+                 if (!_matchBlocked)
+                 {
+diff --git a/Assets/Elemental/Runtime/World/VoxelPlanetBehaviour.cs b/Assets/Elemental/Runtime/World/VoxelPlanetBehaviour.cs
+index b3711d7..ef2aa6d 100644
+--- a/Assets/Elemental/Runtime/World/VoxelPlanetBehaviour.cs
++++ b/Assets/Elemental/Runtime/World/VoxelPlanetBehaviour.cs
+@@ -9,7 +9,7 @@
+ namespace Elemental.Runtime.World
+ {
+     [DisallowMultipleComponent]
+-    public sealed class VoxelPlanetBehaviour : MonoBehaviour
++    public sealed partial class VoxelPlanetBehaviour : MonoBehaviour
+     {
+         private static readonly ProfilerMarker RenderQueueMarker = new ProfilerMarker("Elemental.Voxel.RenderQueue");
+         private static readonly ProfilerMarker ColliderQueueMarker = new ProfilerMarker("Elemental.Voxel.ColliderQueue");
+@@ -188,12 +188,15 @@ public bool TryGetColliderDebt(ChunkCoord coord, out ColliderDebt debt)
+ 
+         public void ApplyEditBatch(EditBatch batch)
+         {
++            if (!HasOnlineSimulationAuthority && !_applyingOnlineCanonical) return;
+             _state.Apply(batch);
+             QueueDirtyChunks();
++            PublishOnlineBatch(batch, false);
+         }
+ 
+         public VoxelEditReceipt ApplyEditBatchTransactional(EditBatch batch)
+         {
++            if (!HasOnlineSimulationAuthority && !_applyingOnlineCanonical) return default;
+             if (batch == null || batch.Count <= 0) return default;
+             uint firstSequence = batch[0].Sequence;
+             uint lastSequence = batch[batch.Count - 1].Sequence;
+@@ -235,6 +238,7 @@ public VoxelEditReceipt ApplyEditBatchTransactional(EditBatch batch)
+             // cold-start shell queue. Reordering only the already-budgeted work keeps
+             // frame cost bounded while making the visible matter transaction responsive.
+             PrioritizeQueuedCoordinates(_renderQueue, _renderQueued, pending.Coords);
++            PublishOnlineBatch(batch, true);
+             return receipt;
+         }
+ 
+diff --git a/Assets/Elemental/Runtime/Characters/ActiveRagdollPuppet.cs b/Assets/Elemental/Runtime/Characters/ActiveRagdollPuppet.cs
+index 26a2100..6bd79a4 100644
+--- a/Assets/Elemental/Runtime/Characters/ActiveRagdollPuppet.cs
++++ b/Assets/Elemental/Runtime/Characters/ActiveRagdollPuppet.cs
+@@ -12,7 +12,7 @@ namespace Elemental.Runtime.Characters
+ {
+     [DisallowMultipleComponent]
+     [RequireComponent(typeof(Rigidbody))]
+-    public sealed class ActiveRagdollPuppet : MonoBehaviour
++    public sealed partial class ActiveRagdollPuppet : MonoBehaviour
+     {
+         private static readonly ProfilerMarker FixedTickMarker = new ProfilerMarker("Elemental.ActiveRagdoll.FixedTick");
+         private const int GroundHitCapacity = 8;
+diff --git a/Assets/Elemental/Simulation/Combat/EarthDuelMatchState.cs b/Assets/Elemental/Simulation/Combat/EarthDuelMatchState.cs
+index ddce7ec..f37307f 100644
+--- a/Assets/Elemental/Simulation/Combat/EarthDuelMatchState.cs
++++ b/Assets/Elemental/Simulation/Combat/EarthDuelMatchState.cs
+@@ -3,7 +3,7 @@
+ namespace Elemental.Simulation.Combat
+ {
+     /// <summary>Explicit match owner; physical knockdown is deliberately independent of death.</summary>
+-    public sealed class EarthDuelMatchState
++    public sealed partial class EarthDuelMatchState
+     {
+         public EarthDuelMatchState(float durationSeconds = 300f, float maximumHealth = 100f)
+         {
+diff --git a/Assets/Elemental/Runtime/Characters/EarthMvpDuelController.cs b/Assets/Elemental/Runtime/Characters/EarthMvpDuelController.cs
+index 8907793..f9e8ce5 100644
+--- a/Assets/Elemental/Runtime/Characters/EarthMvpDuelController.cs
++++ b/Assets/Elemental/Runtime/Characters/EarthMvpDuelController.cs
+@@ -9,7 +9,7 @@
+ namespace Elemental.Runtime.Characters
+ {
+     [DisallowMultipleComponent]
+-    public sealed class EarthMvpDuelController : MonoBehaviour
++    public sealed partial class EarthMvpDuelController : MonoBehaviour
+     {
+         [SerializeField] private ActiveRagdollPuppet playerPuppet;
+         [SerializeField] private HumanoidRagdollRig playerHumanoidRagdoll;
+@@ -95,6 +95,7 @@ public void SetRoundReady(bool ready)
+ 
+         public void RestartRound()
+         {
++            if (!HasSimulationAuthority) return;
+             Match.Restart();
+             PlayerKnockoutCount = BotKnockoutCount = 0;
+             _playerState = _botState = EarthDuelFighterState.Active;
+@@ -106,7 +107,7 @@ public void RestartRound()
+             StateChanged?.Invoke();
+         }
+ 
+-        public bool CanReceiveDamage(EarthDuelFighterId fighter) => CombatAllowed &&
++        public bool CanReceiveDamage(EarthDuelFighterId fighter) => HasSimulationAuthority && CombatAllowed &&
+             (fighter == EarthDuelFighterId.Player ? _playerState.Phase : _botState.Phase) == EarthDuelFighterPhase.Active;
+ 
+         public float ResolveDamage(EarthCharacterImpactSourceKind source, float reactionVelocity, float closingSpeed) =>
+@@ -320,6 +321,7 @@ private void Awake()
+ 
+         private void FixedUpdate()
+         {
++            if (!HasSimulationAuthority) return;
+             using (MatchMarker.Auto())
+             {
+                 bool wasOver = Match.IsOver;
+diff --git a/Assets/Elemental/Runtime/Characters/EarthCharacterImpactTarget.cs b/Assets/Elemental/Runtime/Characters/EarthCharacterImpactTarget.cs
+index 9c989a0..1ea581d 100644
+--- a/Assets/Elemental/Runtime/Characters/EarthCharacterImpactTarget.cs
++++ b/Assets/Elemental/Runtime/Characters/EarthCharacterImpactTarget.cs
+@@ -12,7 +12,7 @@ namespace Elemental.Runtime.Characters
+ {
+     [DisallowMultipleComponent]
+     [RequireComponent(typeof(Rigidbody))]
+-    public sealed class EarthCharacterImpactTarget : MonoBehaviour
++    public sealed partial class EarthCharacterImpactTarget : MonoBehaviour
+     {
+         private const int DedupeCapacity = 8;
+         private static readonly ProfilerMarker ResolveMarker =
+@@ -100,7 +100,7 @@ public CharacterOutcome ResolveFallLanding(
+             float fallDistance,
+             float downwardImpactSpeed)
+         {
+-            if (duelController != null && !duelController.CanReceiveDamage(fighterId))
++            if (!HasSimulationAuthority || duelController != null && !duelController.CanReceiveDamage(fighterId))
+                 return CharacterOutcome.Ignore;
+             var input = new CharacterOutcomeInput(
+                 EarthCharacterImpactSourceKind.FallLanding,
+@@ -159,7 +159,7 @@ public EarthCharacterImpactResponse ApplyImpact(
+         {
+             using (ResolveMarker.Auto())
+             {
+-                if (duelController != null && !duelController.CanReceiveDamage(fighterId))
++                if (!HasSimulationAuthority || duelController != null && !duelController.CanReceiveDamage(fighterId))
+                     return EarthCharacterImpactResponse.Ignore;
+                 if (Time.time < _suppressUntil || targetBody == null || impulse <= 0f)
+                     return EarthCharacterImpactResponse.Ignore;
+@@ -311,6 +311,7 @@ public EarthCharacterImpactResponse ApplyImpact(
+                     targetBody.AddForceAtPosition(velocityChange, point, ForceMode.VelocityChange);
+                 }
+ 
++                PublishAuthorityImpact(in worldResponse, resolution.ReactionVelocityChange, velocityChange);
+                 ImpactResolved?.Invoke(response);
+                 return response;
+             }
+diff --git a/Assets/Elemental/Input/Actions/EarthInputAdapter.cs b/Assets/Elemental/Input/Actions/EarthInputAdapter.cs
+index c03ce09..dfd2608 100644
+--- a/Assets/Elemental/Input/Actions/EarthInputAdapter.cs
++++ b/Assets/Elemental/Input/Actions/EarthInputAdapter.cs
+@@ -1,5 +1,6 @@
+ using System;
+ using Elemental.Simulation.Bending;
++using Elemental.Simulation.Networking;
+ using UnityEngine;
+ using UnityEngine.InputSystem;
+ 
+@@ -9,9 +10,9 @@ namespace Elemental.Input.Actions
+     /// The only gameplay component allowed to read Unity Input System actions.
+     /// Consumers observe semantic bending controls and never query devices directly.
+     /// </summary>
+-    [DisallowMultipleComponent]
++    [DefaultExecutionOrder(-1200), DisallowMultipleComponent]
+     [RequireComponent(typeof(PlayerInput))]
+-    public sealed class EarthInputAdapter : MonoBehaviour
++    public sealed partial class EarthInputAdapter : MonoBehaviour
+     {
+         [SerializeField] private PlayerInput playerInput;
+         [SerializeField] private string actionMapName = "Gameplay";
+@@ -44,33 +45,33 @@ public sealed class EarthInputAdapter : MonoBehaviour
+         public event Action JumpPerformed;
+         public event Action JumpCanceled;
+ 
+-        public Vector2 Move => _move?.ReadValue<Vector2>() ?? Vector2.zero;
+-        public Vector2 PointerPixels => _pointer?.ReadValue<Vector2>() ?? Vector2.zero;
++        public Vector2 Move => RemoteInputEnabled ? new Vector2(_remoteFrame.Move.x, _remoteFrame.Move.y) : _move?.ReadValue<Vector2>() ?? Vector2.zero;
++        public Vector2 PointerPixels => RemoteInputEnabled ? RemotePointerPixels : _pointer?.ReadValue<Vector2>() ?? Vector2.zero;
+         public Vector2 PointerViewport01 => ScreenToViewport(PointerPixels);
+-        public float BendParameter => _bendParameter?.ReadValue<float>() ?? 0f;
+-        public bool BendPrimaryPressed => _bendPrimary?.WasPressedThisFrame() == true;
+-        public bool BendPrimaryReleased => _bendPrimary?.WasReleasedThisFrame() == true;
+-        public bool BendPrimaryHeld => _bendPrimary?.IsPressed() == true;
+-        public bool BendForcePressed => _bendForce?.WasPressedThisFrame() == true;
+-        public bool BendForceReleased => _bendForce?.WasReleasedThisFrame() == true;
+-        public bool BendForceHeld => _bendForce?.IsPressed() == true;
+-        public bool BendFieldPressed => _bendField?.WasPressedThisFrame() == true;
+-        public bool BendFieldReleased => _bendField?.WasReleasedThisFrame() == true;
+-        public bool BendFieldHeld => _bendField?.IsPressed() == true;
+-        public bool BendModifierHeld => _bendModifier?.IsPressed() == true;
+-        public bool JumpPressed => _jumpOrStomp?.WasPressedThisFrame() == true;
+-        public bool JumpReleased => _jumpOrStomp?.WasReleasedThisFrame() == true;
+-        public bool JumpHeld => _jumpOrStomp?.IsPressed() == true;
+-        public bool CancelPressed => _cancel?.WasPressedThisFrame() == true;
+-        public bool ShoulderSwapPressed => _shoulderSwap?.WasPressedThisFrame() == true;
+-        public bool ElementFirePressed => _elementFire?.WasPressedThisFrame() == true;
+-        public bool ElementWaterPressed => _elementWater?.WasPressedThisFrame() == true;
+-        public bool DebugLookdevChargeHeld => _lookdevCharge?.IsPressed() == true;
+-        public bool DebugLookdevDayPressed => _lookdevDay?.WasPressedThisFrame() == true;
+-        public bool DebugLookdevSunsetPressed => _lookdevSunset?.WasPressedThisFrame() == true;
+-        public bool DebugLookdevNightPressed => _lookdevNight?.WasPressedThisFrame() == true;
+-        public bool DebugLookdevSeamPressed => _lookdevSeamDebug?.WasPressedThisFrame() == true;
+-        public bool DebugLookdevHeavyImpactPressed => _lookdevHeavyImpact?.WasPressedThisFrame() == true;
++        public float BendParameter => RemoteInputEnabled ? RemoteScroll : _bendParameter?.ReadValue<float>() ?? 0f;
++        public bool BendPrimaryPressed => RemoteInputEnabled ? RemotePressed(EarthInputBits.Primary) : _bendPrimary?.WasPressedThisFrame() == true;
++        public bool BendPrimaryReleased => RemoteInputEnabled ? RemoteReleased(EarthInputBits.Primary) : _bendPrimary?.WasReleasedThisFrame() == true;
++        public bool BendPrimaryHeld => RemoteInputEnabled ? RemoteHeld(EarthInputBits.Primary) : _bendPrimary?.IsPressed() == true;
++        public bool BendForcePressed => RemoteInputEnabled ? RemotePressed(EarthInputBits.Force) : _bendForce?.WasPressedThisFrame() == true;
++        public bool BendForceReleased => RemoteInputEnabled ? RemoteReleased(EarthInputBits.Force) : _bendForce?.WasReleasedThisFrame() == true;
++        public bool BendForceHeld => RemoteInputEnabled ? RemoteHeld(EarthInputBits.Force) : _bendForce?.IsPressed() == true;
++        public bool BendFieldPressed => RemoteInputEnabled ? RemotePressed(EarthInputBits.Field) : _bendField?.WasPressedThisFrame() == true;
++        public bool BendFieldReleased => RemoteInputEnabled ? RemoteReleased(EarthInputBits.Field) : _bendField?.WasReleasedThisFrame() == true;
++        public bool BendFieldHeld => RemoteInputEnabled ? RemoteHeld(EarthInputBits.Field) : _bendField?.IsPressed() == true;
++        public bool BendModifierHeld => RemoteInputEnabled ? RemoteHeld(EarthInputBits.Modifier) : _bendModifier?.IsPressed() == true;
++        public bool JumpPressed => RemoteInputEnabled ? RemotePressed(EarthInputBits.Jump) : _jumpOrStomp?.WasPressedThisFrame() == true;
++        public bool JumpReleased => RemoteInputEnabled ? RemoteReleased(EarthInputBits.Jump) : _jumpOrStomp?.WasReleasedThisFrame() == true;
++        public bool JumpHeld => RemoteInputEnabled ? RemoteHeld(EarthInputBits.Jump) : _jumpOrStomp?.IsPressed() == true;
++        public bool CancelPressed => RemoteInputEnabled ? RemotePressed(EarthInputBits.Cancel) : _cancel?.WasPressedThisFrame() == true;
++        public bool ShoulderSwapPressed => RemoteInputEnabled ? RemotePressed(EarthInputBits.Shoulder) : _shoulderSwap?.WasPressedThisFrame() == true;
++        public bool ElementFirePressed => !RemoteInputEnabled && _elementFire?.WasPressedThisFrame() == true;
++        public bool ElementWaterPressed => !RemoteInputEnabled && _elementWater?.WasPressedThisFrame() == true;
++        public bool DebugLookdevChargeHeld => !RemoteInputEnabled && _lookdevCharge?.IsPressed() == true;
++        public bool DebugLookdevDayPressed => !RemoteInputEnabled && _lookdevDay?.WasPressedThisFrame() == true;
++        public bool DebugLookdevSunsetPressed => !RemoteInputEnabled && _lookdevSunset?.WasPressedThisFrame() == true;
++        public bool DebugLookdevNightPressed => !RemoteInputEnabled && _lookdevNight?.WasPressedThisFrame() == true;
++        public bool DebugLookdevSeamPressed => !RemoteInputEnabled && _lookdevSeamDebug?.WasPressedThisFrame() == true;
++        public bool DebugLookdevHeavyImpactPressed => !RemoteInputEnabled && _lookdevHeavyImpact?.WasPressedThisFrame() == true;
+ 
+         public EarthGestureFrame CaptureEarthGestureFrame(
+             bool grounded,
+@@ -91,7 +92,7 @@ public EarthGestureFrame CaptureEarthGestureFrame(
+                 descending,
+                 move.magnitude,
+                 BendModifierHeld,
+-                _jumpOrStomp?.WasPressedThisFrame() == true,
++                JumpPressed,
+                 landingWaveArmed,
+                 BendPrimaryPressed,
+                 BendPrimaryHeld,
+@@ -123,6 +124,7 @@ public void Configure(PlayerInput configuredPlayerInput)
+ 
+         public bool DebugAbilityPressed(int oneBasedSlot)
+         {
++            if (RemoteInputEnabled) return oneBasedSlot >= 1 && oneBasedSlot <= 4 && RemotePressed((EarthInputBits)(64u << oneBasedSlot));
+ #if UNITY_EDITOR || DEVELOPMENT_BUILD
+             InputAction action = oneBasedSlot switch
+             {
+@@ -165,6 +167,7 @@ private void OnEnable()
+ 
+         private void Update()
+         {
++            if (RemoteInputEnabled) { AdvanceRemoteInput(); return; }
+             // This project uses Enter Play Mode without a domain/scene reload.
+             // Editor-bound maps can therefore survive into Play while PlayerInput
+             // itself is inactive. PlayerInput may also replace the serialized action
+@@ -189,6 +192,7 @@ private void Update()
+ 
+         private void Bind()
+         {
++            if (RemoteInputEnabled) return;
+             if (playerInput == null) playerInput = GetComponent<PlayerInput>();
+             EnsureGameplayInputActive();
+ 
+@@ -241,6 +245,7 @@ private void Bind()
+ 
+         private void EnsureGameplayInputActive()
+         {
++            if (RemoteInputEnabled) return;
+             if (!Application.isPlaying || playerInput == null || !playerInput.enabled) return;
+             playerInput.ActivateInput();
+             if (playerInput.currentActionMap == null ||
+diff --git a/Assets/Elemental/Runtime/World/MagicExecutor.cs b/Assets/Elemental/Runtime/World/MagicExecutor.cs
+index 14974c7..41509e8 100644
+--- a/Assets/Elemental/Runtime/World/MagicExecutor.cs
++++ b/Assets/Elemental/Runtime/World/MagicExecutor.cs
+@@ -17,7 +17,7 @@
+ namespace Elemental.Runtime.World
+ {
+     [DisallowMultipleComponent]
+-    public sealed class MagicExecutor : MonoBehaviour, IMagicCommandSink
++    public sealed partial class MagicExecutor : MonoBehaviour, IMagicCommandSink
+     {
+         [SerializeField] private EarthMaterialFeedbackHub materialFeedback;
+         public void ConfigureMaterialFeedback(EarthMaterialFeedbackHub hub)
+@@ -138,7 +138,7 @@ public float ResolveNewStoneMass(float volume)
+         public EarthFragment HeldFragment => _heldFragment != null && _heldFragment.IsHeld ? _heldFragment : null;
+         public EarthFragment ReservedOrHeldFragment => _heldFragment;
+         public bool HasPendingExtraction => _pendingExtractions.Count > 0;
+-        public Rigidbody HeldBody => HeldFragment != null
++        public Rigidbody HeldBody => _onlineReplicaPresentation ? _onlineHeldBody : HeldFragment != null
+             ? HeldFragment.Body
+             : (telekinesis != null ? telekinesis.Body : null);
+         public float HeldMass => HeldBody != null ? HeldBody.mass : 0f;
+@@ -155,19 +155,19 @@ public float ResolveNewStoneMass(float volume)
+         public float LastMagicPushVelocityChange { get; private set; }
+         public ulong LastPreviewGeometryHash { get; private set; }
+         public ulong LastCommittedGeometryHash { get; private set; }
+-        public bool IsVectorFieldActive => _vectorFieldTarget != null && _vectorFieldTarget.IsEarthTargetValid;
++        public bool IsVectorFieldActive => _onlineReplicaPresentation ? _onlineView.VectorActive : _vectorFieldTarget != null && _vectorFieldTarget.IsEarthTargetValid;
+         public Rigidbody VectorFieldBody => _vectorFieldTarget != null ? _vectorFieldTarget.Body : null;
+-        public Vector3 VectorFieldDirection => _vectorFieldDirection;
+-        public Vector3 VectorFieldPoint => _vectorFieldTarget != null && _vectorFieldTarget.Body != null
++        public Vector3 VectorFieldDirection => _onlineReplicaPresentation ? (Vector3)_onlineView.VectorDirection : _vectorFieldDirection;
++        public Vector3 VectorFieldPoint => _onlineReplicaPresentation ? (Vector3)_onlineView.VectorPoint : _vectorFieldTarget != null && _vectorFieldTarget.Body != null
+             ? _vectorFieldTarget.Body.worldCenterOfMass
+             : _vectorFieldPoint;
+-        public float VectorFieldCharge => _vectorFieldCharge;
++        public float VectorFieldCharge => _onlineReplicaPresentation ? _onlineView.VectorCharge : _vectorFieldCharge;
+         public float VectorFieldMass => _vectorFieldTarget != null ? _vectorFieldTarget.EarthMass : 0f;
+-        public bool IsGravityWellActive => _gravityWellActive;
+-        public bool IsRepairActive => (_repairController != null && _repairController.IsRepairing) ||
++        public bool IsGravityWellActive => _onlineReplicaPresentation ? _onlineView.GravityActive : _gravityWellActive;
++        public bool IsRepairActive => _onlineReplicaPresentation ? _onlineView.RepairActive : (_repairController != null && _repairController.IsRepairing) ||
+             (_gravityFractureSource is EarthArenaStructure arenaRepair && arenaRepair.HasPendingMagicRepair);
+-        public Vector3 GravityWellFocus => _gravityWellFocus;
+-        public float GravityWellStrength => _gravityWellActive
++        public Vector3 GravityWellFocus => _onlineReplicaPresentation ? (Vector3)_onlineView.GravityFocus : _gravityWellFocus;
++        public float GravityWellStrength => _onlineReplicaPresentation ? _onlineView.GravityStrength : _gravityWellActive
+             ? Mathf.Clamp01(_gravityWellElapsed / GravityFractureDelay)
+             : 0f;
+         public float GravityWellRadius => gravityWellProfile != null ? gravityWellProfile.Radius : 7.5f;
+@@ -979,6 +979,7 @@ public bool TryApplyMagicPush(
+ 
+         private void FixedUpdate()
+         {
++            if (_onlineReplicaPresentation) return;
+             UpdateHeldFractureFormation();
+             if (_gravityWellActive && _repairController == null) ApplyGravityWell();
+             IEarthPhysicalTarget target = _vectorFieldTarget;
+@@ -1458,6 +1459,7 @@ public void ConfigureRecipes(CompiledAbilityRecipe[] recipes)
+ 
+         public bool Execute(in MagicCommand command)
+         {
++            if (_onlineReplicaPresentation) return false;
+             using (ExecuteMarker.Auto())
+             {
+                 if (voxelPlanet == null || fragmentPool == null || planetCenter == null)

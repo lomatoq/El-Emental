@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="5" result="Passed" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-06 21:44:07Z" end-time="2026-09-06 21:44:08Z" duration="0.52461">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="1107" result="Passed" start-time="2026-09-06 21:44:07Z" end-time="2026-09-06 21:44:08Z" duration="0.524610" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2387" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="1067" result="Passed" start-time="2026-09-06 21:44:07Z" end-time="2026-09-06 21:44:08Z" duration="0.190157" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="21092" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2388" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="1067" result="Passed" start-time="2026-09-06 21:44:07Z" end-time="2026-09-06 21:44:08Z" duration="0.189624" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2389" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="1067" result="Passed" start-time="2026-09-06 21:44:07Z" end-time="2026-09-06 21:44:08Z" duration="0.189484" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2390" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="1067" result="Passed" start-time="2026-09-06 21:44:07Z" end-time="2026-09-06 21:44:08Z" duration="0.189303" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1669" name="EarthLifeResultTests" fullname="Elemental.Tests.EditMode.EarthLifeResultTests" classname="Elemental.Tests.EditMode.EarthLifeResultTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-06 21:44:07Z" end-time="2026-09-06 21:44:08Z" duration="0.188089" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1673" name="EachAcceptedLifeProducesOneResult" fullname="Elemental.Tests.EditMode.EarthLifeResultTests.EachAcceptedLifeProducesOneResult" classname="Elemental.Tests.EditMode.EarthLifeResultTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-06 21:44:07Z" end-time="2026-09-06 21:44:08Z" duration="0.174872" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1670" name="EachAcceptedLifeProducesOneResult(0,1,Won)" fullname="Elemental.Tests.EditMode.EarthLifeResultTests.EachAcceptedLifeProducesOneResult(0,1,Won)" methodname="EachAcceptedLifeProducesOneResult" classname="Elemental.Tests.EditMode.EarthLifeResultTests" runstate="Runnable" seed="1018546052" result="Passed" start-time="2026-09-06 21:44:07Z" end-time="2026-09-06 21:44:08Z" duration="0.163289" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1671" name="EachAcceptedLifeProducesOneResult(1,0,Lost)" fullname="Elemental.Tests.EditMode.EarthLifeResultTests.EachAcceptedLifeProducesOneResult(1,0,Lost)" methodname="EachAcceptedLifeProducesOneResult" classname="Elemental.Tests.EditMode.EarthLifeResultTests" runstate="Runnable" seed="1255002282" result="Passed" start-time="2026-09-06 21:44:08Z" end-time="2026-09-06 21:44:08Z" duration="0.000346" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1672" name="EachAcceptedLifeProducesOneResult(1,1,Draw)" fullname="Elemental.Tests.EditMode.EarthLifeResultTests.EachAcceptedLifeProducesOneResult(1,1,Draw)" methodname="EachAcceptedLifeProducesOneResult" classname="Elemental.Tests.EditMode.EarthLifeResultTests" runstate="Runnable" seed="1143746578" result="Passed" start-time="2026-09-06 21:44:08Z" end-time="2026-09-06 21:44:08Z" duration="0.000262" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1674" name="OppositeDeathsInsideWindowCombineWithoutFlashingAWinner" fullname="Elemental.Tests.EditMode.EarthLifeResultTests.OppositeDeathsInsideWindowCombineWithoutFlashingAWinner" methodname="OppositeDeathsInsideWindowCombineWithoutFlashingAWinner" classname="Elemental.Tests.EditMode.EarthLifeResultTests" runstate="Runnable" seed="1458483859" result="Passed" start-time="2026-09-06 21:44:08Z" end-time="2026-09-06 21:44:08Z" duration="0.000470" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1675" name="RestartClearsOldResultsAndPauseDoesNotExpireThem" fullname="Elemental.Tests.EditMode.EarthLifeResultTests.RestartClearsOldResultsAndPauseDoesNotExpireThem" methodname="RestartClearsOldResultsAndPauseDoesNotExpireThem" classname="Elemental.Tests.EditMode.EarthLifeResultTests" runstate="Runnable" seed="1900810836" result="Passed" start-time="2026-09-06 21:44:08Z" end-time="2026-09-06 21:44:08Z" duration="0.001745" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\FeelFollowupUiEdit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

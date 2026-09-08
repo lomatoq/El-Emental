@@ -1,0 +1,15 @@
+--- a/Assets/Elemental/Runtime/Matter/EarthMatterKernelBehaviour.cs
++++ b/Assets/Elemental/Runtime/Matter/EarthMatterKernelBehaviour.cs
+@@ -67,8 +67,10 @@
+         public static EarthMatterKernelBehaviour FindOrCreate(Component owner)
+         {
+             Scene scene = owner != null ? owner.gameObject.scene : SceneManager.GetActiveScene();
+-            if (!scene.IsValid() || !scene.isLoaded)
+-                throw new System.InvalidOperationException("Earth matter requires a loaded owning scene.");
++            // Awake executes while an additive scene is valid but still Loading.
++            // Match Scene.GetRootGameObjects: only Edit Mode requires isLoaded.
++            if (!scene.IsValid() || (!Application.isPlaying && !scene.isLoaded))
++                throw new System.InvalidOperationException("Earth matter requires a valid owning scene (loaded outside Play Mode).");
+             // Cold authoring/registration path. Additive worlds never borrow another
+             // scene's registry: restoring one arena must not retire another world.
+             foreach (GameObject root in scene.GetRootGameObjects())

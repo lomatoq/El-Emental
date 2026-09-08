@@ -13,7 +13,8 @@ namespace Elemental.Presentation.MotionMatching
         MissingCalibration = 1,
         InvalidMapping = 2,
         PoseRejected = 3,
-        Active = 4
+        Active = 4,
+        StaleDatabase = 5
     }
 
     [Serializable]

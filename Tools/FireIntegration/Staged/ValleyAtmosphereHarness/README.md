@@ -1,0 +1,19 @@
+# Valley atmosphere executable QA harness — frozen candidate
+
+Two NEW C# sources only in after/Assets. No actual Assets/Unity changes during staging. Offline current Unity Roslyn compile of Presentation + Authoring.Editor succeeds; existing unrelated obsolete API warnings remain. Actual import/execution is pending the next exclusive lease.
+
+## Art first
+
+1. Import these two new source files. Run existing `Elemental/Graphics/Install Valley Atmosphere V2` twice; review only typed owner/retired volume scene changes. Do not save until artistic result is useful.
+2. Enter ready production Play. Execute `Elemental/Graphics/Capture Valley Atmosphere 1080 Art First`. This writes 30 PNGs under Logs/ValleyAtmosphere1080: day/night × gameplay/lookdown/reverse/side/under × original/fog/clouds. All temporary pose/target/time/owner flags restore in finally; shipping postprocess stays enabled.
+3. Inspect day gameplay and lookdown fog versus clouds against Reference/UserVisualTargets/target-6-main-latest.png. Target is readable soft clustered cloud masses BEHIND clear foreground stone, not a uniform bright floor, visible repeated cards or noisy grain. Inspect reverse/side planet protection and under-cloud attenuation too. If cloud art fails, report it and retain fog-only only if that is useful; do not spend the lease benchmarking rejected art. Existing 40-image oracle menu additionally covers shallow rays/alpha.
+
+## Executable performance capture, only after art acceptance
+
+Stop Play, save reviewed scene. Execute `Elemental/Graphics/Build Valley Atmosphere 1080 Benchmark`. It builds ONLY saved EarthCoreSlice as a Windows development player; no PlayerSettings/build-scene-list changes. Build evidence records existing enableFrameTimingStats setting. Then run `./launch.ps1` when other test players/network pairs are stopped. It starts a hidden bounded player, explicit 1920×1080; no batchmode/no graphics flag. The player requires actual resolution and initialized owner/sky/camera, otherwise writes failure and exits. Do not run while the user is actively testing.
+
+The explicit --valley-benchmark argument creates a development-only helper, absent from shipping builds and authored scenes. There are 12 blocks: original / veil / clouds / clouds / veil / original at gameplay, then lookdown; 240 warm frames and 600 measured frames each (7200 measured rows). Scaled simulation is paused, camera/time fixed, cloud drift frozen, VSync disabled and target120 temporarily. This is fixed-scene rendering, not live gameplay performance. The two reverse/side protection cameras are visual QA, not benchmark views. Duration is about84 seconds at120fps, longer on slower hardware.
+
+Outputs BuildReports/ValleyAtmosphere1080.json + csv + log. Run `python analyze.py <absolute report path>`. The report contains FrameTimingManager whole-frame CPU/GPU with duplicate timestamps rejected, wall interval separately, ProfilerRecorder CPU publisher + fullscreen pass markers, GC allocated-in-frame, render-end pose error, hardware/API/color space/resolution. Missing marker/timing values are -1; unsupported GPU remains unavailable. CPU Render-category marker is NOT GPU timing. Whole-frame GPU delta is an A/B observation, never isolated pass cost. Need separate GPU profiler capture to claim isolated atmosphere GPU budget. Analysis requires >=90% valid timing coverage in both repeated blocks before presenting observed deltas; resolution/pose/coverage failures invalidate interpretation. All CSV/report allocations occur after sample collection. FrameTiming may lag several frames, bounded warm intervals isolate transitions.
+
+No screenshot work occurs during the benchmark. No claim of zero allocations is made until actual measured rows show it; driver and existing scene overhead remain included. The prior Fire0.8ms gate is unrelated and must not be overwritten by this report.

@@ -170,6 +170,11 @@ namespace Elemental.Presentation.Animation
         {
             Collider hitCollider = hit.collider;
             if (hitCollider == null || hitCollider == selfCapsule || hit.rigidbody == selfBody) return false;
+            // A capsule sweep beginning inside the old ledge returns an overlap
+            // sentinel (zero distance/point and a synthetic opposing normal),
+            // not a future surface contact. Treating it as a floor predicted the
+            // world origin instead of the lower step.
+            if (hit.distance <= 0.00001f && hit.point == Vector3.zero) return false;
             if (hitCollider.transform.IsChildOf(selfBody.transform)) return false;
             float minimumSlopeDot = Mathf.Cos(_motor.MaximumSlopeAngle * Mathf.Deg2Rad);
             if (Vector3.Dot(hit.normal, _motor.LocalUp) < minimumSlopeDot) return false;

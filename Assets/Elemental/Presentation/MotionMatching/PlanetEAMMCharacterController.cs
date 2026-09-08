@@ -1,4 +1,5 @@
 using Elemental.Runtime.Characters;
+using Elemental.Presentation.Animation;
 using Elemental.Simulation.Animation;
 using Elemental.Simulation.Characters;
 using MotionMatching;
@@ -42,6 +43,11 @@ namespace Elemental.Presentation.MotionMatching
         private bool _hasLocomotionQuery;
         private bool _locomotionQuery;
         private string _queryTag;
+        private string _appliedQueryTag;
+        private LocomotionRhythmController _rhythm;
+        private float _stalledIntentSeconds;
+        private bool _reportedStaleData;
+        public bool HasStaleLocomotionData { get; private set; }
 
         public bool HasLocomotionQuery => _hasLocomotionQuery;
         public bool LocomotionQuery => _locomotionQuery;
@@ -75,7 +81,7 @@ namespace Elemental.Presentation.MotionMatching
 
         protected override void OnUpdate()
         {
-            if (motor == null || MotionMatching == null) return;
+            if (motor == null || MotionMatching == null || !MotionMatching.RuntimeInitialized) return;
             float2 move = motor.LastCommand.Move;
             if (math.lengthsq(move - _lastMove) > 0.55f * 0.55f)
                 NotifyInputChangedQuickly();
@@ -83,15 +89,31 @@ namespace Elemental.Presentation.MotionMatching
 
             bool hasMoveIntent = math.lengthsq(move) > QueryMoveDeadZone * QueryMoveDeadZone;
             if (hasMoveIntent) _lastDirectionalMove = move;
-            bool locomoting = hasMoveIntent || GetTargetSpeed() > 0.22f;
+            float actualSpeed = GetTargetSpeed();
+            _stalledIntentSeconds = hasMoveIntent && actualSpeed < .12f && motor.HasStableSupport
+                ? _stalledIntentSeconds + Time.deltaTime : 0f;
+            bool locomoting = actualSpeed > .22f || hasMoveIntent && _stalledIntentSeconds < .2f;
             float2 queryMove = hasMoveIntent ? move : _lastDirectionalMove;
             string queryTag = ResolveQueryTag(queryMove, motor.UsesTankSteering, locomoting);
-            if (!_hasLocomotionQuery || !string.Equals(queryTag, _queryTag,
+            if (_rhythm == null) _rhythm = motor.GetComponentInChildren<LocomotionRhythmController>();
+            string appliedTag = _rhythm != null ? _rhythm.ResolveSpeedQuery(queryTag, actualSpeed, _appliedQueryTag) : queryTag;
+            HasStaleLocomotionData = _rhythm != null && !_rhythm.HasCompatibleSourceTags(MotionMatching.PoseSet);
+            if (HasStaleLocomotionData && !_reportedStaleData)
+            {
+                _reportedStaleData = true;
+                Debug.LogWarning("Locomotion database is stale: bake current user locomotion metadata. Authored controller remains visible until every source query is available.", this);
+            }
+            if (MotionMatching.PoseSet == null) return;
+            if (!MotionMatching.PoseSet.TryGetTag(appliedTag, out _)) appliedTag = queryTag;
+            if (!MotionMatching.PoseSet.TryGetTag(appliedTag, out _)) appliedTag = IdleQueryTag;
+            if (!MotionMatching.PoseSet.TryGetTag(appliedTag, out _)) return;
+            if (!_hasLocomotionQuery || !string.Equals(appliedTag, _appliedQueryTag,
                     System.StringComparison.Ordinal))
             {
-                MotionMatching.SetQueryTag(queryTag);
-                _queryTag = queryTag;
+                MotionMatching.SetQueryTag(appliedTag);
+                _appliedQueryTag = appliedTag;
             }
+            _queryTag = queryTag;
             _locomotionQuery = locomoting;
             _hasLocomotionQuery = true;
 
@@ -126,12 +148,7 @@ namespace Elemental.Presentation.MotionMatching
         public override float GetTargetSpeed()
         {
             if (motor == null || motor.Body == null) return 0f;
-            float3 up = motor.LocalUp;
-            float3 velocity = motor.Body.linearVelocity;
-            float stride = surfaceResolver != null && surfaceResolver.Current != null
-                ? surfaceResolver.Current.StrideScale
-                : 1f;
-            return math.length(velocity - up * math.dot(velocity, up)) * stride;
+            return motor.LocomotionMotion.Speed;
         }
 
         public override void GetTrajectoryFeature(
@@ -146,7 +163,7 @@ namespace Elemental.Presentation.MotionMatching
                 motor.LocalUp,
                 motor.FacingForward);
             float seconds = PredictionSeconds(feature, index);
-            float3 velocity = motor.Body != null ? (float3)motor.Body.linearVelocity : float3.zero;
+            float3 velocity = motor.LocomotionMotion.RelativeVelocity;
             float3 tangentVelocity = velocity - frame.Up * math.dot(velocity, frame.Up);
             float2 intent = motor.LastCommand.Move;
             ResolveTrajectoryIntent(
@@ -156,14 +173,7 @@ namespace Elemental.Presentation.MotionMatching
                 out float3 intendedTravelDirection,
                 out float3 predictedFacing,
                 out float intentMagnitude);
-            float stride = surfaceResolver != null && surfaceResolver.Current != null
-                ? surfaceResolver.Current.StrideScale
-                : 1f;
-            float caution = surfaceResolver != null && surfaceResolver.Current != null
-                ? surfaceResolver.Current.Caution
-                : 0f;
-            float targetSpeed = math.max(math.length(tangentVelocity), intentMagnitude * 6.5f) *
-                                stride * math.lerp(1f, 0.72f, caution);
+            float targetSpeed = _locomotionQuery ? math.length(motor.LocomotionMotion.DesiredVelocity) : 0f;
             float3 predictedVelocity = math.lerp(
                 tangentVelocity,
                 intendedTravelDirection * targetSpeed,

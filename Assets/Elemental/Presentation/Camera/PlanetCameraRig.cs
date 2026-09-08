@@ -150,7 +150,7 @@ namespace Elemental.Presentation.Camera
             _occlusionReleaseDelay = Mathf.Max(0f, releaseDelay);
             _ignoredOccluderRoot = ignoredOccluderRoot;
             if (_camera == null) _camera = GetComponent<UnityEngine.Camera>();
-            if (_camera != null) _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, configuredFieldOfView,
+            if (_camera != null && !_externalDriverActive) _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, configuredFieldOfView,
                 1f - Mathf.Exp(-8f * Time.unscaledDeltaTime));
         }
 

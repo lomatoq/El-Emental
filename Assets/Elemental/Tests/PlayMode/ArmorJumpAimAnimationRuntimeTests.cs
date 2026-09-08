@@ -35,6 +35,7 @@ namespace Elemental.Tests.PlayMode
                 while (!gate.IsReady && !gate.Failed && Time.realtimeSinceStartupAsDouble < readinessDeadline)
                     yield return null;
                 Assert.That(gate.IsReady, Is.True, gate.Status);
+                yield return ProductionCombatTestFlow.BeginBotAfterReadiness(scene);
                 foreach (EarthMvpBotController bot in All<EarthMvpBotController>(scene)) bot.enabled = false;
 
                 MagicInputController input = All<MagicInputController>(scene)

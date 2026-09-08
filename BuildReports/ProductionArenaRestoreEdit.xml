@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="6" result="Passed" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-07 09:00:16Z" end-time="2026-09-07 09:00:16Z" duration="0.0576638">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="1174" result="Passed" start-time="2026-09-07 09:00:16Z" end-time="2026-09-07 09:00:16Z" duration="0.057664" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2471" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="1128" result="Passed" start-time="2026-09-07 09:00:16Z" end-time="2026-09-07 09:00:16Z" duration="0.043566" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="35572" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2472" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="1122" result="Passed" start-time="2026-09-07 09:00:16Z" end-time="2026-09-07 09:00:16Z" duration="0.043130" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2473" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="1122" result="Passed" start-time="2026-09-07 09:00:16Z" end-time="2026-09-07 09:00:16Z" duration="0.043001" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2474" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="1122" result="Passed" start-time="2026-09-07 09:00:16Z" end-time="2026-09-07 09:00:16Z" duration="0.042832" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1259" name="EarthArenaBaselinePolicyTests" fullname="Elemental.Tests.EditMode.EarthArenaBaselinePolicyTests" classname="Elemental.Tests.EditMode.EarthArenaBaselinePolicyTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-07 09:00:16Z" end-time="2026-09-07 09:00:16Z" duration="0.041376" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1266" name="OnlyLiveAuthoredRepresentationsReturn" fullname="Elemental.Tests.EditMode.EarthArenaBaselinePolicyTests.OnlyLiveAuthoredRepresentationsReturn" classname="Elemental.Tests.EditMode.EarthArenaBaselinePolicyTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-07 09:00:16Z" end-time="2026-09-07 09:00:16Z" duration="0.035963" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1260" name="OnlyLiveAuthoredRepresentationsReturn(True,TerrainAttached,CanonicalTerrain,True)" fullname="Elemental.Tests.EditMode.EarthArenaBaselinePolicyTests.OnlyLiveAuthoredRepresentationsReturn(True,TerrainAttached,CanonicalTerrain,True)" methodname="OnlyLiveAuthoredRepresentationsReturn" classname="Elemental.Tests.EditMode.EarthArenaBaselinePolicyTests" runstate="Runnable" seed="206444619" result="Passed" start-time="2026-09-07 09:00:16Z" end-time="2026-09-07 09:00:16Z" duration="0.020066" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1261" name="OnlyLiveAuthoredRepresentationsReturn(True,FreeDynamic,HeroPhysical,True)" fullname="Elemental.Tests.EditMode.EarthArenaBaselinePolicyTests.OnlyLiveAuthoredRepresentationsReturn(True,FreeDynamic,HeroPhysical,True)" methodname="OnlyLiveAuthoredRepresentationsReturn" classname="Elemental.Tests.EditMode.EarthArenaBaselinePolicyTests" runstate="Runnable" seed="835014256" result="Passed" start-time="2026-09-07 09:00:16Z" end-time="2026-09-07 09:00:16Z" duration="0.000408" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1262" name="OnlyLiveAuthoredRepresentationsReturn(True,Sleeping,SecondaryPhysical,True)" fullname="Elemental.Tests.EditMode.EarthArenaBaselinePolicyTests.OnlyLiveAuthoredRepresentationsReturn(True,Sleeping,SecondaryPhysical,True)" methodname="OnlyLiveAuthoredRepresentationsReturn" classname="Elemental.Tests.EditMode.EarthArenaBaselinePolicyTests" runstate="Runnable" seed="19968994" result="Passed" start-time="2026-09-07 09:00:16Z" end-time="2026-09-07 09:00:16Z" duration="0.000265" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1263" name="OnlyLiveAuthoredRepresentationsReturn(True,Consumed,HeroPhysical,False)" fullname="Elemental.Tests.EditMode.EarthArenaBaselinePolicyTests.OnlyLiveAuthoredRepresentationsReturn(True,Consumed,HeroPhysical,False)" methodname="OnlyLiveAuthoredRepresentationsReturn" classname="Elemental.Tests.EditMode.EarthArenaBaselinePolicyTests" runstate="Runnable" seed="143649356" result="Passed" start-time="2026-09-07 09:00:16Z" end-time="2026-09-07 09:00:16Z" duration="0.000224" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1264" name="OnlyLiveAuthoredRepresentationsReturn(True,Sleeping,DormantRecord,False)" fullname="Elemental.Tests.EditMode.EarthArenaBaselinePolicyTests.OnlyLiveAuthoredRepresentationsReturn(True,Sleeping,DormantRecord,False)" methodname="OnlyLiveAuthoredRepresentationsReturn" classname="Elemental.Tests.EditMode.EarthArenaBaselinePolicyTests" runstate="Runnable" seed="1023804205" result="Passed" start-time="2026-09-07 09:00:16Z" end-time="2026-09-07 09:00:16Z" duration="0.000199" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1265" name="OnlyLiveAuthoredRepresentationsReturn(False,FreeDynamic,HeroPhysical,False)" fullname="Elemental.Tests.EditMode.EarthArenaBaselinePolicyTests.OnlyLiveAuthoredRepresentationsReturn(False,FreeDynamic,HeroPhysical,False)" methodname="OnlyLiveAuthoredRepresentationsReturn" classname="Elemental.Tests.EditMode.EarthArenaBaselinePolicyTests" runstate="Runnable" seed="2143485834" result="Passed" start-time="2026-09-07 09:00:16Z" end-time="2026-09-07 09:00:16Z" duration="0.000232" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\ProductionArenaRestoreEdit.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

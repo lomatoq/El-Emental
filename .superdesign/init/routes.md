@@ -1,0 +1,1 @@
+Single Unity EarthCoreSlice scene. Existing legacy MainMenuController stub is unused by the arena. New FrontendFlowController owns Main -> Settings -> Main; Main -> Transition -> Combat; Combat -> Main. Host/Join disabled during local alpha and connected to genuine services in stage two. No web routes.

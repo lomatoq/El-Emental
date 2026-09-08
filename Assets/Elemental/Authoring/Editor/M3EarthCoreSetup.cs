@@ -160,7 +160,7 @@ namespace Elemental.Authoring.Editor
                 PhysicsFeelProfilePath,
                 "Earth Physics Feel Profile");
             EarthRockDebrisPool debrisPool = magicRoot.AddComponent<EarthRockDebrisPool>();
-            debrisPool.Configure(72, looseEarthMaterial, debrisMeshes[0], gravityWorld, rockProfile);
+            debrisPool.Configure(256, looseEarthMaterial, debrisMeshes[0], gravityWorld, rockProfile);
             debrisPool.ConfigureMeshVariants(debrisMeshes);
             EarthShapeGrammarProfile shapeGrammar = CreateOrLoadProfile<EarthShapeGrammarProfile>(
                 ShapeGrammarProfilePath, "Earth Shape Grammar Profile");
@@ -748,7 +748,7 @@ namespace Elemental.Authoring.Editor
                     StructureFractureProfilePath,
                     "Earth Structure Fracture Profile");
 
-            debrisPool.Configure(72, looseEarthMaterial, debrisMeshes[0], gravityWorld, rockProfile);
+            debrisPool.Configure(256, looseEarthMaterial, debrisMeshes[0], gravityWorld, rockProfile);
             debrisPool.ConfigureMeshVariants(debrisMeshes);
             debrisPool.ConfigureShapeGrammar(shapeGrammar);
             fragmentPool.Configure(
@@ -4947,8 +4947,11 @@ private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
             body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             GravityBody gravityBody = boulder.AddComponent<GravityBody>();
             gravityBody.Configure(gravityWorld, body);
-            PhysicalImpactTarget target = boulder.AddComponent<PhysicalImpactTarget>();
-            target.Configure(body, 0.5f);
+            EarthRockDebrisPool debris = Object.FindFirstObjectByType<EarthRockDebrisPool>();
+            if (debris == null) throw new UnityEditor.Build.BuildFailedException("Push boulders require the scene stone debris pool.");
+            EarthDestructibleDecorRock rock = boulder.AddComponent<EarthDestructibleDecorRock>();
+            rock.Configure(name == "Light Push Boulder" ? 0xD3B00001u : 0xD3B00002u,
+                body, collider, gravityBody, debris, radius, 720f, false);
         }
 
         private readonly struct EarthPuppetPart

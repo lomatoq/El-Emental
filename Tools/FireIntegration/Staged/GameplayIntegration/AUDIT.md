@@ -1,0 +1,9 @@
+# Fire reachability audit (before graphics priority switch)
+
+The imported FireGroup implementation is currently reachable through FireLabDriver and tests only. Searches across Assets source/scenes found no FireWorldBehaviour or view binding in EarthCoreSlice/Bootstrap/online gameplay. FireLab itself was absent from EditorBuildSettings when inspected. This is a lab/infrastructure result, not a playable new game element.
+
+The handoff explicitly prohibits inventing new moves, hotkeys or damage. Existing ThermalWaterMagicExecutor accepts older HeatJet/ThermalFocus commands but does not publish FireGroup lifecycle events and is not connected to this renderer; an unguarded local cast hook would not establish online authority. No such gameplay hook was added.
+
+The smallest infrastructure gap is a reusable, explicitly injected world-to-view pool; the lab currently owns its own hardwired eight-view loop. `after/Assets/Elemental/Presentation/Fire/FireWorldPresentationPool.cs` is a preliminary additive implementation of that read-only seam. It spawns no domains or gameplay commands and changes no networking. Work was frozen when graphics became priority: **this source is uncompiled/untested and must not be integrated as accepted code**. Review source-null handling before any use. It does not make Fire reachable by normal gameplay on its own.
+
+Remaining production gates include actual source command/lifecycle ownership if gameplay Fire is separately requested, world/view scene binding, network/replay policy for those commands, profile/backend verification, real current destruction fixtures, rendered direct/oblique/corner/edge/overlap motion with existing particle age retained, native backend capability tests and hardware/API CPU/GPU/GC evidence. Do not label the whole Fire element complete from lab screenshots alone.

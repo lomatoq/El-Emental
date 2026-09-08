@@ -46,6 +46,10 @@ namespace Elemental.Simulation.Structures
 
     public static class EarthMatterMassPolicy
     {
+        public static float AccretedMass(float originalVolume, float addedVolume, in EarthMatterMassProfile profile) =>
+            math.max(0f, ResolveGameplayMass(originalVolume + math.max(0f, addedVolume), in profile) -
+                ResolveGameplayMass(originalVolume, in profile));
+
         public static float ResolveGameplayMass(
             float volumeCubicMetres,
             in EarthMatterMassProfile profile)

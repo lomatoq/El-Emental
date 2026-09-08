@@ -53,9 +53,16 @@ namespace Elemental.Runtime.Physics
                 identity.TryTransition(EarthMatterPhase.FreeDynamic);
         }
 
-        private void OnCollisionEnter(Collision collision) =>
+        private void OnCollisionEnter(Collision collision)
+        {
+            Elemental.Runtime.Characters.EarthStoneCharacterContact.Deliver(collision, Body, StableEarthId);
             Owner?.ReportPieceImpact(PieceIndex, collision);
+        }
 
-        private void OnCollisionStay(Collision collision) => Owner?.ReportPieceFriction(PieceIndex, collision);
+        private void OnCollisionStay(Collision collision)
+        {
+            Elemental.Runtime.Characters.EarthStoneCharacterContact.DeliverLoad(collision, Body);
+            Owner?.ReportPieceFriction(PieceIndex, collision);
+        }
     }
 }

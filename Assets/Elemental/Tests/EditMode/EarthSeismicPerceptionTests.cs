@@ -5,6 +5,26 @@ namespace Elemental.Tests.EditMode
 {
     public sealed class EarthSeismicPerceptionTests
     {
+        [TestCase(30)]
+        [TestCase(60)]
+        [TestCase(120)]
+        public void FadeHasIntermediateFramesAndReversesWithoutReset(int hz)
+        {
+            float progress = 0f;
+            for (int i = 0; i < hz / 6; i++)
+                progress = EarthSeismicPerception.AdvanceFade(progress, true, 1f / hz);
+            Assert.That(progress, Is.InRange(0.1f, 0.2f));
+            Assert.That(EarthSeismicPerception.AdvanceFade(progress, false, 0f), Is.EqualTo(progress));
+            float reversed = EarthSeismicPerception.AdvanceFade(progress, false, 1f / hz);
+            Assert.That(reversed, Is.GreaterThan(0f).And.LessThan(progress));
+            for (int i = 0; i <= hz; i++)
+                progress = EarthSeismicPerception.AdvanceFade(progress, true, 1f / hz);
+            Assert.That(progress, Is.EqualTo(1f));
+            for (int i = 0; i <= hz; i++)
+                progress = EarthSeismicPerception.AdvanceFade(progress, false, 1f / hz);
+            Assert.That(progress, Is.Zero);
+        }
+
         [TestCase(true, true, true, true, false, true)]
         [TestCase(false, true, true, true, false, false)]
         [TestCase(true, false, true, true, false, false)]

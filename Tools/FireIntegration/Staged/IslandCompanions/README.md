@@ -1,0 +1,9 @@
+# Island companions — approved scene followup
+
+Two staged source files; actual Assets/Unity untouched. Includes already imported AcceptedIslandRotation baseline; do not import atop changed source without before SHA check. No geometry, cloud, UI, material or lighting edits.
+
+Menu `Elemental/Environment/Procedural Valley/7 Add Small Island Companions` twice, Edit EarthCoreSlice. No bake. Moves only MainIsland0 and CombatIsland0 to85% lateral/depth distance and scale108%; baseheight adjusted to roughlyretain their center framing. Every other existing slot remains intact. Adds four side islands (two/view) and four satellites (two around each nearer primary), reusing accepted six mesh variants with native existing bounded drift/slowspin. Stable names and absolute primary assignments ensure idempotence. Authored cap32/floating20. Profile/mesh references preserved; only owned scene generation and profile data change.
+
+Root QA: guard Edit/scene, run twice, compare slots=32 and no duplicate names, confirm all original22 unmodified slots, capture actual1920 Main/Combat. Inspect primary center framing and HUD/hero/reticle clearance, satellites visible with space between them and primary; no new objects inside arena exclusions. Full-spin bounds remain conservative: record any rejected companions, do not bypass exclusions. Rejection or foreground occlusion may mean fewer than8 additions appear; actual projection acceptance is pending. New satellite meshes have2LODs and existing silhouette haze; no physics/net. No performance claim.
+
+Current approved scene screenshot513ed68f and BuildReports/CombinedVisual/Combat-exact-hud inspected: foreground/HUD retained; changes are confined to existing background composition. Source baseline evidence in baseline.json; C# compile logs in Reports.

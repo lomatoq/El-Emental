@@ -288,8 +288,40 @@ namespace Elemental.Tests.EditMode
                 math.abs(once.ImpactAngularVelocityDegrees.z)));
         }
 
-        [TestCase(EarthCharacterImpactResponse.Flinch, EarthImpactPresentationOwner.ProceduralAngularSpring)]
-        [TestCase(EarthCharacterImpactResponse.Stagger, EarthImpactPresentationOwner.ProceduralAngularSpring)]
+        [TestCase(30)]
+        [TestCase(60)]
+        [TestCase(120)]
+        public void ImpactBendsVisiblyThenRecoversViscouslyWithoutSnapping(int frameRate)
+        {
+            EarthInertialBodyState state = default;
+            float peak = 0f;
+            float peakTime = 0f;
+            float recoveryAngle = 0f;
+            for (int frame = 0; frame < frameRate * 2; frame++)
+            {
+                EarthInertialBodySample sample = EarthInertialBodyMotionSolver.Step(
+                    in state, float3.zero, 0f, 0f,
+                    frame == 0 ? new float3(130f, 0f, 0f) : float3.zero,
+                    true, false, 1f / frameRate);
+                state = sample.State;
+                if (sample.ImpactAnglesDegrees.x > peak)
+                {
+                    peak = sample.ImpactAnglesDegrees.x;
+                    peakTime = (frame + 1f) / frameRate;
+                }
+                if (frame + 1 == Mathf.RoundToInt(frameRate * 0.3f))
+                    recoveryAngle = sample.ImpactAnglesDegrees.x;
+            }
+            Assert.That(peak, Is.InRange(4.5f, 5.1f),
+                "A substantial hit must create a visible torso bend, not the old tiny twitch.");
+            Assert.That(peakTime, Is.InRange(0.08f, 0.14f));
+            Assert.That(recoveryAngle, Is.GreaterThan(0.8f),
+                "Balance recovery must remain continuous after the initial impact.");
+            Assert.That(math.length(state.ImpactOffsetDegrees), Is.LessThan(0.002f));
+        }
+
+        [TestCase(EarthCharacterImpactResponse.Flinch, EarthImpactPresentationOwner.LocalizedPhysics)]
+        [TestCase(EarthCharacterImpactResponse.Stagger, EarthImpactPresentationOwner.LocalizedPhysics)]
         [TestCase(EarthCharacterImpactResponse.RecoverableKnockdown, EarthImpactPresentationOwner.FullRagdoll)]
         [TestCase(EarthCharacterImpactResponse.Knockout, EarthImpactPresentationOwner.FullRagdoll)]
         public void ImpactSeverityHasExactlyOnePresentationOwner(

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-06 18:49:48Z" end-time="2026-09-06 18:50:13Z" duration="25.17297">
+  <test-suite type="TestSuite" id="1335" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="254" result="Passed" start-time="2026-09-06 18:49:48Z" end-time="2026-09-06 18:50:13Z" duration="25.172970" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1328" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="254" result="Passed" start-time="2026-09-06 18:49:48Z" end-time="2026-09-06 18:50:13Z" duration="24.985115" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="21092" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1329" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="254" result="Passed" start-time="2026-09-06 18:49:48Z" end-time="2026-09-06 18:50:13Z" duration="24.972547" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1330" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="254" result="Passed" start-time="2026-09-06 18:49:48Z" end-time="2026-09-06 18:50:13Z" duration="24.967405" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1331" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="254" result="Passed" start-time="2026-09-06 18:49:48Z" end-time="2026-09-06 18:50:13Z" duration="24.963881" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1010" name="SeptemberAnimationRescueRuntimeTests" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" testcasecount="45" result="Passed" start-time="2026-09-06 18:49:48Z" end-time="2026-09-06 18:50:13Z" duration="24.960101" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1027" name="ProductionTurnStepsCompleteShortTapsAndSustainedHalfTurns" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ProductionTurnStepsCompleteShortTapsAndSustainedHalfTurns" methodname="ProductionTurnStepsCompleteShortTapsAndSustainedHalfTurns" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="901718950" result="Passed" start-time="2026-09-06 18:49:48Z" end-time="2026-09-06 18:50:13Z" duration="24.842242" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 3985.39ms; ground=exact baked base, cacheLoad=12.57ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1841.22ms, peakCookingPoll=0.30ms; sync=ArenaInitialize=387.08ms/15;ArenaBevel=365.05ms/175;ArenaMeshPicking=2.13ms/175;WallAwake=88.89ms/1;WallPieceVisuals=48.15ms/40;PlatformPoolAwake=10.15ms/1;PlatformRuntimeMeshes=1.49ms/12;PillarPoolAwake=18.63ms/1;PillarMeshLibrary=4.18ms/1;PillarColumns=14.44ms/1;DebrisPoolAwake=76.96ms/1;HeroFragmentPoolAwake=12.59ms/1.
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[Turn whole-sequence floor proof] left-tap: min ankle=0.0350m, toe=-0.0015m; includes Capture and turn-to-idle exit.
+[Turn clock proof] left-tap: presentationClock=1, animator.speed=1, state.length=1.95, state.speed=1, normalized=0.716962636, controller=KayKitMage.
+[Turn step proof] left-tap: clip=1.000, final foot separation span=0.0369m, min contact=0.000, yaw=23.8deg.
+[Turn floor proof] left-tap: min ankle=0.0370m, toe=0.0090m, released horizontal travel=1.2760m, samples=66.
+[Turn whole-sequence floor proof] left-180: min ankle=0.0350m, toe=0.0105m; includes Capture and turn-to-idle exit.
+[Turn clock proof] left-180: presentationClock=1, animator.speed=1, state.length=1.95, state.speed=1, normalized=1.03197467, controller=KayKitMage.
+[Turn step proof] left-180: clip=1.000, final foot separation span=0.1399m, min contact=0.000, yaw=180.2deg.
+[Turn floor proof] left-180: min ankle=0.0370m, toe=0.0230m, released horizontal travel=2.4514m, samples=64.
+[Turn whole-sequence floor proof] right-tap: min ankle=0.0252m, toe=-0.0124m; includes Capture and turn-to-idle exit.
+[Turn clock proof] right-tap: presentationClock=1, animator.speed=1, state.length=1.95, state.speed=1, normalized=0.84179157, controller=KayKitMage.
+[Turn step proof] right-tap: clip=1.000, final foot separation span=0.1455m, min contact=0.000, yaw=13.6deg.
+[Turn floor proof] right-tap: min ankle=0.0370m, toe=0.0262m, released horizontal travel=1.3899m, samples=70.
+[Turn whole-sequence floor proof] right-180: min ankle=0.0219m, toe=0.0031m; includes Capture and turn-to-idle exit.
+[Turn clock proof] right-180: presentationClock=1, animator.speed=1, state.length=1.95, state.speed=1, normalized=1.14440465, controller=KayKitMage.
+[Turn step proof] right-180: clip=1.000, final foot separation span=0.1160m, min contact=0.000, yaw=180.2deg.
+[Turn floor proof] right-180: min ankle=0.0370m, toe=0.0258m, released horizontal travel=3.0394m, samples=68.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\AlphaTurnStepsPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

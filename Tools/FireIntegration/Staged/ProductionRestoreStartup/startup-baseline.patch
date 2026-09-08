@@ -1,0 +1,81 @@
+--- a/Assets/Elemental/Runtime/World/EarthSceneReadinessGate.cs
++++ b/Assets/Elemental/Runtime/World/EarthSceneReadinessGate.cs
+@@ -1,5 +1,6 @@
+ using System;
+ using Elemental.Runtime.Physics;
++using Elemental.Runtime.Characters;
+ using Elemental.Runtime.Diagnostics;
+ using UnityEngine;
+ 
+@@ -14,6 +15,8 @@
+         [SerializeField] private Behaviour[] pausedControls = Array.Empty<Behaviour>();
+         [SerializeField, Min(5f)] private float timeoutSeconds = 120f;
+         private bool[] _previousEnabled;
++        private EarthPlanetRockScatter[] _scatters;
++        private EarthMvpDuelController[] _duels;
+         private float _previousTimeScale;
+         private bool _ownsPause;
+         private double _started;
+@@ -44,10 +47,27 @@
+             if (IsReady || Failed) return;
+             if (planet == null || debris == null)
+             { Fail("Scene readiness gate needs explicit planet and debris-pool references."); return; }
+-            Status = !planet.GeometryReady ? "Preparing ground" : !debris.PhysicsPrepared ? "Preparing stones" : "Ready";
+-            if (planet.GeometryReady && debris.PhysicsPrepared)
++            // Dressing yields across frames even while timeScale is zero. Keep
++            // physics paused until every authored source exists and is captured.
++            _scatters ??= EarthArenaRoundSnapshot.SceneComponents<EarthPlanetRockScatter>(gameObject.scene);
++            bool dressingReady = true;
++            foreach (var scatter in _scatters)
++                if (scatter != null && scatter.isActiveAndEnabled && !scatter.IsComplete) dressingReady = false;
++            Status = !planet.GeometryReady ? "Preparing ground" : !debris.PhysicsPrepared ? "Preparing stones" :
++                !dressingReady ? "Preparing arena dressing" : "Saving initial arena";
++            if (planet.GeometryReady && debris.PhysicsPrepared && dressingReady)
+             {
+                 UnityEngine.Physics.SyncTransforms();
++                _duels ??= EarthArenaRoundSnapshot.SceneComponents<EarthMvpDuelController>(gameObject.scene);
++                foreach (var duel in _duels)
++                {
++                    if (duel == null || !duel.isActiveAndEnabled || !duel.HasSimulationAuthority) continue;
++                    try { duel.CaptureArenaBaselineIfReady(); }
++                    catch (Exception error) { Fail("Initial arena capture failed: " + error.Message); return; }
++                    if (!duel.ArenaBaselineCaptured)
++                    { Fail("Initial arena capture did not complete before physics release."); return; }
++                }
++                Status = "Ready";
+                 ReadyMilliseconds = (Time.realtimeSinceStartupAsDouble - _started) * 1000;
+                 IsReady = true;
+                 string startupTiming = EarthStartupTiming.SealAndFormat();
+--- a/Assets/Elemental/Runtime/Characters/EarthMvpDuelController.RoundReset.cs
++++ b/Assets/Elemental/Runtime/Characters/EarthMvpDuelController.RoundReset.cs
+@@ -9,6 +9,7 @@
+         private EarthArenaRoundSnapshot _arenaSnapshot;
+         private bool _arenaRestoreRequested, _arenaRestoreApplied, _resumeAfterArenaRestore, _arenaMatchDirty, _respawnAfterArenaRestore;
+         public bool ArenaResetInProgress => _arenaRestoreRequested;
++        public bool ArenaBaselineCaptured => _arenaSnapshot != null;
+         public int ArenaResetCount { get; private set; }
+         public string ArenaResetError { get; private set; }
+         public event Action ArenaRestoreCompleted;
+--- a/Assets/Elemental/Tests/PlayMode/ProductionArenaRestoreTests.cs
++++ b/Assets/Elemental/Tests/PlayMode/ProductionArenaRestoreTests.cs
+@@ -73,10 +73,19 @@
+             _arena = SceneManager.GetSceneByPath(path); SceneManager.SetActiveScene(_arena);
+             var gate = Find<EarthSceneReadinessGate>();
+             float deadline = Time.realtimeSinceStartup + 130;
+-            while (!gate.IsReady && !gate.Failed && Time.realtimeSinceStartup < deadline) yield return null;
++            while (!gate.IsReady && !gate.Failed && Time.realtimeSinceStartup < deadline)
++            {
++                Assert.That(_canonicalDecor.ObservedCollisionCount, Is.Zero,
++                    "Authored dynamic stones must not simulate before the startup baseline is saved.");
++                yield return null;
++            }
+             Assert.That(gate.IsReady, Is.True, gate.Status);
+             var flow = Find<FrontendFlowController>();
+             var duel = Find<EarthMvpDuelController>();
++            Assert.That(duel.ArenaBaselineCaptured, Is.True, "Readiness must include the initial arena snapshot.");
++            foreach (var scatter in Components<EarthPlanetRockScatter>())
++                if (scatter.isActiveAndEnabled) Assert.That(scatter.IsComplete, Is.True,
++                    "Generated authored stones must be included before the baseline is sealed.");
+             var planet = Find<VoxelPlanetBehaviour>();
+             yield return WaitForMain(flow, duel);
+             ulong terrainBaseline = VoxelPlanetBehaviour.ArenaSnapshotHash(planet.CaptureArenaSnapshot());

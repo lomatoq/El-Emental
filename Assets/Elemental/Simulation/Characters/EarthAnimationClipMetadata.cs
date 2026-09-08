@@ -97,6 +97,14 @@ namespace Elemental.Simulation.Characters
     /// </summary>
     public static class EarthAnimationClipMetadata
     {
+        public static void ResolveMirroredFootChannels(bool mirrored,
+            ref float leftPhase, ref float rightPhase, ref float leftContact, ref float rightContact)
+        {
+            if (!mirrored) return;
+            (leftPhase, rightPhase) = (rightPhase, leftPhase);
+            (leftContact, rightContact) = (rightContact, leftContact);
+        }
+
         public const int CurveCount = 8;
         public const string LeftFootContact = "LeftFootContact";
         public const string RightFootContact = "RightFootContact";

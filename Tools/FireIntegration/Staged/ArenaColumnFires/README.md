@@ -1,0 +1,9 @@
+# Decorative arena column fires
+
+Reuses existing `FireCpuMeshBackend`, `FireFieldNode.Stream`, `Fire_Default` CPU material, and `FirePresentationSnapshot`. No new fire shader, FireWorld group, gameplay event, damage, input or light pipeline. Optional owned root `Arena Column Fires` holds references to the seven canonical `Outer Stone Ring` column renderers. Existing scene objects/materials/colliders are not changed or reparented.
+
+Installer `Elemental/Graphics/Install Arena Column Fires` validates exactly seven canonical EarthArenaStructure objects and seats flame bases on average highest 2.5% mesh vertices in the authored ring-up direction. Creates separate `Fire_ColumnDecor.asset` cloned from the current validated profile; no edit to Fire_Default. Run twice for idempotence. Scene stays dirty for review. An intact renderer becoming hidden on fracture stops its fire; restore rewarms it. This deliberately does not attach flames to flying fragments.
+
+Budget: seven CPU mesh renderers, capacity256 each, emission50/s each, lifetime.5–.9s, one substep, roughly175–315 live particles total. Four nearest nonshadowed point lights maximum, range9m, warm orange. Intensity uses actual `CelestialSnapshot.Night01`: day.12, night3.8 with bounded±7% flicker. No shared FireLightPool capacity consumed. Warmup24small steps per reactivated fire; profile before accepting startup cost. Marker `ArenaColumnFires.Update` plus existing `Fire.CpuMesh.Step`. Reduced Motion freezes particles/wind/flicker after warmup, while night brightness still tracks solar state. Unscaled time keeps menu fire alive.
+
+Root validation still required: Unity play images day/night from main and combat showing fire on actual tops; inspect real point-light illumination and max4enabled; fracture a column then restore to verify no floating fire; reinstall count7; reduced-motion toggle; CPU/GPU timing. C# offline compilation alone does not establish performance or visual approval.

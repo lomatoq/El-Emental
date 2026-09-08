@@ -1,0 +1,38 @@
+{
+    "utc": "2026-09-07T23:57:33.0500976Z",
+    "completedUtc": "2026-09-07T23:57:33.0546147Z",
+    "unityVersion": "6000.5.7f1",
+    "scene": "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity",
+    "status": "Failed",
+    "error": "System.InvalidOperationException: Ambiguous scene object Sunlit Air Motes.\r\n  at Elemental.Authoring.Editor.DustProductionVisualQa.FindNamed[T] (UnityEngine.SceneManagement.Scene scene, System.String name) [0x00077] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\DustProductionVisualQa.cs:685 \r\n  at Elemental.Authoring.Editor.DustProductionVisualQa.Run () [0x0057c] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\DustProductionVisualQa.cs:320 ",
+    "scope": "Actual saved EarthCoreSlice, production Main Camera/Game view, live production ParticleSystem instances and materials. One deterministic impact/fracture/mote layout is paused at a fixed age for all three celestial phases. No gameplay damage, asset/profile/light tuning or scene save.",
+    "productionMainCamera": true,
+    "sameParticleLayout": false,
+    "restored": true,
+    "sceneWasDirty": false,
+    "originalPhase": 0.22369202971458436,
+    "originalTimeScale": 1.0,
+    "originalCameraPosition": {
+        "x": 1.4320651292800904,
+        "y": 58.91019058227539,
+        "z": -11.575370788574219
+    },
+    "captureCameraPosition": {
+        "x": 5.143240451812744,
+        "y": 56.12023162841797,
+        "z": -2.355278491973877
+    },
+    "captureTarget": {
+        "x": 10.04858684539795,
+        "y": 55.1002311706543,
+        "z": -3.0694692134857179
+    },
+    "impactWorld": {
+        "x": 9.37912368774414,
+        "y": 54.32023239135742,
+        "z": -2.8649730682373049
+    },
+    "temporarilyDisabled": [],
+    "sources": [],
+    "captures": []
+}

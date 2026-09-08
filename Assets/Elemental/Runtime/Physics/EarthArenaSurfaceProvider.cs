@@ -8,13 +8,16 @@ namespace Elemental.Runtime.Physics
     /// Fracture/pluck authority remains in <see cref="EarthArenaStructure"/>.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class EarthArenaSurfaceProvider : MonoBehaviour, IEarthSurfaceProvider
+    public sealed class EarthArenaSurfaceProvider : MonoBehaviour, IEarthSurfaceProvider, IEarthSurfaceColliderProvider,
+        IEarthContinuousConstructionProvider, IEarthConstructionTopProvider
     {
         [SerializeField] private EarthArenaStructure structure;
         [SerializeField] private Collider surfaceCollider;
+        public Collider ConstructionCollider => surfaceCollider;
         [SerializeField] private EarthSurfaceQueryService queryService;
         [SerializeField] private Vector3 surfaceUp = Vector3.up;
         [SerializeField] private bool supportsLocomotion;
+        public bool AllowsTopConstructionContinuation => supportsLocomotion;
         private readonly RaycastHit[] _assistHits = new RaycastHit[16];
 
         public void Configure(
@@ -45,6 +48,27 @@ namespace Elemental.Runtime.Physics
             float upDot = Vector3.Dot(hit.normal, surfaceUp);
             if (upDot < -0.55f) return false;
             bool top = upDot >= 0.72f;
+            sample = BuildSample(in hit, top);
+            return true;
+        }
+
+        public bool TrySampleConstructionTop(in EarthSurfaceQuery query, out EarthSurfaceSample sample)
+        {
+            sample = default;
+            if (!supportsLocomotion || structure == null || structure.IsFractured || structure.CameraSuppressed ||
+                surfaceCollider == null || !surfaceCollider.enabled) return false;
+            var ray = new Ray(ToVector3(query.Origin), ToVector3(query.Direction));
+            if (!surfaceCollider.Raycast(ray, out RaycastHit hit, query.MaximumDistance) ||
+                Vector3.Dot(hit.normal, surfaceUp) <= 0.01f) return false;
+            // Narrow steep facets in the imported floor's cracks are still its
+            // top footprint. Locomotion slope limits must not split one wall into
+            // tile-sized runs; the wall's four solid-depth intervals guard seating.
+            sample = BuildSample(in hit, true);
+            return true;
+        }
+
+        private EarthSurfaceSample BuildSample(in RaycastHit hit, bool top)
+        {
             Vector3 normal = top ? surfaceUp : hit.normal.normalized;
             EarthSurfaceCapabilities capabilities = EarthSurfaceCapabilities.Draw |
                                                     EarthSurfaceCapabilities.Destructible;
@@ -52,7 +76,7 @@ namespace Elemental.Runtime.Physics
                 capabilities |= EarthSurfaceCapabilities.Support | EarthSurfaceCapabilities.Pillar |
                                 EarthSurfaceCapabilities.LandingCushion;
 
-            sample = new EarthSurfaceSample(
+            return new EarthSurfaceSample(
                 new EarthSurfaceHandle(
                     top ? EarthSurfaceKind.Platform : EarthSurfaceKind.PlatformSide,
                     structure.StructureId,
@@ -66,7 +90,6 @@ namespace Elemental.Runtime.Physics
                 EarthSurfaceMaterial.ConstructedEarth,
                 EarthSurfaceProvenance.RaisedPlatform,
                 capabilities);
-            return true;
         }
 
         public bool IsCurrent(in EarthSurfaceHandle handle) =>

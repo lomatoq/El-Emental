@@ -29,15 +29,17 @@ namespace Elemental.Tests.EditMode
         }
 
         [Test]
-        public void ShortJumpDoesNotAcquirePillarUpperBodyButRealChargeDoes()
+        public void ChargeAndCushionNeverFreezeThePillarReleaseClip()
         {
             Assert.That(EarthPersistentAnimationPolicy.AllowsSustainedUpperBody(
                 EarthActionOwner.Pillar, false), Is.False,
                 "The Space disambiguation window still belongs to ordinary jump locomotion.");
             Assert.That(EarthPersistentAnimationPolicy.AllowsSustainedUpperBody(
-                EarthActionOwner.Pillar, true), Is.True);
+                EarthActionOwner.Pillar, true), Is.False);
             Assert.That(EarthPersistentAnimationPolicy.AllowsSustainedUpperBody(
-                EarthActionOwner.LandingCushion, false), Is.True);
+                EarthActionOwner.LandingCushion, false), Is.False);
+            Assert.That(EarthPersistentAnimationPolicy.AllowsSustainedUpperBody(
+                EarthActionOwner.Surf, true), Is.False);
         }
 
         [Test]

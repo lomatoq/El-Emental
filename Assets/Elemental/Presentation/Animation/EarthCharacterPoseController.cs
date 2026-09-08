@@ -114,6 +114,14 @@ namespace Elemental.Presentation.Animation
         public int DroppedPresentationRequests => _droppedPresentationRequests;
         public int SupersededPresentationRequests => _supersededPresentationRequests;
         public bool RenderedContactReached => _renderedContactReached;
+        public bool TryGetComboMotionTime(out float normalizedTime)
+        {
+            normalizedTime = 0f;
+            if (dualMouseAbilities == null || !dualMouseAbilities.IsComboActionActive ||
+                CurrentRequest.Technique != EarthQuickStoneCombo.Technique(dualMouseAbilities.CurrentShotBeat)) return false;
+            normalizedTime = dualMouseAbilities.ComboNormalizedTime;
+            return true;
+        }
         public bool HasAuthoritativePresentation => _authoritativeTransient;
         public bool AuthoritativeStartsAtContact =>
             _authoritativeTransient && _authoritativeStartsAtContact;
@@ -445,43 +453,24 @@ namespace Elemental.Presentation.Animation
                         focus = transform.position + transform.forward * 3f;
                         return true;
                     case EarthActionOwner.Surf:
-                        // Surf keeps input ownership while Space charges the real
-                        // pillar launch. Prefer that authoritative mobility state
-                        // over the ordinary board crouch so the held trick has a
-                        // readable load pose. A ground tap still cannot enter this
-                        // branch without EarthPillarMobility beginning a charge.
+                        // Surf retains input ownership during its pillar charge;
+                        // preparation is presented by the looping base-body state.
                         if (pillarMobility != null && pillarMobility.IsCharging)
                         {
-                            technique = EarthTechniqueKind.Pillar;
-                            presentationTechnique = EarthTechniqueId.PillarJump;
-                            Vector3 up = motor != null ? motor.LocalUp : transform.up;
-                            Vector3 forward = motor != null
-                                ? motor.FacingForward
-                                : transform.forward;
-                            focus = transform.position + forward * 2f - up * .75f;
-                            return true;
+                            // The looping base-body half crouch owns preparation.
+                            // PillarJump is a finite release clip, not a held frame.
+                            return false;
                         }
                         technique = EarthTechniqueKind.Platform;
                         presentationTechnique = EarthTechniqueId.Surf;
                         focus = transform.position + transform.forward * 2f;
                         return true;
                     case EarthActionOwner.Pillar:
-                        // Space starts as a possible pillar, but a short tap is the
-                        // ordinary motor jump. Do not expose the PillarJump upper-body
-                        // clip until the hold threshold has started a real charge.
-                        if (!EarthPersistentAnimationPolicy.AllowsSustainedUpperBody(
-                                EarthActionOwner.Pillar,
-                                pillarMobility != null && pillarMobility.IsCharging))
-                            return false;
-                        technique = EarthTechniqueKind.Pillar;
-                        presentationTechnique = EarthTechniqueId.PillarJump;
-                        focus = transform.position - motor.LocalUp;
-                        return true;
+                        // PillarRaised starts the finite release clip on commit.
+                        return false;
                     case EarthActionOwner.LandingCushion:
-                        technique = EarthTechniqueKind.Pillar;
-                        presentationTechnique = EarthTechniqueId.PillarJump;
-                        focus = transform.position - motor.LocalUp;
-                        return true;
+                        // Landing/foot contact owns the compression; no frozen cast.
+                        return false;
                 }
             }
             if (executor != null && executor.IsRepairActive)
@@ -563,6 +552,19 @@ namespace Elemental.Presentation.Animation
                 Acceleration = Mathf.Max(0f, acceleration),
                 EntryAtContact = immediateActionBoundary
             };
+            if ((presentationTechnique == EarthTechniqueId.QuickStonePunch &&
+                 dualMouseAbilities != null && dualMouseAbilities.IsComboActionActive) ||
+                presentationTechnique is EarthTechniqueId.QuickStoneLeftKick or
+                EarthTechniqueId.QuickStoneRightKick or EarthTechniqueId.QuickStoneSpinKick)
+            {
+                // The bounded combo controller has already completed the previous
+                // beat before admitting this one. Start anticipation on that tick.
+                _hasPendingPresentation = false;
+                request.EntryAtContact = false;
+                StartAuthoritative(in request);
+                UpdatePoseIntent();
+                return;
+            }
             if (_authoritativeTransient)
             {
                 if (_authoritativeTick == tick && _presentationTechnique == presentationTechnique)
@@ -1244,7 +1246,8 @@ namespace Elemental.Presentation.Animation
                 target,
                 mass,
                 acceleration,
-                technique == EarthTechniqueId.QuickStonePunch);
+                technique == EarthTechniqueId.QuickStonePunch &&
+                (dualMouseAbilities == null || !dualMouseAbilities.IsComboActionActive));
 
         private void OnWallRaised(WallRaisedEvent value) => BeginAuthoritative(
             EarthTechniqueKind.Wall, EarthTechniqueId.RaiseWall, value.Tick,

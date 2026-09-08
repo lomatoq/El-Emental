@@ -1,0 +1,460 @@
+--- a/Assets/Elemental/Authoring/Editor/StoneUI/ElementalStoneSkinInstaller.cs
++++ b/Assets/Elemental/Authoring/Editor/StoneUI/ElementalStoneSkinInstaller.cs
+@@ -78,6 +78,7 @@
+             skin.referenceProfile=PrepareReferenceProfile(theme);
+             skin.referenceSelected=PrepareReferenceSelected();
+             skin.referenceCurtain=PrepareReferenceCurtain();
++            StoneReferenceSpriteInstaller.Apply(skin);
+             if (oldSkin != EditorJsonUtility.ToJson(skin)) { EditorUtility.SetDirty(skin); AssetDatabase.SaveAssetIfDirty(skin); }
+             if (theme.stoneSkin != skin) { Undo.RecordObject(theme, "Assign stone artwork"); theme.stoneSkin = skin; EditorUtility.SetDirty(theme); AssetDatabase.SaveAssetIfDirty(theme); }
+             Debug.Log("Stone artwork installed on existing theme. Existing layout/fonts/input/network/scene are preserved.");
+--- a/Assets/Elemental/Authoring/Editor/StoneUI/StoneReferenceSpriteInstaller.cs
++++ b/Assets/Elemental/Authoring/Editor/StoneUI/StoneReferenceSpriteInstaller.cs
+@@ -0,0 +1,48 @@
++using System;
++using UnityEditor;
++using UnityEngine;
++using Elemental.Presentation.UI;
++
++namespace Elemental.Authoring.Editor
++{
++    public static class StoneReferenceSpriteInstaller
++    {
++        private const string Root="Assets/Elemental/Content/UI/Stone/ReferenceSprites/";
++        public static void Apply(ElementalStoneSkin skin)
++        {
++            if(!System.IO.File.Exists(Root+"selected-construction.png"))return;
++            // Insets describe the cream face in source pixels. The green tail is visual overflow.
++            skin.referenceSelected=Prepare("selected-construction",2138,736,new Rect(0,34,2125,570),new Vector4(350,250,220,40));
++            skin.referenceSelectedInsets=new Vector4(210,237,2,21);
++            skin.referenceNormal=Prepare("passive-button",2172,724,new Rect(54,214,2056,285),new Vector4(125,12,125,12));
++            skin.referenceCard=Prepare("active-element-card",2135,736,new Rect(30,110,2071,465),Vector4.zero);
++            skin.fire=Prepare("element-glyphs",2172,724,new Rect(90,100,430,530),Vector4.zero,"reference-fire");
++            skin.earth=Prepare("element-glyphs",2172,724,new Rect(585,120,470,470),Vector4.zero,"reference-earth");
++            skin.water=Prepare("element-glyphs",2172,724,new Rect(1170,115,400,500),Vector4.zero,"reference-water");
++            skin.air=Prepare("air-glyph",1254,1254,new Rect(190,104,970,1070),Vector4.zero,"reference-air");
++        }
++        public static Sprite Prepare(string name,int width,int height,Rect rect,Vector4 border,string spriteName=null)
++        {
++            string texturePath=Root+name+".png",spritePath=Root+(spriteName??name)+".asset";
++            var importer=AssetImporter.GetAtPath(texturePath) as TextureImporter;
++            if(importer==null)throw new InvalidOperationException("Import reference artwork before installing: "+texturePath);
++            string previous=EditorJsonUtility.ToJson(importer);
++            importer.textureType=TextureImporterType.Default;importer.npotScale=TextureImporterNPOTScale.None;
++            importer.sRGBTexture=true;importer.alphaIsTransparency=true;importer.mipmapEnabled=false;
++            importer.textureCompression=TextureImporterCompression.Uncompressed;importer.maxTextureSize=4096;
++            importer.wrapMode=TextureWrapMode.Clamp;importer.filterMode=FilterMode.Bilinear;importer.isReadable=false;
++            if(previous!=EditorJsonUtility.ToJson(importer))importer.SaveAndReimport();
++            var texture=AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
++            if(texture.width!=width||texture.height!=height)throw new InvalidOperationException("Reference sprite native dimensions changed: "+texturePath);
++            var replacement=Sprite.Create(texture,rect,new Vector2(.5f,.5f),100,0,SpriteMeshType.FullRect,border);
++            replacement.name=spriteName??name;
++            var existing=AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
++            if(existing==null){AssetDatabase.CreateAsset(replacement,spritePath);return replacement;}
++            bool same=existing.rect==rect&&existing.border==border&&existing.texture==texture;
++            var a=existing.uv;var b=replacement.uv;same&=a.Length==b.Length;
++            for(int i=0;same&&i<a.Length;i++)same=a[i]==b[i];
++            if(!same){EditorUtility.CopySerialized(replacement,existing);EditorUtility.SetDirty(existing);AssetDatabase.SaveAssetIfDirty(existing);}
++            UnityEngine.Object.DestroyImmediate(replacement);return existing;
++        }
++    }
++}
+--- a/Assets/Elemental/Presentation/UI/ElementalStoneSkin.cs
++++ b/Assets/Elemental/Presentation/UI/ElementalStoneSkin.cs
+@@ -10,13 +10,15 @@
+         public ElementalStoneReferenceProfile referenceProfile;
+         public Sprite earth, fire, water, air, diamond, ring, minimap, timerPlate, teamWing, halo, shine, danger;
+         public Sprite curtain, normal, primary, hover, pressed, disabled, codeField;
+-        public Sprite referenceSelected, referenceCurtain;
++        public Sprite referenceSelected, referenceCurtain, referenceNormal, referenceCard;
++        // Native pixel insets from the complete construction bounds to its cream button face.
++        public Vector4 referenceSelectedInsets;
+         public Sprite health, mana, pause, window, ribbon;
+         public Sprite wordmark, divider, botIcon, hostIcon, joinIcon, settingsIcon, exitIcon;
+         public Sprite backIcon, playIcon, copyIcon, checkIcon, volumeIcon, sensitivityIcon, sliderDiamond;
+ 
+         public Sprite Button(bool active, bool down, bool hot, Sprite resting)
+-            => !active && disabled != null ? disabled : referenceProfile != null && referenceProfile.enabled && referenceSelected != null && (hot || down) ? referenceSelected : down && pressed != null ? pressed : hot && hover != null ? hover : resting;
++            => !active && referenceProfile != null && referenceProfile.enabled && referenceNormal != null ? referenceNormal : !active && disabled != null ? disabled : referenceProfile != null && referenceProfile.enabled && referenceSelected != null && (hot || down) ? referenceSelected : down && pressed != null ? pressed : hot && hover != null ? hover : resting;
+ 
+         // Owned by one live HUD tree, not by a shared asset or static registry.
+         public sealed class HudBinding
+--- a/Assets/Elemental/Presentation/UI/FrontendButton.cs
++++ b/Assets/Elemental/Presentation/UI/FrontendButton.cs
+@@ -25,6 +25,7 @@
+         private bool _focused, _pointerInside;
+         private TMPro.TMP_Text[] _captions;
+         private Image _roleIcon;
++        private StoneReferenceGlyph _roleGlyph, _rimGlow;
+         private ElementalStoneReferenceProfile Reference => _theme?.stoneSkin?.referenceProfile;
+         private bool ReferenceActive => Reference != null && Reference.enabled;
+         private float Duration(string track,float fallback)=>ReferenceActive?Reference.Duration(track,fallback,ReducedMotion):fallback;
+@@ -37,10 +38,13 @@
+             _captions=_visual.GetComponentsInChildren<TMPro.TMP_Text>(true);
+             var role=_visual.Find("Button role icon"); if(role!=null)_roleIcon=role.GetComponent<Image>();
+             _restingSprite = (_graphic as Image)?.sprite;
++            _roleGlyph=_visual.GetComponentInChildren<StoneReferenceGlyph>(true);
+             _button.transition = Selectable.Transition.None;
+             if(ReferenceActive && _halo==null)
+             {
+                 _halo=CreateFx("Stone hover halo",_theme.stoneSkin.halo);_halo.transform.SetAsFirstSibling();
++                _rimGlow=StoneReferenceGlyph.Create(_visual,"Reference button edge light",StoneReferenceGlyph.Shape.ButtonGlow,new Color(.73f,.95f,.46f,1));
++                var rim=_rimGlow.rectTransform;rim.anchorMin=Vector2.zero;rim.anchorMax=Vector2.one;rim.offsetMin=Vector2.zero;rim.offsetMax=Vector2.zero;_rimGlow.canvasRenderer.SetAlpha(0);
+                 _shine=CreateFx("Stone shine",_theme.stoneSkin.shine);_shine.transform.SetAsLastSibling();
+                 var clip=new GameObject("Stone shine clip",typeof(RectTransform),typeof(RectMask2D));var clipRect=(RectTransform)clip.transform;
+                 clipRect.SetParent(_visual,false);clipRect.anchorMin=Vector2.zero;clipRect.anchorMax=Vector2.one;clipRect.offsetMin=clipRect.offsetMax=Vector2.zero;
+@@ -56,11 +60,13 @@
+             if (!(_graphic is Image source)) throw new System.InvalidOperationException("FrontendButton needs an Image target graphic.");
+             // Keep the authored anchor, scale and hit rectangle still. Only its visual content
+             // shrinks around its center, so a press near an edge cannot chase its own hit area.
+-            var go = new GameObject("Press Visual", typeof(RectTransform), typeof(Image));
++            var go = new GameObject("Press Visual", typeof(RectTransform));
+             _visual = go.GetComponent<RectTransform>(); _visual.SetParent(transform, false);
+             _visual.anchorMin = Vector2.zero; _visual.anchorMax = Vector2.one;
+             _visual.pivot = new Vector2(.5f, .5f); _visual.offsetMin = _visual.offsetMax = Vector2.zero;
+-            var image = go.GetComponent<Image>();
++            var art = new GameObject("Button artwork",typeof(RectTransform),typeof(Image));
++            var artRect=(RectTransform)art.transform;artRect.SetParent(_visual,false);artRect.anchorMin=Vector2.zero;artRect.anchorMax=Vector2.one;artRect.offsetMin=artRect.offsetMax=Vector2.zero;
++            var image = art.GetComponent<Image>();
+             image.sprite = source.sprite; image.overrideSprite = source.overrideSprite;
+             image.type = source.type; image.preserveAspect = source.preserveAspect;
+             image.fillCenter = source.fillCenter; image.fillAmount = source.fillAmount;
+@@ -72,6 +78,7 @@
+                 var child = transform.GetChild(i);
+                 if (child != _visual) { child.SetParent(_visual, true); child.SetAsFirstSibling(); }
+             }
++            art.transform.SetAsFirstSibling();
+             source.color = Color.clear;
+             _graphic = image; _button.targetGraphic = image;
+         }
+@@ -88,7 +95,13 @@
+                 var sprite = _theme.stoneSkin.Button(active, _pressed, _hot, _restingSprite);
+                 skinned.overrideSprite = null; // The cloned normal override must not mask live state sprites.
+                 if (skinned.sprite != sprite) skinned.sprite = sprite;
+-                skinned.color = Color.white;
++                skinned.color = active?Color.white:new Color(.6f,.6f,.6f,.65f);
++                var insets=ReferenceActive&&sprite==_theme.stoneSkin.referenceSelected?_theme.stoneSkin.referenceSelectedInsets:Vector4.zero;
++                float faceHeight=sprite.rect.height-insets.y-insets.w;
++                float density=faceHeight/Mathf.Max(1,_visual.rect.height);
++                skinned.pixelsPerUnitMultiplier=density;
++                skinned.rectTransform.offsetMin=new Vector2(-insets.x,-insets.y)/density;
++                skinned.rectTransform.offsetMax=new Vector2(insets.z,insets.w)/density;
+             }
+             else _graphic.color = Color.Lerp(_normal, _highlight, _blend) * (active ? Color.white : new Color(.6f, .6f, .6f, .65f));
+             bool selected=active&&(_hot||_focused||_pressed);
+@@ -96,13 +109,15 @@
+             var ink=cream?new Color(.04f,.055f,.055f):_theme.text;
+             if(_captions!=null)foreach(var caption in _captions)caption.color=ink;
+             if(_roleIcon!=null)_roleIcon.color=ink;
++            if(_roleGlyph!=null)_roleGlyph.color=ink;
+             // Latest reference requests a subtle 4% visual enlargement; authored easing/duration remain.
+             float target = !ReducedMotion && active ? _pressed ? (ReferenceActive?Reference.Sample("button_press","scale",1,_theme.pressedScale):_theme.pressedScale) : ReferenceActive&&(_hot||_focused)?1.04f:ReferenceActive?Reference.Sample("button_release","scale",1,1):1f : 1f;
+             if(_halo!=null)
+             {
+-                _halo.color=new Color(.73f,.95f,.46f,Reference.Sample("button_hover","glow",_blend));
++                _halo.color=Color.clear; // No radial halo behind the plate.
++                _rimGlow.canvasRenderer.SetAlpha(Reference.Sample("button_hover","glow",_blend));
+                 _focusProgress=Mathf.MoveTowards(_focusProgress,_focused&&active?1:0,Time.unscaledDeltaTime/Duration("focus_enter",.1f));
+-                _focusMark.color=new Color(1,.94f,.74f,Reference.Sample("focus_enter","focus",_focusProgress));
++                _focusMark.color=_theme.stoneSkin.referenceSelectedInsets==Vector4.zero?new Color(1,.94f,.74f,Reference.Sample("focus_enter","focus",_focusProgress)):Color.clear;
+                 _shineAge+=Time.unscaledDeltaTime;
+                 float phase=Reference.Sample("shine_pass","phase",_shineAge/Duration("shine_pass",.6f));
+                 _shine.rectTransform.anchoredPosition=new Vector2(Mathf.Lerp(-_visual.rect.width,_visual.rect.width,phase),0);
+--- a/Assets/Elemental/Presentation/UI/FrontendMenuView.cs
++++ b/Assets/Elemental/Presentation/UI/FrontendMenuView.cs
+@@ -47,8 +47,8 @@
+         private float _menuElementAge;
+         private bool _connecting, _statusError, _statusLeaving;
+         private Vector2 _statusBasePosition;
+-        private readonly Image[] _elementFrames = new Image[4];
+-        private readonly Image[] _elementGlows = new Image[4];
++        private readonly Graphic[] _elementFrames = new Graphic[4];
++        private readonly Graphic[] _elementGlows = new Graphic[4];
+         private Image _activeElementGlyph;
+         private TMP_Text _activeElementTraits;
+         private TMP_Text _activeElementLabel;
+@@ -108,7 +108,7 @@
+             _pages = new GameObject[5];
+             for (int i = 0; i < _pages.Length; i++)
+             {
+-                RectTransform page = Rect(_panel, ((FrontendPage)i).ToString()); Place(page, 0, ReferenceActive ? 484 : 345, ReferenceActive ? 560 : 480, ReferenceActive ? 500 : 470); _pages[i] = page.gameObject;
++                RectTransform page = Rect(_panel, ((FrontendPage)i).ToString()); Place(page, 0, ReferenceActive ? 552 : 345, ReferenceActive ? 560 : 480, ReferenceActive ? 500 : 470); _pages[i] = page.gameObject;
+             }
+             BuildMain(_pages[0].transform); BuildSettings(_pages[1].transform); BuildHost(_pages[2].transform); BuildJoin(_pages[3].transform); BuildPause(_pages[4].transform);
+             _status = Label(menuContents, "", 20, _theme.muted, readable: true); Stretch(_status.rectTransform, new Vector2(.044f, .006f), new Vector2(.35f, .04f));
+@@ -121,11 +121,10 @@
+                 var footerBlock=Rect(menuContents,"Element footer");footerBlock.anchorMin=footerBlock.anchorMax=new Vector2(1,0);
+                 footerBlock.pivot=new Vector2(1,0);footerBlock.anchoredPosition=new Vector2(-42,24);footerBlock.sizeDelta=new Vector2(430,68);
+                 footer.rectTransform.SetParent(footerBlock,false);Place(footer.rectTransform,0,0,430,30);footer.characterSpacing=2;
+-                var footerRule=Image(footerBlock,"Element footer rule",_theme.accent); footerRule.raycastTarget=false;Place(footerRule.rectTransform,0,46,430,1);
+-                var halo=Image(footerBlock,"Element footer glow",new Color(1,.91f,.58f,.5f));halo.sprite=_theme.stoneSkin.halo;halo.raycastTarget=false;Place(halo.rectTransform,9,23,46,46);
+-                var footerDiamond=Image(footerBlock,"Element footer diamond",_theme.accent); footerDiamond.raycastTarget=false;
+-                footerDiamond.sprite=_theme.stoneSkin.diamond; footerDiamond.preserveAspect=true;Place(footerDiamond.rectTransform,21,35,22,22);
+-                var core=Image(footerDiamond.transform,"Light core",_theme.accent);core.raycastTarget=false;core.rectTransform.anchorMin=core.rectTransform.anchorMax=new Vector2(.5f,.5f);core.rectTransform.sizeDelta=new Vector2(6,6);core.rectTransform.localRotation=Quaternion.Euler(0,0,45);
++                var footerRule=Image(footerBlock,"Element footer rule",_theme.accent); footerRule.raycastTarget=false;Place(footerRule.rectTransform,44,46,386,1);
++                var halo=StoneReferenceGlyph.Create(footerBlock,"Element footer glow",StoneReferenceGlyph.Shape.DiamondGlow,new Color(1,.91f,.58f,.8f));Place(halo.rectTransform,17,31,30,30);
++                var footerDiamond=StoneReferenceGlyph.Create(footerBlock,"Element footer diamond",StoneReferenceGlyph.Shape.DiamondGlow,_theme.accent);
++                Place(footerDiamond.rectTransform,21,35,22,22);
+             }
+             _countdown = Label(transform, "4", 160, _theme.text);
+             Stretch(_countdown.rectTransform, new Vector2(.35f, .30f), new Vector2(.65f, .70f));
+@@ -220,7 +219,7 @@
+             if (ReferenceActive)
+             {
+                 _activePage = (RectTransform)_pages[(int)page].transform;
+-                _pageBasePosition = new Vector2(0,-484); _activePage.anchoredPosition=_pageBasePosition; _pageAge=0;
++                _pageBasePosition = new Vector2(0,-552); _activePage.anchoredPosition=_pageBasePosition; _pageAge=0;
+                 _pageGroup = _activePage.GetComponent<CanvasGroup>();
+                 if (_pageGroup == null) _pageGroup = _activePage.gameObject.AddComponent<CanvasGroup>();
+                 _pageGroup.alpha=0;
+@@ -290,7 +289,7 @@
+             var graphic = r.GetComponent<Image>(); graphic.color = normal;
+             var skin = _theme.stoneSkin;
+             bool skinned = skin != null && skin.normal != null;
+-            if (skinned) { graphic.sprite = tier == 0 && skin.primary != null ? skin.primary : skin.normal; graphic.type = UnityEngine.UI.Image.Type.Sliced; graphic.color = Color.white;
++            if (skinned) { graphic.sprite = ReferenceActive && skin.referenceNormal != null ? skin.referenceNormal : tier == 0 && skin.primary != null ? skin.primary : skin.normal; graphic.type = UnityEngine.UI.Image.Type.Sliced; graphic.color = Color.white;
+                 // Scale border pixels uniformly with the 136px source height; leave the hit rect unchanged.
+                 graphic.pixelsPerUnitMultiplier = graphic.sprite.rect.height / (ReferenceActive ? 78f : 70f);
+             }
+@@ -298,6 +297,11 @@
+             var caption = Label(r, text, ReferenceActive ? 25 : tier == 0 ? 30 : 27, tier == 0 && !skinned ? _theme.ink : _theme.text);
+             Stretch(caption.rectTransform, Vector2.zero, Vector2.one); caption.margin = new Vector4(ReferenceActive ? 114 : skinned ? 72 : 24, 0, 24, 0); caption.alignment = TextAlignmentOptions.MidlineLeft;
+             if (skinned && roleIcon != null) Ornament(r, "Button role icon", roleIcon, ReferenceActive ? 38 : 28, ReferenceActive ? 18 : 17, ReferenceActive ? 42 : 36, ReferenceActive ? 42 : 36);
++            if (ReferenceActive && roleIcon != null)
++            {
++                StoneReferenceGlyph.Shape? shape=roleIcon==skin.hostIcon?StoneReferenceGlyph.Shape.People:roleIcon==skin.joinIcon?StoneReferenceGlyph.Shape.PersonPlus:roleIcon==skin.settingsIcon?StoneReferenceGlyph.Shape.Gear:roleIcon==skin.exitIcon?StoneReferenceGlyph.Shape.Door:roleIcon==skin.botIcon?StoneReferenceGlyph.Shape.Target:(StoneReferenceGlyph.Shape?)null;
++                if(shape.HasValue){r.Find("Button role icon").GetComponent<Image>().enabled=false;var glyph=StoneReferenceGlyph.Create(r,"Reference role silhouette",shape.Value,_theme.text);Place(glyph.rectTransform,38,18,42,42);}
++            }
+             if (ReferenceActive) { var arrow=Label(r,"›",36,_theme.accent,readable:true); arrow.name="Button chevron"; Place(arrow.rectTransform,507,8,32,62); arrow.alignment=TextAlignmentOptions.Center; }
+             r.GetComponent<FrontendButton>().Configure(_theme, _audio, normal, Color.Lerp(normal, _theme.accent, tier == 0 ? .28f : .3f)); return b;
+         }
+@@ -338,21 +342,21 @@
+             Color[] colors={new Color(1,.40f,.04f),new Color(.77f,.97f,.41f),new Color(.2f,.75f,1),new Color(.76f,.75f,.71f)};
+             for(int i=0;i<4;i++)
+             {
+-                var glow=Image(parent,"Element glow "+ElementOrder[i],Color.clear); glow.sprite=skin.halo;
+-                glow.raycastTarget=false; Place(glow.rectTransform,26+i*128,-27,124,124); _elementGlows[i]=glow;
+-                var frame=Image(parent,"Element status "+ElementOrder[i],colors[i]); frame.sprite=skin.diamond;
+-                frame.preserveAspect=true; frame.raycastTarget=false; Place(frame.rectTransform,53+i*128,0,70,70);
++                var glow=StoneReferenceGlyph.Create(parent,"Element glow "+ElementOrder[i],StoneReferenceGlyph.Shape.DiamondGlow,new Color(.75f,.98f,.38f,1));
++                glow.raycastTarget=false; Place(glow.rectTransform,41+i*128,-12,94,94); _elementGlows[i]=glow;glow.canvasRenderer.SetAlpha(0);
++                var frame=StoneReferenceGlyph.Create(parent,"Element status "+ElementOrder[i],StoneReferenceGlyph.Shape.Diamond,colors[i]);
++                frame.raycastTarget=false; Place(frame.rectTransform,53+i*128,0,70,70);
+                 frame.rectTransform.pivot=new Vector2(.5f,.5f);frame.rectTransform.anchoredPosition+=new Vector2(35,-35);_elementFrames[i]=frame;
+-                if(sprites[i]!=null) { Ornament(frame.transform,"Element glyph",sprites[i],15,15,40,40); frame.transform.Find("Element glyph").GetComponent<Image>().color=colors[i]; }
++                if(sprites[i]!=null) { Ornament(frame.transform,"Element glyph",sprites[i],15,15,40,40); frame.transform.Find("Element glyph").GetComponent<Image>().color=Color.white; }
+                 var name=Label(parent,ElementOrder[i].ToString().ToUpperInvariant(),18,colors[i]);
+                 Place(name.rectTransform,38+i*128,84,102,30); name.alignment=TextAlignmentOptions.Center;
+             }
+-            var ribbon=Image(parent,"Active element ribbon",Color.white); ribbon.sprite=skin.ribbon; ribbon.type=UnityEngine.UI.Image.Type.Sliced;
+-            ribbon.raycastTarget=false; Place(ribbon.rectTransform,-12,112,594,82);
+-            _activeElementGlyph=Image(ribbon.transform,"Active element glyph",Color.white); _activeElementGlyph.preserveAspect=true; _activeElementGlyph.raycastTarget=false; Place(_activeElementGlyph.rectTransform,29,9,65,65);
+-            _activeElementLabel=Label(ribbon.transform,"",21,_theme.accent); Place(_activeElementLabel.rectTransform,110,8,470,34);
++            var ribbon=Image(parent,"Active element ribbon",Color.white); ribbon.sprite=skin.referenceCard!=null?skin.referenceCard:skin.ribbon; ribbon.type=UnityEngine.UI.Image.Type.Simple;
++            ribbon.raycastTarget=false; Place(ribbon.rectTransform,-12,122,594,133);
++            _activeElementGlyph=Image(ribbon.transform,"Active element glyph",Color.white); _activeElementGlyph.preserveAspect=true; _activeElementGlyph.raycastTarget=false; Place(_activeElementGlyph.rectTransform,58,8,68,68);
++            _activeElementLabel=Label(ribbon.transform,"",21,_theme.accent); Place(_activeElementLabel.rectTransform,168,8,366,34);
+             _activeElementLabel.alignment=TextAlignmentOptions.Center;
+-            _activeElementTraits=Label(ribbon.transform,"",13,_theme.text); Place(_activeElementTraits.rectTransform,110,44,470,26);
++            _activeElementTraits=Label(ribbon.transform,"",13,_theme.text); Place(_activeElementTraits.rectTransform,156,48,366,26);
+             _activeElementTraits.fontSize=13; _activeElementTraits.characterSpacing=2; _activeElementTraits.alignment=TextAlignmentOptions.Center;
+             _lastStatusElement=(Elemental.Simulation.Magic.ElementId)byte.MaxValue;
+         }
+@@ -407,7 +411,7 @@
+                     float selectionT=_menuElementAge/Reference.Duration("element_select",.22f,reduced);
+                     float selectionScale=active&&!reduced?Reference.Sample("element_select","scale",selectionT,1):1;
+                     _elementFrames[i].transform.localScale=Vector3.one*(active?1.24f*selectionScale:1);
+-                    _elementGlows[i].color=new Color(.75f,.98f,.38f,active?(reduced?.65f:.3f+Reference.LoopSample("selected_breath","opacity",Time.unscaledTime,.35f)):0);
++                    _elementGlows[i].canvasRenderer.SetAlpha(active?(reduced?.65f:.3f+Reference.LoopSample("selected_breath","opacity",Time.unscaledTime,.35f)):0);
+                 }
+             }
+         }
+--- a/Assets/Elemental/Presentation/UI/StoneReferenceGlyph.cs
++++ b/Assets/Elemental/Presentation/UI/StoneReferenceGlyph.cs
+@@ -0,0 +1,85 @@
++using UnityEngine;
++using UnityEngine.UI;
++
++namespace Elemental.Presentation.UI
++{
++    /// <summary>Small reference silhouettes and rim-local light. No texture backdrop or input surface.</summary>
++    public sealed class StoneReferenceGlyph : MaskableGraphic
++    {
++        public enum Shape { Diamond, DiamondGlow, ButtonGlow, People, PersonPlus, Gear, Door, Target }
++        public Shape shape;
++        public static StoneReferenceGlyph Create(Transform parent, string name, Shape shape, Color color)
++        {
++            var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(StoneReferenceGlyph));
++            go.transform.SetParent(parent, false);
++            var graphic = go.GetComponent<StoneReferenceGlyph>();
++            graphic.shape = shape; graphic.color = color; graphic.raycastTarget = false;
++            return graphic;
++        }
++        protected override void OnPopulateMesh(VertexHelper vh)
++        {
++            vh.Clear(); var r = GetPixelAdjustedRect();
++            Vector2 P(float x, float y) => new Vector2(r.xMin + r.width * x, r.yMin + r.height * y);
++            void Poly(Color tint, params Vector2[] points)
++            {
++                int first = vh.currentVertCount;
++                foreach (var p in points) vh.AddVert(P(p.x,p.y), tint, Vector2.zero);
++                for (int i=1;i<points.Length-1;i++) vh.AddTriangle(first,first+i,first+i+1);
++            }
++            void Line(Vector2 a, Vector2 b, float width, Color tint)
++            {
++                var n = new Vector2(-(b-a).y,(b-a).x).normalized * width * .5f;
++                Poly(tint,a+n,b+n,b-n,a-n);
++            }
++            void Ring(float radius, float width, Color tint, int sides=4, float angle=0)
++            {
++                for(int i=0;i<sides;i++)
++                {
++                    float a=angle+i*Mathf.PI*2/sides,b=angle+(i+1)*Mathf.PI*2/sides;
++                    Line(new Vector2(.5f+Mathf.Cos(a)*radius,.5f+Mathf.Sin(a)*radius),new Vector2(.5f+Mathf.Cos(b)*radius,.5f+Mathf.Sin(b)*radius),width,tint);
++                }
++            }
++            void Disc(float x,float y,float radius,Color tint)
++            {
++                var points=new Vector2[24]; for(int i=0;i<24;i++){float a=i*Mathf.PI/12;points[i]=new Vector2(x+Mathf.Cos(a)*radius,y+Mathf.Sin(a)*radius);} Poly(tint,points);
++            }
++            void Box(float x,float y,float w,float h,Color tint) => Poly(tint,new Vector2(x,y),new Vector2(x+w,y),new Vector2(x+w,y+h),new Vector2(x,y+h));
++            void Person(float x,float y,float s)
++            {
++                Disc(x,y+s*.3f,s*.16f,color);
++                Poly(color,new Vector2(x-s*.28f,y-s*.3f),new Vector2(x+s*.28f,y-s*.3f),new Vector2(x+s*.23f,y),new Vector2(x+s*.1f,y+s*.08f),new Vector2(x-s*.1f,y+s*.08f),new Vector2(x-s*.23f,y));
++            }
++            switch(shape)
++            {
++                case Shape.Diamond:
++                    Poly(new Color(.035f,.06f,.055f,color.a*.88f),new Vector2(.5f,.98f),new Vector2(.98f,.5f),new Vector2(.5f,.02f),new Vector2(.02f,.5f));
++                    Ring(.47f,.016f,color);Ring(.425f,.008f,new Color(color.r,color.g,color.b,color.a*.5f)); break;
++                case Shape.DiamondGlow:
++                    // Light occupies only a thin band around the diamond perimeter, never a radial disk.
++                    Ring(.45f,.10f,new Color(color.r,color.g,color.b,color.a*.07f));
++                    Ring(.45f,.052f,new Color(color.r,color.g,color.b,color.a*.17f));
++                    Ring(.45f,.018f,new Color(color.r,color.g,color.b,color.a*.8f)); break;
++                case Shape.ButtonGlow:
++                    var outline=new[]{new Vector2(0,.5f),new Vector2(.07f,.98f),new Vector2(.965f,.98f),new Vector2(1,.5f),new Vector2(.965f,.02f),new Vector2(.07f,.02f)};
++                    foreach(float thickness in new[]{6f,3f,1f}) for(int i=0;i<outline.Length;i++)
++                    {
++                        var a=P(outline[i].x,outline[i].y);var b=P(outline[(i+1)%outline.Length].x,outline[(i+1)%outline.Length].y);
++                        var n=new Vector2(-(b-a).y,(b-a).x).normalized*thickness*.5f;int first=vh.currentVertCount;
++                        var tint=new Color(color.r,color.g,color.b,color.a*(thickness>4?.06f:thickness>1?.16f:.8f));
++                        vh.AddVert(a+n,tint,Vector2.zero);vh.AddVert(b+n,tint,Vector2.zero);vh.AddVert(b-n,tint,Vector2.zero);vh.AddVert(a-n,tint,Vector2.zero);vh.AddTriangle(first,first+1,first+2);vh.AddTriangle(first,first+2,first+3);
++                    }break;
++                case Shape.People: Person(.23f,.48f,.66f);Person(.77f,.48f,.66f);Person(.5f,.45f,.92f); break;
++                case Shape.PersonPlus: Person(.36f,.48f,.95f);Box(.68f,.43f,.29f,.085f,color);Box(.785f,.325f,.08f,.29f,color);break;
++                case Shape.Gear:
++                    // Twelve teeth, an open center and a solid annulus.
++                    Ring(.28f,.14f,color,32);
++                    for(int i=0;i<12;i++){float a=i*Mathf.PI/6;var d=new Vector2(Mathf.Cos(a),Mathf.Sin(a));Line(new Vector2(.5f,.5f)+d*.30f,new Vector2(.5f,.5f)+d*.46f,.11f,color);}break;
++                case Shape.Door:
++                    Box(.19f,.12f,.10f,.78f,color);Box(.19f,.82f,.6f,.08f,color);Box(.71f,.12f,.08f,.78f,color);
++                    Poly(color,new Vector2(.30f,.15f),new Vector2(.61f,.04f),new Vector2(.61f,.79f),new Vector2(.30f,.79f));
++                    Disc(.55f,.43f,.025f,new Color(.08f,.10f,.09f,color.a));break;
++                case Shape.Target: Ring(.43f,.055f,color);Ring(.25f,.045f,color);Ring(.07f,.04f,color);break;
++            }
++        }
++    }
++}
+--- a/Assets/Elemental/Tests/EditMode/ReferenceSpriteGeometryTests.cs
++++ b/Assets/Elemental/Tests/EditMode/ReferenceSpriteGeometryTests.cs
+@@ -0,0 +1,49 @@
++using System.IO;
++using NUnit.Framework;
++using UnityEditor;
++using UnityEngine;
++using Elemental.Presentation.UI;
++
++namespace Elemental.Tests.EditMode
++{
++    public sealed class ReferenceSpriteGeometryTests
++    {
++        private const string Root="Assets/Elemental/Content/UI/Stone/ReferenceSprites/";
++        [TestCase("selected-construction",2138,736)]
++        [TestCase("passive-button",2172,724)]
++        [TestCase("active-element-card",2135,736)]
++        [TestCase("element-glyphs",2172,724)]
++        [TestCase("air-glyph",1254,1254)]
++        public void ReferenceArtPreservesNativePixelsAndActualAlpha(string name,int width,int height)
++        {
++            string path=Root+name+".png";
++            var importer=(TextureImporter)AssetImporter.GetAtPath(path);
++            Assert.That(importer.npotScale,Is.EqualTo(TextureImporterNPOTScale.None));
++            Assert.That(importer.maxTextureSize,Is.GreaterThanOrEqualTo(Mathf.Max(width,height)));
++            var imported=AssetDatabase.LoadAssetAtPath<Texture2D>(path);
++            Assert.That(imported.width,Is.EqualTo(width));Assert.That(imported.height,Is.EqualTo(height));
++            // Decode a temporary CPU texture; production textures stay non-readable.
++            var probe=new Texture2D(2,2,TextureFormat.RGBA32,false);
++            try
++            {
++                Assert.That(probe.LoadImage(File.ReadAllBytes(path)),Is.True);
++                int transparent=0,opaque=0;
++                foreach(var pixel in probe.GetPixels32()){if(pixel.a==0)transparent++;if(pixel.a>240)opaque++;}
++                Assert.That(transparent,Is.GreaterThan(width*height/10),"A drawn checkerboard or black backdrop is not alpha.");
++                Assert.That(opaque,Is.GreaterThan(width*height/10),"The intended UI foreground must survive extraction.");
++            }
++            finally{Object.DestroyImmediate(probe);}
++        }
++        [Test]
++        public void WholeConstructionHasPositiveFaceAndOverflowInsets()
++        {
++            var skin=AssetDatabase.LoadAssetAtPath<ElementalStoneSkin>("Assets/Elemental/Content/UI/Stone/ElementalStoneSkin.asset");
++            Assert.That(skin.referenceSelected,Is.Not.Null);Assert.That(skin.referenceNormal,Is.Not.Null);Assert.That(skin.referenceCard,Is.Not.Null);
++            var r=skin.referenceSelected.rect;var i=skin.referenceSelectedInsets;
++            Assert.That(i.x,Is.GreaterThan(100));Assert.That(i.y,Is.GreaterThan(100));
++            Assert.That(r.width-i.x-i.z,Is.GreaterThan(500));Assert.That(r.height-i.y-i.w,Is.GreaterThan(100));
++            float density=(r.height-i.y-i.w)/78;
++            Assert.That(i.x/density,Is.InRange(40f,80f));Assert.That(i.y/density,Is.InRange(40f,90f));
++        }
++    }
++}
+--- a/Assets/Elemental/Tests/PlayMode/StoneSkinPlayTests.cs
++++ b/Assets/Elemental/Tests/PlayMode/StoneSkinPlayTests.cs
+@@ -51,8 +51,8 @@
+             Assert.That(theme.stoneSkin.referenceProfile.PresetCount,Is.EqualTo(20));
+             Assert.That(theme.stoneSkin.referenceSelected,Is.Not.Null);
+             var cream=theme.stoneSkin.referenceSelected;
+-            Assert.That(cream.texture.width,Is.EqualTo(2007),"NPOT importer must not rescale native cropped artwork.");
+-            Assert.That(cream.texture.height,Is.EqualTo(783));
++            Assert.That(cream.texture.width,Is.EqualTo(2138),"NPOT importer must not rescale native cropped artwork.");
++            Assert.That(cream.texture.height,Is.EqualTo(736));
+             Vector2 uvMin=Vector2.one,uvMax=Vector2.zero;
+             foreach(var uv in cream.uv){uvMin=Vector2.Min(uvMin,uv);uvMax=Vector2.Max(uvMax,uv);}
+             Assert.That(uvMin.y,Is.EqualTo(cream.rect.yMin/cream.texture.height).Within(.0001f));
+@@ -91,26 +91,29 @@
+             var play = view.transform.Find("Menu contents/Menu column/Main/PLAY VS BOT").GetComponent<Button>();
+             var rect = (RectTransform)play.transform; var position = rect.anchoredPosition; var size = rect.sizeDelta;
+             var effect = play.GetComponent<FrontendButton>(); var graphic = (Image)play.targetGraphic;
+-            Assert.That(graphic.transform.name, Is.EqualTo("Press Visual"));
++            Assert.That(graphic.transform.name, Is.EqualTo("Button artwork"));
+             Assert.That(graphic.sprite, Is.Not.Null);
+-            var role = graphic.transform.Find("Button role icon").GetComponent<Image>();
++            var role = graphic.transform.parent.Find("Button role icon").GetComponent<Image>();
+             Assert.That(role.sprite, Is.SameAs(theme.stoneSkin.botIcon)); Assert.That(role.raycastTarget, Is.False);
+             Assert.That(rect.sizeDelta, Is.EqualTo(new Vector2(560, 78)));
++            Assert.That(graphic.transform.parent.Find("Reference role silhouette").GetComponent<StoneReferenceGlyph>().shape,Is.EqualTo(StoneReferenceGlyph.Shape.Target));
+             var pointer = new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left };
+             effect.OnPointerEnter(pointer); yield return new WaitForSecondsRealtime(.2f);
+-            if(!flow.Preferences.ReducedMotion) Assert.That(graphic.transform.localScale.x,Is.EqualTo(1.04f).Within(.002f));
++            if(!flow.Preferences.ReducedMotion) Assert.That(graphic.transform.parent.localScale.x,Is.EqualTo(1.04f).Within(.002f));
+             Assert.That(rect.anchoredPosition,Is.EqualTo(position));Assert.That(rect.sizeDelta,Is.EqualTo(size));
+             effect.OnDeselect(new BaseEventData(EventSystem.current));yield return new WaitForSecondsRealtime(.2f);
+-            if(!flow.Preferences.ReducedMotion)Assert.That(graphic.transform.localScale.x,Is.EqualTo(1.04f).Within(.002f),"Pointer hover survives keyboard focus moving away.");
++            if(!flow.Preferences.ReducedMotion)Assert.That(graphic.transform.parent.localScale.x,Is.EqualTo(1.04f).Within(.002f),"Pointer hover survives keyboard focus moving away.");
+             Assert.That(graphic.overrideSprite, Is.SameAs(theme.stoneSkin.referenceSelected != null ? theme.stoneSkin.referenceSelected : theme.stoneSkin.hover));
+             effect.OnPointerDown(pointer); yield return new WaitForSecondsRealtime(.15f);
+             Assert.That(graphic.overrideSprite, Is.SameAs(theme.stoneSkin.referenceSelected != null ? theme.stoneSkin.referenceSelected : theme.stoneSkin.pressed));
+             Assert.That(rect.anchoredPosition, Is.EqualTo(position)); Assert.That(rect.sizeDelta, Is.EqualTo(size));
++            Assert.That(graphic.rectTransform.offsetMin.x,Is.LessThan(-40),"The whole green construction extends left of the stable cream-face hit rectangle.");
++            Assert.That(graphic.rectTransform.offsetMin.y,Is.LessThan(-40),"The lower green tail must not be cropped to the cream plate.");
+             yield return Capture("Pressed"); effect.OnPointerUp(pointer); effect.OnPointerExit(pointer);
+-            play.interactable = false; yield return null; Assert.That(graphic.overrideSprite, Is.SameAs(theme.stoneSkin.disabled));
++            play.interactable = false; yield return null; Assert.That(graphic.overrideSprite, Is.SameAs(theme.stoneSkin.referenceNormal != null ? theme.stoneSkin.referenceNormal : theme.stoneSkin.disabled));
+             play.interactable = true;
+             effect.ReducedMotion=true; effect.OnPointerDown(pointer); yield return new WaitForSecondsRealtime(.12f);
+-            Assert.That(graphic.transform.localScale,Is.EqualTo(Vector3.one)); effect.OnPointerUp(pointer);effect.ReducedMotion=false;
++            Assert.That(graphic.transform.parent.localScale,Is.EqualTo(Vector3.one)); effect.OnPointerUp(pointer);effect.ReducedMotion=false;
+             var hud = Find<EarthDuelHud>(); var hudRoot = hud.GetComponent<UIDocument>().rootVisualElement.Q("duel-hud");
+             var health = hudRoot.Q("health-icon"); var gauge = hudRoot.Q("health-gauge"); var globe = hudRoot.Q("planet-globe");
+             yield return ProductionCombatTestFlow.BeginBotAfterReadiness(_scene);

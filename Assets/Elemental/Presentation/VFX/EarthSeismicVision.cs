@@ -12,12 +12,15 @@ namespace Elemental.Presentation.VFX
     [DefaultExecutionOrder(1700), DisallowMultipleComponent, RequireComponent(typeof(PlanetMotor))]
     public sealed class EarthSeismicVision : MonoBehaviour
     {
-        private const int WaveCount = 5;
+        public const int WaveCount = 16;
         private static readonly ProfilerMarker PublishMarker = new("Elemental.SeismicVision.Publish");
         private static readonly int ActiveId = Shader.PropertyToID("_EarthSeismicVision");
-        private static readonly int WavesId = Shader.PropertyToID("_EarthSeismicWaves");
-        private static readonly int StrengthsId = Shader.PropertyToID("_EarthSeismicStrengths");
-        private static readonly int RadiusTravelsId = Shader.PropertyToID("_EarthSeismicRadiusTravels");
+        private static readonly int MotionId = Shader.PropertyToID("_EarthSeismicMotion01");
+        // Unity fixes a global array's capacity on its first upload, across domain
+        // reloads. New property IDs avoid retaining the legacy five-pulse capacity.
+        private static readonly int WavesId = Shader.PropertyToID("_EarthSeismicWaves16");
+        private static readonly int StrengthsId = Shader.PropertyToID("_EarthSeismicStrengths16");
+        private static readonly int RadiusTravelsId = Shader.PropertyToID("_EarthSeismicRadiusTravels16");
         private readonly Vector4[] _waves = new Vector4[WaveCount];
         private readonly float[] _strengths = new float[WaveCount];
         private readonly float[] _radiusTravels = new float[WaveCount];
@@ -28,6 +31,8 @@ namespace Elemental.Presentation.VFX
         private float _nextAutomaticPulse;
         private Vector3 _lastStepPosition;
         private bool _published;
+        private float _fadeProgress;
+        private float _motion01;
 
         private struct Pulse
         {
@@ -36,8 +41,10 @@ namespace Elemental.Presentation.VFX
         }
 
         public bool Requested { get; private set; }
+        public float VisualBlend => Mathf.SmoothStep(0f, 1f, _fadeProgress);
         public bool IsActive { get; private set; }
         public int VisiblePulseCount { get; private set; }
+        public int EmittedPulseCount => _nextPulse;
 
         private void Awake()
         {
@@ -51,37 +58,51 @@ namespace Elemental.Presentation.VFX
             if (_input != null && _input.isActiveAndEnabled && Keyboard.current != null &&
                 Keyboard.current.vKey.wasPressedThisFrame)
                 SetActive(!Requested);
-            RefreshPerception();
+            RefreshPerception(Time.deltaTime);
         }
 
         public void SetActive(bool active)
         {
             Requested = active;
-            RefreshPerception();
+            RefreshPerception(0f);
         }
 
-        private void RefreshPerception()
+        private void RefreshPerception(float deltaTime)
         {
             using (PublishMarker.Auto())
             {
-                bool active = EarthSeismicPerception.CanPerceive(Requested,
+                _fadeProgress = EarthSeismicPerception.AdvanceFade(_fadeProgress, Requested, deltaTime);
+                bool eligible = EarthSeismicPerception.CanPerceive(true,
                     _input != null && _input.isActiveAndEnabled && _input.SelectedElement == ElementId.Earth,
                     _motor != null && _motor.HasStableSupport,
                     _motor != null && _motor.AcceptsMovingSupport,
                     _motor != null && _motor.IsMantling);
-                if (!active)
+                if (!eligible)
                 {
-                    if (_published) ClearPerception();
+                    // A one-tick support miss on an arena seam must hide vision,
+                    // not repeatedly erase its one-second toggle fade and waves.
+                    if (_published) Shader.SetGlobalFloat(ActiveId, 0f);
+                    if (!Requested && _fadeProgress <= 0f && _published) ClearPerception();
+                    VisiblePulseCount = 0;
                     IsActive = false;
                     return;
                 }
 
-                bool entering = !IsActive;
-                IsActive = true;
-                if (entering || Time.unscaledTime >= _nextAutomaticPulse ||
-                    Vector3.ProjectOnPlane(transform.position - _lastStepPosition, _motor.LocalUp).sqrMagnitude >= 0.72f * 0.72f)
+                bool entering = !_published;
+                IsActive = Requested;
+                if (!Requested && _fadeProgress <= 0f)
                 {
-                    EmitPulse(_motor.SupportFeetPoint(_motor.LocalUp), _motor.LocalUp, 22f, 2.2f);
+                    if (_published) ClearPerception();
+                    return;
+                }
+                float speed = Vector3.ProjectOnPlane(_motor.Body.linearVelocity, _motor.LocalUp).magnitude;
+                _motion01 = Mathf.MoveTowards(_motion01, Mathf.SmoothStep(0f, 1f,
+                    Mathf.InverseLerp(0.15f, 2f, speed)), deltaTime / 0.18f);
+                float stepSpacing = Mathf.Lerp(0.72f, 2f, _motion01);
+                if (IsActive && (entering || Time.unscaledTime >= _nextAutomaticPulse ||
+                    Vector3.ProjectOnPlane(transform.position - _lastStepPosition, _motor.LocalUp).sqrMagnitude >= stepSpacing * stepSpacing))
+                {
+                    EmitPulse(_motor.SupportFeetPoint(_motor.LocalUp), _motor.LocalUp, 40f, 4f);
                     _lastStepPosition = transform.position;
                     _nextAutomaticPulse = Time.unscaledTime + 0.68f;
                 }
@@ -103,7 +124,8 @@ namespace Elemental.Presentation.VFX
                 Shader.SetGlobalVectorArray(WavesId, _waves);
                 Shader.SetGlobalFloatArray(StrengthsId, _strengths);
                 Shader.SetGlobalFloatArray(RadiusTravelsId, _radiusTravels);
-                Shader.SetGlobalFloat(ActiveId, 1f);
+                Shader.SetGlobalFloat(ActiveId, VisualBlend);
+                Shader.SetGlobalFloat(MotionId, _motion01);
                 _published = true;
             }
         }
@@ -126,7 +148,10 @@ namespace Elemental.Presentation.VFX
 
         private void ClearPerception()
         {
+            _fadeProgress = 0f;
+            _motion01 = 0f;
             Shader.SetGlobalFloat(ActiveId, 0f);
+            Shader.SetGlobalFloat(MotionId, 0f);
             for (int i = 0; i < WaveCount; i++)
             {
                 _pulses[i] = default;

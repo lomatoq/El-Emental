@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68236a1efd859214bbbdf12e5009bf5a, type: 3}
+  m_Name: ElementalStoneSkin
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.UI.ElementalStoneSkin
+  referenceProfile: {fileID: 11400000, guid: fbbae749e9936a548b647d77d7240c04, type: 2}
+  earth: {fileID: 21300000, guid: 95bc4f718b1c8d54e972cfb0a149a153, type: 2}
+  fire: {fileID: 21300000, guid: fd2d2bfef42bf1340af9755c5aa4a05d, type: 2}
+  water: {fileID: 21300000, guid: 0b89cfab1a3c281488a64f094e5bb893, type: 2}
+  air: {fileID: 21300000, guid: 000cba3abb4cfba489a6c93d2bcc95e5, type: 2}
+  diamond: {fileID: 21300000, guid: eddbcf71f35d4144daf5d364b83be457, type: 3}
+  ring: {fileID: 21300000, guid: bd80cab92c1ce2f4f8ff19c6c5f4927f, type: 3}
+  minimap: {fileID: 21300000, guid: a941941e08468c545bbffc332a6798d0, type: 3}
+  timerPlate: {fileID: 21300000, guid: 50bbaafcc1c58b345afe88b9b0981d01, type: 3}
+  teamWing: {fileID: 21300000, guid: 07bcc9280c7d8814e8069681f5b773ba, type: 3}
+  halo: {fileID: 21300000, guid: 74836e26eb4c28748b7332fc0d7c7344, type: 3}
+  shine: {fileID: 21300000, guid: 2e09414462b6128459f7e7416c64d071, type: 3}
+  danger: {fileID: 21300000, guid: b8b06293e6cd9844ca3d0e7bc3e3a848, type: 3}
+  curtain: {fileID: 21300000, guid: 154fd1ef97c153b4b94f43eb3116ae05, type: 3}
+  normal: {fileID: 21300000, guid: 2996161abcc463248a709c45c4409238, type: 3}
+  primary: {fileID: 21300000, guid: 19b58960fd6b8f14bba1a9600c496434, type: 3}
+  hover: {fileID: 21300000, guid: 6b58d4fe6d2f8034ea3e749349a466f2, type: 3}
+  pressed: {fileID: 21300000, guid: a392e242ad3adb54580c531649e6decd, type: 3}
+  disabled: {fileID: 21300000, guid: e86ac494543ca7240a60a775a3434c4e, type: 3}
+  codeField: {fileID: 21300000, guid: 3d54bdd42bfcfbe4f91d4952742a29a9, type: 3}
+  referenceSelected: {fileID: 21300000, guid: 11a00a6fee82d854d8b803456746f55b, type: 2}
+  referenceCurtain: {fileID: 21300000, guid: b5bfe1b7fa841bb40b5fed3a8a693001, type: 3}
+  referenceNormal: {fileID: 21300000, guid: dfeaff2c03931cd4abeb7210cdc7822d, type: 2}
+  referenceCard: {fileID: 21300000, guid: b45a3935f3c8ccf4e9ad0fd7e5837c4d, type: 2}
+  roundWinPlate: {fileID: 21300000, guid: ee005733fc1bbcd4bb8d5c93607cf8ff, type: 2}
+  roundLossPlate: {fileID: 21300000, guid: dfeaff2c03931cd4abeb7210cdc7822d, type: 2}
+  referenceSelectedInsets: {x: 210, y: 237, z: 2, w: 21}
+  health: {fileID: 21300000, guid: c2e255dc087111845a97283cda0d3495, type: 3}
+  mana: {fileID: 21300000, guid: 634ce488f496149468cdbcf602b0f4e2, type: 3}
+  pause: {fileID: 21300000, guid: 09f1e717cdb81634599e0654d325540d, type: 3}
+  window: {fileID: 21300000, guid: 289fe7a82c4785e4eb6708f41781a78c, type: 3}
+  ribbon: {fileID: 21300000, guid: 9b8b39cb14443264c8ac93c1a4771dad, type: 3}
+  wordmark: {fileID: 21300000, guid: 9ccd3671dadf039459090946c4ae68fb, type: 3}
+  divider: {fileID: 21300000, guid: b3e496c955ec72c45955de8ccc6c68cb, type: 3}
+  botIcon: {fileID: 21300000, guid: e12fdeb23802e4549b7d96188bd23072, type: 3}
+  hostIcon: {fileID: 21300000, guid: 5c295499f882e134cbde7aebc4f8389c, type: 3}
+  joinIcon: {fileID: 21300000, guid: 65cae605e9b1e4a41a621107ae2649da, type: 3}
+  settingsIcon: {fileID: 21300000, guid: 8542590d963f71e40a2ef6ec9906c8fa, type: 3}
+  exitIcon: {fileID: 21300000, guid: 42310b9af9f2eb54eb0051e067bb0a02, type: 3}
+  backIcon: {fileID: 21300000, guid: 1c0ded29247a1a742a716bbf89a68f33, type: 3}
+  playIcon: {fileID: 21300000, guid: 7b2ce9210e85e304b83665468932a1b6, type: 3}
+  copyIcon: {fileID: 21300000, guid: 953b52c9b4504ee4a9b47df6146f1c30, type: 3}
+  checkIcon: {fileID: 21300000, guid: 16933a679ce3c404c9c3b731d9f11a97, type: 3}
+  volumeIcon: {fileID: 21300000, guid: 6d7fa5fadb142a44890d545b73801dd8, type: 3}
+  sensitivityIcon: {fileID: 21300000, guid: 4a8bd797dd595674f80cdbc10e49fb60, type: 3}
+  sliderDiamond: {fileID: 21300000, guid: eddbcf71f35d4144daf5d364b83be457, type: 3}

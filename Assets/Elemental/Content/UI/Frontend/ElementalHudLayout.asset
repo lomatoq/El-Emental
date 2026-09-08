@@ -1,0 +1,144 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d1d182642825674093a485a4c83d2e9, type: 3}
+  m_Name: ElementalHudLayout
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.UI.ElementalHudLayout
+  health:
+    group:
+      anchor: {x: 0, y: 0.4}
+      pivot: {x: 0, y: 0}
+      position: {x: 14, y: 0}
+      size: {x: 58, y: 344}
+      scale: {x: 1, y: 1}
+      rotation: 0
+    bar:
+      anchor: {x: 0, y: 0}
+      pivot: {x: 0, y: 0}
+      position: {x: 0, y: 0}
+      size: {x: 58, y: 290}
+      scale: {x: 1, y: 1}
+      rotation: 0
+    underBar:
+      anchor: {x: 0, y: 0}
+      pivot: {x: 0, y: 0}
+      position: {x: 0, y: 286}
+      size: {x: 58, y: 58}
+      scale: {x: 1, y: 1}
+      rotation: 0
+    icon:
+      anchor: {x: 0, y: 0}
+      pivot: {x: 0, y: 0}
+      position: {x: -22, y: 2.8}
+      size: {x: 58, y: 32}
+      scale: {x: 1.5, y: 1.5}
+      rotation: 0
+    value:
+      anchor: {x: 0, y: 0}
+      pivot: {x: 0, y: 0}
+      position: {x: -50.4, y: 32}
+      size: {x: 58, y: 22}
+      scale: {x: 2.5, y: 2.5}
+      rotation: 0
+  energy:
+    group:
+      anchor: {x: 1, y: 0.4}
+      pivot: {x: 1, y: 0}
+      position: {x: -14, y: 0}
+      size: {x: 58, y: 344}
+      scale: {x: 1, y: 1}
+      rotation: 0
+    bar:
+      anchor: {x: 0, y: 0}
+      pivot: {x: 0, y: 0}
+      position: {x: 0, y: 0}
+      size: {x: 58, y: 290}
+      scale: {x: 1, y: 1}
+      rotation: 0
+    underBar:
+      anchor: {x: 0, y: 0}
+      pivot: {x: 0, y: 0}
+      position: {x: 0, y: 286}
+      size: {x: 58, y: 58}
+      scale: {x: 1, y: 1}
+      rotation: 0
+    icon:
+      anchor: {x: 0, y: 0}
+      pivot: {x: 0, y: 0}
+      position: {x: 9.67, y: 6.22}
+      size: {x: 58, y: 32}
+      scale: {x: 1, y: 1}
+      rotation: 0
+    value:
+      anchor: {x: 0, y: 0}
+      pivot: {x: 0, y: 0}
+      position: {x: -38.9, y: 32}
+      size: {x: 58, y: 22}
+      scale: {x: 2.5, y: 2.5}
+      rotation: 0
+  navigation:
+    group:
+      anchor: {x: 1, y: 1}
+      pivot: {x: 1, y: 1}
+      position: {x: -27, y: -22}
+      size: {x: 218, y: 252}
+      scale: {x: 1, y: 1}
+      rotation: 0
+    caption:
+      anchor: {x: 0, y: 0}
+      pivot: {x: 0, y: 0}
+      position: {x: 0, y: 0}
+      size: {x: 218, y: 17}
+      scale: {x: 1, y: 1}
+      rotation: 0
+    globe:
+      anchor: {x: 0, y: 0}
+      pivot: {x: 0, y: 0}
+      position: {x: 0, y: 17}
+      size: {x: 218, y: 218}
+      scale: {x: 1, y: 1}
+      rotation: 0
+    legend:
+      anchor: {x: 0, y: 0}
+      pivot: {x: 0, y: 0}
+      position: {x: 0, y: 235}
+      size: {x: 218, y: 17}
+      scale: {x: 1, y: 1}
+      rotation: 0
+  pause:
+    button:
+      anchor: {x: 1, y: 0}
+      pivot: {x: 1, y: 0}
+      position: {x: -24, y: 24}
+      size: {x: 44, y: 44}
+      scale: {x: 1, y: 1}
+      rotation: 0
+    icon:
+      anchor: {x: 0.5, y: 0.5}
+      pivot: {x: 0.5, y: 0.5}
+      position: {x: 0, y: 0}
+      size: {x: 20, y: 18}
+      scale: {x: 1, y: 1}
+      rotation: 0
+  scoreboard:
+    anchor: {x: 0.5, y: 0}
+    pivot: {x: 0.5, y: 0}
+    position: {x: 0, y: 20}
+    size: {x: 390, y: 95}
+    scale: {x: 1, y: 1}
+    rotation: 0
+  lifeResult:
+    anchor: {x: 0.5, y: 0.22}
+    pivot: {x: 0.5, y: 0.5}
+    position: {x: 0, y: 0}
+    size: {x: 600, y: 64}
+    scale: {x: 1, y: 1}
+    rotation: 0

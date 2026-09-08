@@ -37,6 +37,7 @@ namespace Elemental.Input.Gestures
         public static EarthResolvedTarget Resolve(Collider collider, Collider planetCollider)
         {
             if (collider == null) return default;
+            if (EarthBodyTargetFilter.IsCharacterBody(collider.attachedRigidbody)) return default;
             bool isTerrain = collider == planetCollider ||
                              (planetCollider != null && collider.transform.IsChildOf(planetCollider.transform));
             if (isTerrain)

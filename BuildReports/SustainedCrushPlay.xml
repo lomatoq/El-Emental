@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="5" result="Passed" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-07 22:20:39Z" end-time="2026-09-07 22:21:18Z" duration="39.7665952">
+  <test-suite type="TestSuite" id="1393" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="288" result="Passed" start-time="2026-09-07 22:20:39Z" end-time="2026-09-07 22:21:18Z" duration="39.766595" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1386" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="282" result="Passed" start-time="2026-09-07 22:20:39Z" end-time="2026-09-07 22:21:18Z" duration="39.754923" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="7024" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1387" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="282" result="Passed" start-time="2026-09-07 22:20:39Z" end-time="2026-09-07 22:21:18Z" duration="39.749302" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1388" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="282" result="Passed" start-time="2026-09-07 22:20:39Z" end-time="2026-09-07 22:21:18Z" duration="39.747425" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1389" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="282" result="Passed" start-time="2026-09-07 22:20:39Z" end-time="2026-09-07 22:21:18Z" duration="39.745527" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1267" name="EarthSustainedCrushRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthSustainedCrushRuntimeTests" classname="Elemental.Tests.PlayMode.EarthSustainedCrushRuntimeTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-07 22:20:39Z" end-time="2026-09-07 22:20:41Z" duration="2.898163" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1268" name="SleepingVerticalPileRetainsTransmittedUpperStoneWeight" fullname="Elemental.Tests.PlayMode.EarthSustainedCrushRuntimeTests.SleepingVerticalPileRetainsTransmittedUpperStoneWeight" methodname="SleepingVerticalPileRetainsTransmittedUpperStoneWeight" classname="Elemental.Tests.PlayMode.EarthSustainedCrushRuntimeTests" runstate="Runnable" seed="1527117777" result="Passed" start-time="2026-09-07 22:20:39Z" end-time="2026-09-07 22:20:40Z" duration="1.748169" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1269" name="TwoRestingStonesTransmitCombinedLoadAndRemovalReleasesIt" fullname="Elemental.Tests.PlayMode.EarthSustainedCrushRuntimeTests.TwoRestingStonesTransmitCombinedLoadAndRemovalReleasesIt" methodname="TwoRestingStonesTransmitCombinedLoadAndRemovalReleasesIt" classname="Elemental.Tests.PlayMode.EarthSustainedCrushRuntimeTests" runstate="Runnable" seed="1242034466" result="Passed" start-time="2026-09-07 22:20:40Z" end-time="2026-09-07 22:20:41Z" duration="1.137135" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1318" name="LocalPhysicsProductionAcceptanceTests" fullname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests" classname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-09-07 22:20:41Z" end-time="2026-09-07 22:21:18Z" duration="36.844066" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1322" name="HeavyFallingStoneCrushesBotIntoDynamicRagdoll" fullname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests.HeavyFallingStoneCrushesBotIntoDynamicRagdoll" methodname="HeavyFallingStoneCrushesBotIntoDynamicRagdoll" classname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests" runstate="Runnable" seed="834242574" result="Passed" start-time="2026-09-07 22:20:41Z" end-time="2026-09-07 22:20:59Z" duration="17.668222" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Too many meshes passed to SetMeshes, size will be clamped (8, max 4)
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3588.62ms; ground=exact baked base, cacheLoad=11.40ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1055.58ms, peakCookingPoll=0.25ms; sync=ArenaInitialize=336.49ms/15;ArenaBevel=323.78ms/175;ArenaMeshPicking=1.42ms/175;WallAwake=82.86ms/1;WallPieceVisuals=51.06ms/40;PlatformPoolAwake=8.19ms/1;PlatformRuntimeMeshes=1.22ms/12;PillarPoolAwake=28.35ms/1;PillarMeshLibrary=5.07ms/1;PillarColumns=23.27ms/1;DebrisPoolAwake=49.79ms/1;HeroFragmentPoolAwake=11.23ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1321" name="HeavyFallingStoneCrushesPlayerIntoDynamicRagdoll" fullname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests.HeavyFallingStoneCrushesPlayerIntoDynamicRagdoll" methodname="HeavyFallingStoneCrushesPlayerIntoDynamicRagdoll" classname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests" runstate="Runnable" seed="340551431" result="Passed" start-time="2026-09-07 22:20:59Z" end-time="2026-09-07 22:21:08Z" duration="9.053677" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Too many meshes passed to SetMeshes, size will be clamped (8, max 4)
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 2276.01ms; ground=exact baked base, cacheLoad=7.07ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=579.08ms, peakCookingPoll=0.00ms; sync=ArenaInitialize=336.49ms/15;ArenaBevel=323.78ms/175;ArenaMeshPicking=1.42ms/175;WallAwake=82.86ms/1;WallPieceVisuals=51.06ms/40;PlatformPoolAwake=8.19ms/1;PlatformRuntimeMeshes=1.22ms/12;PillarPoolAwake=28.35ms/1;PillarMeshLibrary=5.07ms/1;PillarColumns=23.27ms/1;DebrisPoolAwake=49.79ms/1;HeroFragmentPoolAwake=11.23ms/1.
+Account API did not become accessible within 30 seconds. This may be due to network issues or editor focus.
+]]></output>
+              </test-case>
+              <test-case id="1327" name="RestingSlabDamagesProductionBotWithoutRepeatedImpactAndPreventsRecovery" fullname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests.RestingSlabDamagesProductionBotWithoutRepeatedImpactAndPreventsRecovery" methodname="RestingSlabDamagesProductionBotWithoutRepeatedImpactAndPreventsRecovery" classname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests" runstate="Runnable" seed="155214679" result="Passed" start-time="2026-09-07 22:21:08Z" end-time="2026-09-07 22:21:18Z" duration="10.118538" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Too many meshes passed to SetMeshes, size will be clamped (8, max 4)
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 2253.79ms; ground=exact baked base, cacheLoad=7.04ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=568.19ms, peakCookingPoll=0.00ms; sync=ArenaInitialize=336.49ms/15;ArenaBevel=323.78ms/175;ArenaMeshPicking=1.42ms/175;WallAwake=82.86ms/1;WallPieceVisuals=51.06ms/40;PlatformPoolAwake=8.19ms/1;PlatformRuntimeMeshes=1.22ms/12;PillarPoolAwake=28.35ms/1;PillarMeshLibrary=5.07ms/1;PillarColumns=23.27ms/1;DebrisPoolAwake=49.79ms/1;HeroFragmentPoolAwake=11.23ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\SustainedCrushPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -12,7 +12,8 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
-  m_InvalidKeywords: []
+  m_InvalidKeywords:
+  - _MATCHFRACTURESURFACE_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
@@ -29,18 +30,21 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AmbientStrength: 0.76
-    - _BevelLight: 0.2
+    - _AmbientStrength: 0.8
+    - _BevelLight: 0.13
     - _Cutoff: 0.5
     - _DebugMode: 0
-    - _FacetContrast: 0.16
+    - _FacetContrast: 0.24
     - _Fade: 1
+    - _FormLightStrength: 0.25
     - _FractureInteriorDepth: 0.16
     - _FractureMappingEnabled: 0
     - _MacroScale: 5
     - _MacroStrength: 0.012
-    - _Roughness: 0.92
-    - _ShadowFloor: 0.56
+    - _MatchFractureSurface: 1
+    - _OcclusionStrength: 1
+    - _Roughness: 0.96
+    - _ShadowFloor: 0.66
     - _SideShadingSmoothness: 0
     - _SideShadowFade: 0
     - _StableSideFormOcclusion: 0.075
@@ -49,15 +53,16 @@ Material:
     - _TextureScale: 0.22
     - _TextureStrength: 0.025
     - _TriplanarSharpness: 4
+    - _TwilightFill: 0.55
     - _UsePlanetFrame: 0
     - _VertexFaceTone: 0
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.5809698, g: 0.3930907, b: 0.26270026, a: 1}
-    - _EdgeColor: {r: 0.6312534, g: 0.46591982, b: 0.35117623, a: 1}
-    - _FractureColor: {r: 0.5809698, g: 0.3930907, b: 0.26270026, a: 1}
+    - _BaseColor: {r: 0.6132076, g: 0.39383513, b: 0.23429158, a: 1}
+    - _EdgeColor: {r: 0.764151, g: 0.54981285, b: 0.36405307, a: 1}
+    - _FractureColor: {r: 0.7924528, g: 0.5298292, b: 0.34015664, a: 1}
     - _PlanetCenter: {r: 0, g: 0, b: 0, a: 0}
     - _ReceiverPlanetCenter: {r: 0, g: 0, b: 0, a: 0}
-    - _ShadowColor: {r: 0.24400732, g: 0.16509809, b: 0.110334106, a: 1}
+    - _ShadowColor: {r: 0.205, g: 0.15, b: 0.125, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

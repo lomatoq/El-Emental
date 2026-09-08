@@ -7,6 +7,53 @@ namespace Elemental.Tests.EditMode
     public sealed class SecondaryBoneSpringSolverTests
     {
         [Test]
+        public void CapsuleProjectionPreservesExteriorAndClearsInterior()
+        {
+            Vector3 a = Vector3.zero;
+            Vector3 b = Vector3.up;
+            Vector3 outside = new Vector3(0f, .4f, .5f);
+            Assert.That(SecondaryBoneCollisionSolver.OutsideCapsule(outside, a, b, .2f, Vector3.forward), Is.EqualTo(outside));
+            Vector3 inside = new Vector3(0f, .4f, .05f);
+            Vector3 projected = SecondaryBoneCollisionSolver.OutsideCapsule(inside, a, b, .2f, Vector3.forward);
+            Assert.That(projected.y, Is.EqualTo(.4f).Within(.0001f));
+            Assert.That(projected.z, Is.EqualTo(.2f).Within(.0001f));
+        }
+
+        [Test]
+        public void DegenerateHelmetCapsuleUsesStableOutwardFallback()
+        {
+            Vector3 center = new Vector3(1f, 2f, 3f);
+            Vector3 projected = SecondaryBoneCollisionSolver.OutsideCapsule(center, center, center, .25f, Vector3.back);
+            Assert.That(projected, Is.EqualTo(center + Vector3.back * .25f));
+        }
+
+        [Test]
+        public void SkirtPlaneClearsPenetrationWithoutChangingHeightOrSidewaysMotion()
+        {
+            Vector3 point = new Vector3(.13f, -.2f, -.1f);
+            Vector3 projected = SecondaryBoneCollisionSolver.OutsidePlane(point, Vector3.forward * .2f, Vector3.forward);
+            Assert.That(projected.x, Is.EqualTo(point.x));
+            Assert.That(projected.y, Is.EqualTo(point.y));
+            Assert.That(projected.z, Is.EqualTo(.2f).Within(.0001f));
+        }
+
+        [TestCase(30)]
+        [TestCase(60)]
+        [TestCase(120)]
+        public void WalkingOscillationProducesBoundedVisibleSecondaryMotion(int fps)
+        {
+            var state = new SecondaryBoneSpringState();
+            float peak = 0f;
+            for (int i = 0; i < fps * 3; i++)
+            {
+                Vector2 target = new Vector2(Mathf.Sin(i * 2f * Mathf.PI * 2f / fps) * 10f, 0f);
+                state = SecondaryBoneSpringSolver.Step(state, target, 5.6f, .72f, 18f, 1f / fps);
+                peak = Mathf.Max(peak, state.AngleDegrees.magnitude);
+            }
+            Assert.That(peak, Is.InRange(6f, 18.001f));
+        }
+
+        [Test]
         public void SpringMovesTowardTargetWithoutExceedingLimit()
         {
             var state = new SecondaryBoneSpringState();

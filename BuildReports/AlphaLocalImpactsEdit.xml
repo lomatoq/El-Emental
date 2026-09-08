@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="58" result="Passed" total="58" passed="58" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.0478028">
+  <test-suite type="TestSuite" id="2301" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="1038" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.047803" total="58" passed="58" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2288" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="1027" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.047413" total="58" passed="58" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="21092" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2289" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="1027" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.047145" total="58" passed="58" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2290" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="1027" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.046958" total="58" passed="58" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2291" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="1027" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.046750" total="58" passed="58" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1313" name="EarthCharacterImpactSolverTests" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" testcasecount="32" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.015608" total="32" passed="32" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1349" name="CalibratedGenericPhysicsStillCannotChooseCombatKnockout" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.CalibratedGenericPhysicsStillCannotChooseCombatKnockout" methodname="CalibratedGenericPhysicsStillCannotChooseCombatKnockout" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="454990401" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.001651" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1347" name="CalibratedHeavyBoulderCanKnockOutWithoutLaunchingTheRoot" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.CalibratedHeavyBoulderCanKnockOutWithoutLaunchingTheRoot" methodname="CalibratedHeavyBoulderCanKnockOutWithoutLaunchingTheRoot" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="806952921" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000269" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1346" name="CalibratedLightStoneFlinchesWithoutMovingTheWholeFighterTooFar" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.CalibratedLightStoneFlinchesWithoutMovingTheWholeFighterTooFar" methodname="CalibratedLightStoneFlinchesWithoutMovingTheWholeFighterTooFar" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1900616693" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000261" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1348" name="CalibratedPillarWaveUsesReactionAndMovementAsSeparateChannels" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.CalibratedPillarWaveUsesReactionAndMovementAsSeparateChannels" methodname="CalibratedPillarWaveUsesReactionAndMovementAsSeparateChannels" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1274104572" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000213" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1337" name="CatastrophicVelocityChangeIsClampedForRagdollSafety" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.CatastrophicVelocityChangeIsClampedForRagdollSafety" methodname="CatastrophicVelocityChangeIsClampedForRagdollSafety" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1831808384" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000769" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1333" name="DirectWaveCrestKnocksOutWithoutCellStacking" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.DirectWaveCrestKnocksOutWithoutCellStacking" methodname="DirectWaveCrestKnocksOutWithoutCellStacking" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1153412839" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000301" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1345" name="ExplicitLegacyModeMatchesCompatibilityEntryPoint" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.ExplicitLegacyModeMatchesCompatibilityEntryPoint" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.001882" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1338" name="ExplicitLegacyModeMatchesCompatibilityEntryPoint(LooseStone,42.0f,42.0f,0.0f)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.ExplicitLegacyModeMatchesCompatibilityEntryPoint(LooseStone,42.0f,42.0f,0.0f)" methodname="ExplicitLegacyModeMatchesCompatibilityEntryPoint" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1633315327" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000388" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1339" name="ExplicitLegacyModeMatchesCompatibilityEntryPoint(LooseStone,252.0f,42.0f,0.0f)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.ExplicitLegacyModeMatchesCompatibilityEntryPoint(LooseStone,252.0f,42.0f,0.0f)" methodname="ExplicitLegacyModeMatchesCompatibilityEntryPoint" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="314893868" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000103" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1340" name="ExplicitLegacyModeMatchesCompatibilityEntryPoint(ArmorProjectile,168.0f,42.0f,0.0f)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.ExplicitLegacyModeMatchesCompatibilityEntryPoint(ArmorProjectile,168.0f,42.0f,0.0f)" methodname="ExplicitLegacyModeMatchesCompatibilityEntryPoint" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1306033269" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000073" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1341" name="ExplicitLegacyModeMatchesCompatibilityEntryPoint(PillarWave,1.0f,42.0f,0.0f)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.ExplicitLegacyModeMatchesCompatibilityEntryPoint(PillarWave,1.0f,42.0f,0.0f)" methodname="ExplicitLegacyModeMatchesCompatibilityEntryPoint" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="619113156" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000065" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1342" name="ExplicitLegacyModeMatchesCompatibilityEntryPoint(PillarCrest,1.0f,42.0f,0.0f)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.ExplicitLegacyModeMatchesCompatibilityEntryPoint(PillarCrest,1.0f,42.0f,0.0f)" methodname="ExplicitLegacyModeMatchesCompatibilityEntryPoint" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="476797288" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000059" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1343" name="ExplicitLegacyModeMatchesCompatibilityEntryPoint(SurfNose,0.1f,42.0f,3.5f)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.ExplicitLegacyModeMatchesCompatibilityEntryPoint(SurfNose,0.1f,42.0f,3.5f)" methodname="ExplicitLegacyModeMatchesCompatibilityEntryPoint" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="2074051537" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000067" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1344" name="ExplicitLegacyModeMatchesCompatibilityEntryPoint(Physics,50000.0f,10.0f,0.0f)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.ExplicitLegacyModeMatchesCompatibilityEntryPoint(Physics,50000.0f,10.0f,0.0f)" methodname="ExplicitLegacyModeMatchesCompatibilityEntryPoint" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="2122183134" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000061" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1336" name="HandIkStateReleasesToZeroWithinBoundedRecovery" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.HandIkStateReleasesToZeroWithinBoundedRecovery" methodname="HandIkStateReleasesToZeroWithinBoundedRecovery" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1626774334" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000576" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1314" name="IncomingVelocityKeepsTravelDirectionForEitherCallbackSign" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.IncomingVelocityKeepsTravelDirectionForEitherCallbackSign" methodname="IncomingVelocityKeepsTravelDirectionForEitherCallbackSign" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="254142551" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000986" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1327" name="PhysicalSeverityUsesTargetVelocityChange" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.PhysicalSeverityUsesTargetVelocityChange" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.001238" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1323" name="PhysicalSeverityUsesTargetVelocityChange(41.0f,42.0f,Ignore)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.PhysicalSeverityUsesTargetVelocityChange(41.0f,42.0f,Ignore)" methodname="PhysicalSeverityUsesTargetVelocityChange" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1210501243" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000328" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1324" name="PhysicalSeverityUsesTargetVelocityChange(42.0f,42.0f,Flinch)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.PhysicalSeverityUsesTargetVelocityChange(42.0f,42.0f,Flinch)" methodname="PhysicalSeverityUsesTargetVelocityChange" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1043150308" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000076" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1325" name="PhysicalSeverityUsesTargetVelocityChange(84.0f,42.0f,Stagger)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.PhysicalSeverityUsesTargetVelocityChange(84.0f,42.0f,Stagger)" methodname="PhysicalSeverityUsesTargetVelocityChange" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1313828657" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000049" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1326" name="PhysicalSeverityUsesTargetVelocityChange(210.0f,42.0f,Knockout)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.PhysicalSeverityUsesTargetVelocityChange(210.0f,42.0f,Knockout)" methodname="PhysicalSeverityUsesTargetVelocityChange" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1359696502" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000047" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1335" name="PillarCrestUsesOneLowLaunchBudgetForTheWholeSequentialRow" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.PillarCrestUsesOneLowLaunchBudgetForTheWholeSequentialRow" methodname="PillarCrestUsesOneLowLaunchBudgetForTheWholeSequentialRow" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="357079873" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000540" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1334" name="RagdollLaunchIsBoundedToTwoMeterRiseAndFourMeterPerSecondTangent" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.RagdollLaunchIsBoundedToTwoMeterRiseAndFourMeterPerSecondTangent" methodname="RagdollLaunchIsBoundedToTwoMeterRiseAndFourMeterPerSecondTangent" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="730142433" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000785" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1322" name="StoneMomentumAndDamageIncreaseWithMassAndSpeedWithoutTinyStoneKnockdown" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.StoneMomentumAndDamageIncreaseWithMassAndSpeedWithoutTinyStoneKnockdown" methodname="StoneMomentumAndDamageIncreaseWithMassAndSpeedWithoutTinyStoneKnockdown" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="359685948" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000608" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1321" name="StoneWeightTransferPreservesMassOrderingAndLaunchBudget" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.StoneWeightTransferPreservesMassOrderingAndLaunchBudget" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.001862" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1315" name="StoneWeightTransferPreservesMassOrderingAndLaunchBudget(LooseStone,1.4f)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.StoneWeightTransferPreservesMassOrderingAndLaunchBudget(LooseStone,1.4f)" methodname="StoneWeightTransferPreservesMassOrderingAndLaunchBudget" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="579980467" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000605" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1316" name="StoneWeightTransferPreservesMassOrderingAndLaunchBudget(ArmorProjectile,1.4f)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.StoneWeightTransferPreservesMassOrderingAndLaunchBudget(ArmorProjectile,1.4f)" methodname="StoneWeightTransferPreservesMassOrderingAndLaunchBudget" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1516543426" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000099" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1317" name="StoneWeightTransferPreservesMassOrderingAndLaunchBudget(BotProjectile,1.4f)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.StoneWeightTransferPreservesMassOrderingAndLaunchBudget(BotProjectile,1.4f)" methodname="StoneWeightTransferPreservesMassOrderingAndLaunchBudget" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1672801237" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000087" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1318" name="StoneWeightTransferPreservesMassOrderingAndLaunchBudget(StonePunch,1.4f)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.StoneWeightTransferPreservesMassOrderingAndLaunchBudget(StonePunch,1.4f)" methodname="StoneWeightTransferPreservesMassOrderingAndLaunchBudget" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="611630481" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000075" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1319" name="StoneWeightTransferPreservesMassOrderingAndLaunchBudget(PillarWave,1.0f)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.StoneWeightTransferPreservesMassOrderingAndLaunchBudget(PillarWave,1.0f)" methodname="StoneWeightTransferPreservesMassOrderingAndLaunchBudget" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1082698346" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000073" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1320" name="StoneWeightTransferPreservesMassOrderingAndLaunchBudget(SurfNose,1.0f)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.StoneWeightTransferPreservesMassOrderingAndLaunchBudget(SurfNose,1.0f)" methodname="StoneWeightTransferPreservesMassOrderingAndLaunchBudget" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1666448281" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000071" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="1332" name="SurfHasExplicitCommittedContactBands" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.SurfHasExplicitCommittedContactBands" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000986" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1328" name="SurfHasExplicitCommittedContactBands(3.49f,Ignore)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.SurfHasExplicitCommittedContactBands(3.49f,Ignore)" methodname="SurfHasExplicitCommittedContactBands" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1030269472" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000279" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1329" name="SurfHasExplicitCommittedContactBands(3.5f,Stagger)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.SurfHasExplicitCommittedContactBands(3.5f,Stagger)" methodname="SurfHasExplicitCommittedContactBands" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1026782035" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000060" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1330" name="SurfHasExplicitCommittedContactBands(5.0f,Knockout)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.SurfHasExplicitCommittedContactBands(5.0f,Knockout)" methodname="SurfHasExplicitCommittedContactBands" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="491725413" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000046" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1331" name="SurfHasExplicitCommittedContactBands(7.5f,Knockout)" fullname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests.SurfHasExplicitCommittedContactBands(7.5f,Knockout)" methodname="SurfHasExplicitCommittedContactBands" classname="Elemental.Tests.EditMode.EarthCharacterImpactSolverTests" runstate="Runnable" seed="1223591680" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000048" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+            </test-suite>
+            <test-suite type="TestFixture" id="1612" name="EarthLocalizedPhysicsResponseTests" fullname="Elemental.Tests.EditMode.EarthLocalizedPhysicsResponseTests" classname="Elemental.Tests.EditMode.EarthLocalizedPhysicsResponseTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.004798" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1614" name="CapsuleRimFollowsIncomingHeadPathInsteadOfCloserShoulder" fullname="Elemental.Tests.EditMode.EarthLocalizedPhysicsResponseTests.CapsuleRimFollowsIncomingHeadPathInsteadOfCloserShoulder" methodname="CapsuleRimFollowsIncomingHeadPathInsteadOfCloserShoulder" classname="Elemental.Tests.EditMode.EarthLocalizedPhysicsResponseTests" runstate="Runnable" seed="200397875" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000783" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1613" name="RegionalLimitsProtectHeadAndSupportLegsWithoutReducingTheArmResponse" fullname="Elemental.Tests.EditMode.EarthLocalizedPhysicsResponseTests.RegionalLimitsProtectHeadAndSupportLegsWithoutReducingTheArmResponse" methodname="RegionalLimitsProtectHeadAndSupportLegsWithoutReducingTheArmResponse" classname="Elemental.Tests.EditMode.EarthLocalizedPhysicsResponseTests" runstate="Runnable" seed="225954094" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.002106" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1616" name="RegionGraphIsAcyclicAndTransfersToTheCorrectParent" fullname="Elemental.Tests.EditMode.EarthLocalizedPhysicsResponseTests.RegionGraphIsAcyclicAndTransfersToTheCorrectParent" methodname="RegionGraphIsAcyclicAndTransfersToTheCorrectParent" classname="Elemental.Tests.EditMode.EarthLocalizedPhysicsResponseTests" runstate="Runnable" seed="150111190" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000327" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1615" name="WeakDriveRecoversSmoothlyAndOnlyMediumHitsStun" fullname="Elemental.Tests.EditMode.EarthLocalizedPhysicsResponseTests.WeakDriveRecoversSmoothlyAndOnlyMediumHitsStun" methodname="WeakDriveRecoversSmoothlyAndOnlyMediumHitsStun" classname="Elemental.Tests.EditMode.EarthLocalizedPhysicsResponseTests" runstate="Runnable" seed="1345806587" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000768" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1757" name="EarthProceduralAnimationAndImpactTests" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" testcasecount="22" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.025105" total="22" passed="22" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1766" name="AuthoredContactTimingDiffersByLessThanTenPercentAtThirtySixtyAndOneTwentyFps" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.AuthoredContactTimingDiffersByLessThanTenPercentAtThirtySixtyAndOneTwentyFps" methodname="AuthoredContactTimingDiffersByLessThanTenPercentAtThirtySixtyAndOneTwentyFps" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="1678656358" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000985" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1764" name="AuthoredFlightAndContactWindowsAreExplicit" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.AuthoredFlightAndContactWindowsAreExplicit" methodname="AuthoredFlightAndContactWindowsAreExplicit" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="418072627" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.001105" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1765" name="DirectionalDodgeGateSelectsFourAuthoredClipsAndHonorsInterruptPolicy" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.DirectionalDodgeGateSelectsFourAuthoredClipsAndHonorsInterruptPolicy" methodname="DirectionalDodgeGateSelectsFourAuthoredClipsAndHonorsInterruptPolicy" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="861194622" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.001671" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1769" name="DirectionalImpactSpringProducesOneControlledOvershootAndConverges" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.DirectionalImpactSpringProducesOneControlledOvershootAndConverges" methodname="DirectionalImpactSpringProducesOneControlledOvershootAndConverges" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="2064036972" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.004592" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1770" name="DirectionalKickAndRepeatedHitCompositionPreservePhysicalSign" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.DirectionalKickAndRepeatedHitCompositionPreservePhysicalSign" methodname="DirectionalKickAndRepeatedHitCompositionPreservePhysicalSign" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="1537767960" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.001042" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1782" name="FootIkHasOneRuntimeWriterAndBodyAdaptationRunsLast" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.FootIkHasOneRuntimeWriterAndBodyAdaptationRunsLast" methodname="FootIkHasOneRuntimeWriterAndBodyAdaptationRunsLast" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="1460364772" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.001002" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1774" name="ImpactBendsVisiblyThenRecoversViscouslyWithoutSnapping" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.ImpactBendsVisiblyThenRecoversViscouslyWithoutSnapping" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.001948" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1771" name="ImpactBendsVisiblyThenRecoversViscouslyWithoutSnapping(30)" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.ImpactBendsVisiblyThenRecoversViscouslyWithoutSnapping(30)" methodname="ImpactBendsVisiblyThenRecoversViscouslyWithoutSnapping" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="267828769" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000699" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1772" name="ImpactBendsVisiblyThenRecoversViscouslyWithoutSnapping(60)" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.ImpactBendsVisiblyThenRecoversViscouslyWithoutSnapping(60)" methodname="ImpactBendsVisiblyThenRecoversViscouslyWithoutSnapping" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="433971114" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000328" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1773" name="ImpactBendsVisiblyThenRecoversViscouslyWithoutSnapping(120)" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.ImpactBendsVisiblyThenRecoversViscouslyWithoutSnapping(120)" methodname="ImpactBendsVisiblyThenRecoversViscouslyWithoutSnapping" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="436899851" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000399" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="1779" name="ImpactSeverityHasExactlyOnePresentationOwner" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.ImpactSeverityHasExactlyOnePresentationOwner" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.001424" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1775" name="ImpactSeverityHasExactlyOnePresentationOwner(Flinch,LocalizedPhysics)" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.ImpactSeverityHasExactlyOnePresentationOwner(Flinch,LocalizedPhysics)" methodname="ImpactSeverityHasExactlyOnePresentationOwner" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="72062242" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000539" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1776" name="ImpactSeverityHasExactlyOnePresentationOwner(Stagger,LocalizedPhysics)" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.ImpactSeverityHasExactlyOnePresentationOwner(Stagger,LocalizedPhysics)" methodname="ImpactSeverityHasExactlyOnePresentationOwner" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="971962337" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000087" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1777" name="ImpactSeverityHasExactlyOnePresentationOwner(RecoverableKnockdown,FullRagdoll)" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.ImpactSeverityHasExactlyOnePresentationOwner(RecoverableKnockdown,FullRagdoll)" methodname="ImpactSeverityHasExactlyOnePresentationOwner" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="637022999" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000060" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1778" name="ImpactSeverityHasExactlyOnePresentationOwner(Knockout,FullRagdoll)" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.ImpactSeverityHasExactlyOnePresentationOwner(Knockout,FullRagdoll)" methodname="ImpactSeverityHasExactlyOnePresentationOwner" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="695043060" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000053" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="1763" name="KnockdownTimingIsFrameRateIndependent" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.KnockdownTimingIsFrameRateIndependent" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.001251" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1760" name="KnockdownTimingIsFrameRateIndependent(30)" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.KnockdownTimingIsFrameRateIndependent(30)" methodname="KnockdownTimingIsFrameRateIndependent" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="1859106802" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000745" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1761" name="KnockdownTimingIsFrameRateIndependent(60)" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.KnockdownTimingIsFrameRateIndependent(60)" methodname="KnockdownTimingIsFrameRateIndependent" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="377660737" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000040" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1762" name="KnockdownTimingIsFrameRateIndependent(120)" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.KnockdownTimingIsFrameRateIndependent(120)" methodname="KnockdownTimingIsFrameRateIndependent" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="2075706072" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000039" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1758" name="OneHeavyStoneKnocksDownButThreeDistinctStonesMayKnockOut" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.OneHeavyStoneKnocksDownButThreeDistinctStonesMayKnockOut" methodname="OneHeavyStoneKnocksDownButThreeDistinctStonesMayKnockOut" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="2068137391" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000729" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1759" name="RecoverableKnockdownHasOnePhysicalAndOneAuthoredRecoveryStage" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.RecoverableKnockdownHasOnePhysicalAndOneAuthoredRecoveryStage" methodname="RecoverableKnockdownHasOnePhysicalAndOneAuthoredRecoveryStage" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="1032624962" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000277" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1768" name="UpperBodyInertiaIsBoundedAndConsistentAtThirtySixtyAndOneTwentyFps" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.UpperBodyInertiaIsBoundedAndConsistentAtThirtySixtyAndOneTwentyFps" methodname="UpperBodyInertiaIsBoundedAndConsistentAtThirtySixtyAndOneTwentyFps" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="1740518964" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.001034" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1781" name="VisualContinuityGateAcceptsFastSwingReleaseAndBoundedPivot" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.VisualContinuityGateAcceptsFastSwingReleaseAndBoundedPivot" methodname="VisualContinuityGateAcceptsFastSwingReleaseAndBoundedPivot" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="460456219" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.003436" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1780" name="VisualContinuityGateRejectsSlowSwingIkReleaseAfterTwoFrames" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.VisualContinuityGateRejectsSlowSwingIkReleaseAfterTwoFrames" methodname="VisualContinuityGateRejectsSlowSwingIkReleaseAfterTwoFrames" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="2094598142" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.000340" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1767" name="WorldResponseFansOutOnceWithOneSharedId" fullname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests.WorldResponseFansOutOnceWithOneSharedId" methodname="WorldResponseFansOutOnceWithOneSharedId" classname="Elemental.Tests.EditMode.EarthProceduralAnimationAndImpactTests" runstate="Runnable" seed="1836869696" result="Passed" start-time="2026-09-06 15:58:29Z" end-time="2026-09-06 15:58:29Z" duration="0.001617" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\AlphaLocalImpactsEdit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

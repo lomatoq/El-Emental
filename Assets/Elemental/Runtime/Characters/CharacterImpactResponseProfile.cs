@@ -1,5 +1,6 @@
 using System;
 using Elemental.Simulation.Combat;
+using Elemental.Simulation.Characters;
 using UnityEngine;
 
 namespace Elemental.Runtime.Characters
@@ -30,12 +31,33 @@ namespace Elemental.Runtime.Characters
         [SerializeField, Range(4f, 8f)] private float localizedHeadMaxAngle = 6f;
         [SerializeField, Range(0.05f, 0.35f)] private float localizedHipsLegWeight = 0.18f;
 
+        [Header("Local PhysX response")]
+        [SerializeField, Range(.04f, .4f)] private float physicalWeakDriveSeconds = .12f;
+        [SerializeField, Range(.1f, 1.5f)] private float physicalRecoverySeconds = .5f;
+        [SerializeField, Range(0f, 1f)] private float physicalParentTransfer = .4f;
+        [SerializeField, Range(.05f, .6f)] private float mediumStunSeconds = .24f;
+        [SerializeField, Range(10f, 400f)] private float physicalDriveSpring = 90f;
+        [SerializeField, Range(.2f, 2f)] private float physicalDriveDamping = .9f;
+        [SerializeField, Range(.01f, .5f)] private float physicalWeakDriveScale = .06f;
+        [SerializeField, Range(.02f, .25f)] private float physicalMaximumDisplacement = .12f;
+        [SerializeField, Range(5f, 45f)] private float physicalMaximumAngle = 28f;
+        [Header("Regional limits (capped by the global limits above)")]
+        [SerializeField] private PhysicalRegionLimits physicalHeadLimits = new(.065f, 18f);
+        [SerializeField] private PhysicalRegionLimits physicalTorsoLimits = new(.12f, 28f);
+        [SerializeField] private PhysicalRegionLimits physicalArmLimits = new(.12f, 28f);
+        [SerializeField] private PhysicalRegionLimits physicalLegLimits = new(.08f, 22f);
+
         public ImpactResponseMode ResponseMode => responseMode;
         public float SingleStoneRootVelocity => Mathf.Max(0.1f, singleStoneRootVelocity);
         public float MaximumRagdollRise => Mathf.Max(0.1f, maximumRagdollRise);
         public float MaximumRagdollTangentSpeed => Mathf.Max(0.1f, maximumRagdollTangentSpeed);
         public EarthCharacterImpactTuning Tuning => EarthCharacterImpactTuning.Default;
         public bool LocalizedHitReaction => localizedHitReaction;
+        public EarthLocalizedPhysicsTuning PhysicalTuning => new(
+            physicalWeakDriveSeconds, physicalRecoverySeconds, physicalParentTransfer, mediumStunSeconds,
+            physicalDriveSpring, physicalDriveDamping, physicalWeakDriveScale,
+            physicalMaximumDisplacement, physicalMaximumAngle,
+            physicalHeadLimits.Value, physicalTorsoLimits.Value, physicalArmLimits.Value, physicalLegLimits.Value);
         public float LocalizedHitDuration => Mathf.Clamp(localizedHitDuration, 0.12f, 0.22f);
         public float LocalizedParentWeight => Mathf.Clamp(localizedParentWeight, 0.45f, 0.60f);
         public float LocalizedTorsoWeight => Mathf.Clamp(localizedTorsoWeight, 0.20f, 0.32f);
@@ -62,6 +84,17 @@ namespace Elemental.Runtime.Characters
         }
 
         public void ConfigureMode(ImpactResponseMode mode) => responseMode = mode;
+
+        [Serializable]
+        private struct PhysicalRegionLimits
+        {
+            [Range(.005f, .25f), InspectorName("Maximum displacement (m)"), Tooltip("Maximum physical offset from the animated bone in world metres.")]
+            public float displacement;
+            [Range(1f, 45f), InspectorName("Maximum bend (degrees)"), Tooltip("Maximum physical rotation away from the animated target.")]
+            public float angle;
+            public PhysicalRegionLimits(float metres, float degrees) { displacement = metres; angle = degrees; }
+            public Unity.Mathematics.float2 Value => new(displacement, angle);
+        }
 
         [Serializable]
         private struct SourceCalibration

@@ -109,6 +109,8 @@ namespace Elemental.Authoring.Fracture
         [SerializeField] private EarthFractureBondRecord[] bonds = Array.Empty<EarthFractureBondRecord>();
 
         public int SchemaVersion => schemaVersion;
+        [SerializeField] private int sourceGeometryRevision;
+        public int SourceGeometryRevision => sourceGeometryRevision;
         public Mesh IntactRenderMesh => intactRenderMesh;
         public Mesh IntactColliderMesh => intactColliderMesh;
         public int PieceCount => pieces?.Length ?? 0;
@@ -120,9 +122,11 @@ namespace Elemental.Authoring.Fracture
             Mesh configuredIntactRenderMesh,
             Mesh configuredIntactColliderMesh,
             EarthFracturePieceRecord[] configuredPieces,
-            EarthFractureBondRecord[] configuredBonds)
+            EarthFractureBondRecord[] configuredBonds,
+            int configuredSourceGeometryRevision = 0)
         {
             schemaVersion = CurrentSchemaVersion;
+            sourceGeometryRevision = configuredSourceGeometryRevision;
             intactRenderMesh = configuredIntactRenderMesh;
             intactColliderMesh = configuredIntactColliderMesh;
             pieces = configuredPieces ?? Array.Empty<EarthFracturePieceRecord>();

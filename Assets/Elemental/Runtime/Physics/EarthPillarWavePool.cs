@@ -7,6 +7,7 @@ using Elemental.Runtime.World;
 using Elemental.Simulation.Bending;
 using Elemental.Simulation.Combat;
 using Elemental.Simulation.Matter;
+using Elemental.Simulation.Structures;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -83,7 +84,9 @@ namespace Elemental.Runtime.Physics
         private uint _claimedArenaStructureId;
         private int _nextTopologySeed;
         private EarthWaveSemanticFamily _lastSemanticFamily = EarthWaveSemanticFamily.RollingTerraces;
-        private EarthMatterKernelBehaviour _matterKernel;
+        [SerializeField] private EarthMatterKernelBehaviour _matterKernel;
+        public void ConfigureMatterKernel(EarthMatterKernelBehaviour kernel) => _matterKernel = kernel;
+        public EarthMatterMassProfile MassPolicy => _matterKernel != null ? _matterKernel.MassPolicy : EarthMatterMassProfile.ArenaStone;
         private readonly Mesh[] _webCellMeshes = new Mesh[6];
         private readonly Mesh[] _webCellRenderMeshes = new Mesh[6];
         private readonly Matrix4x4[][] _webMatrices = new Matrix4x4[6][];
@@ -162,7 +165,7 @@ namespace Elemental.Runtime.Physics
             {
                 if (surfaceQueries == null)
                     surfaceQueries = FindAnyObjectByType<EarthSurfaceQueryService>(FindObjectsInactive.Include);
-                _matterKernel = EarthMatterKernelBehaviour.FindOrCreate(this);
+                if (_matterKernel == null) _matterKernel = EarthMatterKernelBehaviour.FindOrCreate(this);
                 if (!useLegacyColumnMeshes)
                 {
                     using (EarthStartupTiming.Measure(EarthStartupTiming.Category.PillarMeshLibrary))
@@ -376,7 +379,7 @@ namespace Elemental.Runtime.Physics
                 Vector3 surface = center + columnUp * radius;
                 ResolveConstructedSurface(ref surface, ref columnUp);
                 Vector3 columnForward = Vector3.ProjectOnPlane(tangentForward, columnUp).normalized;
-                float height = 3.15f * layout.HeightScale;
+                float height = (profile != null ? profile.LinePillarHeight : 3.15f) * layout.HeightScale;
                 EarthPillarWaveColumn column = Acquire();
                 column.Schedule(
                     this,
@@ -531,6 +534,9 @@ namespace Elemental.Runtime.Physics
         private Rigidbody _caster;
         private ActiveRagdollPuppet _casterPuppet;
         private Vector3 _surface;
+        private Vector3 PlacementSurface => _surface + _up *
+            (_impactKind == EarthCharacterImpactSourceKind.PillarCrest && _profile != null
+                ? _profile.LineGroundOffset : 0f);
         private Vector3 _up;
         private Vector3 _outward;
         private Vector3 _fullScale;
@@ -578,7 +584,7 @@ namespace Elemental.Runtime.Physics
             new EarthPhysicalTargetHandle(_stableId, _generation);
         public float EarthMass => _body != null
             ? Mathf.Max(0.5f, _body.mass)
-            : Mathf.Max(0.5f, _fullScale.x * _fullScale.y * _fullScale.z * 150f);
+            : 0f;
         public EarthPhysicalTargetKind TargetKind => EarthPhysicalTargetKind.WaveCell;
         public bool IsEarthTargetValid => gameObject.activeInHierarchy && _stableId != 0u &&
                                                   _collider != null && _collider.enabled;
@@ -793,7 +799,7 @@ namespace Elemental.Runtime.Physics
                 // Every cell keeps the common topology frame. Independent yaw was
                 // the hidden source of the visible rectangular gaps in the old wave.
                 _baseRotation = Quaternion.LookRotation(forward, _up);
-                transform.SetPositionAndRotation(_surface, _baseRotation);
+                transform.SetPositionAndRotation(PlacementSurface, _baseRotation);
                 transform.localScale = Vector3.one;
             }
             else
@@ -813,16 +819,16 @@ namespace Elemental.Runtime.Physics
                 _fullScale.x *= Mathf.Sqrt(areaScale) * anisotropy;
                 _fullScale.z *= Mathf.Sqrt(areaScale) / anisotropy;
                 transform.SetPositionAndRotation(
-                    _surface + (_up * height * 0.0125f),
+                    PlacementSurface + (_up * height * 0.0125f),
                     _baseRotation);
                 transform.localScale = new Vector3(width * 0.70f, height * 0.025f, depth * 0.70f);
             }
             SetVisualVisible(false);
             _collider.enabled = false;
             _body.isKinematic = true;
-            _body.mass = _polygonCell
-                ? Mathf.Max(1f, _footprintArea * _slabThickness * 150f)
-                : Mathf.Max(1f, width * height * depth * 150f);
+            _solidVolume = Mathf.Max(.000001f, _polygonCell ? _footprintArea * _slabThickness : width * height * depth);
+            EarthMatterMassProfile massPolicy = _owner != null ? _owner.MassPolicy : EarthMatterMassProfile.ArenaStone;
+            _body.mass = EarthMatterMassPolicy.ResolveGameplayMass(_solidVolume, in massPolicy);
             _body.maxAngularVelocity = 3.2f;
             gameObject.SetActive(true);
             RegisterMatter();
@@ -873,10 +879,12 @@ namespace Elemental.Runtime.Physics
                 MatterIdentity.TryTransition(EarthMatterPhase.FreeDynamic);
         }
 
+        private float _solidVolume;
+        public float SolidVolume => _solidVolume;
         private void RegisterMatter()
         {
             if (_body == null) return;
-            float volume = Mathf.Max(0.000001f, _body.mass / 150f);
+            float volume = _solidVolume;
             EarthMatterKernelBehaviour kernel = _owner != null
                 ? _owner.MatterKernel
                 : EarthMatterKernelBehaviour.FindOrCreate(this);
@@ -1085,7 +1093,7 @@ namespace Elemental.Runtime.Physics
                 MeshFilter filter = GetComponent<MeshFilter>();
                 EarthSurfacePlacementResult placement = ResolveFullRisePlacement(
                     filter != null ? filter.sharedMesh : null,
-                    _surface,
+                    PlacementSurface,
                     _up,
                     tremorRotation,
                     Vector3.one,
@@ -1094,7 +1102,7 @@ namespace Elemental.Runtime.Physics
                                Mathf.Max(_slabThickness * 1.12f, 0.42f) * motion.Sink01;
                 Vector3 fullRiseRoot = placement.IsValid
                     ? placement.RootPosition
-                    : _surface + _up * _slabThickness;
+                    : PlacementSurface + _up * _slabThickness;
                 _body.MovePosition(fullRiseRoot - _up * burial + lateral);
                 _body.MoveRotation(tremorRotation);
                 transform.localScale = Vector3.one;
@@ -1110,12 +1118,12 @@ namespace Elemental.Runtime.Physics
                 MeshFilter filter = GetComponent<MeshFilter>();
                 EarthSurfacePlacementResult placement = ResolveFullRisePlacement(
                     filter != null ? filter.sharedMesh : null,
-                    _surface - (_up * sink),
+                    PlacementSurface - (_up * sink),
                     _up,
                     tremorRotation,
                     visibleScale,
                     FoundationBurialRatio);
-                _body.MovePosition((placement.IsValid ? placement.RootPosition : _surface) + lateral);
+                _body.MovePosition((placement.IsValid ? placement.RootPosition : PlacementSurface) + lateral);
                 _body.MoveRotation(tremorRotation);
                 transform.localScale = visibleScale;
             }
@@ -1286,7 +1294,7 @@ namespace Elemental.Runtime.Physics
                 MeshFilter filter = GetComponent<MeshFilter>();
                 EarthSurfacePlacementResult placement = ResolveFullRisePlacement(
                     filter != null ? filter.sharedMesh : null,
-                    _surface,
+                    PlacementSurface,
                     _up,
                     rotation,
                     worldScale,
@@ -1295,7 +1303,7 @@ namespace Elemental.Runtime.Physics
                                         (1f - Mathf.Clamp(visual.Height01, 0f, 1.25f));
                 worldPosition = (placement.IsValid
                                     ? placement.RootPosition
-                                    : _surface + _up * _slabThickness) -
+                                    : PlacementSurface + _up * _slabThickness) -
                                 _up * (emergenceBurial + burialDepth * visualSink01) +
                                 lateral;
             }
@@ -1310,12 +1318,12 @@ namespace Elemental.Runtime.Physics
                 MeshFilter filter = GetComponent<MeshFilter>();
                 EarthSurfacePlacementResult placement = ResolveFullRisePlacement(
                     filter != null ? filter.sharedMesh : null,
-                    _surface - _up * (burialDepth * visualSink01),
+                    PlacementSurface - _up * (burialDepth * visualSink01),
                     _up,
                     rotation,
                     worldScale,
                     FoundationBurialRatio);
-                worldPosition = (placement.IsValid ? placement.RootPosition : _surface) + lateral;
+                worldPosition = (placement.IsValid ? placement.RootPosition : PlacementSurface) + lateral;
             }
 
             _instancedVisualMatrix = Matrix4x4.TRS(worldPosition, rotation, worldScale);

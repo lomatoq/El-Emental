@@ -15,5 +15,10 @@ namespace Elemental.Simulation.Characters
         public static float Strength(float age, float duration) =>
             age < 0f || age >= math.max(0.15f, duration) ? 0f :
             1f - math.smoothstep(0.65f, 1f, age / math.max(0.15f, duration));
+
+        // Presentation envelope only; contact authority remains CanPerceive.
+        public static float AdvanceFade(float progress, bool requested, float deltaTime) =>
+            math.saturate(progress + (requested ? 1f : -1f) *
+                math.max(0f, deltaTime)); // One second across the full envelope.
     }
 }

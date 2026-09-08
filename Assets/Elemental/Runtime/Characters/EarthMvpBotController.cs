@@ -45,7 +45,8 @@ namespace Elemental.Runtime.Characters
         [SerializeField] private Collider casterCollider;
         [SerializeField] private EarthMvpDuelController duelController;
         [SerializeField, Min(0.1f)] private float projectileRadius = 0.42f;
-        [SerializeField, Min(0.1f)] private float projectileMass = 18f;
+        [SerializeField, HideInInspector, Min(0.1f)] private float projectileMass = 18f;
+        public float LegacyAuthoredProjectileMass => projectileMass;
         [SerializeField, Min(0.1f)] private float projectileLifetimeSeconds = 2.1f;
         [SerializeField, Min(0.1f)] private float knockoutVelocityChange = 11.8f;
         [SerializeField, Range(0f, 4f)] private float initialStrikeProtectionSeconds = 2.5f;
@@ -260,7 +261,7 @@ namespace Elemental.Runtime.Characters
                 null,
                 origin,
                 projectileRadius,
-                projectileMass);
+                projectilePool.ResolveNewStoneMass(EarthMatterMassRuntime.SphereSolidVolume(projectileRadius)));
             if (projectile == null) return;
             projectile.SetTargetKind(EarthPhysicalTargetKind.ResonanceProjectile);
             EarthMvpMagicProjectile magicProjectile =

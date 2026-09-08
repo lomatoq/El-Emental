@@ -13,6 +13,7 @@ namespace Elemental.Runtime.Physics
         [SerializeField, Min(0.05f)] private float compressionSeconds = 0.28f;
         [SerializeField, Min(0.05f)] private float retreatSeconds = 0.42f;
         [SerializeField, Min(0.1f)] private float gravityMagnitude = 14f;
+        [SerializeField, Min(1f)] private float fractureImpactSpeed = 12f;
 
         public float PredictionSeconds => predictionSeconds;
         public float ActivationHeight => activationHeight;
@@ -22,5 +23,6 @@ namespace Elemental.Runtime.Physics
         public float CompressionSeconds => compressionSeconds;
         public float RetreatSeconds => retreatSeconds;
         public float GravityMagnitude => gravityMagnitude;
+        public float FractureImpactSpeed => fractureImpactSpeed > 0f ? fractureImpactSpeed : 12f;
     }
 }

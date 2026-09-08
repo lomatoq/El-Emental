@@ -23,6 +23,13 @@ namespace Elemental.Presentation.Animation
         public int FinalIkEvaluationCount => HasGraph ? _graph.FinalEvaluations : 0;
         public int FinalContactPassCount => HasGraph ? _finalContactPassCount : 0;
         public float LandingPoseWeight => _landingPoseWeight;
+        public float PresentationClockMultiplier { get; private set; } = 1f;
+        public void SetPresentationClockMultiplier(float value)
+        {
+            PresentationClockMultiplier = float.IsFinite(value) ? Mathf.Clamp01(value) : 1f;
+            if (HasGraph) _graph.SetPresentationClockMultiplier(PresentationClockMultiplier);
+            else if (animator != null) animator.speed = PresentationClockMultiplier;
+        }
 
         private bool HasGraph => _graph != null && _graph.IsCreated;
         private bool CanDriveAnimator =>
@@ -39,6 +46,7 @@ namespace Elemental.Presentation.Animation
             _finalContactPassCount = 0;
             _lastContactGraphEvaluation = -1;
             _graph?.SetLandingPoseWeight(_landingPoseWeight);
+            _graph?.SetPresentationClockMultiplier(PresentationClockMultiplier);
         }
 
         internal void Detach(EarthAnimationGraph graph)
@@ -153,6 +161,13 @@ namespace Elemental.Presentation.Animation
             : CanDriveAnimator && layer >= 0 && layer < animator.layerCount
                 ? animator.GetCurrentAnimatorClipInfo(layer)
                 : System.Array.Empty<AnimatorClipInfo>();
+
+        public void GetCurrentAnimatorClipInfo(int layer, System.Collections.Generic.List<AnimatorClipInfo> clips)
+        {
+            clips.Clear();
+            if (HasGraph) _graph.GetCurrentAnimatorClipInfo(layer, clips);
+            else if (CanDriveAnimator) animator.GetCurrentAnimatorClipInfo(layer, clips);
+        }
 
         public void CrossFade(
             int stateHash,

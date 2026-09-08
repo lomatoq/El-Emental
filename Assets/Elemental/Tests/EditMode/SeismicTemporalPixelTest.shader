@@ -45,7 +45,7 @@ Shader "Hidden/Elemental/Tests/Seismic Temporal Pixel"
                         _TestRadialDistance, _TestCurrentRadius,
                         _TestRadiusTravel, _TestWidth)
                     : (half)(1.0 - smoothstep(
-                        _TestWidth, _TestWidth + 0.32,
+                        _TestWidth, _TestWidth + 0.16,
                         abs(_TestRadialDistance - _TestCurrentRadius)));
                 return half4(pulse.xxx, 1.0h);
             }

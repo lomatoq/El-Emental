@@ -1,5 +1,34 @@
+using Unity.Mathematics;
+
 namespace Elemental.Simulation.Bending
 {
+    public static class EarthSurfRiderSolver
+    {
+        public const float MaximumLeadMeters = 0.45f;
+        public const float MaximumSeparationMeters = 1.2f;
+
+        public static float3 LimitBoardLead(float3 boardPosition, float3 riderAnchorOffset,
+            float3 riderPosition, float3 up)
+        {
+            up = math.normalizesafe(up, new float3(0f, 1f, 0f));
+            float3 error = boardPosition + riderAnchorOffset - riderPosition;
+            float3 tangentError = error - up * math.dot(error, up);
+            float distance = math.length(tangentError);
+            return boardPosition - math.normalizesafe(tangentError) *
+                math.max(0f, distance - MaximumLeadMeters);
+        }
+
+        public static bool HasLostRider(float3 anchor, float3 rider, float3 up)
+        {
+            if (!math.all(math.isfinite(anchor)) || !math.all(math.isfinite(rider))) return true;
+            float3 error = anchor - rider;
+            up = math.normalizesafe(up, new float3(0f, 1f, 0f));
+            float vertical = math.dot(error, up);
+            return math.lengthsq(error - up * vertical) > MaximumSeparationMeters * MaximumSeparationMeters ||
+                   math.abs(vertical) > 1.5f;
+        }
+    }
+
     public enum EarthSurfSilhouetteFamily : byte
     {
         MantaSlab = 0,

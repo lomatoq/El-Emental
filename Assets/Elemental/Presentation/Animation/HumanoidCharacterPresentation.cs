@@ -17,6 +17,8 @@ namespace Elemental.Presentation.Animation
     {
         private static readonly ProfilerMarker PresentationMarker =
             new ProfilerMarker("Elemental.Character.Presentation");
+        private static readonly ProfilerMarker LivingHoldMarker =
+            new ProfilerMarker("Elemental.Character.LivingHold");
         private static readonly int SpeedHash = Animator.StringToHash("Speed");
         private static readonly int MoveXHash = Animator.StringToHash("MoveX");
         private static readonly int MoveYHash = Animator.StringToHash("MoveY");
@@ -55,6 +57,15 @@ namespace Elemental.Presentation.Animation
         private static readonly int EarthCastBStateHash =
             Animator.StringToHash("Earth Magic Upper Body.Earth Cast B");
         private static readonly int SurfStateHash = Animator.StringToHash("Base Layer.Surf Crouch");
+        private static readonly int PillarChargeStateHash = Animator.StringToHash("Base Layer.Pillar Charge");
+        private static readonly int PillarCrouchHash = Animator.StringToHash("PillarCrouch");
+        private bool _presentingPillarCharge;
+        private static readonly int StartWalkTransitionHash = Animator.StringToHash("Base Layer.Start Walk Transition");
+        private static readonly int CrouchExitTransitionHash = Animator.StringToHash("Base Layer.Crouch Exit Transition");
+        private static readonly int StepDownTransitionHash = Animator.StringToHash("Base Layer.Step Down Transition");
+        private EarthShortTransitionState _shortTransitionState;
+        private EarthShortTransitionSample _shortTransitionSample;
+        public EarthShortTransition ShortTransition => _shortTransitionSample.Kind;
         private static readonly int[] EarthPoseWeightHashes =
         {
             Animator.StringToHash("EarthPose01"),
@@ -67,7 +78,10 @@ namespace Elemental.Presentation.Animation
             Animator.StringToHash("EarthPose08"),
             Animator.StringToHash("EarthPose09"),
             Animator.StringToHash("EarthPose10"),
-            Animator.StringToHash("EarthPose11")
+            Animator.StringToHash("EarthPose11"),
+            Animator.StringToHash("EarthPose12"),
+            Animator.StringToHash("EarthPose13"),
+            Animator.StringToHash("EarthPose14")
         };
         private static readonly int[] EarthPoseAWeightHashes = CreateMagicBufferHashes("EarthPoseA");
         private static readonly int[] EarthPoseBWeightHashes = CreateMagicBufferHashes("EarthPoseB");
@@ -99,6 +113,11 @@ namespace Elemental.Presentation.Animation
         [SerializeField] private bool driveMagicPresentation = true;
         [SerializeField] private EarthMagicMotionProfile magicMotionProfile;
         private EarthMagicClipClock _magicClipClock;
+        private EarthMagicClipClock _outgoingMagicClock;
+        private EarthMagicClipTiming _outgoingMagicTiming;
+        private int _livingHoldLayerIndex = -1;
+        private float _livingHoldWeight;
+        public float LivingHoldWeight => _livingHoldWeight;
         private int _activeMagicBuffer = -1;
         private int _outgoingMagicBuffer = -1;
         private int _activeMagicBufferCastKind;
@@ -115,6 +134,12 @@ namespace Elemental.Presentation.Animation
         private bool _mantleAwaitingGroundedExit;
         private uint _mantleSequence;
         private float _mantleHandWeight;
+        private readonly EarthWallBracePresenter _wallBrace = new EarthWallBracePresenter();
+        private bool _wallBracePermitted;
+        public float WallBraceWeight => _wallBrace.Weight;
+        public Vector2 WallBraceSubmittedHands => new Vector2(_wallBrace.LeftSubmittedWeight, _wallBrace.RightSubmittedWeight);
+        public Vector2 WallBraceArmReach => _wallBrace.ArmReach;
+        public Vector2 WallBraceContactDistance => _wallBrace.ContactDistance;
         private static readonly int MantleStateHash = Animator.StringToHash("Base Layer.Mantle");
         private static readonly int MantleTimeHash = Animator.StringToHash("MantleTime");
         public float MagicClipTime => _magicClipClock.NormalizedTime;
@@ -124,6 +149,8 @@ namespace Elemental.Presentation.Animation
         private float _magicHandConstraintWeight;
         private CharacterPhysicalMode _physicalMode;
         private int _magicLayerIndex = -1;
+        private int _comboLegLayerIndex = -1;
+        private float _comboLegWeight;
         private int _impactLayerIndex = -1;
         private float _impactWeight;
         private bool _wasCasting;
@@ -136,7 +163,9 @@ namespace Elemental.Presentation.Animation
         private EarthScalarPresentationState _speedFilter;
         private EarthLocomotionBlendState _locomotionBlend;
         private EarthScalarPresentationState _gaitRateFilter;
+        private LocomotionRhythmController _locomotionRhythm;
         private EarthScalarPresentationState _turnFilter;
+        private EarthTurnStepState _turnStep;
         private Vector3 _previousFacing;
         private bool _hasPreviousFacing;
         private int _activeBaseStateHash;
@@ -174,6 +203,8 @@ namespace Elemental.Presentation.Animation
             contactPredictor != null ? contactPredictor.Latest : default;
         public float FilteredSpeed => _speedFilter.Value;
         public float FilteredTurn => _turnFilter.Value;
+        public bool AuthoredTurnStepActive => _turnStep.Active;
+        public float AuthoredTurnStepDirection => _turnStep.Active ? _turnStep.Direction : 0f;
         public float MeasuredYawRateDegrees { get; private set; }
         public EarthCharacterPoseController PoseController => poseController;
         public EarthFootContactController FootContactController => footContactController;
@@ -264,9 +295,11 @@ namespace Elemental.Presentation.Animation
             if (Application.isPlaying && animator.isActiveAndEnabled)
             {
                 _magicLayerIndex = animator.GetLayerIndex(MagicLayerName);
+                _comboLegLayerIndex = animator.GetLayerIndex("Earth Combo Full Body");
                 _impactLayerIndex = animator.GetLayerIndex(ImpactLayerName);
                 animationDriver.SetLayerWeight(0, 1f);
                 if (_magicLayerIndex >= 0) animationDriver.SetLayerWeight(_magicLayerIndex, 0f);
+                if (_comboLegLayerIndex >= 0) animationDriver.SetLayerWeight(_comboLegLayerIndex, 0f);
                 if (_impactLayerIndex >= 0) animationDriver.SetLayerWeight(_impactLayerIndex, 0f);
                 animationDriver.SetBool(GroundedHash, true);
             }
@@ -394,6 +427,8 @@ namespace Elemental.Presentation.Animation
 
         private void ResetTransientAnimationState()
         {
+            _shortTransitionState = default;
+            _shortTransitionSample = default;
             _physicalMode = CharacterPhysicalMode.AnimatedMotor;
             _animationGrounded = true;
             _unsupportedSeconds = 0f;
@@ -405,6 +440,7 @@ namespace Elemental.Presentation.Animation
             _locomotionBlend = default;
             _gaitRateFilter = default;
             _turnFilter = default;
+            _turnStep = default;
             _hasPreviousFacing = false;
             _activeBaseStateHash = LocomotionStateHash;
             _activeMotionState = EarthMotionStateId.Locomotion;
@@ -457,11 +493,36 @@ namespace Elemental.Presentation.Animation
 
         private void Update()
         {
-            using (PresentationMarker.Auto()) UpdatePresentation();
+            using (PresentationMarker.Auto())
+            {
+                UpdatePresentation();
+                _wallBracePermitted = animator != null && motor != null &&
+                    !_wasMantling && !_mantleAwaitingGroundedExit &&
+                    _physicalMode != CharacterPhysicalMode.FullRagdoll &&
+                    (visibleRagdoll == null || (!visibleRagdoll.IsRagdollActive &&
+                                               !visibleRagdoll.IsRecoveringToAnimation)) &&
+                    CurrentAuthoredAction == EarthAuthoredActionId.Locomotion &&
+                    !_wasCasting && _castWeight < .02f && HandConstraintWeight < .02f;
+                _wallBrace.Step(animator, motor, _wallBracePermitted, Time.deltaTime);
+                if (_wallBracePermitted && _wallBrace.Weight > .001f &&
+                    animationRigBridge != null && animationRigBridge.IsBuilt)
+                    _wallBrace.SubmitRigTargets(motor, leftHandTarget, rightHandTarget, animationRigBridge);
+            }
         }
+
+        private uint _observedTeleportSequence;
 
         private void UpdatePresentation()
         {
+            if (motor != null && _observedTeleportSequence != motor.TeleportSequence)
+            {
+                _observedTeleportSequence = motor.TeleportSequence;
+                ResetTransientAnimationState();
+                ResetMagicIK();
+                _presentingPillarCharge = false;
+                footContactController?.InvalidateBasePose();
+                contactPredictor?.Configure(motor);
+            }
             if (animator == null || rootBody == null || motor == null) return;
             bool protectedAnimationOwner = motor.IsMantling || _mantleAwaitingGroundedExit ||
                                             _physicalMode == CharacterPhysicalMode.FullRagdoll ||
@@ -470,7 +531,12 @@ namespace Elemental.Presentation.Animation
                                               visibleRagdoll.IsRecoveringToAnimation));
             poseController?.SetPresentationSuppressed(protectedAnimationOwner);
             if (!EnsureAnimationDriver(true)) return;
-            if (PresentMantle()) return;
+            if (PresentMantle())
+            {
+                _shortTransitionState = default;
+                _shortTransitionSample = default;
+                return;
+            }
             if (_mantleAwaitingGroundedExit)
             {
                 // The fixed-clock path can finish one rendered frame before the
@@ -491,6 +557,12 @@ namespace Elemental.Presentation.Animation
                 motor.LocalUp);
             float verticalSpeed = Vector3.Dot(rootBody.linearVelocity, motor.LocalUp);
             bool surfing = surfController != null && surfController.IsActive;
+            bool pillarCharge = pillarMobility != null && pillarMobility.IsCharging &&
+                                (motor.HasStableSupport || surfing) && !protectedAnimationOwner;
+            bool chargePoseChanged = pillarCharge != _presentingPillarCharge;
+            _presentingPillarCharge = pillarCharge;
+            animationDriver.SetFloat(PillarCrouchHash,
+                pillarCharge ? Mathf.Lerp(.52f, .72f, pillarMobility.Charge01) : 0f);
             Vector3 facing = Vector3.ProjectOnPlane(motor.FacingForward, motor.LocalUp);
             if (facing.sqrMagnitude < 0.001f) facing = Vector3.ProjectOnPlane(transform.forward, motor.LocalUp);
             facing.Normalize();
@@ -524,7 +596,8 @@ namespace Elemental.Presentation.Animation
                     : 0.14f,
                 profile != null ? profile.SpeedDecelerationSeconds : 0.24f,
                 Time.deltaTime);
-            float gaitRate = EarthAnimationParameterFilter.StepGaitRate(
+            if (_locomotionRhythm == null) _locomotionRhythm = GetComponent<LocomotionRhythmController>();
+            float gaitRate = _locomotionRhythm != null ? _locomotionRhythm.PlaybackRate : EarthAnimationParameterFilter.StepGaitRate(
                 ref _gaitRateFilter,
                 tangentVelocity.magnitude,
                 Time.deltaTime,
@@ -539,14 +612,32 @@ namespace Elemental.Presentation.Animation
                 profile != null ? profile.TurnEnterSeconds : 0.065f,
                 profile != null ? profile.TurnReleaseSeconds : 0.16f,
                 Time.deltaTime);
+            AnimatorStateInfo turnClock = animationDriver.GetCurrentAnimatorStateInfo(0);
+            bool turnClockVisible = turnClock.fullPathHash == TurnInPlaceStateHash;
+            if (animationDriver.IsInTransition(0))
+            {
+                AnimatorStateInfo nextTurnClock = animationDriver.GetNextAnimatorStateInfo(0);
+                turnClockVisible = nextTurnClock.fullPathHash == TurnInPlaceStateHash;
+                if (turnClockVisible) turnClock = nextTurnClock;
+            }
+            bool canTakeTurnStep = motor.HasStableSupport && !protectedAnimationOwner &&
+                !motor.IsImpactStunned && !surfing && !pillarCharge && measuredSpeed < .35f &&
+                Mathf.Abs(motor.LastCommand.Move.y) < .12f &&
+                CurrentAuthoredAction is EarthAuthoredActionId.None or EarthAuthoredActionId.Locomotion;
+            EarthTurnStepSequence.Step(ref _turnStep, motor.LastCommand.Move.x, measuredYaw * Time.deltaTime,
+                canTakeTurnStep, turnClockVisible, turnClock.normalizedTime, Time.deltaTime);
+            // A step's blend weight is a directional choice, not the motor yaw
+            // envelope. Fading that envelope on key-up erased the authored lift
+            // before its planted finish, despite a numerically valid turn state.
+            float playedTurn = _turnStep.Active ? _turnStep.Direction : turn.Value;
             animator.feetPivotActive = Mathf.MoveTowards(
                 animator.feetPivotActive,
-                turn.PivotActive ? 0.18f : 1f,
+                _turnStep.Active || turn.PivotActive ? 0.18f : 1f,
                 Time.deltaTime * 5.5f);
 
             UpdateLandingEvidence(verticalSpeed, Vector3.Dot(tangentVelocity, facing));
             UpdateAnimationGrounded(verticalSpeed);
-            EarthLandingCandidateSnapshot candidate = !_animationGrounded && contactPredictor != null
+            EarthLandingCandidateSnapshot candidate = !motor.HasStableSupport && contactPredictor != null
                 ? contactPredictor.Predict(
                     profile != null ? profile.LandingPredictionHorizon : 0.65f,
                     profile != null ? profile.LandingPredictionSteps : 6,
@@ -560,7 +651,7 @@ namespace Elemental.Presentation.Animation
                 in rescueTuning,
                 in candidate,
                 _animationGrounded,
-                surfing,
+                surfing || pillarCharge,
                 _physicalMode == CharacterPhysicalMode.FullRagdoll,
                 verticalSpeed,
                 tangentVelocity.magnitude,
@@ -615,8 +706,8 @@ namespace Elemental.Presentation.Animation
             animationDriver.SetFloat(MoveXHash, blendVelocity.x);
             animationDriver.SetFloat(MoveYHash, blendVelocity.y);
             animationDriver.SetFloat(GaitRateHash, gaitRate);
-            animationDriver.SetFloat(TurnHash, turn.Value);
-            footContactController?.SetTurnIntent(turn.Value);
+            animationDriver.SetFloat(TurnHash, playedTurn);
+            footContactController?.SetTurnIntent(playedTurn);
             animationDriver.SetBool(SurfingHash, surfing);
             animationDriver.SetBool(GroundedHash, _animationGrounded);
             animationDriver.SetFloat(VerticalSpeedHash, verticalSpeed);
@@ -631,6 +722,26 @@ namespace Elemental.Presentation.Animation
             bool directionalDodge = IsDirectionalDodgeActive;
             bool authoredKnockdownRecovery = visibleRagdoll != null &&
                                                visibleRagdoll.IsRecoveringToAnimation;
+            Vector3 capsuleBottom = motor.Capsule.transform.TransformPoint(motor.Capsule.center) -
+                motor.LocalUp * (motor.Capsule.height * Mathf.Abs(motor.Capsule.transform.lossyScale.y) * .5f);
+            Vector3 predictedPoint = new Vector3(candidate.Point.x, candidate.Point.y, candidate.Point.z);
+            var shortInput = new EarthShortTransitionInput
+            {
+                Grounded = motor.HasStableSupport,
+                Crouched = surfing || pillarCharge,
+                ProtectedOwner = protectedAnimationOwner || directionalDodge || authoredKnockdownRecovery ||
+                    _wasCasting || _castWeight > .02f || HandConstraintWeight > .02f ||
+                    (poseController != null && poseController.AuthoritativePhase != EarthCastPhase.Idle) ||
+                    (!driveMagicPresentation && animationDriver.GetBool(CastHash)) ||
+                    Time.time < _impactUntil || rescue.LandingStyle == EarthLandingStyle.Hard || LandingRollAllowed,
+                DeliberateJump = _deliberateJump || pillarMobility != null && pillarMobility.IsLaunchPending,
+                TangentSpeed = tangentVelocity.magnitude,
+                ForwardSpeed = Vector3.Dot(tangentVelocity, facing),
+                VerticalSpeed = verticalSpeed,
+                HasLandingCandidate = candidate.IsValid,
+                FloorDistance = candidate.IsValid ? Mathf.Max(0f, Vector3.Dot(capsuleBottom - predictedPoint, motor.LocalUp)) : 0f
+            };
+            _shortTransitionSample = EarthShortTransitionPolicy.Step(ref _shortTransitionState, in shortInput, Time.deltaTime);
             int desiredGroundedState = ResolveGroundedStateHash(in rescue);
             bool groundedLaneChanged = desiredGroundedState != 0 &&
                                        desiredGroundedState != _activeBaseStateHash;
@@ -640,7 +751,7 @@ namespace Elemental.Presentation.Animation
                 DriveRescueTransition(in rescue);
             }
             else if (!directionalDodge && !authoredKnockdownRecovery &&
-                     (rescue.PhaseChanged || landingStyleChanged || groundedLaneChanged))
+                     (rescue.PhaseChanged || landingStyleChanged || groundedLaneChanged || chargePoseChanged || _shortTransitionSample.Changed))
             {
                 DriveRescueTransition(in rescue);
             }
@@ -656,13 +767,16 @@ namespace Elemental.Presentation.Animation
                 // The bot presenter owns the cast layer. Clearing its parameters
                 // here every Update erased the telegraph authored the frame before.
                 _castWeight = 0f;
+                _livingHoldWeight = 0f;
+                if (_livingHoldLayerIndex >= 0)
+                    animationDriver.SetLayerWeight(_livingHoldLayerIndex, 0f);
                 _handIkState = HandIkState.Inactive;
                 animationRigBridge?.ResetMagicIk();
                 _wasCasting = false;
                 return;
             }
             int castKind = ResolveCastKind();
-            bool casting = castKind > 0 && !authoredKnockdownRecovery &&
+            bool casting = castKind > 0 && !pillarCharge && !authoredKnockdownRecovery &&
                            _physicalMode != CharacterPhysicalMode.FullRagdoll &&
                            ((poseController != null && poseController.CurrentRequest.IsActive) ||
                             (executor != null &&
@@ -695,7 +809,10 @@ namespace Elemental.Presentation.Animation
                             castKind != _activeMagicBufferCastKind))
                 BeginMagicBuffer(magicPresentationGeneration, castKind);
             ClearOutgoingMagicBufferWhenHidden();
-            _activeMagicMotion = magicMotionProfile != null ? magicMotionProfile.Find(castKind) : null;
+            // Keep the outgoing clip's timing during cancel/recovery: slot zero
+            // is input state, not a request to replace its authored metadata.
+            if (casting)
+                _activeMagicMotion = magicMotionProfile != null ? magicMotionProfile.Find(castKind) : null;
             EarthMagicClipTiming clipTiming = _activeMagicMotion != null
                 ? _activeMagicMotion.timing : EarthMagicClipTiming.Default;
             if (casting && poseController != null)
@@ -706,8 +823,10 @@ namespace Elemental.Presentation.Animation
             float motionTime = _magicClipClock.Step(castKind,
                 magicPresentationGeneration,
                 poseController != null ? poseController.CurrentRequest.Phase : EarthCastPhase.Sustain,
-                casting, in clipTiming, Time.deltaTime,
+                casting, in clipTiming, Time.deltaTime * animationDriver.PresentationClockMultiplier,
                 poseController != null && poseController.AuthoritativeStartsAtContact);
+            if (poseController != null && poseController.TryGetComboMotionTime(out float comboTime))
+                motionTime = comboTime;
             // The clip clock already interpolates continuously. Smoothing it a
             // second time delays authored contact and never reaches markers.
             animationDriver.SetFloat(MotionTimeHash, motionTime);
@@ -727,6 +846,13 @@ namespace Elemental.Presentation.Animation
                     Time.deltaTime);
             }
             if (_magicLayerIndex >= 0) animationDriver.SetLayerWeight(_magicLayerIndex, _castWeight);
+            UpdateLivingHold(casting, motionTime, in clipTiming);
+            if (_comboLegLayerIndex >= 0)
+            {
+                _comboLegWeight = EarthAnimationDriver.DampParameter(_comboLegWeight,
+                    casting && castKind >= 12 ? _castWeight : 0f, .08f, Time.deltaTime);
+                animationDriver.SetLayerWeight(_comboLegLayerIndex, _comboLegWeight);
+            }
             _hasPendingRenderedMagicSample = poseController != null && casting;
             _pendingRenderedMagicSequence = poseController != null
                 ? poseController.LastAuthoritativeTick
@@ -768,6 +894,12 @@ namespace Elemental.Presentation.Animation
 
         private void BeginMagicBuffer(uint sequence, int castKind)
         {
+            _outgoingMagicClock = _magicClipClock;
+            if (_activeMagicBuffer >= 0)
+                _outgoingMagicClock.ResumeRecovery(_activeMagicBufferCastKind,
+                    animationDriver.GetFloat(_activeMagicBuffer == 0 ? MotionTimeAHash : MotionTimeBHash));
+            _outgoingMagicTiming = _activeMagicMotion != null
+                ? _activeMagicMotion.timing : EarthMagicClipTiming.Default;
             int nextBuffer = _activeMagicBuffer < 0 ? 0 : 1 - _activeMagicBuffer;
             int previousBuffer = _activeMagicBuffer;
             int[] nextWeights = nextBuffer == 0
@@ -788,6 +920,14 @@ namespace Elemental.Presentation.Animation
                     animationDriver.Play(nextState, _magicLayerIndex, 0f);
             }
 
+            if (_comboLegLayerIndex >= 0)
+            {
+                int comboState = Animator.StringToHash(nextBuffer == 0
+                    ? "Earth Combo Full Body.Combo A" : "Earth Combo Full Body.Combo B");
+                if (hasVisibleOutgoing)
+                    animationDriver.CrossFadeInFixedTime(comboState, MagicBufferCrossFadeSeconds, _comboLegLayerIndex, 0f);
+                else animationDriver.Play(comboState, _comboLegLayerIndex, 0f);
+            }
             _magicClipClock = default;
             _activeMagicBuffer = nextBuffer;
             _activeMagicBufferSequence = sequence;
@@ -800,6 +940,14 @@ namespace Elemental.Presentation.Animation
 
         private void ClearOutgoingMagicBufferWhenHidden()
         {
+            if (_outgoingMagicBuffer >= 0)
+            {
+                float outgoingTime = _outgoingMagicClock.Step(0, 0,
+                    EarthCastPhase.Recover, false, in _outgoingMagicTiming,
+                    Time.deltaTime * animationDriver.PresentationClockMultiplier);
+                animationDriver.SetFloat(_outgoingMagicBuffer == 0
+                    ? MotionTimeAHash : MotionTimeBHash, outgoingTime);
+            }
             if (_outgoingMagicBuffer < 0 ||
                 Time.unscaledTime < _outgoingMagicBufferClearAt) return;
             if (_magicLayerIndex >= 0 && animationDriver.IsInTransition(_magicLayerIndex)) return;
@@ -817,6 +965,26 @@ namespace Elemental.Presentation.Animation
             _outgoingMagicBuffer = -1;
         }
 
+        private void UpdateLivingHold(bool casting, float motionTime, in EarthMagicClipTiming timing)
+        {
+            using var marker = LivingHoldMarker.Auto();
+            if (_livingHoldLayerIndex < 0)
+                _livingHoldLayerIndex = animator.GetLayerIndex(EarthLivingHoldPolicy.LayerName);
+            if (_livingHoldLayerIndex < 0) return;
+            bool held = executor != null && (executor.HeldBody != null ||
+                executor.IsGravityWellActive || executor.IsVectorFieldActive);
+            bool contact = motionTime + .0005f >= timing.Contact && IsActiveMagicBufferRendered() &&
+                (poseController == null || !poseController.HasAuthoritativePresentation ||
+                 poseController.RenderedContactReached);
+            float target = EarthLivingHoldPolicy.TargetWeight(casting, held, contact,
+                _physicalMode == CharacterPhysicalMode.FullRagdoll || _wasMantling,
+                _castWeight);
+            _livingHoldWeight = EarthAnimationDriver.DampParameter(
+                _livingHoldWeight, target, target > _livingHoldWeight ? .18f : .08f,
+                Time.deltaTime * animationDriver.PresentationClockMultiplier);
+            animationDriver.SetLayerWeight(_livingHoldLayerIndex, _livingHoldWeight);
+        }
+
         private bool IsActiveMagicBufferRendered()
         {
             if (_activeMagicBuffer < 0 || _magicLayerIndex < 0 ||
@@ -830,7 +998,7 @@ namespace Elemental.Presentation.Animation
 
         private static int[] CreateMagicBufferHashes(string prefix)
         {
-            var hashes = new int[11];
+            var hashes = new int[14];
             for (int index = 0; index < hashes.Length; index++)
                 hashes[index] = Animator.StringToHash($"{prefix}{index + 1:00}");
             return hashes;
@@ -968,6 +1136,7 @@ namespace Elemental.Presentation.Animation
             animationDriver.SetBool(GroundedHash, mantleContact);
             animationDriver.SetBool(CastHash, false);
             if (_magicLayerIndex >= 0) animationDriver.SetLayerWeight(_magicLayerIndex, 0f);
+                if (_comboLegLayerIndex >= 0) animationDriver.SetLayerWeight(_comboLegLayerIndex, 0f);
             Vector3 up = motor.LocalUp;
             Vector3 facing = Vector3.ProjectOnPlane(motor.FacingForward, up).normalized;
             Vector3 right = Vector3.Cross(up, facing).normalized;
@@ -1094,10 +1263,17 @@ namespace Elemental.Presentation.Animation
                     destinationCategory = EarthMotionCategory.Landing;
                     break;
                 case EarthAnimationPhase.SurfLoop:
-                    stateHash = SurfStateHash;
+                    stateHash = _presentingPillarCharge ? PillarChargeStateHash : SurfStateHash;
                     destinationState = EarthMotionStateId.Surf;
                     destinationCategory = EarthMotionCategory.Surf;
                     break;
+            }
+            if (_shortTransitionSample.Kind != EarthShortTransition.None)
+            {
+                stateHash = ShortTransitionHash(_shortTransitionSample.Kind);
+                bool stepDown = _shortTransitionSample.Kind == EarthShortTransition.StepDown;
+                destinationState = stepDown ? EarthMotionStateId.Fall : EarthMotionStateId.Locomotion;
+                destinationCategory = stepDown ? EarthMotionCategory.Airborne : EarthMotionCategory.AuthoredAction;
             }
             if (stateHash == 0) return;
             // The semantic recovery clock is intentionally short, but must not
@@ -1126,7 +1302,8 @@ namespace Elemental.Presentation.Animation
             }
             AnimatorStateInfo current = animationDriver.GetCurrentAnimatorStateInfo(0);
             EarthLandingCandidateSnapshot candidate = LandingCandidate;
-            bool canInterrupt = CurrentAuthoredAction == EarthAuthoredActionId.None ||
+            bool canInterrupt = _shortTransitionSample.Kind != EarthShortTransition.None || _shortTransitionSample.Changed ||
+                                CurrentAuthoredAction == EarthAuthoredActionId.None ||
                                 EarthAuthoredActionCatalog.CanInterrupt(
                                     CurrentAuthoredAction,
                                     ResolveCurrentActionNormalizedTime(),
@@ -1147,7 +1324,7 @@ namespace Elemental.Presentation.Animation
                 candidate.TimeToContact,
                 rescue.Phase == EarthAnimationPhase.PreLanding && candidate.IsValid,
                 canInterrupt,
-                false,
+                _activeMotionState == destinationState && _activeBaseStateHash != stateHash,
                 destinationState == EarthMotionStateId.Locomotion);
             if (transitionDirector != null &&
                 transitionDirector.RequestTransition(stateHash, in context))
@@ -1162,10 +1339,19 @@ namespace Elemental.Presentation.Animation
             if (rescue.Phase != EarthAnimationPhase.GroundedIdle &&
                 rescue.Phase != EarthAnimationPhase.LocomotionLoop)
                 return 0;
-            bool turningInPlace = Mathf.Abs(_speedFilter.Value) < 0.35f &&
-                                  Mathf.Abs(_turnFilter.Value) >= 0.20f;
+            if (_shortTransitionSample.Kind is EarthShortTransition.StartWalk or EarthShortTransition.CrouchExit)
+                return ShortTransitionHash(_shortTransitionSample.Kind);
+            bool turningInPlace = _turnStep.Active;
             return turningInPlace ? TurnInPlaceStateHash : LocomotionStateHash;
         }
+
+        private static int ShortTransitionHash(EarthShortTransition kind) => kind switch
+        {
+            EarthShortTransition.StartWalk => StartWalkTransitionHash,
+            EarthShortTransition.CrouchExit => CrouchExitTransitionHash,
+            EarthShortTransition.StepDown => StepDownTransitionHash,
+            _ => 0
+        };
 
         private void CaptureGaitPhase()
         {
@@ -1337,6 +1523,8 @@ namespace Elemental.Presentation.Animation
                 motor != null && motor.HasStableSupport,
                 false);
             LastImpactMotionLane = ImpactMotionSelector.Select(in impactContext);
+            // Weak physical flinches stay local and preserve the current action.
+            if (response == EarthCharacterImpactResponse.Flinch && HasProceduralImpactOwner) return;
             if (CurrentAuthoredAction == EarthAuthoredActionId.DirectionalDodge)
             {
                 float normalizedTime = ResolveCurrentActionNormalizedTime();
@@ -1347,7 +1535,7 @@ namespace Elemental.Presentation.Animation
                 _dodgeUntil = 0f;
                 _dodgeWasActive = true;
             }
-            float duration = response == EarthCharacterImpactResponse.Stagger ? 0.46f : 0.24f;
+            float duration = 0.24f;
             _impactUntil = Mathf.Max(_impactUntil, Time.time + duration);
             if (!HasProceduralImpactOwner && animator != null && animator.enabled)
                 animationDriver.SetTrigger(ImpactHash);
@@ -1460,11 +1648,18 @@ namespace Elemental.Presentation.Animation
         }
 
         private bool HasProceduralImpactOwner =>
-            proceduralBodyResponse != null && proceduralBodyResponse.isActiveAndEnabled;
+            visibleRagdoll != null && visibleRagdoll.LocalizedPhysics != null &&
+            visibleRagdoll.LocalizedPhysics.isActiveAndEnabled;
 
         private void OnAnimatorIK(int layerIndex)
         {
             if (animator == null) return;
+            if (_wallBracePermitted && _wallBrace.Weight > .001f && layerIndex == 0 &&
+                (animationRigBridge == null || !animationRigBridge.IsBuilt))
+            {
+                _wallBrace.Apply(animator, motor);
+                return;
+            }
             // Animation Rigging owns casting arms when available. Mantle disables
             // that rig in PresentMantle and deliberately uses Humanoid IK because
             // its targets are physical ledge contacts on the base layer.
@@ -1678,6 +1873,8 @@ namespace Elemental.Presentation.Animation
         public void ResetMagicIK()
         {
             _magicClipClock = default;
+            _outgoingMagicClock = default;
+            _livingHoldWeight = 0f;
             _activeMagicBuffer = -1;
             _outgoingMagicBuffer = -1;
             _activeMagicBufferCastKind = 0;
@@ -1697,10 +1894,12 @@ namespace Elemental.Presentation.Animation
             if (animator == null) return;
             if (EnsureAnimationDriver(false))
             {
+                if (_livingHoldLayerIndex >= 0) animationDriver.SetLayerWeight(_livingHoldLayerIndex, 0f);
                 animationDriver.SetBool(CastHash, false);
                 animationDriver.SetInteger(CastKindHash, 0);
                 animationDriver.SetFloat(EarthPoseHash, 0f);
                 if (_magicLayerIndex >= 0) animationDriver.SetLayerWeight(_magicLayerIndex, 0f);
+                if (_comboLegLayerIndex >= 0) animationDriver.SetLayerWeight(_comboLegLayerIndex, 0f);
                 for (int index = 0; index < EarthPoseWeightHashes.Length; index++)
                 {
                     animationDriver.SetFloat(EarthPoseWeightHashes[index], 0f);

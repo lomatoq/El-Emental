@@ -23,6 +23,7 @@ namespace Elemental.Runtime.Physics
             owner != null && owner.ApplyReleasedPieceImpact(pieceIndex, in impact);
         public int PieceIndex => pieceIndex;
         public Rigidbody Body => body;
+        public bool HasMagicOwner => _hasMagicOwner;
         public uint StableEarthId => owner != null
             ? unchecked(owner.StructureId * 131u + (uint)Mathf.Max(1, pieceId))
             : 0u;
@@ -31,7 +32,7 @@ namespace Elemental.Runtime.Physics
             : default;
         public float EarthMass => body != null ? Mathf.Max(0.1f, body.mass) : 0f;
         public EarthPhysicalTargetKind TargetKind => EarthPhysicalTargetKind.WallPiece;
-        public bool IsEarthTargetValid => owner != null && owner.IsPieceReleased(pieceIndex) &&
+        public bool IsEarthTargetValid => owner != null && !owner.IsPieceReservedForRepair(pieceIndex) && owner.IsPieceReleased(pieceIndex) &&
                                           gameObject.activeInHierarchy && body != null &&
                                           shape != null && shape.enabled;
 
@@ -51,11 +52,8 @@ namespace Elemental.Runtime.Physics
             gravityBody = configuredGravity;
             _hasMagicOwner = false;
 
-            // EarthArenaStructure receives the exact physical mass baked from the
-            // fracture volume. Convert it once into the same gameplay scale used by
-            // loose rocks instead of retaining a separate arena-only density scale.
-            if (body != null)
-                body.mass = EarthMatterMassRuntime.ResolveFromAuthoredPhysicalMass(body.mass);
+            // The structure owner supplies already resolved gameplay kilograms.
+            // Piece binding/rebinding must never compress the mass a second time.
         }
 
         public void OnEarthMagicGrabbed(EarthMagicGripKind grip)
@@ -76,10 +74,15 @@ namespace Elemental.Runtime.Physics
 
         private void OnCollisionEnter(Collision collision)
         {
+            Elemental.Runtime.Characters.EarthStoneCharacterContact.Deliver(collision, body, StableEarthId);
             if (owner != null && IsEarthTargetValid)
                 owner.HandlePieceCollision(pieceIndex, collision);
         }
 
-        private void OnCollisionStay(Collision collision) => owner?.ReportPieceFriction(pieceIndex, collision);
+        private void OnCollisionStay(Collision collision)
+        {
+            Elemental.Runtime.Characters.EarthStoneCharacterContact.DeliverLoad(collision, body);
+            owner?.ReportPieceFriction(pieceIndex, collision);
+        }
     }
 }

@@ -1,0 +1,9 @@
+# Strong thrown decor and debris splitting
+
+Final runtime verification: DecorFractureFollowupPlay **1/1** passed at `2026-09-08T12:23:57.1924010Z` (2.5165s). Real physical children retain canonical mass and targetability beyond cosmetic lifetime, duplicate splitting is rejected, and exhausted test pools preserve the parent. Together with the 2/2 Edit result below, this completes the focused checks for this change.
+
+September 8 main snapshot over base 1235579. Corrected secondary debris collision momentum: Unity's contact-relative velocity closes along its normal, but this path negated the dot product. It therefore discarded incoming momentum and relied only on the solver impulse. The shared pure ContactImpulse contract now preserves the larger of the measured solver impulse and positive normal-closing momentum; separation and purely tangential motion do not invent incoming momentum.
+
+The production scene had 72 persistent split slots per pool. They are intentionally not recycled while canonical mass is alive, so repeated splitting eventually rejected new breaks with PhysicalPoolFull. Both scene pools and the two authoring setup paths now allocate 256 slots; the supported bounded Inspector range is 16–512. Explicit test pools can still use 16 slots to exercise honest exhaustion. This provides more room, not unlimited fracture. Existing split-depth limit and preservation of large stones at that limit remain unchanged. No active chunks are silently deleted to make room.
+
+DecorFractureFollowupEdit: 2/2 passed at 2026-09-08T12:19:34.6822538Z (0.085543s), including strong incoming momentum producing four physical children and separating/tangential negatives. Runtime persistent-mass and pool-exhaustion verification is coordinated by root before the snapshot. The larger dormant pool increases startup object count; no claim of unchanged full-game physics/GPU cost is made.

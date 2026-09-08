@@ -168,7 +168,7 @@ namespace Elemental.Authoring.Editor
                 if (assets[index] is BlendTree tree && tree.name == "Earth Curated Casts")
                 {
                     AnimatorState cast = FindState(controller.layers[1].stateMachine, "Earth Cast");
-                    return tree.blendType == BlendTreeType.Direct && tree.children.Length == 11 &&
+                    return tree.blendType == BlendTreeType.Direct && tree.children.Length >= 11 &&
                            cast != null && cast.timeParameterActive && cast.timeParameter == "EarthMotionTimeA" &&
                            FindState(controller.layers[1].stateMachine, "Earth Cast B") != null &&
                            controller.layers[1].stateMachine.defaultState == cast &&
@@ -306,7 +306,13 @@ namespace Elemental.Authoring.Editor
                     AnimatorControllerParameterType.Float);
             for (int slot = 1; slot <= 11; slot++)
                 AddParameterIfMissing(controller, PoseWeightParameter(slot), AnimatorControllerParameterType.Float);
-            ConfigureBaseLayer(controller);
+            // Upgrading magic/rig support must not replace user-authored movement
+            // clips, thresholds, mirroring or playback speed in an existing tree.
+            bool hasAuthoredLocomotion = false;
+            foreach (ChildAnimatorState child in controller.layers[0].stateMachine.states)
+                if (child.state.name == "Locomotion" && child.state.motion != null)
+                    hasAuthoredLocomotion = true;
+            if (!hasAuthoredLocomotion) ConfigureBaseLayer(controller);
             ConfigureMagicLayer(controller);
             ConfigureImpactLayer(controller);
             AnimatorControllerLayer[] layers = controller.layers;

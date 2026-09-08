@@ -60,6 +60,11 @@ namespace MotionMatching
         public int CurrentFrame { get; private set; } // Current frame index in the pose/feature set
         public int LastMMSearchFrame { get; private set; } // Frame before the last Motion Matching Search
         public float ContinuousFrame => CurrentFrameTime;
+        // Pose playback only. Search/inertialization retain their real elapsed clock.
+        public float LocomotionPlaybackRate { get; set; } = 1f;
+        public bool HasValidSearchResult { get; private set; } = true;
+        private bool _warnedEmptySearch;
+        public float PresentationClockMultiplier { get; set; } = 1f;
         public bool LeftFootContact => IsLeftFootContact;
         public bool RightFootContact => IsRightFootContact;
         public NativeArray<bool> TagMask { get; private set; }
@@ -86,7 +91,12 @@ namespace MotionMatching
         private bool IsSubscribed = false;
         private MotionMatchingSearch SearchInstance;
 
-        public bool RuntimeInitialized => IsInitialized;
+        private bool _warnedRuntimeStateLost;
+        public bool RuntimeInitialized => IsInitialized && HasRuntimeBuffers;
+        private bool HasRuntimeBuffers => MMData != null && PoseSet != null && FeatureSet != null &&
+            SearchInstance != null && Inertialization != null && SkeletonTransforms != null &&
+            QueryFeature.IsCreated && FeaturesWeightsNativeArray.IsCreated && FeatureScratch.IsCreated &&
+            TagMask.IsCreated && FeatureSet.GetFeatures().IsCreated && FeatureWeights != null;
         public string InitializationStatus { get; private set; } = "not-started";
 
         private void Awake()
@@ -104,7 +114,7 @@ namespace MotionMatching
 
         private bool TryInitialize()
         {
-            if (IsInitialized) return true;
+            if (IsInitialized) return HasRuntimeBuffers || MarkRuntimeStateLost();
             if (CharacterController == null || MMData == null || Search == null)
             {
                 InitializationStatus = CharacterController == null
@@ -248,6 +258,7 @@ namespace MotionMatching
 
         private void OnCharacterControllerUpdated(float deltaTime)
         {
+            if (!HasRuntimeBuffers) { MarkRuntimeStateLost(); return; }
             float presentationDeltaTime = math.min(
                 math.max(deltaTime, 0f),
                 MaximumPresentationDeltaTime);
@@ -261,14 +272,26 @@ namespace MotionMatching
                 PROFILE.END_SAMPLE_PROFILING("Motion Matching Search");
                 // Check if use current or best
                 if (isCurrentValid && bestFrame == -1) bestFrame = CurrentFrame;
-                Debug.Assert(bestFrame != -1, "Motion Matching is not able to find any valid pose. Maybe the motion database is empty or the query tag used produces an empty set of poses?");
+                HasValidSearchResult = bestFrame >= 0;
+                if (!HasValidSearchResult && !_warnedEmptySearch)
+                {
+                    _warnedEmptySearch = true;
+                    Debug.LogWarning("Motion matching query has no valid candidate; retaining the last pose safely. Rebuild/check the tagged database and search features.", this);
+                }
                 const int ignoreSurrounding = 20; // ignore near frames
-                if (math.abs(bestFrame - CurrentFrame) > ignoreSurrounding)
+                PoseSet.AnimationClip currentSearchClip = FindAnimationClipForFrame(CurrentFrame);
+                bool changesClip = bestFrame < currentSearchClip.Start || bestFrame >= currentSearchClip.End;
+                // Frame proximity is meaningful only inside one clip. Adjacent
+                // short walk/run clips must obey a changed speed/direction query.
+                if (bestFrame >= 0 && (changesClip || math.abs(bestFrame - CurrentFrame) > ignoreSurrounding))
                 {
                     // Inertialize
                     if (Inertialize)
                     {
-                        Inertialization.PoseTransition(PoseSet, CurrentFrame, bestFrame);
+                        if (Inertialization.HasPoseOutput)
+                            Inertialization.PoseTransitionFromOutput(SampleInterpolatedPose(bestFrame + math.frac(CurrentFrameTime)));
+                        else
+                            Inertialization.PoseTransition(PoseSet, CurrentFrame, bestFrame);
                     }
                     LastMMSearchFrame = CurrentFrame;
                     CurrentFrameTime = bestFrame + math.frac(CurrentFrameTime); // the fractional part is the error accumulated, add it to the current to avoid drifting
@@ -287,7 +310,9 @@ namespace MotionMatching
             // from the database, e.g., if 1.0f/FrameTime = 60 and our game runes at 30, we need to advance 2 frames at each update
             // However, as we are using Application.targetFrameRate=1.0f/FrameTime, we do not consider the case where the application runs faster than the database
             PoseSet.AnimationClip playingClip = FindAnimationClipForFrame(CurrentFrame);
-            CurrentFrameTime += presentationDeltaTime / DatabaseFrameTime;
+            float rate = math.isfinite(LocomotionPlaybackRate) ? math.clamp(LocomotionPlaybackRate, .8f, 1.25f) : 1f;
+            float clock = math.isfinite(PresentationClockMultiplier) ? math.clamp(PresentationClockMultiplier, 0f, 1f) : 1f;
+            CurrentFrameTime += presentationDeltaTime * rate * clock / DatabaseFrameTime;
             CurrentFrame = (int)math.floor(CurrentFrameTime);
             if (playingClip.End > playingClip.Start && CurrentFrame >= playingClip.End)
             {
@@ -394,7 +419,7 @@ namespace MotionMatching
             }
         }
 
-        private void UpdateTransformAndSkeleton(float continuousFrame, float presentationDeltaTime)
+        private PoseVector SampleInterpolatedPose(float continuousFrame)
         {
             int frameIndex = math.clamp((int)math.floor(continuousFrame), 0, PoseSet.NumberPoses - 1);
             PoseSet.AnimationClip playingClip = FindAnimationClipForFrame(frameIndex);
@@ -423,7 +448,12 @@ namespace MotionMatching
             InterpolatedPose.RightFootContact = frameFraction < 0.5f
                 ? pose.RightFootContact
                 : nextPose.RightFootContact;
-            pose = InterpolatedPose;
+            return InterpolatedPose;
+        }
+
+        private void UpdateTransformAndSkeleton(float continuousFrame, float presentationDeltaTime)
+        {
+            PoseVector pose = SampleInterpolatedPose(continuousFrame);
             // Update Inertialize if enabled
             if (Inertialize)
             {
@@ -594,6 +624,7 @@ namespace MotionMatching
         /// </summary>
         public void DisableQueryTag()
         {
+            if (!RuntimeInitialized) return;
             var job = new DisableTagBurst
             {
                 TagMask = TagMask,
@@ -607,6 +638,7 @@ namespace MotionMatching
         /// </summary>
         public void SetQueryTag(string name)
         {
+            if (!RuntimeInitialized) return;
             PoseSet.Tag tag = PoseSet.GetTag(name);
             // TODO: cache results to avoid duplicated computations...
             var job = new SetTagBurst
@@ -625,6 +657,7 @@ namespace MotionMatching
         /// </summary>
         public void SetQueryTag(QueryTag query)
         {
+            if (!RuntimeInitialized) return;
             query.ComputeRanges(PoseSet);
             var job = new SetTagBurst
             {
@@ -660,6 +693,7 @@ namespace MotionMatching
         }
         public NativeArray<float> UpdateAndGetFeatureWeights()
         {
+            if (!HasRuntimeBuffers) { MarkRuntimeStateLost(); return default; }
             NativeArray<float> featuresWeightsNativeArray = FeaturesWeightsNativeArray;
             int offset = 0;
             for (int i = 0; i < MMData.TrajectoryFeatures.Count; i++)
@@ -753,6 +787,20 @@ namespace MotionMatching
             float2 primaryAxisUnit = new(primaryAxisUnitWorldSpace.x, primaryAxisUnitWorldSpace.z);
             float2 secondaryAxisUnit = new(-primaryAxisUnit.y, primaryAxisUnit.x);
             return new float4(primaryAxisUnit * primaryDistance, secondaryAxisUnit * secondaryDistance);
+        }
+
+        private bool MarkRuntimeStateLost()
+        {
+            HasValidSearchResult = false;
+            InitializationStatus = "runtime-state-lost-after-reload";
+            UnsubscribeFromCharacterController();
+            if (!_warnedRuntimeStateLost)
+            {
+                _warnedRuntimeStateLost = true;
+                Debug.LogWarning("[Motion Matching] Runtime buffers are unavailable after reload. " +
+                    "Search suspended; re-enter the scene to initialize a fresh source.", this);
+            }
+            return false;
         }
 
         private void OnDestroy()

@@ -574,27 +574,9 @@ namespace Elemental.Authoring.Editor
                 MaterialShaderStateUtility.CopyProperties(material, rockMaterial);
             }
 
-            Color authoredCut = rockMaterial.HasProperty("_FractureColor")
-                ? rockMaterial.GetColor("_FractureColor")
-                : new Color(0.62f, 0.48f, 0.36f, 1f);
-            Color shadow = rockMaterial.HasProperty("_ShadowColor")
-                ? rockMaterial.GetColor("_ShadowColor")
-                : new Color(0.20f, 0.15f, 0.12f, 1f);
-            // A new break stays in the authored sandstone palette but sits below
-            // the weathered exterior in value, making the fracture readable even
-            // when dust temporarily covers the topology change.
-            Color cut = Color.Lerp(authoredCut, shadow, 0.36f);
-            if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", cut);
-            if (material.HasProperty("_EdgeColor"))
-                material.SetColor("_EdgeColor", Color.Lerp(cut, Color.white, 0.12f));
-            if (material.HasProperty("_ShadowColor"))
-                material.SetColor("_ShadowColor", Color.Lerp(cut, Color.black, 0.58f));
-            if (material.HasProperty("_FractureColor")) material.SetColor("_FractureColor", cut);
-            // Fracture interiors keep the same broad form response as the intact
-            // arena; their darker authored palette alone identifies a fresh cut.
-            if (material.HasProperty("_FacetContrast")) material.SetFloat("_FacetContrast", 0.16f);
-            if (material.HasProperty("_FractureInteriorDepth"))
-                material.SetFloat("_FractureInteriorDepth", 0.16f);
+            // Fracture faces share the exterior surface response and palette.
+            if (material.HasProperty("_MatchFractureSurface"))
+                material.SetFloat("_MatchFractureSurface", 1f);
             material.enableInstancing = true;
             EditorUtility.SetDirty(material);
             AssetDatabase.SaveAssetIfDirty(material);

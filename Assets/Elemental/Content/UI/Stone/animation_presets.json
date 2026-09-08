@@ -1,0 +1,277 @@
+{
+  "version": 1,
+  "clock": "unscaled UI time; world motion policy selectable",
+  "reduced_motion": {
+    "translation": 0,
+    "scale": 1,
+    "looping": false,
+    "fadeMaxSeconds": 0.08,
+    "cameraMotion": false
+  },
+  "presets": [
+    {
+      "id": "panel_enter",
+      "duration": 0.28,
+      "ease": "outCubic",
+      "start": {
+        "x": -28,
+        "alpha": 0
+      },
+      "end": {
+        "x": 0,
+        "alpha": 1
+      },
+      "loop": false
+    },
+    {
+      "id": "panel_exit",
+      "duration": 0.16,
+      "ease": "inQuad",
+      "start": {
+        "x": 0,
+        "alpha": 1
+      },
+      "end": {
+        "x": -16,
+        "alpha": 0
+      },
+      "loop": false
+    },
+    {
+      "id": "content_enter",
+      "duration": 0.2,
+      "ease": "outCubic",
+      "start": {
+        "y": 8,
+        "alpha": 0
+      },
+      "end": {
+        "y": 0,
+        "alpha": 1
+      },
+      "loop": false
+    },
+    {
+      "id": "button_hover",
+      "duration": 0.13,
+      "ease": "outQuad",
+      "start": {
+        "scale": 1,
+        "glow": 0
+      },
+      "end": {
+        "scale": 1.014,
+        "glow": 0.42
+      },
+      "loop": false
+    },
+    {
+      "id": "button_press",
+      "duration": 0.07,
+      "ease": "outQuad",
+      "start": {
+        "scale": 1
+      },
+      "end": {
+        "scale": 0.984
+      },
+      "loop": false
+    },
+    {
+      "id": "button_release",
+      "duration": 0.12,
+      "ease": "outCubic",
+      "start": {
+        "scale": 0.984
+      },
+      "end": {
+        "scale": 1
+      },
+      "loop": false
+    },
+    {
+      "id": "focus_enter",
+      "duration": 0.1,
+      "ease": "linear",
+      "start": {
+        "focus": 0
+      },
+      "end": {
+        "focus": 1
+      },
+      "loop": false
+    },
+    {
+      "id": "element_select",
+      "duration": 0.22,
+      "ease": "outCubic",
+      "start": {
+        "scale": 0.92,
+        "glow": 0
+      },
+      "end": {
+        "scale": 1,
+        "glow": 0.7
+      },
+      "loop": false
+    },
+    {
+      "id": "selected_breath",
+      "duration": 3.6,
+      "ease": "sine",
+      "start": {
+        "opacity": 0.28
+      },
+      "end": {
+        "opacity": 0.42
+      },
+      "loop": true
+    },
+    {
+      "id": "success",
+      "duration": 0.48,
+      "ease": "outCubic",
+      "start": {
+        "y": 12,
+        "scale": 0.96,
+        "alpha": 0
+      },
+      "end": {
+        "y": 0,
+        "scale": 1,
+        "alpha": 1
+      },
+      "loop": false
+    },
+    {
+      "id": "defeat",
+      "duration": 0.34,
+      "ease": "outCubic",
+      "start": {
+        "y": 5,
+        "alpha": 0
+      },
+      "end": {
+        "y": 0,
+        "alpha": 1
+      },
+      "loop": false
+    },
+    {
+      "id": "toast_in",
+      "duration": 0.16,
+      "ease": "outCubic",
+      "start": {
+        "y": 8,
+        "alpha": 0
+      },
+      "end": {
+        "y": 0,
+        "alpha": 1
+      },
+      "loop": false
+    },
+    {
+      "id": "toast_out",
+      "duration": 0.16,
+      "ease": "inQuad",
+      "start": {
+        "alpha": 1
+      },
+      "end": {
+        "alpha": 0
+      },
+      "loop": false
+    },
+    {
+      "id": "meter_value",
+      "duration": 0.14,
+      "ease": "outQuad",
+      "start": {
+        "value": "current"
+      },
+      "end": {
+        "value": "target"
+      },
+      "loop": false
+    },
+    {
+      "id": "meter_damage_tail",
+      "duration": 0.36,
+      "ease": "outQuad",
+      "start": {
+        "value": "previous"
+      },
+      "end": {
+        "value": "target"
+      },
+      "loop": false
+    },
+    {
+      "id": "error_feedback",
+      "duration": 0.16,
+      "ease": "sine",
+      "start": {
+        "x": 0
+      },
+      "end": {
+        "x": [
+          0,
+          -3,
+          3,
+          -2,
+          0
+        ]
+      },
+      "loop": false
+    },
+    {
+      "id": "shine_pass",
+      "duration": 0.6,
+      "ease": "linear",
+      "start": {
+        "phase": 0
+      },
+      "end": {
+        "phase": 1
+      },
+      "loop": false
+    },
+    {
+      "id": "connect_pulse",
+      "duration": 1.8,
+      "ease": "sine",
+      "start": {
+        "opacity": 0.35
+      },
+      "end": {
+        "opacity": 0.75
+      },
+      "loop": true
+    },
+    {
+      "id": "menu_camera_blend",
+      "duration": 0.85,
+      "ease": "smoothstep",
+      "start": {
+        "pose": "existing gameplay"
+      },
+      "end": {
+        "pose": "menu camera marker"
+      },
+      "loop": false
+    },
+    {
+      "id": "island_float",
+      "duration": 110,
+      "ease": "sine",
+      "start": {
+        "offset": -1.2
+      },
+      "end": {
+        "offset": 1.2
+      },
+      "loop": true
+    }
+  ]
+}

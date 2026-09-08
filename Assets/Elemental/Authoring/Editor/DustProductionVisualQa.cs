@@ -275,7 +275,9 @@ namespace Elemental.Authoring.Editor
             // Probe the arena immediately in front of the column. Bounds-bottom
             // was below the curved arena surface in the first production capture
             // (impact viewport y=-0.314), so the dust itself was outside the frame.
-            Vector3 surfaceProbe = archBounds.center - outward * (outwardExtent + .65f);
+            // The rubble distribution can now fill the first metre around the arch.
+            // Sample farther into the open arena rather than emitting inside that pile.
+            Vector3 surfaceProbe = archBounds.center - outward * (outwardExtent + 3f);
             _impactPoint = FindVisibleStaticSurface(
                 surfaceProbe, _up, Mathf.Max(8f, downwardExtent * 2f + 4f)) + _up * .10f;
             // Stay close enough to read the production particles while retaining
@@ -327,6 +329,7 @@ namespace Elemental.Authoring.Editor
                 Vector3 towardCamera = (_captureCameraPosition - _impactPoint).normalized;
                 Vector3 impactCloud = _impactPoint + towardCamera * .18f + side * .72f;
                 Vector3 fractureCloud = _impactPoint + towardCamera * .12f - side * .42f;
+                ChooseUnoccludedView(impactCloud,fractureCloud);
                 ValidateFraming(impactCloud, fractureCloud);
                 impact.PoseAndEmit(impactCloud,
                     surfaceFrame, 96, 0xD0571001u, .24f);
@@ -480,6 +483,29 @@ namespace Elemental.Authoring.Editor
             ValidateViewport("fracture dust", fractureCloud);
             ValidateLineOfSight("material contact dust", impactCloud);
             ValidateLineOfSight("fracture dust", fractureCloud);
+        }
+
+        private static void ChooseUnoccludedView(Vector3 impactCloud,Vector3 fractureCloud)
+        {
+            Vector3 original=_captureCameraPosition-_impactPoint;
+            float[] angles={0,35,-35,70,-70};
+            for(int height=0;height<3;height++)foreach(float angle in angles)
+            {
+                Vector3 candidate=_impactPoint+Quaternion.AngleAxis(angle,_up)*original+_up*(height*1.2f);
+                bool blocked=false;
+                foreach(var point in new[]{impactCloud,fractureCloud})
+                {
+                    Vector3 ray=point-candidate;
+                    if(Physics.Raycast(candidate,ray.normalized,Mathf.Max(0,ray.magnitude-.14f),Physics.DefaultRaycastLayers,QueryTriggerInteraction.Ignore)){blocked=true;break;}
+                }
+                if(blocked)continue;
+                _captureCameraPosition=candidate;
+                _captureCameraRotation=Quaternion.LookRotation(_captureTarget-candidate,_up);
+                _camera.transform.SetPositionAndRotation(candidate,_captureCameraRotation);
+                _report.captureCameraPosition=candidate;
+                return;
+            }
+            // Existing framing validation reports the actual blocking collider.
         }
 
         private static void ValidateViewport(string label, Vector3 point)
@@ -678,7 +704,9 @@ namespace Elemental.Authoring.Editor
             T found = null;
             foreach (T candidate in Object.FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
-                if (candidate.gameObject.scene != scene || candidate.name != name) continue;
+                // The dormant online-player rig duplicates camera-local effects.
+                // Capture only emitters belonging to the currently active scene rig.
+                if (candidate.gameObject.scene != scene || candidate.name != name || !candidate.gameObject.activeInHierarchy) continue;
                 if (found != null) throw new InvalidOperationException("Ambiguous scene object " + name + ".");
                 found = candidate;
             }

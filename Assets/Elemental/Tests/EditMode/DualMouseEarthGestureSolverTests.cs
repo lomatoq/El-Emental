@@ -18,6 +18,23 @@ namespace Elemental.Tests.EditMode
             Assert.That(fallback.Kind, Is.EqualTo(DualMouseEarthResultKind.FallbackPrimary));
         }
 
+        [TestCase(true)]
+        [TestCase(false)]
+        public void SecondHeldButtonCanStartChordAfterSafeSingleButtonHandoff(bool forceFirst)
+        {
+            var solver = new DualMouseEarthGestureSolver();
+            solver.Step(new DualMouseEarthGestureFrame(0f, !forceFirst, !forceFirst, false,
+                forceFirst, forceFirst, false, new float2(.5f)));
+            solver.Step(new DualMouseEarthGestureFrame(.09f, false, !forceFirst, false,
+                false, forceFirst, false, new float2(.5f)));
+            var joined = solver.Step(new DualMouseEarthGestureFrame(.14f,
+                forceFirst, true, false, !forceFirst, true, false, new float2(.5f)));
+            Assert.That(joined.Kind, Is.EqualTo(DualMouseEarthResultKind.Tracking));
+            var released = solver.Step(new DualMouseEarthGestureFrame(.41f,
+                false, false, true, false, false, true, new float2(.5f, .65f)));
+            Assert.That(released.Kind, Is.EqualTo(DualMouseEarthResultKind.PillarCrest));
+        }
+
         [Test]
         public void QuickChordReleaseCommitsStompStone()
         {

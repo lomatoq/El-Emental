@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="6" result="Passed" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-06 01:18:24Z" end-time="2026-09-06 01:18:40Z" duration="16.7846762">
+  <test-suite type="TestSuite" id="1294" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="221" result="Passed" start-time="2026-09-06 01:18:24Z" end-time="2026-09-06 01:18:40Z" duration="16.784676" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1287" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="221" result="Passed" start-time="2026-09-06 01:18:24Z" end-time="2026-09-06 01:18:40Z" duration="16.766501" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="21092" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1288" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="221" result="Passed" start-time="2026-09-06 01:18:24Z" end-time="2026-09-06 01:18:40Z" duration="16.763441" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1289" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="221" result="Passed" start-time="2026-09-06 01:18:24Z" end-time="2026-09-06 01:18:40Z" duration="16.761143" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1290" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="221" result="Passed" start-time="2026-09-06 01:18:24Z" end-time="2026-09-06 01:18:40Z" duration="16.758247" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1086" name="EarthBakedFractureRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthBakedFractureRuntimeTests" classname="Elemental.Tests.PlayMode.EarthBakedFractureRuntimeTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-06 01:18:24Z" end-time="2026-09-06 01:18:31Z" duration="7.545349" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1087" name="CrackedWallKeepsFullCellsAndNeedsRepeatedHitsToDetach" fullname="Elemental.Tests.PlayMode.EarthBakedFractureRuntimeTests.CrackedWallKeepsFullCellsAndNeedsRepeatedHitsToDetach" methodname="CrackedWallKeepsFullCellsAndNeedsRepeatedHitsToDetach" classname="Elemental.Tests.PlayMode.EarthBakedFractureRuntimeTests" runstate="Runnable" seed="49579724" result="Passed" start-time="2026-09-06 01:18:24Z" end-time="2026-09-06 01:18:31Z" duration="7.524837" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 2441.96ms; ground=exact baked base, cacheLoad=17.06ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1407.53ms, peakCookingPoll=0.31ms; sync=ArenaInitialize=436.39ms/15;ArenaBevel=400.95ms/175;ArenaMeshPicking=3.48ms/175;WallAwake=97.44ms/1;WallPieceVisuals=43.15ms/40;PlatformPoolAwake=14.17ms/1;PlatformRuntimeMeshes=2.04ms/12;PillarPoolAwake=23.09ms/1;PillarMeshLibrary=3.95ms/1;PillarColumns=17.64ms/1;DebrisPoolAwake=118.23ms/1;HeroFragmentPoolAwake=18.45ms/1.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1139" name="EarthMagicExpansionRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" testcasecount="17" result="Passed" start-time="2026-09-06 01:18:31Z" end-time="2026-09-06 01:18:32Z" duration="0.786533" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1156" name="FallingSpaceCushionCapsDescentWithoutInjectingImpactDamage" fullname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests.FallingSpaceCushionCapsDescentWithoutInjectingImpactDamage" methodname="FallingSpaceCushionCapsDescentWithoutInjectingImpactDamage" classname="Elemental.Tests.PlayMode.EarthMagicExpansionRuntimeTests" runstate="Runnable" seed="2028797700" result="Passed" start-time="2026-09-06 01:18:31Z" end-time="2026-09-06 01:18:32Z" duration="0.761286" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1162" name="EarthMvpEncounterRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests" classname="Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-06 01:18:32Z" end-time="2026-09-06 01:18:34Z" duration="2.404966" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1169" name="HighFallOntoLandingCushionDoesNotRagdollOrKillPlayer" fullname="Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests.HighFallOntoLandingCushionDoesNotRagdollOrKillPlayer" methodname="HighFallOntoLandingCushionDoesNotRagdollOrKillPlayer" classname="Elemental.Tests.PlayMode.EarthMvpEncounterRuntimeTests" runstate="Runnable" seed="1439297644" result="Passed" start-time="2026-09-06 01:18:32Z" end-time="2026-09-06 01:18:34Z" duration="2.401602" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 1184.96ms; ground=exact baked base, cacheLoad=6.63ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1092.15ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=436.39ms/15;ArenaBevel=400.95ms/175;ArenaMeshPicking=3.48ms/175;WallAwake=97.44ms/1;WallPieceVisuals=43.15ms/40;PlatformPoolAwake=14.17ms/1;PlatformRuntimeMeshes=2.04ms/12;PillarPoolAwake=23.09ms/1;PillarMeshLibrary=3.95ms/1;PillarColumns=17.64ms/1;DebrisPoolAwake=118.23ms/1;HeroFragmentPoolAwake=18.45ms/1.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1210" name="EarthSurfRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthSurfRuntimeTests" classname="Elemental.Tests.PlayMode.EarthSurfRuntimeTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-06 01:18:34Z" end-time="2026-09-06 01:18:36Z" duration="1.933325" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1214" name="ProductionPloughCarriesTheVisibleHeroInsteadOfLeavingHimBehind" fullname="Elemental.Tests.PlayMode.EarthSurfRuntimeTests.ProductionPloughCarriesTheVisibleHeroInsteadOfLeavingHimBehind" methodname="ProductionPloughCarriesTheVisibleHeroInsteadOfLeavingHimBehind" classname="Elemental.Tests.PlayMode.EarthSurfRuntimeTests" runstate="Runnable" seed="25695090" result="Passed" start-time="2026-09-06 01:18:34Z" end-time="2026-09-06 01:18:36Z" duration="1.926464" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 683.20ms; ground=exact baked base, cacheLoad=7.20ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=583.84ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=436.39ms/15;ArenaBevel=400.95ms/175;ArenaMeshPicking=3.48ms/175;WallAwake=97.44ms/1;WallPieceVisuals=43.15ms/40;PlatformPoolAwake=14.17ms/1;PlatformRuntimeMeshes=2.04ms/12;PillarPoolAwake=23.09ms/1;PillarMeshLibrary=3.95ms/1;PillarColumns=17.64ms/1;DebrisPoolAwake=118.23ms/1;HeroFragmentPoolAwake=18.45ms/1.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1242" name="LinePillarPlacementRuntimeTests" fullname="Elemental.Tests.PlayMode.LinePillarPlacementRuntimeTests" classname="Elemental.Tests.PlayMode.LinePillarPlacementRuntimeTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-06 01:18:36Z" end-time="2026-09-06 01:18:38Z" duration="1.781401" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1243" name="GroundOffsetMovesCrestPhysicsAndRenderWithoutResizingOrMovingOrdinaryWaves" fullname="Elemental.Tests.PlayMode.LinePillarPlacementRuntimeTests.GroundOffsetMovesCrestPhysicsAndRenderWithoutResizingOrMovingOrdinaryWaves" methodname="GroundOffsetMovesCrestPhysicsAndRenderWithoutResizingOrMovingOrdinaryWaves" classname="Elemental.Tests.PlayMode.LinePillarPlacementRuntimeTests" runstate="Runnable" seed="1682503227" result="Passed" start-time="2026-09-06 01:18:36Z" end-time="2026-09-06 01:18:38Z" duration="1.776710" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1279" name="SurfPillarOwnerRegressionTests" fullname="Elemental.Tests.PlayMode.SurfPillarOwnerRegressionTests" classname="Elemental.Tests.PlayMode.SurfPillarOwnerRegressionTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-06 01:18:38Z" end-time="2026-09-06 01:18:40Z" duration="2.301500" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1280" name="OrdinaryPhysicalSpaceHoldRemainsVerticalPillarChargeUntilRelease" fullname="Elemental.Tests.PlayMode.SurfPillarOwnerRegressionTests.OrdinaryPhysicalSpaceHoldRemainsVerticalPillarChargeUntilRelease" methodname="OrdinaryPhysicalSpaceHoldRemainsVerticalPillarChargeUntilRelease" classname="Elemental.Tests.PlayMode.SurfPillarOwnerRegressionTests" runstate="Runnable" seed="2102923" result="Passed" start-time="2026-09-06 01:18:38Z" end-time="2026-09-06 01:18:40Z" duration="2.296439" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 849.61ms; ground=exact baked base, cacheLoad=8.27ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=747.82ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=436.39ms/15;ArenaBevel=400.95ms/175;ArenaMeshPicking=3.48ms/175;WallAwake=97.44ms/1;WallPieceVisuals=43.15ms/40;PlatformPoolAwake=14.17ms/1;PlatformRuntimeMeshes=2.04ms/12;PillarPoolAwake=23.09ms/1;PillarMeshLibrary=3.95ms/1;PillarColumns=17.64ms/1;DebrisPoolAwake=118.23ms/1;HeroFragmentPoolAwake=18.45ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\MobilityWallFollowupPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

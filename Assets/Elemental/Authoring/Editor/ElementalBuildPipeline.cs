@@ -52,6 +52,19 @@ namespace Elemental.Authoring.Editor
                 development: true);
         }
 
+        [MenuItem("Elemental/Build/Build Local Alpha From Saved Arena")]
+        public static void BuildLocalAlphaFromSavedArena()
+        {
+            // The alpha opens its actual arena frontend directly. Authoring setup
+            // must never run as a side effect of building a user's saved scene.
+            Build(
+                BuildTarget.StandaloneWindows64,
+                new[] { M3EarthCoreSetup.EarthCoreScenePath },
+                Path.Combine(ProjectRoot(), "Builds", "LocalAlpha", "ElEmental.exe"),
+                "LocalAlphaSavedArena",
+                development: false);
+        }
+
         [MenuItem("Elemental/Build/Build Windows Release")]
         public static void BuildWindowsRelease()
         {

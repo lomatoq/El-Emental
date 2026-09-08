@@ -118,6 +118,7 @@ namespace Elemental.Presentation.Camera
         public float CameraLag => Accessibility.EffectiveLag;
         public float FieldOfViewMotion => Accessibility.EffectiveFieldOfViewMotion;
         public bool ReducedMotion => reducedMotion;
+        public void SetUserReducedMotion(bool value) => reducedMotion = value;
 
         public bool TryGet(EarthCameraState state, out EarthCameraStateProfile value)
         {

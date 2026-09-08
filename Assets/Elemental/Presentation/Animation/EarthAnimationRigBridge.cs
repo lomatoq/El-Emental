@@ -21,6 +21,8 @@ namespace Elemental.Presentation.Animation
         [SerializeField] private TwoBoneIKConstraint rightArm = null;
         [SerializeField] private EarthStableTwoBoneIkConstraint stableLeftArm;
         [SerializeField] private EarthStableTwoBoneIkConstraint stableRightArm;
+        private EarthWallBraceBodyConstraint _wallBody;
+        private Transform _wallFacing;
 
         public bool IsBuilt => rig != null && stableLeftArm != null && stableRightArm != null;
         public float Weight => rig != null ? rig.weight : 0f;
@@ -38,6 +40,7 @@ namespace Elemental.Presentation.Animation
 
         public void SetMagicWeight(float weight)
         {
+            if (_wallBody != null) _wallBody.weight = 0f;
             float clamped = Mathf.Clamp01(weight);
             if (rig != null) rig.weight = clamped;
             DisableLegacyConstraint(leftArm);
@@ -54,6 +57,16 @@ namespace Elemental.Presentation.Animation
             DisableLegacyConstraint(rightArm);
             if (stableLeftArm != null) stableLeftArm.weight = 0f;
             if (stableRightArm != null) stableRightArm.weight = 0f;
+        }
+
+        /// <summary>Same arm solver as magic; wall contacts may own just one reachable hand.</summary>
+        public void SetWallContactWeight(float weight, float leftWeight, float rightWeight, Quaternion facing)
+        {
+            SetMagicWeight(weight);
+            if (_wallFacing != null) _wallFacing.rotation = facing;
+            if (_wallBody != null) _wallBody.weight = 1f;
+            if (stableLeftArm != null) stableLeftArm.weight = Mathf.Clamp01(leftWeight);
+            if (stableRightArm != null) stableRightArm.weight = Mathf.Clamp01(rightWeight);
         }
 
         private void Awake()
@@ -87,6 +100,7 @@ namespace Elemental.Presentation.Animation
                 if (rig == null) rig = root.AddComponent<Rig>();
             }
 
+            EnsureWallBody();
             stableLeftArm = EnsureArm(
                 stableLeftArm, leftArm, "Left Arm Bending IK",
                 HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftLowerArm,
@@ -106,6 +120,31 @@ namespace Elemental.Presentation.Animation
             if (!found) builder.layers.Add(new RigLayer(rig, true));
             rig.weight = 0f;
             if (Application.isPlaying) builder.Build();
+        }
+
+        private void EnsureWallBody()
+        {
+            Transform existing = rig.transform.Find("Wall Brace Body");
+            GameObject item = existing != null ? existing.gameObject : new GameObject("Wall Brace Body");
+            if (existing == null) item.transform.SetParent(rig.transform, false);
+            // Rig constraints evaluate in hierarchy order: body alignment precedes both arms.
+            item.transform.SetAsFirstSibling();
+            _wallBody = item.GetComponent<EarthWallBraceBodyConstraint>();
+            if (_wallBody == null) _wallBody = item.AddComponent<EarthWallBraceBodyConstraint>();
+            _wallFacing = item.transform.Find("Facing");
+            if (_wallFacing == null)
+            {
+                _wallFacing = new GameObject("Facing").transform;
+                _wallFacing.SetParent(item.transform, false);
+            }
+            _wallBody.data = new EarthWallBraceBodyData
+            {
+                spine = animator.GetBoneTransform(HumanBodyBones.Spine),
+                leftShoulder = animator.GetBoneTransform(HumanBodyBones.LeftUpperArm),
+                rightShoulder = animator.GetBoneTransform(HumanBodyBones.RightUpperArm),
+                facing = _wallFacing
+            };
+            _wallBody.weight = 0f;
         }
 
         private EarthStableTwoBoneIkConstraint EnsureArm(

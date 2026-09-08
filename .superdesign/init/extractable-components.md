@@ -1,0 +1,1 @@
+New reusable Unity components: three button tiers, Back, panel, input field, room-code/status/loading, shared theme, audio feedback. Existing Painter2D gauges and globe remain their original combat components. Do not reproduce CraftPix demo scenes/scripts.

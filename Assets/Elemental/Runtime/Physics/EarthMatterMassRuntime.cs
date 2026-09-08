@@ -22,9 +22,16 @@ namespace Elemental.Runtime.Physics
         public static float ResolveFromCollider(Collider shape, float fallbackRadius = 0.5f)
         {
             EarthMatterMassProfile profile = EarthMatterMassProfile.ArenaStone;
+            return ResolveFromCollider(shape, in profile, fallbackRadius);
+        }
+
+        public static float ResolveFromCollider(Collider shape, in EarthMatterMassProfile profile, float fallbackRadius = 0.5f)
+        {
             float volume = EstimateColliderVolume(shape, fallbackRadius);
             return EarthMatterMassPolicy.ResolveGameplayMass(volume, in profile);
         }
+
+        public static float SphereSolidVolume(float radius) => SphereVolume(radius);
 
         public static float EstimateColliderVolume(Collider shape, float fallbackRadius = 0.5f)
         {

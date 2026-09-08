@@ -27,7 +27,7 @@ namespace Elemental.Authoring.Editor
                 if (layer.name == "Earth Magic Upper Body") machine = layer.stateMachine;
             if (machine == null) throw new InvalidOperationException("Missing magic layer.");
             AnimatorState first = FindState(machine, "Earth Cast");
-            if (first == null || first.motion is not BlendTree original || original.children.Length != 11)
+            if (first == null || first.motion is not BlendTree original || original.children.Length < 11)
                 throw new InvalidOperationException("Expected the existing eleven curated magic clips.");
             ChildMotion[] authored = original.children;
             Undo.RegisterCompleteObjectUndo(controller, "Configure independent magic buffers");

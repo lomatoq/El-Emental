@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="7" result="Passed" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-06 00:39:32Z" end-time="2026-09-06 00:39:50Z" duration="17.9372303">
+  <test-suite type="TestSuite" id="1290" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="219" result="Passed" start-time="2026-09-06 00:39:32Z" end-time="2026-09-06 00:39:50Z" duration="17.937230" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1283" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="219" result="Passed" start-time="2026-09-06 00:39:32Z" end-time="2026-09-06 00:39:50Z" duration="17.922938" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="21092" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1284" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="219" result="Passed" start-time="2026-09-06 00:39:32Z" end-time="2026-09-06 00:39:50Z" duration="17.919954" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1285" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="219" result="Passed" start-time="2026-09-06 00:39:32Z" end-time="2026-09-06 00:39:50Z" duration="17.916422" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1286" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="219" result="Passed" start-time="2026-09-06 00:39:32Z" end-time="2026-09-06 00:39:50Z" duration="17.913890" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1086" name="EarthBakedFractureRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthBakedFractureRuntimeTests" classname="Elemental.Tests.PlayMode.EarthBakedFractureRuntimeTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-06 00:39:32Z" end-time="2026-09-06 00:39:38Z" duration="6.070496" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1087" name="CrackedWallKeepsFullCellsAndNeedsRepeatedHitsToDetach" fullname="Elemental.Tests.PlayMode.EarthBakedFractureRuntimeTests.CrackedWallKeepsFullCellsAndNeedsRepeatedHitsToDetach" methodname="CrackedWallKeepsFullCellsAndNeedsRepeatedHitsToDetach" classname="Elemental.Tests.PlayMode.EarthBakedFractureRuntimeTests" runstate="Runnable" seed="959617312" result="Passed" start-time="2026-09-06 00:39:32Z" end-time="2026-09-06 00:39:38Z" duration="6.054807" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 1599.10ms; ground=exact baked base, cacheLoad=11.80ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=859.11ms, peakCookingPoll=0.26ms; sync=ArenaInitialize=332.48ms/15;ArenaBevel=317.36ms/175;ArenaMeshPicking=1.41ms/175;WallAwake=47.75ms/1;WallPieceVisuals=16.39ms/40;PlatformPoolAwake=10.74ms/1;PlatformRuntimeMeshes=1.31ms/12;PillarPoolAwake=18.42ms/1;PillarMeshLibrary=3.33ms/1;PillarColumns=13.97ms/1;DebrisPoolAwake=80.94ms/1;HeroFragmentPoolAwake=11.78ms/1.
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1117" name="EarthDuelHealthPlayTests" fullname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests" classname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-06 00:39:38Z" end-time="2026-09-06 00:39:38Z" duration="0.054441" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1120" name="AcceptedStoneDamageDeduplicatesAndDeathScoresOnce" fullname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests.AcceptedStoneDamageDeduplicatesAndDeathScoresOnce" methodname="AcceptedStoneDamageDeduplicatesAndDeathScoresOnce" classname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests" runstate="Runnable" seed="1628673922" result="Passed" start-time="2026-09-06 00:39:38Z" end-time="2026-09-06 00:39:38Z" duration="0.017859" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1119" name="ReadinessCapturedBeforeAwakeStillRestoresControls" fullname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests.ReadinessCapturedBeforeAwakeStillRestoresControls" methodname="ReadinessCapturedBeforeAwakeStillRestoresControls" classname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests" runstate="Runnable" seed="1251228331" result="Passed" start-time="2026-09-06 00:39:38Z" end-time="2026-09-06 00:39:38Z" duration="0.006253" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1118" name="SharedStoneRouteKeepsPebbleLocalAndLetsBoulderKnockDown" fullname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests.SharedStoneRouteKeepsPebbleLocalAndLetsBoulderKnockDown" methodname="SharedStoneRouteKeepsPebbleLocalAndLetsBoulderKnockDown" classname="Elemental.Tests.PlayMode.EarthDuelHealthPlayTests" runstate="Runnable" seed="1126022383" result="Passed" start-time="2026-09-06 00:39:38Z" end-time="2026-09-06 00:39:38Z" duration="0.008080" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1125" name="EarthGravityGripSessionTests" fullname="Elemental.Tests.PlayMode.EarthGravityGripSessionTests" classname="Elemental.Tests.PlayMode.EarthGravityGripSessionTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-06 00:39:38Z" end-time="2026-09-06 00:39:38Z" duration="0.008507" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1126" name="MiddleMouseKeepsWholeWallAnchoredAndStillAllowsStructureGestures" fullname="Elemental.Tests.PlayMode.EarthGravityGripSessionTests.MiddleMouseKeepsWholeWallAnchoredAndStillAllowsStructureGestures" methodname="MiddleMouseKeepsWholeWallAnchoredAndStillAllowsStructureGestures" classname="Elemental.Tests.PlayMode.EarthGravityGripSessionTests" runstate="Runnable" seed="529633663" result="Passed" start-time="2026-09-06 00:39:38Z" end-time="2026-09-06 00:39:38Z" duration="0.006198" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1010" name="SeptemberAnimationRescueRuntimeTests" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" testcasecount="35" result="Passed" start-time="2026-09-06 00:39:38Z" end-time="2026-09-06 00:39:50Z" duration="11.776594" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1013" name="ProductionPairedStoneSeries60Fps" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ProductionPairedStoneSeries60Fps" methodname="ProductionPairedStoneSeries60Fps" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="571028197" result="Passed" start-time="2026-09-06 00:39:38Z" end-time="2026-09-06 00:39:45Z" duration="7.058141" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 629.41ms; ground=exact baked base, cacheLoad=6.64ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=546.18ms, peakCookingPoll=0.00ms; sync=ArenaInitialize=332.48ms/15;ArenaBevel=317.36ms/175;ArenaMeshPicking=1.41ms/175;WallAwake=47.75ms/1;WallPieceVisuals=16.39ms/40;PlatformPoolAwake=10.74ms/1;PlatformRuntimeMeshes=1.31ms/12;PillarPoolAwake=18.42ms/1;PillarMeshLibrary=3.33ms/1;PillarColumns=13.97ms/1;DebrisPoolAwake=80.94ms/1;HeroFragmentPoolAwake=11.78ms/1.
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+]]></output>
+              </test-case>
+              <test-case id="1022" name="SeismicEnemyWaitsForWaveAndRendersThroughOpaqueWall" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.SeismicEnemyWaitsForWaveAndRendersThroughOpaqueWall" methodname="SeismicEnemyWaitsForWaveAndRendersThroughOpaqueWall" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="467068063" result="Passed" start-time="2026-09-06 00:39:45Z" end-time="2026-09-06 00:39:50Z" duration="4.713984" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 582.57ms; ground=exact baked base, cacheLoad=6.21ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=508.63ms, peakCookingPoll=0.00ms; sync=ArenaInitialize=332.48ms/15;ArenaBevel=317.36ms/175;ArenaMeshPicking=1.41ms/175;WallAwake=47.75ms/1;WallPieceVisuals=16.39ms/40;PlatformPoolAwake=10.74ms/1;PlatformRuntimeMeshes=1.31ms/12;PillarPoolAwake=18.42ms/1;PillarMeshLibrary=3.33ms/1;PillarColumns=13.97ms/1;DebrisPoolAwake=80.94ms/1;HeroFragmentPoolAwake=11.78ms/1.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+[Seismic occlusion QA] 4842 enemy pixels revealed through wall; before-wave and mode-off output byte-exact.
+Property (_EarthSeismicWaves) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicStrengths) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Property (_EarthSeismicRadiusTravels) exceeds previous array size (16 vs 5). Cap to previous size. Restart Unity to recreate the arrays.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\GameplayTuningPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

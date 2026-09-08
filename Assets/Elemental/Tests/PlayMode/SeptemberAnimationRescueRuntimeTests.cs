@@ -26,10 +26,25 @@ namespace Elemental.Tests.PlayMode
         private readonly List<EarthAnimationPoseSample> _samples = new();
         private readonly WaitForEndOfFrame _frame = new();
         private readonly List<UnityEngine.Object> _diagnosticClones = new();
+        private UnityEngine.InputSystem.InputSettings.BackgroundBehavior _previousBackgroundInput;
+        private UnityEngine.InputSystem.InputSettings.EditorInputBehaviorInPlayMode _previousEditorInput;
+        private bool _batchInputConfigured;
 
         [UnitySetUp]
         public IEnumerator Load()
         {
+            // A hidden batch editor has no focused Game View. Route the synthetic
+            // devices through the normal game input update without changing the
+            // project's saved input settings or bypassing its action router.
+            if (Application.isBatchMode)
+            {
+                var settings = UnityEngine.InputSystem.InputSystem.settings;
+                _previousBackgroundInput = settings.backgroundBehavior;
+                _previousEditorInput = settings.editorInputBehaviorInPlayMode;
+                _batchInputConfigured = true;
+                settings.backgroundBehavior = UnityEngine.InputSystem.InputSettings.BackgroundBehavior.IgnoreFocus;
+                settings.editorInputBehaviorInPlayMode = UnityEngine.InputSystem.InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
+            }
             const string path = "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
             Assert.That(SceneManager.GetSceneByPath(path).isLoaded, Is.False, "Use the focused launcher so production scene can be restored safely.");
             yield return SceneManager.LoadSceneAsync(path, LoadSceneMode.Additive);
@@ -45,6 +60,7 @@ namespace Elemental.Tests.PlayMode
                     yield return null;
                 Assert.That(gate.IsReady, Is.True, $"Scene readiness failed or timed out: {gate.Status}.");
             }
+            yield return ProductionCombatTestFlow.BeginBotAfterReadiness(_scene);
             // The gate restores controls when ready; install deterministic input only afterward.
             foreach (var root in _scene.GetRootGameObjects())
             {
@@ -323,6 +339,13 @@ namespace Elemental.Tests.PlayMode
         [UnityTearDown]
         public IEnumerator Cleanup()
         {
+            if (_batchInputConfigured)
+            {
+                var settings = UnityEngine.InputSystem.InputSystem.settings;
+                settings.backgroundBehavior = _previousBackgroundInput;
+                settings.editorInputBehaviorInPlayMode = _previousEditorInput;
+                _batchInputConfigured = false;
+            }
             Directory.CreateDirectory("BuildReports/SeptemberAnimation");
             if (_walkStopFrames.Count > 0)
                 File.WriteAllText(

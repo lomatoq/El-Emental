@@ -20,6 +20,7 @@ namespace Elemental.Runtime.Physics
         [SerializeField] private GravityBody gravityBody;
         [SerializeField] private EarthRockDebrisPool debrisPool;
         [SerializeField] private uint stableId;
+        [SerializeField] private bool initiallyAnchored = true;
         [SerializeField, Min(1f)] private float integrity = 720f;
         [SerializeField, Min(1f)] private float detachImpulse = 90f;
         [SerializeField, Min(1f)] private float shatterImpulse = 1250f;
@@ -54,8 +55,11 @@ namespace Elemental.Runtime.Physics
         public bool LastCollisionHadMagicOwner { get; private set; }
         private EarthMatterIdentity _matterIdentity;
         private readonly EarthContactFrictionFeedback _frictionFeedback = new();
-        private void OnCollisionStay(Collision collision) =>
+        private void OnCollisionStay(Collision collision)
+        {
+            Elemental.Runtime.Characters.EarthStoneCharacterContact.DeliverLoad(collision, body);
             _frictionFeedback.Emit(materialFeedback, collision, StableEarthId, _generation);
+        }
 
         public Rigidbody Body => body;
         public uint StableEarthId => stableId != 0u ? stableId : 0xD3000001u;
@@ -75,7 +79,8 @@ namespace Elemental.Runtime.Physics
             GravityBody configuredGravity,
             EarthRockDebrisPool configuredDebrisPool,
             float configuredRadius,
-            float configuredIntegrity)
+            float configuredIntegrity,
+            bool configuredInitiallyAnchored = true)
         {
             stableId = configuredStableId != 0u ? configuredStableId : 0xD3000001u;
             body = configuredBody;
@@ -84,8 +89,18 @@ namespace Elemental.Runtime.Physics
             debrisPool = configuredDebrisPool;
             visualRadius = Mathf.Max(0.05f, configuredRadius);
             integrity = Mathf.Max(1f, configuredIntegrity);
+            initiallyAnchored = configuredInitiallyAnchored;
             ApplyUnifiedMass();
-            Anchor();
+            if (initiallyAnchored) Anchor();
+            else { _anchored = true; Detach(); }
+        }
+
+        public float CaptureArenaIntegrity() => integrity;
+        public void RestoreArenaIntegrity(float initialIntegrity)
+        {
+            integrity = Mathf.Max(1, initialIntegrity); _shattered = false; _gripCount = 0;
+            _generation = _generation == uint.MaxValue ? 1 : _generation + 1;
+            _anchored = initiallyAnchored; _initialOverlapCount = 0;
         }
 
         public void ApplyImpact(Vector3 point, Vector3 direction, float impulse)
@@ -151,6 +166,7 @@ namespace Elemental.Runtime.Physics
                 visuals[index].sharedMesh = _renderBevels.Get(source, stoneBevelProfile);
             }
             ApplyUnifiedMass();
+            if (!initiallyAnchored) Detach();
         }
 
         private void OnDestroy() => _renderBevels.Clear();
@@ -172,7 +188,8 @@ namespace Elemental.Runtime.Physics
         private void ApplyUnifiedMass()
         {
             if (body == null) return;
-            body.mass = EarthMatterMassRuntime.ResolveFromCollider(shape, visualRadius);
+            EarthMatterMassProfile policy = debrisPool != null ? debrisPool.MassPolicy : EarthMatterMassProfile.ArenaStone;
+            body.mass = EarthMatterMassRuntime.ResolveFromCollider(shape, in policy, visualRadius);
         }
 
         private void OnCollisionEnter(Collision collision)
@@ -215,6 +232,7 @@ namespace Elemental.Runtime.Physics
             // an actual closing contact may inflict collision damage. Explicit
             // ApplyImpact remains independent of this physical-contact guard.
             if (approach < .1f) return;
+            Elemental.Runtime.Characters.EarthStoneCharacterContact.Deliver(collision, body, StableEarthId);
             float impulse = Mathf.Max(collision.impulse.magnitude, EarthMass * approach);
             bool breakAttempted = false;
             if (!_anchored && debrisPool != null)
@@ -234,9 +252,9 @@ namespace Elemental.Runtime.Physics
                     ? -collision.relativeVelocity.normalized : -contact.normal;
                 ApplyImpact(contact.point, direction, impulse);
             }
-            if (!_shattered && !breakAttempted && approach >= 0.75f)
-                materialFeedback?.Emit(EarthMaterialFeedbackKind.Impact, contact.point, contact.normal,
-                    Mathf.Clamp(approach / 8f, 0.4f, 1f), visualRadius, StableEarthId, _generation);
+            if (!_shattered && !breakAttempted)
+                materialFeedback?.EmitStoneImpact(contact.point, contact.normal,
+                    EarthMass, approach, visualRadius, StableEarthId, _generation);
         }
 
         private void Anchor()

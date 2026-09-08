@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Elemental.Runtime.Physics;
 using Elemental.Runtime.World;
 using Elemental.Simulation.Characters;
@@ -91,14 +91,11 @@ namespace Elemental.Runtime.Characters
             Array.Empty<MaterialPropertyBlock>();
         private Color[] _fadeSourceBaseColors = Array.Empty<Color>();
         private Color[] _fadeSourceLegacyColors = Array.Empty<Color>();
-        private readonly Vector3[] _localizedHitAxes = new Vector3[HumanBones.Length];
-        private readonly float[] _localizedHitStartedAt = new float[HumanBones.Length];
-        private readonly float[] _localizedHitDurations = new float[HumanBones.Length];
-        private readonly float[] _localizedHitAngles = new float[HumanBones.Length];
-        private readonly bool[] _localizedHitActive = new bool[HumanBones.Length];
         private readonly Collider[] _recoveryOverlaps = new Collider[16];
         private EarthRagdollRecoveryGateState _recoveryGate;
 
+        public EarthCharacterImpactTarget ImpactReceiver => motorRootBody != null
+            ? motorRootBody.GetComponent<EarthCharacterImpactTarget>() : null;
         public bool IsRagdollActive { get; private set; }
         public bool IsRecoveringToAnimation { get; private set; }
         public float StoneFade01 { get; private set; }
@@ -117,12 +114,16 @@ namespace Elemental.Runtime.Characters
         public EarthRagdollRecoverySide LastRecoverySide { get; private set; }
         public float LastRecoveryClearanceLiftMeters { get; private set; }
         public bool LastRecoveryClearanceSucceeded { get; private set; }
+        public bool RecoveryBlockedByGeometry { get; private set; }
         public bool LastRecoveryUsedFacingFallback { get; private set; }
         public event Action AuthoredRecoveryBegan;
         public event Action RagdollBegan;
 
-        public void ConfigureLocalizedReactionProfile(CharacterImpactResponseProfile profile) =>
+        public void ConfigureLocalizedReactionProfile(CharacterImpactResponseProfile profile)
+        {
             impactResponseProfile = profile;
+            LocalizedPhysics?.ConfigureProfile(profile);
+        }
 
         public void ConfigureEffectsProfile(EarthEffectsTuningProfile profile)
         {
@@ -134,53 +135,29 @@ namespace Elemental.Runtime.Characters
                     effectsProfile.Materials.StoneFadeDust);
         }
 
-        public void ApplyLocalizedRagdollImpulse(
-            Vector3 worldPoint,
-            Vector3 direction,
-            float effectiveVelocityChange)
+        public HumanoidLocalizedPhysicsResponse LocalizedPhysics { get; private set; }
+
+        public bool ApplyLocalizedPhysicalResponse(in EarthWorldResponseEvent response, float reactionVelocity)
         {
-            if (IsRagdollActive || bones == null || bones.Length == 0 ||
-                (impactResponseProfile != null && !impactResponseProfile.LocalizedHitReaction)) return;
-            int nearestIndex = -1;
-            float nearestDistance = float.PositiveInfinity;
-            for (int index = 0; index < bones.Length; index++)
-            {
-                Transform candidate = bones[index] != null ? bones[index].transform : null;
-                if (candidate == null) continue;
-                float distance = (candidate.position - worldPoint).sqrMagnitude;
-                if (distance >= nearestDistance) continue;
-                nearestDistance = distance;
-                nearestIndex = index;
-            }
-            if (nearestIndex < 0) return;
-            Vector3 safeDirection = direction.sqrMagnitude > 0.0001f
-                ? direction.normalized
-                : transform.forward;
-            Vector3 axisWorld = Vector3.Cross(safeDirection, transform.up);
-            if (axisWorld.sqrMagnitude < 0.001f) axisWorld = transform.right;
-            float parentWeight = impactResponseProfile != null
-                ? impactResponseProfile.LocalizedParentWeight
-                : 0.55f;
-            float torsoWeight = impactResponseProfile != null
-                ? impactResponseProfile.LocalizedTorsoWeight
-                : 0.25f;
-            ApplyLocalizedBoneReaction(nearestIndex, axisWorld, effectiveVelocityChange, 1f);
-            int parentIndex = ParentIndices[nearestIndex];
-            if (parentIndex >= 0)
-                ApplyLocalizedBoneReaction(parentIndex, axisWorld, effectiveVelocityChange, parentWeight);
-            int torsoIndex = nearestIndex <= 2 ? 0 : 1;
-            if (torsoIndex != nearestIndex && torsoIndex != parentIndex)
-                ApplyLocalizedBoneReaction(torsoIndex, axisWorld, effectiveVelocityChange, torsoWeight);
-            if (nearestIndex > 2 && parentIndex != 2)
-            {
-                float headWeight = impactResponseProfile != null
-                    ? impactResponseProfile.LocalizedHeadTransferWeight
-                    : 0.18f;
-                ApplyLocalizedBoneReaction(2, axisWorld, effectiveVelocityChange, headWeight);
-            }
-            LocalizedRagdollHitCount++;
+            bool accepted = LocalizedPhysics != null && LocalizedPhysics.ApplyHit(in response, reactionVelocity);
+            if (accepted) LocalizedRagdollHitCount++;
+            return accepted;
         }
 
+        private void EnsureLocalizedPhysics()
+        {
+            if (!Application.isPlaying || bones == null || bones.Length != HumanBones.Length) return;
+            var transforms = new Transform[bones.Length];
+            for (int i = 0; i < bones.Length; i++)
+            {
+                if (bones[i] == null) return;
+                transforms[i] = bones[i].transform;
+            }
+            LocalizedPhysics = GetComponent<HumanoidLocalizedPhysicsResponse>();
+            if (LocalizedPhysics == null) LocalizedPhysics = gameObject.AddComponent<HumanoidLocalizedPhysicsResponse>();
+            LocalizedPhysics.Configure(transforms, motorRootBody != null ? motorRootBody.transform : transform,
+                impactResponseProfile, this);
+        }
         public void ConfigureAndBuild(
             Animator configuredAnimator,
             Rigidbody configuredMotorRoot,
@@ -206,6 +183,7 @@ namespace Elemental.Runtime.Characters
             BuildRig();
             CacheRenderers();
             SetAnimatedPhysicsState();
+            EnsureLocalizedPhysics();
         }
 
         public void BuildRig()
@@ -287,13 +265,14 @@ namespace Elemental.Runtime.Characters
                     return;
                 }
 
-                ResetLocalizedReactions();
                 IsRecoveringToAnimation = false;
                 _recoveryGate = default;
+                RecoveryBlockedByGeometry = false;
 
                 CaptureRuntimeState();
                 CaptureRendererPresentationState();
-                if (animator != null && animator.enabled) animator.Update(0f);
+                // The last rendered pose already includes local PhysX response;
+                // forcing Animator.Update(0) here would erase that handoff pose.
                 Vector3 inheritedVelocity = motorRootBody != null
                     ? motorRootBody.linearVelocity
                     : Vector3.zero;
@@ -323,12 +302,15 @@ namespace Elemental.Runtime.Characters
                     bone.Body.interpolation = RigidbodyInterpolation.Interpolate;
                     bone.Body.isKinematic = false;
                     bone.Body.detectCollisions = true;
-                    bone.Body.linearVelocity = inheritedVelocity;
-                    bone.Body.angularVelocity = inheritedAngular;
+                    bone.Body.linearVelocity = LocalizedPhysics != null
+                        ? LocalizedPhysics.HandoffLinearVelocity(index, inheritedVelocity) : inheritedVelocity;
+                    bone.Body.angularVelocity = LocalizedPhysics != null
+                        ? LocalizedPhysics.HandoffAngularVelocity(index, inheritedAngular) : inheritedAngular;
                     if (bone.GravityBody != null) bone.GravityBody.enabled = true;
                     bone.Body.WakeUp();
                 }
                 IgnoreSelfCollisions();
+                LocalizedPhysics?.SuspendForFullRagdoll();
                 IsRagdollActive = true;
                 RagdollBegan?.Invoke();
                 SetStoneFade(0f);
@@ -351,17 +333,27 @@ namespace Elemental.Runtime.Characters
         /// spawn pose. Physics hands off once to the authored Falling-To-Roll
         /// recovery; controls may remain disabled until CompleteRecovery.
         /// </summary>
-        public void RecoverToAnimated(
+        public void RecoverToAnimated(Vector3 localUp, Vector3 forward, bool restoreControls) =>
+            TryRecoverToAnimated(localUp, forward, restoreControls);
+
+        public bool TryRecoverToAnimated(Vector3 localUp, Vector3 forward, bool restoreControls) =>
+            TryRecoverToAnimated(localUp, forward, restoreControls, false);
+
+        // Shares the exact recovery candidates, but never consumes the handoff gate or
+        // changes body/control ownership. Crush qualification must not depend on a
+        // recovery timer that the same physical load is currently holding back.
+        public bool RefreshRecoveryClearance(Vector3 localUp, Vector3 forward) =>
+            TryRecoverToAnimated(localUp, forward, false, true);
+
+        private bool TryRecoverToAnimated(
             Vector3 localUp,
             Vector3 forward,
-            bool restoreControls)
+            bool restoreControls,
+            bool clearanceOnly)
         {
             using (HandoffMarker.Auto())
             {
-                if (!EarthRagdollRecoveryPoseSolver.TryConsumeRecoveryRequest(
-                        ref _recoveryGate,
-                        IsRagdollActive))
-                    return;
+                if (!IsRagdollActive) return false;
                 Rigidbody pelvis = bones != null && bones.Length > 0 && bones[0] != null
                     ? bones[0].Body
                     : null;
@@ -432,6 +424,11 @@ namespace Elemental.Runtime.Characters
                     forward,
                     clearanceLift,
                     clearanceSucceeded);
+                LastRecoveryClearanceSucceeded = clearanceSucceeded;
+                RecoveryBlockedByGeometry = !clearanceSucceeded;
+                if (clearanceOnly) return clearanceSucceeded;
+                if (!clearanceSucceeded || !EarthRagdollRecoveryPoseSolver.TryConsumeRecoveryRequest(
+                        ref _recoveryGate, IsRagdollActive)) return false;
                 Vector3 rootPosition = ToVector3(recoveryPose.RootPosition);
                 Quaternion rootRotation = ToQuaternion(recoveryPose.RootRotation);
                 LastRecoverySide = recoveryPose.Side;
@@ -473,6 +470,7 @@ namespace Elemental.Runtime.Characters
                 physicalStateOwner?.SetExternalRagdollAuthority(false);
                 SetControlBehaviours(restoreControls);
                 IsRagdollActive = false;
+                RecoveryBlockedByGeometry = false;
                 IsRecoveringToAnimation = !restoreControls;
                 ResetLocalizedReactions();
                 StoneFade01 = 0f;
@@ -488,6 +486,7 @@ namespace Elemental.Runtime.Characters
                 }
                 if (IsRecoveringToAnimation) AuthoredRecoveryBegan?.Invoke();
                 UnityEngine.Physics.SyncTransforms();
+                return true;
             }
         }
 
@@ -547,6 +546,11 @@ namespace Elemental.Runtime.Characters
         {
             using (HandoffMarker.Auto())
             {
+                // A round can restart before this actor has ever ragdolled.
+                // Only a physical handoff owns a saved runtime snapshot; otherwise
+                // preserve the current collider/Animator/control configuration.
+                if (!IsRagdollActive && !IsRecoveringToAnimation)
+                    CaptureRuntimeState();
                 if (bones != null)
                     for (int index = 0; index < bones.Length; index++)
                     {
@@ -575,6 +579,7 @@ namespace Elemental.Runtime.Characters
                 physicalStateOwner?.SetExternalRagdollAuthority(false);
                 SetControlBehaviours(true);
                 IsRagdollActive = false;
+                RecoveryBlockedByGeometry = false;
                 IsRecoveringToAnimation = false;
                 ResetLocalizedReactions();
                 StoneFade01 = 0f;
@@ -631,66 +636,10 @@ namespace Elemental.Runtime.Characters
                     ? animator.GetComponentsInChildren<HumanoidRagdollBone>(true)
                     : Array.Empty<HumanoidRagdollBone>();
             SetAnimatedPhysicsState();
+            EnsureLocalizedPhysics();
         }
 
-        private void LateUpdate()
-        {
-            if (IsRagdollActive) return;
-            for (int index = 0; index < _localizedHitActive.Length; index++)
-            {
-                if (!_localizedHitActive[index]) continue;
-                HumanoidRagdollBone marker = index < bones.Length ? bones[index] : null;
-                Transform bone = marker != null ? marker.transform : null;
-                float age = Time.time - _localizedHitStartedAt[index];
-                float duration = _localizedHitDurations[index];
-                if (bone == null || age >= duration)
-                {
-                    _localizedHitActive[index] = false;
-                    continue;
-                }
-                const float attackSeconds = 0.028f;
-                float attack = Mathf.Clamp01(age / attackSeconds);
-                float recovery = Mathf.Clamp01((age - attackSeconds) /
-                                                Mathf.Max(0.01f, duration - attackSeconds));
-                float envelope = attack * (1f - recovery) * (1f - recovery);
-                bone.localRotation *= Quaternion.AngleAxis(
-                    _localizedHitAngles[index] * envelope,
-                    _localizedHitAxes[index]);
-            }
-        }
-
-        private void ApplyLocalizedBoneReaction(
-            int index,
-            Vector3 axisWorld,
-            float effectiveVelocityChange,
-            float weight)
-        {
-            if (index < 0 || index >= bones.Length || bones[index] == null) return;
-            // Foot, knee and pelvis ownership belongs to the contact/body pass.
-            // A hit pose may transfer into chest/head/arms but must never twist
-            // the planted chain after IK has solved it.
-            if (index == 0 || index >= 7) return;
-            Transform bone = bones[index].transform;
-            bool head = index == 2;
-            float maximum = head
-                ? (impactResponseProfile != null ? impactResponseProfile.LocalizedHeadMaxAngle : 6f)
-                : (impactResponseProfile != null ? impactResponseProfile.LocalizedArmChestMaxAngle : 12f);
-            float minimum = head ? 2.5f : 4f;
-            float angle = Mathf.Clamp(effectiveVelocityChange * 4.2f, minimum, maximum) * weight;
-            _localizedHitAxes[index] = bone.InverseTransformDirection(axisWorld.normalized);
-            _localizedHitStartedAt[index] = Time.time;
-            _localizedHitDurations[index] = impactResponseProfile != null
-                ? impactResponseProfile.LocalizedHitDuration
-                : 0.18f;
-            _localizedHitAngles[index] = Mathf.Max(_localizedHitAngles[index] * 0.45f, angle);
-            _localizedHitActive[index] = true;
-        }
-
-        private void ResetLocalizedReactions()
-        {
-            Array.Clear(_localizedHitActive, 0, _localizedHitActive.Length);
-            Array.Clear(_localizedHitAngles, 0, _localizedHitAngles.Length);
-        }
+        private void ResetLocalizedReactions() => LocalizedPhysics?.ResetToAnimation();
 
         private void CaptureDefaultRoot()
         {

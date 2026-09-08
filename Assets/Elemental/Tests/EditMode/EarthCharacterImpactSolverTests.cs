@@ -10,6 +10,68 @@ namespace Elemental.Tests.EditMode
         private static readonly EarthCharacterImpactTuning Tuning =
             EarthCharacterImpactTuning.Default;
 
+        [Test]
+        public void IncomingVelocityKeepsTravelDirectionForEitherCallbackSign()
+        {
+            float3 travel = new(0f, -.622f, 9.981f);
+            Assert.That(EarthCharacterImpactSolver.OrientIncomingRelativeVelocity(travel, travel, float3.zero), Is.EqualTo(travel));
+            Assert.That(EarthCharacterImpactSolver.OrientIncomingRelativeVelocity(-travel, travel, float3.zero), Is.EqualTo(travel));
+            float3 receiver = travel * 2f;
+            Assert.That(EarthCharacterImpactSolver.OrientIncomingRelativeVelocity(travel, travel, receiver), Is.EqualTo(-travel),
+                "An overtaking receiver reverses incoming relative travel; absolute projectile direction alone is insufficient.");
+        }
+
+        [TestCase(EarthCharacterImpactSourceKind.LooseStone, 1.4f)]
+        [TestCase(EarthCharacterImpactSourceKind.ArmorProjectile, 1.4f)]
+        [TestCase(EarthCharacterImpactSourceKind.BotProjectile, 1.4f)]
+        [TestCase(EarthCharacterImpactSourceKind.StonePunch, 1.4f)]
+        [TestCase(EarthCharacterImpactSourceKind.PillarWave, 1f)]
+        [TestCase(EarthCharacterImpactSourceKind.SurfNose, 1f)]
+        public void StoneWeightTransferPreservesMassOrderingAndLaunchBudget(
+            EarthCharacterImpactSourceKind source, float expectedGain)
+        {
+            float gain = EarthCharacterImpactSolver.WeightTransferMultiplier(source);
+            Assert.That(gain, Is.EqualTo(expectedGain));
+            float previous = 0f;
+            foreach (float mass in new[] { 0.5f, 10f, 40f, 95f, 1200f })
+            {
+                float normalized = EarthCharacterImpactSolver.StoneImpulse(mass, 80f, 24f) / 80f;
+                float shove = normalized * 0.65f * gain;
+                Assert.That(shove, Is.GreaterThan(previous));
+                previous = shove;
+                float3 bounded = EarthRagdollLaunchLimiter.LimitVelocityChange(
+                    float3.zero, new float3(shove, shove, 0f), new float3(0f, 1f, 0f),
+                    EarthRagdollLaunchLimiter.DefaultGravityMagnitude, 2f, 4f);
+                Assert.That(math.abs(bounded.x), Is.LessThanOrEqualTo(4.001f));
+                Assert.That(bounded.y * bounded.y /
+                    (2f * EarthRagdollLaunchLimiter.DefaultGravityMagnitude),
+                    Is.LessThanOrEqualTo(2.001f));
+            }
+        }
+
+        [Test]
+        public void StoneMomentumAndDamageIncreaseWithMassAndSpeedWithoutTinyStoneKnockdown()
+        {
+            float previous = 0f;
+            foreach (float mass in new[] { 0.5f, 10f, 40f, 95f, 400f, 1200f })
+            {
+                float velocity = EarthCharacterImpactSolver.StoneImpulse(mass, 80f, 24f) / 80f;
+                Assert.That(velocity, Is.GreaterThan(previous));
+                Assert.That(velocity, Is.LessThan(24f * 0.3f));
+                Assert.That(EarthCharacterImpactSolver.StoneImpulse(mass, 80f, 12f) / 80f,
+                    Is.LessThan(velocity));
+                previous = velocity;
+            }
+            float tiny = EarthCharacterImpactSolver.StoneImpulse(0.5f, 80f, 60f) / 80f;
+            float large = EarthCharacterImpactSolver.StoneImpulse(1200f, 80f, 24f) / 80f;
+            Assert.That(tiny, Is.LessThan(0.65f));
+            Assert.That(large, Is.GreaterThan(5f));
+            Assert.That(EarthCharacterImpactSolver.StoneDamage(8f, tiny), Is.LessThan(1f));
+            Assert.That(EarthCharacterImpactSolver.StoneDamage(8f, large), Is.EqualTo(24f));
+            Assert.That(EarthCharacterImpactSolver.StoneImpulse(1200f, 80f, 0.5f), Is.Zero);
+            Assert.That(EarthCharacterImpactSolver.StoneImpulse(float.NaN, 80f, 20f), Is.Zero);
+        }
+
         [TestCase(41f, 42f, EarthCharacterImpactResponse.Ignore)]
         [TestCase(42f, 42f, EarthCharacterImpactResponse.Flinch)]
         [TestCase(84f, 42f, EarthCharacterImpactResponse.Stagger)]

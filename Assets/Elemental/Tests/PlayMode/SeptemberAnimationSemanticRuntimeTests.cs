@@ -268,6 +268,11 @@ namespace Elemental.Tests.PlayMode
             bool sawPunchSemantic = false;
             double punchAcceptedAt = 0d;
             double punchContactAt = 0d;
+            void OnActualStoneRelease(float manaCost)
+            {
+                if (punchAcceptedAt <= 0d) punchAcceptedAt = Time.realtimeSinceStartupAsDouble;
+            }
+            dualMouse.StoneShotCommitted += OnActualStoneRelease;
             float punchPosePeak = 0f;
             FieldInfo profileField = typeof(HumanoidCharacterPresentation).GetField(
                 "magicMotionProfile", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -328,7 +333,7 @@ namespace Elemental.Tests.PlayMode
                         firstVisibleAt = Time.realtimeSinceStartupAsDouble;
                         break;
                     }
-                    yield return _frame;
+                    yield return null;
                 }
                 Assert.That(firstVisibleAt, Is.GreaterThan(0d),
                     "Accepted dual-mouse magic never became visible.");
@@ -349,9 +354,12 @@ namespace Elemental.Tests.PlayMode
                 }
                 Assert.That(maximumPending, Is.LessThanOrEqualTo(1));
 
-                double tailSimulationDeadline = Time.timeAsDouble + 1.5d;
+                // One currently executing beat plus the one accepted buffered
+                // beat may finish after release; rejected spam may not replay.
+                double boundedTailSeconds = 2d * EarthQuickStoneCombo.Duration(EarthQuickStoneBeat.FirstPunch) + .20d;
+                double tailSimulationDeadline = Time.timeAsDouble + boundedTailSeconds;
                 double tailWallDeadline = lastReleasedAt +
-                                          (requestedFrameRate > 0 ? 4d : 1.5d);
+                                          (requestedFrameRate > 0 ? 4d : boundedTailSeconds);
                 while ((pose.CurrentRequest.IsActive || pose.QueuedPresentationCount > 0) &&
                        Time.timeAsDouble < tailSimulationDeadline &&
                        Time.realtimeSinceStartupAsDouble < tailWallDeadline)
@@ -361,19 +369,17 @@ namespace Elemental.Tests.PlayMode
                                         EarthTechniqueId.QuickStonePunch;
                     if (pose.CurrentRequest.Technique == EarthTechniqueId.QuickStonePunch)
                     {
-                        if (punchAcceptedAt <= 0d)
-                            punchAcceptedAt = Time.realtimeSinceStartupAsDouble;
-                        if (pose.RenderedContactReached && punchContactAt <= 0d)
+                        if (punchAcceptedAt > 0d && pose.RenderedContactReached && punchContactAt <= 0d)
                             punchContactAt = Time.realtimeSinceStartupAsDouble;
                     }
                     punchPosePeak = Mathf.Max(punchPosePeak,
                         driver.GetFloat(Animator.StringToHash("EarthPose11")));
                     _samples.Add(actor.Probe.Latest);
-                    yield return _frame;
+                    yield return null;
                 }
                 Assert.That(pose.CurrentRequest.IsActive || pose.QueuedPresentationCount > 0,
                     Is.False,
-                    "Released LMB/RMB left delayed presentation actions replaying after 1.5 simulated seconds.");
+                    "Released LMB/RMB replayed beyond the executing beat and one accepted buffered beat.");
                 Assert.That(maximumPending, Is.LessThanOrEqualTo(1));
                 Assert.That(pose.DroppedPresentationRequests, Is.Zero);
                 Assert.That(sawPunchSemantic, Is.True,
@@ -405,6 +411,7 @@ namespace Elemental.Tests.PlayMode
             }
             finally
             {
+                dualMouse.StoneShotCommitted -= OnActualStoneRelease;
                 Time.captureDeltaTime = previousCaptureDeltaTime;
                 Application.targetFrameRate = previousTargetFrameRate;
                 QualitySettings.vSyncCount = previousVSyncCount;

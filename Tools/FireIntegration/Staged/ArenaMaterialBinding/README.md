@@ -1,0 +1,9 @@
+# Arena material binding (current user instruction)
+
+One new editor source under after/Assets; no existing source replacement, mesh change, palette change or generated asset in this patch. Offline Roslyn compilation passed all four assemblies. Unity/menu execution remains pending root.
+
+Run `Elemental/Environment/Bind Distant Backdrop To Arena Material` in EarthCoreSlice Edit Mode. It verifies the exact material is already used by a renderer beneath an actual EarthArenaStructure, finds the unique backdrop and its owned generated root, and assigns the identical shared Material reference to its profile and every existing mesh renderer/LOD. Future Rebuild already inherits this profile.material. It marks profile/renderers/scene dirty with Undo; root decides when to save. The arena material itself is neither cloned nor modified. No mesh rebuild, atmosphere, camera, collider, network or other renderer modifications occur.
+
+Verified static provenance: BrokenCrownArenaSceneIntegrator uses Assets/Elemental/Content/GraphicsV5/Materials/RumbleArenaSandstone.mat for arena structures. Its GUID is 91fc0cc0e76ed8348bf172edefa7fd44. Actual current EarthCoreSlice YAML has 100 renderer references to that exact material, including FR_outer_arch_04_P002 and FR_outer_arch_07_P001. The menu verifies live loaded-scene owner/renderer identity again, failing without mutation if the evidence differs.
+
+ValleyArt is explicitly archived/not approved after user steering. Do not import ValleyArt. Current geometry remains placeholder pending the user's functions; cloud work belongs to root/its assigned agent. Suggested immediate verification after binding: every renderer beneath the serialized generatedRoot has sharedMaterial reference equal to the profile material and canonical arena Material asset; original arena material asset hash remains unchanged. Existing production capture suite can then show material consistency without claiming final geometry acceptance.

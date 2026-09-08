@@ -1,0 +1,59 @@
+{
+    "utc": "2026-09-08T09:35:38.4045335Z",
+    "completedUtc": "2026-09-08T09:35:38.4162562Z",
+    "unityVersion": "6000.5.7f1",
+    "scene": "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity",
+    "status": "Failed",
+    "error": "System.InvalidOperationException: material contact dust is occluded by Earth Rock Debris 16 at 4.227m before its 4.392m origin.\r\n  at Elemental.Authoring.Editor.DustProductionVisualQa.ValidateLineOfSight (System.String label, UnityEngine.Vector3 point) [0x0009a] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\DustProductionVisualQa.cs:534 \r\n  at Elemental.Authoring.Editor.DustProductionVisualQa.ValidateFraming (UnityEngine.Vector3 impactCloud, UnityEngine.Vector3 fractureCloud) [0x00025] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\DustProductionVisualQa.cs:484 \r\n  at Elemental.Authoring.Editor.DustProductionVisualQa.Run () [0x00641] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\DustProductionVisualQa.cs:333 ",
+    "scope": "Actual saved EarthCoreSlice, production Main Camera/Game view, live production ParticleSystem instances and materials. One deterministic impact/fracture/mote layout is paused at a fixed age for all three celestial phases. No gameplay damage, asset/profile/light tuning or scene save.",
+    "productionMainCamera": true,
+    "sameParticleLayout": false,
+    "restored": true,
+    "sceneWasDirty": false,
+    "originalPhase": 0.36649152636528017,
+    "originalTimeScale": 1.0,
+    "originalCameraPosition": {
+        "x": 2.27909517288208,
+        "y": 57.01542663574219,
+        "z": -16.968883514404298
+    },
+    "captureCameraPosition": {
+        "x": 1.563905954360962,
+        "y": 57.45142364501953,
+        "z": -1.2606472969055176
+    },
+    "captureTarget": {
+        "x": 6.4697265625,
+        "y": 56.43142318725586,
+        "z": -1.971577525138855
+    },
+    "impactWorld": {
+        "x": 5.8001275062561039,
+        "y": 55.651424407958987,
+        "z": -1.767526388168335
+    },
+    "temporarilyDisabled": [
+        "Elemental.Input.Gestures.MagicInputController @ Planet Character",
+        "Elemental.Runtime.Characters.EarthMvpBotController @ Rumble Linebreaker Bot",
+        "Elemental.Presentation.VFX.EarthChargeCameraLookdevV2 @ Gravity Toy Camera [Online Two]",
+        "Unity.Cinemachine.CinemachineBrain @ Gravity Toy Camera",
+        "Elemental.Presentation.Rendering.VisualQaCaptureBehaviour @ Gravity Toy Camera",
+        "Elemental.Presentation.Camera.PlanetCameraRig @ Gravity Toy Camera [Online Two]",
+        "UnityEngine.UIElements.UIDocument @ Earth Core HUD",
+        "Elemental.Input.Actions.PlanetInputReader @ Planet Character",
+        "Elemental.Presentation.VFX.EarthArenaFractureDustPresenter @ Outer Column Fracture Dust",
+        "Elemental.Presentation.VFX.EarthArenaFractureDustPresenter @ Arena Fracture Dust",
+        "Elemental.Presentation.Camera.EarthCinemachineCameraController @ Gravity Toy Camera [Online Two]",
+        "Elemental.Presentation.Camera.EarthCameraDirector @ Gravity Toy Camera",
+        "Elemental.Input.Actions.PlanetInputReader @ Planet Character [Online Two]",
+        "Elemental.Presentation.Camera.EarthCinemachineCameraController @ Gravity Toy Camera",
+        "Elemental.Presentation.VFX.EarthMaterialFeedbackPresenter @ Earth Material Feedback",
+        "Elemental.Input.Gestures.MagicInputController @ Planet Character [Online Two]",
+        "Elemental.Presentation.Camera.EarthCameraDirector @ Gravity Toy Camera [Online Two]",
+        "Elemental.Presentation.Camera.PlanetCameraRig @ Gravity Toy Camera",
+        "Unity.Cinemachine.CinemachineBrain @ Gravity Toy Camera [Online Two]",
+        "Elemental.Presentation.VFX.EarthChargeCameraLookdevV2 @ Gravity Toy Camera"
+    ],
+    "sources": [],
+    "captures": []
+}

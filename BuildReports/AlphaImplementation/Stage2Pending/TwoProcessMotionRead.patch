@@ -1,0 +1,48 @@
+--- a/Packages/com.jlpm.motionmatching/Runtime/Features/FeatureSerializer.cs
++++ b/Packages/com.jlpm.motionmatching/Runtime/Features/FeatureSerializer.cs
+@@ -154,7 +154,7 @@
+             string featuresPath = Path.Combine(path, fileName + ".mmfeatures");
+             if (File.Exists(featuresPath))
+             {
+-                using (var stream = File.Open(featuresPath, FileMode.Open))
++                using (var stream = File.Open(featuresPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                 {
+                     using (var reader = new BinaryReader(stream, System.Text.Encoding.UTF8))
+                     {
+--- a/Packages/com.jlpm.motionmatching/Runtime/Core/MotionMatchingController.cs
++++ b/Packages/com.jlpm.motionmatching/Runtime/Core/MotionMatchingController.cs
+@@ -624,6 +624,7 @@
+         /// </summary>
+         public void DisableQueryTag()
+         {
++            if (!RuntimeInitialized) return;
+             var job = new DisableTagBurst
+             {
+                 TagMask = TagMask,
+@@ -637,6 +638,7 @@
+         /// </summary>
+         public void SetQueryTag(string name)
+         {
++            if (!RuntimeInitialized) return;
+             PoseSet.Tag tag = PoseSet.GetTag(name);
+             // TODO: cache results to avoid duplicated computations...
+             var job = new SetTagBurst
+@@ -655,6 +657,7 @@
+         /// </summary>
+         public void SetQueryTag(QueryTag query)
+         {
++            if (!RuntimeInitialized) return;
+             query.ComputeRanges(PoseSet);
+             var job = new SetTagBurst
+             {
+--- a/Assets/Elemental/Presentation/MotionMatching/PlanetEAMMCharacterController.cs
++++ b/Assets/Elemental/Presentation/MotionMatching/PlanetEAMMCharacterController.cs
+@@ -81,7 +81,7 @@
+ 
+         protected override void OnUpdate()
+         {
+-            if (motor == null || MotionMatching == null) return;
++            if (motor == null || MotionMatching == null || !MotionMatching.RuntimeInitialized) return;
+             float2 move = motor.LastCommand.Move;
+             if (math.lengthsq(move - _lastMove) > 0.55f * 0.55f)
+                 NotifyInputChangedQuickly();

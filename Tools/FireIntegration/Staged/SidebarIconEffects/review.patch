@@ -1,0 +1,157 @@
+--- before/Assets/Elemental/Presentation/UI/FrontendButton.cs
++++ after/Assets/Elemental/Presentation/UI/FrontendButton.cs
+@@ -25,7 +25,7 @@
+         private bool _focused, _pointerInside;
+         private TMPro.TMP_Text[] _captions;
+         private Image _roleIcon;
+-        private StoneReferenceGlyph _roleGlyph, _rimGlow;
++        private StoneReferenceGlyph _roleGlyph, _rimGlow, _edgeGlints;
+         private ElementalStoneReferenceProfile Reference => _theme?.stoneSkin?.referenceProfile;
+         private bool ReferenceActive => Reference != null && Reference.enabled;
+         private float Duration(string track,float fallback)=>ReferenceActive?Reference.Duration(track,fallback,ReducedMotion):fallback;
+@@ -45,6 +45,8 @@
+                 _halo=CreateFx("Stone hover halo",_theme.stoneSkin.halo);_halo.transform.SetAsFirstSibling();
+                 _rimGlow=StoneReferenceGlyph.Create(_visual,"Reference button edge light",StoneReferenceGlyph.Shape.ButtonGlow,new Color(.73f,.95f,.46f,1));
+                 var rim=_rimGlow.rectTransform;rim.anchorMin=Vector2.zero;rim.anchorMax=Vector2.one;rim.offsetMin=Vector2.zero;rim.offsetMax=Vector2.zero;_rimGlow.canvasRenderer.SetAlpha(0);
++                _edgeGlints=StoneReferenceGlyph.Create(_visual,"Reference button edge glints",StoneReferenceGlyph.Shape.ButtonGlints,new Color(1,1,.76f,1));
++                var glintRect=_edgeGlints.rectTransform;glintRect.anchorMin=Vector2.zero;glintRect.anchorMax=Vector2.one;glintRect.offsetMin=glintRect.offsetMax=Vector2.zero;_edgeGlints.canvasRenderer.SetAlpha(0);
+                 _shine=CreateFx("Stone shine",_theme.stoneSkin.shine);_shine.transform.SetAsLastSibling();
+                 var clip=new GameObject("Stone shine clip",typeof(RectTransform),typeof(RectMask2D));var clipRect=(RectTransform)clip.transform;
+                 clipRect.SetParent(_visual,false);clipRect.anchorMin=Vector2.zero;clipRect.anchorMax=Vector2.one;clipRect.offsetMin=clipRect.offsetMax=Vector2.zero;
+@@ -115,13 +117,14 @@
+             if(_halo!=null)
+             {
+                 _halo.color=Color.clear; // No radial halo behind the plate.
+-                _rimGlow.canvasRenderer.SetAlpha(Reference.Sample("button_hover","glow",_blend));
++                _rimGlow.canvasRenderer.SetAlpha(_blend*.95f);
++                _edgeGlints.canvasRenderer.SetAlpha(_blend*(ReducedMotion?.5f:.65f+.2f*Mathf.Sin(_shineAge*4)));
+                 _focusProgress=Mathf.MoveTowards(_focusProgress,_focused&&active?1:0,Time.unscaledDeltaTime/Duration("focus_enter",.1f));
+                 _focusMark.color=_theme.stoneSkin.referenceSelectedInsets==Vector4.zero?new Color(1,.94f,.74f,Reference.Sample("focus_enter","focus",_focusProgress)):Color.clear;
+                 _shineAge+=Time.unscaledDeltaTime;
+                 float phase=Reference.Sample("shine_pass","phase",_shineAge/Duration("shine_pass",.6f));
+                 _shine.rectTransform.anchoredPosition=new Vector2(Mathf.Lerp(-_visual.rect.width,_visual.rect.width,phase),0);
+-                _shine.color=new Color(1,.94f,.74f,!ReducedMotion&&active&&_hot?Mathf.Sin(phase*Mathf.PI)*.22f:0);
++                _shine.color=new Color(1,.94f,.74f,!ReducedMotion&&selected?Mathf.Sin(phase*Mathf.PI)*.28f:0);
+             }
+             if (!Mathf.Approximately(target, _scaleTarget))
+             { _scaleStart = _visual.localScale.x; _scaleTarget = target; _scaleElapsed = 0; }
+--- before/Assets/Elemental/Presentation/UI/FrontendMenuView.cs
++++ after/Assets/Elemental/Presentation/UI/FrontendMenuView.cs
+@@ -53,6 +53,8 @@
+         private bool _connecting, _statusError, _statusLeaving;
+         private Vector2 _statusBasePosition;
+         private readonly Graphic[] _elementFrames = new Graphic[4];
++        private readonly RectTransform[] _elementHolders = new RectTransform[4];
++        private readonly Graphic[] _elementGlints = new Graphic[4];
+         private readonly Graphic[] _elementGlows = new Graphic[4];
+         private Image _activeElementGlyph;
+         private TMP_Text _activeElementTraits;
+@@ -363,7 +365,7 @@
+             {
+                 case Elemental.Simulation.Magic.ElementId.Fire: return new Vector2(.93f,-2.98f);
+                 case Elemental.Simulation.Magic.ElementId.Water: return new Vector2(1.01f,-3.83f);
+-                case Elemental.Simulation.Magic.ElementId.Air: return new Vector2(.37f,1.43f);
++                case Elemental.Simulation.Magic.ElementId.Air: return new Vector2(.37f,-1f);
+                 default: return new Vector2(.11f,-3.12f);
+             }
+         }
+@@ -374,17 +376,26 @@
+             Color[] colors={new Color(1,.40f,.04f),new Color(.77f,.97f,.41f),new Color(.2f,.75f,1),new Color(.76f,.75f,.71f)};
+             for(int i=0;i<4;i++)
+             {
+-                var glow=StoneReferenceGlyph.Create(parent,"Element glow "+ElementOrder[i],StoneReferenceGlyph.Shape.DiamondGlow,new Color(.75f,.98f,.38f,1));
+-                glow.raycastTarget=false; Place(glow.rectTransform,41+i*128,-12,94,94); _elementGlows[i]=glow;glow.canvasRenderer.SetAlpha(0);
+-                var frame=StoneReferenceGlyph.Create(parent,"Element status "+ElementOrder[i],StoneReferenceGlyph.Shape.Diamond,colors[i]);
+-                frame.raycastTarget=false; Place(frame.rectTransform,53+i*128,0,70,70);
+-                frame.rectTransform.pivot=new Vector2(.5f,.5f);frame.rectTransform.anchoredPosition+=new Vector2(35,-35);_elementFrames[i]=frame;
+-                if(sprites[i]!=null) { var offset=ElementGlyphOffset(ElementOrder[i]); Ornament(frame.transform,"Element glyph",sprites[i],15+offset.x,15+offset.y,40,40); frame.transform.Find("Element glyph").GetComponent<Image>().color=Color.white; }
++                // One shared center/scaling transform; frame, rim light and symbol cannot drift apart.
++                var holder=Rect(parent,"Element token "+ElementOrder[i]);Place(holder,53+i*128,0,70,70);
++                holder.pivot=new Vector2(.5f,.5f);holder.anchoredPosition+=new Vector2(35,-35);_elementHolders[i]=holder;
++                var glow=StoneReferenceGlyph.Create(holder,"Element glow "+ElementOrder[i],StoneReferenceGlyph.Shape.DiamondSoftRim,new Color(.84f,1,.48f,1));
++                Place(glow.rectTransform,0,0,70,70);_elementGlows[i]=glow;glow.canvasRenderer.SetAlpha(0);
++                var frame=StoneReferenceGlyph.Create(holder,"Element status "+ElementOrder[i],StoneReferenceGlyph.Shape.SingleDiamond,colors[i]);
++                Place(frame.rectTransform,0,0,70,70);_elementFrames[i]=frame;
++                if(sprites[i]!=null)
++                {
++                    float glyphSize=ElementOrder[i]==Elemental.Simulation.Magic.ElementId.Air?34:40;
++                    float inset=(70-glyphSize)*.5f;var offset=ElementGlyphOffset(ElementOrder[i])*(glyphSize/40f);
++                    Ornament(holder,"Element glyph",sprites[i],inset+offset.x,inset+offset.y,glyphSize,glyphSize);
++                }
++                var glint=StoneReferenceGlyph.Create(holder,"Element rim glints",StoneReferenceGlyph.Shape.DiamondGlints,new Color(1,1,.78f,1));
++                Place(glint.rectTransform,0,0,70,70);_elementGlints[i]=glint;glint.canvasRenderer.SetAlpha(0);
+                 var name=Label(parent,ElementOrder[i].ToString().ToUpperInvariant(),18,colors[i]);
+                 Place(name.rectTransform,37+i*128,84,102,30); name.alignment=TextAlignmentOptions.Center;
+             }
+             var ribbon=Image(parent,"Active element ribbon",Color.white); ribbon.sprite=skin.referenceCard!=null?skin.referenceCard:skin.ribbon; ribbon.type=UnityEngine.UI.Image.Type.Simple;
+-            ribbon.raycastTarget=false; Place(ribbon.rectTransform,-12,122,594,133);
++            ribbon.raycastTarget=false; Place(ribbon.rectTransform,-12,134,594,133);
+             _activeElementGlyph=Image(ribbon.transform,"Active element glyph",Color.white); _activeElementGlyph.preserveAspect=true; _activeElementGlyph.raycastTarget=false; Place(_activeElementGlyph.rectTransform,85,18,68,68);
+             _activeElementLabel=Label(ribbon.transform,"",21,_theme.accent); Place(_activeElementLabel.rectTransform,180,8,348,34);
+             _activeElementLabel.alignment=TextAlignmentOptions.Center;
+@@ -444,8 +455,9 @@
+                     }
+                     var skin=_theme.stoneSkin;
+                     _activeElementGlyph.sprite=selected==Elemental.Simulation.Magic.ElementId.Fire?skin.fire:selected==Elemental.Simulation.Magic.ElementId.Water?skin.water:selected==Elemental.Simulation.Magic.ElementId.Air?skin.air:skin.earth;
+-                    var cardOffset=ElementGlyphOffset(selected)*(68f/40f);
+-                    Place(_activeElementGlyph.rectTransform,85+cardOffset.x,18+cardOffset.y,68,68);
++                    float cardGlyphSize=selected==Elemental.Simulation.Magic.ElementId.Air?58:68;
++                    float cardInset=(68-cardGlyphSize)*.5f;var cardOffset=ElementGlyphOffset(selected)*(cardGlyphSize/40f);
++                    Place(_activeElementGlyph.rectTransform,85+cardInset+cardOffset.x,18+cardInset+cardOffset.y,cardGlyphSize,cardGlyphSize);
+                     _activeElementTraits.text=selected==Elemental.Simulation.Magic.ElementId.Earth?"STRENGTH  /  BALANCE  /  ENDURANCE":"";
+                 }
+                 if(_footerMarker!=null)
+@@ -457,11 +469,15 @@
+                 for(int i=0;i<4;i++) if(_elementFrames[i]!=null)
+                 {
+                     bool active=ElementOrder[i]==selected;
+-                    _elementFrames[i].canvasRenderer.SetAlpha(active?0:1);
++                    _elementFrames[i].canvasRenderer.SetAlpha(1);
++                    // A single outline survives selection; only its tint and shared token scale change.
++                    var baseColor=ElementOrder[i]==Elemental.Simulation.Magic.ElementId.Fire?new Color(1,.40f,.04f):ElementOrder[i]==Elemental.Simulation.Magic.ElementId.Water?new Color(.2f,.75f,1):ElementOrder[i]==Elemental.Simulation.Magic.ElementId.Air?new Color(.76f,.75f,.71f):new Color(.77f,.97f,.41f);
++                    _elementFrames[i].color=active?new Color(.94f,1,.66f):baseColor;
+                     float selectionT=_menuElementAge/Reference.Duration("element_select",.22f,reduced);
+                     float selectionScale=active&&!reduced?Reference.Sample("element_select","scale",selectionT,1):1;
+-                    _elementFrames[i].transform.localScale=Vector3.one*(active?1.24f*selectionScale:1);
+-                    _elementGlows[i].canvasRenderer.SetAlpha(active?(reduced?.65f:.3f+Reference.LoopSample("selected_breath","opacity",Time.unscaledTime,.35f)):0);
++                    _elementHolders[i].localScale=Vector3.one*(active?1.24f*selectionScale:1);
++                    _elementGlows[i].canvasRenderer.SetAlpha(active?(reduced?.65f:.72f+.18f*Mathf.Sin(Time.unscaledTime*1.5f)):0);
++                    _elementGlints[i].canvasRenderer.SetAlpha(active?(reduced?.5f:.55f+.35f*Mathf.Pow(.5f+.5f*Mathf.Sin(Time.unscaledTime*1.8f),4)):0);
+                 }
+             }
+         }
+--- before/Assets/Elemental/Presentation/UI/StoneReferenceGlyph.cs
++++ after/Assets/Elemental/Presentation/UI/StoneReferenceGlyph.cs
+@@ -6,7 +6,7 @@
+     /// <summary>Small reference silhouettes and rim-local light. No texture backdrop or input surface.</summary>
+     public sealed class StoneReferenceGlyph : MaskableGraphic
+     {
+-        public enum Shape { Diamond, DiamondGlow, ButtonGlow, People, PersonPlus, Gear, Door, Target, Rule }
++        public enum Shape { Diamond, DiamondGlow, ButtonGlow, People, PersonPlus, Gear, Door, Target, Rule, SingleDiamond, DiamondSoftRim, DiamondGlints, ButtonGlints }
+         public Shape shape;
+         public static StoneReferenceGlyph Create(Transform parent, string name, Shape shape, Color color)
+         {
+@@ -51,6 +51,23 @@
+             }
+             switch(shape)
+             {
++                case Shape.SingleDiamond:
++                    Poly(new Color(.035f,.06f,.055f,color.a*.88f),new Vector2(.5f,.97f),new Vector2(.97f,.5f),new Vector2(.5f,.03f),new Vector2(.03f,.5f));
++                    Ring(.47f,.019f,color);break;
++                case Shape.DiamondSoftRim:
++                    // Soft perimeter bands share the exact single frame radius; no second sharp outline.
++                    Ring(.47f,.13f,new Color(color.r,color.g,color.b,color.a*.08f));
++                    Ring(.47f,.075f,new Color(color.r,color.g,color.b,color.a*.16f));
++                    Ring(.47f,.035f,new Color(color.r,color.g,color.b,color.a*.24f));break;
++                case Shape.DiamondGlints:
++                    Line(new Vector2(.455f,.97f),new Vector2(.545f,.97f),.012f,color);
++                    Line(new Vector2(.5f,.915f),new Vector2(.5f,1),.012f,color);
++                    Line(new Vector2(.93f,.5f),new Vector2(1,.5f),.012f,new Color(color.r,color.g,color.b,color.a*.7f));break;
++                case Shape.ButtonGlints:
++                    // Tiny bright sections on the plate edge, not a central radial wash.
++                    Box(.075f,.969f,.05f,.024f,color);
++                    Box(.963f,.46f,.004f,.08f,new Color(color.r,color.g,color.b,color.a*.8f));
++                    Box(.075f,.012f,.024f,.018f,new Color(color.r,color.g,color.b,color.a*.45f));break;
+                 case Shape.Rule:
+                     // Geometry remains visible at fractional CanvasScaler ratios; no texture sampling.
+                     Box(0,0,1,1,color); break;

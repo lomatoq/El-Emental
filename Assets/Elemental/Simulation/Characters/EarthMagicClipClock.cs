@@ -65,9 +65,19 @@ namespace Elemental.Simulation.Characters
         private int _slot;
         private uint _sequence;
         private EarthCastPhase _phase;
-        private float _phaseStart, _elapsed;
+        private float _phaseStart;
         private bool _active;
         public float NormalizedTime { get; private set; }
+
+        /// <summary>Seed a visible outgoing buffer, including externally timed combo clips.</summary>
+        public void ResumeRecovery(int slot, float renderedNormalizedTime)
+        {
+            _slot = slot;
+            _active = false;
+            _phase = EarthCastPhase.Recover;
+            NormalizedTime = math.saturate(math.isfinite(renderedNormalizedTime) ? renderedNormalizedTime : 0f);
+            _phaseStart = NormalizedTime;
+        }
 
         public float Step(int slot, uint sequence, EarthCastPhase phase, bool active,
             in EarthMagicClipTiming timing, float deltaTime,
@@ -76,10 +86,10 @@ namespace Elemental.Simulation.Characters
             if (active && (!_active || slot != _slot || sequence != _sequence))
             {
                 _slot = slot; _sequence = sequence; _phase = EarthCastPhase.Idle;
-                _phaseStart = _elapsed = 0f;
+                _phaseStart = 0f;
                 // Each accepted sequence owns the inactive A/B Animator buffer.
                 // Its time can restart at frame zero while the outgoing state's
-                // independent parameters remain frozen through the crossfade.
+                // independent recovery clock advances through the crossfade.
                 NormalizedTime = startAtContact ? timing.Contact : 0f;
             }
             _active = active;
@@ -91,19 +101,22 @@ namespace Elemental.Simulation.Characters
                 // last sampled pose and move continuously toward the new marker;
                 // snapping to timing.Start skips a large section of long source
                 // clips in one render and visibly folds the arm chain.
-                _phaseStart = NormalizedTime; _elapsed = 0f; _phase = requested;
+                _phaseStart = NormalizedTime; _phase = requested;
             }
             float boundedDelta = math.clamp(math.isfinite(deltaTime) ? deltaTime : 0f, 0f, 0.1f);
-            _elapsed += boundedDelta;
             float target = math.max(_phaseStart, timing.End(requested));
-            float t = math.saturate(_elapsed / math.max(0.01f, timing.Seconds(requested)));
-            // Ease the velocity at marker boundaries, not the event itself.
-            float eased = t * t * (3f - 2f * t);
-            float next = math.lerp(_phaseStart, target, eased);
-            float maximumSpeed = MaximumSpeedForSlot(slot);
+            // Phase markers are contact boundaries, not separate poses to ease
+            // into and out of. Repeated smoothstep restarts forced the source
+            // velocity toward zero on every fixed-tick phase handoff. Continue
+            // the authored trajectory at its bounded phase rate instead.
+            float rate = math.max(0f, target - _phaseStart) /
+                         math.max(0.01f, timing.Seconds(requested));
+            // Cancellation commonly reports slot zero. Recovery still belongs
+            // to the last accepted clip and must keep its calibrated speed.
+            float maximumSpeed = MaximumSpeedForSlot(_slot);
             NormalizedTime = math.min(
-                next,
-                NormalizedTime + maximumSpeed * boundedDelta);
+                target,
+                NormalizedTime + math.min(rate, maximumSpeed) * boundedDelta);
             return NormalizedTime;
         }
 
@@ -131,6 +144,8 @@ namespace Elemental.Simulation.Characters
             // resulting continuity and measured latency.
             (int)EarthHumanoidPoseSlot.GenericCast =>
                 QuickPunchMaximumNormalizedSpeedPerSecond,
+            (int)EarthHumanoidPoseSlot.LeftKick or (int)EarthHumanoidPoseSlot.RightKick or
+                (int)EarthHumanoidPoseSlot.SpinKick => 2f,
             _ => 0f
         };
     }

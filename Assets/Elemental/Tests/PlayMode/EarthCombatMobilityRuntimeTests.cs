@@ -136,17 +136,17 @@ namespace Elemental.Tests.PlayMode
                 for (int hit = 0; hit < 5; hit++)
                     Assert.That(wall.ApplyRockImpact(wall.transform.position, Vector3.forward, 10f), Is.False);
                 Assert.That(wall.ApplyRockImpact(wall.transform.position, Vector3.forward, 10f), Is.True);
-                var natural = All<EarthWallPiece>(scene).Where(x => x.Owner == wall)
-                    .Select(x => x.GetComponent<MeshFilter>()).Where(x =>
-                    x.sharedMesh != null && x.sharedMesh.name.Contains("Natural Fracture Stone")).ToArray();
-                Assert.That(natural.Length, Is.GreaterThan(1), "The wall must break into rounded ground-stone shapes.");
-                Assert.That(natural.All(x => x.GetComponent<Renderer>().sharedMaterial == pool.StoneMaterial), Is.True);
-                foreach (var stone in natural)
+                var wallCells = All<EarthWallPiece>(scene).Where(x => x.Owner == wall)
+                    .Select(x => x.GetComponent<MeshFilter>()).Where(x => x.sharedMesh != null).ToArray();
+                Assert.That(wallCells.Length, Is.EqualTo(wall.StructureRuntime.PieceCount));
+                foreach (var stone in wallCells)
                 {
-                    Assert.That(stone.sharedMesh.subMeshCount, Is.EqualTo(1));
-                    Assert.That(stone.GetComponent<Renderer>().sharedMaterials,
-                        Is.EqualTo(new[] { pool.StoneMaterial }),
-                        "No retained clay slot may redraw the natural stone submesh.");
+                    Assert.That(stone.sharedMesh.name, Does.Not.Contain("Natural Fracture Stone"),
+                        "Cracked wall cells must keep their matching partition, not undersized loose stones.");
+                    Material[] materials = stone.GetComponent<Renderer>().sharedMaterials;
+                    Assert.That(materials.Length, Is.EqualTo(stone.sharedMesh.subMeshCount));
+                    Assert.That(materials.All(x => x == pool.StoneMaterial), Is.True,
+                        "Exterior and cut surfaces must retain sandstone without an extra clay draw.");
                 }
             }
             finally

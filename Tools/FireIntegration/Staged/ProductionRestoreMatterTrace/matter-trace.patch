@@ -1,0 +1,51 @@
+--- a/Assets/Elemental/Tests/PlayMode/ProductionArenaRestoreTests.cs
++++ b/Assets/Elemental/Tests/PlayMode/ProductionArenaRestoreTests.cs
+@@ -97,6 +97,7 @@
+                 if (surf.BoardTransform != null) Assert.That(surf.BoardTransform.gameObject.scene, Is.EqualTo(_arena));
+             AssertSceneOwnership();
+             yield return ProductionCombatTestFlow.BeginBotAfterReadiness(_arena);
++            TraceCanonicalMatter("after-first-countdown");
+             for (int cycle = 0; cycle < 2; cycle++)
+             {
+                 DisableBots();
+@@ -236,9 +237,39 @@
+             Assert.That(_canonicalIdentity.TryRead(out _canonicalBaseline), Is.True);
+             Assert.That(_canonicalBaseline.Phase, Is.Not.EqualTo(EarthMatterPhase.Consumed));
+         }
++        private string TraceCanonicalMatter(string checkpoint = "assert-canonical-matter")
++        {
++            var kernel = _canonicalIdentity.Kernel;
++            bool live = _canonicalIdentity.TryRead(out var current);
++            var failure = kernel.Registry.LastFailure;
++            var records = new EarthMatterRecord[kernel.Registry.Capacity];
++            int count = kernel.Registry.CopyActiveNonAlloc(records, true);
++            int sourceCount = 0, consumedCount = 0; float mass = 0, volume = 0;
++            string family = "";
++            for (int i = 0; i < count; i++)
++            {
++                var record = records[i];
++                if (record.Source.Kind != _canonicalBaseline.Source.Kind ||
++                    record.Source.SourceStableId != _canonicalBaseline.Source.SourceStableId) continue;
++                if (record.Phase == EarthMatterPhase.Consumed) { consumedCount++; continue; }
++                sourceCount++; mass += record.Mass; volume += record.Volume;
++                family += $" [{record.Id} {record.Phase}/{record.Representation} m={record.Mass} v={record.Volume}]";
++            }
++            string trace = $"checkpoint={checkpoint}; time={Time.time}; name={_canonicalDecor.name}; " +
++                $"id={_canonicalIdentity.MatterId}; read={live}; phase={(live ? current.Phase.ToString() : "<stale>")}; failure={failure}; " +
++                $"active={_canonicalDecor.gameObject.activeInHierarchy}; shattered={_canonicalDecor.IsShattered}; anchored={_canonicalDecor.IsAnchored}; " +
++                $"bodyPos={_canonicalDecor.Body.position}; velocity={_canonicalDecor.Body.linearVelocity}; " +
++                $"collisionCount={_canonicalDecor.ObservedCollisionCount}; collider={_canonicalDecor.LastCollisionCollider?.name}; " +
++                $"impulse={_canonicalDecor.LastCollisionImpulse}; approach={_canonicalDecor.LastCollisionApproach}; " +
++                $"sourceRecords={sourceCount}; sourceConsumed={consumedCount}; sourceMass={mass}; sourceVolume={volume}; family={family}";
++            Directory.CreateDirectory(Output);
++            File.AppendAllText(Output + "/canonical-trace.txt", DateTime.UtcNow.ToString("O") + " " + trace + Environment.NewLine);
++            return trace;
++        }
+         private void AssertAuthoredMatter()
+         {
+-            Assert.That(_canonicalIdentity.IsRegistered, Is.True, "Filtering out all baseline matter must fail this proof.");
++            string trace = TraceCanonicalMatter();
++            Assert.That(_canonicalIdentity.IsRegistered, Is.True, "Filtering out all baseline matter must fail this proof. " + trace);
+             Assert.That(_canonicalIdentity.TryRead(out var record), Is.True);
+             Assert.That(record.Phase, Is.Not.EqualTo(EarthMatterPhase.Consumed));
+             Assert.That(record.Representation, Is.EqualTo(_canonicalBaseline.Representation));

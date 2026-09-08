@@ -400,7 +400,8 @@ namespace Elemental.Runtime.World
             }
             if (meteor == null) return false;
             float safeRadius = Mathf.Max(0.1f, radius);
-            float density = profile != null ? profile.Density : 1800f;
+            EarthMatterMassProfile massPolicy = debrisPool != null ? debrisPool.MassPolicy :
+                magicExecutor != null ? magicExecutor.MassPolicy : EarthMatterMassProfile.ArenaStone;
             float volume = 4f / 3f * Mathf.PI * safeRadius * safeRadius * safeRadius;
             TrailRenderer trail = meteor.GetComponent<TrailRenderer>();
             if (trail != null)
@@ -409,7 +410,7 @@ namespace Elemental.Runtime.World
                 trail.startWidth = Mathf.Clamp(safeRadius * 0.68f, 0.16f, 1.4f);
                 trail.emitting = true;
             }
-            meteor.Activate(id, position, safeRadius, volume * density, velocity);
+            meteor.Activate(id, position, safeRadius, EarthMatterMassPolicy.ResolveGameplayMass(volume, in massPolicy), velocity);
             return true;
         }
 

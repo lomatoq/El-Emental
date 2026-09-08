@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Elemental.Simulation.Magic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -383,6 +384,53 @@ namespace Elemental.Runtime.World
 
     public static class EarthParticleSystemTuningApplier
     {
+        private static readonly int FlipbookBlendingId = Shader.PropertyToID("_FlipbookBlending");
+        private static readonly int FlipbookColumnsId = Shader.PropertyToID("_FlipbookColumns");
+        private static readonly int FlipbookRowsId = Shader.PropertyToID("_FlipbookRows");
+        private static readonly List<ParticleSystemVertexStream> FlipbookStreams = new()
+        {
+            ParticleSystemVertexStream.Position, ParticleSystemVertexStream.Normal,
+            ParticleSystemVertexStream.Color, ParticleSystemVertexStream.UV,
+            ParticleSystemVertexStream.UV2, ParticleSystemVertexStream.AnimBlend
+        };
+
+        public static void ConfigureDustFlipbook(ParticleSystem system)
+        {
+            if (system == null) return;
+            var renderer = system.GetComponent<ParticleSystemRenderer>();
+            Material material = renderer != null ? renderer.sharedMaterial : null;
+            // Existing ground wind/surf/motes remain on their original material
+            // and UV contract. Only explicitly authored atlas materials opt in.
+            if (material == null || !material.HasProperty(FlipbookBlendingId)) return;
+            var sheet = system.textureSheetAnimation;
+            if (material.GetFloat(FlipbookBlendingId) < .5f)
+            {
+                // A reused dust emitter must not keep atlas UVs after switching
+                // back to the authored ground-wind/surf single sprite.
+                sheet.enabled = false;
+                return;
+            }
+            int columns = Mathf.Max(1, Mathf.RoundToInt(material.GetFloat(FlipbookColumnsId)));
+            int rows = Mathf.Max(1, Mathf.RoundToInt(material.GetFloat(FlipbookRowsId)));
+            sheet.enabled = true;
+            sheet.mode = ParticleSystemAnimationMode.Grid;
+            sheet.animation = ParticleSystemAnimationType.WholeSheet;
+            sheet.numTilesX = columns; sheet.numTilesY = rows;
+            sheet.timeMode = ParticleSystemAnimationTimeMode.Lifetime;
+            // With frame interpolation the terminal frame must not blend back
+            // into frame zero. Nine authored images have eight transitions.
+            float terminalFrame = (columns * rows - 1f) / (columns * rows);
+            float playbackSpeed = material.HasProperty("_FlipbookSpeed") ? Mathf.Clamp(material.GetFloat("_FlipbookSpeed"),1f,5f) : 1f;
+            sheet.frameOverTime = new ParticleSystem.MinMaxCurve(terminalFrame,
+                new AnimationCurve(new Keyframe(0f,0f,playbackSpeed,playbackSpeed),
+                    new Keyframe(1f/playbackSpeed,1f,playbackSpeed,0f),new Keyframe(1.001f,1f,0f,0f)));
+            sheet.startFrame = new ParticleSystem.MinMaxCurve(0f);
+            sheet.cycleCount = 1;
+            sheet.uvChannelMask = UVChannelFlags.UV0;
+            renderer.SetActiveVertexStreams(FlipbookStreams);
+            renderer.receiveShadows = true;
+        }
+
         public static void ApplyDust(ParticleSystem system, EarthParticleLayerTuning tuning, Material material)
         {
             Apply(system, tuning, material);
@@ -425,6 +473,7 @@ namespace Elemental.Runtime.World
         {
             if (system == null) return;
             EarthEffectRenderOrder.ApplyDustRenderer(system.GetComponent<ParticleSystemRenderer>());
+            ConfigureDustFlipbook(system);
             var main = system.main;
             main.startColor = AlphaOnly(main.startColor);
             var lifetime = system.colorOverLifetime;

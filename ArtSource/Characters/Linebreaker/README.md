@@ -17,8 +17,18 @@ Tripo character source. The original `Bender.blend` in Downloads was not overwri
 The Unity Humanoid mapping uses the renamed `mixamorig:` body bones. Secondary
 bones remain outside Mecanim's Humanoid map and are presentation-only.
 
-The checked runtime FBX is exported from `LinebreakerRigged_weighted.blend`.
+The previous runtime FBX was exported from `LinebreakerRigged_weighted.blend`.
 `Tools/Blender/repair_linebreaker_character_rig.py` validates/repairs hierarchy,
 and `Tools/Blender/weight_linebreaker_secondary.py` performs the deterministic
 weight pass. Both scripts support dry-run JSON reports; never apply them directly
 to `LinebreakerRigged.blend`.
+
+September 6 clothing repair source: `LinebreakerRigged_clothing.blend`, generated
+from the weighted copy by `Tools/Blender/repair_linebreaker_clothing.py` after its
+companion island audit. This pass removes arm weights from helmet/hair, separates
+the black plume from the metal shell, and matches the torso/waist weight envelope.
+It preserves topology, UVs and the 50-bone rest skeleton. The repaired export was
+promoted to the existing runtime FBX with the original `.meta` preserved. Export
+uses `FBX_SCALE_ALL` to preserve the original Unity Avatar's bone-unit convention.
+Source stress captures and runtime verification contract are documented in
+`Docs/CHARACTER_RIG_REPAIR_SEPT06.md`.

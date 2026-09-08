@@ -52,7 +52,7 @@ namespace Elemental.Authoring.Editor
                 throw new InvalidOperationException(
                     $"Missing controller: {EarthHumanoidMotionSetup.ControllerPath}");
             BlendTree tree = FindTree(controller, TreeName);
-            if (tree == null || tree.blendType != BlendTreeType.Direct || tree.children.Length != 11)
+            if (tree == null || tree.blendType != BlendTreeType.Direct || tree.children.Length < 11)
                 throw new InvalidOperationException(
                     $"{TreeName} must be the saved eleven-child direct BlendTree.");
 

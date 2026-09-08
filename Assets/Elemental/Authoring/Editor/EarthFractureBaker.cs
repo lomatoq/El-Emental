@@ -23,6 +23,7 @@ namespace Elemental.Authoring.Editor
         private const float AuthoredDepth = 0.55f;
         private const int VolumetricCellCount = 40;
         private const uint ProductionSeed = 0xE17F1002u;
+        private const int WallSourceGeometryRevision = 2;
 
         [MenuItem("Elemental/Fracture/Bake Production Earth Wall")]
         public static void BakeProductionWallFromMenu()
@@ -99,7 +100,8 @@ namespace Elemental.Authoring.Editor
         {
             EarthFractureAsset asset = AssetDatabase.LoadAssetAtPath<EarthFractureAsset>(
                 ProductionWallAssetPath);
-            if (asset != null && asset.PieceCount == VolumetricCellCount &&
+            if (asset != null && asset.SourceGeometryRevision == WallSourceGeometryRevision &&
+                asset.PieceCount == VolumetricCellCount &&
                 HasProductionShapeQuality(asset) &&
                 EarthFractureValidator.Validate(asset).IsValid)
                 return asset;
@@ -134,7 +136,6 @@ namespace Elemental.Authoring.Editor
             Mesh intactRenderMesh,
             Mesh intactColliderMesh)
         {
-            RemoveOldPieceMeshes(asset);
             float2[] physicalBoundary =
             {
                 new float2(-AuthoredWidth * 0.5f, -AuthoredDepth * 0.5f),
@@ -143,10 +144,12 @@ namespace Elemental.Authoring.Editor
                 new float2(-AuthoredWidth * 0.5f, AuthoredDepth * 0.5f)
             };
             EarthVolumetricFracturePlan plan = BuildProductionPlan(physicalBoundary);
-            if (!plan.IsValid || plan.Cells.Length != VolumetricCellCount)
+            if (!plan.IsValid || plan.Cells.Length != VolumetricCellCount || ProductionShapePenalty(plan) > .0001f)
                 throw new UnityEditor.Build.BuildFailedException(
-                    $"Volumetric wall fracture failed conservation: {plan.RelativeVolumeError:P2}.");
+                    $"Wall volume/depth/topology quality failed: volume error {plan.RelativeVolumeError:P2}, shape penalty {ProductionShapePenalty(plan)}. Existing asset was preserved.");
 
+            // Validate the complete replacement before removing any saved subassets.
+            RemoveOldPieceMeshes(asset);
             var pieces = new EarthFracturePieceRecord[plan.Cells.Length];
             float volumeScale = 1f / Mathf.Max(0.0001f, plan.SourceVolume);
             for (int pieceIndex = 0; pieceIndex < plan.Cells.Length; pieceIndex++)
@@ -225,7 +228,29 @@ namespace Elemental.Authoring.Editor
                     true);
             }
 
-            asset.SetBakedData(intactRenderMesh, intactColliderMesh, pieces, bonds.ToArray());
+            // The source hull and every cell use the same broad crown/chamfer
+            // planes. The former decorative crest was unrelated to the fracture.
+            var sourcePoints = new List<float3>();
+            foreach (EarthVolumetricFractureCell cell in plan.Cells)
+                foreach (float3 vertex in cell.Vertices)
+                {
+                    Vector3 mapped = MapPoint(vertex);
+                    sourcePoints.Add(new float3(mapped.x, mapped.y, mapped.z));
+                }
+            EarthConvexPartitionCell hull = EarthConvexPartitionSolver.BuildHull(sourcePoints.ToArray());
+            var sourceVertices = new Vector3[hull.Vertices.Length];
+            for (int index = 0; index < sourceVertices.Length; index++)
+            {
+                float3 point = hull.Vertices[index] + hull.Center;
+                sourceVertices[index] = new Vector3(point.x, point.y, point.z);
+            }
+            Mesh matchedSource = new Mesh { name = "Earth Wall Matched Broad Crown v2" };
+            matchedSource.vertices = sourceVertices;
+            matchedSource.triangles = hull.Triangles;
+            matchedSource.RecalculateNormals();
+            matchedSource.RecalculateBounds();
+            AssetDatabase.AddObjectToAsset(matchedSource, asset);
+            asset.SetBakedData(matchedSource, matchedSource, pieces, bonds.ToArray(), WallSourceGeometryRevision);
         }
 
         private static void AddBond(
@@ -335,6 +360,8 @@ namespace Elemental.Authoring.Editor
             if (records == null || records.Length != VolumetricCellCount) return false;
             float minimumVolume = float.PositiveInfinity;
             float maximumVolume = 0f;
+            int partialDepth = 0;
+            float minimumDepthSpan = float.PositiveInfinity, maximumDepthSpan = 0f;
             var aspects = new float[records.Length];
             var vertexFamilies = new HashSet<int>();
             for (int index = 0; index < records.Length; index++)
@@ -343,6 +370,10 @@ namespace Elemental.Authoring.Editor
                 if (collider == null || collider.vertexCount < 4 ||
                     collider.triangles.Length / 3 > 255) return false;
                 vertexFamilies.Add(collider.vertexCount);
+                float normalizedDepth = collider.bounds.size.z;
+                if (normalizedDepth < .85f) partialDepth++;
+                minimumDepthSpan = Mathf.Min(minimumDepthSpan, normalizedDepth);
+                maximumDepthSpan = Mathf.Max(maximumDepthSpan, normalizedDepth);
                 minimumVolume = Mathf.Min(minimumVolume, records[index].volume);
                 maximumVolume = Mathf.Max(maximumVolume, records[index].volume);
                 Vector3 physicalSize = Vector3.Scale(
@@ -353,10 +384,11 @@ namespace Elemental.Authoring.Editor
                 aspects[index] = Mathf.Max(physicalSize.x, physicalSize.y, physicalSize.z) / smallest;
             }
             Array.Sort(aspects);
-            return vertexFamilies.Count >= 4 && minimumVolume > 0.0001f &&
+            return partialDepth >= 8 && maximumDepthSpan - minimumDepthSpan >= .20f &&
+                   vertexFamilies.Count >= 4 && minimumVolume > 0.0001f &&
                    maximumVolume / minimumVolume >= 3f &&
                    aspects[aspects.Length / 2] <= 3.5f &&
-                   aspects[aspects.Length - 1] <= 6f;
+                   aspects[aspects.Length - 1] <= 8f;
         }
 
         private static EarthVolumetricFracturePlan BuildProductionPlan(float2[] physicalBoundary)
@@ -371,7 +403,8 @@ namespace Elemental.Authoring.Editor
                     physicalBoundary,
                     -AuthoredHeight * 0.5f,
                     AuthoredHeight * 0.5f,
-                    VolumetricCellCount);
+                    VolumetricCellCount,
+                    ProductionSourceHalfSpaces(), splitWallDepth: true);
                 float penalty = ProductionShapePenalty(candidate);
                 if (penalty < bestPenalty)
                 {
@@ -385,11 +418,14 @@ namespace Elemental.Authoring.Editor
 
         private static float ProductionShapePenalty(EarthVolumetricFracturePlan plan)
         {
-            if (!plan.IsValid || plan.Cells.Length != VolumetricCellCount)
+            if (!plan.IsValid || plan.Cells.Length != VolumetricCellCount ||
+                !EarthVolumetricFractureSolver.HasClosedTopology(in plan))
                 return float.PositiveInfinity;
 
             var aspects = new float[plan.Cells.Length];
             var volumes = new float[plan.Cells.Length];
+            int partialDepth = 0;
+            float minimumDepth = float.PositiveInfinity, maximumDepth = 0f;
             for (int index = 0; index < plan.Cells.Length; index++)
             {
                 EarthVolumetricFractureCell cell = plan.Cells[index];
@@ -397,6 +433,11 @@ namespace Elemental.Authoring.Editor
                     return float.PositiveInfinity;
                 aspects[index] = cell.AspectRatio;
                 volumes[index] = cell.Volume;
+                float near = float.PositiveInfinity, far = float.NegativeInfinity;
+                foreach (float3 vertex in cell.Vertices) { near = Mathf.Min(near, vertex.z); far = Mathf.Max(far, vertex.z); }
+                float span = (far - near) / AuthoredDepth;
+                if (span < .85f) partialDepth++;
+                minimumDepth = Mathf.Min(minimumDepth, span); maximumDepth = Mathf.Max(maximumDepth, span);
             }
             Array.Sort(aspects);
             Array.Sort(volumes);
@@ -405,11 +446,27 @@ namespace Elemental.Authoring.Editor
             float p10 = volumes[Mathf.Clamp(Mathf.FloorToInt((volumes.Length - 1) * 0.10f), 0, volumes.Length - 1)];
             float p90 = volumes[Mathf.Clamp(Mathf.FloorToInt((volumes.Length - 1) * 0.90f), 0, volumes.Length - 1)];
             float volumeTail = p90 / Mathf.Max(0.0001f, p10);
-            return Mathf.Max(0f, medianAspect - 3.5f) * 4f +
-                   Mathf.Max(0f, maximumAspect - 6f) * 2f +
+            return Mathf.Max(0, 8 - partialDepth) * 20f +
+                   Mathf.Max(0f, .20f - (maximumDepth - minimumDepth)) * 100f +
+                   Mathf.Max(0f, medianAspect - 3.5f) * 4f +
+                   Mathf.Max(0f, maximumAspect - 8f) * 2f +
                    Mathf.Max(0f, 3f - volumeTail) * 3f +
                    plan.RelativeVolumeError * 10f;
         }
+
+        private static float4[] ProductionSourceHalfSpaces() => new[]
+        {
+            // Normalized wall coordinates: one broad low crest, with real
+            // continuous edge chamfers. No width-independent comb of teeth.
+            new float4(.10f / AuthoredWidth, 1f / AuthoredHeight, 0f, .5f),
+            new float4(-.08f / AuthoredWidth, 1f / AuthoredHeight, 0f, .49f),
+            new float4(0f, 1f / AuthoredHeight, 1f / AuthoredDepth, .95f),
+            new float4(0f, 1f / AuthoredHeight, -1f / AuthoredDepth, .95f),
+            new float4(1f / AuthoredWidth, 0f, 1f / AuthoredDepth, .95f),
+            new float4(1f / AuthoredWidth, 0f, -1f / AuthoredDepth, .95f),
+            new float4(-1f / AuthoredWidth, 0f, 1f / AuthoredDepth, .95f),
+            new float4(-1f / AuthoredWidth, 0f, -1f / AuthoredDepth, .95f)
+        };
 
         private static Vector3 MapPoint(float3 point) => new Vector3(
             point.x / AuthoredWidth,

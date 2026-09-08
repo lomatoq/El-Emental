@@ -3,11 +3,27 @@ using Elemental.Runtime.Geometry;
 using Elemental.Runtime.Physics;
 using NUnit.Framework;
 using UnityEngine;
+using Unity.Mathematics;
 
 namespace Elemental.Tests.EditMode
 {
     public sealed class EarthSurfSessionTests
     {
+        [Test]
+        public void BoardWaitsForBlockedRiderAndReleasesAfterRealSeparation()
+        {
+            float3 up = new float3(0f, 1f, 0f);
+            float3 rider = new float3(0f, 25f, 0f);
+            float3 offset = new float3(0f, 1.3f, 0f);
+            float3 proposed = new float3(0f, 23.7f, 0.9f);
+            float3 bounded = EarthSurfRiderSolver.LimitBoardLead(proposed, offset, rider, up);
+            Assert.That(bounded.z, Is.EqualTo(EarthSurfRiderSolver.MaximumLeadMeters).Within(0.001f));
+            Assert.That(bounded.y, Is.EqualTo(proposed.y));
+            Assert.That(EarthSurfRiderSolver.HasLostRider(bounded + offset, rider, up), Is.False);
+            Assert.That(EarthSurfRiderSolver.HasLostRider(bounded + offset, rider + new float3(3f, 0f, 0f), up), Is.True);
+            Assert.That(EarthSurfRiderSolver.HasLostRider(bounded + offset, rider + up * 2f, up), Is.True);
+        }
+
         [Test]
         public void Speed_RisesNonlinearlyFromFourToThirteen()
         {

@@ -69,6 +69,14 @@ KO is not an accepted rollback.
 
 ## Finite surf follow-up — 2026-08-31
 
+Rider continuity follow-up (2026-09-06 working tree): the moving board now bounds
+its tangent lead over the rider to 0.45 m before publishing its support frame.
+Actual bounded displacement supplies speed/impact telemetry. A disabled,
+kinematic or launched rider, or separation outside 1.2 m tangent / 1.5 m vertical,
+ends the board session. The prior free-running board could escape the existing
+anchor solver's 1.25 m correction range and continue moving alone. Pure lead/loss
+tests and the production carry test now cover this failure; execution pending.
+
 - The surf plough is a fixed fifteen-cell semantic graph: left/right foot cores and
   their bridge remain occupied support, while twelve nose/rail/tail cells are
   prebuilt detachable views. Damage callbacks only change a bounded bit mask and

@@ -12,7 +12,7 @@ namespace Elemental.Tests.EditMode
         private const int StripHeight = 16;
         private const float RadiusSpeed = 10f;
         private const float FixedWorldDistance = 10f;
-        private const float StartRadius = 9.56f;
+        private const float StartRadius = 9.68f;
         private const float EndRadius = 10.72f;
         private static readonly int TestModeId = Shader.PropertyToID("_TestMode");
         private static readonly int TestRadialDistanceId = Shader.PropertyToID("_TestRadialDistance");
@@ -54,10 +54,12 @@ namespace Elemental.Tests.EditMode
                 previous = current;
             }
 
-            int firstPeak = samples.FindIndex(value => value >= 190);
-            Assert.That(firstPeak, Is.GreaterThan(0), $"{hz} Hz sequence never reached the pulse peak.");
+            // A half-width front can cross between 30 Hz samples: its integrated
+            // peak is half coverage, not the old wide front's full-white plateau.
+            int firstPeak = samples.FindIndex(value => value >= 100);
+            Assert.That(firstPeak, Is.GreaterThan(0), $"{hz} Hz sequence missed the thin pulse.");
             bool hasIntermediate = false;
-            for (int i = 0; i < firstPeak; i++)
+            for (int i = 0; i <= firstPeak; i++)
                 hasIntermediate |= samples[i] > 15 && samples[i] < 190;
             Assert.That(hasIntermediate, Is.True,
                 $"{hz} Hz front jumped from baseline to peak without a temporal coverage sample: {string.Join(",", samples)}");
@@ -114,7 +116,7 @@ namespace Elemental.Tests.EditMode
             _material.SetFloat(TestRadialDistanceId, FixedWorldDistance);
             _material.SetFloat(TestCurrentRadiusId, currentRadius);
             _material.SetFloat(TestRadiusTravelId, radiusTravel);
-            _material.SetFloat(TestWidthId, 0.12f);
+            _material.SetFloat(TestWidthId, 0.06f);
             Color32[] pixel = Render(Texture2D.whiteTexture, temporal ? 2f : 3f, 1, 1);
             return pixel[0].r;
         }

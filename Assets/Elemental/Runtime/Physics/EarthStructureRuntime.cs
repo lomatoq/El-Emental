@@ -21,6 +21,7 @@ namespace Elemental.Runtime.Physics
         private EarthBondRuntime[] _bondRuntimes = System.Array.Empty<EarthBondRuntime>();
         private EarthStructureState _state;
         private uint _generation;
+        private bool _supportDirty;
 
         public bool IsConfigured { get; private set; }
         public bool IsFractured => _state.Phase == EarthStructurePhase.Fractured ||
@@ -82,6 +83,17 @@ namespace Elemental.Runtime.Physics
             _pieceTransforms = pieceTransforms;
             _pieceRuntimes = new EarthPieceRuntime[asset.PieceCount];
             _bondRuntimes = new EarthBondRuntime[asset.BondCount];
+            // These pieces have explicit breakable source bonds. Keeping the
+            // implicit Foundation flag as well would make their anchors immortal
+            // even after the source bond was severed or the piece was grabbed.
+            for (int index = 0; index < _bondDefinitions.Length; index++)
+            {
+                EarthBondDefinition bond = _bondDefinitions[index];
+                if (bond.PieceB != EarthBondGraph.WorldPieceIndex) continue;
+                EarthPieceDefinition piece = _pieceDefinitions[bond.PieceA];
+                piece.Flags &= ~EarthPieceFlags.Foundation;
+                _pieceDefinitions[bond.PieceA] = piece;
+            }
             for (int index = 0; index < asset.PieceCount; index++)
             {
                 EarthWallPiece pieceRuntime = pieceTransforms[index].GetComponent<EarthWallPiece>();
@@ -109,6 +121,7 @@ namespace Elemental.Runtime.Physics
         {
             if (!IsConfigured) return;
             _generation = generation;
+            _supportDirty = false;
             for (int index = 0; index < _pieceDefinitions.Length; index++)
             {
                 _pieceStates[index] = EarthPieceState.Intact;
@@ -169,12 +182,16 @@ namespace Elemental.Runtime.Physics
             float3 localImpulse,
             float localRadius,
             float materialResponse,
-            uint tick)
+            uint tick,
+            float maximumDamagePerBond = 1f,
+            float maximumFoundationDamagePerBond = 1f,
+            float3 localMetricScale = default)
         {
             if (!IsConfigured || !IsFractured)
                 return default;
             var impact = new EarthBondImpact(
-                localPoint, localImpulse, localRadius, materialResponse, tick);
+                localPoint, localImpulse, localRadius, materialResponse, tick,
+                maximumDamagePerBond, maximumFoundationDamagePerBond, localMetricScale);
             EarthBondDamageResult result = EarthFractureBatchRunner.ApplyImpact(
                 in impact,
                 _bondDefinitions,
@@ -209,6 +226,7 @@ namespace Elemental.Runtime.Physics
             state.AccumulatedDamage = 1f;
             state.LastChangedTick = tick;
             _bondStates[index] = state;
+            _supportDirty = true;
             _state.Phase = EarthStructurePhase.Fractured;
             _state.Revision++;
             _state.LastChangedTick = tick;
@@ -247,6 +265,7 @@ namespace Elemental.Runtime.Physics
 
         public bool IsPieceSupported(int index)
         {
+            if (_supportDirty) SolveIslands();
             if (index < 0 || index >= _islandByPiece.Length) return false;
             int island = _islandByPiece[index];
             return island >= 0 && island < _islandSupported.Length && _islandSupported[island];
@@ -369,6 +388,7 @@ namespace Elemental.Runtime.Physics
 
         private void SolveIslands()
         {
+            _supportDirty = false;
             EarthIslandSolveResult result = EarthFractureBatchRunner.SolveIslands(
                 _pieceDefinitions,
                 _pieceStates,

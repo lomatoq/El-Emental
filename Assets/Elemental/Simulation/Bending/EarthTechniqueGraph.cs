@@ -36,7 +36,10 @@ namespace Elemental.Simulation.Bending
         LaunchRamp = 34,
         RearWall = 35,
         FaultLine = 36,
-        QuickStonePunch = 37
+        QuickStonePunch = 37,
+        QuickStoneLeftKick = 38,
+        QuickStoneRightKick = 39,
+        QuickStoneSpinKick = 40
     }
 
     [Flags]

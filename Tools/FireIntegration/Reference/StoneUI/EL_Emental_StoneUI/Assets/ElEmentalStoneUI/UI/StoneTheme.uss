@@ -1,0 +1,227 @@
+/* EL EMENTAL / StoneUI v1 — UI Toolkit. No CSS-only web properties. */
+.ee-screen { position:absolute; left:0; top:0; right:0; bottom:0; color:#F2E6C7; font-size:21px; }
+.safe-root { position:absolute; left:0; top:0; right:0; bottom:0; }
+.demo-background { position:absolute; left:0; top:0; right:0; bottom:0; -unity-background-scale-mode:scale-and-crop; display:none; }
+.art { -unity-background-scale-mode:scale-to-fit; flex-shrink:0; }
+.panel-art { position:absolute; left:0; top:0; width:784px; height:1080px; }
+.brand { position:absolute; left:86px; top:60px; width:480px; height:272px; }
+.brand-emblem { position:absolute; left:20px; top:0; width:76px; height:84px; }
+.brand-build { position:absolute; left:118px; top:31px; font-size:16px; letter-spacing:2px; color:#DFD1AE; }
+.wordmark { position:absolute; left:0; top:102px; width:460px; height:113px; }
+.tagline { position:absolute; left:49px; top:225px; width:390px; -unity-text-align:middle-center; white-space:normal; font-size:16px; letter-spacing:3px; }
+.screen-title { position:absolute; left:87px; top:337px; width:570px; font-size:29px; letter-spacing:4px; -unity-text-align:middle-center; }
+.menu-content { position:absolute; left:87px; top:392px; width:570px; bottom:105px; }
+.menu-content > .unity-scroll-view__content-viewport { overflow:hidden; }
+.menu-content .unity-scroll-view__content-container { padding-right:5px; }
+.settings-content { top:326px; bottom:48px; }
+.ee-button { position:relative; height:114px; min-height:64px; flex-shrink:0; margin:0 0 18px 0; padding:0; border-width:0; border-radius:0; background-color:rgba(0,0,0,0); color:#F2E6C7; }
+.ee-button.small { height:87px; margin-top:15px; }
+.button-surface { position:absolute; left:0; top:0; right:0; bottom:0; background-image:url("../Art/Buttons/button_normal.png"); -unity-slice-left:64; -unity-slice-right:64; -unity-slice-top:25; -unity-slice-bottom:25; }
+.primary .button-surface { background-image:url("../Art/Buttons/button_earth.png"); }
+.ee-button:hover .button-surface, .ee-button:focus .button-surface { background-image:url("../Art/Buttons/button_hover.png"); }
+.ee-button:active .button-surface { background-image:url("../Art/Buttons/button_pressed.png"); }
+.ee-button:disabled .button-surface { background-image:url("../Art/Buttons/button_disabled.png"); }
+.ee-button:disabled { color:#8B9594; }
+.button-glow { position:absolute; left:-16px; right:-16px; top:-19px; bottom:-19px; opacity:0; -unity-background-image-tint-color:#B9DB74; transition-property:opacity; transition-duration:0.13s; }
+.ee-button:hover .button-glow, .ee-button:focus .button-glow { opacity:0.6; }
+.button-icon { position:absolute; left:33px; top:20px; width:73px; height:73px; }
+.small .button-icon { top:20px; left:36px; width:47px; height:47px; }
+.button-labels { position:absolute; left:142px; right:65px; top:0; bottom:0; justify-content:center; }
+.button-label { font-size:29px; letter-spacing:3px; white-space:normal; }
+.button-sub { margin-top:5px; font-size:19px; letter-spacing:1px; color:#C1C8BC; }
+.small .button-label { font-size:23px; }
+.button-arrow { position:absolute; right:31px; top:42px; width:28px; height:28px; opacity:0.7; }
+.small .button-arrow { top:31px; }
+.button-focus { position:absolute; left:10px; top:47px; width:12px; height:12px; background-color:#F2E6C7; rotate:45deg; opacity:0; }
+.ee-button:focus .button-focus { opacity:1; }
+.footer-links { flex-direction:row; justify-content:space-between; margin-top:10px; }
+.text-button { min-height:48px; padding:8px 20px; background-color:rgba(0,0,0,0); border-width:0; color:#DFD2B0; font-size:18px; letter-spacing:2px; }
+.text-button:hover, .text-button:focus { color:#F2E6C7; background-color:rgba(185,219,116,0.1); }
+.status-label { position:absolute; left:87px; bottom:58px; width:570px; font-size:16px; color:#CCB77D; white-space:normal; }
+.demo-badge { position:absolute; right:24px; bottom:14px; font-size:13px; color:#E4E3CC; background-color:rgba(6,15,20,0.7); padding:4px 8px; letter-spacing:1px; }
+.intro { font-size:24px; margin:10px 0 28px; white-space:normal; color:#DFDCCB; }
+.body-copy { white-space:normal; font-size:21px; color:#BEC5BF; margin:18px 0 28px; }
+.small-copy { font-size:16px; white-space:normal; color:#9DA8A7; margin-top:5px; }
+.overline { font-size:17px; letter-spacing:3px; color:#CCB77D; margin-top:16px; }
+.choice-row { flex-direction:row; justify-content:space-between; }
+.choice-row .ee-button { width:49%; height:176px; }
+.choice-row .button-icon { left:95px; top:23px; width:66px; height:66px; }
+.choice-row .button-labels { left:15px; right:15px; top:97px; bottom:15px; }
+.choice-row .button-label { -unity-text-align:middle-center; }
+.choice-row .button-arrow { display:none; }
+.code-display { flex-direction:row; align-items:center; justify-content:space-between; height:122px; background-image:url("../Art/Panels/code_field.png"); -unity-slice-left:30; -unity-slice-right:30; -unity-slice-top:30; -unity-slice-bottom:30; padding:20px; margin-top:12px; }
+.room-code { font-size:42px; letter-spacing:6px; }
+.connection-line { flex-direction:row; align-items:center; margin-top:25px; }
+.status-icon { width:34px; height:34px; margin-right:16px; }
+.occupancy { font-size:42px; margin-top:15px; }
+.large-status-icon { width:96px; height:96px; margin:8px 0 20px; }
+.code-input { flex-direction:column; margin:10px 0 20px; }
+.code-input > .unity-base-field__label { font-size:17px; letter-spacing:3px; margin-bottom:16px; }
+.code-input .unity-base-text-field__input { height:100px; font-size:38px; letter-spacing:5px; background-color:#152022; border-color:#CCB77D; border-width:1px; padding:15px 24px; color:#F2E6C7; }
+.validation { min-height:35px; color:#F17668; font-size:18px; white-space:normal; }
+.element-row { flex-direction:row; justify-content:space-between; height:88px; margin-bottom:13px; }
+.element-tab { position:relative; width:111px; height:85px; padding:0; margin:0; border-width:0; background-color:rgba(0,0,0,0); }
+.element-tab .art { width:51px; height:51px; align-self:center; }
+.element-label { -unity-text-align:middle-center; font-size:13px; letter-spacing:2px; margin-top:8px; color:#AEB6AA; }
+.element-tab.selected .element-label { color:#B9DB74; }
+.element-tab.locked { opacity:0.46; }
+.element-ribbon { height:72px; flex-direction:row; align-items:center; background-image:url("../Art/Panels/ribbon.png"); -unity-slice-left:46; -unity-slice-right:46; -unity-slice-top:30; -unity-slice-bottom:30; margin-bottom:21px; }
+.ribbon-icon { width:60px; height:60px; margin:0 21px; }
+.ribbon-label { color:#B9DB74; font-size:19px; letter-spacing:1px; }
+.setting-row { height:93px; position:relative; }
+.ee-slider { flex-direction:column; margin:0; padding-right:60px; }
+.ee-slider > .unity-base-field__label { font-size:18px; letter-spacing:2px; margin-bottom:15px; }
+.ee-slider .unity-base-slider__tracker { height:3px; background-color:#7E806B; }
+.ee-slider .unity-base-slider__dragger { width:24px; height:24px; margin-top:-10px; border-radius:0; border-width:2px; border-color:#F2E6C7; background-color:#BDAB72; rotate:45deg; }
+.setting-value { position:absolute; right:5px; top:31px; font-size:24px; }
+.ee-toggle { min-height:52px; margin-top:6px; font-size:18px; letter-spacing:2px; }
+.ee-toggle .unity-toggle__checkmark { width:27px; height:27px; border-color:#CCB77D; border-width:2px; background-color:#10191C; }
+.loading-track { height:5px; margin:20px 0; background-color:#293334; }
+.loading-fill { height:5px; width:0%; background-color:#B9DB74; }
+.result-scrim { position:absolute; left:0; top:0; right:0; bottom:0; background-color:rgba(5,13,16,0.6); }
+.loss .result-scrim { background-color:rgba(25,8,4,0.78); }
+.brand-small { left:50%; margin-left:-160px; top:34px; width:320px; height:145px; }
+.brand-small .brand-emblem, .brand-small .brand-build { display:none; }
+.brand-small .wordmark { left:0; top:0; width:320px; height:82px; }
+.brand-small .tagline { top:90px; left:0; width:320px; font-size:13px; letter-spacing:2px; }
+.result-content { position:absolute; left:50%; top:226px; width:650px; margin-left:-325px; align-items:center; }
+.result-halo { position:absolute; width:500px; height:500px; left:75px; top:-70px; opacity:0.28; -unity-background-image-tint-color:#B9DB74; }
+.result-emblem { width:176px; height:176px; }
+.result-title { font-size:112px; letter-spacing:6px; color:#F2E6C7; margin-top:-3px; }
+.result-divider { width:570px; height:40px; }
+.result-score { font-size:58px; margin:0 0 22px; letter-spacing:8px; }
+.result-content .ee-button { width:580px; height:104px; }
+.result-content .small { width:530px; height:82px; margin-top:0; }
+.loss .result-halo { -unity-background-image-tint-color:#F17668; }
+.loss .result-title { color:#F7B996; }
+.loss .primary .button-surface { background-image:url("../Art/Buttons/button_danger.png"); }
+.hud-wordmark { position:absolute; left:28px; top:23px; width:276px; height:72px; }
+.scoreboard { position:absolute; top:17px; left:50%; margin-left:-310px; width:620px; height:122px; flex-direction:row; align-items:center; justify-content:center; }
+.team-score { width:88px; font-size:46px; -unity-text-align:middle-center; }
+.team-wing { width:71px; height:35px; }
+.red-wing { -unity-background-image-tint-color:#F17668; }
+.blue-wing { -unity-background-image-tint-color:#72C5E8; scale:-1 1; }
+.timer-wrap { width:278px; height:117px; position:relative; }
+.timer-art { position:absolute; left:0; top:0; right:0; bottom:0; }
+.timer-caption { position:absolute; left:0; top:21px; width:100%; -unity-text-align:middle-center; font-size:14px; letter-spacing:3px; }
+.timer { position:absolute; left:0; top:44px; width:100%; -unity-text-align:middle-center; font-size:45px; letter-spacing:6px; }
+.pause-button { position:absolute; right:29px; top:28px; width:62px; height:62px; border-width:1px; border-color:#CCB77D; background-color:rgba(12,22,27,0.75); }
+.pause-button .art { width:32px; height:32px; margin:8px; }
+.meter { position:absolute; top:35%; width:102px; height:400px; }
+.meter-left { left:0; } .meter-right { right:0; }
+.meter-frame { position:absolute; left:0; top:0; width:102px; height:318px; }
+.meter-clip { position:absolute; left:0; bottom:82px; width:102px; height:318px; overflow:hidden; }
+.meter-fill { position:absolute; left:0; bottom:0; width:102px; height:318px; }
+.hp-fill { -unity-background-image-tint-color:#F17668; } .mp-fill { -unity-background-image-tint-color:#72C5E8; }
+.meter-symbol { position:absolute; left:34px; top:324px; width:26px; height:26px; }
+.meter-number { position:absolute; top:354px; width:100%; -unity-text-align:middle-center; font-size:30px; }
+.meter-name { position:absolute; top:390px; width:100%; -unity-text-align:middle-center; font-size:13px; letter-spacing:3px; }
+.element-wheel { position:absolute; bottom:12px; left:50%; margin-left:-160px; width:320px; height:157px; }
+.wheel-ring { position:absolute; width:116px; height:116px; left:102px; top:0; opacity:0.55; }
+.wheel-token { position:absolute; width:40px; height:40px; }
+.token-frame { position:absolute; left:0; top:0; right:0; bottom:0; }
+.token-glyph { position:absolute; left:7px; top:7px; right:7px; bottom:7px; }
+.token-fire { left:86px; top:39px; } .token-air { left:194px; top:39px; } .token-water { left:140px; top:-15px; }
+.token-earth { left:124px; top:77px; width:72px; height:72px; }
+.token-earth .token-glyph { left:11px; top:11px; right:11px; bottom:11px; }
+.token-label { position:absolute; top:100%; width:76px; left:-18px; font-size:11px; letter-spacing:2px; -unity-text-align:middle-center; }
+.token-earth .token-label { width:100px; left:-14px; color:#D6EBAA; font-size:13px; }
+.minimap { position:absolute; right:27px; bottom:40px; width:238px; height:238px; }
+.minimap-art { position:absolute; left:0; top:0; width:238px; height:238px; }
+.minimap-data { position:absolute; left:27px; top:27px; width:184px; height:184px; overflow:hidden; border-radius:92px; opacity:0.8; }
+.player-arrow { position:absolute; left:104px; top:104px; width:30px; height:30px; -unity-background-image-tint-color:#B9DB74; }
+.map-north { position:absolute; top:18px; width:100%; -unity-text-align:middle-center; font-size:12px; }
+.map-caption { position:absolute; top:230px; width:100%; -unity-text-align:middle-center; font-size:13px; letter-spacing:3px; }
+.game-status { position:absolute; left:50%; bottom:184px; width:500px; margin-left:-250px; -unity-text-align:middle-center; font-size:18px; }
+.reduced-motion .button-glow { transition-duration:0.08s; }
+
+.art-curtain_left { background-image:url("../Art/Panels/curtain_left.png"); }
+.art-curtain_right { background-image:url("../Art/Panels/curtain_right.png"); }
+.art-curtain_quiet { background-image:url("../Art/Panels/curtain_quiet.png"); }
+.art-curtain_cap_top { background-image:url("../Art/Segments/curtain_cap_top.png"); }
+.art-curtain_cap_bottom { background-image:url("../Art/Segments/curtain_cap_bottom.png"); }
+.art-stone_center_tile { background-image:url("../Art/Segments/stone_center_tile.png"); }
+.art-wordmark_master { background-image:url("../Art/Brand/wordmark_master.png"); }
+.art-emblem_master { background-image:url("../Art/Brand/emblem_master.png"); }
+.art-button_normal { background-image:url("../Art/Buttons/button_normal.png"); }
+.art-button_hover { background-image:url("../Art/Buttons/button_hover.png"); }
+.art-button_pressed { background-image:url("../Art/Buttons/button_pressed.png"); }
+.art-button_disabled { background-image:url("../Art/Buttons/button_disabled.png"); }
+.art-button_earth { background-image:url("../Art/Buttons/button_earth.png"); }
+.art-button_water { background-image:url("../Art/Buttons/button_water.png"); }
+.art-button_fire { background-image:url("../Art/Buttons/button_fire.png"); }
+.art-button_air { background-image:url("../Art/Buttons/button_air.png"); }
+.art-button_danger { background-image:url("../Art/Buttons/button_danger.png"); }
+.art-window_body { background-image:url("../Art/Panels/window_body.png"); }
+.art-tooltip_body { background-image:url("../Art/Panels/tooltip_body.png"); }
+.art-code_field { background-image:url("../Art/Panels/code_field.png"); }
+.art-ribbon { background-image:url("../Art/Panels/ribbon.png"); }
+.art-toast_body { background-image:url("../Art/Panels/toast_body.png"); }
+.art-edge_slant { background-image:url("../Art/Segments/edge_slant.png"); }
+.art-corner_cut { background-image:url("../Art/Segments/corner_cut.png"); }
+.art-divider { background-image:url("../Art/Segments/divider.png"); }
+.art-edge_horizontal { background-image:url("../Art/Segments/edge_horizontal.png"); }
+.art-element_earth { background-image:url("../Art/Icons/element_earth.png"); }
+.art-element_fire { background-image:url("../Art/Icons/element_fire.png"); }
+.art-element_water { background-image:url("../Art/Icons/element_water.png"); }
+.art-element_air { background-image:url("../Art/Icons/element_air.png"); }
+.art-icon_play { background-image:url("../Art/Icons/icon_play.png"); }
+.art-icon_pause { background-image:url("../Art/Icons/icon_pause.png"); }
+.art-icon_back { background-image:url("../Art/Icons/icon_back.png"); }
+.art-icon_next { background-image:url("../Art/Icons/icon_next.png"); }
+.art-icon_close { background-image:url("../Art/Icons/icon_close.png"); }
+.art-icon_check { background-image:url("../Art/Icons/icon_check.png"); }
+.art-icon_plus { background-image:url("../Art/Icons/icon_plus.png"); }
+.art-icon_minus { background-image:url("../Art/Icons/icon_minus.png"); }
+.art-icon_copy { background-image:url("../Art/Icons/icon_copy.png"); }
+.art-icon_host { background-image:url("../Art/Icons/icon_host.png"); }
+.art-icon_join { background-image:url("../Art/Icons/icon_join.png"); }
+.art-icon_volume { background-image:url("../Art/Icons/icon_volume.png"); }
+.art-icon_mute { background-image:url("../Art/Icons/icon_mute.png"); }
+.art-icon_settings { background-image:url("../Art/Icons/icon_settings.png"); }
+.art-icon_crosshair { background-image:url("../Art/Icons/icon_crosshair.png"); }
+.art-icon_health { background-image:url("../Art/Icons/icon_health.png"); }
+.art-icon_mana { background-image:url("../Art/Icons/icon_mana.png"); }
+.art-icon_lock { background-image:url("../Art/Icons/icon_lock.png"); }
+.art-icon_unlock { background-image:url("../Art/Icons/icon_unlock.png"); }
+.art-icon_info { background-image:url("../Art/Icons/icon_info.png"); }
+.art-icon_warning { background-image:url("../Art/Icons/icon_warning.png"); }
+.art-icon_refresh { background-image:url("../Art/Icons/icon_refresh.png"); }
+.art-icon_exit { background-image:url("../Art/Icons/icon_exit.png"); }
+.art-icon_expand { background-image:url("../Art/Icons/icon_expand.png"); }
+.art-icon_motion { background-image:url("../Art/Icons/icon_motion.png"); }
+.art-icon_keyboard { background-image:url("../Art/Icons/icon_keyboard.png"); }
+.art-icon_network { background-image:url("../Art/Icons/icon_network.png"); }
+.art-icon_eye { background-image:url("../Art/Icons/icon_eye.png"); }
+.art-icon_swords { background-image:url("../Art/Icons/icon_swords.png"); }
+.art-icon_players { background-image:url("../Art/Icons/icon_players.png"); }
+.art-icon_trophy { background-image:url("../Art/Icons/icon_trophy.png"); }
+.art-icon_bot { background-image:url("../Art/Icons/icon_bot.png"); }
+.art-icon_pin { background-image:url("../Art/Icons/icon_pin.png"); }
+.art-icon_compass { background-image:url("../Art/Icons/icon_compass.png"); }
+.art-icon_arrow_player { background-image:url("../Art/Icons/icon_arrow_player.png"); }
+.art-icon_clock { background-image:url("../Art/Icons/icon_clock.png"); }
+.art-diamond_normal { background-image:url("../Art/Frames/diamond_normal.png"); }
+.art-diamond_active { background-image:url("../Art/Frames/diamond_active.png"); }
+.art-diamond_locked { background-image:url("../Art/Frames/diamond_locked.png"); }
+.art-circle_frame { background-image:url("../Art/Frames/circle_frame.png"); }
+.art-circle_ring { background-image:url("../Art/Frames/circle_ring.png"); }
+.art-minimap_frame { background-image:url("../Art/Frames/minimap_frame.png"); }
+.art-timer_plate { background-image:url("../Art/Frames/timer_plate.png"); }
+.art-team_wing { background-image:url("../Art/Frames/team_wing.png"); }
+.art-meter_frame_left { background-image:url("../Art/Frames/meter_frame_left.png"); }
+.art-meter_fill_left { background-image:url("../Art/Masks/meter_fill_left.png"); }
+.art-meter_frame_right { background-image:url("../Art/Frames/meter_frame_right.png"); }
+.art-meter_fill_right { background-image:url("../Art/Masks/meter_fill_right.png"); }
+.art-glow_soft { background-image:url("../Art/FX/glow_soft.png"); }
+.art-glow_ring { background-image:url("../Art/FX/glow_ring.png"); }
+.art-spark_diamond { background-image:url("../Art/FX/spark_diamond.png"); }
+.art-dust_soft { background-image:url("../Art/FX/dust_soft.png"); }
+.art-button_halo { background-image:url("../Art/FX/button_halo.png"); }
+.art-line_glint { background-image:url("../Art/FX/line_glint.png"); }
+.art-sweep_band { background-image:url("../Art/FX/sweep_band.png"); }
+.art-vignette { background-image:url("../Art/FX/vignette.png"); }
+.art-noise_soft { background-image:url("../Art/Masks/noise_soft.png"); }
+.art-button_fx_packed { background-image:url("../Art/Masks/button_fx_packed.png"); }
+.art-distant_stone_detail { background-image:url("../Art/Environment/distant_stone_detail.png"); }
+.art-generated_stone_swatch { background-image:url("../Art/SourceOnly/generated_stone_swatch.png"); }

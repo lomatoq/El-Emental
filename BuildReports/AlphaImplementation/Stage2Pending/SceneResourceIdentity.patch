@@ -1,0 +1,30 @@
+--- a/Assets/Elemental/NetworkingStage2/Editor/OnlineArenaIdentityAuthoring.cs
++++ b/Assets/Elemental/NetworkingStage2/Editor/OnlineArenaIdentityAuthoring.cs
+@@ -143,8 +143,26 @@
+                     throw new InvalidOperationException("Asset has no stable identity: " + target.name);
+                 return guid + ":" + id.ToString(CultureInfo.InvariantCulture);
+             }
++            // Saved procedural platform meshes are embedded scene objects, not
++            // imported assets. Their content, not a process-local object ID or
++            // generated display name, belongs in compatibility.
++            if (target is Mesh mesh)
++            {
++                OnlineMeshCodec.Encode(mesh, out int rawLength, out ulong geometryHash);
++                var geometry = new StringBuilder("scene-mesh:").Append(rawLength).Append(':')
++                    .Append(geometryHash.ToString("X16", CultureInfo.InvariantCulture)).Append(':');
++                Bounds bounds = mesh.bounds;
++                Floats(geometry, bounds.center.x, bounds.center.y, bounds.center.z, bounds.size.x, bounds.size.y, bounds.size.z);
++                return geometry.ToString();
++            }
++            if (target is Material || target is PhysicsMaterial)
++            {
++                var content = new StringBuilder(target.GetType().FullName).Append(':');
++                AppendSerialized(content, target);
++                return "scene-resource:" + OnlineMeshCodec.Hash(Encoding.UTF8.GetBytes(content.ToString())).ToString("X16", CultureInfo.InvariantCulture);
++            }
+             Transform transform = target is GameObject go ? go.transform : target is Component component ? component.transform : null;
+-            if (transform == null) throw new InvalidOperationException("Unsupported authored reference: " + target.name);
++            if (transform == null) throw new InvalidOperationException("Unsupported authored reference: " + target.name + " (" + target.GetType().FullName + ")");
+             string path = transform.name;
+             while (transform.parent != null) { path = transform.GetSiblingIndex() + ":" + path; transform = transform.parent; path = transform.name + "/" + path; }
+             if (target is Component typed) path += ":" + typed.GetType().FullName + ":" + Array.IndexOf(typed.GetComponents(typed.GetType()), typed);

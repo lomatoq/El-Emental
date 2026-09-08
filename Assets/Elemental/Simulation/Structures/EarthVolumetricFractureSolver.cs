@@ -181,7 +181,9 @@ namespace Elemental.Simulation.Structures
             float2[] convexBoundary,
             float bottom,
             float top,
-            int requestedCellCount)
+            int requestedCellCount,
+            float4[] sourceHalfSpaces = null,
+            bool splitWallDepth = false)
         {
             if (convexBoundary == null || convexBoundary.Length < 3)
                 return default;
@@ -194,8 +196,25 @@ namespace Elemental.Simulation.Structures
             if (area <= 0.00001f) return default;
 
             int cellCount = math.clamp(requestedCellCount, MinimumCells, MaximumCells);
-            float3[] sites = GenerateSites(seed, boundary, safeBottom, safeTop, cellCount);
+            float3[] sites = splitWallDepth
+                ? GenerateDepthPairedSites(seed, boundary, safeBottom, safeTop, cellCount)
+                : GenerateSites(seed, boundary, safeBottom, safeTop, cellCount);
             HalfSpace[] boundaryPlanes = BuildBoundaryPlanes(boundary, safeBottom, safeTop);
+            float sourceVolume = area * (safeTop - safeBottom);
+            if (sourceHalfSpaces != null && sourceHalfSpaces.Length > 0)
+            {
+                int prismPlaneCount = boundaryPlanes.Length;
+                Array.Resize(ref boundaryPlanes, prismPlaneCount + sourceHalfSpaces.Length);
+                for (int index = 0; index < sourceHalfSpaces.Length; index++)
+                {
+                    float4 plane = sourceHalfSpaces[index];
+                    if (!math.all(math.isfinite(plane)) || math.lengthsq(plane.xyz) < 0.000001f)
+                        return default;
+                    boundaryPlanes[prismPlaneCount + index] = new HalfSpace(plane.xyz, plane.w, -1);
+                }
+                sourceVolume = BuildCell(0u, -1, float3.zero, safeBottom, safeTop, boundaryPlanes).Volume;
+                if (sourceVolume <= 0.00001f) return default;
+            }
             var cells = new EarthVolumetricFractureCell[cellCount];
             for (int cellIndex = 0; cellIndex < cellCount; cellIndex++)
             {
@@ -226,7 +245,7 @@ namespace Elemental.Simulation.Structures
                 boundary,
                 safeBottom,
                 safeTop,
-                area * (safeTop - safeBottom),
+                sourceVolume,
                 cells);
         }
 
@@ -322,6 +341,38 @@ namespace Elemental.Simulation.Structures
             planes[boundary.Length] = new HalfSpace(new float3(0f, -1f, 0f), -bottom, -1);
             planes[boundary.Length + 1] = new HalfSpace(new float3(0f, 1f, 0f), top, -1);
             return planes;
+        }
+
+        // Thin walls need some nearby front/back competitors. Ordinary metre-space
+        // sites are farther apart across the face than the whole wall is deep, so
+        // varying seed.z alone still gives almost every cell the full thickness.
+        // Pair one fifth of sites through depth while retaining broad unpaired cells.
+        // All cells still use the same 3D bisector construction and clipped source.
+        private static float3[] GenerateDepthPairedSites(uint seed, float2[] boundary,
+            float bottom, float top, int count)
+        {
+            int pairCount = math.max(1, count / 5);
+            int baseCount = count - pairCount;
+            float3[] distributed = GenerateSites(seed, boundary, bottom, top, baseCount);
+            var sites = new float3[count];
+            Array.Copy(distributed, sites, baseCount);
+            Bounds(boundary, out float2 minimum, out float2 maximum);
+            float depth = maximum.y - minimum.y;
+            float middle = (minimum.y + maximum.y) * .5f;
+            int primaryCount = math.clamp((int)math.round(baseCount * .58f), 8, baseCount);
+            var random = new DeterministicRandom(seed ^ 0x51ED270Bu);
+            for (int pair = 0; pair < pairCount; pair++)
+            {
+                int parent = (pair * 7) % primaryCount;
+                float3 center = sites[parent];
+                float midDepth = middle + (random.NextFloat01() - .5f) * depth * .20f;
+                float halfDepth = depth * math.lerp(.27f, .36f, random.NextFloat01());
+                float dx = (random.NextFloat01() - .5f) * depth * .055f;
+                float dy = (random.NextFloat01() - .5f) * depth * .055f;
+                sites[parent] = new float3(center.x - dx, center.y - dy, midDepth - halfDepth);
+                sites[baseCount + pair] = new float3(center.x + dx, center.y + dy, midDepth + halfDepth);
+            }
+            return sites;
         }
 
         private static float3[] GenerateSites(

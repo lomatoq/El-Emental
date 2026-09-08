@@ -95,12 +95,24 @@ namespace Elemental.Runtime.Physics
         private EarthArenaMeshPicking[] _piecePicking = Array.Empty<EarthArenaMeshPicking>();
         private GravityBody[] _pieceGravity = Array.Empty<GravityBody>();
         private bool[] _released = Array.Empty<bool>();
+        private bool[] _repairReserved = Array.Empty<bool>();
+        public bool IsPieceReservedForRepair(int index) => index >= 0 && index < _repairReserved.Length && _repairReserved[index];
         private MaterialPropertyBlock _fractureShadingProperties;
         private uint _generation = 1u;
         private bool _configured;
         private bool _fractured;
         private int _releasedCount;
         private int _repairStartReleased;
+        private int _repairRequestedCount;
+        private int _repairFlyingPiece = -1;
+        private float _repairFlightTime, _repairFlightDuration;
+        private Vector3 _repairFlightStart;
+        private Quaternion _repairRotationStart;
+        public int RepairFlyingPieceIndex => _repairFlyingPiece;
+        public bool HasPendingMagicRepair => _repairFlyingPiece >= 0 ||
+            (_repairRequestedCount > _repairStartReleased - _releasedCount && _repairStartReleased > 0);
+        private static readonly ProfilerMarker RepairFlightMarker =
+            new ProfilerMarker("Elemental.Earth.ArenaRepair.Flight");
         private uint _lastImpactSourceId;
         private float _lastImpactTime = float.NegativeInfinity;
 
@@ -188,7 +200,7 @@ namespace Elemental.Runtime.Physics
         public bool SetMagicDisassemblyProgress(float phase01, Vector3 focus, Vector3 direction)
         {
             if (!ordinaryDamageEnabled || !_configured || PieceCount == 0) return false;
-            _repairStartReleased = 0;
+            CancelMagicRepair();
             int desiredReleased = Mathf.Clamp(
                 Mathf.CeilToInt(Mathf.Clamp01(phase01) * PieceCount), 1, PieceCount);
             int requested = desiredReleased - _releasedCount;
@@ -199,30 +211,98 @@ namespace Elemental.Runtime.Physics
         public bool SetMagicRepairProgress(float phase01)
         {
             if (!repairable || !_fractured || _releasedCount <= 0) return false;
-            if (_repairStartReleased <= 0) _repairStartReleased = _releasedCount;
-            int targetRepaired = Mathf.Clamp(
-                Mathf.FloorToInt(Mathf.Clamp01(phase01) * _repairStartReleased),
-                0,
-                _repairStartReleased);
-            int alreadyRepaired = _repairStartReleased - _releasedCount;
-            while (alreadyRepaired < targetRepaired)
+            if (_repairStartReleased <= 0)
             {
-                int index = FindReleasedPiece();
-                if (index < 0) break;
-                ReattachPiece(index);
-                materialFeedback?.Emit(EarthMaterialFeedbackKind.RepairSeat, pieces[index].position,
-                    coordinateRoot.up, 0.7f, 0.4f, structureId, _generation);
-                alreadyRepaired++;
+                _repairStartReleased = _releasedCount;
+                for (int index = 0; index < _released.Length; index++)
+                {
+                    if (!_released[index] || _shattered[index] || _pieceTargets[index].HasMagicOwner) continue;
+                    _repairReserved[index] = true;
+                    Rigidbody waiting = _pieceBodies[index];
+                    if (!waiting.isKinematic) waiting.linearVelocity = waiting.angularVelocity = Vector3.zero;
+                    waiting.isKinematic = true;
+                    waiting.detectCollisions = false;
+                    if (_pieceGravity[index] != null) _pieceGravity[index].enabled = false;
+                }
             }
-            if (_releasedCount == 0)
+            _repairRequestedCount = Mathf.Max(_repairRequestedCount, Mathf.Clamp(
+                Mathf.FloorToInt(Mathf.Clamp01(phase01) * _repairStartReleased), 0, _repairStartReleased));
+            return true;
+        }
+
+        public void CancelMagicRepair()
+        {
+            for (int index = 0; index < _repairReserved.Length; index++)
             {
+                if (!_repairReserved[index]) continue;
+                _repairReserved[index] = false;
+                Rigidbody body = _pieceBodies[index];
+                if (body != null && _released[index] && !_shattered[index])
+                {
+                    body.isKinematic = false;
+                    body.detectCollisions = true;
+                    body.WakeUp();
+                    if (_pieceGravity[index] != null) _pieceGravity[index].enabled = true;
+                }
+            }
+            _repairFlyingPiece = -1;
+            _repairStartReleased = _repairRequestedCount = 0;
+        }
+
+        private void FixedUpdate() => TickMagicRepair(Time.fixedDeltaTime);
+
+        public void TickMagicRepair(float deltaTime)
+        {
+            if (!_fractured || !HasPendingMagicRepair || deltaTime <= 0f) return;
+            using (RepairFlightMarker.Auto())
+            {
+                if (_repairFlyingPiece < 0)
+                {
+                    int next = FindReleasedPiece();
+                    if (next < 0) { _repairRequestedCount = _repairStartReleased - _releasedCount; return; }
+                    _repairFlyingPiece = next;
+                    Rigidbody nextBody = _pieceBodies[next];
+                    _repairFlightStart = nextBody.position;
+                    _repairRotationStart = nextBody.rotation;
+                    _repairFlightTime = 0f;
+                    _repairFlightDuration = EarthRepairFlight.Duration(
+                        Vector3.Distance(nextBody.position, RepairRestPosition(next)));
+                    if (!nextBody.isKinematic) nextBody.linearVelocity = nextBody.angularVelocity = Vector3.zero;
+                    nextBody.isKinematic = true;
+                    nextBody.detectCollisions = false;
+                    if (_pieceGravity[next] != null) _pieceGravity[next].enabled = false;
+                }
+                int index = _repairFlyingPiece;
+                if (_shattered[index] || !_released[index]) { CancelMagicRepair(); return; }
+                Rigidbody body = _pieceBodies[index];
+                _repairFlightTime += deltaTime;
+                float phase = EarthRepairFlight.Phase(_repairFlightTime, _repairFlightDuration);
+                Vector3 target = RepairRestPosition(index);
+                quaternion rotation = _pieceDefinitions[index].RestLocalRotation;
+                Quaternion localRotation = new Quaternion(rotation.value.x, rotation.value.y, rotation.value.z, rotation.value.w);
+                Quaternion targetRotation = pieces[index].parent != null
+                    ? pieces[index].parent.rotation * localRotation : localRotation;
+                body.MovePosition(Vector3.LerpUnclamped(_repairFlightStart, target, phase));
+                body.MoveRotation(Quaternion.SlerpUnclamped(_repairRotationStart, targetRotation, phase));
+                if (_repairFlightTime < _repairFlightDuration) return;
+                // Only this already-arrived cell may commit its original graph pose.
+                ReattachPiece(index);
+                _repairFlyingPiece = -1;
+                materialFeedback?.Emit(EarthMaterialFeedbackKind.RepairSeat, target,
+                    coordinateRoot.up, 0.7f, 0.4f, structureId, _generation);
+                if (_releasedCount != 0) return;
                 materialFeedback?.Emit(EarthMaterialFeedbackKind.RepairComplete,
                     intactRenderer.bounds.center, coordinateRoot.up, 1f,
                     Mathf.Min(3f, intactRenderer.bounds.extents.magnitude), structureId, _generation);
                 ResetToIntact();
-                _repairStartReleased = 0;
             }
-            return true;
+        }
+
+        private Vector3 RepairRestPosition(int index)
+        {
+            float3 value = _pieceDefinitions[index].RestLocalPosition;
+            Vector3 local = new Vector3(value.x, value.y, value.z);
+            return pieces[index].parent != null ? pieces[index].parent.TransformPoint(local) : local;
         }
 
         public bool TriggerMeteorImpact(Vector3 point, Vector3 direction, float impulse)
@@ -391,6 +471,7 @@ namespace Elemental.Runtime.Physics
             _piecePicking = new EarthArenaMeshPicking[pieceCount];
             _pieceGravity = new GravityBody[pieceCount];
             _released = new bool[pieceCount];
+            _repairReserved = new bool[pieceCount];
             _shattered = new bool[pieceCount];
             _pieceImpactDamage = new EarthImpactDamage[pieceCount];
             _pieceIdentities = new EarthMatterIdentity[pieceCount];
@@ -468,7 +549,8 @@ namespace Elemental.Runtime.Physics
                 collider.enabled = false;
                 Rigidbody body = piece.GetComponent<Rigidbody>();
                 if (body == null) body = piece.gameObject.AddComponent<Rigidbody>();
-                body.mass = Mathf.Clamp(_pieceDefinitions[index].Mass, 8f, 1800f);
+                EarthMatterMassProfile massPolicy = rockDebrisPool != null ? rockDebrisPool.MassPolicy : EarthMatterMassProfile.ArenaStone;
+                body.mass = EarthMatterMassPolicy.ResolveGameplayMass(_pieceDefinitions[index].Volume, in massPolicy);
                 body.useGravity = false;
                 body.isKinematic = true;
                 body.interpolation = RigidbodyInterpolation.Interpolate;
@@ -516,6 +598,9 @@ namespace Elemental.Runtime.Physics
                 _fractureShadingProperties);
         }
 
+        public void RestoreArenaStructure()
+        { if (_configured) ResetToIntact(); }
+
         private void ResetToIntact()
         {
             _generation = _generation == uint.MaxValue ? 1u : _generation + 1u;
@@ -524,6 +609,8 @@ namespace Elemental.Runtime.Physics
 
         private void ResetCanonicalState()
         {
+            _repairFlyingPiece = -1;
+            _repairRequestedCount = 0;
             _fractured = false;
             _releasedCount = 0;
             _repairStartReleased = 0;
@@ -533,6 +620,7 @@ namespace Elemental.Runtime.Physics
             {
                 _pieceStates[index] = EarthPieceState.Intact;
                 _released[index] = false;
+                _repairReserved[index] = false;
                 _shattered[index] = false;
                 _pieceImpactDamage[index] = default;
                 Rigidbody body = _pieceBodies[index];
@@ -707,7 +795,7 @@ namespace Elemental.Runtime.Physics
         private int FindReleasedPiece()
         {
             for (int index = _released.Length - 1; index >= 0; index--)
-                if (_released[index] && !_shattered[index] && CanSeatOnAttachedSupport(index)) return index;
+                if (_released[index] && _repairReserved[index] && !_shattered[index] && CanSeatOnAttachedSupport(index)) return index;
             return -1;
         }
 
@@ -765,6 +853,7 @@ namespace Elemental.Runtime.Physics
                 definition.RestLocalScale.y,
                 definition.RestLocalScale.z);
             _released[index] = false;
+            _repairReserved[index] = false;
             _releasedCount--;
             EarthPieceState state = _pieceStates[index];
             state.Phase = EarthPiecePhase.Welded;

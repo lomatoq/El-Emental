@@ -1,0 +1,11 @@
+# ADR 0003 addendum — real online adapter (proposed, not accepted)
+
+Keep transport-independent M8 contracts and add a Unity MPS Sessions/Relay + NGO custom-message adapter. Existing GameObject motor/physics/pool authoring remains; no ECS migration. The adapter must be accepted only after actual two-process evidence.
+
+Host owns commands, health/stun/recovery/result, matter ownership, stone flight/contact, bonds/destruction/repair and ordered terrain edits. Each player has its own authored executor/control/pools; planet, matter kernel and surface service are shared. Client predicts its motor, applies canonical world collision/visual graph, and consumes accepted hit-region/ability/recovery presentation facts without rerunning damage or bond solvers. Cosmetic bone poses are not streamed.
+
+The client graph uses host-issued session-scoped node IDs separate from EarthMatterRegistry IDs. Clients send semantic inputs, not canonical target IDs or outcomes; the host performs current scene queries and controls. Exact mesh/material/collider graph deltas mirror structure fracture/repair results. A second client bond graph is unnecessary because client structures never simulate. Complete terrain batch boundaries and touched chunk versions/hashes are checked independently.
+
+Start requires two real NGO peers, identical build/world/catalog identities, full explicit bindings, both Ready, initial world ACK and terrain/rig geometry readiness. Host migration, resume and late join are unsupported; disconnect ends the round and requires a new room. Online entry requires clean terrain, using scene reload when necessary. Sessions owns NGO startup. Cancellation observes late SDK completion and leaves created sessions before a new connection/reload.
+
+Implementation is pending outside Assets. Ordinary compiler/pure checks exist, but SDK, live connectivity, bandwidth, GC, two-player toolkit and cleanup/visual evidence do not. Do not mark this ADR accepted or stage 2 complete before the gates in VALIDATION.md pass.

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="7" result="Passed" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-07 01:27:09Z" end-time="2026-09-07 01:27:09Z" duration="0.1156062">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="1116" result="Passed" start-time="2026-09-07 01:27:09Z" end-time="2026-09-07 01:27:09Z" duration="0.115606" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2398" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="1070" result="Passed" start-time="2026-09-07 01:27:09Z" end-time="2026-09-07 01:27:09Z" duration="0.105791" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="1564" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2399" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="1070" result="Passed" start-time="2026-09-07 01:27:09Z" end-time="2026-09-07 01:27:09Z" duration="0.105083" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2400" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="1070" result="Passed" start-time="2026-09-07 01:27:09Z" end-time="2026-09-07 01:27:09Z" duration="0.104626" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2401" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="1070" result="Passed" start-time="2026-09-07 01:27:09Z" end-time="2026-09-07 01:27:09Z" duration="0.104132" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1996" name="EarthStoneBevelProfileTests" fullname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests" classname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-07 01:27:09Z" end-time="2026-09-07 01:27:09Z" duration="0.102672" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2001" name="ChippedWallCellsRetainVolumeAndVaryTheirChamfersDeterministically" fullname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests.ChippedWallCellsRetainVolumeAndVaryTheirChamfersDeterministically" methodname="ChippedWallCellsRetainVolumeAndVaryTheirChamfersDeterministically" classname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests" runstate="Runnable" seed="693389958" result="Passed" start-time="2026-09-07 01:27:09Z" end-time="2026-09-07 01:27:09Z" duration="0.053211" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2003" name="DefaultProfilePreservesExistingBevelGeometry" fullname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests.DefaultProfilePreservesExistingBevelGeometry" methodname="DefaultProfilePreservesExistingBevelGeometry" classname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests" runstate="Runnable" seed="58741854" result="Passed" start-time="2026-09-07 01:27:09Z" end-time="2026-09-07 01:27:09Z" duration="0.006496" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1997" name="FourWideChamfersHaveSolidBackingAtTheirSharedJunction" fullname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests.FourWideChamfersHaveSolidBackingAtTheirSharedJunction" methodname="FourWideChamfersHaveSolidBackingAtTheirSharedJunction" classname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests" runstate="Runnable" seed="1709315812" result="Passed" start-time="2026-09-07 01:27:09Z" end-time="2026-09-07 01:27:09Z" duration="0.009643" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2004" name="LocalEdgeFractionCapsLargeRequestedWidthWithoutChangingSource" fullname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests.LocalEdgeFractionCapsLargeRequestedWidthWithoutChangingSource" methodname="LocalEdgeFractionCapsLargeRequestedWidthWithoutChangingSource" classname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests" runstate="Runnable" seed="168970580" result="Passed" start-time="2026-09-07 01:27:09Z" end-time="2026-09-07 01:27:09Z" duration="0.001644" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2002" name="RenderCacheReusesPreparedCopiesAndNeverChangesColliderSource" fullname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests.RenderCacheReusesPreparedCopiesAndNeverChangesColliderSource" methodname="RenderCacheReusesPreparedCopiesAndNeverChangesColliderSource" classname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests" runstate="Runnable" seed="716181936" result="Passed" start-time="2026-09-07 01:27:09Z" end-time="2026-09-07 01:27:09Z" duration="0.003789" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="2000" name="WallBevelRemainsWiderMetricScaleAcrossWallWidths" fullname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests.WallBevelRemainsWiderMetricScaleAcrossWallWidths" classname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-07 01:27:09Z" end-time="2026-09-07 01:27:09Z" duration="0.009455" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1998" name="WallBevelRemainsWiderMetricScaleAcrossWallWidths(2.0f)" fullname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests.WallBevelRemainsWiderMetricScaleAcrossWallWidths(2.0f)" methodname="WallBevelRemainsWiderMetricScaleAcrossWallWidths" classname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests" runstate="Runnable" seed="87169132" result="Passed" start-time="2026-09-07 01:27:09Z" end-time="2026-09-07 01:27:09Z" duration="0.004191" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1999" name="WallBevelRemainsWiderMetricScaleAcrossWallWidths(8.0f)" fullname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests.WallBevelRemainsWiderMetricScaleAcrossWallWidths(8.0f)" methodname="WallBevelRemainsWiderMetricScaleAcrossWallWidths" classname="Elemental.Tests.EditMode.EarthStoneBevelProfileTests" runstate="Runnable" seed="347513626" result="Passed" start-time="2026-09-07 01:27:09Z" end-time="2026-09-07 01:27:09Z" duration="0.002642" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\WallSurfaceEdit.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="3" result="Passed" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-06 15:44:25Z" end-time="2026-09-06 15:44:36Z" duration="10.9041018">
+  <test-suite type="TestSuite" id="1326" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="245" result="Passed" start-time="2026-09-06 15:44:25Z" end-time="2026-09-06 15:44:36Z" duration="10.904102" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1319" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="245" result="Passed" start-time="2026-09-06 15:44:25Z" end-time="2026-09-06 15:44:36Z" duration="10.828697" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="21092" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1320" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="245" result="Passed" start-time="2026-09-06 15:44:25Z" end-time="2026-09-06 15:44:36Z" duration="10.818726" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1321" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="245" result="Passed" start-time="2026-09-06 15:44:25Z" end-time="2026-09-06 15:44:36Z" duration="10.814671" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1322" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="245" result="Passed" start-time="2026-09-06 15:44:25Z" end-time="2026-09-06 15:44:36Z" duration="10.811623" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1189" name="EarthPersistentBreakRuntimeTests" fullname="Elemental.Tests.PlayMode.EarthPersistentBreakRuntimeTests" classname="Elemental.Tests.PlayMode.EarthPersistentBreakRuntimeTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-06 15:44:25Z" end-time="2026-09-06 15:44:27Z" duration="2.377405" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1190" name="SplitChildrenKeepMassAndTargetabilityBeyondCosmeticLifetime" fullname="Elemental.Tests.PlayMode.EarthPersistentBreakRuntimeTests.SplitChildrenKeepMassAndTargetabilityBeyondCosmeticLifetime" methodname="SplitChildrenKeepMassAndTargetabilityBeyondCosmeticLifetime" classname="Elemental.Tests.PlayMode.EarthPersistentBreakRuntimeTests" runstate="Runnable" seed="498009908" result="Passed" start-time="2026-09-06 15:44:25Z" end-time="2026-09-06 15:44:27Z" duration="2.349790" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1302" name="SharedMassPolicyProductionTests" fullname="Elemental.Tests.PlayMode.SharedMassPolicyProductionTests" classname="Elemental.Tests.PlayMode.SharedMassPolicyProductionTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-06 15:44:27Z" end-time="2026-09-06 15:44:36Z" duration="8.428746" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1304" name="ActualTerrainExtractionAccretionAndHeldSplitKeepCanonicalVolumeAndMass" fullname="Elemental.Tests.PlayMode.SharedMassPolicyProductionTests.ActualTerrainExtractionAccretionAndHeldSplitKeepCanonicalVolumeAndMass" methodname="ActualTerrainExtractionAccretionAndHeldSplitKeepCanonicalVolumeAndMass" classname="Elemental.Tests.PlayMode.SharedMassPolicyProductionTests" runstate="Runnable" seed="1800816798" result="Passed" start-time="2026-09-06 15:44:27Z" end-time="2026-09-06 15:44:32Z" duration="4.406550" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 2398.17ms; ground=exact baked base, cacheLoad=19.41ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1372.89ms, peakCookingPoll=0.29ms; sync=ArenaInitialize=448.69ms/15;ArenaBevel=422.07ms/175;ArenaMeshPicking=2.70ms/175;WallAwake=102.13ms/1;WallPieceVisuals=51.21ms/40;PlatformPoolAwake=19.89ms/1;PlatformRuntimeMeshes=3.22ms/12;PillarPoolAwake=28.87ms/1;PillarMeshLibrary=5.75ms/1;PillarColumns=23.11ms/1;DebrisPoolAwake=161.72ms/2;HeroFragmentPoolAwake=15.49ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1303" name="ProductionDecorHeroAndWallUseOnePolicyAndWallChildrenConserveMass" fullname="Elemental.Tests.PlayMode.SharedMassPolicyProductionTests.ProductionDecorHeroAndWallUseOnePolicyAndWallChildrenConserveMass" methodname="ProductionDecorHeroAndWallUseOnePolicyAndWallChildrenConserveMass" classname="Elemental.Tests.PlayMode.SharedMassPolicyProductionTests" runstate="Runnable" seed="1877802802" result="Passed" start-time="2026-09-06 15:44:32Z" end-time="2026-09-06 15:44:36Z" duration="3.996866" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[[StartupCache] Scene ready in 1132.42ms; ground=exact baked base, cacheLoad=6.29ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1054.89ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=448.69ms/15;ArenaBevel=422.07ms/175;ArenaMeshPicking=2.70ms/175;WallAwake=102.13ms/1;WallPieceVisuals=51.21ms/40;PlatformPoolAwake=19.89ms/1;PlatformRuntimeMeshes=3.22ms/12;PillarPoolAwake=28.87ms/1;PillarMeshLibrary=5.75ms/1;PillarColumns=23.11ms/1;DebrisPoolAwake=161.72ms/2;HeroFragmentPoolAwake=15.49ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\SharedMassPolicyPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

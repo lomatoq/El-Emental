@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83274e4aa259fad4e86f106b121e6f02, type: 3}
+  m_Name: Fire_Default
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.Fire.FireVisualProfile
+  Backend: 2
+  CpuMaterial: {fileID: 2100000, guid: 03de50d2f1e4f1b468df839c473cfb0a, type: 2}
+  CoherentBody: 0
+  CoherentBodyShader: {fileID: 4800000, guid: 367bffa7ded88c345abb8e503e1c3116, type: 3}
+  CpuCapacity: 512
+  Graph: {fileID: 8926484042661614526, guid: 1adcbf7fb0d907e4bb764becb03563ac, type: 3}
+  NativeBackendEnabled: 1
+  SpawnRate: 90
+  FlameMinWidth: 1.25
+  FlameMaxWidth: 1.85
+  FlameMinAspect: 1.1
+  FlameMaxAspect: 1.45
+  MinLifetime: 0.55
+  MaxLifetime: 0.85
+  ParticleRadius: 0.035
+  FreeDrag: 1.2
+  FreeLift: 2
+  MaximumSpeed: 24
+  Substeps: 2
+  LowDetailDistance: 25
+  LowDetailRate: 0.5
+  LightIntensity: 2
+  LightRange: 5

@@ -57,9 +57,9 @@ namespace Elemental.Tests.EditMode
             var tree = (BlendTree)cast.motion;
             Assert.That(tree.name, Is.EqualTo("Earth Curated Casts"));
             Assert.That(tree.blendType, Is.EqualTo(BlendTreeType.Direct));
-            Assert.That(tree.children, Has.Length.EqualTo(11));
+            Assert.That(tree.children, Has.Length.GreaterThanOrEqualTo(11));
 
-            for (int index = 0; index < tree.children.Length; index++)
+            for (int index = 0; index < ExpectedMagicPaths.Length; index++)
             {
                 ChildMotion child = tree.children[index];
                 int slot = index + 1;
@@ -80,7 +80,7 @@ namespace Elemental.Tests.EditMode
             Assert.That(alternate.motion, Is.Not.SameAs(tree), "Reusing one tree rewinds the outgoing cast.");
             var incoming = (BlendTree)alternate.motion;
             Assert.That(incoming.blendType, Is.EqualTo(BlendTreeType.Direct));
-            Assert.That(incoming.children, Has.Length.EqualTo(11));
+            Assert.That(incoming.children, Has.Length.EqualTo(tree.children.Length));
             for (int index = 0; index < incoming.children.Length; index++)
             {
                 Assert.That(incoming.children[index].motion, Is.SameAs(tree.children[index].motion));
@@ -104,18 +104,20 @@ namespace Elemental.Tests.EditMode
                 EarthAnimationRescueSetup.MagicProfilePath);
             Assert.That(profile, Is.Not.Null);
             Assert.That(profile.Validate(out string error), Is.True, error);
-            Assert.That(profile.motions, Has.Length.EqualTo(11));
+            Assert.That(profile.motions, Has.Length.GreaterThanOrEqualTo(11));
             var seen = new HashSet<EarthHumanoidPoseSlot>();
             foreach (EarthMagicMotionEntry entry in profile.motions)
             {
                 Assert.That(entry, Is.Not.Null);
-                Assert.That((int)entry.slot, Is.InRange(1, 11));
+                Assert.That((int)entry.slot, Is.InRange(1, 14));
                 Assert.That(seen.Add(entry.slot), Is.True, $"Duplicate saved timing for {entry.slot}.");
                 Assert.That(entry.timing.IsValid, Is.True, $"Invalid timing for {entry.slot}.");
                 Assert.That(entry.timing.Contact, Is.GreaterThan(entry.timing.LoadEnd));
                 Assert.That(entry.timing.RecoverEnd, Is.GreaterThan(entry.timing.Sustain));
             }
-            Assert.That(seen.Count, Is.EqualTo(11));
+            Assert.That(seen.Count, Is.EqualTo(profile.motions.Length));
+            for (int slot = 1; slot <= 11; slot++)
+                Assert.That(seen.Contains((EarthHumanoidPoseSlot)slot), Is.True);
         }
 
         [Test]

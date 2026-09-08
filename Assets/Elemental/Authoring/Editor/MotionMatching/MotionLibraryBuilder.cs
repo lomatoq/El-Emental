@@ -107,7 +107,7 @@ namespace Elemental.Authoring.Editor.MotionMatching
                 foreach (MotionClipRecipe recipe in library.clips)
                 {
                     if (!IsSearchableBaseMotion(recipe.role)) continue;
-                    PoseVector[] poses = SampleClip(instance, animator, transforms, recipe, frameTime);
+                    PoseVector[] poses = SampleClip(instance, animator, transforms, recipe, frameTime, poseSet.MaximumFramesPrediction);
                     if (recipe.role == MotionClipRole.Locomotion &&
                         !HasBilateralFootCycle(poses, out string contactSummary))
                         throw new InvalidOperationException(
@@ -122,6 +122,11 @@ namespace Elemental.Authoring.Editor.MotionMatching
                         Start = new[] { 0 },
                         End = new[] { poses.Length }
                     });
+                    if (recipe.stableId.StartsWith("user.locomotion.", StringComparison.Ordinal))
+                        poseSet.AddTag(animationClip, new AnimationData.Tag
+                        {
+                            Name = recipe.stableId, Start = new[] { 0 }, End = new[] { poses.Length }
+                        });
                 }
                 poseSet.ConvertTagsToNativeArrays();
 
@@ -397,10 +402,15 @@ namespace Elemental.Authoring.Editor.MotionMatching
             Animator animator,
             List<Transform> transforms,
             MotionClipRecipe recipe,
-            float frameTime)
+            float frameTime,
+            int predictionFrames = 0)
         {
             AnimationClip clip = recipe.clip;
-            int frameCount = Mathf.Max(2, Mathf.CeilToInt(clip.length / frameTime) + 1);
+            // A loop must expose a complete cycle of searchable phases before
+            // the future-trajectory tail. Repeat the authored cycle in derived
+            // data only; source clips and their import settings stay untouched.
+            int cycles = recipe.loop ? 1 + Mathf.CeilToInt(predictionFrames * frameTime / Mathf.Max(frameTime, clip.length)) : 1;
+            int frameCount = Mathf.Max(2, Mathf.CeilToInt(clip.length * cycles / frameTime) + (recipe.loop ? 0 : 1));
             var positions = new float3[frameCount][];
             var rotations = new quaternion[frameCount][];
             Transform leftContactBone = animator.GetBoneTransform(HumanBodyBones.LeftToes) ??
@@ -410,11 +420,14 @@ namespace Elemental.Authoring.Editor.MotionMatching
             var leftContactPositions = new float3[frameCount];
             var rightContactPositions = new float3[frameCount];
             Vector3 syntheticOrigin = Vector3.zero;
+            Vector3 syntheticTravelDirection = Vector3.zero;
             bool hasSyntheticOrigin = false;
+            Vector3 contactTravelDirection = Vector3.zero;
 
             for (int frame = 0; frame < frameCount; frame++)
             {
-                float time = Mathf.Min(clip.length, frame * frameTime);
+                float elapsed = frame * frameTime;
+                float time = recipe.loop ? Mathf.Repeat(elapsed, clip.length) : Mathf.Min(clip.length, elapsed);
                 clip.SampleAnimation(instance, time);
                 positions[frame] = new float3[transforms.Count];
                 rotations[frame] = new quaternion[transforms.Count];
@@ -434,12 +447,16 @@ namespace Elemental.Authoring.Editor.MotionMatching
                 if (!hasSyntheticOrigin)
                 {
                     syntheticOrigin = sampledSimulationPosition;
+                    syntheticTravelDirection = Quaternion.AngleAxis(recipe.nominalDirection, Vector3.up) * planarForward.normalized;
                     hasSyntheticOrigin = true;
                 }
-                Vector3 travelDirection = Quaternion.AngleAxis(recipe.nominalDirection, Vector3.up) *
-                                          planarForward.normalized;
+                // Root-facing animation must not turn an ever-growing synthetic
+                // displacement vector: that injects elapsed*yawRate into velocity
+                // and makes the DB lie about measured speed/stride distance.
+                Vector3 travelDirection = syntheticTravelDirection;
+                contactTravelDirection = recipe.nominalSpeed > .12f ? travelDirection : Vector3.zero;
                 Vector3 simulationPosition = syntheticOrigin +
-                                             travelDirection * recipe.nominalSpeed * time;
+                                             travelDirection * recipe.nominalSpeed * elapsed;
                 Quaternion simulationRotation = Quaternion.AngleAxis(
                     recipe.nominalYaw * time,
                     Vector3.up) * sampledSimulationRotation;
@@ -471,11 +488,13 @@ namespace Elemental.Authoring.Editor.MotionMatching
                 var velocities = new float3[transforms.Count];
                 var angularVelocities = new float3[transforms.Count];
                 for (int joint = 0; joint < transforms.Count; joint++)
-                    velocities[joint] = (positions[frame][joint] - positions[previous][joint]) / frameTime;
+                    velocities[joint] = frame == 0
+                        ? (positions[1][joint] - positions[0][joint]) / frameTime
+                        : (positions[frame][joint] - positions[previous][joint]) / frameTime;
                 bool leftContact = DetectFootContact(
-                    leftContactPositions, frame, frameTime, recipe.loop);
+                    leftContactPositions, frame, frameTime, recipe.loop, contactTravelDirection);
                 bool rightContact = DetectFootContact(
-                    rightContactPositions, frame, frameTime, recipe.loop);
+                    rightContactPositions, frame, frameTime, recipe.loop, contactTravelDirection);
                 poses[frame] = new PoseVector(
                     positions[frame],
                     rotations[frame],
@@ -483,6 +502,8 @@ namespace Elemental.Authoring.Editor.MotionMatching
                     angularVelocities,
                     leftContact,
                     rightContact);
+                if (Mathf.Abs(math.length(velocities[0]) - recipe.nominalSpeed) > .001f)
+                    throw new InvalidOperationException($"{recipe.stableId} synthetic trajectory speed differs from its measured nominal at frame {frame}.");
             }
             return poses;
         }
@@ -491,7 +512,8 @@ namespace Elemental.Authoring.Editor.MotionMatching
             float3[] worldPositions,
             int frame,
             float frameTime,
-            bool looping)
+            bool looping,
+            float3 travelDirection = default)
         {
             int count = worldPositions != null ? worldPositions.Length : 0;
             if (count < 2 || frame < 0 || frame >= count || frameTime <= 0f ||
@@ -499,23 +521,40 @@ namespace Elemental.Authoring.Editor.MotionMatching
                 return false;
 
             float minimumHeight = float.MaxValue;
+            float maximumHeight = float.MinValue;
+            float minimumTravel = float.MaxValue, maximumTravel = float.MinValue;
+            float3 planarTravel = math.normalizesafe(new float3(travelDirection.x, 0f, travelDirection.z));
             for (int index = 0; index < count; index++)
                 if (math.all(math.isfinite(worldPositions[index])))
+                {
                     minimumHeight = math.min(minimumHeight, worldPositions[index].y);
+                    maximumHeight = math.max(maximumHeight, worldPositions[index].y);
+                    float travel = math.dot(worldPositions[index], planarTravel);
+                    minimumTravel = math.min(minimumTravel, travel); maximumTravel = math.max(maximumTravel, travel);
+                }
             if (!math.isfinite(minimumHeight)) return false;
 
             int previous = frame > 0
                 ? frame - 1
-                : looping && count > 2 ? count - 2 : frame;
+                : looping && count > 2 ? count - 1 : frame;
             int next = frame + 1 < count
                 ? frame + 1
-                : looping && count > 2 ? 1 : frame;
+                : looping && count > 2 ? 0 : frame;
             bool oneSidedDifference = previous == frame || next == frame;
             float sampleSpan = (oneSidedDifference ? 1f : 2f) * frameTime;
             float verticalVelocity =
                 (worldPositions[next].y - worldPositions[previous].y) / sampleSpan;
             float currentHeight = worldPositions[frame].y;
             bool nearGround = currentHeight <= minimumHeight + 0.045f;
+            // Low walking/shuffling return strokes can remain inside the height
+            // band. They are still swing: height alone incorrectly marked some
+            // feet planted for ~90% of a cycle and starved the opposite support.
+            // Backstroke (or stationary world-space root-motion contact) is stance.
+            if (maximumTravel - minimumTravel > .015f)
+            {
+                float planarVelocity = math.dot(worldPositions[next] - worldPositions[previous], planarTravel) / sampleSpan;
+                return nearGround && planarVelocity <= .03f;
+            }
             // At a 30 Hz database rate a sharp run/strafe minimum may fall
             // between samples or across the loop seam. A sampled local valley
             // is still a physical plant even when its finite-difference speed

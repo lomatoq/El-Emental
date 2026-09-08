@@ -1,0 +1,125 @@
+--- before/Assets/Elemental/Presentation/UI/FrontendMenuView.cs
++++ after/Assets/Elemental/Presentation/UI/FrontendMenuView.cs
+@@ -163,15 +163,15 @@
+             _join = Button(parent, "JOIN GAME", ReferenceActive ? 180 : 176, 1, () => _flow.OpenJoin(), _theme.stoneSkin?.joinIcon);
+             Button(parent, "SETTINGS", ReferenceActive ? 270 : 284, 2, () => _flow.OpenSettings(), _theme.stoneSkin?.settingsIcon);
+             Button(parent, "QUIT", ReferenceActive ? 360 : 364, 2, () => _flow.Quit(), _theme.stoneSkin?.exitIcon);
+-            if (ReferenceActive) for (int i=0;i<parent.childCount;i++) { var row=(RectTransform)parent.GetChild(i); row.anchoredPosition+=new Vector2(i*30,0); }
++
+         }
+ 
+         private void BuildPause(Transform parent)
+         {
+-            var label = Label(parent, "PAUSED", 34, _theme.accent); Place(label.rectTransform, 0, 0, 470, 50);
+-            _resume = Button(parent, "RESUME", ReferenceActive ? 92 : 82, 0, () => _flow.Resume(), _theme.stoneSkin?.playIcon);
+-            Button(parent, "SETTINGS", ReferenceActive ? 218 : 178, 1, () => _flow.OpenSettings(), _theme.stoneSkin?.settingsIcon);
+-            Button(parent, "END MATCH - MAIN MENU", ReferenceActive ? 354 : 292, 2, () => _flow.EndMatch(), _theme.stoneSkin?.exitIcon);
++            var label = Label(parent, "PAUSED", 34, _theme.accent); Place(label.rectTransform, 0, 0, ReferenceActive ? 560 : 470, 50); if(ReferenceActive)label.alignment=TextAlignmentOptions.Center;
++            _resume = Button(parent, "RESUME", ReferenceActive ? 74 : 82, 0, () => _flow.Resume(), _theme.stoneSkin?.playIcon);
++            Button(parent, "SETTINGS", ReferenceActive ? 164 : 178, 1, () => _flow.OpenSettings(), _theme.stoneSkin?.settingsIcon);
++            Button(parent, "END MATCH - MAIN MENU", ReferenceActive ? 254 : 292, 2, () => _flow.EndMatch(), _theme.stoneSkin?.exitIcon);
+         }
+         private void BuildSettings(Transform parent)
+         {
+@@ -201,8 +201,8 @@
+             var label = Label(parent, "ROOM CODE", 22, _theme.muted); Place(label.rectTransform, 0, 0, 470, 42);
+             _roomCode = Label(parent, "â€”", 56, _theme.text, readable: true); Place(_roomCode.rectTransform, 0, 52, 470, 90);
+             Button(parent, "COPY CODE", 156, 1, () => _flow.CopyRoomCode(), _theme.stoneSkin?.copyIcon);
+-            _hostReady = Button(parent, "READY", 248, 0, () => _flow.SetNetworkReady(), _theme.stoneSkin?.checkIcon);
+-            Button(parent, "BACK", 364, 2, () => _flow.Back(), _theme.stoneSkin?.backIcon);
++            _hostReady = Button(parent, "READY", ReferenceActive ? 246 : 248, 0, () => _flow.SetNetworkReady(), _theme.stoneSkin?.checkIcon);
++            Button(parent, "BACK", ReferenceActive ? 336 : 364, 2, () => _flow.Back(), _theme.stoneSkin?.backIcon);
+         }
+         private void BuildJoin(Transform parent)
+         {
+@@ -218,7 +218,7 @@
+             _codeInput.characterLimit = 16; _codeInput.lineType = TMP_InputField.LineType.SingleLine;
+             _codeInput.onSubmit.AddListener(_ => _flow.JoinRoom(_codeInput.text));
+             _joinSubmit = Button(parent, "CONNECT", 176, 0, () => _flow.JoinRoom(_codeInput.text), _theme.stoneSkin?.joinIcon);
+-            Button(parent, "BACK", 284, 2, () => _flow.Back(), _theme.stoneSkin?.backIcon);
++            Button(parent, "BACK", ReferenceActive ? 266 : 284, 2, () => _flow.Back(), _theme.stoneSkin?.backIcon);
+         }
+         public void SetNetworkAvailable(bool available) { _host.interactable = _join.interactable = available; }
+         public void SetPlayAvailable(bool available) => _play.interactable = available;
+@@ -239,7 +239,7 @@
+             if (ReferenceActive)
+             {
+                 _activePage = (RectTransform)_pages[(int)page].transform;
+-                _pageBasePosition = new Vector2(page == FrontendPage.Main ? 32 : 0,-552); _activePage.anchoredPosition=_pageBasePosition; _pageAge=0;
++                _pageBasePosition = new Vector2(32,-552); _activePage.anchoredPosition=_pageBasePosition; _pageAge=0;
+                 _pageGroup = _activePage.GetComponent<CanvasGroup>();
+                 if (_pageGroup == null) _pageGroup = _activePage.gameObject.AddComponent<CanvasGroup>();
+                 _pageGroup.alpha=0;
+@@ -251,7 +251,7 @@
+                     page == FrontendPage.Host ? _hostReady.gameObject :
+                     page == FrontendPage.Join ? _codeInput.gameObject :
+                     page == FrontendPage.Pause ? _resume.gameObject : _play.gameObject;
+-                EventSystem.current.SetSelectedGameObject(page == FrontendPage.Main ? null : first);
++                EventSystem.current.SetSelectedGameObject(page == FrontendPage.Main || page == FrontendPage.Pause ? null : first);
+             }
+             if (page == FrontendPage.Join) _codeInput.ActivateInputField();
+             if (page == FrontendPage.Settings) RefreshSettings();
+@@ -304,7 +304,7 @@
+         }
+         private Button Button(Transform parent, string text, float y, int tier, UnityAction action, Sprite roleIcon = null)
+         {
+-            RectTransform r = Rect(parent, text, typeof(Image), typeof(Button), typeof(FrontendButton)); Place(r, 0, y, ReferenceActive ? 560 : 470, ReferenceActive ? 78 : 70);
++            RectTransform r = Rect(parent, text, typeof(Image), typeof(Button), typeof(FrontendButton)); Place(r, ReferenceActive ? y/3f : 0, y, ReferenceActive ? 560 : 470, ReferenceActive ? 78 : 70);
+             Color normal = tier == 0 ? _theme.accent : tier == 1 ? new Color(.11f, .19f, .23f, .9f) : new Color(.08f, .13f, .17f, .35f);
+             var graphic = r.GetComponent<Image>(); graphic.color = normal;
+             var skin = _theme.stoneSkin;
+@@ -350,10 +350,22 @@
+         private TMP_Text Label(Transform parent, string text, float size, Color color, bool display = false, bool readable = false)
+         {
+             var r = Rect(parent, text.Length < 40 ? text : "Label", typeof(TextMeshProUGUI));
+-            var label = r.GetComponent<TextMeshProUGUI>(); label.font = ReferenceActive && Reference.menuFont != null ? (readable ? _theme.readableFont : Reference.menuFont) : display ? _theme.displayFont : readable ? _theme.readableFont : _theme.labelFont;
++            var label = r.GetComponent<TextMeshProUGUI>(); label.font = ReferenceActive && Reference.menuFont != null ? Reference.menuFont : display ? _theme.displayFont : readable ? _theme.readableFont : _theme.labelFont;
+             label.text = text; label.fontSize = size * _theme.menuFontScale;
+             if (ReferenceActive) { label.fontSize = Mathf.Max(18,label.fontSize); label.characterSpacing=1.5f; } label.color = color; label.raycastTarget = false; label.textWrappingMode = TextWrappingModes.NoWrap;
+             return label;
++        }
++        // Alpha-mass centers measured from the installed sprite rects, in a 40px image box.
++        // These compensate source padding and asymmetric silhouettes without changing artwork.
++        private static Vector2 ElementGlyphOffset(Elemental.Simulation.Magic.ElementId element)
++        {
++            switch(element)
++            {
++                case Elemental.Simulation.Magic.ElementId.Fire: return new Vector2(.93f,-2.98f);
++                case Elemental.Simulation.Magic.ElementId.Water: return new Vector2(1.01f,-3.83f);
++                case Elemental.Simulation.Magic.ElementId.Air: return new Vector2(.37f,1.43f);
++                default: return new Vector2(.11f,-3.12f);
++            }
+         }
+         private void BuildElementStatus(Transform parent)
+         {
+@@ -367,7 +379,7 @@
+                 var frame=StoneReferenceGlyph.Create(parent,"Element status "+ElementOrder[i],StoneReferenceGlyph.Shape.Diamond,colors[i]);
+                 frame.raycastTarget=false; Place(frame.rectTransform,53+i*128,0,70,70);
+                 frame.rectTransform.pivot=new Vector2(.5f,.5f);frame.rectTransform.anchoredPosition+=new Vector2(35,-35);_elementFrames[i]=frame;
+-                if(sprites[i]!=null) { Ornament(frame.transform,"Element glyph",sprites[i],i==2?16.8f:15,i==0?16:15,40,40); frame.transform.Find("Element glyph").GetComponent<Image>().color=Color.white; }
++                if(sprites[i]!=null) { var offset=ElementGlyphOffset(ElementOrder[i]); Ornament(frame.transform,"Element glyph",sprites[i],15+offset.x,15+offset.y,40,40); frame.transform.Find("Element glyph").GetComponent<Image>().color=Color.white; }
+                 var name=Label(parent,ElementOrder[i].ToString().ToUpperInvariant(),18,colors[i]);
+                 Place(name.rectTransform,37+i*128,84,102,30); name.alignment=TextAlignmentOptions.Center;
+             }
+@@ -382,10 +394,10 @@
+         }
+         private void UpdateReferenceMotion()
+         {
+-            if (_pages[0].activeSelf && EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null)
++            if ((_pages[0].activeSelf || _pages[4].activeSelf) && EventSystem.current != null && EventSystem.current.currentSelectedGameObject == null)
+             {
+                 var keys=UnityEngine.InputSystem.Keyboard.current;
+-                if(keys!=null&&(keys.tabKey.wasPressedThisFrame||keys.upArrowKey.wasPressedThisFrame||keys.downArrowKey.wasPressedThisFrame)) EventSystem.current.SetSelectedGameObject(_play.gameObject);
++                if(keys!=null&&(keys.tabKey.wasPressedThisFrame||keys.upArrowKey.wasPressedThisFrame||keys.downArrowKey.wasPressedThisFrame)) EventSystem.current.SetSelectedGameObject(_pages[4].activeSelf?_resume.gameObject:_play.gameObject);
+             }
+             bool reduced=_flow.Preferences.ReducedMotion; float dt=Time.unscaledDeltaTime;
+             _panelTrackAge+=dt;
+@@ -432,6 +444,8 @@
+                     }
+                     var skin=_theme.stoneSkin;
+                     _activeElementGlyph.sprite=selected==Elemental.Simulation.Magic.ElementId.Fire?skin.fire:selected==Elemental.Simulation.Magic.ElementId.Water?skin.water:selected==Elemental.Simulation.Magic.ElementId.Air?skin.air:skin.earth;
++                    var cardOffset=ElementGlyphOffset(selected)*(68f/40f);
++                    Place(_activeElementGlyph.rectTransform,85+cardOffset.x,18+cardOffset.y,68,68);
+                     _activeElementTraits.text=selected==Elemental.Simulation.Magic.ElementId.Earth?"STRENGTH  /  BALANCE  /  ENDURANCE":"";
+                 }
+                 if(_footerMarker!=null)

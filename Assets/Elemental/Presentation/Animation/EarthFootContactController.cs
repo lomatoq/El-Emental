@@ -2,6 +2,7 @@ using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
 using Elemental.Presentation.MotionMatching;
 using Elemental.Simulation.Characters;
+using Elemental.Simulation.Bending;
 using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine;
@@ -12,9 +13,10 @@ namespace Elemental.Presentation.Animation
     [DisallowMultipleComponent]
     public sealed class EarthFootContactController : MonoBehaviour
     {
-        private const int FootHitCapacity = 8;
+        private const int FootHitCapacity = 32;
         private const float KneeHintResponseSeconds = 0.085f;
         private const float MaximumKneeHintStepDegreesAt60Hz = 6f;
+        private const float AuthoredFloorSolverSkinMeters = .002f;
         private static readonly ProfilerMarker ContactMarker =
             new ProfilerMarker("Elemental.Character.FootContact");
         private static readonly int LeftFootContactHash = Animator.StringToHash(
@@ -25,6 +27,8 @@ namespace Elemental.Presentation.Animation
             EarthAnimationClipMetadata.LeftFootPhase);
         private static readonly int RightFootPhaseHash = Animator.StringToHash(
             EarthAnimationClipMetadata.RightFootPhase);
+        private static readonly int TurnParameterHash = Animator.StringToHash("Turn");
+        private static readonly int TurnStateHash = Animator.StringToHash("Base Layer.Turn In Place");
 
         [SerializeField] private Animator animator;
         [SerializeField] private PlanetMotor motor;
@@ -39,7 +43,9 @@ namespace Elemental.Presentation.Animation
         [SerializeField, Range(0.02f, 0.4f)] private float contactCaptureSeconds = 0.10f;
         private EarthAnimationDriver _animationDriver;
         private EAMMBasePoseBridge _basePoseBridge;
+        private HumanoidLocalizedPhysicsResponse _localHitPhysics;
         private int _lastContactFrame = -1;
+        private uint _observedTeleportSequence;
         private Vector3 _leftHintWorld, _rightHintWorld;
         public int LastContactEvaluationFrame => _lastContactFrame;
 
@@ -55,6 +61,24 @@ namespace Elemental.Presentation.Animation
         private Transform _rightFoot;
         private Transform _leftUpperLeg;
         private Transform _rightUpperLeg;
+        private LocomotionRhythmController _rhythm;
+        private bool _leftSwingStrideActive, _rightSwingStrideActive;
+        private Vector3 _leftSwingStrideTarget, _rightSwingStrideTarget;
+        private bool _leftSwingFloorActive, _rightSwingFloorActive;
+        private Vector3 _leftSwingFloorTarget, _rightSwingFloorTarget;
+        private Transform _leftToes, _rightToes;
+        private float _leftRestLegLength, _rightRestLegLength;
+        public int AnatomicalReachReleaseCount { get; private set; }
+        public float LeftSwingFloorCorrectionMeters { get; private set; }
+        public float RightSwingFloorCorrectionMeters { get; private set; }
+        public float LeftFloorPredictedClearance { get; private set; }
+        public float RightFloorPredictedClearance { get; private set; }
+        public float LeftFloorGoalClearance { get; private set; }
+        public float RightFloorGoalClearance { get; private set; }
+        public float LeftFloorBoneClearance { get; private set; }
+        public float RightFloorBoneClearance { get; private set; }
+        public bool LeftFloorEvaluated { get; private set; }
+        public bool RightFloorEvaluated { get; private set; }
         private EarthFootContactState _leftState;
         private EarthFootContactState _rightState;
         private EarthFootContactDecision _leftDecision;
@@ -235,6 +259,9 @@ namespace Elemental.Presentation.Animation
 
         public void InvalidateBasePose()
         {
+            _leftSwingStrideActive = _rightSwingStrideActive = false;
+            _leftSwingFloorActive = _rightSwingFloorActive = false;
+            LeftSwingFloorCorrectionMeters = RightSwingFloorCorrectionMeters = 0f;
             _lastContactFrame = -1;
             _hasBasePoseContactMetadata = false;
             _leftState = default;
@@ -269,6 +296,8 @@ namespace Elemental.Presentation.Animation
 
         private void OnDisable()
         {
+            _leftSwingFloorActive = _rightSwingFloorActive = false;
+            LeftSwingFloorCorrectionMeters = RightSwingFloorCorrectionMeters = 0f;
             _lastContactFrame = -1;
             _hasBasePoseContactMetadata = false;
             _leftState = default;
@@ -348,6 +377,19 @@ namespace Elemental.Presentation.Animation
 
         private void EvaluateFootContacts()
         {
+            LeftFloorEvaluated = RightFloorEvaluated = false;
+            LeftFloorPredictedClearance = RightFloorPredictedClearance = 0f;
+            LeftFloorGoalClearance = RightFloorGoalClearance = 0f;
+            LeftFloorBoneClearance = RightFloorBoneClearance = 0f;
+            _leftSwingStrideActive = _rightSwingStrideActive = false;
+            _leftSwingFloorActive = _rightSwingFloorActive = false;
+            LeftSwingFloorCorrectionMeters = RightSwingFloorCorrectionMeters = 0f;
+            if (_localHitPhysics == null) _localHitPhysics = GetComponent<HumanoidLocalizedPhysicsResponse>();
+            if (_observedTeleportSequence != motor.TeleportSequence)
+            {
+                _observedTeleportSequence = motor.TeleportSequence;
+                InvalidateBasePose();
+            }
             float deltaTime = Mathf.Max(0.0001f, Time.deltaTime);
             Vector3 up = motor.LocalUp.sqrMagnitude > 0.5f
                 ? motor.LocalUp.normalized
@@ -452,13 +494,18 @@ namespace Elemental.Presentation.Animation
             float rightSolverPhase = float.IsFinite(rightContact)
                 ? rightPhase
                 : leftPhase;
+            EarthTechniqueId comboTechnique = poseIntentSource != null
+                ? poseIntentSource.CurrentRequest.Technique : EarthTechniqueId.None;
+            bool leftKick = comboTechnique == EarthTechniqueId.QuickStoneLeftKick;
+            bool rightKick = comboTechnique == EarthTechniqueId.QuickStoneRightKick;
+            bool spinKick = comboTechnique == EarthTechniqueId.QuickStoneSpinKick;
             EarthFootContactInput leftInput = BuildInput(
                 true,
                 in leftProbe,
                 leftVerticalVelocity,
                 leftPhase,
                 leftContact,
-                contactSupported,
+                contactSupported && !leftKick && !spinKick,
                 locomoting,
                 pivotingInPlace,
                 requestLock,
@@ -471,7 +518,7 @@ namespace Elemental.Presentation.Animation
                 rightVerticalVelocity,
                 rightSolverPhase,
                 rightContact,
-                contactSupported,
+                contactSupported && !rightKick && !spinKick,
                 locomoting,
                 pivotingInPlace,
                 requestLock,
@@ -498,34 +545,42 @@ namespace Elemental.Presentation.Animation
                 up,
                 out _rightTargetWorld,
                 out _rightNormalWorld);
-            // Final IK follows the selected base pose. A regular stance capture
-            // takes four percent per 60 Hz frame and cannot consume more than
-            // twelve percent in a hitch frame; otherwise the last 0.84 -> 1.0
-            // step can visibly straighten a Humanoid knee. Pivot capture stays
-            // quicker, while swing release remains immediate.
-            float responseSeconds = contactCaptureSeconds;
+            ReleaseUnreachableLocomotionPlant(true, in leftInput, up);
+            ReleaseUnreachableLocomotionPlant(false, in rightInput, up);
+            // Final IK follows the selected base pose. Idle retains its gentle
+            // capture; moving plants and pivots acquire within their actual stance
+            // window. Every lane bounds frame steps and releases swing promptly.
+            // A walking plant is shorter than the gentle .40s idle handoff.
+            // Capture while the foot is still near its new anchor, before the
+            // moving base pose can pull a lightly weighted IK chain past it.
+            float responseSeconds = locomoting
+                ? Mathf.Min(contactCaptureSeconds, EarthFootIkWeightBlend.LocomotionCaptureResponseSeconds)
+                : Mathf.Max(contactCaptureSeconds, EarthFootIkWeightBlend.StanceCaptureResponseSeconds);
+            float captureFrameStep = locomoting
+                ? EarthFootIkWeightBlend.MaximumLocomotionCaptureFrameStep
+                : EarthFootIkWeightBlend.MaximumStanceCaptureFrameStep;
             _leftAppliedWeight = EarthFootIkWeightBlend.StepContact(
                 _leftAppliedWeight,
                 _leftDecision.TargetWeight,
                 deltaTime,
                 pivotingInPlace
                     ? 0.06f
-                    : Mathf.Max(responseSeconds, EarthFootIkWeightBlend.StanceCaptureResponseSeconds),
+                    : responseSeconds,
                 0.02f,
                 pivotingInPlace
                     ? EarthFootIkWeightBlend.MaximumPivotCaptureFrameStep
-                    : EarthFootIkWeightBlend.MaximumStanceCaptureFrameStep);
+                    : captureFrameStep);
             _rightAppliedWeight = EarthFootIkWeightBlend.StepContact(
                 _rightAppliedWeight,
                 _rightDecision.TargetWeight,
                 deltaTime,
                 pivotingInPlace
                     ? 0.06f
-                    : Mathf.Max(responseSeconds, EarthFootIkWeightBlend.StanceCaptureResponseSeconds),
+                    : responseSeconds,
                 0.02f,
                 pivotingInPlace
                     ? EarthFootIkWeightBlend.MaximumPivotCaptureFrameStep
-                    : EarthFootIkWeightBlend.MaximumStanceCaptureFrameStep);
+                    : captureFrameStep);
             _leftAppliedWeight = EarthFootIkWeightBlend.EnforceSwingMaximum(
                 _leftAppliedWeight,
                 _leftDecision.Locked,
@@ -536,7 +591,23 @@ namespace Elemental.Presentation.Animation
                 _rightDecision.Reason);
 
             // Establish final body reach before setting goals and hints.
+            // A struck lower chain is temporarily owned by the physical response.
+            // Release its foot lock before IK instead of bending a planted limb afterward.
+            if (_localHitPhysics != null && _localHitPhysics.LeftLegActive)
+            {
+                _leftAppliedWeight = 0f;
+                _leftState = default;
+                _leftDecision = default;
+            }
+            if (_localHitPhysics != null && _localHitPhysics.RightLegActive)
+            {
+                _rightAppliedWeight = 0f;
+                _rightState = default;
+                _rightDecision = default;
+            }
             ApplyPelvis(up, in poseIntent, requestLock, deltaTime);
+            ResolveAuthoredSwingFloor(true, up);
+            ResolveAuthoredSwingFloor(false, up);
             ApplyFoot(
                 AvatarIKGoal.LeftFoot,
                 _leftTargetWorld,
@@ -629,8 +700,24 @@ namespace Elemental.Presentation.Animation
             Vector3 animated = !_hasPreviousAnimatedFeet || needsFreshIdlePose
                 ? foot.position
                 : animator.GetIKPosition(left ? AvatarIKGoal.LeftFoot : AvatarIKGoal.RightFoot);
-            if (_basePoseBridge != null && _basePoseBridge.TryGetBaseFootPosition(left, out Vector3 baseFoot))
+            Vector3 baseFoot = default;
+            bool hasFreshEammFoot = _basePoseBridge != null &&
+                _basePoseBridge.TryGetBaseFootPosition(left, out baseFoot);
+            if (hasFreshEammFoot)
                 animated = Vector3.Lerp(animated, baseFoot, _basePoseBridge.AppliedEammMasterWeight);
+            if (_rhythm == null) _rhythm = GetComponent<LocomotionRhythmController>();
+            // Source cadence metadata cannot warp a different authored start/stop
+            // pose. Its IK goal can also retain the last submitted world target;
+            // re-warping that goal feeds our output back into next frame's input.
+            if (hasFreshEammFoot && _rhythm != null && !previousFootState.Locked &&
+                _leftUpperLeg != null && _rightUpperLeg != null)
+            {
+                Vector3 warped = _rhythm.WarpFoot(animated, (_leftUpperLeg.position + _rightUpperLeg.position) * .5f);
+                bool active = (warped - animated).sqrMagnitude > .0000001f;
+                if (left) { _leftSwingStrideActive = active; _leftSwingStrideTarget = warped; }
+                else { _rightSwingStrideActive = active; _rightSwingStrideTarget = warped; }
+                animated = warped;
+            }
             EarthPoseIntent poseIntent = poseIntentSource != null
                 ? poseIntentSource.CurrentIntent
                 : default;
@@ -640,7 +727,12 @@ namespace Elemental.Presentation.Animation
                                       previousSupportFrame.IsValid &&
                                       previousFootState.SupportId == previousSupportFrame.SurfaceId &&
                                       previousFootState.SupportGeneration == previousSupportFrame.Generation;
-            if (stableLockedAnchor)
+            // Recheck under the authored foot when it leaves the planted reach.
+            // Otherwise a backwards step off a ledge keeps probing the old upper
+            // floor forever even while the body has moved to the lower surface.
+            if (stableLockedAnchor && Vector3.Distance(animated,
+                    ToVector3(EarthSupportFootLockSolver.ResolveWorld(
+                        previousFootState.AnchorLocal, in previousSupportFrame))) <= 0.30f)
             {
                 probeBase = ToVector3(EarthSupportFootLockSolver.ResolveWorld(
                     previousFootState.AnchorLocal,
@@ -669,7 +761,7 @@ namespace Elemental.Presentation.Animation
                 candidates[candidateCount] = CharacterSupportRuntimeAdapter.Classify(
                     hit.collider,
                     hit.distance,
-                    upDot);
+                    upDot, previousSupport, motor.GroundSupport);
                 candidateHitIndices[candidateCount] = index;
                 candidateCount++;
             }
@@ -732,6 +824,31 @@ namespace Elemental.Presentation.Animation
             float applied = EarthFootIkWeightBlend.ResolveSubmittedGoalWeight(weight);
             animator.SetIKPositionWeight(goal, applied);
             animator.SetIKRotationWeight(goal, applied);
+            bool left = goal == AvatarIKGoal.LeftFoot;
+            bool swingFloor = left ? _leftSwingFloorActive : _rightSwingFloorActive;
+            if (swingFloor)
+            {
+                // A collision floor changes only this frame's vertical trajectory.
+                // It never creates a stance anchor or changes contact metadata.
+                animator.SetIKPositionWeight(goal, 1f);
+                animator.SetIKRotationWeight(goal, applied);
+                animator.SetIKPosition(goal, left ? _leftSwingFloorTarget : _rightSwingFloorTarget);
+                Vector3 floorUp = motor != null ? motor.LocalUp.normalized : transform.up;
+                animator.SetIKRotation(goal, Quaternion.FromToRotation(floorUp, normal) * authoredGoalRotation);
+                return;
+            }
+            bool swingStride = left ? _leftSwingStrideActive && !_leftDecision.Locked &&
+                (_localHitPhysics == null || !_localHitPhysics.LeftLegActive) :
+                _rightSwingStrideActive && !_rightDecision.Locked && (_localHitPhysics == null || !_localHitPhysics.RightLegActive);
+            if (swingStride)
+            {
+                // This target is the current animated foot plus a bounded stride
+                // offset, never a released terrain anchor. Rotation stays authored.
+                animator.SetIKPositionWeight(goal, 1f);
+                animator.SetIKRotationWeight(goal, 0f);
+                animator.SetIKPosition(goal, left ? _leftSwingStrideTarget : _rightSwingStrideTarget);
+                return;
+            }
             if (applied <= 0.001f) return;
             // Animator IK already blends the target by its position weight.
             // Lerping the target here as well applied weight twice (w^2), which
@@ -854,6 +971,12 @@ namespace Elemental.Presentation.Animation
             float allowedDrop = requestLock || stanceCaptureOwned
                 ? maximumPelvisDrop
                 : Mathf.Min(0.08f, maximumPelvisDrop);
+            if (_leftDecision.Locked && _leftAppliedWeight > .05f)
+                leftError = Mathf.Min(leftError, ResolveLegReachOffset(
+                    _leftUpperLeg, _leftLowerLeg, _leftFoot, _leftTargetWorld, up, allowedDrop));
+            if (_rightDecision.Locked && _rightAppliedWeight > .05f)
+                rightError = Mathf.Min(rightError, ResolveLegReachOffset(
+                    _rightUpperLeg, _rightLowerLeg, _rightFoot, _rightTargetWorld, up, allowedDrop));
             float target = EarthPelvisCompensation.Solve(
                 leftError,
                 rightError,
@@ -891,6 +1014,129 @@ namespace Elemental.Presentation.Animation
             RightAnchorErrorMeters = _rightDecision.Locked
                 ? Vector3.Distance(_rightTargetWorld, _rightFoot.position)
                 : 0f;
+        }
+
+        private void ReleaseUnreachableLocomotionPlant(bool left,
+            in EarthFootContactInput input, Vector3 up)
+        {
+            EarthFootContactDecision decision = left ? _leftDecision : _rightDecision;
+            if (!_locomoting || !decision.Locked || decision.State.PoseOwned) return;
+            Transform thigh = left ? _leftUpperLeg : _rightUpperLeg;
+            float length = left ? _leftRestLegLength : _rightRestLegLength;
+            if (thigh == null || length <= 0f) return;
+            Vector3 target = left ? _leftTargetWorld : _rightTargetWorld;
+            if (EarthPelvisCompensation.CanReachWithPelvisDrop(ToFloat3(thigh.position),
+                ToFloat3(target), ToFloat3(up), length, maximumPelvisDrop)) return;
+            // Motor travel can carry a planted anchor outside anatomical reach.
+            // Release into the existing swing hysteresis rather than stretching
+            // the shin, dragging the anchor or exceeding the pelvis-drop budget.
+            decision = EarthFootContactSolver.ReleaseUnreachable(in decision, in input);
+            if (left)
+            {
+                _leftDecision = decision; _leftState = decision.State;
+                ResolveWorldTarget(in decision, in _leftContactSupport, up,
+                    out _leftTargetWorld, out _leftNormalWorld);
+            }
+            else
+            {
+                _rightDecision = decision; _rightState = decision.State;
+                ResolveWorldTarget(in decision, in _rightContactSupport, up,
+                    out _rightTargetWorld, out _rightNormalWorld);
+            }
+            AnatomicalReachReleaseCount++;
+        }
+
+        private void ResolveAuthoredSwingFloor(bool left, Vector3 up)
+        {
+            bool authoredLowerBody = _basePoseBridge == null ||
+                _basePoseBridge.AppliedEammMasterWeight <= .001f ||
+                _basePoseBridge.AppliedIdleKneeEammWeight < .999f;
+            if (!motor.HasStableSupport || !authoredLowerBody ||
+                _authoredFootPolicy is EarthAuthoredFootPolicy.FlightIkOff or
+                    EarthAuthoredFootPolicy.AuthoredContact or EarthAuthoredFootPolicy.BraceBoth) return;
+            float applied = left ? _leftAppliedWeight : _rightAppliedWeight;
+            if (applied >= .999f ||
+                (_localHitPhysics != null && (left ? _localHitPhysics.LeftLegActive : _localHitPhysics.RightLegActive))) return;
+            Transform foot = left ? _leftFoot : _rightFoot;
+            Transform toes = left ? _leftToes : _rightToes;
+            // Continue collision safety through Capture and blend-to-idle. Match
+            // the ordinary position blend first, then change only its vertical
+            // clearance. The captured support target itself stays untouched.
+            // During partial contact, the internal goal is the solver's blend
+            // input. At zero contact that goal can retain a previous IK target;
+            // the released bone trajectory is then the actual authored input.
+            Vector3 goal = animator.GetIKPosition(left ? AvatarIKGoal.LeftFoot : AvatarIKGoal.RightFoot) + up * _pelvisOffset;
+            Vector3 authored = applied <= .001f ? foot.position + up * _pelvisOffset : goal;
+            Vector3 animated = Vector3.Lerp(authored,
+                left ? _leftTargetWorld : _rightTargetWorld, applied);
+            RaycastHit[] hits = left ? _leftHits : _rightHits;
+            float lift = RequiredSwingFloorLift(animated, up, hits);
+            // Record all positions in one support plane before final Humanoid IK.
+            // A Transform and an Animator goal need not expose the same pose phase.
+            float boneDelta = Vector3.Dot(foot.position + up * _pelvisOffset - animated, up);
+            float goalDelta = Vector3.Dot(goal - animated, up);
+            if (left)
+            {
+                LeftFloorEvaluated = float.IsFinite(_lastSwingFloorClearance);
+                LeftFloorPredictedClearance = _lastSwingFloorClearance;
+                LeftFloorGoalClearance = _lastSwingFloorClearance + goalDelta;
+                LeftFloorBoneClearance = _lastSwingFloorClearance + boneDelta;
+            }
+            else
+            {
+                RightFloorEvaluated = float.IsFinite(_lastSwingFloorClearance);
+                RightFloorPredictedClearance = _lastSwingFloorClearance;
+                RightFloorGoalClearance = _lastSwingFloorClearance + goalDelta;
+                RightFloorBoneClearance = _lastSwingFloorClearance + boneDelta;
+            }
+            if (toes != null)
+                lift = Mathf.Max(lift, RequiredSwingFloorLift(animated + toes.position - foot.position, up, hits));
+            if (lift <= .0001f) return;
+            if (left)
+            {
+                _leftSwingFloorActive = true;
+                _leftSwingFloorTarget = animated + up * lift;
+                LeftSwingFloorCorrectionMeters = lift;
+            }
+            else
+            {
+                _rightSwingFloorActive = true;
+                _rightSwingFloorTarget = animated + up * lift;
+                RightSwingFloorCorrectionMeters = lift;
+            }
+        }
+
+        private float _lastSwingFloorClearance;
+        private float RequiredSwingFloorLift(Vector3 animated, Vector3 up, RaycastHit[] hits)
+        {
+            _lastSwingFloorClearance = float.PositiveInfinity;
+            int count = UnityEngine.Physics.RaycastNonAlloc(animated + up * footProbeLift, -up,
+                hits, footProbeLift + footProbeDistance, motor.GroundMask, QueryTriggerInteraction.Ignore);
+            float nearest = float.PositiveInfinity;
+            float lift = 0f;
+            float minUpDot = Mathf.Cos(motor.MaximumSlopeAngle * Mathf.Deg2Rad);
+            for (int i = 0; i < Mathf.Min(count, hits.Length); i++)
+            {
+                RaycastHit hit = hits[i];
+                if (hit.collider == null || hit.distance >= nearest ||
+                    (rootBody != null && hit.collider.transform.IsChildOf(rootBody.transform)) ||
+                    EarthBodyTargetFilter.IsCharacterBody(hit.rigidbody) || Vector3.Dot(hit.normal, up) < minUpDot) continue;
+                nearest = hit.distance;
+                _lastSwingFloorClearance = Vector3.Dot(animated - hit.point, up);
+                lift = EarthPelvisCompensation.SolveSwingFloorLift(ToFloat3(animated),
+                    ToFloat3(hit.point), ToFloat3(up), soleOffset + AuthoredFloorSolverSkinMeters, .22f);
+            }
+            return lift;
+        }
+
+        private static float ResolveLegReachOffset(Transform thigh, Transform knee,
+            Transform ankle, Vector3 target, Vector3 up, float maximumDrop)
+        {
+            if (thigh == null || knee == null || ankle == null) return 0f;
+            float length = Vector3.Distance(thigh.position, knee.position) +
+                           Vector3.Distance(knee.position, ankle.position);
+            return EarthPelvisCompensation.SolveReachOffset(ToFloat3(thigh.position),
+                ToFloat3(target), ToFloat3(up), length, maximumDrop);
         }
 
         private SupportFrameSnapshot ResolvePresentationSupport(
@@ -986,14 +1232,32 @@ namespace Elemental.Presentation.Animation
                 rightContact = float.NaN;
                 return;
             }
-            leftPhase = Mathf.Repeat(ReadParameter(LeftFootPhaseHash), 1f);
-            rightPhase = Mathf.Repeat(ReadParameter(RightFootPhaseHash), 1f);
-            leftContact = Mathf.Clamp01(ReadParameter(LeftFootContactHash));
-            rightContact = Mathf.Clamp01(ReadParameter(RightFootContactHash));
+            ReadAuthoredFootChannels(animator, _animationDriver,
+                out leftPhase, out rightPhase, out leftContact, out rightContact);
         }
 
-        private float ReadParameter(int hash) => _animationDriver != null
-            ? _animationDriver.GetFloat(hash) : animator.GetFloat(hash);
+        /// <summary>Reads named authored curves in the same left/right frame as
+        /// the controller pose. Unity mirrors Humanoid bones, not custom names.</summary>
+        public static void ReadAuthoredFootChannels(Animator source, EarthAnimationDriver driver,
+            out float leftPhase, out float rightPhase, out float leftContact, out float rightContact)
+        {
+            leftPhase = Mathf.Repeat(driver != null ? driver.GetFloat(LeftFootPhaseHash) : source.GetFloat(LeftFootPhaseHash), 1f);
+            rightPhase = Mathf.Repeat(driver != null ? driver.GetFloat(RightFootPhaseHash) : source.GetFloat(RightFootPhaseHash), 1f);
+            leftContact = Mathf.Clamp01(driver != null ? driver.GetFloat(LeftFootContactHash) : source.GetFloat(LeftFootContactHash));
+            rightContact = Mathf.Clamp01(driver != null ? driver.GetFloat(RightFootContactHash) : source.GetFloat(RightFootContactHash));
+            AnimatorStateInfo current = driver != null ? driver.GetCurrentAnimatorStateInfo(0) : source.GetCurrentAnimatorStateInfo(0);
+            bool turn = current.fullPathHash == TurnStateHash;
+            bool transition = driver != null ? driver.IsInTransition(0) : source.IsInTransition(0);
+            if (transition)
+            {
+                AnimatorStateInfo next = driver != null ? driver.GetNextAnimatorStateInfo(0) : source.GetNextAnimatorStateInfo(0);
+                turn |= next.fullPathHash == TurnStateHash;
+            }
+            float direction = driver != null ? driver.GetFloat(TurnParameterHash) : source.GetFloat(TurnParameterHash);
+            // Saved production tree: -1 original Left Turn, +1 mirrored Left Turn.
+            EarthAnimationClipMetadata.ResolveMirroredFootChannels(turn && direction > .5f,
+                ref leftPhase, ref rightPhase, ref leftContact, ref rightContact);
+        }
 
         private void ResolveMetadataAvailability()
         {
@@ -1040,6 +1304,16 @@ namespace Elemental.Presentation.Animation
             _rightUpperLeg = animator.GetBoneTransform(HumanBodyBones.RightUpperLeg);
             _leftLowerLeg = animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg);
             _rightLowerLeg = animator.GetBoneTransform(HumanBodyBones.RightLowerLeg);
+            _leftToes = animator.GetBoneTransform(HumanBodyBones.LeftToes);
+            _rightToes = animator.GetBoneTransform(HumanBodyBones.RightToes);
+            // Capture the rest chain before final IK; measuring a solved stance
+            // each frame would accept Humanoid's already-stretched leg as normal.
+            if (_leftRestLegLength <= 0f && _leftUpperLeg != null && _leftLowerLeg != null && _leftFoot != null)
+                _leftRestLegLength = Vector3.Distance(_leftUpperLeg.position, _leftLowerLeg.position) +
+                                     Vector3.Distance(_leftLowerLeg.position, _leftFoot.position);
+            if (_rightRestLegLength <= 0f && _rightUpperLeg != null && _rightLowerLeg != null && _rightFoot != null)
+                _rightRestLegLength = Vector3.Distance(_rightUpperLeg.position, _rightLowerLeg.position) +
+                                      Vector3.Distance(_rightLowerLeg.position, _rightFoot.position);
         }
 
         private float ResolveAnkleAngle(Transform foot)

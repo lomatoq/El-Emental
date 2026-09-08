@@ -5,7 +5,7 @@ namespace Elemental.Simulation.Characters
     public enum EarthImpactPresentationOwner : byte
     {
         None = 0,
-        ProceduralAngularSpring = 1,
+        LocalizedPhysics = 1,
         FullRagdoll = 2
     }
 
@@ -15,7 +15,7 @@ namespace Elemental.Simulation.Characters
             EarthCharacterImpactResponse response) => response switch
         {
             EarthCharacterImpactResponse.Flinch or EarthCharacterImpactResponse.Stagger =>
-                EarthImpactPresentationOwner.ProceduralAngularSpring,
+                EarthImpactPresentationOwner.LocalizedPhysics,
             EarthCharacterImpactResponse.RecoverableKnockdown or EarthCharacterImpactResponse.Knockout =>
                 EarthImpactPresentationOwner.FullRagdoll,
             _ => EarthImpactPresentationOwner.None

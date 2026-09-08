@@ -1,0 +1,1 @@
+public interface IRunCommand { void Execute(ExecutionResult result); } public sealed class ExecutionResult {}

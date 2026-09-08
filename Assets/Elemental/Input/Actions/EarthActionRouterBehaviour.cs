@@ -3,6 +3,7 @@ using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
 using Elemental.Simulation.Matter;
 using Elemental.Simulation.Bending;
+using Elemental.Simulation.Combat;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -24,6 +25,14 @@ namespace Elemental.Input.Actions
         [SerializeField] private EarthPillarMobility pillarMobility;
         [SerializeField] private ActiveRagdollPuppet puppet;
         [SerializeField] private EarthDualMouseAbilityController dualMouseAbilities;
+        [SerializeField] private EarthMvpDuelController duel;
+        private bool _matchBlocked;
+        private bool _impactBlocked;
+        private EarthDuelFighterId _boundDuelFighter;
+        public EarthMvpDuelController BoundDuel => duel;
+        public EarthDuelFighterId BoundDuelFighter => _boundDuelFighter;
+        public void BindDuel(EarthMvpDuelController match, EarthDuelFighterId fighter = EarthDuelFighterId.Player)
+        { duel = match; _boundDuelFighter = fighter; }
 
         private readonly EarthActionRouter _router = new EarthActionRouter();
         private readonly DualMouseEarthGestureSolver _dualMouse = new DualMouseEarthGestureSolver();
@@ -35,6 +44,7 @@ namespace Elemental.Input.Actions
         private int _bufferedPrimaryPathCount;
 
         public EarthActionRoute Current => _current;
+        public float PillarCrestCharge01 => _dualMouse.CrestCharge01;
         public EarthActionOwner Owner => _dualMouse.OwnsInput ||
                                          _current.Owner == EarthActionOwner.DualMouseEarth
             ? EarthActionOwner.DualMouseEarth
@@ -99,6 +109,21 @@ namespace Elemental.Input.Actions
                 dualMouseAbilities = GetComponent<EarthDualMouseAbilityController>();
             if (pillarMobility == null) pillarMobility = GetComponent<EarthPillarMobility>();
             if (puppet == null) puppet = GetComponent<ActiveRagdollPuppet>();
+            if (motor != null) motor.ImpactStunBegan += CancelForImpactStun;
+        }
+
+        private void OnDestroy()
+        {
+            if (motor != null) motor.ImpactStunBegan -= CancelForImpactStun;
+        }
+
+        private void CancelForImpactStun()
+        {
+            OnDisable();
+            resonanceController?.Cancel();
+            surfController?.Cancel();
+            magicInput?.CancelForImpactStun();
+            _impactBlocked = true;
         }
 
         private void OnDisable()
@@ -117,6 +142,24 @@ namespace Elemental.Input.Actions
 
         private void Update()
         {
+            if (motor != null && motor.IsImpactStunned)
+            {
+                if (!_impactBlocked) CancelForImpactStun();
+                return;
+            }
+            _impactBlocked = false;
+            if (duel != null && (!duel.HasSimulationAuthority || !duel.CombatAllowed || (_boundDuelFighter == EarthDuelFighterId.Bot ? duel.BotPhase : duel.PlayerPhase) != EarthDuelFighterPhase.Active))
+            {
+                if (!_matchBlocked)
+                {
+                    OnDisable();
+                    resonanceController?.Cancel();
+                    surfController?.Cancel();
+                    _matchBlocked = true;
+                }
+                return;
+            }
+            _matchBlocked = false;
             if (inputAdapter == null) return;
             Vector2 move = inputAdapter.Move;
             Vector3 up = motor != null && motor.LocalUp.sqrMagnitude > 0.5f
@@ -143,6 +186,15 @@ namespace Elemental.Input.Actions
             Vector2 pointerViewport = inputAdapter.PointerViewport01;
             if (dualMouseAbilities != null && dualMouseAbilities.IsStompStoneActive)
                 dualMouseAbilities.UpdateStompAim(inputAdapter.PointerPixels);
+            bool secondMousePressed = inputAdapter.BendPrimaryHeld && inputAdapter.BendForceHeld &&
+                (inputAdapter.BendPrimaryPressed || inputAdapter.BendForcePressed);
+            if (!_dualMouse.OwnsInput && secondMousePressed &&
+                (_router.Owner == EarthActionOwner.Primary || _router.Owner == EarthActionOwner.VectorField) &&
+                magicInput != null && magicInput.TryYieldPendingMouseToDualChord())
+            {
+                _router.Reset();
+                _bufferedPrimaryPathCount = 0;
+            }
             bool handsAvailable = !_router.HasActiveSession &&
                                   magicInput != null &&
                                   magicInput.SelectedElement == Elemental.Simulation.Magic.ElementId.Earth &&
@@ -316,6 +368,9 @@ namespace Elemental.Input.Actions
 
         private void ExecuteRoute(in EarthActionRoute route)
         {
+            if (route.Owner != EarthActionOwner.DualMouseEarth &&
+                (route.Phase == EarthActionRoutePhase.Begin || route.Phase == EarthActionRoutePhase.Cancel))
+                dualMouseAbilities?.CancelStompStone();
             if (route.Intent == EarthActionIntentKind.Cancel || route.Phase == EarthActionRoutePhase.Cancel)
             {
                 waveAbility?.CancelCharge();

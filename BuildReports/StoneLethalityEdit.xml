@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="14" result="Passed" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.0957073">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="1283" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.095707" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2612" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="1237" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.064300" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="11736" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2613" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="1231" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.063517" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2614" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="1231" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.063096" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2615" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="1231" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.062711" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="2068" name="EarthStoneLethalityTests" fullname="Elemental.Tests.EditMode.EarthStoneLethalityTests" classname="Elemental.Tests.EditMode.EarthStoneLethalityTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.057029" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="2076" name="NonClosingAndGrazingContactsRemainBelowDamageAdmission" fullname="Elemental.Tests.EditMode.EarthStoneLethalityTests.NonClosingAndGrazingContactsRemainBelowDamageAdmission" classname="Elemental.Tests.EditMode.EarthStoneLethalityTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.036604" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2072" name="NonClosingAndGrazingContactsRemainBelowDamageAdmission(-2.0f)" fullname="Elemental.Tests.EditMode.EarthStoneLethalityTests.NonClosingAndGrazingContactsRemainBelowDamageAdmission(-2.0f)" methodname="NonClosingAndGrazingContactsRemainBelowDamageAdmission" classname="Elemental.Tests.EditMode.EarthStoneLethalityTests" runstate="Runnable" seed="154575365" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.027870" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2073" name="NonClosingAndGrazingContactsRemainBelowDamageAdmission(0.0f)" fullname="Elemental.Tests.EditMode.EarthStoneLethalityTests.NonClosingAndGrazingContactsRemainBelowDamageAdmission(0.0f)" methodname="NonClosingAndGrazingContactsRemainBelowDamageAdmission" classname="Elemental.Tests.EditMode.EarthStoneLethalityTests" runstate="Runnable" seed="729122278" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.000084" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2074" name="NonClosingAndGrazingContactsRemainBelowDamageAdmission(0.1f)" fullname="Elemental.Tests.EditMode.EarthStoneLethalityTests.NonClosingAndGrazingContactsRemainBelowDamageAdmission(0.1f)" methodname="NonClosingAndGrazingContactsRemainBelowDamageAdmission" classname="Elemental.Tests.EditMode.EarthStoneLethalityTests" runstate="Runnable" seed="1264428116" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.000046" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2075" name="NonClosingAndGrazingContactsRemainBelowDamageAdmission(0.75f)" fullname="Elemental.Tests.EditMode.EarthStoneLethalityTests.NonClosingAndGrazingContactsRemainBelowDamageAdmission(0.75f)" methodname="NonClosingAndGrazingContactsRemainBelowDamageAdmission" classname="Elemental.Tests.EditMode.EarthStoneLethalityTests" runstate="Runnable" seed="1016429461" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.000037" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="2077" name="ObliqueContactPreservesMeasuredVerticalPileWeight" fullname="Elemental.Tests.EditMode.EarthStoneLethalityTests.ObliqueContactPreservesMeasuredVerticalPileWeight" methodname="ObliqueContactPreservesMeasuredVerticalPileWeight" classname="Elemental.Tests.EditMode.EarthStoneLethalityTests" runstate="Runnable" seed="1989338295" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.002194" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2070" name="StandingLightAndNearbyUnloadedObstructionsCannotCausePinDamage" fullname="Elemental.Tests.EditMode.EarthStoneLethalityTests.StandingLightAndNearbyUnloadedObstructionsCannotCausePinDamage" methodname="StandingLightAndNearbyUnloadedObstructionsCannotCausePinDamage" classname="Elemental.Tests.EditMode.EarthStoneLethalityTests" runstate="Runnable" seed="412373536" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.000783" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2069" name="VerifiedPinnedBodyGetsSlowDamageBelowHeavyCrushGateAndStopsAfterRelease" fullname="Elemental.Tests.EditMode.EarthStoneLethalityTests.VerifiedPinnedBodyGetsSlowDamageBelowHeavyCrushGateAndStopsAfterRelease" methodname="VerifiedPinnedBodyGetsSlowDamageBelowHeavyCrushGateAndStopsAfterRelease" classname="Elemental.Tests.EditMode.EarthStoneLethalityTests" runstate="Runnable" seed="997098880" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.000409" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2071" name="WeakRealStoneContactHasChipDamageWithoutPromotingItsPhysicalResponse" fullname="Elemental.Tests.EditMode.EarthStoneLethalityTests.WeakRealStoneContactHasChipDamageWithoutPromotingItsPhysicalResponse" methodname="WeakRealStoneContactHasChipDamageWithoutPromotingItsPhysicalResponse" classname="Elemental.Tests.EditMode.EarthStoneLethalityTests" runstate="Runnable" seed="464325585" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.006528" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="2111" name="EarthSustainedCrushTests" fullname="Elemental.Tests.EditMode.EarthSustainedCrushTests" classname="Elemental.Tests.EditMode.EarthSustainedCrushTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.003843" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2116" name="BriefImpactAndRemovedLoadDoNotBecomeSustainedDamage" fullname="Elemental.Tests.EditMode.EarthSustainedCrushTests.BriefImpactAndRemovedLoadDoNotBecomeSustainedDamage" methodname="BriefImpactAndRemovedLoadDoNotBecomeSustainedDamage" classname="Elemental.Tests.EditMode.EarthSustainedCrushTests" runstate="Runnable" seed="1293902946" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.000645" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2117" name="DamageIsBoundedAndIndependentOfPhysicsStep" fullname="Elemental.Tests.EditMode.EarthSustainedCrushTests.DamageIsBoundedAndIndependentOfPhysicsStep" methodname="DamageIsBoundedAndIndependentOfPhysicsStep" classname="Elemental.Tests.EditMode.EarthSustainedCrushTests" runstate="Runnable" seed="1257462757" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.000207" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2114" name="DamageRejectsInvalidOrRemovedLoadEvenWithOldDwell" fullname="Elemental.Tests.EditMode.EarthSustainedCrushTests.DamageRejectsInvalidOrRemovedLoadEvenWithOldDwell" methodname="DamageRejectsInvalidOrRemovedLoadEvenWithOldDwell" classname="Elemental.Tests.EditMode.EarthSustainedCrushTests" runstate="Runnable" seed="1918936833" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.000242" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2115" name="SeparateSubThresholdStonesCombineOnlyAfterSustainedLoad" fullname="Elemental.Tests.EditMode.EarthSustainedCrushTests.SeparateSubThresholdStonesCombineOnlyAfterSustainedLoad" methodname="SeparateSubThresholdStonesCombineOnlyAfterSustainedLoad" classname="Elemental.Tests.EditMode.EarthSustainedCrushTests" runstate="Runnable" seed="1219477913" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.000239" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2112" name="SettledMeasuredStackForceSurvivesSleepWithoutRetainingLandingSpike" fullname="Elemental.Tests.EditMode.EarthSustainedCrushTests.SettledMeasuredStackForceSurvivesSleepWithoutRetainingLandingSpike" methodname="SettledMeasuredStackForceSurvivesSleepWithoutRetainingLandingSpike" classname="Elemental.Tests.EditMode.EarthSustainedCrushTests" runstate="Runnable" seed="1713085907" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.000635" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2113" name="SleepingImpactSpikeIsCappedOnceAcrossAllBonePairs" fullname="Elemental.Tests.EditMode.EarthSustainedCrushTests.SleepingImpactSpikeIsCappedOnceAcrossAllBonePairs" methodname="SleepingImpactSpikeIsCappedOnceAcrossAllBonePairs" classname="Elemental.Tests.EditMode.EarthSustainedCrushTests" runstate="Runnable" seed="507177430" result="Passed" start-time="2026-09-08 12:06:14Z" end-time="2026-09-08 12:06:14Z" duration="0.000303" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\StoneLethalityEdit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

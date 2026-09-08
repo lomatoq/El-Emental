@@ -14,7 +14,7 @@ namespace Elemental.Runtime.World
         [SerializeField] private Vector2 speedRange = new Vector2(24f, 42f);
         [SerializeField] private Vector2 radiusRange = new Vector2(0.25f, 0.9f);
         [SerializeField] private Vector2 craterRadiusRange = new Vector2(0.4f, 2f);
-        [SerializeField, Min(1f)] private float density = 1800f;
+        [SerializeField, HideInInspector, Min(1f)] private float density = 1800f;
         [SerializeField, Range(0, 2)] private int maximumTerrainEditsPerSecond = 2;
 
         public bool Enabled => enabled;

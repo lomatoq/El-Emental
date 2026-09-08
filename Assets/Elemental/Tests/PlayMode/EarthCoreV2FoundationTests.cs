@@ -276,7 +276,7 @@ namespace Elemental.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator ProductionCameraRayLocksAndQuicklyShovesVisibleWall()
+        public IEnumerator ProductionCameraRmbTapLaunchesVisibleWallCell()
         {
             const string scenePath = "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
             Scene scene = SceneManager.GetSceneByPath(scenePath);
@@ -321,7 +321,6 @@ namespace Elemental.Tests.PlayMode
             Assert.That(screen.z, Is.GreaterThan(0f), "The production camera must actually see the target wall.");
             Assert.That(screen.x, Is.InRange(0f, (float)Screen.width));
             Assert.That(screen.y, Is.InRange(0f, (float)Screen.height));
-            Vector3 casterBefore = motor.transform.position;
             Ray diagnosticRay = camera.ScreenPointToRay(screen);
             RaycastHit[] diagnosticHits = Physics.RaycastAll(
                 diagnosticRay, 200f, ~0, QueryTriggerInteraction.Ignore);
@@ -338,43 +337,39 @@ namespace Elemental.Tests.PlayMode
                     $"valid={resolved.IsValid}:caps={resolved.Capabilities}:" +
                     $"arenaSuppressed={arena?.CameraSuppressed}; ");
             }
-            input.ReplayBufferedForcePress(new Vector2(screen.x, screen.y));
-            Assert.That(executor.VectorFieldBody, Is.SameAs(wall.Body),
-                $"Production target ray: {targetSummary}");
-            Ray pushRay = camera.ScreenPointToRay(screen);
-            executor.UpdateVectorField(pushRay.direction, 0f);
-            input.ReplayBufferedForceRelease(new Vector2(screen.x, screen.y));
-            Assert.That(executor.IsVectorFieldActive, Is.False,
-                "The 80 ms chord fallback must release the locked RMB field atomically.");
-            yield return new WaitForFixedUpdate();
-
-            // Keep the established strength check independent from the chord
-            // replay assertion above: reacquire the wall through the production
-            // camera after the compact pulse, then exercise the canonical shove.
-            screen = camera.WorldToScreenPoint(wall.Body.worldCenterOfMass);
-            Vector3 wallBefore = wall.transform.position;
-            bool canonicalLock = input.TryBeginPushAtScreenPoint(new float2(screen.x, screen.y));
-            if (canonicalLock)
+            int releasedCells = 0;
+            uint launchedId = 0;
+            Vector3 launchVelocity = Vector3.zero;
+            void ObserveRelease(Elemental.Simulation.Magic.EarthBodyReleasedEvent value)
             {
-                pushRay = camera.ScreenPointToRay(screen);
-                executor.UpdateVectorField(pushRay.direction, 0f);
-                executor.ReleaseVectorField();
+                releasedCells++;
+                launchedId = value.BodyId;
+                launchVelocity = value.Velocity;
             }
-            for (int tick = 0; tick < 14; tick++) yield return new WaitForFixedUpdate();
-
+            executor.Events.EarthBodyReleased += ObserveRelease;
+            Vector3 wallBefore = wall.transform.position;
+            input.ReplayBufferedForcePress(new Vector2(screen.x, screen.y));
+            Assert.That(executor.VectorFieldBody, Is.Null,
+                $"A pending RMB wall tap must not grip the entire wall. Production ray: {targetSummary}");
+            input.ReplayBufferedForceRelease(new Vector2(screen.x, screen.y));
+            executor.Events.EarthBodyReleased -= ObserveRelease;
+            Assert.That(releasedCells, Is.EqualTo(1));
+            Assert.That(executor.IsVectorFieldActive, Is.False);
+            EarthPieceRuntime launched = null;
+            foreach (EarthPieceRuntime piece in wallPool.GetComponentsInChildren<EarthPieceRuntime>())
+                if (piece.StableEarthId == launchedId) launched = piece;
+            Assert.That(launched, Is.Not.Null);
+            Assert.That(launchVelocity.magnitude, Is.GreaterThan(30f));
+            Vector3 pieceBefore = launched.transform.position;
+            for (int tick = 0; tick < 6; tick++) yield return new WaitForFixedUpdate();
+            float pieceTravel = Vector3.Distance(launched.transform.position, pieceBefore);
             float wallTravel = Vector3.Distance(wall.transform.position, wallBefore);
-            float casterTravel = Vector3.Distance(motor.transform.position, casterBefore);
             wallPool.ReleaseTransient(wall);
             yield return new WaitForFixedUpdate();
             if (bot != null) bot.enabled = botWasEnabled;
             if (loadedForTest) yield return SceneManager.UnloadSceneAsync(scene);
-
-            Assert.That(canonicalLock, Is.True,
-                "The wall must remain targetable after an atomically replayed RMB tap.");
-            Assert.That(wallTravel, Is.GreaterThan(0.25f),
-                $"A quick wall push must be immediately readable (travel {wallTravel:F3} m).");
-            Assert.That(casterTravel, Is.LessThan(wallTravel * 0.65f),
-                "The spell must move the wall instead of feeding the impulse back into the caster.");
+            Assert.That(pieceTravel, Is.GreaterThan(.25f), "The selected cell must visibly leave its wall.");
+            Assert.That(wallTravel, Is.LessThan(.001f), "RMB tap must keep the wall foundation anchored.");
         }
 
         private static float MeasureSupportClearance(

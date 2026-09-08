@@ -1,7 +1,9 @@
 using UnityEngine;
+using Elemental.Presentation.VFX;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.Rendering.RendererUtils;
 
 namespace Elemental.Presentation.Rendering
 {
@@ -40,6 +42,8 @@ namespace Elemental.Presentation.Rendering
             private static readonly int CameraDepthTextureId =
                 Shader.PropertyToID("_CameraDepthTexture");
             private readonly Material _material;
+            private static readonly int HeatSourceId = Shader.PropertyToID("_ElementalHeatSource");
+            private static readonly int HeatTexelSizeId = Shader.PropertyToID("_ElementalHeatSource_TexelSize");
 
             public AtmospherePass(Material material)
             {
@@ -52,6 +56,7 @@ namespace Elemental.Presentation.Rendering
             {
                 if (_material == null) return;
                 UniversalResourceData resources = frameData.Get<UniversalResourceData>();
+                var targets = frameData.Get<UniversalCameraData>().camera.GetComponent<EarthSeismicCameraTargets>();
                 if (resources.isActiveTargetBackBuffer) return;
                 TextureHandle source = resources.activeColorTexture;
                 TextureHandle depth = resources.activeDepthTexture;
@@ -60,14 +65,26 @@ namespace Elemental.Presentation.Rendering
                 destinationDescriptor.name = "Elemental Atmosphere Color";
                 destinationDescriptor.clearBuffer = false;
                 TextureHandle destination = renderGraph.CreateTexture(destinationDescriptor);
+                bool drawClouds=ValleyCloudParticles.HasActive || ProceduralCloudBanks.HasActive || Elemental.Presentation.Fire.ArenaColumnFires.HasActive;
+                RendererListHandle cloudList=default;
+                if(drawClouds)
+                {
+                    var desc=new RendererListDesc(new ShaderTagId("ElementalValleyCloud"),frameData.Get<UniversalRenderingData>().cullResults,frameData.Get<UniversalCameraData>().camera)
+                    {renderQueueRange=RenderQueueRange.transparent,sortingCriteria=SortingCriteria.CommonTransparent};
+                    cloudList=renderGraph.CreateRendererList(desc);
+                }
                 using (IRasterRenderGraphBuilder builder =
                        renderGraph.AddRasterRenderPass<AtmospherePassData>(
                            "Elemental Atmosphere Fullscreen",
                            out AtmospherePassData passData))
                 {
+                    passData.clouds=cloudList;passData.drawClouds=drawClouds;
+                    if(drawClouds)builder.UseRendererList(cloudList);
                     passData.source = source;
                     passData.depth = depth;
                     passData.material = _material;
+                    passData.targets = targets != null && targets.isActiveAndEnabled && targets.Blend > 0f
+                        ? targets.Targets : null;
                     passData.blitTexelSize = new Vector4(
                         1f / Mathf.Max(1, destinationDescriptor.width),
                         1f / Mathf.Max(1, destinationDescriptor.height),
@@ -75,6 +92,7 @@ namespace Elemental.Presentation.Rendering
                         destinationDescriptor.height);
                     builder.UseTexture(source, AccessFlags.Read);
                     builder.UseTexture(depth, AccessFlags.Read);
+                    if(resources.mainShadowsTexture.IsValid())builder.UseTexture(resources.mainShadowsTexture,AccessFlags.Read);
                     builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
                     builder.AllowGlobalStateModification(true);
                     builder.SetRenderFunc(static (
@@ -93,16 +111,74 @@ namespace Elemental.Presentation.Rendering
                             BlitTextureTexelSizeId,
                             data.blitTexelSize);
                         CoreUtils.DrawFullScreen(context.cmd, data.material, null, 0);
+                        // Dedicated sprite geometry draws after the opaque sky veil, in
+                        // this same raster pass. Its custom LightMode excludes normal URP
+                        // transparent drawing; exact scene depth is sampled in its shader.
+                        if(data.drawClouds)context.cmd.DrawRendererList(data.clouds);
+                        // Draw hostile meshes after the world recolour. Ignore wall depth
+                        // and ordinary occlusion culling; never include the local player.
+                        if (data.targets != null)
+                            foreach (EarthSeismicCameraTargets.Target target in data.targets)
+                            {
+                                Renderer renderer = target.Renderer;
+                                if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy) continue;
+                                for (int submesh = 0; submesh < target.SubmeshCount; submesh++)
+                                    context.cmd.DrawRenderer(renderer, data.material, submesh, 1);
+                            }
                     });
                 }
                 resources.cameraColor = destination;
+                if (Elemental.Presentation.Fire.FireCpuMeshBackend.HasVisibleGroups)
+                {
+                    // Read the completed atmosphere/cloud/flame image into a
+                    // separate target: never sample the current attachment.
+                    var heatDescription = destinationDescriptor;
+                    heatDescription.name = "Elemental Heat Haze Color";
+                    var heatOutput = renderGraph.CreateTexture(heatDescription);
+                    var heatListDescription = new RendererListDesc(new ShaderTagId("ElementalFireHeat"),
+                        frameData.Get<UniversalRenderingData>().cullResults,
+                        frameData.Get<UniversalCameraData>().camera)
+                    { renderQueueRange = RenderQueueRange.transparent, sortingCriteria = SortingCriteria.CommonTransparent };
+                    var heatList = renderGraph.CreateRendererList(heatListDescription);
+                    using (var builder = renderGraph.AddRasterRenderPass<HeatPassData>(
+                        "Elemental Fire Heat Haze", out var data))
+                    {
+                        data.source = destination; data.depth = depth; data.renderers = heatList;
+                        data.texelSize = new Vector4(1f / destinationDescriptor.width,
+                            1f / destinationDescriptor.height, destinationDescriptor.width, destinationDescriptor.height);
+                        builder.UseTexture(destination, AccessFlags.Read);
+                        builder.UseTexture(depth, AccessFlags.Read);
+                        builder.UseRendererList(heatList);
+                        builder.SetRenderAttachment(heatOutput, 0, AccessFlags.Write);
+                        builder.AllowGlobalStateModification(true);
+                        builder.SetRenderFunc(static (HeatPassData pass, RasterGraphContext context) =>
+                        {
+                            Blitter.BlitTexture(context.cmd, pass.source, new Vector4(1, 1, 0, 0), 0, false);
+                            context.cmd.SetGlobalTexture(HeatSourceId, pass.source);
+                            context.cmd.SetGlobalVector(HeatTexelSizeId, pass.texelSize);
+                            context.cmd.SetGlobalTexture(CameraDepthTextureId, pass.depth);
+                            context.cmd.DrawRendererList(pass.renderers);
+                        });
+                    }
+                    resources.cameraColor = heatOutput;
+                }
+            }
+
+            private sealed class HeatPassData
+            {
+                public TextureHandle source, depth;
+                public RendererListHandle renderers;
+                public Vector4 texelSize;
             }
 
             private sealed class AtmospherePassData
             {
+                public RendererListHandle clouds;
+                public bool drawClouds;
                 public TextureHandle source;
                 public TextureHandle depth;
                 public Material material;
+                public EarthSeismicCameraTargets.Target[] targets;
                 public Vector4 blitTexelSize;
             }
         }

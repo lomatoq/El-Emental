@@ -73,8 +73,32 @@ namespace Elemental.Presentation.VFX
             {
                 UnityCamera camera = cameras[index];
                 if (camera == null || camera.cameraType != CameraType.Game) continue;
-                if (camera.GetComponent<EarthChargeCameraLookdev>() == null)
+                var legacyLook = camera.GetComponent<EarthChargeCameraLookdev>();
+                if (camera.GetComponent<EarthChargeCameraLookdevV2>() != null)
+                {
+                    // Additive scene loading runs after V2 Awake. Do not install a
+                    // second lens writer after V2 already retired the legacy one.
+                    if (legacyLook != null) legacyLook.enabled = false;
+                }
+                else if (legacyLook == null)
                     camera.gameObject.AddComponent<EarthChargeCameraLookdev>();
+                EarthSeismicVision vision = null;
+                var hostileRenderers = new List<Renderer>();
+                foreach (GameObject root in camera.gameObject.scene.GetRootGameObjects())
+                {
+                    foreach (EarthMvpDuelController duel in root.GetComponentsInChildren<EarthMvpDuelController>(true))
+                    {
+                        if (duel.PlayerTransform == null || duel.BotTransform == null) continue;
+                        vision = duel.PlayerTransform.GetComponent<EarthSeismicVision>();
+                        hostileRenderers.AddRange(duel.BotTransform.GetComponentsInChildren<Renderer>(true));
+                    }
+                }
+                if (vision != null)
+                {
+                    var targets = camera.GetComponent<EarthSeismicCameraTargets>();
+                    if (targets == null) targets = camera.gameObject.AddComponent<EarthSeismicCameraTargets>();
+                    targets.Configure(vision, hostileRenderers);
+                }
             }
         }
     }

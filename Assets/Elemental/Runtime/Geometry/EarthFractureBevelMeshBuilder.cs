@@ -12,6 +12,7 @@ namespace Elemental.Runtime.Geometry
         {
             public Vector3 Point;
             public float ShortestEdge = float.PositiveInfinity;
+            public float WidthScale = 1f;
             public readonly List<Vector3> Normals = new();
             public readonly List<Vector3> Inset = new();
         }
@@ -27,7 +28,8 @@ namespace Elemental.Runtime.Geometry
             profile != null ? profile.Width : EarthStoneBevelProfile.DefaultWidth,
             profile != null ? profile.MaxLocalEdgeFraction : EarthStoneBevelProfile.DefaultMaxLocalEdgeFraction);
 
-        public static Mesh Create(Mesh source, float width = 0.02f, float edgeFraction = 0.08f)
+        public static Mesh Create(Mesh source, float width = 0.02f, float edgeFraction = 0.08f,
+            uint cornerSeed = 0u, float cornerVariation = 0f, float bevelAlpha = .1f)
         {
             if (source == null || !source.isReadable) return source;
             Vector3[] points = source.vertices;
@@ -78,6 +80,14 @@ namespace Elemental.Runtime.Geometry
             width = float.IsFinite(width) ? Mathf.Max(0f, width) : EarthStoneBevelProfile.DefaultWidth;
             edgeFraction = float.IsFinite(edgeFraction) ? Mathf.Clamp(edgeFraction, 0f, .25f)
                 : EarthStoneBevelProfile.DefaultMaxLocalEdgeFraction;
+            cornerVariation = float.IsFinite(cornerVariation) ? Mathf.Clamp01(cornerVariation) : 0f;
+            for (int index = 0; index < corners.Count && cornerVariation > 0f; index++)
+            {
+                uint hash = (uint)index ^ cornerSeed ^ 0x9E3779B9u;
+                hash ^= hash >> 16; hash *= 0x7FEB352Du; hash ^= hash >> 15;
+                float sample = (hash & 0xFFFFu) / 65535f;
+                corners[index].WidthScale = Mathf.Lerp(1f, Mathf.Lerp(.45f, 1.65f, sample), cornerVariation);
+            }
             var vertices = new List<Vector3>();
             var normals = new List<Vector3>();
             var uv = new List<Vector2>();
@@ -145,7 +155,7 @@ namespace Elemental.Runtime.Geometry
                 {
                     output[submesh].Add(vertices.Count); vertices.Add(p); normals.Add(n);
                     uv.Add(new Vector2(p.x, p.z));
-                    colors.Add(sourceColors.Length == points.Length ? new Color(1f, 0f, 0f, 0.1f) : Color.white);
+                    colors.Add(sourceColors.Length == points.Length ? new Color(1f, 0f, 0f, Mathf.Clamp01(bevelAlpha)) : Color.white);
                     for (int channel = 0; channel < extraUv.Length; channel++) extraUv[channel]?.Add(Vector4.zero);
                 }
             }
@@ -167,7 +177,8 @@ namespace Elemental.Runtime.Geometry
             Vector3 inward = Vector3.zero;
             for (int i = 0; i < corner.Normals.Count; i++)
                 inward -= Vector3.ProjectOnPlane(corner.Normals[i], faceNormal);
-            Vector3 result = corner.Point + inward.normalized * Mathf.Min(width, corner.ShortestEdge * edgeFraction);
+            Vector3 result = corner.Point + inward.normalized *
+                Mathf.Min(width * corner.WidthScale, corner.ShortestEdge * edgeFraction * corner.WidthScale);
             bool exists = false;
             for (int i = 0; i < corner.Inset.Count; i++)
                 if ((corner.Inset[i] - result).sqrMagnitude < 0.0000000001f) { exists = true; break; }

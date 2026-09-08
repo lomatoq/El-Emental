@@ -52,3 +52,24 @@ MonoBehaviour:
   localizedArmChestMaxAngle: 14
   localizedHeadMaxAngle: 7
   localizedHipsLegWeight: 0.12
+  physicalWeakDriveSeconds: 0.12
+  physicalRecoverySeconds: 0.5
+  physicalParentTransfer: 0.4
+  mediumStunSeconds: 0.24
+  physicalDriveSpring: 90
+  physicalDriveDamping: 0.9
+  physicalWeakDriveScale: 0.06
+  physicalMaximumDisplacement: 0.12
+  physicalMaximumAngle: 28
+  physicalHeadLimits:
+    displacement: 0.065
+    angle: 18
+  physicalTorsoLimits:
+    displacement: 0.12
+    angle: 28
+  physicalArmLimits:
+    displacement: 0.12
+    angle: 28
+  physicalLegLimits:
+    displacement: 0.08
+    angle: 22

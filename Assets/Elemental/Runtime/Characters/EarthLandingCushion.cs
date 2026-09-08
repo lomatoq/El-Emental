@@ -31,10 +31,24 @@ namespace Elemental.Runtime.Characters
         private Vector3 _landingUp;
         private bool _emergencePresented;
         private float _nextDustAt;
+        private float _brakingAcceleration;
+        private float _incomingSpeed;
+        private float _fractureElapsed;
+        private const int ChunkCount = 12;
+        private readonly Transform[] _chunks = new Transform[ChunkCount];
+        private readonly Mesh[] _chunkMeshes = new Mesh[ChunkCount];
+        private readonly Vector3[] _chunkVelocities = new Vector3[ChunkCount];
+        private readonly Vector3[] _chunkScales = new Vector3[ChunkCount];
+        private readonly Vector3[] _chunkPositions = new Vector3[ChunkCount];
+        private readonly Quaternion[] _chunkRotations = new Quaternion[ChunkCount];
+        public bool HasFractured { get; private set; }
+        public float IncomingLandingSpeed => _incomingSpeed;
+        public int VisibleChunkCount => HasFractured && cushionVisual != null && cushionVisual.gameObject.activeSelf
+            ? ChunkCount : 0;
 
         public bool IsHolding => _holding;
         public bool IsCushioning => _cushioning;
-        public bool SuppressesHardLanding => _cushioning || Time.time <= _safeLandingUntil;
+        public bool SuppressesHardLanding => (_holding && _cushioning) || Time.time <= _safeLandingUntil;
         public Vector3 PredictedLandingPoint => _landingPoint;
         public EarthLandingPrediction LastPrediction { get; private set; }
         public float LastLandingSpeed { get; private set; }
@@ -75,6 +89,7 @@ namespace Elemental.Runtime.Characters
             profile = configuredProfile;
             cushionVisual = configuredVisual;
             surfaceQueries = configuredSurfaceQueries;
+            PrepareStoneChunks();
             if (cushionVisual != null) cushionVisual.gameObject.SetActive(false);
         }
 
@@ -90,6 +105,10 @@ namespace Elemental.Runtime.Characters
             _retreatElapsed = 0f;
             _emergencePresented = false;
             _nextDustAt = 0f;
+            _incomingSpeed = 0f;
+            _brakingAcceleration = 0f;
+            HasFractured = false;
+            ResetStoneChunks();
             return true;
         }
 
@@ -105,6 +124,7 @@ namespace Elemental.Runtime.Characters
             if (targetBody == null) targetBody = GetComponent<Rigidbody>();
             if (motor == null) motor = GetComponent<PlanetMotor>();
             if (puppet == null) puppet = GetComponent<ActiveRagdollPuppet>();
+            PrepareStoneChunks();
         }
 
         private void FixedUpdate()
@@ -129,16 +149,26 @@ namespace Elemental.Runtime.Characters
                     surfaceRadius,
                     GravityMagnitude,
                     PredictionSeconds);
-                if (!LastPrediction.Valid) return;
-                _landingPoint = ToVector3(LastPrediction.SurfacePoint);
-                _landingUp = (_landingPoint - center).normalized;
-                LastLandingSurface = default;
-                if (TryResolveLandingSurface(
-                        targetBody.worldCenterOfMass, _landingPoint, out EarthSurfaceSample sample))
+                // Once contact owns the cushion, a stale/invalid ballistic
+                // prediction cannot interrupt braking or strand its visual.
+                if (!LastPrediction.Valid && !_cushioning) return;
+                if (!_cushioning)
                 {
-                    LastLandingSurface = sample;
-                    _landingPoint = ToVector3(sample.Point);
-                    _landingUp = ToVector3(sample.Normal);
+                    _landingPoint = ToVector3(LastPrediction.SurfacePoint);
+                    _landingUp = (_landingPoint - center).normalized;
+                    LastLandingSurface = default;
+                    if (TryResolveLandingSurface(
+                        targetBody.worldCenterOfMass, _landingPoint, out EarthSurfaceSample sample))
+                    {
+                        LastLandingSurface = sample;
+                        _landingPoint = ToVector3(sample.Point);
+                        _landingUp = ToVector3(sample.Normal);
+                    }
+                }
+                else
+                {
+                    _landingPoint += ToVector3(LastLandingSurface.Velocity) * Time.fixedDeltaTime;
+                    AlignCushionUnderFeet();
                 }
                 ShowPrediction();
                 if (!_emergencePresented)
@@ -148,20 +178,26 @@ namespace Elemental.Runtime.Characters
                         1f, PillarWidth * .5f, dustCount: 72, chipCount: 18);
                 }
 
-                float clearance = Vector3.Dot(
-                    targetBody.worldCenterOfMass - _landingPoint, _landingUp) - 1.05f;
+                float clearance = Vector3.Dot(motor.SupportFeetPoint(_landingUp) - _landingPoint, _landingUp);
                 float currentUpSpeed = Vector3.Dot(targetBody.linearVelocity -
                     ToVector3(LastLandingSurface.Velocity), _landingUp);
-                if (clearance <= ActivationHeight && currentUpSpeed < -MaximumLandingSpeed)
+                if (clearance <= Mathf.Min(ActivationHeight, PillarHeight + 0.08f) &&
+                    currentUpSpeed < -MaximumLandingSpeed)
                 {
-                    float velocityChange = EarthLandingCushionSolver.RequiredUpwardVelocityChange(
-                        currentUpSpeed,
-                        MaximumLandingSpeed);
+                    if (!_cushioning)
+                    {
+                        AlignCushionUnderFeet();
+                        _incomingSpeed = Mathf.Max(0f, -currentUpSpeed);
+                        _brakingAcceleration = EarthLandingCushionSolver.BrakingAcceleration(
+                            _incomingSpeed, clearance, MaximumLandingSpeed, CompressionSeconds);
+                    }
+                    float velocityChange = EarthLandingCushionSolver.CompressionVelocityChange(
+                        currentUpSpeed, clearance, MaximumLandingSpeed, _brakingAcceleration,
+                        GravityMagnitude, Time.fixedDeltaTime);
                     ApplyVelocityChange(_landingUp * velocityChange);
                     LastLandingSpeed = Mathf.Max(0f, -(currentUpSpeed + velocityChange));
                     _cushioning = true;
                     _safeLandingUntil = Time.time + 0.75f;
-                    motor.BeginExternalLaunch(3);
                 }
 
                 if (_cushioning)
@@ -185,12 +221,19 @@ namespace Elemental.Runtime.Characters
                 motor.SuppressLandingRoll(.9f);
                 materialFeedback?.Emit(EarthMaterialFeedbackKind.Land, _landingPoint, _landingUp,
                     1f, PillarWidth * .6f, dustCount: 80, chipCount: 20);
+                if (_incomingSpeed >= (profile != null ? profile.FractureImpactSpeed : 12f))
+                    FractureStoneChunks();
             }
         }
 
         private void Update()
         {
             if (!_cushioning || _holding || cushionVisual == null || !cushionVisual.gameObject.activeSelf) return;
+            if (HasFractured)
+            {
+                UpdateFracturedChunks(Time.deltaTime);
+                return;
+            }
             _retreatElapsed += Time.deltaTime;
             float retreat = Mathf.Clamp01(_retreatElapsed / RetreatSeconds);
             Vector3 scale = cushionVisual.localScale;
@@ -216,10 +259,19 @@ namespace Elemental.Runtime.Characters
         private void CompressVisual(float clearance)
         {
             if (cushionVisual == null) return;
-            float compression = 1f - Mathf.Clamp01(clearance / ActivationHeight);
-            float height = Mathf.Lerp(PillarHeight, PillarHeight * 0.18f, compression);
+            float height = EarthLandingCushionSolver.CompressionHeight(clearance, PillarHeight);
             cushionVisual.localScale = new Vector3(PillarWidth, height, PillarWidth);
             cushionVisual.position = _landingPoint + (_landingUp * height * 0.5f);
+        }
+
+        private void AlignCushionUnderFeet()
+        {
+            // Braking lengthens flight time, so the old ballistic X/Z landing
+            // prediction is no longer valid. Keep the cosmetic footprint under
+            // the actual feet on the captured support plane; locomotion stays
+            // authoritative and receives no lateral correction from the cushion.
+            Vector3 feet = motor.SupportFeetPoint(_landingUp);
+            _landingPoint += Vector3.ProjectOnPlane(feet - _landingPoint, _landingUp);
         }
 
         private void ApplyVelocityChange(Vector3 velocityChange)
@@ -228,12 +280,121 @@ namespace Elemental.Runtime.Characters
             else targetBody.AddForce(velocityChange, ForceMode.VelocityChange);
         }
 
+        private void PrepareStoneChunks()
+        {
+            if (!Application.isPlaying || cushionVisual == null || _chunks[0] != null) return;
+            MeshRenderer original = cushionVisual.GetComponent<MeshRenderer>();
+            Material stoneMaterial = original != null ? original.sharedMaterial : null;
+            if (original != null) original.enabled = false;
+            for (int index = 0; index < ChunkCount; index++)
+            {
+                var chunk = new GameObject($"Cushion stone {index + 1}");
+                chunk.transform.SetParent(cushionVisual, false);
+                _chunks[index] = chunk.transform;
+                _chunkMeshes[index] = EarthWebWaveCellMeshFactory.Create(1201 + index);
+                chunk.AddComponent<MeshFilter>().sharedMesh = _chunkMeshes[index];
+                chunk.AddComponent<MeshRenderer>().sharedMaterial = stoneMaterial;
+            }
+            ResetStoneChunks();
+        }
+
+        private void ResetStoneChunks()
+        {
+            for (int index = 0; index < ChunkCount; index++)
+            {
+                Transform chunk = _chunks[index];
+                if (chunk == null) continue;
+                chunk.localPosition = new Vector3((index % 2 == 0 ? -1f : 1f) * 0.23f,
+                    (index / 4 - 1) / 3f, ((index / 2) % 2 == 0 ? -1f : 1f) * 0.22f);
+                chunk.localRotation = Quaternion.Euler((index % 3 - 1) * 4f,
+                    index * 43f, (index % 2 == 0 ? -1f : 1f) * 3f);
+                chunk.localScale = new Vector3(0.72f, 0.37f, 0.72f);
+                chunk.gameObject.SetActive(true);
+            }
+        }
+
+        private void FractureStoneChunks()
+        {
+            if (cushionVisual == null || _chunks[0] == null) return;
+            HasFractured = true;
+            _fractureElapsed = 0f;
+            for (int index = 0; index < ChunkCount; index++)
+            {
+                _chunkPositions[index] = _chunks[index].position;
+                _chunkRotations[index] = _chunks[index].rotation;
+                Vector3 scale = _chunks[index].lossyScale;
+                scale.y = Mathf.Max(0.22f, scale.y);
+                _chunkScales[index] = scale;
+            }
+            cushionVisual.localScale = Vector3.one;
+            Vector3 inherited = Vector3.ProjectOnPlane(targetBody.linearVelocity, _landingUp) * 0.22f;
+            for (int index = 0; index < ChunkCount; index++)
+            {
+                Transform chunk = _chunks[index];
+                chunk.SetPositionAndRotation(_chunkPositions[index], _chunkRotations[index]);
+                chunk.localScale = _chunkScales[index];
+                Vector3 outward = Vector3.ProjectOnPlane(chunk.position - cushionVisual.position, _landingUp);
+                _chunkVelocities[index] = inherited + outward.normalized * (1.8f + index * 0.13f) +
+                                          _landingUp * (1.4f + (index % 3) * 0.35f);
+            }
+            materialFeedback?.Emit(EarthMaterialFeedbackKind.Fracture, _landingPoint, _landingUp,
+                1f, PillarWidth * 0.8f, dustCount: 220, chipCount: 64);
+        }
+
+        private void UpdateFracturedChunks(float deltaSeconds)
+        {
+            float previousElapsed = _fractureElapsed;
+            _fractureElapsed += deltaSeconds;
+            // A second small billow makes the collapse substantial without
+            // demanding all particles from the shared budget in the contact frame.
+            if (previousElapsed < .08f && _fractureElapsed >= .08f)
+                materialFeedback?.Emit(EarthMaterialFeedbackKind.Fracture, _landingPoint, _landingUp,
+                    .85f, PillarWidth, dustCount: 150, chipCount: 48);
+            for (int index = 0; index < ChunkCount; index++)
+            {
+                Transform chunk = _chunks[index];
+                if (chunk == null) continue;
+                _chunkVelocities[index] -= _landingUp * (GravityMagnitude * deltaSeconds);
+                Vector3 next = chunk.position + _chunkVelocities[index] * deltaSeconds;
+                float height = Vector3.Dot(next - _landingPoint, _landingUp);
+                if (height < 0.11f)
+                {
+                    next += _landingUp * (0.11f - height);
+                    _chunkVelocities[index] = Vector3.ProjectOnPlane(_chunkVelocities[index], _landingUp) *
+                                              Mathf.Exp(-7f * deltaSeconds);
+                }
+                chunk.position = next;
+                if (height > 0.11f) chunk.Rotate(new Vector3(37f, 53f, 29f) * deltaSeconds, Space.Self);
+                chunk.localScale = _chunkScales[index] * (1f - Mathf.Clamp01((_fractureElapsed - 1.2f) / 0.4f));
+            }
+            if (_fractureElapsed < 1.6f) return;
+            cushionVisual.gameObject.SetActive(false);
+            _cushioning = false;
+        }
+
+        private void OnDisable()
+        {
+            _holding = _cushioning = false;
+            _safeLandingUntil = 0f;
+            if (cushionVisual != null) cushionVisual.gameObject.SetActive(false);
+        }
+
+        private void OnDestroy()
+        {
+            for (int index = 0; index < ChunkCount; index++)
+            {
+                if (_chunks[index] != null) Destroy(_chunks[index].gameObject);
+                if (_chunkMeshes[index] != null) Destroy(_chunkMeshes[index]);
+            }
+        }
+
         private float PredictionSeconds => profile != null ? profile.PredictionSeconds : 4f;
         private float ActivationHeight => profile != null ? profile.ActivationHeight : 3.2f;
         private float MaximumLandingSpeed => profile != null ? profile.MaximumLandingSpeed : 4f;
         private float PillarHeight => profile != null ? profile.PillarHeight : 2.4f;
         private float PillarWidth => profile != null ? profile.PillarWidth : 1.7f;
         private float RetreatSeconds => profile != null ? profile.RetreatSeconds : 0.42f;
+        private float CompressionSeconds => profile != null ? profile.CompressionSeconds : 0.28f;
         private float GravityMagnitude => profile != null ? profile.GravityMagnitude : 14f;
         private static float3 ToFloat3(Vector3 value) => new float3(value.x, value.y, value.z);
         private static Vector3 ToVector3(float3 value) => new Vector3(value.x, value.y, value.z);
