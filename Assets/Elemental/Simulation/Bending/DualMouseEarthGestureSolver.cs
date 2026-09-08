@@ -102,6 +102,7 @@ namespace Elemental.Simulation.Bending
         }
 
         public bool OwnsInput => _state != State.Idle;
+        public bool CanYieldPendingForce => _state == State.Idle || _state == State.PendingForce;
         public float CrestCharge01 => _state == State.Chord &&
             math.length(_crestDelta) >= CrestMinimumTravelViewport
             ? math.saturate(math.length(_crestDelta) / 0.23f) : 0f;

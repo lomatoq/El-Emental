@@ -312,6 +312,15 @@ namespace Elemental.Tests.EditMode
         public void PremiumVisualWaveSeedVariationStaysInsideSevenPercent()
         {
             EarthPillarWaveVisualTuning tuning = EarthPillarWaveVisualTuning.PremiumDefault;
+            var unvaried = new EarthPillarWaveVisualTuning(tuning.PrecompressionSeconds,
+                tuning.PrecompressionDepth01, tuning.RiseSeconds, tuning.Overshoot01,
+                tuning.SettleSeconds, tuning.HoldSeconds, tuning.RetreatSeconds,
+                tuning.TiltDegrees, tuning.SettleFrequencyHz, tuning.SettleDamping, 0f);
+            // Seed variation is relative to the animated envelope, which includes
+            // precompression lean; it is not relative to the raw 6-degree setting.
+            float reference = Mathf.Abs(EarthPillarWaveSolver.EvaluateVisualMotion(
+                tuning.RiseSeconds * .5f, .30f, .05f, .32f,
+                WaveMotionMode.PremiumVisual, in unvaried, 1u).TiltDegrees);
             for (uint seed = 1u; seed <= 64u; seed++)
             {
                 EarthPillarWaveVisualSample sample = EarthPillarWaveSolver.EvaluateVisualMotion(
@@ -322,7 +331,7 @@ namespace Elemental.Tests.EditMode
                     WaveMotionMode.PremiumVisual,
                     in tuning,
                     seed);
-                Assert.That(Mathf.Abs(sample.TiltDegrees), Is.InRange(5.58f, 6.42f));
+                Assert.That(Mathf.Abs(sample.TiltDegrees), Is.InRange(reference * .93f, reference * 1.07f));
             }
         }
     }

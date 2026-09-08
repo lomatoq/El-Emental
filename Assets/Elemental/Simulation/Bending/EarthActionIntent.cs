@@ -23,7 +23,9 @@ namespace Elemental.Simulation.Bending
         VectorFieldPush = 18,
         PillarCharge = 19,
         StompStone = 20,
-        PillarCrest = 21
+        PillarCrest = 21,
+        GroundSlam = 22,
+        WallPush = 23
     }
 
     public readonly struct EarthActionIntent

@@ -13,7 +13,7 @@ namespace Elemental.Runtime.Physics
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(BoxCollider), typeof(Rigidbody))]
-    public sealed class EarthWall : MonoBehaviour, IEarthPhysicalTarget, IEarthReassemblableStructure, IEarthDamageableStructure, IEarthPluckableStructure
+    public sealed partial class EarthWall : MonoBehaviour, IEarthPhysicalTarget, IEarthReassemblableStructure, IEarthDamageableStructure, IEarthPluckableStructure
     {
         [SerializeField] private EarthMaterialFeedbackHub materialFeedback;
         private readonly EarthContactFrictionFeedback _frictionFeedback = new();
@@ -327,6 +327,8 @@ namespace Elemental.Runtime.Physics
             _stableElapsed = 0f;
             _fractureElapsed = 0f;
             _fractured = false;
+            ResetHeldPushState();
+            ResetIntactPresentation();
             _manualFracturePaused = false;
             _gestureDisassemblyProgress = 0f;
             _fractureOrigin = _surfacePosition;
@@ -362,6 +364,7 @@ namespace Elemental.Runtime.Physics
         public float ApplyMagicPush(Vector3 direction, float impulse)
         {
             if (impulse <= 0f) return 0f;
+            RevealCracks();
             Vector3 tangentDirection = Vector3.ProjectOnPlane(direction, _up).normalized;
             if (tangentDirection.sqrMagnitude < 0.5f) tangentDirection = _forward;
             _fractureBias = tangentDirection;
@@ -392,6 +395,7 @@ namespace Elemental.Runtime.Physics
         public float ApplyMagicLaunchVelocity(Vector3 direction, float targetSpeed)
         {
             if (_fractured || targetSpeed <= 0f) return 0f;
+            RevealCracks();
             Vector3 tangentDirection = Vector3.ProjectOnPlane(direction, _up).normalized;
             if (tangentDirection.sqrMagnitude < 0.5f) tangentDirection = _forward;
             ActivateDynamicPhysics();
@@ -407,6 +411,7 @@ namespace Elemental.Runtime.Physics
 
         public void OnEarthMagicGrabbed(EarthMagicGripKind grip)
         {
+            RevealCracks();
             _magicFieldActive = grip == EarthMagicGripKind.VectorField;
             if (_magicFieldActive && !_fractured)
             {
@@ -604,6 +609,8 @@ namespace Elemental.Runtime.Physics
             for (int index = 0; index < _bonds.Length; index++)
                 _structureRuntime.GetBondRuntime(index)?.Release();
             _fractured = false;
+            ResetHeldPushState();
+            ResetIntactPresentation();
             _manualFracturePaused = false;
             _gestureDisassemblyProgress = 0f;
             _cohesion?.ResetCohesion();
@@ -626,6 +633,7 @@ namespace Elemental.Runtime.Physics
 
         public bool ApplyRockImpact(Vector3 point, Vector3 direction, float impulse)
         {
+            if (impulse > 0f) RevealCracks();
             if (_damageWallId != WallId) { _impactDamage = default; _damageWallId = WallId; }
             if (!_impactDamage.Add(impulse) || _impactDamage.Impulse < MinimumRockImpactImpulse) return false;
             impulse = _impactDamage.Impulse;
@@ -641,7 +649,9 @@ namespace Elemental.Runtime.Physics
 
         public bool ApplyRockContact(Rigidbody source, Vector3 point, Vector3 direction, float impulse)
         {
-            if (source == null || source == _body || impulse < MinimumRockImpactImpulse) return false;
+            if (source == null || source == _body) return false;
+            if (impulse > 0f) RevealCracks();
+            if (impulse < MinimumRockImpactImpulse) return false;
             for (int i = 0; i < _impactSources.Length; i++)
                 if (_impactSources[i] == source && Time.fixedTime - _impactSourceTimes[i] <= .06f)
                     return false;
@@ -775,7 +785,7 @@ namespace Elemental.Runtime.Physics
             UpdateLaunchedCellCollisions();
         }
 
-        private void OnDisable() => ClearLaunchedCellCollisions();
+        private void OnDisable() { ClearLaunchedCellCollisions(); ResetHeldPushState(); }
 
         public bool SetMagicDisassemblyProgress(
             float phase01,
@@ -934,6 +944,7 @@ namespace Elemental.Runtime.Physics
                 if (_pendingColliderActivation) return;
             }
             if (_body == null) return;
+            TickHeldPush();
             if (!_body.isKinematic) StabilizeRootBody();
             if (!_fractured || _pieceBodies == null) return;
             if (_structureRuntime != null && _structureRuntime.IsConfigured)
@@ -961,6 +972,7 @@ namespace Elemental.Runtime.Physics
 
         private void StabilizeRootBody()
         {
+            if(_heldPushCoasting){StabilizeHeldPushBody();return;}
             if (_orientationMode == ConstructionOrientationMode.PreserveAuthoredFrame)
             {
                 // A construction authored on another structure owns its frame.
@@ -971,7 +983,7 @@ namespace Elemental.Runtime.Physics
                 _body.angularVelocity = Vector3.zero;
                 _body.rotation = _surfaceRotation;
                 Vector3 authoredVelocity = _body.linearVelocity;
-                float authoredDrag = _magicFieldActive ? MagicFieldSlideDrag : WallSlideDrag;
+                float authoredDrag = RootSlideDrag;
                 _body.AddForce(-authoredVelocity * authoredDrag, ForceMode.Acceleration);
                 if (authoredVelocity.magnitude > MaximumSlideSpeed)
                     _body.linearVelocity = Vector3.ClampMagnitude(authoredVelocity, MaximumSlideSpeed);
@@ -995,7 +1007,7 @@ namespace Elemental.Runtime.Physics
                 normalVelocity = 0f;
             }
             Vector3 tangentVelocity = Vector3.ProjectOnPlane(velocity, localUp);
-            float slideDrag = _magicFieldActive ? MagicFieldSlideDrag : WallSlideDrag;
+            float slideDrag = RootSlideDrag;
             _body.AddForce(-tangentVelocity * slideDrag, ForceMode.Acceleration);
             if (tangentVelocity.magnitude > MaximumSlideSpeed)
                 _body.linearVelocity = Vector3.ClampMagnitude(tangentVelocity, MaximumSlideSpeed) +

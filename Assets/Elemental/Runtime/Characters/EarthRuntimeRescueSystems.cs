@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Elemental.Runtime.Physics;
 using Elemental.Simulation.Characters;
 using Elemental.Simulation.Combat;
@@ -293,6 +293,7 @@ namespace Elemental.Runtime.Characters
         private PlanetMotor _motor;
         private Rigidbody _body;
         private EarthLandingCushion _landingCushion;
+        private EarthLandingSlam _landingSlam;
         private bool _wasSupported;
         private bool _hasObservedSupport;
         private float _minimumVerticalSpeed;
@@ -308,6 +309,7 @@ namespace Elemental.Runtime.Characters
             _motor = GetComponent<PlanetMotor>();
             _body = GetComponent<Rigidbody>();
             _landingCushion = GetComponent<EarthLandingCushion>();
+            _landingSlam = GetComponent<EarthLandingSlam>();
         }
 
         private void OnEnable()
@@ -361,8 +363,9 @@ namespace Elemental.Runtime.Characters
             {
                 LastLandingSpeed = Mathf.Max(0f, -_minimumVerticalSpeed);
                 LastInjectedSeverity = EarthHardLandingMath.ImpactSeverity(LastLandingSpeed);
-                bool cushionedLanding = _landingCushion != null &&
-                                         _landingCushion.SuppressesHardLanding;
+                _landingSlam ??= GetComponent<EarthLandingSlam>();
+                bool cushionedLanding = _landingCushion != null && _landingCushion.SuppressesHardLanding ||
+                                        _landingSlam != null && _landingSlam.SuppressesHardLanding;
                 bool emergingSupport = _motor.CurrentSupportFrame.IsValid &&
                                        _motor.CurrentSupportFrame.Emerging;
                 if (cushionedLanding)

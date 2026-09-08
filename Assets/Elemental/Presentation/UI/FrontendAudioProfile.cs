@@ -12,6 +12,8 @@ namespace Elemental.Presentation.UI
         [Min(.05f)] public float musicFadeSeconds=1.5f;
         [Min(.05f)] public float loopCrossfadeSeconds=3f;
         [Min(.01f)] public float panelAttackSeconds=.025f, panelReleaseSeconds=.15f;
+        [Tooltip("Начало звука движения: пропуск тишины исходного клипа, секунды")]
+        [Min(0)] public float panelStartOffsetSeconds=.044f;
         [Range(0,1)] public float pausedMusicGain=.65f;
     }
 }

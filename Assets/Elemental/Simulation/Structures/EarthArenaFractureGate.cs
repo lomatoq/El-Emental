@@ -6,7 +6,8 @@ namespace Elemental.Simulation.Structures
     {
         OrdinaryImpact = 0,
         MagicPluck = 1,
-        MeteorImpact = 2
+        MeteorImpact = 2,
+        LandingSlam = 3
     }
 
     public readonly struct EarthArenaFractureDecision
@@ -40,6 +41,9 @@ namespace Elemental.Simulation.Structures
             if (remaining == 0) return default;
             if (trigger == EarthArenaFractureTrigger.MeteorImpact)
                 return new EarthArenaFractureDecision(true, remaining);
+            if (trigger == EarthArenaFractureTrigger.LandingSlam)
+                return float.IsFinite(impulse) && impulse > 0f
+                    ? new EarthArenaFractureDecision(true, Math.Min(4, remaining)) : default;
             if (!ordinaryDamageEnabled) return default;
             if (trigger == EarthArenaFractureTrigger.MagicPluck)
                 return new EarthArenaFractureDecision(true, 1);

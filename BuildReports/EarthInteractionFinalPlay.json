@@ -1,0 +1,16 @@
+{
+    "unityVersion": "6000.5.7f1",
+    "utc": "2026-09-08T15:14:20.8586079Z",
+    "mode": "PlayMode",
+    "result": "Failed",
+    "total": 13,
+    "passed": 11,
+    "failed": 2,
+    "skipped": 0,
+    "inconclusive": 0,
+    "durationSeconds": 129.5523595,
+    "failures": [
+        "Elemental.Tests.PlayMode.EarthWallPushKeyboardProductionTests.PairedControlForceTargetsGroundWallOnceAndRespectsOcclusion:   Occluded input must not damage the fresh whole-wall target.\r\n  Expected: False\r\n  But was:  True\r\n",
+        "Elemental.Tests.PlayMode.RepairMouseProductionTests.HeldMiddleMouseClockwiseRimCircleActuallyRebuildsDamagedWall:   Holding the real MMB circle must finish exact physical repair.\r\n  Expected: 1\r\n  But was:  0\r\n"
+    ]
+}

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Elemental.Runtime.Physics;
 using Elemental.Simulation.Bending;
 using Elemental.Simulation.Matter;
@@ -121,6 +121,20 @@ namespace Elemental.Runtime.Characters
             if (LastColumnCount > 0)
                 CastCommitted?.Invoke(surface, Mathf.Clamp01(power01), LastColumnCount);
             return rejection == EarthTechniqueRejectReason.None;
+        }
+
+        // Called only after the landing adapter has accepted real support contact.
+        // The supplied point avoids the standing body's estimated 1.25m offset.
+        public bool TryCastLandingImpact(Vector3 point, Vector3 normal, float power01,
+            out EarthTechniqueRejectReason rejection)
+        {
+            if (casterBody == null || motor == null || wavePool == null || normal.sqrMagnitude < .5f)
+            { rejection = LastRejection = EarthTechniqueRejectReason.RuntimeUnavailable; return false; }
+            Vector3 up = normal.normalized;
+            LastColumnCount = wavePool.LaunchLandingPulse(point, up, motor.FacingForward, Mathf.Clamp01(power01), casterBody);
+            rejection = LastRejection = LastColumnCount > 0 ? EarthTechniqueRejectReason.None : EarthTechniqueRejectReason.PoolExhausted;
+            if (LastColumnCount > 0) CastCommitted?.Invoke(point, Mathf.Clamp01(power01), LastColumnCount);
+            return LastColumnCount > 0;
         }
 
         public void CancelCharge()

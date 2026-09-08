@@ -74,6 +74,7 @@ namespace Elemental.Online
             Accumulate(EarthInputBits.Field, input.BendFieldHeld, input.BendFieldPressed, input.BendFieldReleased, ref held, ref pressed, ref released);
             Accumulate(EarthInputBits.Jump, input.JumpHeld, input.JumpPressed, input.JumpReleased, ref held, ref pressed, ref released);
             if (input.BendModifierHeld) held |= EarthInputBits.Modifier;
+            if (input.WallPushModifierHeld) held |= EarthInputBits.WallPushModifier;
             if (input.CancelPressed) pressed |= EarthInputBits.Cancel;
             if (input.ShoulderSwapPressed) pressed |= EarthInputBits.Shoulder;
             for (int slot = 1; slot <= 4; slot++) if (input.DebugAbilityPressed(slot)) pressed |= (EarthInputBits)(64u << slot);

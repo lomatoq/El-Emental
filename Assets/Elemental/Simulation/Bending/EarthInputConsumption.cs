@@ -13,6 +13,7 @@ namespace Elemental.Simulation.Bending
         Primary = 1 << 4,
         Force = 1 << 5,
         Field = 1 << 6,
-        Parameter = 1 << 7
+        Parameter = 1 << 7,
+        WallPushModifier = 1 << 8
     }
 }

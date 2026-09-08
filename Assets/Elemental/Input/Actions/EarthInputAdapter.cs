@@ -24,6 +24,7 @@ namespace Elemental.Input.Actions
         private InputAction _bendForce;
         private InputAction _bendField;
         private InputAction _bendModifier;
+        private InputAction _wallPushModifier;
         private InputAction _bendParameter;
         private InputAction _cancel;
         private InputAction _shoulderSwap;
@@ -58,6 +59,7 @@ namespace Elemental.Input.Actions
         public bool BendFieldPressed => RemoteInputEnabled ? RemotePressed(EarthInputBits.Field) : _bendField?.WasPressedThisFrame() == true;
         public bool BendFieldReleased => RemoteInputEnabled ? RemoteReleased(EarthInputBits.Field) : _bendField?.WasReleasedThisFrame() == true;
         public bool BendFieldHeld => RemoteInputEnabled ? RemoteHeld(EarthInputBits.Field) : _bendField?.IsPressed() == true;
+        public bool WallPushModifierHeld => RemoteInputEnabled ? RemoteHeld(EarthInputBits.WallPushModifier) : _wallPushModifier?.IsPressed() == true;
         public bool BendModifierHeld => RemoteInputEnabled ? RemoteHeld(EarthInputBits.Modifier) : _bendModifier?.IsPressed() == true;
         public bool JumpPressed => RemoteInputEnabled ? RemotePressed(EarthInputBits.Jump) : _jumpOrStomp?.WasPressedThisFrame() == true;
         public bool JumpReleased => RemoteInputEnabled ? RemoteReleased(EarthInputBits.Jump) : _jumpOrStomp?.WasReleasedThisFrame() == true;
@@ -220,6 +222,7 @@ namespace Elemental.Input.Actions
             _bendForce = Find("BendForce", true);
             _bendField = Find("BendField", true);
             _bendModifier = Find("BendModifier", true);
+            _wallPushModifier = Find("WallPushModifier", true);
             _bendParameter = Find("BendParameter", true);
             _cancel = Find("Cancel", true);
             _shoulderSwap = Find("ShoulderSwap", true);
@@ -279,6 +282,7 @@ namespace Elemental.Input.Actions
             _bendForce = null;
             _bendField = null;
             _bendModifier = null;
+            _wallPushModifier = null;
             _bendParameter = null;
             _cancel = null;
             _shoulderSwap = null;

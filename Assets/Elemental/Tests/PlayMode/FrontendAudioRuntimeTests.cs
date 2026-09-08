@@ -108,6 +108,8 @@ namespace Elemental.Tests.PlayMode
             _theme.frontendAudio = _profile; _theme.confirm = _panel;
             var feedback = _root.AddComponent<UIAudioFeedback>(); feedback.Configure(_theme); feedback.Volume = .7f;
             feedback.PlayPanelMove(); feedback.PlayPanelMove();
+            Assert.That(feedback.PanelMovePlayCount,Is.EqualTo(1),"Playback must be dispatched in the initiating frame, without waiting for Update.");
+            Assert.That(_root.transform.Find("Panel movement sound").GetComponent<AudioSource>().volume,Is.GreaterThan(0),"First audio buffer must not wait for the next rendered frame's envelope update.");
             yield return null;
             Assert.That(feedback.PanelMovePlayCount, Is.EqualTo(1), "Same-frame layout events must coalesce into one sound.");
             var panel = _root.transform.Find("Panel movement sound").GetComponent<AudioSource>();
@@ -123,6 +125,62 @@ namespace Elemental.Tests.PlayMode
             Assert.That(feedback.PanelMovePlayCount, Is.EqualTo(1));
             Assert.That(panel.volume, Is.Zero); Assert.That(panel.isPlaying, Is.False);
             Assert.That(Time.timeScale, Is.Zero);
+        }
+        [UnityTest] public IEnumerator PanelReversalStartsWhilePreviousVoiceRetires()
+        {
+            _theme=ScriptableObject.CreateInstance<ElementalUITheme>();_theme.frontendAudio=_profile;
+            var feedback=_root.AddComponent<UIAudioFeedback>();feedback.Configure(_theme);
+            feedback.PlayPanelMove();yield return WaitReal(.08f);
+            var oldVoice=_root.transform.Find("Panel movement sound").GetComponent<AudioSource>();
+            Assert.That(oldVoice.isPlaying,Is.True);
+            feedback.PlayPanelMove();
+            Assert.That(feedback.PanelMovePlayCount,Is.EqualTo(2),"A reversal must not wait for the outgoing voice's 60 ms fade.");
+            Assert.That(oldVoice.isPlaying,Is.True);Assert.That(oldVoice.volume,Is.GreaterThan(0));
+            var newVoice=_root.transform.Find("Panel movement tail").GetComponent<AudioSource>();
+            Assert.That(newVoice.volume,Is.GreaterThan(0));
+            Assert.That(newVoice.timeSamples,Is.GreaterThanOrEqualTo(Mathf.FloorToInt(_profile.panelStartOffsetSeconds*_panel.frequency)));
+            yield return WaitReal(.09f);Assert.That(oldVoice.isPlaying,Is.False);
+        }
+        [UnityTest] public IEnumerator PointerAudioStartsImmediatelyAndActionDoesNotAddLateConfirm()
+        {
+            _theme=ScriptableObject.CreateInstance<ElementalUITheme>();_theme.hover=_panel;_theme.press=_panel;_theme.confirm=_panel;
+            var audio=_root.AddComponent<UIAudioFeedback>();audio.Configure(_theme);
+            var go=new GameObject("Audio button",typeof(RectTransform),typeof(UnityEngine.UI.Image),typeof(UnityEngine.UI.Button));
+            go.transform.SetParent(_root.transform,false);
+            go.GetComponent<UnityEngine.UI.Button>().targetGraphic=go.GetComponent<UnityEngine.UI.Image>();
+            var button=go.AddComponent<FrontendButton>();button.Configure(_theme,audio,Color.white,Color.yellow);
+            var pointer=new UnityEngine.EventSystems.PointerEventData(null){button=UnityEngine.EventSystems.PointerEventData.InputButton.Left};
+            button.OnPointerEnter(pointer);Assert.That(audio.CuePlayCount,Is.EqualTo(1));Assert.That(audio.LastPlayedCue,Is.EqualTo(UIAudioCue.Hover));
+            button.OnPointerDown(pointer);Assert.That(audio.CuePlayCount,Is.EqualTo(2));Assert.That(audio.LastPlayedCue,Is.EqualTo(UIAudioCue.Press));
+            audio.InvokeButtonAction(()=>audio.Play(UIAudioCue.Confirm));Assert.That(audio.CuePlayCount,Is.EqualTo(2));
+            audio.Play(UIAudioCue.Confirm);Assert.That(audio.CuePlayCount,Is.EqualTo(3),"Non-button confirmations remain available.");
+            yield return null;
+        }
+        [UnityTest] public IEnumerator InteractionOnsetIsPreparedOnceWithoutChangingSourceAndReleasedOnDestroy()
+        {
+            const int rate=48000,frames=9600,channels=2,onset=1920;
+            var data=new float[frames*channels];
+            for(int i=onset;i<frames;i++)data[i*channels+1]=.25f*Mathf.Sin((i-onset)*.1f);
+            var source=AudioClip.Create("Silent preroll stereo cue",frames,channels,rate,false);source.SetData(data,0);
+            try
+            {
+                _theme=ScriptableObject.CreateInstance<ElementalUITheme>();_theme.hover=source;_theme.press=source;
+                var feedback=_root.AddComponent<UIAudioFeedback>();feedback.Configure(_theme);
+                feedback.Play(UIAudioCue.Press);
+                Assert.That(feedback.CuePlayCount,Is.EqualTo(1),"Press playback is issued before yielding a frame.");
+                var immediate=feedback.LastPlayedClip;
+                Assert.That(immediate,Is.Not.SameAs(source));Assert.That(immediate.channels,Is.EqualTo(channels));
+                var rendered=new float[immediate.samples*channels];Assert.That(immediate.GetData(rendered,0),Is.True);
+                int first=-1;for(int i=0;i<rendered.Length;i++)if(Mathf.Abs(rendered[i])>.001f){first=i/channels;break;}
+                Assert.That(first,Is.InRange(1,rate/250),"Retain at most 4 ms including safe attack/preroll, not the source's 40 ms silence.");
+                feedback.Configure(_theme);feedback.Play(UIAudioCue.Press);
+                Assert.That(feedback.LastPlayedClip,Is.SameAs(immediate),"Configure and subsequent presses reuse the prepared clip.");
+                var unchanged=new float[data.Length];source.GetData(unchanged,0);CollectionAssert.AreEqual(data,unchanged);
+                Object.Destroy(_root);yield return null;yield return null;
+                Assert.That(immediate==null,Is.True,"Owned onset clips must be released with the feedback owner.");
+                Assert.That(source!=null,Is.True);
+            }
+            finally{Object.DestroyImmediate(source);}
         }
     }
 }

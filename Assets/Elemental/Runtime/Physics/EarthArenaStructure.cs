@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Elemental.Simulation.Structures;
 using Elemental.Simulation.Bending;
 using Elemental.Runtime.World;
@@ -303,6 +303,44 @@ namespace Elemental.Runtime.Physics
             float3 value = _pieceDefinitions[index].RestLocalPosition;
             Vector3 local = new Vector3(value.x, value.y, value.z);
             return pieces[index].parent != null ? pieces[index].parent.TransformPoint(local) : local;
+        }
+
+        public bool CanLandingSlam => _configured && PieceCount > _releasedCount;
+
+        public bool CanLandingSlamAt(Vector3 point, Vector3 up, float radius)
+        {
+            if (!CanLandingSlam || !float.IsFinite(radius) || radius < .3f || up.sqrMagnitude < .5f) return false;
+            int index = FindNearestAvailablePiece(point);
+            return index >= 0 && Vector3.ProjectOnPlane(pieces[index].position - point, up).sqrMagnitude <=
+                (radius + 1.5f) * (radius + 1.5f);
+        }
+
+        public int TriggerLandingSlam(Vector3 point, Vector3 up, float impulse, float radius, Collider casterCollider = null)
+        {
+            if (!_configured || !float.IsFinite(radius) || radius < .3f || up.sqrMagnitude < .5f) return 0;
+            var decision = EarthArenaFractureGate.Resolve(ordinaryDamageEnabled,
+                EarthArenaFractureTrigger.LandingSlam, impulse, PieceCount - _releasedCount);
+            if (!decision.Accepted) return 0;
+            up.Normalize();
+            int released = 0;
+            for (int count = 0; count < decision.ReleaseCount; count++)
+            {
+                int index = FindNearestAvailablePiece(point);
+                if (index < 0) break;
+                Vector3 offset = Vector3.ProjectOnPlane(pieces[index].position - point, up);
+                if (offset.sqrMagnitude > (radius + 1.5f) * (radius + 1.5f)) break;
+                Vector3 direction = (up * 1.2f + offset.normalized).normalized;
+                // Meteor-only FloorBase intentionally has no support graph. A
+                // local slam must not run unsupported-island propagation and
+                // release every remaining floor cell as a side effect.
+                if (ReleasePiece(index, pieces[index].position, direction, impulse, false))
+                {
+                    EarthLandingSlamCollisionGrace.Apply(_pieceColliders[index], casterCollider);
+                    released++;
+                }
+            }
+            if (released > 0) TargetsActivated?.Invoke(this);
+            return released;
         }
 
         public bool TriggerMeteorImpact(Vector3 point, Vector3 direction, float impulse)

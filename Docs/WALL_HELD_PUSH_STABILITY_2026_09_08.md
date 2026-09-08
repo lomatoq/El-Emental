@@ -1,0 +1,16 @@
+# Held-wall stability correction
+
+Current control/strength contract: [Ctrl+RMB charge and release](WALL_PUSH_TAP_HOLD_2026_09_08.md). The final charge-on-hold/release-to-fire implementation supersedes earlier continuous drive timing described in historical evidence below.
+
+The prior path continuously replaced travel direction with camera aim and reused the generic spherical stabilizer, which advanced a predicted position before the physics solver also integrated velocity. This could steer the wall sideways and amplify noisy floor contacts. The original y=120 test did not establish support on the actual arena.
+
+Held launch now latches the wall's normal, signed toward the initiating direction. Cursor updates cannot steer it sideways; orientation is only parallel-transported when planetary up changes. A held/coasting-only stabilizer leaves position integration to PhysX, samples three points under the real collider foot, and uses bounded support acceleration. It rejects steep/raised obstacles as support, preserves colliders, damps unintended lateral velocity and temporarily uses ContinuousDynamic CCD. Existing mass, finite impulse budget, generic vectorfield movement and material assets remain unchanged. Prior CCD mode is restored when coasting finishes or the wall resets.
+
+Production fixture EarthWallPushKeyboardProductionTests now samples actual low arena/planet floor, records BuildReports/WallPushInput/trajectory.csv, and asserts positive normal travel, side travel below 20% plus 3cm, backward steps below 2.5cm, floor penetration below 4cm, cursor-independent heading, and a real BoxCollider barrier stopping/fracturing the wall. Runtime marker includes held support probing. Final measured results follow.
+## Final verification
+
+Main baseline 56e7d9e1. LandingRowEdit95/95 passed at2026-09-08T15:19:17.3229473Z. Final real input + repair Play2/2 passed at2026-09-08T15:20:37.7206176Z (35.9705s), BuildReports/RepairPushPlay.json. Earlier AllPlay13 run at15:14:20 had11 passing independent cases; its remaining wall/repair failures are superseded by this final2/2, not represented as a single13/13 run.
+
+Actual grounded push: mass895.0063kg unchanged, forward1.30417m, side0.00374m, largest recorded penetration0.01483m, largest backward correction0.00553m. Actual Control release changes speed11.4541→9.9864m/s and removes drive while forward coasting continues. The wall then contacts existing rubble; stopped motion after that contact is expected. Explicit box barrier stop/fracture check also passed. Feedback231 dust/39 chips through existing budgets. Held-push profiler peak0.0613ms including support probes. Grounded screenshot inspected; no GPU measurement or online pair claimed.
+
+The fixture now isolates the bot before/after the real combat transition, rejects nearby dynamic-body margins, and keeps its occlusion cube close to the camera so the cube itself cannot shove the caster into the wall. First-fracture stack and physical neighborhood are recorded instead of relaxing damage thresholds. The airborne regression independently verifies inertia without false ground dust. Final console read contained0 errors and0 warnings; the older native Graphics Ring Buffer warning during Edit runs is separate from script compiler validation.

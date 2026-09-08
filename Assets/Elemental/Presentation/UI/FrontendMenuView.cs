@@ -439,7 +439,8 @@ namespace Elemental.Presentation.UI
                 // Scale border pixels uniformly with the 136px source height; leave the hit rect unchanged.
                 graphic.pixelsPerUnitMultiplier = graphic.sprite.rect.height / (ReferenceActive ? 78f : 70f);
             }
-            var b = r.GetComponent<Button>(); b.targetGraphic = graphic; b.onClick.AddListener(action);
+            var b = r.GetComponent<Button>(); b.targetGraphic = graphic;
+            b.onClick.AddListener(()=>{if(_audio!=null)_audio.InvokeButtonAction(action);else action?.Invoke();});
             var caption = Label(r, text, ReferenceActive ? 25 : tier == 0 ? 30 : 27, tier == 0 && !skinned ? _theme.ink : _theme.text);
             Stretch(caption.rectTransform, Vector2.zero, Vector2.one); caption.margin = ReferenceActive ? new Vector4(90,12,90,12) : new Vector4(skinned ? 72 : 24,0,24,0); caption.alignment = ReferenceActive ? TextAlignmentOptions.Center : TextAlignmentOptions.MidlineLeft;
             if (skinned && roleIcon != null) Ornament(r, "Button role icon", roleIcon, ReferenceActive ? 38 : 28, ReferenceActive ? 18 : 17, ReferenceActive ? 42 : 36, ReferenceActive ? 42 : 36);

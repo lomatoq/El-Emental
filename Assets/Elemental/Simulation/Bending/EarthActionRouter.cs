@@ -13,7 +13,9 @@ namespace Elemental.Simulation.Bending
         VectorField = 8,
         Pillar = 9,
         LandingCushion = 10,
-        DualMouseEarth = 11
+        DualMouseEarth = 11,
+        LandingSlam = 12,
+        WallPush = 13
     }
 
     public enum EarthActionRoutePhase : byte
@@ -80,7 +82,8 @@ namespace Elemental.Simulation.Bending
             bool fieldReleased = false,
             bool hasRepairTarget = false,
             bool hasPrimedQuickStone = false,
-            bool resonanceVolleyActive = false)
+            bool resonanceVolleyActive = false,
+            bool wallPushModifierHeld = false)
         {
             Time = time;
             CancelPressed = cancelPressed;
@@ -104,6 +107,7 @@ namespace Elemental.Simulation.Bending
             HasRepairTarget = hasRepairTarget;
             HasPrimedQuickStone = hasPrimedQuickStone;
             ResonanceVolleyActive = resonanceVolleyActive;
+            WallPushModifierHeld = wallPushModifierHeld;
         }
 
         public float Time { get; }
@@ -128,6 +132,7 @@ namespace Elemental.Simulation.Bending
         public bool HasRepairTarget { get; }
         public bool HasPrimedQuickStone { get; }
         public bool ResonanceVolleyActive { get; }
+        public bool WallPushModifierHeld { get; }
         public bool AnyMouseHeld => PrimaryHeld || ForceHeld || FieldHeld;
     }
 
@@ -170,6 +175,7 @@ namespace Elemental.Simulation.Bending
         private EarthActionOwner _owner;
         private float _startedAt;
         private bool _surfPillarCharging;
+        private bool _wallPushSpent;
 
         public EarthActionRouter(
             float chordWindowSeconds = DefaultChordWindowSeconds,
@@ -186,6 +192,8 @@ namespace Elemental.Simulation.Bending
 
         public EarthActionRoute Step(in EarthActionRouterFrame frame)
         {
+            bool wallChord = frame.WallPushModifierHeld && frame.ForceHeld;
+            if (!wallChord) _wallPushSpent = false;
             if (frame.CancelPressed)
             {
                 EarthActionOwner canceled = _owner;
@@ -196,6 +204,24 @@ namespace Elemental.Simulation.Bending
                     EarthActionIntentKind.Cancel,
                     EarthInputConsumption.Cancel);
             }
+
+            // A spent chord survives cancellation/stun until either key is released.
+            if (wallChord && !_wallPushSpent && !frame.ModifierHeld && !frame.PrimaryHeld && !frame.FieldHeld &&
+                !frame.ResonanceVolleyActive && !frame.HasPrimedQuickStone &&
+                (_owner == EarthActionOwner.None || _owner == EarthActionOwner.VectorField))
+            {
+                _wallPushSpent = true;
+                return Begin(EarthActionOwner.WallPush, EarthActionIntentKind.WallPush,
+                    EarthInputConsumption.WallPushModifier | EarthInputConsumption.Force, frame.Time);
+            }
+
+            // The airborne hold upgrades the ordinary Space cushion, including
+            // Shift added after Space. Other active techniques retain ownership.
+            if (!frame.Grounded && !frame.StableSupport && frame.ModifierHeld && frame.JumpHeld && !frame.AnyMouseHeld &&
+                (_owner == EarthActionOwner.None || _owner == EarthActionOwner.Pillar ||
+                 _owner == EarthActionOwner.LandingCushion || _owner == EarthActionOwner.Wave || _owner == EarthActionOwner.ShiftSpaceChord))
+                return Begin(EarthActionOwner.LandingSlam, EarthActionIntentKind.GroundSlam,
+                    EarthInputConsumption.Modifier | EarthInputConsumption.Jump, frame.Time);
 
             if (_owner != EarthActionOwner.None) return StepActive(in frame);
 
@@ -448,6 +474,19 @@ namespace Elemental.Simulation.Bending
                         frame.HasPrimedQuickStone ? EarthActionIntentKind.QuickFire : EarthActionIntentKind.FullBend,
                         EarthInputConsumption.Primary);
 
+                case EarthActionOwner.WallPush:
+                    if (!frame.WallPushModifierHeld)
+                    {
+                        Reset();
+                        return Route(EarthActionOwner.WallPush, EarthActionRoutePhase.Cancel,
+                            EarthActionIntentKind.Cancel, EarthInputConsumption.WallPushModifier | EarthInputConsumption.Force);
+                    }
+                    if (frame.ForceReleased || !frame.ForceHeld)
+                        return CommitAndReset(_owner, EarthActionIntentKind.WallPush,
+                            EarthInputConsumption.WallPushModifier | EarthInputConsumption.Force);
+                    return Route(_owner, EarthActionRoutePhase.Continue, EarthActionIntentKind.WallPush,
+                        EarthInputConsumption.WallPushModifier | EarthInputConsumption.Force);
+
                 case EarthActionOwner.VectorField:
                     if (frame.ForceReleased || !frame.ForceHeld)
                         return CommitAndReset(_owner, EarthActionIntentKind.VectorFieldPush, EarthInputConsumption.Force);
@@ -466,6 +505,17 @@ namespace Elemental.Simulation.Bending
                     return Route(_owner, EarthActionRoutePhase.Continue,
                         EarthActionIntentKind.PillarCharge, EarthInputConsumption.Jump, Charge(elapsed, 1.45f));
 
+                case EarthActionOwner.LandingSlam:
+                    // Keep ownership through the contact frame. The physics adapter
+                    // commits once on landing; key release must never cast a wave.
+                    if (!frame.ModifierHeld || !frame.JumpHeld || frame.JumpReleased)
+                    {
+                        Reset();
+                        return Route(EarthActionOwner.LandingSlam, EarthActionRoutePhase.Cancel,
+                            EarthActionIntentKind.Cancel, EarthInputConsumption.Modifier | EarthInputConsumption.Jump);
+                    }
+                    return Route(_owner, EarthActionRoutePhase.Continue, EarthActionIntentKind.GroundSlam,
+                        EarthInputConsumption.Modifier | EarthInputConsumption.Jump);
                 case EarthActionOwner.LandingCushion:
                     if (frame.JumpReleased || !frame.JumpHeld)
                         return CommitAndReset(_owner, EarthActionIntentKind.LandingWave, EarthInputConsumption.Jump);

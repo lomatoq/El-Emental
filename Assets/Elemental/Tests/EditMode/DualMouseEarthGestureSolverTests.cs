@@ -48,6 +48,23 @@ namespace Elemental.Tests.EditMode
             Assert.That(result.Kind, Is.EqualTo(DualMouseEarthResultKind.StompStone));
         }
 
+        [TestCase(true)]
+        [TestCase(false)]
+        public void HeldRowWaitsForBothButtonsAndCommitsExactlyOnce(bool releasePrimaryFirst)
+        {
+            var solver = new DualMouseEarthGestureSolver();
+            solver.Step(new DualMouseEarthGestureFrame(0f,true,true,false,true,true,false,new float2(.5f)));
+            var halfReleased = solver.Step(new DualMouseEarthGestureFrame(.25f,
+                false,!releasePrimaryFirst,releasePrimaryFirst,false,releasePrimaryFirst,!releasePrimaryFirst,new float2(.7f,.5f)));
+            Assert.That(halfReleased.Kind,Is.EqualTo(DualMouseEarthResultKind.Tracking));
+            var committed = solver.Step(new DualMouseEarthGestureFrame(.27f,
+                false,false,!releasePrimaryFirst,false,false,releasePrimaryFirst,new float2(.7f,.5f)));
+            Assert.That(committed.Kind,Is.EqualTo(DualMouseEarthResultKind.PillarCrest));
+            Assert.That(committed.CrestCount,Is.EqualTo(5));
+            var next = solver.Step(new DualMouseEarthGestureFrame(.28f,false,false,false,false,false,false,new float2(.7f,.5f)));
+            Assert.That(next.Kind,Is.EqualTo(DualMouseEarthResultKind.None));
+        }
+
         [TestCase(0.08f, 1)]
         [TestCase(0.12f, 3)]
         [TestCase(0.20f, 5)]

@@ -17,6 +17,7 @@ namespace Elemental.Input.Actions
         [SerializeField] private PlanetInputReader motorInput;
         [SerializeField] private MagicInputController magicInput;
         [SerializeField] private EarthPillarWaveAbility waveAbility;
+        [SerializeField] private EarthLandingSlam landingSlam;
         [SerializeField] private PlanetMotor motor;
         [SerializeField] private Rigidbody casterBody;
         [SerializeField] private UnityEngine.Camera castCamera;
@@ -42,6 +43,15 @@ namespace Elemental.Input.Actions
         private Vector2 _bufferedForcePointer;
         private readonly Vector2[] _bufferedPrimaryPath = new Vector2[16];
         private int _bufferedPrimaryPathCount;
+        private readonly RaycastHit[] _wallPushHits = new RaycastHit[32];
+        private EarthWall _heldPushWall;
+        public EarthWall HeldPushWall => _heldPushWall;
+        public bool LastWallPushAccepted { get; private set; }
+        public string LastWallPushRejection { get; private set; } = "";
+        public Collider LastWallPushHit { get; private set; }
+        public EarthWall LastWallPushTarget { get; private set; }
+        public Ray LastWallPushRay { get; private set; }
+        public uint WallPushBeginCount { get; private set; }
 
         public EarthActionRoute Current => _current;
         public float PillarCrestCharge01 => _dualMouse.CrestCharge01;
@@ -89,6 +99,8 @@ namespace Elemental.Input.Actions
             if (dualMouseAbilities == null)
                 dualMouseAbilities = GetComponent<EarthDualMouseAbilityController>() ??
                                      gameObject.AddComponent<EarthDualMouseAbilityController>();
+            if (landingSlam == null) landingSlam = GetComponent<EarthLandingSlam>() ?? gameObject.AddComponent<EarthLandingSlam>();
+            landingSlam.Configure(casterBody, motor, magicInput != null ? magicInput.EarthExecutor : null, waveAbility);
             dualMouseAbilities.Configure(
                 magicInput != null ? magicInput.EarthExecutor : null,
                 FindAnyObjectByType<EarthPillarWavePool>(FindObjectsInactive.Include),
@@ -128,6 +140,8 @@ namespace Elemental.Input.Actions
 
         private void OnDisable()
         {
+            CancelWallPush();
+            landingSlam?.Cancel();
             waveAbility?.CancelCharge();
             pillarMobility?.CancelCharge();
             motorInput?.RouteCancel();
@@ -195,7 +209,20 @@ namespace Elemental.Input.Actions
                 _router.Reset();
                 _bufferedPrimaryPathCount = 0;
             }
-            bool handsAvailable = !_router.HasActiveSession &&
+            // Ctrl+RMB is a semantic chord, including Ctrl added during a pending
+            // single-RMB gesture. Do not spend the dual-mouse delay on this route.
+            bool wallPushChord = _dualMouse.CanYieldPendingForce && inputAdapter.WallPushModifierHeld && inputAdapter.BendForceHeld &&
+                !inputAdapter.BendModifierHeld && !inputAdapter.BendPrimaryHeld && !inputAdapter.BendFieldHeld &&
+                (_router.Owner == EarthActionOwner.None || _router.Owner == EarthActionOwner.VectorField ||
+                 _router.Owner == EarthActionOwner.WallPush) && !ResonanceVolleyActive &&
+                (magicInput == null || (!magicInput.IsArmorActive && !magicInput.IsQuickStonePrimed &&
+                 magicInput.SelectedElement == Elemental.Simulation.Magic.ElementId.Earth));
+            if (wallPushChord)
+            {
+                _dualMouse.Reset();
+                _bufferedPrimaryPathCount = 0;
+            }
+            bool handsAvailable = !wallPushChord && !_router.HasActiveSession &&
                                   magicInput != null &&
                                   magicInput.SelectedElement == Elemental.Simulation.Magic.ElementId.Earth &&
                                   (magicInput.CurrentBendPhase == BendPhase.Idle ||
@@ -320,7 +347,8 @@ namespace Elemental.Input.Actions
                 fieldReleased: inputAdapter.BendFieldReleased,
                 hasRepairTarget: magicInput != null && magicInput.EarthExecutor != null &&
                                  magicInput.EarthExecutor.IsRepairActive,
-                hasPrimedQuickStone: magicInput != null && magicInput.IsQuickStonePrimed);
+                hasPrimedQuickStone: magicInput != null && magicInput.IsQuickStonePrimed,
+                wallPushModifierHeld: inputAdapter.WallPushModifierHeld && (magicInput == null || magicInput.SelectedElement == Elemental.Simulation.Magic.ElementId.Earth));
             frame = new EarthActionRouterFrame(
                 frame.Time, frame.CancelPressed, frame.Grounded, frame.StableSupport, frame.Descending,
                 frame.MoveForward, frame.ModifierHeld, frame.JumpPressed, frame.JumpHeld, frame.JumpReleased,
@@ -328,7 +356,7 @@ namespace Elemental.Input.Actions
                 frame.ForcePressed, frame.ForceHeld, frame.ForceReleased,
                 frame.FieldPressed, frame.FieldHeld, frame.FieldReleased,
                 frame.HasRepairTarget, frame.HasPrimedQuickStone,
-                resonanceController != null && resonanceController.IsVolleyActive);
+                resonanceController != null && resonanceController.IsVolleyActive, frame.WallPushModifierHeld);
             _current = _router.Step(in frame);
             ExecuteRoute(in _current);
             ExecuteResonanceVolleyInput();
@@ -373,6 +401,8 @@ namespace Elemental.Input.Actions
                 dualMouseAbilities?.CancelStompStone();
             if (route.Intent == EarthActionIntentKind.Cancel || route.Phase == EarthActionRoutePhase.Cancel)
             {
+                CancelWallPush();
+                landingSlam?.Cancel();
                 waveAbility?.CancelCharge();
                 pillarMobility?.CancelCharge();
                 resonanceController?.Cancel();
@@ -383,6 +413,14 @@ namespace Elemental.Input.Actions
 
             switch (route.Owner)
             {
+                case EarthActionOwner.WallPush:
+                    ExecuteWallPush(in route);
+                    break;
+                case EarthActionOwner.LandingSlam:
+                    if (route.Phase == EarthActionRoutePhase.Begin)
+                    { waveAbility?.CancelCharge(); motorInput?.RouteCancel(); }
+                    landingSlam?.SetHeld(true);
+                    break;
                 case EarthActionOwner.ShiftSpaceChord:
                     ExecuteSpeculativeWavePreview(in route);
                     break;
@@ -407,6 +445,79 @@ namespace Elemental.Input.Actions
                     ExecuteSurf(in route);
                     break;
             }
+        }
+
+        private void CancelWallPush()
+        {
+            if (_heldPushWall != null) _heldPushWall.CancelHeldPush();
+            _heldPushWall = null;
+        }
+
+        private void ExecuteWallPush(in EarthActionRoute route)
+        {
+            if (route.Phase == EarthActionRoutePhase.Commit)
+            {
+                EarthWall chargedWall = _heldPushWall;
+                _heldPushWall = null;
+                if (chargedWall != null) chargedWall.ReleaseHeldPush();
+                return;
+            }
+            UnityEngine.Camera camera = magicInput != null && magicInput.CastCamera != null
+                ? magicInput.CastCamera : castCamera;
+            if (route.Phase == EarthActionRoutePhase.Begin)
+            {
+                CancelWallPush();
+                // This existing entry point cancels gesture state and held vector
+                // control; it does not apply a stun or change physical state.
+                magicInput?.CancelForImpactStun();
+                LastWallPushAccepted = false;
+                LastWallPushRejection = "";
+                LastWallPushHit = null;
+                LastWallPushTarget = null;
+                WallPushBeginCount++;
+                if (camera == null || inputAdapter == null)
+                { LastWallPushRejection = "Missing casting camera or semantic input adapter"; return; }
+                Ray ray = camera.ScreenPointToRay(inputAdapter.PointerPixels);
+                LastWallPushRay = ray;
+                int count = UnityEngine.Physics.RaycastNonAlloc(ray, _wallPushHits, 60f,
+                    UnityEngine.Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+                // Overflow cannot prove the nearest occluder, so reject rather
+                // than push a wall through unobserved geometry.
+                if (count == _wallPushHits.Length)
+                { LastWallPushRejection = "Aim ray exceeded bounded hit capacity"; return; }
+                Collider nearest = null;
+                float distance = float.PositiveInfinity;
+                for (int i = 0; i < count; i++)
+                {
+                    RaycastHit hit = _wallPushHits[i];
+                    if (hit.collider == null || hit.collider.transform.IsChildOf(transform) ||
+                        (casterBody != null && hit.rigidbody == casterBody)) continue;
+                    if (hit.distance >= distance) continue;
+                    distance = hit.distance;
+                    nearest = hit.collider;
+                }
+                LastWallPushHit = nearest;
+                EarthPieceRuntime piece = nearest != null ? nearest.GetComponent<EarthPieceRuntime>() : null;
+                EarthWall wall = piece != null ? piece.Owner : nearest != null ? nearest.GetComponentInParent<EarthWall>() : null;
+                LastWallPushTarget = wall;
+                if (wall == null)
+                {
+                    LastWallPushRejection = nearest == null ? "Aim ray hit no solid target" :
+                        "Nearest solid collider is not an Earth wall: " + nearest.name;
+                    return;
+                }
+                if (wall != null && wall.TryBeginHeldPush(ray.direction))
+                {
+                    _heldPushWall = wall;
+                    LastWallPushAccepted = true;
+                }
+                else LastWallPushRejection = $"Wall rejected push: active={wall.isActiveAndEnabled}, emerged={wall.IsEmergenceComplete}, fractured={wall.IsCollapsing}, body={wall.Body != null}, kinematic={wall.Body != null && wall.Body.isKinematic}";
+                return;
+            }
+            // Retain the original target. Failed acquisition and broken walls
+            // never retry while this same chord remains held.
+            if (_heldPushWall != null && _heldPushWall.IsHeldPushActive && camera != null)
+                _heldPushWall.UpdateHeldPush(camera.ScreenPointToRay(inputAdapter.PointerPixels).direction);
         }
 
         private void ExecuteSpeculativeWavePreview(in EarthActionRoute route)

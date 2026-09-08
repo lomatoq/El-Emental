@@ -49571,6 +49571,7 @@ GameObject:
   - component: {fileID: 370967224}
   - component: {fileID: 370967223}
   - component: {fileID: 370967222}
+  - component: {fileID: 370967254}
   m_Layer: 0
   m_Name: 'Planet Character [Online Two]'
   m_TagString: Player
@@ -49691,6 +49692,7 @@ MonoBehaviour:
   motorInput: {fileID: 0}
   magicInput: {fileID: 0}
   waveAbility: {fileID: 0}
+  landingSlam: {fileID: 370967254}
   motor: {fileID: 0}
   casterBody: {fileID: 0}
   castCamera: {fileID: 0}
@@ -50370,6 +50372,28 @@ MonoBehaviour:
   orientationDamping: 12
   maxOrientationTorque: 140
   maximumOrientationDegreesPerSecond: 540
+--- !u!114 &370967254
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 370967220}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 189cef9dbeba49d8bf5c19046b9b9648, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Characters.EarthLandingSlam
+  body: {fileID: 370967221}
+  motor: {fileID: 370967253}
+  executor: {fileID: 379799462}
+  wave: {fileID: 370967248}
+  profile: {fileID: 11400000, guid: ce4a470f793016c45b61f191245c3ee4, type: 2}
+  settings:
+    MinimumDrop: 2
+    MinimumSpeed: 7.5
+    CraterRadius: 1.6
+    EjectionSpeed: 8
 --- !u!114 &371400208
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -78972,6 +78996,7 @@ GameObject:
   - component: {fileID: 587163401}
   - component: {fileID: 587163403}
   - component: {fileID: 587163402}
+  - component: {fileID: 587163404}
   m_Layer: 0
   m_Name: Planet Character
   m_TagString: Player
@@ -79670,6 +79695,7 @@ MonoBehaviour:
   motorInput: {fileID: 0}
   magicInput: {fileID: 0}
   waveAbility: {fileID: 0}
+  landingSlam: {fileID: 587163404}
   motor: {fileID: 0}
   casterBody: {fileID: 0}
   castCamera: {fileID: 0}
@@ -79771,6 +79797,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0c3c759a8d474942a225189d8b4f7ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Elemental.Online::Elemental.Online.OnlineLocalMotorInput
+--- !u!114 &587163404
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 587163368}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 189cef9dbeba49d8bf5c19046b9b9648, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Elemental.Runtime::Elemental.Runtime.Characters.EarthLandingSlam
+  body: {fileID: 587163369}
+  motor: {fileID: 587163372}
+  executor: {fileID: 105669178}
+  wave: {fileID: 587163383}
+  profile: {fileID: 11400000, guid: ce4a470f793016c45b61f191245c3ee4, type: 2}
+  settings:
+    MinimumDrop: 2
+    MinimumSpeed: 7.5
+    CraterRadius: 1.6
+    EjectionSpeed: 8
 --- !u!1 &589036402
 GameObject:
   m_ObjectHideFlags: 0

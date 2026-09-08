@@ -65,6 +65,7 @@ namespace Elemental.Runtime.Physics
 
         public bool IsRepairing { get; private set; }
         public bool LastRepairWasPartial { get; private set; }
+        public string LastCompletionDiagnostic { get; private set; }
         public int SelectedPieceCount => _orderResult.OrderedPieceCount;
         public int TargetPieceCount => _targetPieceCount;
         public int WeldedPieceCount => _weldedPieceCount;
@@ -564,9 +565,11 @@ namespace Elemental.Runtime.Physics
 
         private void FinishRepair()
         {
+            CaptureCompletionDiagnostic();
             bool complete = _orderResult.OrderedPieceCount == _pieceDefinitions.Length;
             if (complete)
             {
+                ReconcileSeatedSeams();
                 for (int bondIndex = 0; bondIndex < _bondDefinitions.Length; bondIndex++)
                 {
                     if ((_bondDefinitions[bondIndex].Flags & EarthBondFlags.Repairable) != 0 &&
@@ -591,6 +594,68 @@ namespace Elemental.Runtime.Physics
                 _structure.FinishPartialRepair(_tick);
             }
         }
+
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        private void CaptureCompletionDiagnostic()
+        {
+            var text = new System.Text.StringBuilder();
+            text.AppendLine($"completion generation={_generation}; positionTolerance={_tuning.PositionTolerance}; angleTolerance={_tuning.AngleToleranceRadians}");
+            for (int i = 0; i < _pieceDefinitions.Length; i++)
+            {
+                var piece = _structure.GetPieceRuntime(i);
+                if (piece == null) { text.AppendLine($"piece={i}; missing"); continue; }
+                Vector3 rest = _wall.transform.TransformPoint(ToVector3(_pieceDefinitions[i].RestLocalPosition));
+                Quaternion rotation = _wall.transform.rotation * ToQuaternion(_pieceDefinitions[i].RestLocalRotation);
+                text.AppendLine($"piece={i}; seated={IsActuallySeated(i)}; available={_available[i]}; welded={_welded[i]}; active={piece.gameObject.activeInHierarchy}; gen={piece.Generation}; phase={_structure.GetPieceState(i).Phase}; owner={piece.HasMagicOwner}/{piece.MagicOwner}; kinematic={piece.Body?.isKinematic}; positionError={Vector3.Distance(piece.Body.position, rest)}; angleError={Quaternion.Angle(piece.Body.rotation, rotation)}");
+            }
+            for (int i = 0; i < _bondDefinitions.Length; i++)
+            {
+                var state = _structure.GetBondState(i); var runtime = _structure.GetBondRuntime(i);
+                text.AppendLine($"finishBond={i}; phase={state.Phase}; damage={state.AccumulatedDamage}; released={runtime.IsReleased}; jointMissing={runtime.Joint == null}");
+            }
+            LastCompletionDiagnostic = text.ToString();
+        }
+
+        private void ReconcileSeatedSeams()
+        {
+            // Earlier seated seams can take hits while later pieces
+            // fly home. Re-weld those seams only after checking their real poses;
+            // a welded-piece counter alone cannot prove an intact structure.
+            for (int index = 0; index < _bondDefinitions.Length; index++)
+            {
+                EarthBondDefinition bond = _bondDefinitions[index];
+                EarthBondState state = _structure.GetBondState(index);
+                EarthBondRuntime runtime = _structure.GetBondRuntime(index);
+                if ((bond.Flags & EarthBondFlags.Repairable) == 0 ||
+                    !CanReconcileSeatedBond(state.Phase, runtime != null && runtime.Joint != null,
+                        IsActuallySeated(bond.PieceA), bond.PieceB == EarthBondGraph.WorldPieceIndex
+                            ? (bond.Flags & EarthBondFlags.Foundation) != 0 : IsActuallySeated(bond.PieceB))) continue;
+                _structure.SetBondReforming(index, _tick);
+                BondReforming?.Invoke(new EarthBondReformingEvent(_tick, _structure.State.Id, bond.Id, 0f));
+                _structure.SetBondRepaired(index, _tick);
+                _wall.RestoreBondForRepair(index);
+                BondRepaired?.Invoke(new EarthBondRepairedEvent(_tick, _structure.State.Id, bond.Id));
+            }
+        }
+
+        private bool IsActuallySeated(int index)
+        {
+            if (index < 0 || index >= _welded.Length || !_available[index] || !_welded[index]) return false;
+            EarthPieceRuntime piece = _structure.GetPieceRuntime(index);
+            if (piece == null || !piece.gameObject.activeInHierarchy || piece.Generation != _generation ||
+                piece.HasMagicOwner || piece.Body == null || !piece.Body.isKinematic ||
+                _structure.GetPieceState(index).Phase != EarthPiecePhase.Welded) return false;
+            Vector3 rest = _wall.transform.TransformPoint(ToVector3(_pieceDefinitions[index].RestLocalPosition));
+            Quaternion rotation = _wall.transform.rotation * ToQuaternion(_pieceDefinitions[index].RestLocalRotation);
+            return Vector3.Distance(piece.Body.position, rest) <= _tuning.PositionTolerance &&
+                Quaternion.Angle(piece.Body.rotation, rotation) * Mathf.Deg2Rad <= _tuning.AngleToleranceRadians;
+        }
+
+        private static bool CanReconcileSeatedBond(EarthBondPhase phase, bool runtimeJointExists,
+            bool firstSeated, bool secondSeated) =>
+            (phase == EarthBondPhase.Damaged || phase == EarthBondPhase.Healthy ||
+             phase == EarthBondPhase.Broken || phase == EarthBondPhase.Reforming) &&
+            runtimeJointExists && firstSeated && secondSeated;
 
         public void ResetRepairCollisionPolicy()
         {
@@ -620,8 +685,18 @@ namespace Elemental.Runtime.Physics
                  _ignoredCollisionCount < _ignoredPieceColliders.Length; hitIndex++)
             {
                 Collider obstacle = _seatingOverlap[hitIndex];
-                if (obstacle == null || obstacle == pieceCollider || obstacle.attachedRigidbody != null)
-                    continue;
+                if (obstacle == null || obstacle == pieceCollider) continue;
+                Rigidbody obstacleBody = obstacle.attachedRigidbody;
+                if (obstacleBody != null)
+                {
+                    // Authored FloorBase can be a kinematic structure body. The
+                    // wall's original seated pose intentionally intersects it,
+                    // just as it intersects static voxel support. Other bodies
+                    // (including held stones/characters/walls) remain obstacles.
+                    EarthArenaStructure support = obstacle.GetComponentInParent<EarthArenaStructure>();
+                    if (!obstacleBody.isKinematic || support == null || support.OrdinaryDamageEnabled)
+                        continue;
+                }
                 bool duplicate = false;
                 for (int existing = 0; existing < _ignoredCollisionCount; existing++)
                 {

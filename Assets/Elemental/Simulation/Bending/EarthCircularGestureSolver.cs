@@ -20,6 +20,10 @@ namespace Elemental.Simulation.Bending
     {
         public float2 Center;
         public float2 PreviousDirection;
+        public float2 PreviousPointer;
+        public float2 BoundsMin;
+        public float2 BoundsMax;
+        public float Travel;
         public float AccumulatedDegrees;
         public bool HasPreviousDirection;
     }
@@ -50,6 +54,9 @@ namespace Elemental.Simulation.Bending
             new EarthCircularGestureState
             {
                 Center = center,
+                PreviousPointer = center,
+                BoundsMin = center,
+                BoundsMax = center,
                 PreviousDirection = float2.zero,
                 AccumulatedDegrees = 0f,
                 HasPreviousDirection = false
@@ -63,12 +70,18 @@ namespace Elemental.Simulation.Bending
             float fullPhaseDegrees = 300f,
             float maximumSampleDegrees = 72f)
         {
-            float2 radial = pointer - state.Center;
-            float radius = math.length(radial);
-            if (radius < math.max(0.0001f, minimumRadiusViewport))
+            state.BoundsMin = math.min(state.BoundsMin, pointer);
+            state.BoundsMax = math.max(state.BoundsMax, pointer);
+            // Integrate the turn of the drawn path, not its angle about mouse-down.
+            // Mouse-down is usually on the rim of a player's circle; treating it
+            // as the centre caps a full circle at roughly half the intended phase.
+            float2 movement = pointer - state.PreviousPointer;
+            float distance = math.length(movement);
+            if (distance < math.max(0.0001f, minimumRadiusViewport * .04f))
                 return Evaluate(in state, recognitionDegrees, fullPhaseDegrees);
-
-            float2 direction = radial / radius;
+            state.PreviousPointer = pointer;
+            state.Travel += distance;
+            float2 direction = movement / distance;
             if (!state.HasPreviousDirection)
             {
                 state.PreviousDirection = direction;
@@ -80,7 +93,11 @@ namespace Elemental.Simulation.Bending
                           state.PreviousDirection.y * direction.x;
             float dot = math.clamp(math.dot(state.PreviousDirection, direction), -1f, 1f);
             float degrees = math.degrees(math.atan2(cross, dot));
-            if (math.abs(degrees) <= math.max(1f, maximumSampleDegrees))
+            // Travel alone is insufficient: repeatedly circling inside the old
+            // deadzone must never arm a spell. Require an observed diameter.
+            float diameter = math.cmax(state.BoundsMax - state.BoundsMin);
+            if (diameter >= math.max(.0002f, minimumRadiusViewport * 2f) &&
+                math.abs(degrees) <= math.max(1f, maximumSampleDegrees))
                 state.AccumulatedDegrees += degrees;
             state.PreviousDirection = direction;
             return Evaluate(in state, recognitionDegrees, fullPhaseDegrees);

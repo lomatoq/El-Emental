@@ -350,6 +350,44 @@ namespace Elemental.Runtime.Physics
             up = new Vector3(sample.Normal.x, sample.Normal.y, sample.Normal.z).normalized;
         }
 
+        /// <summary>Independent contact pulse; leaves any visible wave partition and row intact.</summary>
+        public int LaunchLandingPulse(Vector3 surfaceOrigin, Vector3 localUp,
+            Vector3 forward, float powerCharge01, Rigidbody caster)
+        {
+            const int count = 36;
+            if (AvailableColumns < count) { RejectedBusyCasts++; return 0; }
+            uint impactCastId = _nextImpactCastId++;
+            if (_nextImpactCastId == 0u) _nextImpactCastId = 0x57000001u;
+            Vector3 up = localUp.sqrMagnitude > .5f ? localUp.normalized : Vector3.up;
+            ResolveConstructedSurface(ref surfaceOrigin, ref up);
+            Vector3 tangent = Vector3.ProjectOnPlane(forward, up).normalized;
+            if (tangent.sqrMagnitude < .5f)
+                tangent = Vector3.Cross(up, Mathf.Abs(up.y) < .9f ? Vector3.up : Vector3.right).normalized;
+            float power = Mathf.Clamp01(powerCharge01);
+            float impulse = Mathf.Lerp(profile != null ? profile.MinimumImpulse : 85f,
+                profile != null ? profile.MaximumImpulse : 420f, power);
+            for (int ring = 1; ring <= 3; ring++)
+            {
+                int ringCount = ring * 6;
+                float radius = ring * Mathf.Lerp(.75f, .95f, power);
+                for (int index = 0; index < ringCount; index++)
+                {
+                    Vector3 direction = Quaternion.AngleAxis((index + (ring % 2) * .5f) * 360f / ringCount, up) * tangent;
+                    Vector3 surface = surfaceOrigin + direction * radius;
+                    Vector3 sampledUp = up;
+                    ResolveConstructedSurface(ref surface, ref sampledUp);
+                    // No topology, mesh or timing globals are replaced by a contact pulse.
+                    Acquire().Schedule(this, surface, sampledUp,
+                        Vector3.ProjectOnPlane(direction, sampledUp).normalized,
+                        Mathf.Lerp(.75f, 1.55f, power) * (1.15f - ring * .1f),
+                        .95f, .95f, (ring - 1) * .085f, .16f, 1f,
+                        _nextPulseId++, impulse, caster, profile, ImpactHits,
+                        6, 1f, 0f, null, 0f, impactCastId);
+                }
+            }
+            return count;
+        }
+
         public int LaunchCrest(
             Vector3 surfaceOrigin,
             Vector3 localUp,
@@ -358,7 +396,9 @@ namespace Elemental.Runtime.Physics
             Rigidbody caster)
         {
             int count = requestedCount <= 1 ? 1 : requestedCount <= 3 ? 3 : requestedCount <= 5 ? 5 : 7;
-            if (Time.time < _protectedWaveUntil || HasAnchoredColumns || AvailableColumns < count) { RejectedBusyCasts++; return 0; }
+            // Independent crest teeth only acquire inactive entries. Existing rows
+            // and wave partitions can finish untouched while another row rises.
+            if (AvailableColumns < count) { RejectedBusyCasts++; return 0; }
             uint impactCastId = _nextImpactCastId++;
             if (_nextImpactCastId == 0u) _nextImpactCastId = 0x57000001u;
             Vector3 center = planetCenter != null ? planetCenter.position : Vector3.zero;

@@ -51,6 +51,7 @@ namespace Elemental.Runtime.Physics
         private readonly List<Mesh> _runtimeFractureMeshes = new List<Mesh>(64);
         private readonly Dictionary<EarthWall, Vector3> _metricDimensions = new();
         private readonly Dictionary<EarthWall, Mesh[]> _metricMeshes = new();
+        private readonly Dictionary<EarthWall, EarthWallDimensionFracture> _dimensionFractures = new();
         private static readonly Unity.Profiling.ProfilerMarker MetricVisualMarker = new("Elemental.Earth.Wall.MetricVisuals");
         private EarthWallShapeDiversityTracker _wallShapeDiversity;
         private uint _nextId = 1u;
@@ -184,6 +185,8 @@ namespace Elemental.Runtime.Physics
                 foreach (Mesh mesh in meshes)
                     if (mesh != null) { if (Application.isPlaying) Destroy(mesh); else DestroyImmediate(mesh); }
             _metricMeshes.Clear(); _metricDimensions.Clear();
+            foreach (var data in _dimensionFractures.Values) data.Dispose();
+            _dimensionFractures.Clear();
             _wallFilters.Clear();
         }
 
@@ -433,42 +436,31 @@ namespace Elemental.Runtime.Physics
 
         private void PrepareMetricCellVisuals(EarthWall wall, Vector3 dimensions)
         {
-            if (!wall.UsesBakedFracture || fractureAsset is not IEarthFractureAssetRuntimeData data) return;
+            if (!wall.UsesBakedFracture) return;
             if (_metricDimensions.TryGetValue(wall, out Vector3 previous) && previous == dimensions) return;
             using var metricSample = MetricVisualMarker.Auto();
+            // A pool slot caches one dimension-specific graph. Live walls never
+            // enter this method: acquisition chooses only inactive slots.
+            var data = new EarthWallDimensionFracture(dimensions, 0xE17F1002u);
             EarthStructureRuntime runtime = wall.StructureRuntime;
-            var pieces = new Transform[runtime.PieceCount];
-            var owned = new Mesh[runtime.PieceCount + 1];
-            for (int i = 0; i < pieces.Length; i++)
-            {
-                EarthPieceRuntime piece = runtime.GetPieceRuntime(i);
-                EarthPieceDefinition definition = runtime.GetPieceDefinition(i);
-                pieces[i] = piece.transform;
-                pieces[i].localPosition = ToVector3(definition.RestLocalPosition);
-                quaternion rest = definition.RestLocalRotation;
-                pieces[i].localRotation = new Quaternion(rest.value.x, rest.value.y, rest.value.z, rest.value.w);
-                pieces[i].localScale = ToVector3(definition.RestLocalScale);
-                owned[i] = EarthWallFractureVisual.Create(data.GetPieceRenderMesh(i),
-                    data.GetPieceColliderMesh(i), stoneBevelProfile, definition.Id.Value,
-                    Vector3.Scale(dimensions, pieces[i].localScale));
-                Mesh openChamfer = owned[i];
-                owned[i] = EarthWallFractureVisual.SealChamferJunctions(openChamfer,
-                    data.GetPieceRenderMesh(i), wall.transform.worldToLocalMatrix * pieces[i].localToWorldMatrix,
-                    dimensions.z, stoneBevelProfile != null ? stoneBevelProfile.WallWidthMeters : EarthStoneBevelProfile.DefaultWallWidthMeters);
-                if (Application.isPlaying) Destroy(openChamfer); else DestroyImmediate(openChamfer);
-                piece.GetComponent<MeshFilter>().sharedMesh = owned[i];
-                piece.GetComponent<MeshRenderer>().sharedMaterials = new[] {
-                    rockDebrisPool != null ? rockDebrisPool.StoneMaterial : wallMaterial };
-            }
-            owned[pieces.Length] = EarthWallFractureVisual.CombineIntact(pieces, wall.transform);
-            _wallFilters[wall].sharedMesh = owned[pieces.Length];
-            _wallFilters[wall].GetComponent<MeshRenderer>().sharedMaterials =
-                pieces[0].GetComponent<MeshRenderer>().sharedMaterials;
+            var oldPieces = new GameObject[runtime.PieceCount];
+            for (int i=0;i<oldPieces.Length;i++) oldPieces[i]=runtime.GetPieceRuntime(i).gameObject;
+            int meshStart = _runtimeFractureMeshes.Count;
+            if (!TryConfigureBakedWall(wall.gameObject, _wallFilters[wall], wall.GetComponent<Rigidbody>(),
+                wall, out _, data, dimensions))
+                throw new InvalidOperationException("Dimension-matched wall graph was rejected.");
+            foreach (var piece in oldPieces)
+            { piece.SetActive(false); if (Application.isPlaying) Destroy(piece); else DestroyImmediate(piece); }
             if (_metricMeshes.TryGetValue(wall, out Mesh[] retired))
                 foreach (Mesh mesh in retired)
                     if (mesh != null) { if (Application.isPlaying) Destroy(mesh); else DestroyImmediate(mesh); }
-            _metricMeshes[wall] = owned;
+            if (_dimensionFractures.TryGetValue(wall, out var oldData)) oldData.Dispose();
+            int count = _runtimeFractureMeshes.Count - meshStart;
+            _metricMeshes[wall] = _runtimeFractureMeshes.GetRange(meshStart,count).ToArray();
+            _runtimeFractureMeshes.RemoveRange(meshStart,count);
+            _dimensionFractures[wall] = data;
             _metricDimensions[wall] = dimensions;
+            ConfigureGravityBodies(wall.gameObject);
         }
 
         private void ApplyVisualShapeVariant(EarthWall wall, uint sourceTick)
@@ -590,10 +582,10 @@ namespace Elemental.Runtime.Physics
             MeshFilter intactFilter,
             Rigidbody wallBody,
             EarthWall wall,
-            out Transform[] pieces)
+            out Transform[] pieces, IEarthFractureAssetRuntimeData dimensionData = null, Vector3 metricDimensions = default)
         {
             pieces = null;
-            IEarthFractureAssetRuntimeData data = fractureAsset as IEarthFractureAssetRuntimeData;
+            IEarthFractureAssetRuntimeData data = dimensionData ?? fractureAsset as IEarthFractureAssetRuntimeData;
             if (data == null || data.SchemaVersion <= 0 || data.PieceCount <= 0 || data.BondCount <= 0)
                 return false;
 
@@ -644,7 +636,15 @@ namespace Elemental.Runtime.Physics
                         1,
                         $"{renderMesh.name} Hard {pieceIndex + 1:000}");
                     beveled = EarthWallFractureVisual.Create(hardRenderMesh, colliderMesh,
-                        stoneBevelProfile, definition.Id.Value);
+                        stoneBevelProfile, definition.Id.Value, metricDimensions);
+                    if (dimensionData != null)
+                    {
+                        Mesh open = beveled;
+                        beveled = EarthWallFractureVisual.SealChamferJunctions(open, renderMesh,
+                            Matrix4x4.TRS(piece.transform.localPosition, piece.transform.localRotation, piece.transform.localScale),
+                            metricDimensions.z, stoneBevelProfile != null ? stoneBevelProfile.WallWidthMeters : EarthStoneBevelProfile.DefaultWallWidthMeters);
+                        if (Application.isPlaying) Destroy(open); else DestroyImmediate(open);
+                    }
                     pieceFilter.sharedMesh = beveled;
                     _runtimeFractureMeshes.Add(beveled);
                     _runtimeFractureMeshes.Add(hardRenderMesh);
@@ -696,7 +696,7 @@ namespace Elemental.Runtime.Physics
                 throw new InvalidOperationException("The baked Earth runtime adapter rejected validated data.");
             Mesh intactAssembly = EarthWallFractureVisual.CombineIntact(pieces, wallObject.transform);
             _runtimeFractureMeshes.Add(intactAssembly);
-            intactFilter.sharedMesh = intactAssembly;
+            wall.ConfigureIntactPresentation(intactFilter, data.IntactRenderMesh, intactAssembly);
             intactFilter.GetComponent<MeshRenderer>().sharedMaterials = pieces[0].GetComponent<MeshRenderer>().sharedMaterials;
             return true;
         }
