@@ -1,5 +1,6 @@
 using System;
 using Elemental.Presentation.Camera;
+using Elemental.Presentation.Rendering;
 using Elemental.Runtime.Characters;
 using Elemental.Runtime.World;
 using UnityEngine;
@@ -20,6 +21,11 @@ namespace Elemental.Presentation.UI
         [SerializeField] private EarthMvpDuelController duel;
         [SerializeField] private EarthSceneReadinessGate readiness;
         [SerializeField] private EarthCameraDirector cameraDirector;
+        [SerializeField] private CelestialSystemBehaviour celestial;
+        private FrontendMusicDirector _music;
+        private bool _worldHeld,_restartSubscribed;
+        private float _scaleBeforeWorldHold=1;
+        public void ConfigureEnvironment(CelestialSystemBehaviour sky)=>celestial=sky;
         [SerializeField] private Behaviour[] debugOverlays = Array.Empty<Behaviour>();
         public Elemental.Simulation.Magic.ElementId SelectedElement => hud != null ? hud.SelectedElement : Elemental.Simulation.Magic.ElementId.Earth;
         public float PresentationTransitionSeconds => theme.transitionSeconds;
@@ -59,16 +65,21 @@ namespace Elemental.Presentation.UI
         {
             if (theme == null || view == null || duel == null) { Debug.LogError("Frontend needs theme, view and duel references.", this); enabled = false; return; }
             Preferences.Load(); audioFeedback.Configure(theme); view.Build(theme, audioFeedback, this); _built = true;
+            _music=GetComponent<FrontendMusicDirector>();
+            if(_music==null)_music=gameObject.AddComponent<FrontendMusicDirector>();
+            _music.Configure(theme.frontendAudio);
+            BindMatchPresentation();
             hud?.ConfigurePause(Pause, EndMatch);
             ApplyPreferences(); HideDebugOverlays(); hud?.SetFrontendPresentation(theme, false); duel.SetRoundReady(false);
             view.SetPlayAvailable(false); view.SetStatus("PREPARING ARENA");
         }
         private void OnEnable()
-        { _back = new InputAction("Frontend back", InputActionType.Button, "<Keyboard>/escape"); _back.performed += OnBack; _back.Enable(); }
+        { if(_built)BindMatchPresentation(); _back = new InputAction("Frontend back", InputActionType.Button, "<Keyboard>/escape"); _back.performed += OnBack; _back.Enable(); }
         private void OnBack(InputAction.CallbackContext _) => Back();
         private void Update()
         {
             if (!_built) return;
+            SyncWorldHold();
             if (State == FrontendState.Loading)
             {
                 if (readiness != null && readiness.Failed) { view.SetStatus("ARENA COULD NOT LOAD. CHECK THE GAME LOG.", true); return; }
@@ -108,6 +119,32 @@ namespace Elemental.Presentation.UI
                 }
             }
             else if (menuCamera != null && menuCamera.NeedsReframe) menuCamera.Reframe(Preferences.ReducedMotion);
+            SyncWorldHold();_music?.SetContext(State);
+        }
+        private void BindMatchPresentation()
+        {
+            if(duel==null)return;
+            celestial?.BindMatchLifecycle(duel);
+            if(!_restartSubscribed){duel.RoundRestarted+=OnRoundRestarted;duel.ArenaRestoreFinished+=OnArenaRestoreFinished;_restartSubscribed=true;}
+        }
+        private void OnRoundRestarted()=>SyncWorldHold();
+        private void OnArenaRestoreFinished() { if(menuCamera!=null && menuCamera.OwnsPresentation)menuCamera.Reframe(Preferences.ReducedMotion); }
+        private void SyncWorldHold()
+        {
+            bool hold=!_networkRound && !_pausedLocal && (State is FrontendState.Main or FrontendState.Settings or
+                FrontendState.Starting or FrontendState.Host or FrontendState.Join or FrontendState.Ending ||
+                duel!=null && (duel.ArenaResetInProgress || State==FrontendState.Combat && duel.IsRoundOver));
+            if(hold)
+            {
+                if(!_worldHeld){_scaleBeforeWorldHold=Time.timeScale>0?Time.timeScale:1;_worldHeld=true;}
+                Time.timeScale=0;
+            }
+            else ReleaseWorldHold();
+        }
+        private void ReleaseWorldHold()
+        {
+            if(!_worldHeld)return;
+            Time.timeScale=_scaleBeforeWorldHold;_worldHeld=false;
         }
         public bool BeginBot()
         {
@@ -119,6 +156,7 @@ namespace Elemental.Presentation.UI
         }
         private void StartCountdownPresentation()
         {
+            _music?.SetContext(State);
             _countdownCameraReleased = false; _countdownFramingStarted=false;
             view.BeginDeparture();
         }
@@ -127,11 +165,13 @@ namespace Elemental.Presentation.UI
             if (!_built) return;
             RestorePauseState();
             duel.CaptureArenaBaselineIfReady(); duel.RestoreArenaForMatchBoundary();
+            celestial?.ResetForMatchBoundary();
             _networkCountdownRemaining = null;
             _networkRound = false;
             duel.SetRoundReady(false); hud?.SetFrontendPresentation(theme, false);
             view.SetCountdown(0);
             State = FrontendState.Main; menuCamera.Enter(Preferences.ReducedMotion, theme.transitionSeconds);
+            SyncWorldHold();_music?.SetContext(State);
             view.Show(FrontendPage.Main); view.SetVisibility(1, true); view.SetPlayAvailable(IsWorldReady);
             view.SetStatus(message ?? (OnlineAvailable ? "" : "ONLINE MULTIPLAYER â€” NOT AVAILABLE IN LOCAL ALPHA"));
             Cursor.visible = true; Cursor.lockState = CursorLockMode.None;
@@ -154,6 +194,7 @@ namespace Elemental.Presentation.UI
                 duel.SetRoundReady(false); Time.timeScale = 0f;
             }
             hud?.SetFrontendPresentation(theme, false);
+            menuCamera?.Enter(Preferences.ReducedMotion,theme.transitionSeconds);
             ShowPausePage();
             Cursor.visible = true; Cursor.lockState = CursorLockMode.None;
         }
@@ -173,6 +214,7 @@ namespace Elemental.Presentation.UI
             RestorePauseState();
             if (_networkRound) NetworkPauseRequested?.Invoke(false); else duel.SetRoundReady(true);
             State = FrontendState.Combat; view.SetVisibility(0, false);
+            menuCamera?.ReturnToGameplay(Preferences.ReducedMotion,theme.transitionSeconds);
             hud?.SetFrontendPresentation(theme, true);
             Cursor.visible = _cursorBeforePause; Cursor.lockState = _lockBeforePause;
             audioFeedback.Play(UIAudioCue.Confirm);
@@ -244,6 +286,9 @@ namespace Elemental.Presentation.UI
         private void OnDisable()
         {
             RestorePauseState();
+            ReleaseWorldHold();
+            if(_restartSubscribed && duel!=null){duel.RoundRestarted-=OnRoundRestarted;duel.ArenaRestoreFinished-=OnArenaRestoreFinished;_restartSubscribed=false;}
+            _music?.FadeOut();
             if (_back != null) { _back.performed -= OnBack; _back.Dispose(); _back = null; }
             menuCamera?.FinishCombatTransition();
         }

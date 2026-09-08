@@ -70,6 +70,7 @@ namespace Elemental.Authoring.Editor
                 output.GetComponent<EarthCinematicDepthOfFieldController>(), director.Player.GetComponentInChildren<EarthAnimationDriver>(true),
                 director.Player.GetComponent<PlanetMotor>(), director.Player, duel.BotTransform, cameraController.VirtualCamera, cameraController);
             flow.Configure(theme, view, audio, menuCamera, hud, duel, gate, director);
+            flow.ConfigureEnvironment(Find<Elemental.Presentation.Rendering.CelestialSystemBehaviour>(scene));
             var debug = new System.Collections.Generic.List<Behaviour>();
             foreach (var sceneRoot in scene.GetRootGameObjects()) debug.AddRange(sceneRoot.GetComponentsInChildren<BendingDebugOverlay>(true));
             flow.ConfigureDebugOverlays(debug.ToArray());

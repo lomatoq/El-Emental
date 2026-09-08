@@ -28,6 +28,7 @@ namespace Elemental.Presentation.UI
         public Font hudFont;
         public Sprite logo, panelDetail;
         public AudioClip hover, press, confirm, back, error, copy, connect;
+        public FrontendAudioProfile frontendAudio;
         [Header("Interaction durations (seconds)")]
         [Min(.01f)] public float hoverSeconds = .1f, pressSeconds = .07f, releaseSeconds = .12f;
         [Range(.9f, 1f)] public float pressedScale = .98f;

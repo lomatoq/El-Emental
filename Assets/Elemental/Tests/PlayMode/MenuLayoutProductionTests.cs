@@ -49,6 +49,14 @@ namespace Elemental.Tests.PlayMode
             for(int frame=0;frame<64;frame++)
             {yield return null;long ns=layoutRecorder.LastValue;if(ns>0){totalNs+=ns;peakNs=System.Math.Max(peakNs,ns);samples++;}}
             Assert.That(samples,Is.GreaterThan(0));
+            var music=flow.GetComponent<FrontendMusicDirector>();var feedback=Find<UIAudioFeedback>();
+            Assert.That(theme.frontendAudio,Is.Not.Null);Assert.That(music,Is.Not.Null);
+            Assert.That(theme.frontendAudio.mainMenu.name,Is.EqualTo("Main Menu"));
+            Assert.That(theme.frontendAudio.game.name,Is.EqualTo("Sky Temple Gate"));
+            Assert.That(theme.frontendAudio.panelMove.name,Is.EqualTo("Panel Move Sound"));
+            Assert.That(Time.timeScale,Is.Zero);Assert.That(music.MenuGain,Is.GreaterThan(0));
+            Assert.That(music.GetComponentsInChildren<AudioSource>().Any(source=>source.isPlaying),Is.True);
+            Assert.That(feedback.PanelMovePlayCount,Is.GreaterThanOrEqualTo(1));
             File.WriteAllText(Folder+"/layout-cpu.txt","samples="+samples+"; meanMs="+(totalNs/(double)samples/1000000d)+"; peakMs="+(peakNs/1000000d)+"; scope=layout binding only, editor, not total UI rendering");
             foreach(var page in new[]{FrontendPage.Main,FrontendPage.Settings,FrontendPage.Host,FrontendPage.Join,FrontendPage.Pause})
             {
@@ -74,6 +82,7 @@ namespace Elemental.Tests.PlayMode
             finally{entry.offset=savedOffset;entry.scale=savedScale;settings.Revision++;}
             bool oldReduced=flow.Preferences.ReducedMotion;
             flow.Preferences.Set(flow.Preferences.MasterVolume,flow.Preferences.UIVolume,flow.Preferences.Sensitivity,false);
+            int panelSoundsBeforeStart=feedback.PanelMovePlayCount;
             Assert.That(flow.BeginBot(),Is.True);
             var menuGroup=view.transform.Find("Menu contents").GetComponent<CanvasGroup>();
             var panel=(RectTransform)view.transform.Find("Menu contents/Menu column");
@@ -100,6 +109,12 @@ namespace Elemental.Tests.PlayMode
                 Assert.That(flow.State,Is.EqualTo(FrontendState.Combat));
             }
             finally{flow.Preferences.Set(flow.Preferences.MasterVolume,flow.Preferences.UIVolume,flow.Preferences.Sensitivity,oldReduced);}
+            Assert.That(feedback.PanelMovePlayCount,Is.EqualTo(panelSoundsBeforeStart+1),"Only one sound for the complete sidebar departure.");
+            Assert.That(music.GameGain,Is.GreaterThan(0));Assert.That(music.MenuGain,Is.Zero);
+            flow.Pause();yield return new WaitForSecondsRealtime(.25f);Assert.That(Time.timeScale,Is.Zero);
+            Assert.That(feedback.PanelMovePlayCount,Is.EqualTo(panelSoundsBeforeStart+2));
+            flow.Resume();yield return new WaitForSecondsRealtime(.25f);Assert.That(Time.timeScale,Is.GreaterThan(0));
+            Assert.That(feedback.PanelMovePlayCount,Is.EqualTo(panelSoundsBeforeStart+3));
             var duel=Find<EarthMvpDuelController>();var hud=Find<EarthDuelHud>();
             var root=hud.GetComponent<UIDocument>().rootVisualElement.Q("duel-hud");
             foreach(var outcome in new[]{"Victory","Defeat","Draw"})
@@ -110,7 +125,7 @@ namespace Elemental.Tests.PlayMode
                 if(outcome!="Draw")duel.RequestKnockout(outcome=="Victory"?EarthDuelFighterId.Bot:EarthDuelFighterId.Player,RagdollHandoff.Uniform(Vector3.zero));
                 yield return null;
                 var match=(EarthDuelMatchState)typeof(EarthMvpDuelController).GetField("_match",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(duel);
-                match.Step(Mathf.Max(0,match.RemainingSeconds-.03f));yield return new WaitForSeconds(.1f);yield return new WaitForSecondsRealtime(.8f);
+                match.Step(Mathf.Max(0,match.RemainingSeconds-.03f));yield return new WaitForSecondsRealtime(.1f);yield return new WaitForSecondsRealtime(.8f);
                 Assert.That(duel.IsRoundOver,Is.True);
                 Assert.That(root.Q<Label>("reference-result-title").text,Is.EqualTo(outcome.ToUpperInvariant()));
                 Assert.That(root.Q("reference-result-button-edge"),Is.Null,"No extra polygon plate may sit over the authored sprite.");

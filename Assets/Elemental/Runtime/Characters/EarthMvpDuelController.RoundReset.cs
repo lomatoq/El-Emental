@@ -1,18 +1,23 @@
-using System;
+﻿using System;
 using Elemental.Runtime.World;
 using UnityEngine;
+using Unity.Profiling;
 
 namespace Elemental.Runtime.Characters
 {
     public sealed partial class EarthMvpDuelController
     {
+        private static readonly ProfilerMarker ArenaRestoreMarker = new("Elemental.Duel.ArenaRestore");
         private EarthArenaRoundSnapshot _arenaSnapshot;
         private bool _arenaRestoreRequested, _arenaRestoreApplied, _resumeAfterArenaRestore, _arenaMatchDirty, _respawnAfterArenaRestore;
         public bool ArenaResetInProgress => _arenaRestoreRequested;
         public bool ArenaBaselineCaptured => _arenaSnapshot != null;
         public int ArenaResetCount { get; private set; }
         public string ArenaResetError { get; private set; }
+        // Applied is the online snapshot publication boundary; Finished additionally
+        // guarantees rebuilt geometry and external readiness acknowledgements.
         public event Action ArenaRestoreCompleted;
+        public event Action ArenaRestoreFinished;
         public Func<bool> ArenaRestoreReady { private get; set; }
         public void CaptureArenaBaselineIfReady()
         {
@@ -40,9 +45,16 @@ namespace Elemental.Runtime.Characters
             _arenaRestoreApplied = _resumeAfterArenaRestore = false;
             SetRoundReady(false);
         }
+        // Terrain/collider rebuild queues also run in Update. A local frontend may
+        // freeze physics/time while the restore transaction remains in flight.
+        private void Update()
+        {
+            if (HasSimulationAuthority && _arenaRestoreRequested) StepArenaMatchRestore();
+        }
         private bool StepArenaMatchRestore()
         {
             if (!_arenaRestoreRequested) return false;
+            using var marker = ArenaRestoreMarker.Auto();
             if (ArenaResetError != null) return true;
             if (!_arenaRestoreApplied)
             {
@@ -56,6 +68,7 @@ namespace Elemental.Runtime.Characters
             { _respawnAfterArenaRestore = false; RespawnPlayer(); RespawnBot(); }
             SetRoundReady(resume);
             if (resume) _arenaMatchDirty = true;
+            ArenaRestoreFinished?.Invoke();
             return true;
         }
     }

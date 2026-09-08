@@ -1,8 +1,10 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using Elemental.Presentation.UI;
+using Elemental.Presentation.Rendering;
 using Elemental.Runtime.Characters;
 using Elemental.Runtime.Matter;
 using Elemental.Runtime.Physics;
@@ -11,10 +13,12 @@ using Elemental.Simulation.Matter;
 using Elemental.Simulation.Combat;
 using Elemental.Simulation.Bending;
 using Unity.Mathematics;
+using Unity.Profiling;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 
 namespace Elemental.Tests.PlayMode
@@ -167,9 +171,19 @@ namespace Elemental.Tests.PlayMode
                 Directory.CreateDirectory(Output);
                 ScreenCapture.CaptureScreenshot(Output + "/cycle-" + cycle + "-damaged.png");
                 yield return new WaitForEndOfFrame();
+                var sky = Find<CelestialSystemBehaviour>();
+                sky.SetTimeOfDayForQa(.75f); sky.EvaluatePresentationForQa();
+                Assert.That(sky.Snapshot.TimeOfDay01, Is.EqualTo(.75f).Within(.001f));
                 flow.EndMatch(); // The same frontend action as Pause > Main Menu.
                 yield return WaitForMain(flow, duel);
                 Assert.That(duel.ArenaResetCount, Is.EqualTo(resetBefore + 1));
+                Assert.That(Time.timeScale, Is.Zero, "The local Main menu must stop world physics.");
+                Assert.That(sky.Snapshot.TimeOfDay01, Is.EqualTo(sky.Profile.StartTime01).Within(.001f));
+                Vector3 frozenStone = _canonicalDecor.Body.position;
+                float frozenDay = sky.Snapshot.TimeOfDay01;
+                for (int menuFrame = 0; menuFrame < 20; menuFrame++) yield return null;
+                Assert.That(_canonicalDecor.Body.position, Is.EqualTo(frozenStone));
+                Assert.That(sky.Snapshot.TimeOfDay01, Is.EqualTo(frozenDay));
                 Assert.That(source.ReleasedPieceCount, Is.Zero);
                 Assert.That(planet.State.EditCount, Is.EqualTo(baselineEdits));
                 Assert.That(VoxelPlanetBehaviour.ArenaSnapshotHash(planet.CaptureArenaSnapshot()), Is.EqualTo(terrainBaseline));
@@ -208,6 +222,90 @@ namespace Elemental.Tests.PlayMode
             evidence.foreignMatterUntouched = evidence.livesKeptDamage = evidence.authoredMatterPreserved = true;
             File.WriteAllText(Output + "/evidence.json", JsonUtility.ToJson(evidence, true));
         }
+        [UnityTest] public IEnumerator PausedRematchRebuildsTerrainAndStructuresBeforeCombatResumes()
+        {
+            _prior = SceneManager.GetActiveScene();
+            const string path = "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
+            yield return SceneManager.LoadSceneAsync(path, LoadSceneMode.Additive);
+            _arena = SceneManager.GetSceneByPath(path); SceneManager.SetActiveScene(_arena);
+            var gate = Find<EarthSceneReadinessGate>();
+            float deadline = Time.realtimeSinceStartup + 130f;
+            while (!gate.IsReady && !gate.Failed && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.That(gate.IsReady, Is.True, gate.Status);
+            yield return ProductionCombatTestFlow.BeginBotAfterReadiness(_arena);
+            DisableBots();
+            var duel = Find<EarthMvpDuelController>();
+            var planet = Find<VoxelPlanetBehaviour>();
+            var sky = Find<CelestialSystemBehaviour>();
+            ulong baseline = VoxelPlanetBehaviour.ArenaSnapshotHash(planet.CaptureArenaSnapshot());
+            EarthArenaStructure structure = null;
+            foreach (var candidate in Components<EarthArenaStructure>())
+                if (candidate.OrdinaryDamageEnabled && candidate.name.Contains("Column")) { structure = candidate; break; }
+            Assert.That(structure, Is.Not.Null);
+            Assert.That(structure.TryPluckCell(structure.transform.position, out _), Is.True);
+            planet.ApplySphereEdit(planet.transform.TransformPoint(new Vector3(.55f, .8f, .2f).normalized * (planet.State.Radius - .1f)), .45f, false);
+            Assert.That(structure.ReleasedPieceCount, Is.GreaterThan(0));
+            sky.SetTimeOfDayForQa(.75f); sky.EvaluatePresentationForQa();
+            int resets = duel.ArenaResetCount, finished = 0;
+            duel.ArenaRestoreFinished += () => finished++;
+            double began = Time.realtimeSinceStartupAsDouble;
+            using var recorder = ProfilerRecorder.StartNew(ProfilerCategory.Scripts, "Elemental.Duel.ArenaRestore", 512);
+            long peakNs = 0, totalNs = 0; int samples = 0;
+            duel.RestartRound();
+            Assert.That(duel.ArenaResetInProgress, Is.True);
+            Assert.That(duel.CombatAllowed, Is.False);
+            Assert.That(duel.CanReceiveDamage(EarthDuelFighterId.Bot), Is.False);
+            // Explicitly exercise completion with no FixedUpdate ticks available.
+            Time.timeScale = 0f;
+            deadline = Time.realtimeSinceStartup + 45f;
+            while (duel.ArenaResetInProgress && duel.ArenaResetError == null && Time.realtimeSinceStartup < deadline)
+            {
+                yield return null;
+                if (recorder.Valid && recorder.LastValue > 0)
+                { peakNs = Math.Max(peakNs, recorder.LastValue); totalNs += recorder.LastValue; samples++; }
+            }
+            Assert.That(duel.ArenaResetError, Is.Null);
+            Assert.That(duel.ArenaResetInProgress, Is.False);
+            Assert.That(duel.ArenaResetCount, Is.EqualTo(resets + 1));
+            Assert.That(finished, Is.EqualTo(1));
+            Assert.That(planet.GeometryReady, Is.True);
+            Assert.That(VoxelPlanetBehaviour.ArenaSnapshotHash(planet.CaptureArenaSnapshot()), Is.EqualTo(baseline));
+            Assert.That(structure.ReleasedPieceCount, Is.Zero);
+            Assert.That(sky.Snapshot.TimeOfDay01, Is.EqualTo(sky.Profile.StartTime01).Within(.01f));
+            Assert.That(duel.PlayerHealth, Is.EqualTo(100)); Assert.That(duel.BotHealth, Is.EqualTo(100));
+            Assert.That(duel.PlayerScore, Is.Zero); Assert.That(duel.BotScore, Is.Zero);
+            Assert.That(duel.CombatAllowed, Is.True);
+            // A completed result has explicitly closed Match.IsReady. Exercise the
+            // actual named HUD button rather than calling the duel restart directly.
+            yield return null;
+            DisableBots();
+            var match = (EarthDuelMatchState)typeof(EarthMvpDuelController)
+                .GetField("_match", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(duel);
+            match.Step(Mathf.Max(0f, match.RemainingSeconds - .03f));
+            deadline = Time.realtimeSinceStartup + 15f;
+            while ((!duel.IsRoundOver || duel.ArenaResetInProgress) && Time.realtimeSinceStartup < deadline)
+                yield return null;
+            Assert.That(duel.IsRoundOver, Is.True);
+            Assert.That(duel.ArenaResetError, Is.Null);
+            Assert.That(duel.CombatAllowed, Is.False);
+            Assert.That(Time.timeScale, Is.Zero);
+            var button = Find<EarthDuelHud>().GetComponent<UIDocument>().rootVisualElement.Q<Button>("restart-round");
+            Assert.That(button, Is.Not.Null); Assert.That(button.enabledInHierarchy, Is.True);
+            sky.SetTimeOfDayForQa(.75f); sky.EvaluatePresentationForQa();
+            using (var submit = NavigationSubmitEvent.GetPooled()) button.SendEvent(submit);
+            deadline = Time.realtimeSinceStartup + 15f;
+            while ((!duel.CombatAllowed || duel.ArenaResetInProgress) && Time.realtimeSinceStartup < deadline)
+                yield return null;
+            Assert.That(duel.CombatAllowed, Is.True, "The real result Rematch button must reopen the completed match's readiness gate.");
+            Assert.That(duel.IsRoundOver, Is.False);
+            Assert.That(sky.Snapshot.TimeOfDay01, Is.EqualTo(sky.Profile.StartTime01).Within(.01f));
+            yield return null;
+            Assert.That(Time.timeScale, Is.GreaterThan(0f));
+            Assert.That(structure.ReleasedPieceCount, Is.Zero);
+            Directory.CreateDirectory(Output);
+            File.WriteAllText(Output + "/paused-rematch.txt", $"UTC={DateTime.UtcNow:O}; restoreWallMs={(Time.realtimeSinceStartupAsDouble-began)*1000:F3}; finished={finished}; terrainReady={planet.GeometryReady}; day={sky.Snapshot.TimeOfDay01:F4}; markerSamples={samples}; markerMeanMs={(samples > 0 ? totalNs / (double)samples / 1000000d : 0d):F4}; markerPeakMs={peakNs / 1000000d:F4}");
+        }
+
         [UnityTest] public IEnumerator LazyRegistrySurvivesItsHostAwakening()
         {
             var root = new GameObject("Inactive registry host"); root.SetActive(false);

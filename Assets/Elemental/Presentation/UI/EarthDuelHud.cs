@@ -551,7 +551,7 @@ namespace Elemental.Presentation.UI
 
             _result.Add(Text("ROUND COMPLETE", "duel-caption")); _resultText = Text("", "duel-result-title"); _result.Add(_resultText);
 
-            _restart = new Button(() => { if (_restartAllowed) duel.RestartRound(); }) { text = "NEW ROUND", name = "restart-round" }; _restart.AddToClassList("duel-restart"); _result.Add(_restart);
+            _restart = new Button(() => { if (_restartAllowed) { duel.RestartRound(); duel.SetRoundReady(true); } }) { text = "NEW ROUND", name = "restart-round" }; _restart.AddToClassList("duel-restart"); _result.Add(_restart);
             SetFrontendPresentation(_theme, _combatVisible);
         }
 

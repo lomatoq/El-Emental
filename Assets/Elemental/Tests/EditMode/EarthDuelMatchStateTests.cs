@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Elemental.Simulation.Combat;
 using NUnit.Framework;
 
@@ -6,6 +6,28 @@ namespace Elemental.Tests.EditMode
 {
     public sealed class EarthDuelMatchStateTests
     {
+        [TestCase(false)]
+        [TestCase(true)]
+        public void RestartResetsMatchButPreservesExplicitWorldReadiness(bool ready)
+        {
+            var state = new EarthDuelMatchState { IsReady = true };
+            state.Damage(EarthDuelFighterId.Bot, 100f);
+            state.Step(7f);
+            state.IsReady = ready;
+            state.Restart();
+            Assert.That(state.PlayerScore, Is.Zero);
+            Assert.That(state.BotHealth, Is.EqualTo(100f));
+            Assert.That(state.RemainingSeconds, Is.EqualTo(300f));
+            Assert.That(state.CombatAllowed, Is.EqualTo(ready));
+            if (!ready)
+            {
+                state.Step(4f);
+                Assert.That(state.Damage(EarthDuelFighterId.Player, 100f), Is.False);
+                Assert.That(state.PlayerHealth, Is.EqualTo(100f));
+                Assert.That(state.RemainingSeconds, Is.EqualTo(300f));
+            }
+        }
+
         [Test]
         public void LoadingAndPauseDoNotConsumeRoundTime()
         {

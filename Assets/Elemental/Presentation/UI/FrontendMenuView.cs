@@ -51,6 +51,7 @@ namespace Elemental.Presentation.UI
         public float StartCameraCueSeconds => _flow.Preferences.ReducedMotion ? .08f : .58f;
         public void BeginDeparture()
         {
+            if(!_departing)_audio?.PlayPanelMove();
             _departureAge=0;_departureStartX=_renderedPanelX;_departureStartAlpha=_group.alpha;
             _departing=true;_group.interactable=false;_group.blocksRaycasts=false;
             SetCountdown(0);
@@ -387,6 +388,7 @@ namespace Elemental.Presentation.UI
         }
         public void SetVisibility(float alpha, bool interactable)
         {
+            if((alpha>.01f)!=(_visibleTarget>.01f) && (!_departing || alpha>.01f))_audio?.PlayPanelMove();
             if (_group == null) return;
             if(alpha>0 && interactable){_departing=false;SetStartVeil(StartIntroSeconds);}
             if(ReferenceActive)

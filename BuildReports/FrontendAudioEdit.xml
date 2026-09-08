@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="6" result="Passed" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-08 12:53:54Z" end-time="2026-09-08 12:53:54Z" duration="0.0848992">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="1295" result="Passed" start-time="2026-09-08 12:53:54Z" end-time="2026-09-08 12:53:54Z" duration="0.084899" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2629" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="1249" result="Passed" start-time="2026-09-08 12:53:54Z" end-time="2026-09-08 12:53:54Z" duration="0.051038" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="11736" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2630" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="1243" result="Passed" start-time="2026-09-08 12:53:54Z" end-time="2026-09-08 12:53:54Z" duration="0.050317" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2631" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="1243" result="Passed" start-time="2026-09-08 12:53:54Z" end-time="2026-09-08 12:53:54Z" duration="0.050034" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2632" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="1243" result="Passed" start-time="2026-09-08 12:53:54Z" end-time="2026-09-08 12:53:54Z" duration="0.049786" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="2252" name="FrontendAudioEnvelopeTests" fullname="Elemental.Tests.EditMode.FrontendAudioEnvelopeTests" classname="Elemental.Tests.EditMode.FrontendAudioEnvelopeTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-08 12:53:54Z" end-time="2026-09-08 12:53:54Z" duration="0.048710" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2253" name="LoopOverlapKeepsEqualPowerThroughTheEntireSeam" fullname="Elemental.Tests.EditMode.FrontendAudioEnvelopeTests.LoopOverlapKeepsEqualPowerThroughTheEntireSeam" methodname="LoopOverlapKeepsEqualPowerThroughTheEntireSeam" classname="Elemental.Tests.EditMode.FrontendAudioEnvelopeTests" runstate="Runnable" seed="614388207" result="Passed" start-time="2026-09-08 12:53:54Z" end-time="2026-09-08 12:53:54Z" duration="0.027629" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="2259" name="OverlapIsBoundedForShortClips" fullname="Elemental.Tests.EditMode.FrontendAudioEnvelopeTests.OverlapIsBoundedForShortClips" classname="Elemental.Tests.EditMode.FrontendAudioEnvelopeTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-08 12:53:54Z" end-time="2026-09-08 12:53:54Z" duration="0.003248" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2256" name="OverlapIsBoundedForShortClips(0.4d,3,0.1d)" fullname="Elemental.Tests.EditMode.FrontendAudioEnvelopeTests.OverlapIsBoundedForShortClips(0.4d,3,0.1d)" methodname="OverlapIsBoundedForShortClips" classname="Elemental.Tests.EditMode.FrontendAudioEnvelopeTests" runstate="Runnable" seed="1751571110" result="Passed" start-time="2026-09-08 12:53:54Z" end-time="2026-09-08 12:53:54Z" duration="0.001120" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2257" name="OverlapIsBoundedForShortClips(12,2,2)" fullname="Elemental.Tests.EditMode.FrontendAudioEnvelopeTests.OverlapIsBoundedForShortClips(12,2,2)" methodname="OverlapIsBoundedForShortClips" classname="Elemental.Tests.EditMode.FrontendAudioEnvelopeTests" runstate="Runnable" seed="1903554335" result="Passed" start-time="2026-09-08 12:53:54Z" end-time="2026-09-08 12:53:54Z" duration="0.000133" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2258" name="OverlapIsBoundedForShortClips(12,-1,0.01d)" fullname="Elemental.Tests.EditMode.FrontendAudioEnvelopeTests.OverlapIsBoundedForShortClips(12,-1,0.01d)" methodname="OverlapIsBoundedForShortClips" classname="Elemental.Tests.EditMode.FrontendAudioEnvelopeTests" runstate="Runnable" seed="810934370" result="Passed" start-time="2026-09-08 12:53:54Z" end-time="2026-09-08 12:53:54Z" duration="0.000119" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="2255" name="PanelOneShotAttacksAndReleasesToExactSilence" fullname="Elemental.Tests.EditMode.FrontendAudioEnvelopeTests.PanelOneShotAttacksAndReleasesToExactSilence" methodname="PanelOneShotAttacksAndReleasesToExactSilence" classname="Elemental.Tests.EditMode.FrontendAudioEnvelopeTests" runstate="Runnable" seed="316069772" result="Passed" start-time="2026-09-08 12:53:54Z" end-time="2026-09-08 12:53:54Z" duration="0.003229" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2254" name="SmoothFadeHasQuietEndpointsAndNoOvershoot" fullname="Elemental.Tests.EditMode.FrontendAudioEnvelopeTests.SmoothFadeHasQuietEndpointsAndNoOvershoot" methodname="SmoothFadeHasQuietEndpointsAndNoOvershoot" classname="Elemental.Tests.EditMode.FrontendAudioEnvelopeTests" runstate="Runnable" seed="718963045" result="Passed" start-time="2026-09-08 12:53:54Z" end-time="2026-09-08 12:53:54Z" duration="0.000352" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\FrontendAudioEdit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

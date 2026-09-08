@@ -11,6 +11,7 @@ namespace Elemental.Presentation.UI
     [DisallowMultipleComponent]
     public sealed class CinematicMenuCamera : MonoBehaviour
     {
+        private static readonly Unity.Profiling.ProfilerMarker ReframeMarker = new("Elemental.MenuCamera.Reframe");
         [SerializeField] private CinemachineCamera menuCamera;
         [SerializeField] private CinemachineBrain brain;
         [SerializeField] private CinemachineCamera gameplayCamera;
@@ -28,6 +29,8 @@ namespace Elemental.Presentation.UI
         [SerializeField, Range(30, 55)] private float fieldOfView = 38;
         [SerializeField, Range(.45f, .65f)] private float characterScreenHeight = .55f;
         [SerializeField, Range(-75, 75)] private float presentationAzimuth = 35f;
+        [SerializeField, Tooltip("Character framing centre in normalized screen coordinates; used by Main and Pause.")]
+        private Vector2 portraitViewport = new Vector2(.78f, .58f);
         [Header("Countdown framing")]
         [SerializeField, Range(45, 120)] private float countdownAzimuth = 85f;
         [SerializeField, Range(5, 35)] private float countdownElevation = 18f;
@@ -43,6 +46,15 @@ namespace Elemental.Presentation.UI
         private bool _countdownFraming;
         public float CountdownFocalLength => UnityEngine.Camera.FieldOfViewToFocalLength(menuCamera.Lens.FieldOfView, 24f);
         private bool _active, _chargeWasEnabled;
+        private bool _previousIgnoreTimeScale, _returning;
+        private CinemachineBrain.UpdateMethods _previousUpdateMethod;
+        private CinemachineBrain.BrainUpdateMethods _previousBlendUpdateMethod;
+        private float _returnStartedAt, _returnSeconds;
+        private int _returnStartedFrame;
+        private Vector3 _framedActorPosition;
+        private Quaternion _framedActorRotation;
+        private bool _hasFramedActor;
+        private SkinnedMeshRenderer[] _actorRenderers = System.Array.Empty<SkinnedMeshRenderer>();
         private Transform _primary, _secondary;
         private CinemachineBlendDefinition _blend;
         private float _previousDofWeight = 1f;
@@ -59,22 +71,34 @@ namespace Elemental.Presentation.UI
         public void Enter(bool reducedMotion, float transitionSeconds)
         {
             if (menuCamera == null || actor == null) return;
+            _returning = false;
             _countdownFraming = false;
             if (_active)
             {
+                SetPresentationClock();
+                if (brain != null) brain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut, reducedMotion ? 0 : transitionSeconds);
                 menuCamera.Priority = 1000; menuCamera.gameObject.SetActive(true);
                 depthOfField?.SetPresentationWeight(1); Reframe(reducedMotion);
                 animationDriver?.SetPresentationClockMultiplier(.45f); return;
             }
             _active = true;
-            if (brain != null) _previousLensModeOverride = brain.LensModeOverride;
+            if (brain != null)
+            {
+                _previousLensModeOverride = brain.LensModeOverride;
+                _previousIgnoreTimeScale = brain.IgnoreTimeScale;
+                _previousUpdateMethod = brain.UpdateMethod;
+                _previousBlendUpdateMethod = brain.BlendUpdateMethod;
+            }
+            SetPresentationClock();
+            var activeAnimator = animationDriver != null ? animationDriver.Animator : null;
+            _actorRenderers = activeAnimator != null ? activeAnimator.GetComponentsInChildren<SkinnedMeshRenderer>(true) : System.Array.Empty<SkinnedMeshRenderer>();
             if (outputCamera != null) _previousOutputLens = LensSettings.FromCamera(outputCamera);
             var renderers = new System.Collections.Generic.List<Renderer>();
             foreach (var root in gameObject.scene.GetRootGameObjects()) renderers.AddRange(root.GetComponentsInChildren<Renderer>(true));
             _sceneRenderers = renderers.ToArray();
             _rendererWasHidden = new bool[_sceneRenderers.Length]; _suppressed = new bool[_sceneRenderers.Length];
             for (int i = 0; i < _sceneRenderers.Length; i++) _rendererWasHidden[i] = _sceneRenderers[i] != null && _sceneRenderers[i].forceRenderingOff;
-            if (brain != null) { _blend = brain.DefaultBlend; brain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut, transitionSeconds); }
+            if (brain != null) { _blend = brain.DefaultBlend; brain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut, reducedMotion ? 0 : transitionSeconds); }
             // The lookdev bootstrap may add this component after scene authoring.
             if (chargeLook == null && outputCamera != null) chargeLook = outputCamera.GetComponent<EarthChargeCameraLookdevV2>();
             _chargeWasEnabled = chargeLook != null && chargeLook.enabled; if (chargeLook != null) chargeLook.enabled = false;
@@ -90,7 +114,8 @@ namespace Elemental.Presentation.UI
         public void Reframe(bool reducedMotion)
         {
             if (!_active || actor == null || menuCamera == null) return;
-            Vector3 up = motor != null ? motor.LocalUp : actor.up;
+            using var marker = ReframeMarker.Auto();
+            Vector3 up = motor != null && motor.LocalUp.sqrMagnitude > .5f ? motor.LocalUp.normalized : actor.up;
             Vector3 facing = Vector3.ProjectOnPlane(motor != null ? motor.FacingForward : actor.forward, up).normalized;
             if (facing.sqrMagnitude < .1f) facing = Vector3.ProjectOnPlane(actor.forward, up).normalized;
             Vector3 feet = motor != null ? motor.SupportFeetPoint(up) : actor.position;
@@ -101,8 +126,9 @@ namespace Elemental.Presentation.UI
             // Frame the actual rendered silhouette, including those accessories.
             if (animator != null)
             {
-                foreach (var renderer in animator.GetComponentsInChildren<SkinnedMeshRenderer>())
+                foreach (var renderer in _actorRenderers)
                 {
+                    if (renderer == null) continue;
                     Bounds bounds = renderer.bounds;
                     float projectedHalfHeight = Mathf.Abs(up.x) * bounds.extents.x + Mathf.Abs(up.y) * bounds.extents.y + Mathf.Abs(up.z) * bounds.extents.z;
                     height = Mathf.Max(height, Vector3.Dot(bounds.center - feet, up) + projectedHalfHeight);
@@ -143,7 +169,9 @@ namespace Elemental.Presentation.UI
             if (_countdownFraming) position = center + (facing * Mathf.Cos(countdownElevation * Mathf.Deg2Rad) + up * Mathf.Sin(countdownElevation * Mathf.Deg2Rad)) * distance;
             Vector3 target = center - right * distance * Mathf.Tan(framingFov * Mathf.Deg2Rad * .5f) * aspect * .40f;
             if (_countdownFraming) target = center;
-            menuCamera.transform.SetPositionAndRotation(position, Quaternion.LookRotation(target - position, up));
+            Quaternion rotation = _countdownFraming ? Quaternion.LookRotation(target - position, up) :
+                PortraitRotation(position, center, up, framingFov, aspect, portraitViewport, reducedMotion ? 0 : dutchAngle);
+            menuCamera.transform.SetPositionAndRotation(position, rotation);
             SuppressForegroundOccluders(position, center, up, height);
             var lens = menuCamera.Lens;
             lens.ModeOverride = _countdownFraming ? LensSettings.OverrideModes.Physical : LensSettings.OverrideModes.Perspective;
@@ -157,7 +185,21 @@ namespace Elemental.Presentation.UI
             }
             lens.FieldOfView = framingFov; lens.Dutch = reducedMotion || _countdownFraming ? 0 : dutchAngle; menuCamera.Lens = lens;
             _width = Screen.width; _height = Screen.height;
+            _framedActorPosition = actor.position; _framedActorRotation = actor.rotation; _hasFramedActor = true;
+            menuCamera.PreviousStateIsValid = false;
             depthOfField?.ApplyPolicy(!reducedMotion, distance, 5.6f, 50f);
+        }
+        public static Quaternion PortraitRotation(Vector3 position, Vector3 subject, Vector3 up,
+            float verticalFov, float aspect, Vector2 viewport, float dutch)
+        {
+            float tangent = Mathf.Tan(verticalFov * Mathf.Deg2Rad * .5f);
+            Vector3 screenRay = new Vector3((viewport.x * 2 - 1) * tangent * aspect,
+                (viewport.y * 2 - 1) * tangent, 1);
+            // Compensate the final Cinemachine roll so the requested on-screen
+            // position stays the same in normal and Reduced Motion presentation.
+            screenRay = Quaternion.AngleAxis(dutch, Vector3.forward) * screenRay;
+            return Quaternion.LookRotation(subject - position, up) *
+                Quaternion.FromToRotation(screenRay.normalized, Vector3.forward);
         }
         private void RestoreOccluders()
         {
@@ -237,6 +279,36 @@ namespace Elemental.Presentation.UI
         }
         public void BeginCombatTransition()
         { if (_active && menuCamera != null && (!_countdownFraming || gameplayCamera == null)) menuCamera.Priority = -1000; }
+        private void SetPresentationClock()
+        {
+            if (brain == null) return;
+            // Cinemachine 3's Smart/Fixed update can stop when the duel freezes.
+            // Both virtual-camera evaluation and brain blending must use render time.
+            brain.IgnoreTimeScale = true;
+            brain.UpdateMethod = CinemachineBrain.UpdateMethods.LateUpdate;
+            brain.BlendUpdateMethod = CinemachineBrain.BrainUpdateMethods.LateUpdate;
+        }
+        public void ReturnToGameplay(bool reducedMotion, float transitionSeconds)
+        {
+            if (!_active || menuCamera == null) return;
+            _returning = true; _countdownFraming = false;
+            _returnStartedAt = Time.unscaledTime; _returnStartedFrame = Time.frameCount;
+            _returnSeconds = reducedMotion ? 0 : Mathf.Max(0, transitionSeconds);
+            SetPresentationClock();
+            if (brain != null) brain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut, _returnSeconds);
+            gameplayController?.SnapToTarget();
+            menuCamera.Priority = -1000;
+        }
+        private void Update()
+        {
+            if (!_returning || !_active) return;
+            float age = Time.unscaledTime - _returnStartedAt;
+            SetTransitionProgress(_returnSeconds > 0 ? Mathf.Clamp01(age / _returnSeconds) : 1);
+            // Let the brain see the priority change and render the completed blend
+            // before returning its saved clock, lens and occlusion policies.
+            if (Time.frameCount > _returnStartedFrame + 1 && age >= _returnSeconds && (brain == null || !brain.IsBlending))
+                FinishCombatTransition();
+        }
         public void SetTransitionProgress(float progress)
         {
             if (!_active) return;
@@ -246,10 +318,15 @@ namespace Elemental.Presentation.UI
         public void FinishCombatTransition()
         {
             if (!_active) return;
-            _active = false; animationDriver?.SetPresentationClockMultiplier(1f);
+            _active = false; _returning = false; animationDriver?.SetPresentationClockMultiplier(1f);
             RestoreOccluders();
             if (menuCamera != null) { menuCamera.Priority = -1000; menuCamera.gameObject.SetActive(false); }
-            if (brain != null) { brain.DefaultBlend = _blend; brain.LensModeOverride = _previousLensModeOverride; }
+            if (brain != null)
+            {
+                brain.DefaultBlend = _blend; brain.LensModeOverride = _previousLensModeOverride;
+                brain.IgnoreTimeScale = _previousIgnoreTimeScale;
+                brain.UpdateMethod = _previousUpdateMethod; brain.BlendUpdateMethod = _previousBlendUpdateMethod;
+            }
             if (outputCamera != null)
             {
                 outputCamera.usePhysicalProperties = _previousOutputLens.IsPhysicalCamera;
@@ -268,7 +345,9 @@ namespace Elemental.Presentation.UI
             }
             if (chargeLook != null) chargeLook.enabled = _chargeWasEnabled;
         }
-        public bool NeedsReframe => _active && (_width != Screen.width || _height != Screen.height);
+        public bool NeedsReframe => _active && !_returning && !_countdownFraming && actor != null &&
+            (!_hasFramedActor || _width != Screen.width || _height != Screen.height ||
+             (actor.position - _framedActorPosition).sqrMagnitude > .0004f || Quaternion.Angle(actor.rotation, _framedActorRotation) > .5f);
         private void OnDisable() => FinishCombatTransition();
     }
 }

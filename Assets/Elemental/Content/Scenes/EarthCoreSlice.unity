@@ -49902,6 +49902,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Elemental.Input::Elemental.Input.Gestures.EarthPreviewPresenter
   line: {fileID: 370967238}
+  minimumWorldWidth: 0.065
+  previewTint: {r: 1.6, g: 1.25, b: 0.55, a: 1}
 --- !u!120 &370967238
 LineRenderer:
   serializedVersion: 3
@@ -79383,6 +79385,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Elemental.Input::Elemental.Input.Gestures.EarthPreviewPresenter
   line: {fileID: 587163387}
+  minimumWorldWidth: 0.065
+  previewTint: {r: 1.6, g: 1.25, b: 0.55, a: 1}
 --- !u!120 &587163387
 LineRenderer:
   serializedVersion: 3
@@ -248295,6 +248299,7 @@ MonoBehaviour:
   fieldOfView: 38
   characterScreenHeight: 0.55
   presentationAzimuth: 0
+  portraitViewport: {x: 0.78, y: 0.58}
   countdownAzimuth: 85
   countdownElevation: 18
   countdownCharacterScreenHeight: 0.48
@@ -248428,6 +248433,7 @@ MonoBehaviour:
   duel: {fileID: 1613659716}
   readiness: {fileID: 246707014}
   cameraDirector: {fileID: 1967943506}
+  celestial: {fileID: 880120852}
   debugOverlays:
   - {fileID: 1957364951}
 --- !u!4 &1968201431

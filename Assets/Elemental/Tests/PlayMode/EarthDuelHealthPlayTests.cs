@@ -62,6 +62,42 @@ namespace Elemental.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator RestartReassertsClosedControlGateWithoutLosingOriginalFlags()
+        {
+            var host = new GameObject("Closed restart control gate fixture");
+            var controlHost = new GameObject("Originally enabled control");
+            var disabledHost = new GameObject("Originally disabled control");
+            try
+            {
+                // Behaviour-only surrogates never render: all assertions run
+                // synchronously, before the sole yield with both cameras disabled.
+                var originallyEnabled = controlHost.AddComponent<Camera>();
+                var originallyDisabled = disabledHost.AddComponent<Camera>();
+                originallyEnabled.enabled = true; originallyDisabled.enabled = false;
+                var duel = host.AddComponent<EarthMvpDuelController>();
+                duel.ConfigureRoundControls(originallyEnabled, originallyDisabled);
+                duel.SetRoundReady(false);
+                Assert.That(originallyEnabled.enabled, Is.False);
+                // Model the independent ragdoll-reset adapter restoring its own
+                // controls while the outer match gate remains closed.
+                originallyEnabled.enabled = originallyDisabled.enabled = true;
+                duel.RestartRound();
+                Assert.That(duel.CombatAllowed, Is.False);
+                Assert.That(originallyEnabled.enabled, Is.False, "Restart must reassert an already closed input gate.");
+                Assert.That(originallyDisabled.enabled, Is.False);
+                duel.SetRoundReady(true);
+                Assert.That(originallyEnabled.enabled, Is.True);
+                Assert.That(originallyDisabled.enabled, Is.False, "Repeated suspension must not replace the original enabled-state ledger.");
+                originallyEnabled.enabled = false;
+                yield return null;
+            }
+            finally
+            {
+                Object.Destroy(host); Object.Destroy(controlHost); Object.Destroy(disabledHost);
+            }
+        }
+
+        [UnityTest]
         public IEnumerator ReadinessCapturedBeforeAwakeStillRestoresControls()
         {
             var host = new GameObject("Inactive duel startup fixture");

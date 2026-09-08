@@ -1,4 +1,5 @@
-using Elemental.Runtime.World;
+﻿using Elemental.Runtime.World;
+using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
 using Elemental.Simulation.Time;
 using Unity.Mathematics;
@@ -32,6 +33,34 @@ namespace Elemental.Presentation.Rendering
             CelestialLightingAuthorityMode.AnimatedEphemeris;
 
         private double _elapsed;
+        private EarthMvpDuelController _matchLifecycle;
+
+        public void BindMatchLifecycle(EarthMvpDuelController match)
+        {
+            if (_matchLifecycle == match) return;
+            if (_matchLifecycle != null)
+            {
+                _matchLifecycle.RoundRestarted -= ResetForMatchBoundary;
+                _matchLifecycle.ArenaRestoreCompleted -= ResetForMatchBoundary;
+            }
+            _matchLifecycle = match;
+            if (_matchLifecycle != null)
+            {
+                _matchLifecycle.RoundRestarted += ResetForMatchBoundary;
+                _matchLifecycle.ArenaRestoreCompleted += ResetForMatchBoundary;
+            }
+        }
+
+        // Preserve the authored daylight composition; do not mutate the shared
+        // profile or restart the clock for an ordinary lost life.
+        public void ResetForMatchBoundary()
+        {
+            _elapsed = 0d;
+            EvaluateFrame(0f);
+        }
+
+        private void OnDestroy() => BindMatchLifecycle(null);
+
         private MaterialPropertyBlock _atmosphereProperties;
         private MaterialPropertyBlock _moonProperties;
         private MaterialPropertyBlock _distantPlanetProperties;

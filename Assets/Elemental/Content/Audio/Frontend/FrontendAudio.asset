@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e55bdecb62a97dd4a8137b31e87f582b, type: 3}
+  m_Name: FrontendAudio
+  m_EditorClassIdentifier: Elemental.Presentation::Elemental.Presentation.UI.FrontendAudioProfile
+  mainMenu: {fileID: 8300000, guid: 49686c7e8e07dbf4a8867f954fb532fb, type: 3}
+  game: {fileID: 8300000, guid: e2bb95cb335fe9a428751c5ae29cc8da, type: 3}
+  panelMove: {fileID: 8300000, guid: 270ebdd9fd80412479cd4362656621c7, type: 3}
+  menuVolume: 0.42
+  gameVolume: 0.46
+  panelVolume: 0.24
+  musicFadeSeconds: 1.5
+  loopCrossfadeSeconds: 3
+  panelAttackSeconds: 0.025
+  panelReleaseSeconds: 0.15
+  pausedMusicGain: 0.65

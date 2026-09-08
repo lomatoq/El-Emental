@@ -2405,6 +2405,19 @@ namespace Elemental.Input.Gestures
                     _drawSurface.Handle.StableId,
                     _drawSurface.Handle.Generation,
                     _drawSurface.Handle.Kind);
+                if (!executed)
+                {
+                    var profile = executor.PlatformPool != null ? executor.PlatformPool.Profile : null;
+                    string rejection = null;
+                    Vector3 normal = ToVector3(_drawSurface.Normal);
+                    Vector3 gravityUp = (ToVector3(_drawSurface.Point) - PlanetCenterWorld).normalized;
+                    if (profile != null && Mathf.Abs(Vector3.Dot(normal, gravityUp)) >= .72f)
+                    {
+                        var footprint = EarthPlatformGeometrySolver.Build(_worldPath, (float3)PlanetCenterWorld, 32);
+                        rejection = EarthPlatformDrawFeedback.ForArea(footprint.Area, profile.MinimumArea, profile.MaximumArea);
+                    }
+                    StatusChanged?.Invoke(rejection ?? "Platform could not be raised on this face. Draw a clear closed outline away from the edge, or free an existing platform.");
+                }
             }
             else executed = executor.Execute(in command);
 

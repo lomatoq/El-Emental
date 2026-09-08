@@ -60,7 +60,19 @@ namespace Elemental.Runtime.Characters
 
         private void SetRoundControlsSuspended(bool suspended)
         {
-            if (_roundControlsSuspended == suspended) return;
+            if (_roundControlsSuspended == suspended)
+            {
+                // Respawn/ragdoll reset may re-enable a registered control while
+                // the enclosing menu/restore gate is still closed. Reassert the
+                // gate without recapturing the original enabled-state ledger.
+                if (suspended)
+                    for (int index = 0; index < roundInputBehaviours.Length; index++)
+                    {
+                        Behaviour control = roundInputBehaviours[index];
+                        if (control != null && control != this) control.enabled = false;
+                    }
+                return;
+            }
             if (_roundControlWasEnabled == null || _roundControlWasEnabled.Length != roundInputBehaviours.Length)
                 _roundControlWasEnabled = new bool[roundInputBehaviours.Length];
             _roundControlsSuspended = suspended;
@@ -329,7 +341,7 @@ namespace Elemental.Runtime.Characters
         private void FixedUpdate()
         {
             if (!HasSimulationAuthority) return;
-            if (StepArenaMatchRestore()) return;
+            if (ArenaResetInProgress) return;
             using (MatchMarker.Auto())
             {
                 bool wasOver = Match.IsOver;
