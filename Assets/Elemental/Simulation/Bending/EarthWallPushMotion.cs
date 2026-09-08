@@ -30,6 +30,10 @@ namespace Elemental.Simulation.Bending
             if(!float.IsFinite(gap))return -8*q;
             return -q*Math.Min(40,4+Math.Max(0,gap)*60+Math.Max(0,upwardSpeed)*18);
         }
+        // Intact rooted stone may climb a support plane, but cannot store penetration as lift energy.
+        public static float SupportedRiseLimit(float gap,float planeRiseSpeed) =>
+            float.IsFinite(gap)&&gap<=.08f&&float.IsFinite(planeRiseSpeed)?Math.Clamp(planeRiseSpeed,0,4.5f):0;
+        public static float RemoveUpwardBounce(float upwardSpeed,float riseLimit) => Math.Min(upwardSpeed,riseLimit);
         public static int DustCount(float charge,bool launch)=>
             (launch?32:18)+(int)Math.Round(Math.Clamp(charge,0,1)*(launch?48:24));
         public static int ChipCount(float charge,bool launch)=>

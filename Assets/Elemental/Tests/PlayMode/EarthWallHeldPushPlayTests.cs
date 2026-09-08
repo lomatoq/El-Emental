@@ -222,6 +222,41 @@ namespace Elemental.Tests.PlayMode
             Assert.That(sum,Is.EqualTo(mass).Within(.02f));Assert.That(wall.RemainingBondCount,Is.GreaterThan(0));
             pool.ReleaseTransient(wall);
         }
+        [UnityTest] public IEnumerator EmbeddedWallResolvesOverlapWithoutSpringLaunch()
+        {
+            const string path="Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
+            yield return SceneManager.LoadSceneAsync(path,LoadSceneMode.Additive);_scene=SceneManager.GetSceneByPath(path);
+            var gate=Find<EarthSceneReadinessGate>();double deadline=Time.realtimeSinceStartupAsDouble+125;
+            while(!gate.IsReady&&!gate.Failed&&Time.realtimeSinceStartupAsDouble<deadline)yield return null;
+            Assert.That(gate.IsReady,Is.True,gate.Status);
+            yield return ProductionCombatTestFlow.BeginBotAfterReadiness(_scene);Find<EarthMvpBotController>().enabled=false;
+            var floor=GameObject.CreatePrimitive(PrimitiveType.Cube);SceneManager.MoveGameObjectToScene(floor,_scene);
+            floor.transform.position=new Vector3(0,119.5f,25);floor.transform.localScale=new Vector3(40,1,100);
+            UnityEngine.Physics.SyncTransforms();
+            var pool=Find<EarthWallPool>();
+            var wall=pool.Acquire(new Vector3(-3,120,0),new Vector3(3,120,0),Vector3.zero,2,.4f,0xAAF069,Vector3.up);
+            deadline=Time.realtimeSinceStartupAsDouble+5;
+            while(!wall.IsEmergenceComplete&&Time.realtimeSinceStartupAsDouble<deadline)yield return null;
+            Assert.That(wall.TryBeginHeldPush(Vector3.forward),Is.True);
+            for(int i=0;i<55;i++)yield return new WaitForFixedUpdate();
+            Assert.That(wall.ReleaseHeldPush(),Is.True);
+            // Reproduce a buried contact seam at the handoff, while fully charged.
+            wall.Body.position-=Vector3.up*.08f;
+            UnityEngine.Physics.SyncTransforms();
+            float peakGap=0,peakUpSpeed=0;int airborne=0;
+            for(int i=0;i<160;i++)
+            {
+                yield return new WaitForFixedUpdate();
+                float gap=wall.SurfaceCollider.bounds.min.y-120;
+                peakGap=Mathf.Max(peakGap,gap);peakUpSpeed=Mathf.Max(peakUpSpeed,wall.Body.linearVelocity.y);
+                if(gap>.025f)airborne++;
+                Assert.That(wall.IsCollapsing,Is.False);
+            }
+            System.IO.File.WriteAllText("BuildReports/WallPushInput/no-spring.txt",$"peakGap={peakGap};peakUpSpeed={peakUpSpeed};airborneSamples={airborne}");
+            Assert.That(peakGap,Is.LessThan(.025f),"A buried base must never pop above the flat floor.");
+            Assert.That(peakUpSpeed,Is.LessThan(.6f),"Contact correction must not turn into a launch impulse.");
+            Assert.That(airborne,Is.Zero);pool.ReleaseTransient(wall);
+        }
         private T Find<T>() where T:Component
         {foreach(var root in _scene.GetRootGameObjects()){var result=root.GetComponentInChildren<T>(true);if(result!=null)return result;}throw new System.InvalidOperationException(typeof(T).Name);}
     }

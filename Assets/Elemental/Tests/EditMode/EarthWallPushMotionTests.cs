@@ -4,6 +4,16 @@ namespace Elemental.Tests.EditMode
 {
     public sealed class EarthWallPushMotionTests
     {
+        [Test] public void EmbeddedFlatSupportCannotLaunchStoneAndSlopeCannotStoreBounce()
+        {
+            Assert.That(EarthWallPushMotion.SupportedRiseLimit(-.17f,0),Is.Zero);
+            Assert.That(EarthWallPushMotion.RemoveUpwardBounce(8,0),Is.Zero);
+            Assert.That(EarthWallPushMotion.RemoveUpwardBounce(-3,0),Is.EqualTo(-3));
+            Assert.That(EarthWallPushMotion.SupportedRiseLimit(.2f,4),Is.Zero);
+            Assert.That(EarthWallPushMotion.SupportedRiseLimit(float.PositiveInfinity,4),Is.Zero);
+            Assert.That(EarthWallPushMotion.SupportedRiseLimit(-.1f,3),Is.EqualTo(3));
+            Assert.That(EarthWallPushMotion.RemoveUpwardBounce(8,3),Is.EqualTo(3));
+        }
         [Test] public void FullChargeHasLargerBoundedLaunchAndTrailFeedback()
         {
             foreach(bool launch in new[]{false,true})

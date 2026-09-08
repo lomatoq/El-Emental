@@ -251,17 +251,17 @@ namespace Elemental.Runtime.Physics
                 }
             }
             _heldPushSupportGap=nearestGap;
-            float supportAcceleration=float.IsFinite(nearestGap)?
-                nearestGap<-.005f?Mathf.Clamp(-nearestGap*240-Vector3.Dot(velocity,_up)*14,-8,80): -Mathf.Min(8,2+Mathf.Max(0,nearestGap)*30):-8;
-            if(float.IsFinite(nearestGap)&&nearestGap<.12f)
-            {
-                // Follow a rising support plane before the leading bottom edge hits it.
-                // This supplies vertical velocity through force, without moving the body pose.
-                float climbSpeed=Mathf.Min(Mathf.Lerp(10f,4.5f,_heldPushReleasedCharge),Mathf.Max(0,-Vector3.Dot(tangentVelocity,supportNormal)/Mathf.Max(.7f,Vector3.Dot(_up,supportNormal))));
-                if(climbSpeed>.05f)
-                    supportAcceleration=Mathf.Max(supportAcceleration,Mathf.Clamp((climbSpeed-Vector3.Dot(velocity,_up))/Time.fixedDeltaTime,0,Mathf.Lerp(250,140,_heldPushReleasedCharge)));
-            }
-            supportAcceleration+=EarthWallPushMotion.GroundHoldAcceleration(_heldPushReleasedCharge,nearestGap,Vector3.Dot(velocity,_up));
+            float planeRiseSpeed=Mathf.Max(0,-Vector3.Dot(tangentVelocity,supportNormal)/Mathf.Max(.7f,Vector3.Dot(_up,supportNormal)));
+            float riseLimit=EarthWallPushMotion.SupportedRiseLimit(nearestGap,planeRiseSpeed);
+            float verticalSpeed=Vector3.Dot(_body.linearVelocity,_up);
+            float constrainedSpeed=EarthWallPushMotion.RemoveUpwardBounce(verticalSpeed,riseLimit);
+            _body.linearVelocity+=_up*(constrainedSpeed-verticalSpeed);
+            // No penetration spring: flat seams cannot inject upward energy.
+            // Anticipate only the velocity required by an actual rising support plane.
+            float supportAcceleration=float.IsFinite(nearestGap)?-Mathf.Min(8,2+Mathf.Max(0,nearestGap)*30):-8;
+            if(riseLimit>.05f)
+                supportAcceleration=Mathf.Clamp((riseLimit-constrainedSpeed)/Time.fixedDeltaTime,0,140);
+            supportAcceleration+=EarthWallPushMotion.GroundHoldAcceleration(_heldPushReleasedCharge,nearestGap,constrainedSpeed);
             _body.AddForce(_up*supportAcceleration,ForceMode.Acceleration);
         }
     }

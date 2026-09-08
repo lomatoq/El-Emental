@@ -310,6 +310,8 @@ namespace Elemental.Runtime.Physics
                     Mathf.Max(0.1f, _planetRadius - clearance),
                     clearance);
             _foundationEmbed = embed;
+            // Embedded roots resolve contact overlap gently; they are not ballistic debris.
+            _body.maxDepenetrationVelocity = .5f;
             Vector3 embeddedChordCenter = midpoint - (_up * embed);
             _embeddedStart = embeddedChordCenter - (_tangent * chord.magnitude * 0.5f);
             _embeddedEnd = embeddedChordCenter + (_tangent * chord.magnitude * 0.5f);
@@ -986,6 +988,8 @@ namespace Elemental.Runtime.Physics
                 _body.angularVelocity = Vector3.zero;
                 _body.rotation = _surfaceRotation;
                 Vector3 authoredVelocity = _body.linearVelocity;
+                float outwardSpeed=Vector3.Dot(authoredVelocity,_up);
+                if(outwardSpeed>0){authoredVelocity-=_up*outwardSpeed;_body.linearVelocity=authoredVelocity;}
                 float authoredDrag = RootSlideDrag;
                 _body.AddForce(-authoredVelocity * authoredDrag, ForceMode.Acceleration);
                 if (authoredVelocity.magnitude > MaximumSlideSpeed)
