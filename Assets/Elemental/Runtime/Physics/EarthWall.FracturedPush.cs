@@ -23,6 +23,7 @@ namespace Elemental.Runtime.Physics
             get
             {
                 if(!isActiveAndEnabled||!_fractured||_pieceBodies==null||_bonds==null)return false;
+                if(HasRigidSlideCarrier)return true;
                 for(int i=0;i<_pieceBodies.Length;i++)
                     if(IsLiveFracturedPushPiece(i)&&_cohesion!=null&&_cohesion.IsPieceHeld(i))return false;
                 for(int i=0;i<_bonds.Length;i++)
@@ -36,6 +37,7 @@ namespace Elemental.Runtime.Physics
         public bool BeginFracturedHeldPush(Vector3 direction)
         {
             if(IsFracturedHeldPushActive)return true;
+            ReleaseRigidSlideCarrier();
             if(!CanBeginFracturedHeldPush)return false;
             int count=_pieceBodies.Length;
             if(_fracturedPushPoses.Length!=count)
@@ -129,8 +131,9 @@ namespace Elemental.Runtime.Physics
                 if(!_fracturedPushPoses[i].Selected||!IsLiveFracturedPushPiece(i))continue;
                 var body=_pieceBodies[i];body.isKinematic=false;
                 body.collisionDetectionMode=CollisionDetectionMode.ContinuousDynamic;
-                body.AddForce(_fracturedPushDirection*(impulse*body.mass/mass),ForceMode.Impulse);body.WakeUp();
+                body.linearVelocity+=_fracturedPushDirection*(impulse/mass);body.WakeUp();
             }
+            _fracturedSlide=true;BuildRigidSlideCarrier();
             return true;
         }
     }

@@ -131,9 +131,10 @@ namespace Elemental.Presentation.UI
         private void OnArenaRestoreFinished() { if(menuCamera!=null && menuCamera.OwnsPresentation)menuCamera.Reframe(Preferences.ReducedMotion); }
         private void SyncWorldHold()
         {
-            bool hold=!_networkRound && !_pausedLocal && (State is FrontendState.Main or FrontendState.Settings or
-                FrontendState.Starting or FrontendState.Host or FrontendState.Join or FrontendState.Ending ||
-                duel!=null && (duel.ArenaResetInProgress || State==FrontendState.Combat && duel.IsRoundOver));
+            bool hold=Elemental.Simulation.Time.FrontendWorldClockPolicy.ShouldHold(
+                _networkRound, _pausedLocal, State is FrontendState.Starting or FrontendState.Ending,
+                duel!=null && duel.ArenaResetInProgress,
+                duel!=null && State==FrontendState.Combat && duel.IsRoundOver);
             if(hold)
             {
                 if(!_worldHeld){_scaleBeforeWorldHold=Time.timeScale>0?Time.timeScale:1;_worldHeld=true;}

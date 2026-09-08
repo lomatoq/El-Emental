@@ -126,3 +126,7 @@ New compiler warnings, package resolution warnings, leaked native allocations, o
 ## Shared material microshake rule (September 8, 2026)
 
 Large earth abilities, emergence/sliding, heavy contacts and high falls route subtle camera feedback through the explicitly bound EarthMaterialFeedbackHub. Presentation owns one bounded, distance-weighted envelope and restores the camera pose after rendering. Aggregate concurrent events by maximum rather than by particle count. Respect Reduced Motion, ShakeIntensity, pause and round reset. New large actions must use the shared material cue path instead of adding independent camera transform writers. See MATERIAL_MICRO_SHAKE_2026_09_08.md for limits and tests.
+
+## Rigid moving wall domains (September 9, 2026)
+
+Canonical domain IDs, masses and bond damage remain authoritative. A shove may represent the largest connected damaged component with one existing Rigidbody carrying the aggregate mass and compound domain contact shapes. Parked bodies must not duplicate dynamic mass. Domain-shaped render proxies share that physical frame. Release this representation before domain ownership, bond disassembly, repair, or pool hiding; restore each original body, pose, mass, collider and renderer. Resolve contact proxies to the original domain for magic selection. Buried foundation render geometry does not imply a below-ground collision hull. Small destructible decor uses a finite momentum budget and local bond damage, not immovable-arena classification. See WALL_ANCHORED_DECOR_2026_09_09.md for validation and limits.

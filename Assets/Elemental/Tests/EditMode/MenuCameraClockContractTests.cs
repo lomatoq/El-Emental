@@ -6,6 +6,14 @@ namespace Elemental.Tests.EditMode
 {
     public sealed class MenuCameraClockContractTests
     {
+        [TestCase(false,false,false,false,false,false)]
+        [TestCase(false,false,true,false,false,true)]
+        [TestCase(false,false,false,true,false,true)]
+        [TestCase(false,false,false,false,true,true)]
+        [TestCase(true,false,true,true,true,false)]
+        [TestCase(false,true,true,true,true,false)]
+        public void LiveMenuDoesNotOwnPauseButMatchBoundariesDo(bool network,bool paused,bool transition,bool reset,bool finished,bool expected)
+        {Assert.That(Elemental.Simulation.Time.FrontendWorldClockPolicy.ShouldHold(network,paused,transition,reset,finished),Is.EqualTo(expected));}
         [TestCase(1.777778f,10f),TestCase(1.333333f,10f),TestCase(2.333333f,0f)]
         public void PortraitUsesRequestedViewportPositionAcrossAspectAndRoll(float aspect,float roll)
         {

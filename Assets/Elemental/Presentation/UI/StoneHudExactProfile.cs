@@ -27,7 +27,7 @@ namespace Elemental.Presentation.UI
             layout.navigation.globe=Box(0,0,218,218);
             layout.navigation.caption=Box(0,225,218,18);
             layout.navigation.legend=Box(0,244,218,0);
-            layout.pause.button=new HudElementLayout(Vector2.right,Vector2.right,new Vector2(-15*s,14*s),new Vector2(47*s,48*s));
+            layout.pause.button=new HudElementLayout(Vector2.right,new Vector2(.5f,.5f),new Vector2(-38.5f*s,38*s),new Vector2(47*s,48*s));
             layout.pause.icon=new HudElementLayout(new Vector2(.5f,.5f),new Vector2(.5f,.5f),Vector2.zero,new Vector2(16*s,18*s));
             layout.NotifyChanged();
         }

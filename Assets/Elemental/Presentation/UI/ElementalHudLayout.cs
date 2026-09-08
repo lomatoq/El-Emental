@@ -54,7 +54,7 @@ namespace Elemental.Presentation.UI
     [Serializable]
     public sealed class HudPauseLayout
     {
-        public HudElementLayout button = new HudElementLayout(Vector2.right, Vector2.right, new Vector2(-24, 24), new Vector2(44, 44));
+        public HudElementLayout button = new HudElementLayout(Vector2.right, new Vector2(.5f,.5f), new Vector2(-46, 46), new Vector2(44, 44));
         public HudElementLayout icon = new HudElementLayout(new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(20, 18));
     }
 

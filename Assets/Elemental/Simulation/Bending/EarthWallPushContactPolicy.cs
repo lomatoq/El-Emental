@@ -3,6 +3,9 @@ namespace Elemental.Simulation.Bending
 {
     public static class EarthWallPushContactPolicy
     {
+        public static bool CanTipSlidingWall(float mass,float impulse)=>mass>0&&math.isfinite(impulse)&&impulse>mass*6f;
+        public static bool CanPloughDecor(float wallMass,float rockMass,float speed)=>wallMass>0&&rockMass>0&&rockMass<wallMass*.65f&&speed>1.5f;
+        public static float PloughRemainingSpeed(float wallMass,float rockMass,float speed)=>speed*wallMass/(wallMass+rockMass*2);
         public static float ChipDisplacement(float charge)=>math.lerp(.012f,.025f,math.saturate(charge));
         public static bool ShouldChipHeavyObstacle(float wallMass,float otherMass,bool fixedObstacle,float forwardSpeed,float normalUp,float normalForward)=>
             wallMass>0&&forwardSpeed>2&&normalUp<.65f&&normalForward<-.35f&&(fixedObstacle||otherMass>=wallMass*1.5f);

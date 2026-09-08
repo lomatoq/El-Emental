@@ -4,6 +4,15 @@ namespace Elemental.Tests.EditMode
 {
     public sealed class EarthWallPushContactTests
     {
+        [Test] public void DecorPloughConsumesMomentumAndRejectsMassiveBlockers()
+        {
+            Assert.That(EarthWallPushContactPolicy.CanTipSlidingWall(1600,800),Is.False);
+            Assert.That(EarthWallPushContactPolicy.CanTipSlidingWall(1600,12000),Is.True);
+            Assert.That(EarthWallPushContactPolicy.CanPloughDecor(1600,100,12),Is.True);
+            Assert.That(EarthWallPushContactPolicy.CanPloughDecor(1600,1200,12),Is.False);
+            Assert.That(EarthWallPushContactPolicy.CanPloughDecor(1600,100,.5f),Is.False);
+            Assert.That(EarthWallPushContactPolicy.PloughRemainingSpeed(1600,100,12),Is.InRange(8f,12f));
+        }
         [Test] public void HeavyChipResponseIsLocalAndRejectsFloorOrLightStone()
         {
             Assert.That(EarthWallPushContactPolicy.ShouldChipHeavyObstacle(1000,0,true,10,0,-1),Is.True);

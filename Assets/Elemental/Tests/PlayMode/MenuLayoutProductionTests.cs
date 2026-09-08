@@ -54,7 +54,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(theme.frontendAudio.mainMenu.name,Is.EqualTo("Main Menu"));
             Assert.That(theme.frontendAudio.game.name,Is.EqualTo("Sky Temple Gate"));
             Assert.That(theme.frontendAudio.panelMove.name,Is.EqualTo("Panel Move Sound"));
-            Assert.That(Time.timeScale,Is.Zero);Assert.That(music.MenuGain,Is.GreaterThan(0));
+            Assert.That(Time.timeScale,Is.GreaterThan(0));Assert.That(music.MenuGain,Is.GreaterThan(0));
             Assert.That(music.GetComponentsInChildren<AudioSource>().Any(source=>source.isPlaying),Is.True);
             Assert.That(feedback.PanelMovePlayCount,Is.GreaterThanOrEqualTo(1));
             File.WriteAllText(Folder+"/layout-cpu.txt","samples="+samples+"; meanMs="+(totalNs/(double)samples/1000000d)+"; peakMs="+(peakNs/1000000d)+"; scope=layout binding only, editor, not total UI rendering");

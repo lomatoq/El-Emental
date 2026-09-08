@@ -23,6 +23,13 @@ namespace Elemental.Runtime.Physics
         private void CachePushContactVelocity()
         {
             _pushContactTick=Time.fixedTime;
+            if(_fracturedSlide&&HasRigidSlideCarrier)
+            {
+                _pushContactCenter=RigidSlideBody.worldCenterOfMass;
+                _pushContactVelocity=RigidSlideBody.linearVelocity;
+                _pendingPushContactSpeed=0;
+                return;
+            }
             if(_body!=null)_pushContactCenter=_body.worldCenterOfMass;
             _pushContactVelocity=_heldPushCoasting&&_body!=null&&!_body.isKinematic
                 ? _body.linearVelocity : Vector3.zero;
@@ -49,7 +56,8 @@ namespace Elemental.Runtime.Physics
         // to the wall callback is unspecified. No impulse or collision is removed.
         private bool TryHandleOutgoingPushStone(Rigidbody stone,Vector3 point,float impulse)
         {
-            if(!_heldPushCoasting||_fractured||_body==null||_body.isKinematic||stone==null||stone==_body||
+            var movingBody=_fracturedSlide&&HasRigidSlideCarrier?RigidSlideBody:_body;
+            if((!_heldPushCoasting&&!_fracturedSlide)||movingBody==null||movingBody.isKinematic||stone==null||stone==movingBody||
                 stone.isKinematic||Mathf.Abs(Time.fixedTime-_pushContactTick)>.001f)return false;
             if(stone.GetComponent<EarthWall>()!=null||stone.GetComponent<EarthWallPiece>()!=null||
                 stone.GetComponent<EarthPlatform>()!=null||stone.GetComponent<EarthArenaStructure>()!=null)return false;
@@ -59,7 +67,7 @@ namespace Elemental.Runtime.Physics
             // Contact belongs to the pre-step shape. The post-solver body may
             // already have moved beyond that point during a fast first shove.
             if(Vector3.Dot(point-_pushContactCenter,_heldPushDirection)<Mathf.Max(.01f,Thickness*.15f))return false;
-            if(!EarthWallPushContactPolicy.IsOutgoingLooseStone(_body.mass,stone.mass,
+            if(!EarthWallPushContactPolicy.IsOutgoingLooseStone(movingBody.mass,stone.mass,
                 Vector3.Dot(_pushContactVelocity,_heldPushDirection),
                 Vector3.Dot(stone.linearVelocity,_heldPushDirection),impulse))return false;
             OutgoingLooseStoneContacts++;

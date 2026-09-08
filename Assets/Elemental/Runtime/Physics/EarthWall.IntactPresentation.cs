@@ -28,6 +28,7 @@ namespace Elemental.Runtime.Physics
 
         internal void ResetIntactPresentation()
         {
+            RestoreDomainFoundationContact();
             HasRevealedCracks = false;
             ResetCrackFeedback();
             ResetHeavyContactChips();

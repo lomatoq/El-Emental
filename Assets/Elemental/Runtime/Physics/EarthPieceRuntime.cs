@@ -34,7 +34,7 @@ namespace Elemental.Runtime.Physics
         public EarthPhysicalTargetHandle TargetHandle => Owner != null
             ? new EarthPhysicalTargetHandle(StableEarthId, Owner.TargetHandle.Generation)
             : default;
-        public float EarthMass => Body != null ? Body.mass : 0f;
+        public float EarthMass => Body != null ? (Owner != null ? Owner.DomainMass(PieceIndex,Body.mass) : Body.mass) : 0f;
         public EarthPhysicalTargetKind TargetKind => EarthPhysicalTargetKind.WallPiece;
         public bool IsEarthTargetValid => Owner != null && Owner.IsCollapsing &&
                                           gameObject.activeSelf && Body != null;

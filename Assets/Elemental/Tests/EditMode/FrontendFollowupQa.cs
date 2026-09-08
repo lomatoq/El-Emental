@@ -4,6 +4,7 @@ namespace Elemental.Tests.EditMode
 {
     public static class FrontendFollowupQa
     {
+        public static void Clock()=>Run(TestMode.PlayMode,"FrontendLiveClockPlay",new[]{"Elemental.Tests.PlayMode.MenuCameraProductionTests"});
         public static void Edit()=>Run(TestMode.EditMode,"FrontendFollowupEdit",new[]{
             "Elemental.Tests.EditMode.MenuCameraClockContractTests",
             "Elemental.Tests.EditMode.FrontendAudioEnvelopeTests","Elemental.Tests.EditMode.PlatformPreviewContractTests",

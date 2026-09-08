@@ -10,6 +10,7 @@ using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.UIElements;
 namespace Elemental.Tests.PlayMode
 {
     public sealed class MenuCameraProductionTests
@@ -36,12 +37,26 @@ namespace Elemental.Tests.PlayMode
             var output=(Camera)typeof(CinematicMenuCamera).GetField("outputCamera",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(menu);
             var brain=output.GetComponent<CinemachineBrain>();
             yield return new WaitForSecondsRealtime(flow.PresentationTransitionSeconds+.15f);
-            Assert.That(Time.timeScale,Is.Zero);Assert.That(menu.OwnsPresentation,Is.True);
+            Assert.That(Time.timeScale,Is.GreaterThan(0));Assert.That(menu.OwnsPresentation,Is.True);
+            yield return AssertLivingMenu(duel);
+            flow.OpenSettings();yield return AssertLivingMenu(duel);flow.Back();
+            yield return new WaitForSecondsRealtime(1.5f);
             yield return Capture("Main");AssertFramed("Main",duel,output,menu,brain);
             Assert.That(flow.BeginBot(),Is.True);
             deadline=Time.realtimeSinceStartupAsDouble+20;
             while(flow.State!=FrontendState.Combat&&Time.realtimeSinceStartupAsDouble<deadline)yield return null;
             Assert.That(flow.State,Is.EqualTo(FrontendState.Combat));
+            // Let UI Toolkit lay out the newly visible combat HUD before sampling screen coordinates.
+            yield return null;yield return null;
+            var hud=Find<EarthDuelHud>();
+            var pauseButton=hud.GetComponent<UIDocument>().rootVisualElement.Q<Button>("pause-match");
+            Assert.That(pauseButton.resolvedStyle.transformOrigin.x,Is.EqualTo(pauseButton.layout.width*.5f).Within(.1f));
+            Assert.That(pauseButton.resolvedStyle.transformOrigin.y,Is.EqualTo(pauseButton.layout.height*.5f).Within(.1f));
+            Vector2 pauseCenter=pauseButton.worldBound.center;
+            var held=typeof(EarthDuelHud).GetField("_pauseHeld",BindingFlags.NonPublic|BindingFlags.Instance);
+            held.SetValue(hud,true);yield return null;yield return null;
+            Assert.That(Vector2.Distance(pauseButton.worldBound.center,pauseCenter),Is.LessThan(.2f),"Pause press must scale around the icon center.");
+            held.SetValue(hud,false);
             bool combatIgnoreScale=brain.IgnoreTimeScale;var combatUpdate=brain.UpdateMethod;var combatBlendUpdate=brain.BlendUpdateMethod;
             flow.Pause();yield return new WaitForSecondsRealtime(flow.PresentationTransitionSeconds+.15f);
             Assert.That(Time.timeScale,Is.Zero);Assert.That(menu.OwnsPresentation,Is.True);
@@ -61,6 +76,21 @@ namespace Elemental.Tests.PlayMode
             Assert.That(flow.State,Is.EqualTo(FrontendState.Main));
             yield return new WaitForSecondsRealtime(flow.PresentationTransitionSeconds+.15f);
             yield return Capture("Main-after-restore");AssertFramed("Main after restore",duel,output,menu,brain);
+            yield return AssertLivingMenu(duel);
+        }
+        private IEnumerator AssertLivingMenu(EarthMvpDuelController duel)
+        {
+            var sky=Find<Elemental.Presentation.Rendering.CelestialSystemBehaviour>();
+            var animator=duel.PlayerTransform.GetComponentInChildren<EarthAnimationDriver>(true);
+            float time=Time.time,phase=sky.Snapshot.TimeOfDay01,round=duel.RoundRemainingSeconds;
+            var pose=animator.GetCurrentAnimatorStateInfo(0);
+            yield return new WaitForSecondsRealtime(.35f);
+            Assert.That(Time.time-time,Is.GreaterThan(.15f),"The main-menu world clock must advance.");
+            Assert.That(Mathf.Abs(Mathf.DeltaAngle(phase*360,sky.Snapshot.TimeOfDay01*360)),Is.GreaterThan(.0001f),"The menu day/night cycle must advance.");
+            var nextPose=animator.GetCurrentAnimatorStateInfo(0);
+            Assert.That(nextPose.fullPathHash!=pose.fullPathHash||Mathf.Abs(nextPose.normalizedTime-pose.normalizedTime)>.0001f,Is.True,"The menu character must keep animating.");
+            Assert.That(duel.CombatAllowed,Is.False);
+            Assert.That(duel.RoundRemainingSeconds,Is.EqualTo(round).Within(.001f),"Live scenery must not start the match clock.");
         }
         private static void AssertFramed(string phase,EarthMvpDuelController duel,Camera output,CinematicMenuCamera menu,CinemachineBrain brain)
         {

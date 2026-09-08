@@ -488,6 +488,7 @@ namespace Elemental.Runtime.Physics
 
         internal bool AcquirePieceForMagic(int pieceIndex)
         {
+            ReleaseRigidSlideCarrier();_fracturedSlide=false;
             if (!_fractured || _cohesion == null || !_cohesion.AcquirePiece(pieceIndex)) return false;
             _structureRuntime?.BreakPieceBonds(pieceIndex, CurrentStructureTick);
             BreakRemainingPieceBonds(pieceIndex);
@@ -510,6 +511,7 @@ namespace Elemental.Runtime.Physics
 
         internal bool AcquirePieceForRepair(int pieceIndex)
         {
+            ReleaseRigidSlideCarrier();_fracturedSlide=false;
             if (!_fractured || _cohesion == null || !_cohesion.AcquirePiece(pieceIndex)) return false;
             if (pieceIndex < 0 || pieceIndex >= _pieces.Length) return false;
             // Snapshot/order selection happens before capture. Once a piece enters
@@ -645,7 +647,9 @@ namespace Elemental.Runtime.Physics
             _fractureOrigin = point;
             _fractureBias = tangentDirection;
             if (!_fractured) BeginCohesiveFracture();
+            if(_fracturedSlide){_rigidSlideCanTip |= EarthWallPushContactPolicy.CanTipSlidingWall(FracturedHeldPushMass,impulse);ReleaseRigidSlideCarrier();}
             DamageBonds(point, tangentDirection, impulse);
+            if(_fracturedSlide){if(BeginFracturedHeldPush(_heldPushDirection)){CancelFracturedHeldPush();BuildRigidSlideCarrier();}else _fracturedSlide=false;}
             return true;
         }
 
@@ -687,6 +691,7 @@ namespace Elemental.Runtime.Physics
             float hitHeight01 = Vector3.Dot(impact.Point - baseCenter, _up) / Height;
             EarthSurfWallBandDecision band = EarthSurfWallBandSolver.Resolve(hitHeight01, surfSpeed);
             if (!band.Accepted) return false;
+            ReleaseRigidSlideCarrier();_fracturedSlide=false;
 
             Vector3 tangentDirection = Vector3.ProjectOnPlane(impact.Direction, _up).normalized;
             if (tangentDirection.sqrMagnitude < 0.5f) tangentDirection = _forward;
@@ -706,6 +711,8 @@ namespace Elemental.Runtime.Physics
 
         public bool TryPluckCell(Vector3 point, out IEarthPhysicalTarget target)
         {
+            ReleaseRigidSlideCarrier();
+            _fracturedSlide = false;
             target = null;
             if (_pieces == null || _pieceBodies == null || _pieceTargets == null) return false;
             if (!_fractured) BeginCohesiveFracture();
@@ -788,7 +795,7 @@ namespace Elemental.Runtime.Physics
             UpdateLaunchedCellCollisions();
         }
 
-        private void OnDisable() { ClearLaunchedCellCollisions(); ResetHeldPushState(); }
+        private void OnDisable() { ClearLaunchedCellCollisions(); ResetHeldPushState(); RestoreDomainFoundationContact(); }
 
         public bool SetMagicDisassemblyProgress(
             float phase01,
@@ -798,6 +805,7 @@ namespace Elemental.Runtime.Physics
             float requested = Mathf.Clamp01(phase01);
             if (requested <= _gestureDisassemblyProgress || _bonds == null || _bonds.Length == 0)
                 return _fractured;
+            ReleaseRigidSlideCarrier();_fracturedSlide=false;
             _fractureOrigin = focus;
             _fractureBias = Vector3.ProjectOnPlane(direction, _up).normalized;
             if (_fractureBias.sqrMagnitude < 0.5f) _fractureBias = _forward;
@@ -845,6 +853,9 @@ namespace Elemental.Runtime.Physics
         internal void HandlePieceCollision(int pieceIndex, Collision collision)
         {
             if (collision == null) return;
+            if(TryPloughDecor(collision))return;
+            if(TryHandleOutgoingPushContact(collision))return;
+            if(_fracturedSlide&&collision.contactCount>0&&(collision.rigidbody==null||collision.rigidbody.isKinematic)&&Vector3.Dot(collision.GetContact(0).normal,_up)>.55f)return;
             EarthPieceRuntime otherWallPiece = collision.collider != null
                 ? collision.collider.GetComponentInParent<EarthPieceRuntime>() : null;
             // Contacts inside the same cracked wall are constraint/seat feedback,
@@ -941,6 +952,7 @@ namespace Elemental.Runtime.Physics
 
         private void FixedUpdate()
         {
+            StabilizeFracturedSlide();
             CachePushContactVelocity();
             UpdateLaunchedCellCollisions();
             if (_pendingColliderActivation)
@@ -1284,6 +1296,14 @@ namespace Elemental.Runtime.Physics
                 _pieceShrinking[index] = false;
                 Rigidbody pieceBody = _pieceBodies[index];
                 if (pieceBody == null) continue;
+                // Activate contact hulls at the current fracture pose, not an old pooled/interpolated pose.
+                pieceBody.interpolation=RigidbodyInterpolation.None;
+                pieceBody.position=transform.TransformPoint(_pieceBasePositions[index]);
+                pieceBody.rotation=transform.rotation;
+                pieceBody.interpolation=RigidbodyInterpolation.Interpolate;
+                PrepareDomainFoundationContact(index);
+                pieceBody.maxDepenetrationVelocity=.35f;
+                pieceBody.solverIterations=64;pieceBody.solverVelocityIterations=32;
                 pieceBody.mass = Mathf.Max(.000001f, EstimatedMass * _pieceVolumeFractions[index] / Mathf.Max(.000001f, totalVolumeFraction));
                 pieceBody.isKinematic = false;
                 pieceBody.detectCollisions = true;
@@ -1400,6 +1420,8 @@ namespace Elemental.Runtime.Physics
             {
                 EarthWallBond bond = _bonds[index];
                 ConfigurableJoint joint = bond.Joint;
+                joint.projectionMode=JointProjectionMode.PositionAndRotation;
+                joint.projectionDistance=.001f;joint.projectionAngle=.1f;
                 _bondDamage[index] = 0f;
                 _bondBroken[index] = false;
                 float contactWeight = Mathf.Sqrt(Mathf.Max(0.04f, bond.NormalizedContactArea * _pieces.Length));
@@ -1679,6 +1701,7 @@ namespace Elemental.Runtime.Physics
 
         private void SynchronizeSupportedPiece(int index)
         {
+            if(IsRigidSlideFollower(index))return;
             Rigidbody body = _pieceBodies[index];
             Transform piece = _pieces[index];
             if (body == null || piece == null || !piece.gameObject.activeSelf) return;
@@ -1781,6 +1804,7 @@ namespace Elemental.Runtime.Physics
 
         private void HideFracturePieces()
         {
+            ResetHeldPushState();
             ClearLaunchedCellCollisions();
             if (_bonds != null)
             {
@@ -1856,6 +1880,7 @@ namespace Elemental.Runtime.Physics
 
         private void OnCollisionEnter(Collision collision)
         {
+            if (TryPloughDecor(collision)) return;
             if (TryChipAgainstHeavyObstacle(collision)) return;
             if (_fractured || collision.contactCount == 0 || collision.rigidbody == null) return;
             if (TryHandleOutgoingPushContact(collision)) return;

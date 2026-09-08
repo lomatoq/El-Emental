@@ -100,9 +100,12 @@ namespace Elemental.Runtime.Physics
             if(!_heldPush.Active)return;
             bool fracturedCharge=IsFracturedHeldPushActive;
             _heldPush.Cancel();CancelFracturedHeldPush();if(!fracturedCharge&&!_fractured)RestoreHeldPushChargeBody();_heldPushDirection=_heldPushSavedDirection;
+            if(fracturedCharge&&_fracturedSlide)BuildRigidSlideCarrier();
         }
         private void ResetHeldPushState()
         {
+            ReleaseRigidSlideCarrier();
+            _fracturedSlide=false;_rigidSlideCanTip=false;PloughedDecorContacts=0;PloughDetachedDomains=0;_ploughContactAt=-10;_ploughRockId=0;
             CancelHeldPush();StopHeldPushCoasting();_heldPushFracturedFeedback=false;_heldPushBurstPulses=0;_heldPushDirection=Vector3.zero;_heldPushDustClock=0;
             _heldPushSupportGap=float.PositiveInfinity;
         }
@@ -243,6 +246,7 @@ namespace Elemental.Runtime.Physics
                 {
                     var hit=_heldPushSupportHits[i];var other=hit.collider;
                     if(other==null||other==_collider||other.transform.IsChildOf(transform))continue;
+                    if(other.GetComponentInParent<EarthDestructibleDecorRock>()!=null)continue;
                     if(other.attachedRigidbody!=null&&!other.attachedRigidbody.isKinematic)continue;
                     if(Vector3.Dot(hit.normal,_up)<.7f)continue;
                     float gap=Vector3.Dot(point-hit.point,_up);

@@ -1434,6 +1434,7 @@ namespace Elemental.Runtime.World
         private IEarthPhysicalTarget ResolveExplicitGravityTarget(Collider hitCollider)
         {
             if (hitCollider == null) return null;
+            if (hitCollider.TryGetComponent<EarthRigidDomainTarget>(out var domain)) return domain.Source;
             if (EarthBodyTargetFilter.IsCharacterBody(hitCollider.attachedRigidbody)) return null;
             EarthRockDebris debris = hitCollider.GetComponentInParent<EarthRockDebris>();
             if (debris != null && debris.IsEarthTargetValid) return debris;
@@ -2450,6 +2451,7 @@ namespace Elemental.Runtime.World
 
         private IEarthPhysicalTarget ResolveEarthTarget(Collider hitCollider, Rigidbody body)
         {
+            if (hitCollider != null && hitCollider.TryGetComponent<EarthRigidDomainTarget>(out var domain)) return domain.Source;
             if (EarthBodyTargetFilter.IsCharacterBody(body) ||
                 (hitCollider != null && EarthBodyTargetFilter.IsCharacterBody(hitCollider.attachedRigidbody))) return null;
             if (hitCollider != null)
