@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 00:02:30Z" end-time="2026-09-09 00:03:40Z" duration="70.7563311">
+  <test-suite type="TestSuite" id="1454" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="330" result="Failed" site="Child" start-time="2026-09-09 00:02:30Z" end-time="2026-09-09 00:03:40Z" duration="70.756331" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1447" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="324" result="Failed" site="Child" start-time="2026-09-09 00:02:30Z" end-time="2026-09-09 00:03:40Z" duration="70.427320" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="11736" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1448" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="324" result="Failed" site="Child" start-time="2026-09-09 00:02:30Z" end-time="2026-09-09 00:03:40Z" duration="70.420964" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1449" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="324" result="Failed" site="Child" start-time="2026-09-09 00:02:30Z" end-time="2026-09-09 00:03:40Z" duration="70.416153" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1450" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="324" result="Failed" site="Child" start-time="2026-09-09 00:02:30Z" end-time="2026-09-09 00:03:40Z" duration="70.412824" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1023" name="SeptemberAnimationRescueRuntimeTests" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" testcasecount="48" result="Failed" site="Child" start-time="2026-09-09 00:02:30Z" end-time="2026-09-09 00:03:40Z" duration="70.408672" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1065" name="FinalHumanoidFeetTraverseRealPitHumpAndSlopeAtControlledThirtySixtyOneTwentySteps" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.FinalHumanoidFeetTraverseRealPitHumpAndSlopeAtControlledThirtySixtyOneTwentySteps" methodname="FinalHumanoidFeetTraverseRealPitHumpAndSlopeAtControlledThirtySixtyOneTwentySteps" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1921766711" result="Failed" start-time="2026-09-09 00:02:30Z" end-time="2026-09-09 00:03:40Z" duration="70.215746" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Linebreaker X Bot Presentation/120: left final planted gap=0.0190m.
+  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.EvaluateSurfaceFoot (Elemental.Presentation.Animation.EarthFootContactController feet, System.Boolean left, UnityEngine.MeshCollider surface, UnityEngine.Vector3 up, Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+SurfaceFrame row, Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+SurfaceRun run) [0x00160] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\SeptemberAnimationSurfaceRuntimeTests.cs:266
+at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+<RunSurfaceTrack>d__98.MoveNext () [0x00b05] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\SeptemberAnimationSurfaceRuntimeTests.cs:199
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 8236.04ms; ground=exact baked base, cacheLoad=12.34ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=3077.13ms, peakCookingPoll=0.30ms; sync=ArenaInitialize=521.73ms/15;ArenaBevel=491.93ms/175;ArenaMeshPicking=3.93ms/175;WallAwake=120.56ms/1;WallPieceVisuals=61.45ms/40;PlatformPoolAwake=16.18ms/1;PlatformRuntimeMeshes=1.85ms/12;PillarPoolAwake=23.17ms/1;PillarMeshLibrary=3.68ms/1;PillarColumns=19.48ms/1;DebrisPoolAwake=168.03ms/1;HeroFragmentPoolAwake=13.74ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\SeptemberSurfacePlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-08 23:55:42Z" end-time="2026-09-08 23:56:07Z" duration="25.2232613">
+  <test-suite type="TestSuite" id="1454" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="330" result="Failed" site="Child" start-time="2026-09-08 23:55:42Z" end-time="2026-09-08 23:56:07Z" duration="25.223261" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1447" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="324" result="Failed" site="Child" start-time="2026-09-08 23:55:42Z" end-time="2026-09-08 23:56:07Z" duration="24.895171" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="11736" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1448" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="324" result="Failed" site="Child" start-time="2026-09-08 23:55:42Z" end-time="2026-09-08 23:56:07Z" duration="24.888037" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1449" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="324" result="Failed" site="Child" start-time="2026-09-08 23:55:42Z" end-time="2026-09-08 23:56:07Z" duration="24.884341" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1450" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="324" result="Failed" site="Child" start-time="2026-09-08 23:55:42Z" end-time="2026-09-08 23:56:07Z" duration="24.881439" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1023" name="SeptemberAnimationRescueRuntimeTests" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" testcasecount="48" result="Failed" site="Child" start-time="2026-09-08 23:55:42Z" end-time="2026-09-08 23:56:07Z" duration="24.877386" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1043" name="TeleportAdvancesFootContactsOnlyOncePerRenderedFrame" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.TeleportAdvancesFootContactsOnlyOncePerRenderedFrame" methodname="TeleportAdvancesFootContactsOnlyOncePerRenderedFrame" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1734091717" result="Failed" start-time="2026-09-08 23:55:42Z" end-time="2026-09-08 23:56:07Z" duration="24.676442" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Teleport invalidation erased the completed-frame guard.
+  Expected: 977
+  But was:  -1
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+<TeleportAdvancesFootContactsOnlyOncePerRenderedFrame>d__47.MoveNext () [0x00142] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\SeptemberAnimationRescueRuntimeTests.cs:101
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 8024.61ms; ground=exact baked base, cacheLoad=12.32ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=3036.60ms, peakCookingPoll=0.30ms; sync=ArenaInitialize=504.25ms/15;ArenaBevel=471.50ms/175;ArenaMeshPicking=3.68ms/175;WallAwake=147.81ms/1;WallPieceVisuals=73.36ms/40;PlatformPoolAwake=14.37ms/1;PlatformRuntimeMeshes=1.42ms/12;PillarPoolAwake=22.66ms/1;PillarMeshLibrary=3.69ms/1;PillarColumns=18.96ms/1;DebrisPoolAwake=157.24ms/1;HeroFragmentPoolAwake=20.94ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolishTeleportGuardPlay.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

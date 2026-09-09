@@ -6,6 +6,29 @@ namespace Elemental.Tests.EditMode
 {
     public static class SeptemberAnimationRescueTestLauncher
     {
+        [MenuItem("Elemental/QA/Hard Polish Foot Contact Edit Tests")]
+        public static void RunHardPolishEdit()
+        {
+            // A CLI Test Runner already owns its filter and result callback.
+            // Ignore delayed/retried manual connector requests during that run.
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-runTests") >= 0) return;
+            Run(TestMode.EditMode, "HardPolishFootContactEdit", new[]
+            {
+                "Elemental.Tests.EditMode.EarthAnimationContactAcceptanceTests",
+                "Elemental.Tests.EditMode.EarthFootSupportAuthorityIntegrationTests",
+                "Elemental.Tests.EditMode.LocomotionRhythmTests"
+            });
+        }
+        [MenuItem("Elemental/QA/Hard Polish Foot Contact Play Tests")]
+        public static void RunHardPolishPlay() => Run(TestMode.PlayMode, "HardPolishFootContactPlay", new[]
+        {
+            "Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.TeleportAdvancesFootContactsOnlyOncePerRenderedFrame",
+            "Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.WalkStopKeepsKneesFiniteAndAvoidsAOneFrameLegSnap",
+            "Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.FinalHumanoidFeetTraverseRealPitHumpAndSlopeAtControlledThirtySixtyOneTwentySteps"
+        });
+        [MenuItem("Elemental/QA/Hard Polish Teleport Foot Guard Play Test")]
+        public static void RunTeleportGuard() => Run(TestMode.PlayMode, "HardPolishTeleportGuardPlay",
+            "Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.TeleportAdvancesFootContactsOnlyOncePerRenderedFrame");
         [MenuItem("Elemental/QA/September Animation Edit Tests")]
         public static void RunEdit() => Run(TestMode.EditMode, "SeptemberAnimationEdit", "Elemental.Tests.EditMode.SeptemberAnimationRescueTests");
         [MenuItem("Elemental/QA/September Animation Play Tests")]

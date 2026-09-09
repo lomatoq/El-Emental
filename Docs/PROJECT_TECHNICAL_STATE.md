@@ -1,5 +1,16 @@
 # El-Emental project technical state
 
+**September 9 hard-polish contact guard (base main `41b13d6a`):** Teleport
+invalidation now preserves completed-frame ownership after contact evaluation;
+repeated graph callbacks reuse cached goals. Final **55/55 Edit** and **2/2
+rendered Play** (00:37:09Z) verify the retained change, both actors and walk-stop.
+Foot-contact marker mean .143808ms / peak .4346ms across63 editor samples.
+**Full G03 is not accepted:** the broader surface corpus recorded a bot/120
+planted gap of .019005m; a stronger-IK-curve experiment still failed and was
+reverted. The original-guard comparison passed, so causation/initial-pose
+variation remains unresolved. No GPU/GC delta or new visual acceptance claimed.
+[Evidence, rejected experiments and remaining plan](HARD_POLISH_PROGRESS_2026_09_09.md).
+
 **September 9 live menu / pause pivot follow-up (base main 4b592086):** Main and its settings/lobby pages advance the world and animation clocks while the duel-ready gate keeps combat and its timer stopped. Explicit pause, countdown/ending and arena restoration retain their clock ownership. The pause button now scales about its center; compensated offsets preserve its screen position in all three HUD layouts. Edit **35/35** and production main/settings/combat/pause/restored-main Play **1/1** at23:39:22Z. [Evidence and contract](LIVE_MENU_CLOCK_2026_09_09.md).
 
 **September 9 anchored-decor / rigid wall correction (base main 4b592086):** Real anchored decor is processed before static-arena blocking, with finite mass-dependent momentum loss and one or two local disconnected domains. Fracture activation transfers exact physical poses and trims buried contact hulls. The retained moving wall uses one compound Rigidbody, restoring original domain bodies before ownership, repair, disassembly or pool hiding. Ordinary sliding preserves orientation; heavy incoming impacts may permit rigid tipping. Final anchored-decor travel 4.636 m, peak hull gap 5.283 cm, rigid distance error 4.89 micrometers, marker peak 0.1442 ms. Edit **138/138**; broad Play **11/11**, followed by final domain-mass/ownership Play **1/1** after the final accessor correction. [Evidence, freshness and limitations](WALL_ANCHORED_DECOR_2026_09_09.md).

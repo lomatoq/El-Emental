@@ -83,6 +83,89 @@ namespace Elemental.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator TeleportAdvancesFootContactsOnlyOncePerRenderedFrame()
+        {
+            foreach (Actor actor in _actors)
+            {
+                var feet = actor.Presentation.FootContactController;
+                var motor = actor.Presentation.GetComponentInParent<PlanetMotor>();
+                actor.Input.Move = float2.zero;
+                // Resume before animation evaluation, then exercise the real graph
+                // (including its two landing-controller inputs) on the teleport frame.
+                yield return null;
+                uint before = feet.ContactEvaluationCount;
+                motor.ResetAfterTeleport();
+                yield return _frame;
+                Assert.That(feet.ContactEvaluationCount - before, Is.EqualTo(1u),
+                    actor.Presentation.name + ": teleport advanced contact state more than once.");
+                Assert.That(feet.LastContactEvaluationFrame, Is.EqualTo(Time.frameCount),
+                    "Teleport invalidation erased the completed-frame guard.");
+                yield return null;
+                before = feet.ContactEvaluationCount;
+                yield return _frame;
+                Assert.That(feet.ContactEvaluationCount - before, Is.EqualTo(1u),
+                    "The next rendered frame must still advance normally.");
+
+                var driver = actor.Presentation.GetComponent<EarthAnimationDriver>();
+                Assert.That(driver.UsesPlayableGraph, Is.True);
+                object owner = typeof(EarthAnimationDriver).GetField("_graph",
+                    BindingFlags.Instance | BindingFlags.NonPublic).GetValue(driver);
+                var graph = (UnityEngine.Playables.PlayableGraph)owner.GetType().GetField("_graph",
+                    BindingFlags.Instance | BindingFlags.NonPublic).GetValue(owner);
+                float savedWeight = driver.LandingPoseWeight;
+                try
+                {
+                    driver.SetLandingPoseWeight(.5f);
+                    feet.InvalidateBasePose();
+                    motor.ResetAfterTeleport();
+                    before = feet.ContactEvaluationCount;
+                    int finalBefore = driver.FinalIkEvaluationCount;
+                    graph.Evaluate(0f);
+                    graph.Evaluate(0f);
+                    Assert.That(driver.FinalIkEvaluationCount - finalBefore, Is.GreaterThanOrEqualTo(2),
+                        "The duplicate-callback fixture must evaluate the real output graph twice.");
+                    Assert.That(feet.ContactEvaluationCount - before, Is.EqualTo(1u),
+                        "Two real graph evaluations in the teleport frame must reuse cached contacts.");
+                }
+                finally { driver.SetLandingPoseWeight(savedWeight); }
+            }
+
+            using (var recorder = Unity.Profiling.ProfilerRecorder.StartNew(
+                       Unity.Profiling.ProfilerCategory.Scripts, "Elemental.Character.FootContact", 128))
+            {
+                long total = 0, peak = 0;
+                int measured = 0;
+                for (int sample = 0; sample < 64; sample++)
+                {
+                    yield return null;
+                    yield return _frame;
+                    long elapsed = recorder.LastValue;
+                    if (elapsed <= 0) continue;
+                    total += elapsed;
+                    peak = Math.Max(peak, elapsed);
+                    measured++;
+                }
+                Directory.CreateDirectory("BuildReports/HardPolish");
+                File.WriteAllText("BuildReports/HardPolish/FootContactCpu.json", JsonUtility.ToJson(
+                    new FootContactCpuReport
+                    {
+                        utc = DateTime.UtcNow.ToString("O"), samples = measured,
+                        meanMilliseconds = measured > 0 ? total / (double)measured / 1000000d : 0,
+                        peakMilliseconds = peak / 1000000d,
+                        scope = "Editor production actors after teleport; whole FootContact marker per frame. No baseline/GPU/GC delta. Zero samples means unavailable."
+                    }, true));
+            }
+        }
+
+        [Serializable]
+        private sealed class FootContactCpuReport
+        {
+            public string utc, scope;
+            public int samples;
+            public double meanMilliseconds, peakMilliseconds;
+        }
+
+        [UnityTest]
         public IEnumerator ProductionMantleOwnsPoseReleasesFeetAndReturnsToContacts()
         {
             yield return ObserveProductionMantle(false);

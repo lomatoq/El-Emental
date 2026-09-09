@@ -48,6 +48,7 @@ namespace Elemental.Presentation.Animation
         private uint _observedTeleportSequence;
         private Vector3 _leftHintWorld, _rightHintWorld;
         public int LastContactEvaluationFrame => _lastContactFrame;
+        public uint ContactEvaluationCount { get; private set; }
 
         private readonly RaycastHit[] _leftHits = new RaycastHit[FootHitCapacity];
         private readonly RaycastHit[] _rightHits = new RaycastHit[FootHitCapacity];
@@ -371,6 +372,11 @@ namespace Elemental.Presentation.Animation
             }
             _lastContactFrame = Time.frameCount;
             using (ContactMarker.Auto()) EvaluateFootContacts();
+            // Teleport invalidation inside evaluation clears pose history and the
+            // frame guard. Keep that reset, then mark this evaluation complete so
+            // another landing-mixer callback only resubmits the cached goals.
+            _lastContactFrame = Time.frameCount;
+            ContactEvaluationCount++;
             if (Mathf.Max(_leftAppliedWeight, _rightAppliedWeight) > .001f)
                 _animationDriver?.RecordFinalContactPass();
         }
