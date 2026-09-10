@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="18" result="Failed(Child)" total="18" passed="9" failed="9" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 08:38:56Z" end-time="2026-09-09 08:39:59Z" duration="63.2473355">
+  <test-suite type="TestSuite" id="1502" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="362" result="Failed" site="Child" start-time="2026-09-09 08:38:56Z" end-time="2026-09-09 08:39:59Z" duration="63.247336" total="18" passed="9" failed="9" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1495" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="356" result="Failed" site="Child" start-time="2026-09-09 08:38:56Z" end-time="2026-09-09 08:39:59Z" duration="63.231126" total="18" passed="9" failed="9" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="24832" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1496" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="356" result="Failed" site="Child" start-time="2026-09-09 08:38:56Z" end-time="2026-09-09 08:39:59Z" duration="63.225258" total="18" passed="9" failed="9" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1497" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="356" result="Failed" site="Child" start-time="2026-09-09 08:38:56Z" end-time="2026-09-09 08:39:59Z" duration="63.220721" total="18" passed="9" failed="9" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1498" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="356" result="Failed" site="Child" start-time="2026-09-09 08:38:56Z" end-time="2026-09-09 08:39:59Z" duration="63.215308" total="18" passed="9" failed="9" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1089" name="CelestialReadabilityRuntimeTests" fullname="Elemental.Tests.PlayMode.CelestialReadabilityRuntimeTests" classname="Elemental.Tests.PlayMode.CelestialReadabilityRuntimeTests" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2026-09-09 08:38:56Z" end-time="2026-09-09 08:39:13Z" duration="17.479705" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1090" name="DayKeepsAuthoredOverridesNightLiftsShadowsAndDisableRestoresOwnedProfile" fullname="Elemental.Tests.PlayMode.CelestialReadabilityRuntimeTests.DayKeepsAuthoredOverridesNightLiftsShadowsAndDisableRestoresOwnedProfile" methodname="DayKeepsAuthoredOverridesNightLiftsShadowsAndDisableRestoresOwnedProfile" classname="Elemental.Tests.PlayMode.CelestialReadabilityRuntimeTests" runstate="Runnable" seed="396125486" result="Failed" start-time="2026-09-09 08:38:56Z" end-time="2026-09-09 08:39:13Z" duration="17.455286" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[Unhandled log message: '[Error] Local Fire presentation unavailable: Production humanoid pose controllers must initialize before Fire binding.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                  <stack-trace><![CDATA[Elemental.Presentation.Fire.FireStreamPresentationBinding:Fail (string) (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:127)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update () (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:61)
+
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Error reason is 'NoSubscription' and no additional error information was provided (https://generators.ai.unity.com).
+Error reason is 'NoSubscription' and no additional error information was provided (https://generators.ai.unity.com).
+Error reason is 'NoSubscription' and no additional error information was provided (https://generators.ai.unity.com).
+Error reason is 'NoSubscription' and no additional error information was provided (https://generators.ai.unity.com).
+Error reason is 'NoSubscription' and no additional error information was provided (https://generators.ai.unity.com).
+Rejected 24 stale/invalid convex fracture plans; canonical cold preparation retained. Rebake startup caches.
+Local Fire presentation unavailable: Production humanoid pose controllers must initialize before Fire binding.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1346" name="FireStreamAuthorityRuntimeTests" fullname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests" classname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-09-09 08:39:13Z" end-time="2026-09-09 08:39:14Z" duration="0.168778" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1352" name="CapabilityAndRoundResetRetireWithoutOldRoundDamage" fullname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests.CapabilityAndRoundResetRetireWithoutOldRoundDamage" methodname="CapabilityAndRoundResetRetireWithoutOldRoundDamage" classname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests" runstate="Runnable" seed="2017840970" result="Passed" start-time="2026-09-09 08:39:13Z" end-time="2026-09-09 08:39:13Z" duration="0.054368" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1350" name="CompoundTargetReceivesSixteenHpPerSecondAfterFrontArrives" fullname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests.CompoundTargetReceivesSixteenHpPerSecondAfterFrontArrives" classname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-09 08:39:13Z" end-time="2026-09-09 08:39:14Z" duration="0.032254" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1347" name="CompoundTargetReceivesSixteenHpPerSecondAfterFrontArrives(30)" fullname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests.CompoundTargetReceivesSixteenHpPerSecondAfterFrontArrives(30)" methodname="CompoundTargetReceivesSixteenHpPerSecondAfterFrontArrives" classname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests" runstate="Runnable" seed="403494424" result="Passed" start-time="2026-09-09 08:39:14Z" end-time="2026-09-09 08:39:14Z" duration="0.010684" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1348" name="CompoundTargetReceivesSixteenHpPerSecondAfterFrontArrives(60)" fullname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests.CompoundTargetReceivesSixteenHpPerSecondAfterFrontArrives(60)" methodname="CompoundTargetReceivesSixteenHpPerSecondAfterFrontArrives" classname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests" runstate="Runnable" seed="1046421006" result="Passed" start-time="2026-09-09 08:39:14Z" end-time="2026-09-09 08:39:14Z" duration="0.003506" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1349" name="CompoundTargetReceivesSixteenHpPerSecondAfterFrontArrives(120)" fullname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests.CompoundTargetReceivesSixteenHpPerSecondAfterFrontArrives(120)" methodname="CompoundTargetReceivesSixteenHpPerSecondAfterFrontArrives" classname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests" runstate="Runnable" seed="775977942" result="Passed" start-time="2026-09-09 08:39:14Z" end-time="2026-09-09 08:39:14Z" duration="0.004430" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1355" name="DisabledWorldCannotAdmitOrKeepAnAuthorityHold" fullname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests.DisabledWorldCannotAdmitOrKeepAnAuthorityHold" methodname="DisabledWorldCannotAdmitOrKeepAnAuthorityHold" classname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests" runstate="Runnable" seed="1226798744" result="Passed" start-time="2026-09-09 08:39:14Z" end-time="2026-09-09 08:39:14Z" duration="0.003171" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1351" name="FirstCoverBlocksDamageAndRemovingItRestoresTheSameSession" fullname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests.FirstCoverBlocksDamageAndRemovingItRestoresTheSameSession" methodname="FirstCoverBlocksDamageAndRemovingItRestoresTheSameSession" classname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests" runstate="Runnable" seed="1177038084" result="Passed" start-time="2026-09-09 08:39:14Z" end-time="2026-09-09 08:39:14Z" duration="0.011442" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1354" name="PendingContactCannotDamageAfterOwnerKnockout" fullname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests.PendingContactCannotDamageAfterOwnerKnockout" methodname="PendingContactCannotDamageAfterOwnerKnockout" classname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests" runstate="Runnable" seed="1786305960" result="Passed" start-time="2026-09-09 08:39:14Z" end-time="2026-09-09 08:39:14Z" duration="0.003602" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1353" name="StopCallbacksCannotAdmitOrDrainAnotherGeneration" fullname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests.StopCallbacksCannotAdmitOrDrainAnotherGeneration" methodname="StopCallbacksCannotAdmitOrDrainAnotherGeneration" classname="Elemental.Tests.PlayMode.FireStreamAuthorityRuntimeTests" runstate="Runnable" seed="794528239" result="Passed" start-time="2026-09-09 08:39:14Z" end-time="2026-09-09 08:39:14Z" duration="0.005699" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1367" name="GoldRespawnProductionTests" fullname="Elemental.Tests.PlayMode.GoldRespawnProductionTests" classname="Elemental.Tests.PlayMode.GoldRespawnProductionTests" runstate="Runnable" testcasecount="2" result="Failed" site="Child" start-time="2026-09-09 08:39:14Z" end-time="2026-09-09 08:39:33Z" duration="19.031963" total="2" passed="0" failed="2" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1369" name="LateBlockedReservationRevisesPoseAndRoundResetCancelsReveal" fullname="Elemental.Tests.PlayMode.GoldRespawnProductionTests.LateBlockedReservationRevisesPoseAndRoundResetCancelsReveal" methodname="LateBlockedReservationRevisesPoseAndRoundResetCancelsReveal" classname="Elemental.Tests.PlayMode.GoldRespawnProductionTests" runstate="Runnable" seed="2072698812" result="Failed" start-time="2026-09-09 08:39:14Z" end-time="2026-09-09 08:39:23Z" duration="9.902158" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : Unhandled log message: '[Error] Local Fire presentation unavailable: Production humanoid pose controllers must initialize before Fire binding.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                  <stack-trace><![CDATA[Elemental.Presentation.Fire.FireStreamPresentationBinding:Fail (string) (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:127)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update () (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:61)
+
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Rejected 24 stale/invalid convex fracture plans; canonical cold preparation retained. Rebake startup caches.
+Local Fire presentation unavailable: Production humanoid pose controllers must initialize before Fire binding.
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 4141.83ms; ground=exact baked base, cacheLoad=8.06ms, bakedPlans=1915, planMisses=26, cookedMeshes=7284/7284, backgroundCooking=1496.28ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=585.27ms/30;ArenaBevel=554.66ms/350;ArenaMeshPicking=3.48ms/350;WallAwake=196.62ms/2;WallPieceVisuals=130.59ms/80;PlatformPoolAwake=15.28ms/2;PlatformRuntimeMeshes=3.26ms/24;PillarPoolAwake=40.09ms/2;PillarMeshLibrary=12.76ms/2;PillarColumns=27.32ms/2;DebrisPoolAwake=819.75ms/2;HeroFragmentPoolAwake=159.34ms/2.
+Match stage unavailable: Stage rendering-layer support must be verified for Elemental/Light Dust Mote
+]]></output>
+              </test-case>
+              <test-case id="1368" name="TwentySimultaneousLifecyclesPreserveRootsMaterialsAndDeadline" fullname="Elemental.Tests.PlayMode.GoldRespawnProductionTests.TwentySimultaneousLifecyclesPreserveRootsMaterialsAndDeadline" methodname="TwentySimultaneousLifecyclesPreserveRootsMaterialsAndDeadline" classname="Elemental.Tests.PlayMode.GoldRespawnProductionTests" runstate="Runnable" seed="69384825" result="Failed" start-time="2026-09-09 08:39:23Z" end-time="2026-09-09 08:39:33Z" duration="9.112118" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : Unhandled log message: '[Error] Local Fire presentation unavailable: Production humanoid pose controllers must initialize before Fire binding.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                  <stack-trace><![CDATA[Elemental.Presentation.Fire.FireStreamPresentationBinding:Fail (string) (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:127)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update () (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:61)
+
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Rejected 24 stale/invalid convex fracture plans; canonical cold preparation retained. Rebake startup caches.
+Local Fire presentation unavailable: Production humanoid pose controllers must initialize before Fire binding.
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3559.00ms; ground=exact baked base, cacheLoad=7.69ms, bakedPlans=1915, planMisses=26, cookedMeshes=7284/7284, backgroundCooking=1303.28ms, peakCookingPoll=0.00ms; sync=ArenaInitialize=585.27ms/30;ArenaBevel=554.66ms/350;ArenaMeshPicking=3.48ms/350;WallAwake=196.62ms/2;WallPieceVisuals=130.59ms/80;PlatformPoolAwake=15.28ms/2;PlatformRuntimeMeshes=3.26ms/24;PillarPoolAwake=40.09ms/2;PillarMeshLibrary=12.76ms/2;PillarColumns=27.32ms/2;DebrisPoolAwake=819.75ms/2;HeroFragmentPoolAwake=159.34ms/2.
+Match stage unavailable: Stage rendering-layer support must be verified for Elemental/Light Dust Mote
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1373" name="HardPolishActionSegmentDiagnostics" fullname="Elemental.Tests.PlayMode.HardPolishActionSegmentDiagnostics" classname="Elemental.Tests.PlayMode.HardPolishActionSegmentDiagnostics" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2026-09-09 08:39:33Z" end-time="2026-09-09 08:39:33Z" duration="0.634422" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1374" name="NativeEightSegmentComparisonAndHeavyThrowCandidateSheets" fullname="Elemental.Tests.PlayMode.HardPolishActionSegmentDiagnostics.NativeEightSegmentComparisonAndHeavyThrowCandidateSheets" methodname="NativeEightSegmentComparisonAndHeavyThrowCandidateSheets" classname="Elemental.Tests.PlayMode.HardPolishActionSegmentDiagnostics" runstate="Runnable" seed="247578868" result="Failed" start-time="2026-09-09 08:39:33Z" end-time="2026-09-09 08:39:33Z" duration="0.629207" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  gravity-living-hold did not animate; diagnostic graph is not valid evidence.
+  Expected: greater than 9.99999975E-05f
+  But was:  0.0f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.HardPolishActionSegmentDiagnostics+<NativeEightSegmentComparisonAndHeavyThrowCandidateSheets>d__7.MoveNext () [0x00956] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\HardPolishActionSegmentDiagnostics.cs:122
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1377" name="HardPolishFireStreamBindingRuntimeTests" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" testcasecount="2" result="Failed" site="Child" start-time="2026-09-09 08:39:33Z" end-time="2026-09-09 08:39:37Z" duration="4.112804" total="2" passed="0" failed="2" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1379" name="BridgeShutdownEndsBothPosesClearsViewsAndReenableDoesNotRestart" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.BridgeShutdownEndsBothPosesClearsViewsAndReenableDoesNotRestart" methodname="BridgeShutdownEndsBothPosesClearsViewsAndReenableDoesNotRestart" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1180878511" result="Failed" start-time="2026-09-09 08:39:33Z" end-time="2026-09-09 08:39:35Z" duration="2.044655" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp :   Preparing arena dressing
+  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests+<Load>d__8.MoveNext () [0x0013e] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\HardPolishFireStreamBindingRuntimeTests.cs:42
+at UnityEngine.TestTools.EnumeratorHelper+<ProgressOnEnumerator>d__5.MoveNext () [0x00017] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\EnumeratorHelper.cs:35
+at UnityEngine.TestTools.BeforeAfterTestCommandBase`1+<ExecuteEnumerable>d__16[T].MoveNext () [0x00132] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\BeforeAfterTestCommandBase.cs:155
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Rejected 24 stale/invalid convex fracture plans; canonical cold preparation retained. Rebake startup caches.
+Local Fire presentation unavailable: Production humanoid pose controllers must initialize before Fire binding.
+]]></output>
+              </test-case>
+              <test-case id="1378" name="LocalDuelStreamPrewarmsTracksHandDrainsAndStopsAtLifecycleBoundaries" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.LocalDuelStreamPrewarmsTracksHandDrainsAndStopsAtLifecycleBoundaries" methodname="LocalDuelStreamPrewarmsTracksHandDrainsAndStopsAtLifecycleBoundaries" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1868417476" result="Failed" start-time="2026-09-09 08:39:35Z" end-time="2026-09-09 08:39:37Z" duration="2.060943" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp :   Preparing arena dressing
+  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests+<Load>d__8.MoveNext () [0x0013e] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\HardPolishFireStreamBindingRuntimeTests.cs:42
+at UnityEngine.TestTools.EnumeratorHelper+<ProgressOnEnumerator>d__5.MoveNext () [0x00017] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\EnumeratorHelper.cs:35
+at UnityEngine.TestTools.BeforeAfterTestCommandBase`1+<ExecuteEnumerable>d__16[T].MoveNext () [0x00132] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\BeforeAfterTestCommandBase.cs:155
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Rejected 24 stale/invalid convex fracture plans; canonical cold preparation retained. Rebake startup caches.
+Local Fire presentation unavailable: Production humanoid pose controllers must initialize before Fire binding.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1380" name="HardPolishLightingRuntimeTests" fullname="Elemental.Tests.PlayMode.HardPolishLightingRuntimeTests" classname="Elemental.Tests.PlayMode.HardPolishLightingRuntimeTests" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2026-09-09 08:39:37Z" end-time="2026-09-09 08:39:38Z" duration="0.382662" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1381" name="MaterialFamiliesReceiveMoonAndPointInForwardAndForwardPlus" fullname="Elemental.Tests.PlayMode.HardPolishLightingRuntimeTests.MaterialFamiliesReceiveMoonAndPointInForwardAndForwardPlus" methodname="MaterialFamiliesReceiveMoonAndPointInForwardAndForwardPlus" classname="Elemental.Tests.PlayMode.HardPolishLightingRuntimeTests" runstate="Runnable" seed="2004019960" result="Failed" start-time="2026-09-09 08:39:37Z" end-time="2026-09-09 08:39:38Z" duration="0.375329" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Global sun/moon must remain unchanged when only the receiver layer changes.
+  Expected: less than 0.00499999989f
+  But was:  0.599609375f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.HardPolishLightingRuntimeTests+<MaterialFamiliesReceiveMoonAndPointInForwardAndForwardPlus>d__2.MoveNext () [0x00838] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\HardPolishLightingRuntimeTests.cs:131
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1417" name="MatchStageProductionTests" fullname="Elemental.Tests.PlayMode.MatchStageProductionTests" classname="Elemental.Tests.PlayMode.MatchStageProductionTests" runstate="Runnable" testcasecount="2" result="Failed" site="Child" start-time="2026-09-09 08:39:38Z" end-time="2026-09-09 08:39:59Z" duration="21.318821" total="2" passed="0" failed="2" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1418" name="ResultFramingUsesStandingProxyWhenLiveHeadHasCollapsed" fullname="Elemental.Tests.PlayMode.MatchStageProductionTests.ResultFramingUsesStandingProxyWhenLiveHeadHasCollapsed" methodname="ResultFramingUsesStandingProxyWhenLiveHeadHasCollapsed" classname="Elemental.Tests.PlayMode.MatchStageProductionTests" runstate="Runnable" seed="1578457896" result="Failed" start-time="2026-09-09 08:39:44Z" end-time="2026-09-09 08:39:57Z" duration="12.690476" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[Unhandled log message: '[Error] Local Fire presentation unavailable: Production humanoid pose controllers must initialize before Fire binding.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                  <stack-trace><![CDATA[Elemental.Presentation.Fire.FireStreamPresentationBinding:Fail (string) (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:127)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update () (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:61)
+
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Rejected 24 stale/invalid convex fracture plans; canonical cold preparation retained. Rebake startup caches.
+Local Fire presentation unavailable: Production humanoid pose controllers must initialize before Fire binding.
+]]></output>
+              </test-case>
+              <test-case id="1419" name="StableReplicaIdsAndRepeatedResultMainDisableLeases" fullname="Elemental.Tests.PlayMode.MatchStageProductionTests.StableReplicaIdsAndRepeatedResultMainDisableLeases" methodname="StableReplicaIdsAndRepeatedResultMainDisableLeases" classname="Elemental.Tests.PlayMode.MatchStageProductionTests" runstate="Runnable" seed="1978963255" result="Failed" start-time="2026-09-09 08:39:57Z" end-time="2026-09-09 08:39:59Z" duration="2.121833" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[Unhandled log message: '[Error] Local Fire presentation unavailable: Production humanoid pose controllers must initialize before Fire binding.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                  <stack-trace><![CDATA[Elemental.Presentation.Fire.FireStreamPresentationBinding:Fail (string) (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:127)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update () (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:61)
+
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Rejected 24 stale/invalid convex fracture plans; canonical cold preparation retained. Rebake startup caches.
+Local Fire presentation unavailable: Production humanoid pose controllers must initialize before Fire binding.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1466" name="RespawnProxyLeaseTests" fullname="Elemental.Tests.PlayMode.RespawnProxyLeaseTests" classname="Elemental.Tests.PlayMode.RespawnProxyLeaseTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-09 08:39:59Z" end-time="2026-09-09 08:39:59Z" duration="0.025806" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1467" name="OverlappingProxiesRestoreOnlyAfterLastReleaseInEitherOrder" fullname="Elemental.Tests.PlayMode.RespawnProxyLeaseTests.OverlappingProxiesRestoreOnlyAfterLastReleaseInEitherOrder" methodname="OverlappingProxiesRestoreOnlyAfterLastReleaseInEitherOrder" classname="Elemental.Tests.PlayMode.RespawnProxyLeaseTests" runstate="Runnable" seed="221606875" result="Passed" start-time="2026-09-09 08:39:59Z" end-time="2026-09-09 08:39:59Z" duration="0.019212" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

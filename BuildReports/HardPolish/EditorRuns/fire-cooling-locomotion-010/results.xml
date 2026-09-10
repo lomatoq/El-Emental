@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Failed(Child)" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 13:55:18Z" end-time="2026-09-09 13:57:18Z" duration="120.355916">
+  <test-suite type="TestSuite" id="1553" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="400" result="Failed" site="Child" start-time="2026-09-09 13:55:18Z" end-time="2026-09-09 13:57:18Z" duration="120.355916" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1546" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="394" result="Failed" site="Child" start-time="2026-09-09 13:55:18Z" end-time="2026-09-09 13:57:18Z" duration="120.276225" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="16264" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1547" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="394" result="Failed" site="Child" start-time="2026-09-09 13:55:18Z" end-time="2026-09-09 13:57:18Z" duration="120.265803" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1548" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="394" result="Failed" site="Child" start-time="2026-09-09 13:55:18Z" end-time="2026-09-09 13:57:18Z" duration="120.255117" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1549" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="394" result="Failed" site="Child" start-time="2026-09-09 13:55:18Z" end-time="2026-09-09 13:57:18Z" duration="120.244268" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1410" name="HardPolishFireStreamBindingRuntimeTests" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-09 13:55:18Z" end-time="2026-09-09 13:55:55Z" duration="37.756374" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1412" name="CollisionDrivenFireActualLinebreakerHeadOnObliqueCornerOrbitAimAndMovingCapture" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.CollisionDrivenFireActualLinebreakerHeadOnObliqueCornerOrbitAimAndMovingCapture" methodname="CollisionDrivenFireActualLinebreakerHeadOnObliqueCornerOrbitAimAndMovingCapture" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="144188816" result="Passed" start-time="2026-09-09 13:55:18Z" end-time="2026-09-09 13:55:55Z" duration="37.733210" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="300000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 4477.42ms; ground=exact baked base, cacheLoad=15.53ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=1507.56ms, peakCookingPoll=0.33ms; sync=ArenaInitialize=293.03ms/15;ArenaBevel=275.65ms/175;ArenaMeshPicking=1.65ms/175;WallAwake=99.23ms/1;WallPieceVisuals=56.66ms/40;PlatformPoolAwake=10.74ms/1;PlatformRuntimeMeshes=1.44ms/12;PillarPoolAwake=23.03ms/1;PillarMeshLibrary=5.70ms/1;PillarColumns=17.32ms/1;DebrisPoolAwake=128.82ms/1;HeroFragmentPoolAwake=12.46ms/1.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1023" name="SeptemberAnimationRescueRuntimeTests" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" testcasecount="58" result="Failed" site="Child" start-time="2026-09-09 13:55:55Z" end-time="2026-09-09 13:57:18Z" duration="82.448137" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1040" name="ActualSavedFighterRunStartsStopsAndTurnReleaseStayContinuous" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ActualSavedFighterRunStartsStopsAndTurnReleaseStayContinuous" methodname="ActualSavedFighterRunStartsStopsAndTurnReleaseStayContinuous" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1500556325" result="Failed" start-time="2026-09-09 13:55:56Z" end-time="2026-09-09 13:57:18Z" duration="82.403588" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="300000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  right-turn 120Hz right release discontinuity at 188
+  Expected: <empty>
+  But was:  < "right-turn 120Hz right release discontinuity at 188" >
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+<ActualSavedFighterRunStartsStopsAndTurnReleaseStayContinuous>d__45.MoveNext () [0x00d72] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\LocomotionGamefeelProductionTests.cs:157
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 2836.48ms; ground=exact baked base, cacheLoad=11.90ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=843.73ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=293.03ms/15;ArenaBevel=275.65ms/175;ArenaMeshPicking=1.65ms/175;WallAwake=99.23ms/1;WallPieceVisuals=56.66ms/40;PlatformPoolAwake=10.74ms/1;PlatformRuntimeMeshes=1.44ms/12;PillarPoolAwake=23.03ms/1;PillarMeshLibrary=5.70ms/1;PillarColumns=17.32ms/1;DebrisPoolAwake=128.82ms/1;HeroFragmentPoolAwake=12.46ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\EditorRuns\fire-cooling-locomotion-010\results.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

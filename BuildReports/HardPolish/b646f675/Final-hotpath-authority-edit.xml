@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="55" result="Failed(Child)" total="55" passed="53" failed="2" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 09:27:23Z" end-time="2026-09-09 09:28:03Z" duration="39.4290087">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="1464" result="Failed" site="Child" start-time="2026-09-09 09:27:23Z" end-time="2026-09-09 09:28:03Z" duration="39.429009" total="55" passed="53" failed="2" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="2853" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="1418" result="Failed" site="Child" start-time="2026-09-09 09:27:23Z" end-time="2026-09-09 09:28:03Z" duration="39.402841" total="55" passed="53" failed="2" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="20908" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="2854" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="1412" result="Failed" site="Child" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:28:03Z" duration="39.389052" total="55" passed="53" failed="2" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="2855" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="1412" result="Failed" site="Child" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:28:03Z" duration="39.375735" total="55" passed="53" failed="2" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="2856" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="1412" result="Failed" site="Child" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:28:03Z" duration="39.363072" total="55" passed="53" failed="2" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1105" name="BotAuthoredTintOwnershipTests" fullname="Elemental.Tests.EditMode.BotAuthoredTintOwnershipTests" classname="Elemental.Tests.EditMode.BotAuthoredTintOwnershipTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.041479" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1106" name="ProductionTelegraphPhasesPreserveAuthoredTeamAndRespawnEmission" fullname="Elemental.Tests.EditMode.BotAuthoredTintOwnershipTests.ProductionTelegraphPhasesPreserveAuthoredTeamAndRespawnEmission" methodname="ProductionTelegraphPhasesPreserveAuthoredTeamAndRespawnEmission" classname="Elemental.Tests.EditMode.BotAuthoredTintOwnershipTests" runstate="Runnable" seed="1745994706" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.027631" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1642" name="EarthFeedbackSignalPriorityTests" fullname="Elemental.Tests.EditMode.EarthFeedbackSignalPriorityTests" classname="Elemental.Tests.EditMode.EarthFeedbackSignalPriorityTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.020278" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1645" name="BothActorIgnitionsSurviveDustBeforeAndAfterAdmission" fullname="Elemental.Tests.EditMode.EarthFeedbackSignalPriorityTests.BothActorIgnitionsSurviveDustBeforeAndAfterAdmission" classname="Elemental.Tests.EditMode.EarthFeedbackSignalPriorityTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.016134" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1643" name="BothActorIgnitionsSurviveDustBeforeAndAfterAdmission(False)" fullname="Elemental.Tests.EditMode.EarthFeedbackSignalPriorityTests.BothActorIgnitionsSurviveDustBeforeAndAfterAdmission(False)" methodname="BothActorIgnitionsSurviveDustBeforeAndAfterAdmission" classname="Elemental.Tests.EditMode.EarthFeedbackSignalPriorityTests" runstate="Runnable" seed="1007551755" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.014964" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1644" name="BothActorIgnitionsSurviveDustBeforeAndAfterAdmission(True)" fullname="Elemental.Tests.EditMode.EarthFeedbackSignalPriorityTests.BothActorIgnitionsSurviveDustBeforeAndAfterAdmission(True)" methodname="BothActorIgnitionsSurviveDustBeforeAndAfterAdmission" classname="Elemental.Tests.EditMode.EarthFeedbackSignalPriorityTests" runstate="Runnable" seed="551209906" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000430" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="1647" name="DistinctSignalFloodStillHonorsTheExistingEightEventCapacity" fullname="Elemental.Tests.EditMode.EarthFeedbackSignalPriorityTests.DistinctSignalFloodStillHonorsTheExistingEightEventCapacity" methodname="DistinctSignalFloodStillHonorsTheExistingEightEventCapacity" classname="Elemental.Tests.EditMode.EarthFeedbackSignalPriorityTests" runstate="Runnable" seed="1473682901" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000730" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1646" name="LifecycleSignalPreemptsContactAccentsWithoutGrowingTheQueue" fullname="Elemental.Tests.EditMode.EarthFeedbackSignalPriorityTests.LifecycleSignalPreemptsContactAccentsWithoutGrowingTheQueue" methodname="LifecycleSignalPreemptsContactAccentsWithoutGrowingTheQueue" classname="Elemental.Tests.EditMode.EarthFeedbackSignalPriorityTests" runstate="Runnable" seed="253505260" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.001272" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1924" name="EarthMotionContinuityTests" fullname="Elemental.Tests.EditMode.EarthMotionContinuityTests" classname="Elemental.Tests.EditMode.EarthMotionContinuityTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.009920" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1928" name="ArmorFormationFlightDoesNotSnapAndConvergesWithoutOvershoot" fullname="Elemental.Tests.EditMode.EarthMotionContinuityTests.ArmorFormationFlightDoesNotSnapAndConvergesWithoutOvershoot" methodname="ArmorFormationFlightDoesNotSnapAndConvergesWithoutOvershoot" classname="Elemental.Tests.EditMode.EarthMotionContinuityTests" runstate="Runnable" seed="2145635997" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.002757" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1930" name="EmergingPlatformCannotBePluckedIntoItsFinalPose" fullname="Elemental.Tests.EditMode.EarthMotionContinuityTests.EmergingPlatformCannotBePluckedIntoItsFinalPose" methodname="EmergingPlatformCannotBePluckedIntoItsFinalPose" classname="Elemental.Tests.EditMode.EarthMotionContinuityTests" runstate="Runnable" seed="1081089896" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000402" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1927" name="EveryShippingElementAbilityMapsToAVisibleSemanticPose" fullname="Elemental.Tests.EditMode.EarthMotionContinuityTests.EveryShippingElementAbilityMapsToAVisibleSemanticPose" methodname="EveryShippingElementAbilityMapsToAVisibleSemanticPose" classname="Elemental.Tests.EditMode.EarthMotionContinuityTests" runstate="Runnable" seed="334460469" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.001331" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1925" name="MagicMotionTime_UsesStableAuthoredPhaseWindows" fullname="Elemental.Tests.EditMode.EarthMotionContinuityTests.MagicMotionTime_UsesStableAuthoredPhaseWindows" methodname="MagicMotionTime_UsesStableAuthoredPhaseWindows" classname="Elemental.Tests.EditMode.EarthMotionContinuityTests" runstate="Runnable" seed="627184977" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000254" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1926" name="MaskedUpperBodyRecoveryContinuesWhileLocomotionMoves" fullname="Elemental.Tests.EditMode.EarthMotionContinuityTests.MaskedUpperBodyRecoveryContinuesWhileLocomotionMoves" methodname="MaskedUpperBodyRecoveryContinuesWhileLocomotionMoves" classname="Elemental.Tests.EditMode.EarthMotionContinuityTests" runstate="Runnable" seed="1127852746" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000171" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1929" name="SemanticEarthTechniquesResolveToDedicatedCuratedSlots" fullname="Elemental.Tests.EditMode.EarthMotionContinuityTests.SemanticEarthTechniquesResolveToDedicatedCuratedSlots" methodname="SemanticEarthTechniquesResolveToDedicatedCuratedSlots" classname="Elemental.Tests.EditMode.EarthMotionContinuityTests" runstate="Runnable" seed="231184261" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000286" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1931" name="WaveCellFinishesRetreatFullyBelowItsSourceSurface" fullname="Elemental.Tests.EditMode.EarthMotionContinuityTests.WaveCellFinishesRetreatFullyBelowItsSourceSurface" methodname="WaveCellFinishesRetreatFullyBelowItsSourceSurface" classname="Elemental.Tests.EditMode.EarthMotionContinuityTests" runstate="Runnable" seed="104989550" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000749" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="2367" name="FireStreamContactIntervalTests" fullname="Elemental.Tests.EditMode.FireStreamContactIntervalTests" classname="Elemental.Tests.EditMode.FireStreamContactIntervalTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.005710" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="2371" name="CrossingIntegratesOnlyActualContactAtEverySamplingRate" fullname="Elemental.Tests.EditMode.FireStreamContactIntervalTests.CrossingIntegratesOnlyActualContactAtEverySamplingRate" classname="Elemental.Tests.EditMode.FireStreamContactIntervalTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.002926" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2368" name="CrossingIntegratesOnlyActualContactAtEverySamplingRate(30)" fullname="Elemental.Tests.EditMode.FireStreamContactIntervalTests.CrossingIntegratesOnlyActualContactAtEverySamplingRate(30)" methodname="CrossingIntegratesOnlyActualContactAtEverySamplingRate" classname="Elemental.Tests.EditMode.FireStreamContactIntervalTests" runstate="Runnable" seed="1753571828" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.001703" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2369" name="CrossingIntegratesOnlyActualContactAtEverySamplingRate(60)" fullname="Elemental.Tests.EditMode.FireStreamContactIntervalTests.CrossingIntegratesOnlyActualContactAtEverySamplingRate(60)" methodname="CrossingIntegratesOnlyActualContactAtEverySamplingRate" classname="Elemental.Tests.EditMode.FireStreamContactIntervalTests" runstate="Runnable" seed="587449640" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000086" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2370" name="CrossingIntegratesOnlyActualContactAtEverySamplingRate(120)" fullname="Elemental.Tests.EditMode.FireStreamContactIntervalTests.CrossingIntegratesOnlyActualContactAtEverySamplingRate(120)" methodname="CrossingIntegratesOnlyActualContactAtEverySamplingRate" classname="Elemental.Tests.EditMode.FireStreamContactIntervalTests" runstate="Runnable" seed="1440233336" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000101" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="2372" name="FastCrossingBetweenTwoMissesIsNotAFullTickHit" fullname="Elemental.Tests.EditMode.FireStreamContactIntervalTests.FastCrossingBetweenTwoMissesIsNotAFullTickHit" methodname="FastCrossingBetweenTwoMissesIsNotAFullTickHit" classname="Elemental.Tests.EditMode.FireStreamContactIntervalTests" runstate="Runnable" seed="834122021" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000197" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2373" name="GrowingFrontAndRoundedEndpointHaveTheirOwnEntryTime" fullname="Elemental.Tests.EditMode.FireStreamContactIntervalTests.GrowingFrontAndRoundedEndpointHaveTheirOwnEntryTime" methodname="GrowingFrontAndRoundedEndpointHaveTheirOwnEntryTime" classname="Elemental.Tests.EditMode.FireStreamContactIntervalTests" runstate="Runnable" seed="1496032968" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000200" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2374" name="ObstacleClippedBeamDoesNotDamageTheFighterBehindIt" fullname="Elemental.Tests.EditMode.FireStreamContactIntervalTests.ObstacleClippedBeamDoesNotDamageTheFighterBehindIt" methodname="ObstacleClippedBeamDoesNotDamageTheFighterBehindIt" classname="Elemental.Tests.EditMode.FireStreamContactIntervalTests" runstate="Runnable" seed="1625847028" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000207" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2375" name="ParallelCapsulesAndStationaryContactRemainFinite" fullname="Elemental.Tests.EditMode.FireStreamContactIntervalTests.ParallelCapsulesAndStationaryContactRemainFinite" methodname="ParallelCapsulesAndStationaryContactRemainFinite" classname="Elemental.Tests.EditMode.FireStreamContactIntervalTests" runstate="Runnable" seed="2077483825" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000260" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="2439" name="HardPolishAllocationCounterTests" fullname="Elemental.Tests.EditMode.HardPolishAllocationCounterTests" classname="Elemental.Tests.EditMode.HardPolishAllocationCounterTests" runstate="Runnable" testcasecount="2" result="Failed" site="Child" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.005759" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="2440" name="DisabledAndWarmedValueScopesDoNotAllocatePerMeasurement" fullname="Elemental.Tests.EditMode.HardPolishAllocationCounterTests.DisabledAndWarmedValueScopesDoNotAllocatePerMeasurement" methodname="DisabledAndWarmedValueScopesDoNotAllocatePerMeasurement" classname="Elemental.Tests.EditMode.HardPolishAllocationCounterTests" runstate="Runnable" seed="388907625" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.001968" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2441" name="NestedScopesReportInclusiveBytesWithoutPretendingTheyAreAdditive" fullname="Elemental.Tests.EditMode.HardPolishAllocationCounterTests.NestedScopesReportInclusiveBytesWithoutPretendingTheyAreAdditive" methodname="NestedScopesReportInclusiveBytesWithoutPretendingTheyAreAdditive" classname="Elemental.Tests.EditMode.HardPolishAllocationCounterTests" runstate="Runnable" seed="1485073598" result="Failed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.003214" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: greater than or equal to 128
+  But was:  0
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.EditMode.HardPolishAllocationCounterTests.NestedScopesReportInclusiveBytesWithoutPretendingTheyAreAdditive () [0x00063] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\EditMode\HardPolishAllocationCounterTests.cs:35
+]]></stack-trace>
+                </failure>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="2453" name="HardPolishResponseTests" fullname="Elemental.Tests.EditMode.HardPolishResponseTests" classname="Elemental.Tests.EditMode.HardPolishResponseTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.010037" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2458" name="AdmissionDeduplicatesContactsBoundsFloodAndAcceptsReusedGeneration" fullname="Elemental.Tests.EditMode.HardPolishResponseTests.AdmissionDeduplicatesContactsBoundsFloodAndAcceptsReusedGeneration" methodname="AdmissionDeduplicatesContactsBoundsFloodAndAcceptsReusedGeneration" classname="Elemental.Tests.EditMode.HardPolishResponseTests" runstate="Runnable" seed="310079823" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000589" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="2464" name="CosmeticSignalsDoNotAddCameraKick" fullname="Elemental.Tests.EditMode.HardPolishResponseTests.CosmeticSignalsDoNotAddCameraKick" classname="Elemental.Tests.EditMode.HardPolishResponseTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.002876" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2460" name="CosmeticSignalsDoNotAddCameraKick(SchoolSwitch)" fullname="Elemental.Tests.EditMode.HardPolishResponseTests.CosmeticSignalsDoNotAddCameraKick(SchoolSwitch)" methodname="CosmeticSignalsDoNotAddCameraKick" classname="Elemental.Tests.EditMode.HardPolishResponseTests" runstate="Runnable" seed="1232590680" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000440" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2461" name="CosmeticSignalsDoNotAddCameraKick(FireIgnite)" fullname="Elemental.Tests.EditMode.HardPolishResponseTests.CosmeticSignalsDoNotAddCameraKick(FireIgnite)" methodname="CosmeticSignalsDoNotAddCameraKick" classname="Elemental.Tests.EditMode.HardPolishResponseTests" runstate="Runnable" seed="418079661" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000071" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2462" name="CosmeticSignalsDoNotAddCameraKick(FireEnd)" fullname="Elemental.Tests.EditMode.HardPolishResponseTests.CosmeticSignalsDoNotAddCameraKick(FireEnd)" methodname="CosmeticSignalsDoNotAddCameraKick" classname="Elemental.Tests.EditMode.HardPolishResponseTests" runstate="Runnable" seed="761554421" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000061" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2463" name="CosmeticSignalsDoNotAddCameraKick(FireContact)" fullname="Elemental.Tests.EditMode.HardPolishResponseTests.CosmeticSignalsDoNotAddCameraKick(FireContact)" methodname="CosmeticSignalsDoNotAddCameraKick" classname="Elemental.Tests.EditMode.HardPolishResponseTests" runstate="Runnable" seed="8422441" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000058" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="2457" name="SchoolEnvelopeReturnsExactlyToAuthoredScale" fullname="Elemental.Tests.EditMode.HardPolishResponseTests.SchoolEnvelopeReturnsExactlyToAuthoredScale" classname="Elemental.Tests.EditMode.HardPolishResponseTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.003040" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2454" name="SchoolEnvelopeReturnsExactlyToAuthoredScale(30)" fullname="Elemental.Tests.EditMode.HardPolishResponseTests.SchoolEnvelopeReturnsExactlyToAuthoredScale(30)" methodname="SchoolEnvelopeReturnsExactlyToAuthoredScale" classname="Elemental.Tests.EditMode.HardPolishResponseTests" runstate="Runnable" seed="1301429677" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000834" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2455" name="SchoolEnvelopeReturnsExactlyToAuthoredScale(60)" fullname="Elemental.Tests.EditMode.HardPolishResponseTests.SchoolEnvelopeReturnsExactlyToAuthoredScale(60)" methodname="SchoolEnvelopeReturnsExactlyToAuthoredScale" classname="Elemental.Tests.EditMode.HardPolishResponseTests" runstate="Runnable" seed="1952716125" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000211" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2456" name="SchoolEnvelopeReturnsExactlyToAuthoredScale(120)" fullname="Elemental.Tests.EditMode.HardPolishResponseTests.SchoolEnvelopeReturnsExactlyToAuthoredScale(120)" methodname="SchoolEnvelopeReturnsExactlyToAuthoredScale" classname="Elemental.Tests.EditMode.HardPolishResponseTests" runstate="Runnable" seed="1671901253" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000363" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="2459" name="SharedSeedAndSchoolSurviveParticleBudgetClamping" fullname="Elemental.Tests.EditMode.HardPolishResponseTests.SharedSeedAndSchoolSurviveParticleBudgetClamping" methodname="SharedSeedAndSchoolSurviveParticleBudgetClamping" classname="Elemental.Tests.EditMode.HardPolishResponseTests" runstate="Runnable" seed="1436858562" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:24Z" duration="0.000976" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="2623" name="RumbleRockMeshFactoryTests" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" testcasecount="25" result="Failed" site="Child" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:28:03Z" duration="39.003614" total="25" passed="24" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="2630" name="ApprovedTwentyRockCorpus_IsValidAndVisiblyDiverse" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.ApprovedTwentyRockCorpus_IsValidAndVisiblyDiverse" methodname="ApprovedTwentyRockCorpus_IsValidAndVisiblyDiverse" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="1609542141" result="Passed" start-time="2026-09-09 09:27:24Z" end-time="2026-09-09 09:27:25Z" duration="0.897848" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2637" name="BevelGeometry_ContainsSeparateFaceAndEdgeClasses" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.BevelGeometry_ContainsSeparateFaceAndEdgeClasses" methodname="BevelGeometry_ContainsSeparateFaceAndEdgeClasses" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="442066109" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.069847" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="2650" name="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" testcasecount="12" result="Failed" site="Child" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.051048" total="12" passed="11" failed="1" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <failure>
+                  <message><![CDATA[One or more child tests had errors]]></message>
+                </failure>
+                <test-case id="2638" name="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Boulder_00&quot;)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Boulder_00&quot;)" methodname="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="417127037" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.010393" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2639" name="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Boulder_01&quot;)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Boulder_01&quot;)" methodname="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="1765996869" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.004629" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2640" name="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Boulder_02&quot;)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Boulder_02&quot;)" methodname="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="1614480412" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.004445" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2641" name="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Boulder_03&quot;)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Boulder_03&quot;)" methodname="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="1696592316" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.002789" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2642" name="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Boulder_04&quot;)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Boulder_04&quot;)" methodname="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="1640826397" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.003299" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2643" name="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Boulder_05&quot;)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Boulder_05&quot;)" methodname="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="47863188" result="Failed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.001404" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <failure>
+                    <message><![CDATA[  Expected: greater than 1.00000001E-10f
+  But was:  2.34899188E-12f
+]]></message>
+                    <stack-trace><![CDATA[at Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.AssertNormalsFollowTriangleWinding (UnityEngine.Mesh mesh) [0x00091] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\EditMode\RumbleRockMeshFactoryTests.cs:268
+at Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology (System.String sourceName) [0x00212] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\EditMode\RumbleRockMeshFactoryTests.cs:180
+]]></stack-trace>
+                  </failure>
+                </test-case>
+                <test-case id="2644" name="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Boulder_06&quot;)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Boulder_06&quot;)" methodname="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="2037362898" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.002476" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2645" name="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Boulder_07&quot;)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Boulder_07&quot;)" methodname="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="983221690" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.002409" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2646" name="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Pebble_17&quot;)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Pebble_17&quot;)" methodname="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="1151249455" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.003142" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2647" name="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Pebble_18&quot;)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Pebble_18&quot;)" methodname="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="980020487" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.002747" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2648" name="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Pebble_19&quot;)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Pebble_19&quot;)" methodname="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="961328622" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.002880" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2649" name="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Wedge_12&quot;)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology(&quot;V5_Wedge_12&quot;)" methodname="PhysicsCopy_IsCenteredUnitSizedAndPreservesApprovedTopology" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="1428847103" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.002280" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="2651" name="RumbleStoneVariation_StaysInsideTheAuthoredPaletteFamily" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.RumbleStoneVariation_StaysInsideTheAuthoredPaletteFamily" methodname="RumbleStoneVariation_StaysInsideTheAuthoredPaletteFamily" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="1631457512" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.004718" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="2636" name="SameRecipe_ProducesIdenticalMesh" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.SameRecipe_ProducesIdenticalMesh" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.431875" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2631" name="SameRecipe_ProducesIdenticalMesh(Boulder)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.SameRecipe_ProducesIdenticalMesh(Boulder)" methodname="SameRecipe_ProducesIdenticalMesh" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="1796876737" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.101388" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2632" name="SameRecipe_ProducesIdenticalMesh(Slab)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.SameRecipe_ProducesIdenticalMesh(Slab)" methodname="SameRecipe_ProducesIdenticalMesh" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="576690005" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.045320" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2633" name="SameRecipe_ProducesIdenticalMesh(Wedge)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.SameRecipe_ProducesIdenticalMesh(Wedge)" methodname="SameRecipe_ProducesIdenticalMesh" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="1346041341" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.115694" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2634" name="SameRecipe_ProducesIdenticalMesh(Pebble)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.SameRecipe_ProducesIdenticalMesh(Pebble)" methodname="SameRecipe_ProducesIdenticalMesh" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="1023367891" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.098493" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2635" name="SameRecipe_ProducesIdenticalMesh(Pillar)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.SameRecipe_ProducesIdenticalMesh(Pillar)" methodname="SameRecipe_ProducesIdenticalMesh" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="1929936542" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:25Z" duration="0.068165" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="2629" name="ThousandRecipeCourt_IsClosedPlanarAndDeterministic" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.ThousandRecipeCourt_IsClosedPlanarAndDeterministic" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:28:03Z" duration="37.544564" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2624" name="ThousandRecipeCourt_IsClosedPlanarAndDeterministic(Boulder)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.ThousandRecipeCourt_IsClosedPlanarAndDeterministic(Boulder)" methodname="ThousandRecipeCourt_IsClosedPlanarAndDeterministic" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="1572250280" result="Passed" start-time="2026-09-09 09:27:25Z" end-time="2026-09-09 09:27:34Z" duration="8.546279" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Boulder: recipes=200, maxCanonicalDelta=5.12738552E-06, minCrossMargin=1.06866109, reducedBevelCuts=23, retainedEdges=0, rejectedShapeCuts=114
+]]></output>
+                </test-case>
+                <test-case id="2625" name="ThousandRecipeCourt_IsClosedPlanarAndDeterministic(Slab)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.ThousandRecipeCourt_IsClosedPlanarAndDeterministic(Slab)" methodname="ThousandRecipeCourt_IsClosedPlanarAndDeterministic" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="1607206111" result="Passed" start-time="2026-09-09 09:27:34Z" end-time="2026-09-09 09:27:40Z" duration="5.744180" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Slab: recipes=200, maxCanonicalDelta=2.16265489E-05, minCrossMargin=1.4145087, reducedBevelCuts=16, retainedEdges=0, rejectedShapeCuts=179
+]]></output>
+                </test-case>
+                <test-case id="2626" name="ThousandRecipeCourt_IsClosedPlanarAndDeterministic(Wedge)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.ThousandRecipeCourt_IsClosedPlanarAndDeterministic(Wedge)" methodname="ThousandRecipeCourt_IsClosedPlanarAndDeterministic" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="420044778" result="Passed" start-time="2026-09-09 09:27:40Z" end-time="2026-09-09 09:27:48Z" duration="7.888793" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Wedge: recipes=200, maxCanonicalDelta=7.3527226E-06, minCrossMargin=1.08322287, reducedBevelCuts=21, retainedEdges=0, rejectedShapeCuts=265
+]]></output>
+                </test-case>
+                <test-case id="2627" name="ThousandRecipeCourt_IsClosedPlanarAndDeterministic(Pebble)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.ThousandRecipeCourt_IsClosedPlanarAndDeterministic(Pebble)" methodname="ThousandRecipeCourt_IsClosedPlanarAndDeterministic" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="457159574" result="Passed" start-time="2026-09-09 09:27:48Z" end-time="2026-09-09 09:27:56Z" duration="8.083031" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Pebble: recipes=200, maxCanonicalDelta=2.59061744E-06, minCrossMargin=1.19745111, reducedBevelCuts=16, retainedEdges=0, rejectedShapeCuts=134
+]]></output>
+                </test-case>
+                <test-case id="2628" name="ThousandRecipeCourt_IsClosedPlanarAndDeterministic(Pillar)" fullname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests.ThousandRecipeCourt_IsClosedPlanarAndDeterministic(Pillar)" methodname="ThousandRecipeCourt_IsClosedPlanarAndDeterministic" classname="Elemental.Tests.EditMode.RumbleRockMeshFactoryTests" runstate="Runnable" seed="1022506760" result="Passed" start-time="2026-09-09 09:27:56Z" end-time="2026-09-09 09:28:03Z" duration="7.279391" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Pillar: recipes=200, maxCanonicalDelta=2.99228868E-05, minCrossMargin=1.17248905, reducedBevelCuts=22, retainedEdges=0, rejectedShapeCuts=83
+Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

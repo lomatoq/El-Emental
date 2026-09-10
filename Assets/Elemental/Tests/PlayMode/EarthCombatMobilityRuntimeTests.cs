@@ -67,7 +67,7 @@ namespace Elemental.Tests.PlayMode
                 var cells = All<EarthArenaPiece>(scene).Where(x => x.Owner == column).ToArray();
                 var attached = cells.First(x => !x.IsEarthTargetValid && x.gameObject.activeInHierarchy);
                 float previous = column.AccumulatedImpactImpulse;
-                var weak = new EarthStructureImpact(attached.transform.position, -direction, 5f,
+                var weak = new EarthStructureImpact(attached.transform.position, -direction, 12f,
                     EarthStructureImpactKind.Projectile, 778899u);
                 EarthStructureImpactRouter.Apply(attached.GetComponent<Collider>(), in weak);
                 Assert.That(column.AccumulatedImpactImpulse, Is.GreaterThan(previous),

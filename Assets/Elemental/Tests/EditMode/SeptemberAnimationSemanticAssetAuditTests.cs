@@ -21,7 +21,7 @@ namespace Elemental.Tests.EditMode
             EarthHumanoidMotionSetup.MagicAttack05Path,
             EarthHumanoidMotionSetup.MagicArea02Path,
             EarthHumanoidMotionSetup.Magic2HCast01Path,
-            EarthHumanoidMotionSetup.WheelbarrowDumpPath,
+            EarthHumanoidMotionSetup.Magic2HAttack03Path,
             EarthHumanoidMotionSetup.LeadJabPath,
             EarthHumanoidMotionSetup.Magic1HCast01Path,
             EarthHumanoidMotionSetup.Magic2HAttack03Path,
@@ -132,6 +132,7 @@ namespace Elemental.Tests.EditMode
                 EarthMagicMotionEntry actual = profile.Find((int)expected.slot);
                 Assert.That(actual, Is.Not.Null, expected.slot.ToString());
                 AssertTiming(actual.timing, expected.timing, expected.slot.ToString());
+                Assert.That(actual.releaseStartNormalized,Is.EqualTo(expected.releaseStartNormalized).Within(.00001f),expected.slot.ToString());
                 Assert.That(actual.actionHandInfluence,
                     Is.EqualTo(expected.actionHandInfluence).Within(.00001f), expected.slot.ToString());
                 Assert.That(actual.sustainedHandInfluence,
@@ -141,9 +142,9 @@ namespace Elemental.Tests.EditMode
 
             Assert.That(contacts.Count, Is.EqualTo(11),
                 "Each current source clip/semantic reuse needs its own reviewed contact beat.");
-            Assert.That(profile.Find((int)EarthHumanoidPoseSlot.VectorPush).timing.Contact,
-                Is.LessThan(profile.Find((int)EarthHumanoidPoseSlot.HeavyThrow).timing.Contact),
-                "The lead-jab push must contact before the late wheelbarrow-dump release.");
+            Assert.That(profile.Find((int)EarthHumanoidPoseSlot.VectorPush).timing.Contact * 1.5f,
+                Is.LessThan(profile.Find((int)EarthHumanoidPoseSlot.HeavyThrow).timing.Contact * 4.3f),
+                "Compare native source seconds across the lead jab and two-hand release, not unrelated normalized ranges.");
             Assert.That(profile.Find((int)EarthHumanoidPoseSlot.PullStone).timing.Contact,
                 Is.Not.EqualTo(profile.Find((int)EarthHumanoidPoseSlot.ArmorAssemble).timing.Contact),
                 "Pull and armor share a clip, so semantic timing must keep them visually distinct.");

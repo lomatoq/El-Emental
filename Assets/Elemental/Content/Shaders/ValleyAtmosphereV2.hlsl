@@ -1,9 +1,11 @@
 #ifndef ELEMENTAL_VALLEY_ATMOSPHERE_V2
 #define ELEMENTAL_VALLEY_ATMOSPHERE_V2
 float _ElementalValleyEnabled,_ElementalValleyDebug,_ElementalValleyChromaticPixels;
+float _ElementalValleyMidAerial;
 float4x4 _ElementalWorldToValley;
 float4 _ElementalValleyFog,_ElementalValleyFar,_ElementalValleyFarArt;
 float4 _ElementalValleyClosure;
+float4 _ElementalValleyStorm;
 float4 _ElementalValleyDay,_ElementalValleyBottom,_ElementalValleyNight,_ElementalValleyDusk;
 float4 _ElementalValleyTimeFogTop,_ElementalValleyTimeFogBottom,_ElementalValleyTimeCloudTop,_ElementalValleyTimeCloudBottom;
 float4 _ElementalValleyBanks4[4],_ElementalValleyBankSizes4[4];
@@ -111,13 +113,21 @@ float4 ApplyValleyAtmosphere(float4 source,float2 uv,float rawDepth,bool hasGeom
         // Latest art requirement: protect the playable upper cap, not the entire
         // spherical underside. Lower terrain joins the opaque veil continuously.
         float playableWindow=smoothstep(radius*0.45,radius*0.75,surfaceLocal.y);
-        cloudProtection=lerp(1,protect*planetProtect,playableWindow);
+        // The underside seal closes distant terrain, not nearby fighters or
+        // held stones. Preserve the immediate interaction volume at every normal;
+        // restore the original underside treatment smoothly beyond 24 metres.
+        float nearSurfaceFogWeight=smoothstep(12,24,distanceMetres);
+        cloudProtection=lerp(1,protect*planetProtect,playableWindow)*nearSurfaceFogWeight;
         // The forced underside seal belongs only to the planet. Applying it to
         // all distant columns painted a shared narrow horizontal opacity band.
         float lowerTerrain=(1-smoothstep(-radius*0.25,radius*0.60,surfaceLocal.y))*(1-planetProtect);
         // Only aerial haze is capped. Physical height fog must reach full opacity
         // continuously below the sea instead of stopping at the aerial cap.
         closure=smoothstep(_ElementalValleyClosure.x,_ElementalValleyClosure.y,distanceMetres);
+        // Middle aerial attenuation only; retain lower height fog and far closure.
+        float midWindow=smoothstep(_ElementalValleyFar.x,_ElementalValleyFar.x+200,distanceMetres)*
+            (1-smoothstep(_ElementalValleyClosure.x-600,_ElementalValleyClosure.x,distanceMetres));
+        aerial*=lerp(1,clamp(_ElementalValleyMidAerial,.7,1),midWindow);
         alpha=max(lowerTerrain,1-(1-veil)*(1-aerial)*(1-closure))*cloudProtection;
         farArtMask=smoothstep(_ElementalValleyFarArt.y,_ElementalValleyFarArt.z,distanceMetres)*protect*planetProtect*_ElementalValleyFarArt.x;
         farLightDiffusion=(1-exp(-max(0,distanceMetres-400)/1400))*0.24*cloudProtection*playableWindow;
@@ -133,6 +143,12 @@ float4 ApplyValleyAtmosphere(float4 source,float2 uv,float rawDepth,bool hasGeom
     float transmittance=1-saturate(alpha);
     farArtMask*=transmittance;
     farLightDiffusion*=transmittance;
+    // One distant cloud-region pulse inside the existing fog scattering owner.
+    // Direction/height/distance masks exclude near geometry and most of the sky.
+    float stormDirection=smoothstep(.94,.995,dot(normalize(localRay),(_ElementalValleyStorm.xyz/max(length(_ElementalValleyStorm.xyz),1e-5))));
+    float stormHeight=(1-smoothstep(.03,.18,abs(localRay.y-.03)));
+    float stormDistance=smoothstep(700,1100,distanceMetres);
+    fog+=float3(.76,.71,.93)*(_ElementalValleyStorm.w*stormDirection*stormHeight*stormDistance*cloudProtection);
     float3 color=lerp(source.rgb,fog,saturate(alpha));
     // Pale cool air perspective only on distant upper stone; never global RGB fringes.
     color=lerp(color,float3(0.85,0.91,0.98),farLightDiffusion*day);

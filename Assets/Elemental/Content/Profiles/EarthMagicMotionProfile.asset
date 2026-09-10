@@ -27,6 +27,7 @@ MonoBehaviour:
       StrikeSeconds: 0.11
       SustainSeconds: 0.19
       RecoverSeconds: 0.22
+    releaseStartNormalized: -1
     actionHandInfluence: 0.12
     sustainedHandInfluence: 0.34
   - slot: 2
@@ -43,6 +44,7 @@ MonoBehaviour:
       StrikeSeconds: 0.11
       SustainSeconds: 0.18
       RecoverSeconds: 0.23
+    releaseStartNormalized: -1
     actionHandInfluence: 0.1
     sustainedHandInfluence: 0.38
   - slot: 3
@@ -59,22 +61,24 @@ MonoBehaviour:
       StrikeSeconds: 0.09
       SustainSeconds: 0.22
       RecoverSeconds: 0.22
+    releaseStartNormalized: -1
     actionHandInfluence: 0.18
     sustainedHandInfluence: 0.62
   - slot: 4
     timing:
-      AcquireEnd: 0.1
-      RootEnd: 0.27
-      LoadEnd: 0.47
-      Contact: 0.64
-      Sustain: 0.76
-      RecoverEnd: 0.98
-      AcquireSeconds: 0.1
-      RootSeconds: 0.16
-      LoadSeconds: 0.2
+      AcquireEnd: 0.035
+      RootEnd: 0.09
+      LoadEnd: 0.18
+      Contact: 0.23
+      Sustain: 0.27
+      RecoverEnd: 0.32
+      AcquireSeconds: 0.15
+      RootSeconds: 0.24
+      LoadSeconds: 0.38
       StrikeSeconds: 0.11
-      SustainSeconds: 0.15
-      RecoverSeconds: 0.23
+      SustainSeconds: 0.17
+      RecoverSeconds: 0.21
+    releaseStartNormalized: 0.205
     actionHandInfluence: 0.08
     sustainedHandInfluence: 0.24
   - slot: 5
@@ -91,6 +95,7 @@ MonoBehaviour:
       StrikeSeconds: 0.08
       SustainSeconds: 0.14
       RecoverSeconds: 0.18
+    releaseStartNormalized: -1
     actionHandInfluence: 0.08
     sustainedHandInfluence: 0.28
   - slot: 6
@@ -107,6 +112,7 @@ MonoBehaviour:
       StrikeSeconds: 0.09
       SustainSeconds: 0.24
       RecoverSeconds: 0.21
+    releaseStartNormalized: -1
     actionHandInfluence: 0.2
     sustainedHandInfluence: 0.66
   - slot: 7
@@ -123,6 +129,7 @@ MonoBehaviour:
       StrikeSeconds: 0.1
       SustainSeconds: 0.2
       RecoverSeconds: 0.22
+    releaseStartNormalized: -1
     actionHandInfluence: 0.1
     sustainedHandInfluence: 0.42
   - slot: 8
@@ -139,6 +146,7 @@ MonoBehaviour:
       StrikeSeconds: 0.09
       SustainSeconds: 0.14
       RecoverSeconds: 0.19
+    releaseStartNormalized: -1
     actionHandInfluence: 0.06
     sustainedHandInfluence: 0.2
   - slot: 9
@@ -155,6 +163,7 @@ MonoBehaviour:
       StrikeSeconds: 0.1
       SustainSeconds: 0.22
       RecoverSeconds: 0.22
+    releaseStartNormalized: -1
     actionHandInfluence: 0.22
     sustainedHandInfluence: 0.58
   - slot: 10
@@ -171,6 +180,7 @@ MonoBehaviour:
       StrikeSeconds: 0.08
       SustainSeconds: 0.16
       RecoverSeconds: 0.18
+    releaseStartNormalized: -1
     actionHandInfluence: 0.06
     sustainedHandInfluence: 0.18
   - slot: 11
@@ -187,6 +197,7 @@ MonoBehaviour:
       StrikeSeconds: 0.08
       SustainSeconds: 0.14
       RecoverSeconds: 0.18
+    releaseStartNormalized: -1
     actionHandInfluence: 0.1
     sustainedHandInfluence: 0.3
   - slot: 12
@@ -203,6 +214,7 @@ MonoBehaviour:
       StrikeSeconds: 0.1
       SustainSeconds: 0.18
       RecoverSeconds: 0.22
+    releaseStartNormalized: -1
     actionHandInfluence: 0
     sustainedHandInfluence: 0
   - slot: 13
@@ -219,6 +231,7 @@ MonoBehaviour:
       StrikeSeconds: 0.1
       SustainSeconds: 0.18
       RecoverSeconds: 0.22
+    releaseStartNormalized: -1
     actionHandInfluence: 0
     sustainedHandInfluence: 0
   - slot: 14
@@ -235,5 +248,8 @@ MonoBehaviour:
       StrikeSeconds: 0.1
       SustainSeconds: 0.18
       RecoverSeconds: 0.22
+    releaseStartNormalized: -1
     actionHandInfluence: 0
     sustainedHandInfluence: 0
+  fireChannelAcquireSeconds: 0.14
+  fireChannelRecoverySeconds: 0.15

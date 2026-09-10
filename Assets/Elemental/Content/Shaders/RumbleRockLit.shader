@@ -2,8 +2,18 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
 {
     Properties
     {
+        _FireBurnPoint("Fire burn point",Vector)=(0,0,0,0)
+        _FireBurnRadius("Fire burn radius",Float)=1.5
+        _FireHeat("Fire heat",Range(0,1))=0
+        _FireChar("Fire charring",Range(0,1))=0
         [MainTexture] _BaseMap("Optional Surface Texture", 2D) = "white" {}
+        [HDR] _RespawnEmission("Respawn additive radiance", Color) = (0,0,0,0)
         [MainColor] _BaseColor("Sunlit Rock", Color) = (0.50, 0.34, 0.23, 1)
+        _StoneWeathering("Stone surface character", Range(0,1)) = 0
+        _StoneMatte("Matte stone response", Range(0,1)) = 1
+        _StoneLayerScale("Broad strata scale", Range(.05,2)) = .48
+        _StoneCoolTint("Quiet mineral tint", Color) = (.42,.43,.40,1)
+        _StoneWarmTint("Weathered sandstone tint", Color) = (.72,.58,.39,1)
         _ShadowColor("Soft Shadow Rock", Color) = (0.20, 0.15, 0.13, 1)
         _EdgeColor("Bevel Light Tint", Color) = (0.64, 0.47, 0.34, 1)
         _FractureColor("Fresh Fracture", Color) = (0.64, 0.47, 0.32, 1)
@@ -17,7 +27,7 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
         _FormLightStrength("Broad Form Lighting", Range(0.0, 1.0)) = 0.0
         _Roughness("Visual Roughness", Range(0.0, 1.0)) = 0.82
         _BevelLight("Bevel Light", Range(0.0, 1.0)) = 0.42
-        _SideShadingSmoothness("Vertical Side Shading Smoothness", Range(0.0, 1.0)) = 1.0
+        _SideShadingSmoothness("Vertical Side Shading Smoothness", Range(0.0, 1.0)) = 0.0
         _SideShadowFade("Stable Radial Side Receiver", Range(0.0, 1.0)) = 0.0
         _StableSideFormOcclusion("Stable Side Form Occlusion", Range(0.0, 0.12)) = 0.0
         _FractureInteriorDepth("Fresh Fracture Depth", Range(0.0, 0.30)) = 0.0
@@ -32,6 +42,7 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
         [HideInInspector] _ReceiverPlanetCenter("Receiver Planet Center", Vector) = (0,0,0,0)
         [HideInInspector] _FractureMappingEnabled("Fracture Mapping Frame", Float) = 0
         _Fade("Visible Fraction", Range(0.0, 1.0)) = 1
+        [HideInInspector] _MenuOcclusionFade("Cinematic Occlusion Visibility", Range(0,1)) = 1
         [Enum(Off,0,Mapping,1,Normals,2,BlendWeights,3,FaceData,4,Albedo,5,ContactAO,6)] _DebugMode("Seam Debug", Float) = 0
         [HideInInspector] _Cutoff("Cutoff", Range(0,1)) = 0.5
         [HideInInspector] _Surface("Surface", Float) = 0
@@ -56,6 +67,10 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
             ZWrite [_ZWrite]
 
             HLSLPROGRAM
+            // Compile a new editor lighting variant before drawing it: the cyan
+            // fallback otherwise flashes across every rock/character at sunset.
+            #pragma editor_sync_compilation
+            #pragma multi_compile_fragment _ _DBUFFER_MRT1 _DBUFFER_MRT2 _DBUFFER_MRT3
             #pragma target 3.5
             #pragma vertex Vert
             #pragma fragment Frag
@@ -65,9 +80,20 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
+            #pragma multi_compile_fragment _ _LIGHT_LAYERS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DBuffer.hlsl"
+            half3 ElementalAdditionalResponse(Light light, half3 normalWS)
+            {
+                return light.color*saturate(dot(normalWS,light.direction))*
+                    light.distanceAttenuation*light.shadowAttenuation;
+            }
+            #include "ElementalAdditionalRadiance.hlsl"
+            #include "GoldRespawnSurfaceWave.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/AmbientOcclusion.hlsl"
 
             float _ElementalSolarAltitude;
@@ -76,7 +102,9 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseMap_ST;
+                half _FireHeat,_FireChar; float4 _FireBurnPoint; float _FireBurnRadius;
                 half4 _BaseColor;
+                half4 _RespawnEmission;
                 half4 _ShadowColor;
                 half4 _EdgeColor;
                 half4 _FractureColor;
@@ -88,6 +116,11 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                 half _VertexFaceTone;
                 half _FacetContrast;
                 half _FormLightStrength;
+                half _StoneWeathering;
+                half _StoneMatte;
+                half _StoneLayerScale;
+                half4 _StoneCoolTint;
+                half4 _StoneWarmTint;
                 half _Roughness;
                 half _BevelLight;
                 half _SideShadingSmoothness;
@@ -107,6 +140,7 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                 half _FractureMappingEnabled;
                 float4x4 _FractureLocalToStructure;
                 half _Fade;
+                half _MenuOcclusionFade;
                 half _DebugMode;
             CBUFFER_END
 
@@ -210,8 +244,8 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                if (_Fade < 0.999h)
-                    clip(_Fade - ScreenDither(input.positionCS.xy));
+                if (_Fade * _MenuOcclusionFade < 0.999h)
+                    clip(_Fade * _MenuOcclusionFade - ScreenDither(input.positionCS.xy));
 
                 half3 geometryNormalWS = normalize(input.normalWS);
                 half3 geometryNormalOS = normalize(input.normalOS);
@@ -292,6 +326,24 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                 palette = lerp(palette, _FractureColor.rgb, fractureMask);
                 half fractureValue = 1.0h - fractureMask * _FractureInteriorDepth;
                 half3 rockAlbedo = palette * macro * faceTone * textureModulation * fractureValue;
+                // Coarse weathering belongs to the intact mapping frame, so newly
+                // detached pieces do not restart their mineral pattern at their centroid.
+                // This changes surface colour, not topology or authored lighting normals.
+                UNITY_BRANCH if (_StoneWeathering > .001h && characterMode < .5h)
+                {
+                    float broad = ValueNoise(mappingPosition * .31 + float3(7.1,2.3,9.7));
+                    float patches = ValueNoise(mappingPosition * .83 + broad * .52);
+                    float height = lerp(mappingPosition.y, length(mappingPosition), saturate(_UsePlanetFrame));
+                    float strata = sin(height * _StoneLayerScale * 6.2831853 + broad * 2.8);
+                    float layerMask = smoothstep(-.62,.65,strata) * .24;
+                    float mineralMask = smoothstep(.28,.76,broad) * .48;
+                    half3 weathered = lerp(palette, _StoneCoolTint.rgb, mineralMask);
+                    weathered = lerp(weathered, _StoneWarmTint.rgb, layerMask);
+                    weathered *= lerp(.94h,1.045h,smoothstep(.16,.82,patches));
+                    // Broad patches stay quiet in value; no per-triangle random tones.
+                    rockAlbedo = lerp(rockAlbedo,weathered * faceTone * fractureValue,
+                        saturate(_StoneWeathering));
+                }
                 // Rock surfaces keep metric triplanar mapping. Character surfaces
                 // instead honor their authored UV layout and treat Texture Strength
                 // as the amount of original texture colour allowed through the
@@ -305,6 +357,9 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                     authoredCharacterColor,
                     saturate(_TextureStrength)) * macro;
                 half3 albedo = lerp(rockAlbedo, characterAlbedo, characterMode);
+                #if defined(_DBUFFER)
+                ApplyDecalToBaseColor(input.positionCS,albedo);
+                #endif
                 if (_DebugMode >= 4.5h && _DebugMode < 5.5h)
                     return half4(albedo, 1);
 
@@ -373,18 +428,10 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                 half formLight = lerp(1.0h, lerp(.40h,1.0h,softDiffuse),
                     _FormLightStrength * (1.0h-characterMode));
                 half3 direct = albedo * directTint * formLight * mainLight.color * shadow *
-                               mainLight.distanceAttenuation *
-                               lerp(1.0h,screenAo.directAmbientOcclusion,_OcclusionStrength);
+                               mainLight.distanceAttenuation;
 
-                half3 additional = 0;
-                uint additionalCount = GetAdditionalLightsCount();
-                LIGHT_LOOP_BEGIN(additionalCount)
-                    Light light = GetAdditionalLight(lightIndex, input.positionWS);
-                    half additionalDiffuse = saturate(dot(normalWS, light.direction));
-                    additional += albedo * light.color * additionalDiffuse *
-                                  light.distanceAttenuation * light.shadowAttenuation *
-                                  lerp(1.0h,screenAo.directAmbientOcclusion,_OcclusionStrength);
-                LIGHT_LOOP_END
+                half3 additional = albedo * ElementalAdditionalRadiance(input.positionWS,
+                    GetNormalizedScreenSpaceUV(input.positionCS),normalWS);
 
                 half3 ambient = SampleSH(normalWS) * _AmbientStrength;
                 ambient += _ShadowColor.rgb * 0.12h;
@@ -403,9 +450,33 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                 half specular = pow(saturate(dot(normalWS, halfDirection)), specularPower) *
                                 lerp(0.018h, 0.075h, smoothness) * shadow;
                 half fresnel = pow(saturate(1.0h - dot(normalWS, viewDirection)), 4.0h);
+                // Dry stylized stone uses diffuse form lighting. Preserve the
+                // character's authored response; remove camera-following rock gloss.
+                half surfaceReflectance = lerp(1.0h - saturate(_StoneMatte), 1.0h, characterMode);
+                specular *= surfaceReflectance;
+                fresnel *= surfaceReflectance;
                 half3 color = direct + additional + albedo * ambient +
                               mainLight.color * specular +
                               _EdgeColor.rgb * fresnel * 0.035h;
+                // Object-space ember islands remain attached as debris moves.
+                UNITY_BRANCH if(_FireHeat>.0001h||_FireChar>.0001h)
+                {
+                float3 burnP=(input.positionWS-_FireBurnPoint.xyz)*17.1;
+                half coarse=ValueNoise(burnP*.41);
+                half grain=ValueNoise(burnP+coarse*3.7);
+                half fine=ValueNoise(burnP*2.73+13.2);
+                // Narrow broken ember veins, rather than repeating round spots.
+                half ridge=1-abs(grain-.52h)*2;
+                half ember=smoothstep(.87h,.96h,ridge)*smoothstep(.38h,.7h,fine)*
+                    (.7h+.3h*sin(_Time.y*3.1+coarse*11));
+                float3 burnDelta=input.positionWS-_FireBurnPoint.xyz;
+                float irregularRadius=_FireBurnRadius*(.70+.28*ValueNoise(burnDelta*5.3+7.1));
+                half burnMask=1-smoothstep(irregularRadius*.35,irregularRadius,length(burnDelta));
+                color*=lerp(1.0h,lerp(.32h,.46h,coarse),saturate(_FireChar)*burnMask*.62h);
+                color+=half3(.85h,.17h,.012h)*ember*max(_FireHeat,_FireChar*.28h)*burnMask*saturate(_FireChar*4+.12h);
+                }
+                color += _RespawnEmission.rgb;
+                color += ElementalGoldRespawnSurfaceWave(input.positionWS, geometryNormalWS, _SurfaceMode);
                 color = MixFog(color, input.fogFactor);
                 return half4(color, 1);
             }
@@ -435,7 +506,9 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseMap_ST;
+                half _FireHeat,_FireChar; float4 _FireBurnPoint; float _FireBurnRadius;
                 half4 _BaseColor;
+                half4 _RespawnEmission;
                 half4 _ShadowColor;
                 half4 _EdgeColor;
                 half4 _FractureColor;
@@ -447,6 +520,11 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                 half _VertexFaceTone;
                 half _FacetContrast;
                 half _FormLightStrength;
+                half _StoneWeathering;
+                half _StoneMatte;
+                half _StoneLayerScale;
+                half4 _StoneCoolTint;
+                half4 _StoneWarmTint;
                 half _Roughness;
                 half _BevelLight;
                 half _SideShadingSmoothness;
@@ -466,6 +544,7 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
                 half _FractureMappingEnabled;
                 float4x4 _FractureLocalToStructure;
                 half _Fade;
+                half _MenuOcclusionFade;
                 half _DebugMode;
             CBUFFER_END
 
@@ -510,8 +589,8 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                if (_Fade < 0.999h)
-                    clip(_Fade - DepthNormalsDither(input.positionCS.xy));
+                if (_Fade * _MenuOcclusionFade < 0.999h)
+                    clip(_Fade * _MenuOcclusionFade - DepthNormalsDither(input.positionCS.xy));
 
                 float3 normalWS = NormalizeNormalPerPixel(input.normalWS);
                 #if defined(_GBUFFER_NORMALS_OCT)
@@ -528,7 +607,124 @@ Shader "Elemental/Graphics V5/Rumble Rock Lit"
         }
 
         UsePass "Universal Render Pipeline/Lit/ShadowCaster"
-        UsePass "Universal Render Pipeline/Lit/DepthOnly"
+        Pass
+        {
+            Name "DepthOnly"
+            Tags { "LightMode"="DepthOnly" }
+            ColorMask 0
+            Cull Back
+            ZWrite [_ZWrite]
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex DepthNormalsVert
+            #pragma fragment DepthNormalsFrag
+            #pragma multi_compile_instancing
+            #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            CBUFFER_START(UnityPerMaterial)
+                float4 _BaseMap_ST;
+                half _FireHeat,_FireChar; float4 _FireBurnPoint; float _FireBurnRadius;
+                half4 _BaseColor;
+                half4 _RespawnEmission;
+                half4 _ShadowColor;
+                half4 _EdgeColor;
+                half4 _FractureColor;
+                half _TextureScale;
+                half _TextureStrength;
+                half _TriplanarSharpness;
+                half _MacroScale;
+                half _MacroStrength;
+                half _VertexFaceTone;
+                half _FacetContrast;
+                half _FormLightStrength;
+                half _StoneWeathering;
+                half _StoneMatte;
+                half _StoneLayerScale;
+                half4 _StoneCoolTint;
+                half4 _StoneWarmTint;
+                half _Roughness;
+                half _BevelLight;
+                half _SideShadingSmoothness;
+                half _SideShadowFade;
+                half _StableSideFormOcclusion;
+                half _FractureInteriorDepth;
+                half _MatchFractureSurface;
+                half _ShadowFloor;
+                half _AmbientStrength;
+                half _OcclusionStrength;
+                half _TwilightFill;
+                half _SurfaceMode;
+                half _Surface;
+                half _UsePlanetFrame;
+                float4 _PlanetCenter;
+                float4 _ReceiverPlanetCenter;
+                half _FractureMappingEnabled;
+                float4x4 _FractureLocalToStructure;
+                half _Fade;
+                half _MenuOcclusionFade;
+                half _DebugMode;
+            CBUFFER_END
+
+            struct DepthNormalsAttributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct DepthNormalsVaryings
+            {
+                float4 positionCS : SV_POSITION;
+                half3 normalWS : TEXCOORD0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            half DepthNormalsDither(float2 pixel)
+            {
+                return frac(52.9829189 * frac(dot(
+                    pixel,
+                    float2(0.06711056, 0.00583715))));
+            }
+
+            DepthNormalsVaryings DepthNormalsVert(DepthNormalsAttributes input)
+            {
+                DepthNormalsVaryings output = (DepthNormalsVaryings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+
+                // AO describes geometric contact and creases, not the stylized radial
+                // normal used to soften forward-lit slab sides. Keep those policies separate.
+                output.normalWS = NormalizeNormalPerVertex(
+                    TransformObjectToWorldNormal(input.normalOS));
+                return output;
+            }
+
+            half4 DepthNormalsFrag(DepthNormalsVaryings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                if (_Fade * _MenuOcclusionFade < 0.999h)
+                    clip(_Fade * _MenuOcclusionFade - DepthNormalsDither(input.positionCS.xy));
+
+                float3 normalWS = NormalizeNormalPerPixel(input.normalWS);
+                #if defined(_GBUFFER_NORMALS_OCT)
+                    float2 octNormalWS = PackNormalOctQuadEncode(normalWS);
+                    float2 remappedOctNormalWS = saturate(
+                        octNormalWS * 0.5 + 0.5);
+                    half3 packedNormalWS = PackFloat2To888(remappedOctNormalWS);
+                    return half4(packedNormalWS, 0.0h);
+                #else
+                    return half4(normalWS, 0.0h);
+                #endif
+            }
+            ENDHLSL
+        }
     }
 
     FallBack "Universal Render Pipeline/Lit"

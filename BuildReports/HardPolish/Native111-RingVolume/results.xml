@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Passed" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-10 13:32:51Z" end-time="2026-09-10 13:33:37Z" duration="45.7575549">
+  <test-suite type="TestSuite" id="1633" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="477" result="Passed" start-time="2026-09-10 13:32:51Z" end-time="2026-09-10 13:33:37Z" duration="45.757555" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1626" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="471" result="Passed" start-time="2026-09-10 13:32:51Z" end-time="2026-09-10 13:33:37Z" duration="45.693207" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="34284" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1627" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="471" result="Passed" start-time="2026-09-10 13:32:51Z" end-time="2026-09-10 13:33:37Z" duration="45.633489" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1628" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="471" result="Passed" start-time="2026-09-10 13:32:51Z" end-time="2026-09-10 13:33:37Z" duration="45.604781" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1629" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="471" result="Passed" start-time="2026-09-10 13:32:51Z" end-time="2026-09-10 13:33:37Z" duration="45.568869" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1091" name="HardPolishFireStreamBindingRuntimeTests" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" testcasecount="64" result="Passed" start-time="2026-09-10 13:32:51Z" end-time="2026-09-10 13:33:37Z" duration="45.519836" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1129" name="ActualLateRingMediumSameFrameComparison" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.ActualLateRingMediumSameFrameComparison" methodname="ActualLateRingMediumSameFrameComparison" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1777639873" result="Passed" start-time="2026-09-10 13:32:51Z" end-time="2026-09-10 13:33:16Z" duration="25.351391" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="180000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 5329.80ms; ground=exact baked base, cacheLoad=14.91ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=1484.32ms, peakCookingPoll=0.39ms; sync=ArenaInitialize=55.09ms/15;ArenaBevel=40.68ms/175;ArenaMeshPicking=1.39ms/175;WallAwake=96.24ms/1;WallPieceVisuals=57.16ms/40;PlatformPoolAwake=9.55ms/1;PlatformRuntimeMeshes=1.31ms/12;PillarPoolAwake=18.21ms/1;PillarMeshLibrary=4.08ms/1;PillarColumns=14.12ms/1;DebrisPoolAwake=138.31ms/1;HeroFragmentPoolAwake=13.19ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1115" name="SavedFighterContinuousFireMotionCorpus" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedFighterContinuousFireMotionCorpus" methodname="SavedFighterContinuousFireMotionCorpus" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1237042052" result="Passed" start-time="2026-09-10 13:33:16Z" end-time="2026-09-10 13:33:37Z" duration="20.114221" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3647.33ms; ground=exact baked base, cacheLoad=10.45ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=588.49ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=55.09ms/15;ArenaBevel=40.68ms/175;ArenaMeshPicking=1.39ms/175;WallAwake=96.24ms/1;WallPieceVisuals=57.16ms/40;PlatformPoolAwake=9.55ms/1;PlatformRuntimeMeshes=1.31ms/12;PillarPoolAwake=18.21ms/1;PillarMeshLibrary=4.08ms/1;PillarColumns=14.12ms/1;DebrisPoolAwake=138.31ms/1;HeroFragmentPoolAwake=13.19ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\Native111-RingVolume\results.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

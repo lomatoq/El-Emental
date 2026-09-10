@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 07:01:18Z" end-time="2026-09-09 07:01:52Z" duration="33.7849864">
+  <test-suite type="TestSuite" id="1454" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="330" result="Passed" start-time="2026-09-09 07:01:18Z" end-time="2026-09-09 07:01:52Z" duration="33.784986" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1447" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="324" result="Passed" start-time="2026-09-09 07:01:18Z" end-time="2026-09-09 07:01:52Z" duration="33.762304" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="23432" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1448" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="324" result="Passed" start-time="2026-09-09 07:01:18Z" end-time="2026-09-09 07:01:52Z" duration="33.752636" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1449" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="324" result="Passed" start-time="2026-09-09 07:01:18Z" end-time="2026-09-09 07:01:52Z" duration="33.745790" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1450" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="324" result="Passed" start-time="2026-09-09 07:01:18Z" end-time="2026-09-09 07:01:52Z" duration="33.738968" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1023" name="SeptemberAnimationRescueRuntimeTests" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" testcasecount="48" result="Passed" start-time="2026-09-09 07:01:18Z" end-time="2026-09-09 07:01:52Z" duration="33.722907" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1043" name="TeleportAdvancesFootContactsOnlyOncePerRenderedFrame" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.TeleportAdvancesFootContactsOnlyOncePerRenderedFrame" methodname="TeleportAdvancesFootContactsOnlyOncePerRenderedFrame" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1929595666" result="Passed" start-time="2026-09-09 07:01:18Z" end-time="2026-09-09 07:01:52Z" duration="33.702216" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 4528.62ms; ground=exact baked base, cacheLoad=11.68ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1406.68ms, peakCookingPoll=0.30ms; sync=ArenaInitialize=441.53ms/15;ArenaBevel=416.50ms/175;ArenaMeshPicking=2.82ms/175;WallAwake=107.32ms/1;WallPieceVisuals=58.94ms/40;PlatformPoolAwake=8.96ms/1;PlatformRuntimeMeshes=1.12ms/12;PillarPoolAwake=14.90ms/1;PillarMeshLibrary=3.02ms/1;PillarColumns=11.87ms/1;DebrisPoolAwake=113.38ms/1;HeroFragmentPoolAwake=12.96ms/1.
+Account API did not become accessible within 30 seconds. This may be due to network issues or editor focus.
+Setting and getting Body Position/Rotation, IK Goals, Lookat and BoneLocalRotation should only be done in OnAnimatorIK or OnStateIK
+Setting and getting Body Position/Rotation, IK Goals, Lookat and BoneLocalRotation should only be done in OnAnimatorIK or OnStateIK
+Setting and getting Body Position/Rotation, IK Goals, Lookat and BoneLocalRotation should only be done in OnAnimatorIK or OnStateIK
+Setting and getting Body Position/Rotation, IK Goals, Lookat and BoneLocalRotation should only be done in OnAnimatorIK or OnStateIK
+Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

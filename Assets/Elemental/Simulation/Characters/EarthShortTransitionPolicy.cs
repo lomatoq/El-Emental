@@ -9,11 +9,12 @@ namespace Elemental.Simulation.Characters
         public bool Grounded, Crouched, ProtectedOwner, DeliberateJump;
         public bool HasLandingCandidate;
         public float TangentSpeed, ForwardSpeed, VerticalSpeed, FloorDistance;
+        public float DesiredSpeed, MaximumStartWalkSpeed;
     }
 
     public struct EarthShortTransitionState
     {
-        public bool Initialized, WasGrounded, WasCrouched, StepDownConsumed, HasSeenSupport;
+        public bool Initialized, WasGrounded, WasCrouched, StepDownConsumed, HasSeenSupport, StartArmed;
         public float IdleSeconds, AirSeconds, Elapsed;
         public EarthShortTransition Active;
     }
@@ -60,13 +61,17 @@ namespace Elemental.Simulation.Characters
             else state.AirSeconds += delta;
 
             bool blocked = input.ProtectedOwner || input.DeliberateJump;
+            float walkLimit = input.MaximumStartWalkSpeed > .12f ? input.MaximumStartWalkSpeed : 2f;
+            bool walkCompatible = math.max(input.TangentSpeed, input.DesiredSpeed) <= walkLimit;
+            if (blocked || !input.Grounded || input.Crouched) state.StartArmed = false;
+            else if (state.IdleSeconds >= .18f) state.StartArmed = true;
             if (state.Active != EarthShortTransition.None)
             {
                 state.Elapsed += delta;
                 bool invalid = state.Active switch
                 {
                     EarthShortTransition.StartWalk => !input.Grounded || input.Crouched ||
-                        input.ForwardSpeed < .15f,
+                        input.ForwardSpeed < .15f || !walkCompatible,
                     EarthShortTransition.CrouchExit => !input.Grounded || input.Crouched ||
                         input.TangentSpeed > .6f,
                     EarthShortTransition.StepDown => input.Grounded || input.VerticalSpeed > .5f ||
@@ -85,10 +90,14 @@ namespace Elemental.Simulation.Characters
                     input.HasLandingCandidate && input.FloorDistance >= .08f && input.FloorDistance <= .85f &&
                     input.VerticalSpeed <= .1f && input.VerticalSpeed >= -3.5f && input.TangentSpeed >= .15f)
                 { state.Active = EarthShortTransition.StepDown; state.StepDownConsumed = true; }
-                else if (input.Grounded && !input.Crouched && state.IdleSeconds >= .18f &&
-                    input.ForwardSpeed >= .35f)
+                else if (input.Grounded && !input.Crouched && state.StartArmed &&
+                    input.ForwardSpeed >= .35f && walkCompatible)
                     state.Active = EarthShortTransition.StartWalk;
             }
+            // Keep the rest-to-start latch through the .12..35m/s acceleration
+            // interval. Otherwise a gradual analog start loses its idle history
+            // before reaching the entry threshold. Any established travel consumes it.
+            if (input.TangentSpeed >= .35f) state.StartArmed = false;
             state.IdleSeconds = input.Grounded && !input.Crouched && !blocked && input.TangentSpeed < .12f
                 ? state.IdleSeconds + delta : 0f;
             state.WasGrounded = input.Grounded;

@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Elemental.Presentation.DistantScenery;
+using Elemental.Runtime.Geometry;
+using Unity.Mathematics;
 
 namespace Elemental.Presentation.Rendering
 {
@@ -44,109 +47,212 @@ namespace Elemental.Presentation.Rendering
         public float SilhouetteBias { get; }
     }
 
-    /// <summary>
-    /// Deterministic, editor-bake-friendly stylized rock generator. It deliberately
-    /// builds a convex form from large clipping planes, then creates real inset face,
-    /// edge and vertex bevel polygons. Runtime gameplay consumes ordinary Mesh assets;
-    /// it does not generate hero art every time a stone is spawned.
-    /// </summary>
+    /// <summary>Cold, deterministic convex authoring. Each bevel is a supporting-plane
+    /// cut, so its cap is planar and the published solid remains closed.</summary>
     public static class RumbleRockMeshFactory
     {
+        public readonly struct BuildDiagnostics
+        {
+            public BuildDiagnostics(float maximumCanonicalAdjustment, float minimumCross, float requiredCross,
+                int rejectedShapeCuts, int reducedBevelCuts, int retainedEdges)
+            {
+                MaximumCanonicalAdjustment = maximumCanonicalAdjustment;
+                MinimumCross = minimumCross;
+                RequiredCross = requiredCross;
+                RejectedShapeCuts = rejectedShapeCuts;
+                ReducedBevelCuts = reducedBevelCuts;
+                RetainedEdges = retainedEdges;
+            }
+            public float MaximumCanonicalAdjustment { get; }
+            public float MinimumCross { get; }
+            public float RequiredCross { get; }
+            public int RejectedShapeCuts { get; }
+            public int ReducedBevelCuts { get; }
+            public int RetainedEdges { get; }
+            public override string ToString() => $"canonicalDelta={MaximumCanonicalAdjustment:G9}, minCross={MinimumCross:G9}, " +
+                $"requiredCross={RequiredCross:G9}, rejectedShapeCuts={RejectedShapeCuts}, reducedBevelCuts={ReducedBevelCuts}, retainedEdges={RetainedEdges}";
+        }
         private const float GeometryEpsilon = 0.00008f;
-        private const float MinimumTriangleAreaSq = 0.00000001f;
-        private const float QuantizeScale = 10000f;
+        private static readonly Unity.Profiling.ProfilerMarker BuildMarker =
+            new Unity.Profiling.ProfilerMarker("Elemental.Geometry.RumbleRock.Build");
 
-        private sealed class PolyFace
+        public static Mesh Build(in RumbleRockRecipe recipe, string meshName = null)
         {
-            public readonly List<Vector3> Vertices;
-            public Vector3 Normal;
-
-            public PolyFace(IEnumerable<Vector3> vertices, Vector3 normal)
-            {
-                Vertices = new List<Vector3>(vertices);
-                Normal = normal.normalized;
-                EnsureWinding(Vertices, Normal);
-            }
+            using (BuildMarker.Auto()) return BuildCore(recipe, meshName, out _);
         }
 
-        private readonly struct CutPlane
+        public static Mesh Build(in RumbleRockRecipe recipe, out BuildDiagnostics diagnostics, string meshName = null)
         {
-            public CutPlane(Vector3 normal, float distance)
-            {
-                Normal = normal.normalized;
-                Distance = distance;
-            }
-
-            public Vector3 Normal { get; }
-            public float Distance { get; }
-            public float SignedDistance(Vector3 point) => Vector3.Dot(Normal, point) - Distance;
+            using (BuildMarker.Auto()) return BuildCore(recipe, meshName, out diagnostics);
         }
 
-        private readonly struct VertexKey : IEquatable<VertexKey>
+        private static Mesh BuildCore(in RumbleRockRecipe recipe, string meshName, out BuildDiagnostics diagnostics)
         {
-            public VertexKey(Vector3 value)
+            diagnostics = default;
+            int rejectedShapeCuts = 0, reducedBevelCuts = 0, retainedEdges = 0;
+            var random = new System.Random(recipe.Seed);
+            Vector3 halfExtents = recipe.Size * 0.5f;
+            RockPolyhedron solid = RockPolyhedron.Box((float3)(-halfExtents), (float3)halfExtents);
+            // Random cuts are proposals: Clip admits only complete valid convex solids.
+            // Rejected/no-op proposals preserve the last validated shape, never a partial mesh.
+            if (recipe.Family == RumbleRockFamily.Wedge)
             {
-                X = Mathf.RoundToInt(value.x * QuantizeScale);
-                Y = Mathf.RoundToInt(value.y * QuantizeScale);
-                Z = Mathf.RoundToInt(value.z * QuantizeScale);
+                Vector3 side = random.NextDouble() > 0.5 ? Vector3.right : Vector3.left;
+                Vector3 normal = (side * Next(random, 0.35f, 0.58f) +
+                    Vector3.up * Next(random, 0.58f, 0.82f) +
+                    Vector3.forward * Next(random, -0.18f, 0.18f)).normalized;
+                if (solid.Clip((float3)normal, SupportDistance(halfExtents, normal) *
+                    Next(random, 0.50f, 0.67f), out RockPolyhedron wedge) &&
+                    TryCanonicalFaces(wedge, out _, out _, out _, out _)) solid = wedge;
+                else rejectedShapeCuts++;
             }
-
-            public readonly int X;
-            public readonly int Y;
-            public readonly int Z;
-
-            public bool Equals(VertexKey other) => X == other.X && Y == other.Y && Z == other.Z;
-            public override bool Equals(object obj) => obj is VertexKey other && Equals(other);
-            public override int GetHashCode()
+            for (int index = 0; index < recipe.CutCount; index++)
             {
-                unchecked
+                Vector3 normal = RandomCutNormal(random, recipe.Family, recipe.SilhouetteBias, index);
+                float minimum = recipe.Family == RumbleRockFamily.Pebble ? 0.52f : 0.57f;
+                float maximum = recipe.Family == RumbleRockFamily.Slab ? 0.88f : 0.84f;
+                float threshold = SupportDistance(halfExtents, normal) * Next(random, minimum, maximum);
+                if (solid.Clip((float3)normal, threshold, out RockPolyhedron cut) &&
+                    TryCanonicalFaces(cut, out _, out _, out _, out _)) solid = cut;
+                else rejectedShapeCuts++;
+            }
+            var baseFaces = new List<RockPolyhedron.Face>(solid.Faces);
+            var edges = solid.Adjacencies();
+            for (int edge = 0; edge < edges.Count; edge++)
+            {
+                var pair = edges[edge];
+                float3 normal = math.normalize(pair.Item1.Normal + pair.Item2.Normal);
+                float3 shared = default;
+                bool found = false;
+                foreach (float3 a in pair.Item1.Points)
                 {
-                    int hash = X;
-                    hash = (hash * 397) ^ Y;
-                    hash = (hash * 397) ^ Z;
-                    return hash;
+                    foreach (float3 b in pair.Item2.Points)
+                        if (math.lengthsq(a - b) <= solid.Epsilon * solid.Epsilon * 9f)
+                        { shared = a; found = true; break; }
+                    if (found) break;
+                }
+                if (!found) throw new InvalidOperationException($"Rock {recipe.Seed}: adjacency has no shared edge.");
+                float edgeDistance = math.dot(normal, shared);
+                bool admitted = false;
+                for (int attempt = 0; attempt < 9; attempt++)
+                {
+                    float distance = edgeDistance - recipe.BevelWidth / (1 << attempt);
+                    float maximum = float.NegativeInfinity;
+                    foreach (var face in solid.Faces) foreach (float3 point in face.Points)
+                        maximum = math.max(maximum, math.dot(normal, point));
+                    // Earlier bevels can already remove the entire original edge.
+                    if (maximum <= distance) { admitted = true; break; }
+                    if (!solid.Clip(normal, distance, out RockPolyhedron beveled) ||
+                        !TryCanonicalFaces(beveled, out _, out _, out _, out _)) continue;
+                    solid = beveled;
+                    if (attempt > 0) reducedBevelCuts++;
+                    admitted = true;
+                    break;
+                }
+                // Retain this complete validated edge when every bounded bevel
+                // proposal is too small to publish. Diagnostics expose the fallback.
+                if (!admitted) retainedEdges++;
+            }
+            if (!solid.Validate(out _)) throw new InvalidOperationException($"Rock {recipe.Seed}: invalid final solid.");
+            if (!TryCanonicalFaces(solid, out List<RockPolyhedron.Face> renderFaces,
+                out float maximumAdjustment, out float minimumCross, out float requiredCross))
+                throw new InvalidOperationException($"Rock {recipe.Seed}: final triangulation cannot be published; " +
+                    $"canonicalDelta={maximumAdjustment:G9}, minCross={minimumCross:G9}, requiredCross={requiredCross:G9}.");
+            diagnostics = new BuildDiagnostics(maximumAdjustment, minimumCross, requiredCross,
+                rejectedShapeCuts, reducedBevelCuts, retainedEdges);
+            var vertices = new List<Vector3>();
+            var normals = new List<Vector3>();
+            var colors = new List<Color>();
+            var triangles = new List<int>();
+            float lowest = float.PositiveInfinity;
+            foreach (var face in renderFaces) foreach (float3 point in face.Points) lowest = math.min(lowest, point.y);
+            for (int f = 0; f < renderFaces.Count; f++)
+            {
+                var face = renderFaces[f];
+                bool bevel = true;
+                for (int original = 0; original < baseFaces.Count; original++)
+                    if (math.dot(baseFaces[original].Normal, face.Normal) > 0.999999f &&
+                        math.abs(math.dot(face.Normal, baseFaces[original].Points[0] - face.Points[0])) < solid.Epsilon * 2)
+                    { bevel = false; break; }
+                Color color = FaceColor(recipe.Seed, f, bevel);
+                int start = vertices.Count;
+                int fan = RockPolyhedron.FanStart(face);
+                for (int i = 0; i < face.Points.Count; i++)
+                {
+                    float3 point = face.Points[(fan + i) % face.Points.Count];
+                    vertices.Add(new Vector3(point.x, point.y - lowest, point.z));
+                    normals.Add((Vector3)face.Normal);
+                    colors.Add(color);
+                }
+                for (int i = 1; i < face.Points.Count - 1; i++)
+                { triangles.Add(start); triangles.Add(start + i); triangles.Add(start + i + 1); }
+            }
+            var mesh = new Mesh { indexFormat = IndexFormat.UInt32,
+                name = string.IsNullOrWhiteSpace(meshName) ? $"RumbleRock_{recipe.Family}_{recipe.Seed}" : meshName };
+            mesh.SetVertices(vertices); mesh.SetNormals(normals); mesh.SetColors(colors);
+            mesh.SetTriangles(triangles, 0, true); mesh.RecalculateBounds();
+            if (Validate(mesh, out string reason)) return mesh;
+            if (Application.isPlaying) UnityEngine.Object.Destroy(mesh); else UnityEngine.Object.DestroyImmediate(mesh);
+            throw new InvalidOperationException($"Rock {recipe.Family}/{recipe.Seed} cannot be published: {reason}; {diagnostics}");
+        }
+
+        private static bool TryCanonicalFaces(RockPolyhedron solid, out List<RockPolyhedron.Face> faces,
+            out float maximumAdjustment, out float minimumCross, out float requiredCross)
+        {
+            faces = new List<RockPolyhedron.Face>(solid.Faces.Count);
+            var positions = new List<float3>();
+            maximumAdjustment = 0;
+            minimumCross = float.PositiveInfinity;
+            float3 minimum = new float3(float.PositiveInfinity), maximum = new float3(float.NegativeInfinity);
+            float toleranceSquared = solid.Epsilon * solid.Epsilon * 9f;
+            // Use exactly the first-representative rule in RockPolyhedron.Validate.
+            // Rendering keeps split vertices; mathematically shared corners receive
+            // the same float position instead of independent intersection roundoff.
+            foreach (var face in solid.Faces)
+            {
+                var points = new List<float3>(face.Points.Count);
+                foreach (float3 point in face.Points)
+                {
+                    float3 canonical = point;
+                    bool found = false;
+                    foreach (float3 representative in positions)
+                        if (math.lengthsq(representative - point) < toleranceSquared)
+                        { canonical = representative; found = true; break; }
+                    if (!found) positions.Add(point);
+                    maximumAdjustment = math.max(maximumAdjustment, math.length(canonical - point));
+                    points.Add(canonical);
+                    minimum = math.min(minimum, canonical); maximum = math.max(maximum, canonical);
+                }
+                faces.Add(new RockPolyhedron.Face(face.Normal, points));
+            }
+            // Validator requires cross > 1e-7 * boundsDiagonal^2. The factor four
+            // reserves room for final float grounding without relaxing that gate.
+            requiredCross = 4e-7f * math.lengthsq(maximum - minimum);
+            foreach (var face in faces)
+            {
+                int fan = RockPolyhedron.FanStart(face);
+                float3 origin = face.Points[fan];
+                for (int i = 1; i < face.Points.Count - 1; i++)
+                {
+                    float3 cross = math.cross(face.Points[(fan + i) % face.Points.Count] - origin,
+                        face.Points[(fan + i + 1) % face.Points.Count] - origin);
+                    float length = math.length(cross);
+                    minimumCross = math.min(minimumCross, length);
+                    if (!math.isfinite(length) || length <= requiredCross ||
+                        math.dot(cross, face.Normal) < length * 0.9995f) return false;
                 }
             }
+            return true;
         }
 
-        private readonly struct EdgeKey : IEquatable<EdgeKey>
+        public static bool Validate(Mesh mesh, out string reason)
         {
-            public EdgeKey(int a, int b)
-            {
-                if (a <= b)
-                {
-                    A = a;
-                    B = b;
-                }
-                else
-                {
-                    A = b;
-                    B = a;
-                }
-            }
-
-            public readonly int A;
-            public readonly int B;
-            public bool Equals(EdgeKey other) => A == other.A && B == other.B;
-            public override bool Equals(object obj) => obj is EdgeKey other && Equals(other);
-            public override int GetHashCode() => (A * 397) ^ B;
+            var policy = new EarthMeshIntegrityPolicy(true, true, false, 4096,
+                weldTolerance: 0.000001f, strictFlatNormals: true);
+            EarthMeshIntegrityReport report = EarthMeshIntegrityValidator.Validate(mesh, policy);
+            reason = report.IsValid ? null : report.ToString();
+            return report.IsValid;
         }
-
-        private sealed class EdgeInset
-        {
-            public int OriginalA;
-            public int OriginalB;
-            public Vector3 InsetA;
-            public Vector3 InsetB;
-            public Vector3 FaceNormal;
-        }
-
-        private sealed class VertexCap
-        {
-            public readonly List<Vector3> Points = new List<Vector3>(8);
-            public Vector3 NormalSum;
-        }
-
         public static RumbleRockRecipe CreateDefaultRecipe(int seed, RumbleRockFamily family, float scale = 1f)
         {
             scale = Mathf.Max(0.2f, scale);
@@ -203,399 +309,6 @@ namespace Elemental.Presentation.Rendering
             return new RumbleRockRecipe(seed, family, size, cuts, bevel, bias);
         }
 
-        public static Mesh Build(in RumbleRockRecipe recipe, string meshName = null)
-        {
-            var random = new System.Random(recipe.Seed);
-            Vector3 halfExtents = recipe.Size * 0.5f;
-            List<PolyFace> faces = CreateBox(halfExtents);
-
-            if (recipe.Family == RumbleRockFamily.Wedge)
-            {
-                Vector3 side = random.NextDouble() > 0.5 ? Vector3.right : Vector3.left;
-                Vector3 wedgeNormal = (side * Next(random, 0.35f, 0.58f) +
-                                       Vector3.up * Next(random, 0.58f, 0.82f) +
-                                       Vector3.forward * Next(random, -0.18f, 0.18f)).normalized;
-                float support = SupportDistance(halfExtents, wedgeNormal);
-                Clip(faces, new CutPlane(wedgeNormal, support * Next(random, 0.50f, 0.67f)));
-            }
-
-            for (int index = 0; index < recipe.CutCount; index++)
-            {
-                Vector3 normal = RandomCutNormal(random, recipe.Family, recipe.SilhouetteBias, index);
-                float support = SupportDistance(halfExtents, normal);
-                float minimum = recipe.Family == RumbleRockFamily.Pebble ? 0.52f : 0.57f;
-                float maximum = recipe.Family == RumbleRockFamily.Slab ? 0.88f : 0.84f;
-                float threshold = support * Next(random, minimum, maximum);
-                Clip(faces, new CutPlane(normal, threshold));
-                if (faces.Count < 5) break;
-            }
-
-            // Preserve a useful, stable base for environment dressing and physics.
-            float lowest = float.PositiveInfinity;
-            for (int faceIndex = 0; faceIndex < faces.Count; faceIndex++)
-            for (int vertexIndex = 0; vertexIndex < faces[faceIndex].Vertices.Count; vertexIndex++)
-                lowest = Mathf.Min(lowest, faces[faceIndex].Vertices[vertexIndex].y);
-            Vector3 lift = Vector3.up * -lowest;
-            for (int faceIndex = 0; faceIndex < faces.Count; faceIndex++)
-            for (int vertexIndex = 0; vertexIndex < faces[faceIndex].Vertices.Count; vertexIndex++)
-                faces[faceIndex].Vertices[vertexIndex] += lift;
-
-            Mesh mesh = BuildBeveledMesh(faces, recipe.BevelWidth, recipe.Seed);
-            GroundAtZero(mesh);
-            mesh.name = string.IsNullOrWhiteSpace(meshName)
-                ? $"RumbleRock_{recipe.Family}_{recipe.Seed}"
-                : meshName;
-            return mesh;
-        }
-
-        private static void GroundAtZero(Mesh mesh)
-        {
-            mesh.RecalculateBounds();
-            float minimumY = mesh.bounds.min.y;
-            if (!float.IsFinite(minimumY) || Mathf.Abs(minimumY) <= 0.000001f) return;
-            Vector3[] vertices = mesh.vertices;
-            for (int index = 0; index < vertices.Length; index++)
-                vertices[index].y -= minimumY;
-            mesh.vertices = vertices;
-            mesh.RecalculateBounds();
-        }
-
-        public static bool Validate(Mesh mesh, out string reason)
-        {
-            if (mesh == null)
-            {
-                reason = "Mesh is null.";
-                return false;
-            }
-            Vector3[] vertices = mesh.vertices;
-            int[] triangles = mesh.triangles;
-            if (vertices.Length < 12 || triangles.Length < 24)
-            {
-                reason = "Mesh does not contain enough geometry.";
-                return false;
-            }
-            for (int index = 0; index < vertices.Length; index++)
-            {
-                Vector3 value = vertices[index];
-                if (!float.IsFinite(value.x) || !float.IsFinite(value.y) || !float.IsFinite(value.z))
-                {
-                    reason = $"Vertex {index} is non-finite.";
-                    return false;
-                }
-            }
-
-            double signedVolume = 0.0;
-            for (int index = 0; index < triangles.Length; index += 3)
-            {
-                int ia = triangles[index];
-                int ib = triangles[index + 1];
-                int ic = triangles[index + 2];
-                if ((uint)ia >= vertices.Length || (uint)ib >= vertices.Length || (uint)ic >= vertices.Length)
-                {
-                    reason = "Triangle references an invalid vertex.";
-                    return false;
-                }
-                Vector3 a = vertices[ia];
-                Vector3 b = vertices[ib];
-                Vector3 c = vertices[ic];
-                float areaSq = Vector3.Cross(b - a, c - a).sqrMagnitude;
-                if (areaSq <= MinimumTriangleAreaSq)
-                {
-                    reason = $"Triangle {index / 3} is degenerate.";
-                    return false;
-                }
-                signedVolume += Vector3.Dot(a, Vector3.Cross(b, c)) / 6.0;
-            }
-            if (Math.Abs(signedVolume) <= 0.00001)
-            {
-                reason = "Mesh volume is effectively zero.";
-                return false;
-            }
-            if (mesh.bounds.size.x <= 0.05f || mesh.bounds.size.y <= 0.05f || mesh.bounds.size.z <= 0.05f)
-            {
-                reason = "Mesh bounds are collapsed.";
-                return false;
-            }
-            reason = null;
-            return true;
-        }
-
-        private static List<PolyFace> CreateBox(Vector3 e)
-        {
-            Vector3 p000 = new Vector3(-e.x, -e.y, -e.z);
-            Vector3 p001 = new Vector3(-e.x, -e.y, e.z);
-            Vector3 p010 = new Vector3(-e.x, e.y, -e.z);
-            Vector3 p011 = new Vector3(-e.x, e.y, e.z);
-            Vector3 p100 = new Vector3(e.x, -e.y, -e.z);
-            Vector3 p101 = new Vector3(e.x, -e.y, e.z);
-            Vector3 p110 = new Vector3(e.x, e.y, -e.z);
-            Vector3 p111 = new Vector3(e.x, e.y, e.z);
-            return new List<PolyFace>
-            {
-                new PolyFace(new[] { p100, p101, p111, p110 }, Vector3.right),
-                new PolyFace(new[] { p001, p000, p010, p011 }, Vector3.left),
-                new PolyFace(new[] { p010, p110, p111, p011 }, Vector3.up),
-                new PolyFace(new[] { p000, p001, p101, p100 }, Vector3.down),
-                new PolyFace(new[] { p001, p011, p111, p101 }, Vector3.forward),
-                new PolyFace(new[] { p000, p100, p110, p010 }, Vector3.back)
-            };
-        }
-
-        private static void Clip(List<PolyFace> faces, in CutPlane plane)
-        {
-            var clippedFaces = new List<PolyFace>(faces.Count + 1);
-            var capPoints = new List<Vector3>(32);
-            for (int faceIndex = 0; faceIndex < faces.Count; faceIndex++)
-            {
-                PolyFace face = faces[faceIndex];
-                List<Vector3> clipped = ClipPolygon(face.Vertices, plane, capPoints);
-                CleanPolygon(clipped);
-                if (clipped.Count >= 3)
-                    clippedFaces.Add(new PolyFace(clipped, face.Normal));
-            }
-
-            Unique(capPoints);
-            if (capPoints.Count >= 3)
-            {
-                Vector3 center = Average(capPoints);
-                BuildPlaneBasis(plane.Normal, out Vector3 axisX, out Vector3 axisY);
-                capPoints.Sort((a, b) =>
-                {
-                    Vector3 da = a - center;
-                    Vector3 db = b - center;
-                    float aa = Mathf.Atan2(Vector3.Dot(da, axisY), Vector3.Dot(da, axisX));
-                    float ab = Mathf.Atan2(Vector3.Dot(db, axisY), Vector3.Dot(db, axisX));
-                    return aa.CompareTo(ab);
-                });
-                clippedFaces.Add(new PolyFace(capPoints, plane.Normal));
-            }
-
-            if (clippedFaces.Count >= 4)
-            {
-                faces.Clear();
-                faces.AddRange(clippedFaces);
-            }
-        }
-
-        private static List<Vector3> ClipPolygon(
-            List<Vector3> input,
-            in CutPlane plane,
-            List<Vector3> capPoints)
-        {
-            var output = new List<Vector3>(input.Count + 2);
-            if (input.Count == 0) return output;
-            Vector3 previous = input[input.Count - 1];
-            float previousDistance = plane.SignedDistance(previous);
-            bool previousInside = previousDistance <= GeometryEpsilon;
-            for (int index = 0; index < input.Count; index++)
-            {
-                Vector3 current = input[index];
-                float currentDistance = plane.SignedDistance(current);
-                bool currentInside = currentDistance <= GeometryEpsilon;
-                if (previousInside && currentInside)
-                {
-                    output.Add(current);
-                }
-                else if (previousInside != currentInside)
-                {
-                    float denominator = previousDistance - currentDistance;
-                    float amount = Mathf.Abs(denominator) > GeometryEpsilon
-                        ? Mathf.Clamp01(previousDistance / denominator)
-                        : 0.5f;
-                    Vector3 intersection = Vector3.LerpUnclamped(previous, current, amount);
-                    output.Add(intersection);
-                    capPoints.Add(intersection);
-                    if (currentInside) output.Add(current);
-                }
-                previous = current;
-                previousDistance = currentDistance;
-                previousInside = currentInside;
-            }
-            return output;
-        }
-
-        private static Mesh BuildBeveledMesh(List<PolyFace> faces, float bevelWidth, int seed)
-        {
-            var originalVertexIds = new Dictionary<VertexKey, int>(128);
-            var originalPositions = new List<Vector3>(128);
-            int GetOriginalId(Vector3 point)
-            {
-                var key = new VertexKey(point);
-                if (originalVertexIds.TryGetValue(key, out int id)) return id;
-                id = originalPositions.Count;
-                originalVertexIds.Add(key, id);
-                originalPositions.Add(point);
-                return id;
-            }
-
-            var faceInsets = new List<Vector3[]>(faces.Count);
-            var faceOriginalIds = new List<int[]>(faces.Count);
-            for (int faceIndex = 0; faceIndex < faces.Count; faceIndex++)
-            {
-                PolyFace face = faces[faceIndex];
-                Vector3 centroid = Average(face.Vertices);
-                var inset = new Vector3[face.Vertices.Count];
-                var ids = new int[face.Vertices.Count];
-                for (int vertexIndex = 0; vertexIndex < face.Vertices.Count; vertexIndex++)
-                {
-                    Vector3 vertex = face.Vertices[vertexIndex];
-                    Vector3 toCenter = centroid - vertex;
-                    float distance = toCenter.magnitude;
-                    float insetDistance = Mathf.Min(bevelWidth, distance * 0.34f);
-                    inset[vertexIndex] = distance > GeometryEpsilon
-                        ? vertex + toCenter / distance * insetDistance
-                        : vertex;
-                    ids[vertexIndex] = GetOriginalId(vertex);
-                }
-                faceInsets.Add(inset);
-                faceOriginalIds.Add(ids);
-            }
-
-            var vertices = new List<Vector3>(512);
-            var normals = new List<Vector3>(512);
-            var colors = new List<Color>(512);
-            var triangles = new List<int>(1024);
-            var edgeMap = new Dictionary<EdgeKey, EdgeInset>(256);
-            var vertexCaps = new Dictionary<int, VertexCap>(128);
-            Vector3 meshCenter = Average(originalPositions);
-
-            for (int faceIndex = 0; faceIndex < faces.Count; faceIndex++)
-            {
-                PolyFace face = faces[faceIndex];
-                Vector3[] inset = faceInsets[faceIndex];
-                int[] ids = faceOriginalIds[faceIndex];
-                Color faceColor = FaceColor(seed, faceIndex, false);
-                AppendPolygon(vertices, normals, colors, triangles, inset, face.Normal, faceColor, meshCenter);
-
-                for (int index = 0; index < inset.Length; index++)
-                {
-                    int next = (index + 1) % inset.Length;
-                    int originalA = ids[index];
-                    int originalB = ids[next];
-                    var key = new EdgeKey(originalA, originalB);
-                    if (!edgeMap.TryGetValue(key, out EdgeInset first))
-                    {
-                        edgeMap.Add(key, new EdgeInset
-                        {
-                            OriginalA = originalA,
-                            OriginalB = originalB,
-                            InsetA = inset[index],
-                            InsetB = inset[next],
-                            FaceNormal = face.Normal
-                        });
-                    }
-                    else
-                    {
-                        Vector3 secondA = originalA == first.OriginalA ? inset[index] : inset[next];
-                        Vector3 secondB = originalB == first.OriginalB ? inset[next] : inset[index];
-                        Vector3 bevelNormal = (first.FaceNormal + face.Normal).normalized;
-                        Vector3[] quad =
-                        {
-                            first.InsetA,
-                            first.InsetB,
-                            secondB,
-                            secondA
-                        };
-                        AppendPolygon(
-                            vertices,
-                            normals,
-                            colors,
-                            triangles,
-                            quad,
-                            bevelNormal,
-                            FaceColor(seed, faceIndex + 101, true),
-                            meshCenter);
-                    }
-
-                    if (!vertexCaps.TryGetValue(ids[index], out VertexCap cap))
-                    {
-                        cap = new VertexCap();
-                        vertexCaps.Add(ids[index], cap);
-                    }
-                    cap.Points.Add(inset[index]);
-                    cap.NormalSum += face.Normal;
-                }
-            }
-
-            foreach (KeyValuePair<int, VertexCap> pair in vertexCaps)
-            {
-                VertexCap cap = pair.Value;
-                Unique(cap.Points);
-                if (cap.Points.Count < 3) continue;
-                Vector3 normal = cap.NormalSum.sqrMagnitude > GeometryEpsilon
-                    ? cap.NormalSum.normalized
-                    : (originalPositions[pair.Key] - meshCenter).normalized;
-                Vector3 center = Average(cap.Points);
-                BuildPlaneBasis(normal, out Vector3 axisX, out Vector3 axisY);
-                cap.Points.Sort((a, b) =>
-                {
-                    Vector3 da = a - center;
-                    Vector3 db = b - center;
-                    return Mathf.Atan2(Vector3.Dot(da, axisY), Vector3.Dot(da, axisX))
-                        .CompareTo(Mathf.Atan2(Vector3.Dot(db, axisY), Vector3.Dot(db, axisX)));
-                });
-                AppendPolygon(
-                    vertices,
-                    normals,
-                    colors,
-                    triangles,
-                    cap.Points,
-                    normal,
-                    FaceColor(seed, pair.Key + 211, true),
-                    meshCenter);
-            }
-
-            var mesh = new Mesh { indexFormat = IndexFormat.UInt32 };
-            mesh.SetVertices(vertices);
-            mesh.SetNormals(normals);
-            mesh.SetColors(colors);
-            mesh.SetTriangles(triangles, 0, true);
-            mesh.RecalculateBounds();
-            return mesh;
-        }
-
-        private static void AppendPolygon(
-            List<Vector3> vertices,
-            List<Vector3> normals,
-            List<Color> colors,
-            List<int> triangles,
-            IReadOnlyList<Vector3> points,
-            Vector3 desiredNormal,
-            Color color,
-            Vector3 meshCenter)
-        {
-            if (points == null || points.Count < 3) return;
-            var ordered = new List<Vector3>(points.Count);
-            for (int index = 0; index < points.Count; index++) ordered.Add(points[index]);
-            CleanPolygon(ordered);
-            if (ordered.Count < 3) return;
-            Vector3 geometricNormal = PolygonNormal(ordered);
-            Vector3 centroid = Average(ordered);
-            Vector3 outward = desiredNormal.sqrMagnitude > GeometryEpsilon
-                ? desiredNormal.normalized
-                : (centroid - meshCenter).normalized;
-            if (Vector3.Dot(geometricNormal, outward) < 0f) ordered.Reverse();
-
-            int start = vertices.Count;
-            for (int index = 0; index < ordered.Count; index++)
-            {
-                vertices.Add(ordered[index]);
-                normals.Add(outward);
-                colors.Add(color);
-            }
-            for (int index = 1; index < ordered.Count - 1; index++)
-            {
-                Vector3 a = ordered[0];
-                Vector3 b = ordered[index];
-                Vector3 c = ordered[index + 1];
-                if (Vector3.Cross(b - a, c - a).sqrMagnitude <= MinimumTriangleAreaSq)
-                    continue;
-                triangles.Add(start);
-                triangles.Add(start + index);
-                triangles.Add(start + index + 1);
-            }
-        }
-
         private static Vector3 RandomCutNormal(
             System.Random random,
             RumbleRockFamily family,
@@ -646,82 +359,6 @@ namespace Elemental.Presentation.Rendering
             float tone = Mathf.Lerp(0.88f, 1.08f, variation);
             if (bevel) tone *= 1.045f;
             return new Color(tone, tone, tone, bevel ? 0.72f : 0.38f);
-        }
-
-        private static void CleanPolygon(List<Vector3> points)
-        {
-            if (points.Count < 2) return;
-            for (int index = points.Count - 1; index >= 0; index--)
-            {
-                int previous = (index - 1 + points.Count) % points.Count;
-                if ((points[index] - points[previous]).sqrMagnitude <= GeometryEpsilon * GeometryEpsilon)
-                    points.RemoveAt(index);
-            }
-            if (points.Count < 3) return;
-            bool removed;
-            do
-            {
-                removed = false;
-                for (int index = 0; index < points.Count && points.Count >= 3; index++)
-                {
-                    Vector3 a = points[(index - 1 + points.Count) % points.Count];
-                    Vector3 b = points[index];
-                    Vector3 c = points[(index + 1) % points.Count];
-                    if (Vector3.Cross(b - a, c - b).sqrMagnitude <= MinimumTriangleAreaSq)
-                    {
-                        points.RemoveAt(index);
-                        removed = true;
-                        break;
-                    }
-                }
-            } while (removed);
-        }
-
-        private static void Unique(List<Vector3> points)
-        {
-            var keys = new HashSet<VertexKey>();
-            for (int index = points.Count - 1; index >= 0; index--)
-            {
-                if (!keys.Add(new VertexKey(points[index]))) points.RemoveAt(index);
-            }
-        }
-
-        private static void EnsureWinding(List<Vector3> points, Vector3 desiredNormal)
-        {
-            if (points.Count < 3) return;
-            if (Vector3.Dot(PolygonNormal(points), desiredNormal) < 0f) points.Reverse();
-        }
-
-        private static Vector3 PolygonNormal(IReadOnlyList<Vector3> points)
-        {
-            Vector3 normal = Vector3.zero;
-            for (int index = 0; index < points.Count; index++)
-            {
-                Vector3 current = points[index];
-                Vector3 next = points[(index + 1) % points.Count];
-                normal.x += (current.y - next.y) * (current.z + next.z);
-                normal.y += (current.z - next.z) * (current.x + next.x);
-                normal.z += (current.x - next.x) * (current.y + next.y);
-            }
-            return normal.sqrMagnitude > GeometryEpsilon ? normal.normalized : Vector3.up;
-        }
-
-        private static Vector3 Average(IReadOnlyList<Vector3> points)
-        {
-            if (points == null || points.Count == 0) return Vector3.zero;
-            Vector3 sum = Vector3.zero;
-            for (int index = 0; index < points.Count; index++) sum += points[index];
-            return sum / points.Count;
-        }
-
-        private static void BuildPlaneBasis(Vector3 normal, out Vector3 axisX, out Vector3 axisY)
-        {
-            Vector3 reference = Mathf.Abs(Vector3.Dot(normal, Vector3.up)) < 0.92f
-                ? Vector3.up
-                : Vector3.right;
-            axisX = Vector3.Cross(reference, normal).normalized;
-            if (axisX.sqrMagnitude < GeometryEpsilon) axisX = Vector3.right;
-            axisY = Vector3.Cross(normal, axisX).normalized;
         }
 
         private static float Next(System.Random random, float minimum, float maximum) =>

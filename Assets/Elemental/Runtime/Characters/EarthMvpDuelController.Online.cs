@@ -8,7 +8,7 @@ namespace Elemental.Runtime.Characters
     {
         public bool HasSimulationAuthority { get; private set; } = true;
         public void ConfigureOnlineAuthority(bool authority)
-        { HasSimulationAuthority = authority; SetRoundReady(false); }
+        { CancelRespawnPresentations(); HasSimulationAuthority = authority; SetRoundReady(false); }
         public EarthRecoverableKnockdownPhase GetKnockdownPhase(EarthDuelFighterId fighter) =>
             fighter == EarthDuelFighterId.Player ? _playerKnockdown.Phase : _botKnockdown.Phase;
 

@@ -30,6 +30,15 @@ namespace Elemental.Presentation.DistantScenery
 
         [Tooltip("Add bounded negative-Z sidebands for the front-facing menu; existing combat placements stay unchanged.")]
         public bool rearContinuation;
+        [Header("Hard polish authored supplements (explicit opt-in)")]
+        public bool hardPolishSupplements;
+        [Range(2,5)] public int satellitesPerMainIsland=3;
+        public ViewLandmark[] nearLandmarks=new[]{
+            new ViewLandmark{name="NearWest",airborne=true,variant=0,position=new Vector3(-230,85,-160),scale=70},
+            new ViewLandmark{name="NearEast",airborne=true,variant=2,position=new Vector3(245,105,145),scale=65},
+            new ViewLandmark{name="NearNorth",airborne=true,variant=3,position=new Vector3(-205,115,215),scale=60},
+            new ViewLandmark{name="NearSouth",airborne=true,variant=1,position=new Vector3(195,95,-235),scale=75}
+        };
         public int geometrySeed=13771, motionSeed=24611;
         public RockShapeSettings rockShape=RockShapeSettings.Default;
         [Range(8,12)] public int valleyGroups=10;

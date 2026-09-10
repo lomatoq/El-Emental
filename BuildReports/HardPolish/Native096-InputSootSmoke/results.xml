@@ -1,0 +1,540 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="3" result="Failed(Child)" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-10 11:45:20Z" end-time="2026-09-10 11:46:07Z" duration="47.5002566">
+  <test-suite type="TestSuite" id="1620" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="465" result="Failed" site="Child" start-time="2026-09-10 11:45:20Z" end-time="2026-09-10 11:46:07Z" duration="47.500257" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1613" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="459" result="Failed" site="Child" start-time="2026-09-10 11:45:20Z" end-time="2026-09-10 11:46:07Z" duration="47.425597" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="34284" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1614" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="459" result="Failed" site="Child" start-time="2026-09-10 11:45:20Z" end-time="2026-09-10 11:46:07Z" duration="47.411647" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1615" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="459" result="Failed" site="Child" start-time="2026-09-10 11:45:20Z" end-time="2026-09-10 11:46:07Z" duration="47.401196" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1616" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="459" result="Failed" site="Child" start-time="2026-09-10 11:45:20Z" end-time="2026-09-10 11:46:07Z" duration="47.391332" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1091" name="HardPolishFireStreamBindingRuntimeTests" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" testcasecount="54" result="Failed" site="Child" start-time="2026-09-10 11:45:20Z" end-time="2026-09-10 11:45:56Z" duration="35.736656" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1122" name="ActualFireCoolingUsesSharedDustMaterialAndVisibleSmokeSubmesh" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.ActualFireCoolingUsesSharedDustMaterialAndVisibleSmokeSubmesh" methodname="ActualFireCoolingUsesSharedDustMaterialAndVisibleSmokeSubmesh" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1417638610" result="Passed" start-time="2026-09-10 11:45:20Z" end-time="2026-09-10 11:45:47Z" duration="26.633425" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="180000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 5223.53ms; ground=exact baked base, cacheLoad=15.14ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=1153.81ms, peakCookingPoll=0.29ms; sync=ArenaInitialize=45.38ms/15;ArenaBevel=33.37ms/175;ArenaMeshPicking=1.04ms/175;WallAwake=81.52ms/1;WallPieceVisuals=47.29ms/40;PlatformPoolAwake=9.06ms/1;PlatformRuntimeMeshes=1.30ms/12;PillarPoolAwake=18.80ms/1;PillarMeshLibrary=5.24ms/1;PillarColumns=13.55ms/1;DebrisPoolAwake=132.01ms/1;HeroFragmentPoolAwake=11.82ms/1.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+]]></output>
+              </test-case>
+              <test-case id="1138" name="SavedFireScorchTracksMovingSurfaceAndExpires" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedFireScorchTracksMovingSurfaceAndExpires" methodname="SavedFireScorchTracksMovingSurfaceAndExpires" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="566283739" result="Failed" start-time="2026-09-10 11:45:47Z" end-time="2026-09-10 11:45:56Z" duration="9.061786" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="300000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: 1920
+  But was:  1733
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.ProductionCaptureResolution.SaveScreen (System.String path) [0x00006] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\ProductionCaptureResolution.cs:70
+at Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests+<SavedFireScorchTracksMovingSurfaceAndExpires>d__86.MoveNext () [0x00378] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\HardPolishFireWorldResponseTests.cs:61
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3373.12ms; ground=exact baked base, cacheLoad=10.52ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=654.73ms, peakCookingPoll=0.00ms; sync=ArenaInitialize=45.38ms/15;ArenaBevel=33.37ms/175;ArenaMeshPicking=1.04ms/175;WallAwake=81.52ms/1;WallPieceVisuals=47.29ms/40;PlatformPoolAwake=9.06ms/1;PlatformRuntimeMeshes=1.30ms/12;PillarPoolAwake=18.80ms/1;PillarMeshLibrary=5.24ms/1;PillarColumns=13.55ms/1;DebrisPoolAwake=132.01ms/1;HeroFragmentPoolAwake=11.82ms/1.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1418" name="HardPolishSchoolInputTests" fullname="Elemental.Tests.PlayMode.HardPolishSchoolInputTests" classname="Elemental.Tests.PlayMode.HardPolishSchoolInputTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-09-10 11:45:56Z" end-time="2026-09-10 11:46:07Z" duration="11.592076" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1422" name="ActualMouseWeavesPowerShootsChargesAndCancelsHeldInput" fullname="Elemental.Tests.PlayMode.HardPolishSchoolInputTests.ActualMouseWeavesPowerShootsChargesAndCancelsHeldInput" methodname="ActualMouseWeavesPowerShootsChargesAndCancelsHeldInput" classname="Elemental.Tests.PlayMode.HardPolishSchoolInputTests" runstate="Runnable" seed="161012716" result="Passed" start-time="2026-09-10 11:45:56Z" end-time="2026-09-10 11:46:07Z" duration="11.575982" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3182.47ms; ground=exact baked base, cacheLoad=10.12ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=580.75ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=45.38ms/15;ArenaBevel=33.37ms/175;ArenaMeshPicking=1.04ms/175;WallAwake=81.52ms/1;WallPieceVisuals=47.29ms/40;PlatformPoolAwake=9.06ms/1;PlatformRuntimeMeshes=1.30ms/12;PillarPoolAwake=18.80ms/1;PillarMeshLibrary=5.24ms/1;PillarColumns=13.55ms/1;DebrisPoolAwake=132.01ms/1;HeroFragmentPoolAwake=11.82ms/1.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+SetSubMesh #0 shares part of its index buffer with SubMesh #1. Sharing part of an index buffer can result in undefined behavior and will be deprecated soon. To future-proof your Project, fix the indexStart/indexCount
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\Native096-InputSootSmoke\results.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

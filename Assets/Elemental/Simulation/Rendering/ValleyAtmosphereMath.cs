@@ -40,7 +40,7 @@ namespace Elemental.Simulation.Rendering
         public static double UpperWindowProtection(double cameraDistance,double surfaceRadius,double surfaceHeight,double planetRadius,double clearRange)
         {
             double upper=Smooth(planetRadius*0.45,planetRadius*0.75,surfaceHeight);
-            return 1-upper*(1-OpaqueProtection(cameraDistance,surfaceRadius,planetRadius,clearRange));
+            return (1-upper*(1-OpaqueProtection(cameraDistance,surfaceRadius,planetRadius,clearRange)))*Smooth(12,24,cameraDistance);
         }
         public static double LowerTerrainOpacity(double surfaceHeight,double planetRadius)
             =>1-Smooth(-planetRadius*0.25,planetRadius*0.60,surfaceHeight);

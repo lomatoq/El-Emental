@@ -6,6 +6,44 @@ namespace Elemental.Tests.EditMode
     public sealed class EarthSustainedCrushTests
     {
         [Test]
+        public void BriefMeasuredUnloadingDoesNotRestartAnOtherwiseStablePin()
+        {
+            float elapsed=0f,gap=0f,legacy=0f,damage=0f;
+            // Native012 repeatedly sustained ~700N then dipped below350N for
+            // six fixed ticks while the same stone still blocked recovery.
+            for(int frame=0;frame<205;frame++)
+            {
+                float load=frame%41<35?700f:24f;
+                legacy=EarthSustainedCrush.StepPinned(legacy,load,42f,true,true,.02f);
+                elapsed=EarthSustainedCrush.StepPinnedWithBriefUnloading(elapsed,ref gap,load,42f,true,true,.02f);
+                float sample=EarthSustainedCrush.PinnedDamage(elapsed,load,42f,.02f);
+                if(load<350f)Assert.That(sample,Is.Zero,"No damage during absent/subthreshold measured load.");
+                damage+=sample;
+            }
+            Assert.That(legacy,Is.Zero,"Old hard-reset policy never qualified this measured oscillation.");
+            Assert.That(damage,Is.GreaterThan(20f));
+            Assert.That(elapsed,Is.EqualTo(EarthSustainedCrush.PinnedDwellSeconds));
+        }
+
+        [Test]
+        public void RemovalStopsDamageImmediatelyAndExpiresRememberedPin()
+        {
+            float elapsed=EarthSustainedCrush.PinnedDwellSeconds,gap=0f;
+            for(int frame=0;frame<20;frame++)
+            {
+                elapsed=EarthSustainedCrush.StepPinnedWithBriefUnloading(elapsed,ref gap,0f,42f,true,true,.02f);
+                Assert.That(EarthSustainedCrush.PinnedDamage(elapsed,0f,42f,.02f),Is.Zero);
+            }
+            Assert.That(elapsed,Is.Zero);
+            elapsed=EarthSustainedCrush.StepPinnedWithBriefUnloading(1.25f,ref gap,700f,42f,true,false,.02f);
+            Assert.That(elapsed,Is.Zero);Assert.That(gap,Is.Zero);
+            Assert.That(EarthSustainedCrush.StepPinnedWithBriefUnloading(1.25f,ref gap,float.NaN,42f,true,true,.02f),Is.Zero);
+            float underThreshold=0f;
+            for(int frame=0;frame<200;frame++)underThreshold=EarthSustainedCrush.StepPinnedWithBriefUnloading(underThreshold,ref gap,200f,42f,true,true,.02f);
+            Assert.That(underThreshold,Is.Zero,"Grace never qualifies a continuously subthreshold stone.");
+        }
+
+        [Test]
         public void SettledMeasuredStackForceSurvivesSleepWithoutRetainingLandingSpike()
         {
             EarthSettledLoad load = default;

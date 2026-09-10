@@ -1,0 +1,9 @@
+Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests.SurfaceBandKeepsDenseGasAboveNonconvexFloor
+  Invalid=0, blocked=2, unresolvedMesh=2, recovered=252, recoveryRays=1524, deepMesh=0, sentinel=0, last=unresolved-mesh-overlap, collider=Isolated fire nonconvex floor (UnityEngine.MeshCollider), center=float3(0.08480883f, 100.9016f, -0.01402356f), radius=0.3976418, invalidCenter=float3(0f, 0f, 0f), invalidPoint=float3(0f, 0f, 0f), invalidRadius=0
+  Expected: 0
+  But was:  2
+
+at Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests+<SurfaceBandKeepsDenseGasAboveNonconvexFloor>d__1.MoveNext () [0x00412] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\FireFlowShallowContactPlayTests.cs:62
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+
+

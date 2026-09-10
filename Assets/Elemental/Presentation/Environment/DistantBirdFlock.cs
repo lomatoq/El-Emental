@@ -13,7 +13,7 @@ namespace Elemental.Presentation.DistantScenery
         [SerializeField] private Material silhouetteMaterial;
         [SerializeField] private Vector3 stagingUp=Vector3.up,viewDirection=Vector3.forward;
         [SerializeField] private int seed=38217;
-        [SerializeField,Range(8,24)] private int birdCount=16;
+        [SerializeField,Range(32,48)] private int birdCount=40;
         private DistantBirdFlight.Bird[] birds;
         private Vector3[] vertices;
         private Mesh mesh;
@@ -21,6 +21,8 @@ namespace Elemental.Presentation.DistantScenery
         private Quaternion frame,anchorRotation;
         private Vector3 anchorScale;
         private bool wasReduced;
+        [SerializeField] private UnityEngine.Camera viewCamera;
+        public void ConfigureViewCamera(UnityEngine.Camera camera)=>viewCamera=camera;
         public int BirdCount=>birds==null?0:birds.Length;
         public Mesh GeneratedMesh=>mesh;
         public void Configure(Transform planet,Vector3 up,Vector3 direction,FrontendFlowController settings,Material material)
@@ -35,13 +37,13 @@ namespace Elemental.Presentation.DistantScenery
             // This owned root is world anchored; vertices are evaluated in its fixed frame.
             transform.SetPositionAndRotation(center,frame);transform.localScale=Vector3.one;
             anchorPosition=transform.position;anchorRotation=transform.rotation;anchorScale=transform.localScale;
-            int count=Mathf.Clamp(birdCount,8,24);birds=new DistantBirdFlight.Bird[count];vertices=new Vector3[count*8];int[] indices=new int[count*18];
+            int count=Mathf.Clamp(birdCount,32,48);birds=new DistantBirdFlight.Bird[count];vertices=new Vector3[count*8];int[] indices=new int[count*18];
             int[] topology={0,2,1,0,1,3,2,4,5,2,5,1,3,1,7,3,7,6};
             Bounds bounds=new Bounds();
             for(int i=0;i<count;i++)
             {
                 birds[i]=DistantBirdFlight.Create(seed,i);
-                var envelope=new Bounds((Vector3)birds[i].Center,new Vector3(260,100,180));
+                var envelope=new Bounds((Vector3)birds[i].Center,new Vector3(320,120,240));
                 if(i==0)bounds=envelope;else bounds.Encapsulate(envelope);
                 for(int j=0;j<18;j++)indices[i*18+j]=i*8+topology[j];
             }
@@ -53,7 +55,7 @@ namespace Elemental.Presentation.DistantScenery
         private void LateUpdate()
         {
             bool reduced=settingsSource!=null&&settingsSource.Preferences.ReducedMotion;
-            if(reduced&&wasReduced&&transform.position==anchorPosition&&transform.rotation==anchorRotation&&transform.localScale==anchorScale)return;
+            // Visibility follows the camera even while motion is reduced.
             ApplyTime(Time.unscaledTimeAsDouble,reduced);
         }
         public void ApplyTime(double time,bool reducedMotion)
@@ -68,7 +70,16 @@ namespace Elemental.Presentation.DistantScenery
                 {
                     var pose=DistantBirdFlight.Evaluate(birds[i],time,reducedMotion);
                     Quaternion rotation=Quaternion.LookRotation((Vector3)pose.Forward,Vector3.up)*Quaternion.AngleAxis(pose.Bank*Mathf.Rad2Deg,Vector3.forward);
-                    Vector3 p=(Vector3)pose.Position;float span=birds[i].Span,c=Mathf.Cos(pose.WingAngle),s=Mathf.Sin(pose.WingAngle);int v=i*8;
+                    Vector3 p=(Vector3)pose.Position;float span=birds[i].Span;
+                    if(viewCamera!=null)
+                    {
+                        Vector3 world=anchorPosition+anchorRotation*p;
+                        float depth=Vector3.Dot(world-viewCamera.transform.position,viewCamera.transform.forward);
+                        float pixels=viewCamera.orthographic?span*1080/(2*viewCamera.orthographicSize):span*1080/(2*Mathf.Max(.01f,depth)*Mathf.Tan(viewCamera.fieldOfView*Mathf.Deg2Rad*.5f));
+                        // Cull unreadable silhouettes; never inflate distant geometry.
+                        if(depth<=0 || pixels<3){for(int j=0;j<8;j++)vertices[i*8+j]=p;continue;}
+                    }
+                    float c=Mathf.Cos(pose.WingAngle),s=Mathf.Sin(pose.WingAngle);int v=i*8;
                     vertices[v]=p+rotation*new Vector3(0,0,.30f*span);vertices[v+1]=p+rotation*new Vector3(0,0,-.23f*span);
                     vertices[v+2]=p+rotation*new Vector3(-.04f*span,0,.05f*span);vertices[v+3]=p+rotation*new Vector3(.04f*span,0,.05f*span);
                     vertices[v+4]=p+rotation*new Vector3(-.5f*c*span,.5f*s*span,-.06f*span);vertices[v+5]=p+rotation*new Vector3(-.30f*c*span,.30f*s*span,-.22f*span);

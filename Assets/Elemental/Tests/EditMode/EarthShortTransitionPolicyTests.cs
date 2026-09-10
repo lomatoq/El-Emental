@@ -11,11 +11,11 @@ namespace Elemental.Tests.EditMode
             var state = new EarthShortTransitionState();
             var input = new EarthShortTransitionInput { Grounded = true };
             EarthShortTransitionPolicy.Step(ref state, in input, .25f);
-            input.ForwardSpeed = input.TangentSpeed = 7.2f;
+            input.ForwardSpeed = input.TangentSpeed = 1.4f;
             Assert.That(EarthShortTransitionPolicy.Step(ref state, in input, .016f).Kind,
                 Is.EqualTo(EarthShortTransition.StartWalk));
             Assert.That(EarthShortTransitionPolicy.Step(ref state, in input, .12f).Kind,
-                Is.EqualTo(EarthShortTransition.StartWalk), "Normal full keyboard speed cannot erase the bridge before its incoming fade completes.");
+                Is.EqualTo(EarthShortTransition.StartWalk), "A compatible slow walking start retains its bounded anticipation.");
             Assert.That(EarthShortTransitionPolicy.Step(ref state, in input, .22f).Kind,
                 Is.EqualTo(EarthShortTransition.None));
             Assert.That(EarthShortTransitionPolicy.Step(ref state, in input, .016f).Kind,

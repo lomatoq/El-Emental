@@ -12,6 +12,6 @@ namespace Elemental.Tests.EditMode
    Assert.That(ArenaColumnFires.NightIntensity(0,-100),Is.GreaterThan(0));
   }
   [Test] public void DecorativeBudgetRemainsSevenFiresAndFourLights()
-  {Assert.That(ArenaColumnFires.MaximumFires,Is.EqualTo(7));Assert.That(ArenaColumnFires.MaximumLights,Is.EqualTo(4));}
+  {Assert.That(ArenaColumnFires.MaximumFires,Is.EqualTo(7));Assert.That(ArenaColumnFires.MaximumLights,Is.EqualTo(7));}
  }
 }

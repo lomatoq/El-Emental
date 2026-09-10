@@ -86,6 +86,8 @@ namespace Elemental.Input.Actions
             return new PlanetMotorCommand(tick, new float2(move.x, move.y), jump);
         }
 
+        public void RoutePlainJump() => _jumpQueued = true;
+
         public void RouteJumpPerformed()
         {
             if (earthPillarMobility != null || earthPillarWave != null) return;

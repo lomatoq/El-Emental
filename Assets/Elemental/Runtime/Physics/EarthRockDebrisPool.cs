@@ -35,6 +35,8 @@ namespace Elemental.Runtime.Physics
                 ? profile.ResolveBreak(radius, mass, impulse, controlled, depth)
                 : EarthRockBreakPolicy.Resolve(radius, mass, impulse, controlled, depth);
         public EarthMaterialFeedbackHub MaterialFeedback => materialFeedback;
+        public float SmallStoneRadius => profile != null ? profile.SmallShatterRadius : .35f;
+        public float LargeStoneRadius => profile != null ? profile.HugeShatterRadius : 1.2f;
         public void ConfigureMaterialFeedback(EarthMaterialFeedbackHub hub) => materialFeedback = hub;
 
         private readonly List<EarthRockDebris> _pieces = new List<EarthRockDebris>(256);
@@ -88,13 +90,14 @@ namespace Elemental.Runtime.Physics
             EnsureBakedCache();
             Mesh sourceMesh = _convexCells.SourceMesh(source);
             float volumeScale = Mathf.Abs(source.transform.localToWorldMatrix.determinant);
-            int first = forcedCount > 0 ? forcedCount : 3, last = forcedCount > 0 ? forcedCount : 4;
+            int first = forcedCount > 0 ? forcedCount : 2, last = forcedCount > 0 ? forcedCount : 4;
             for (int count = first; count <= last; count++)
             {
                 var children = _convexCells.Get(sourceMesh, count);
                 foreach (var child in children)
                 {
                     float radius = Mathf.Pow(child.Volume * volumeScale * .2387324f, 1f / 3f);
+                    _convexCells.Get(child.ColliderMesh, 2);
                     int nextCount = ResolveBreak(radius, 1f, 100000f, false, 1).PhysicalPieces;
                     if (nextCount > 0) _convexCells.Get(child.ColliderMesh, nextCount);
                 }
@@ -186,8 +189,13 @@ namespace Elemental.Runtime.Physics
 
         public bool TryEmitBreak(Vector3 position, Vector3 normal, Vector3 inheritedVelocity,
             float radius, float mass, uint seed, EarthRockBreakDecision decision, int depth,
-            EarthMatterIdentity parentIdentity = null)
+            EarthMatterIdentity parentIdentity = null, bool counterSplit = false)
         {
+            // Ordinary later fractures inherit counter immunity. This is separate
+            // from counterSplit's momentum arrest: an impact keeps its physical
+            // velocity even when its parent was produced by a defensive punch.
+            bool counterImmune = counterSplit || (parentIdentity != null &&
+                parentIdentity.TryGetComponent<EarthRockDebris>(out var ancestor) && !ancestor.CounterGuardEligible);
             int count = decision.PhysicalPieces;
             if (!decision.Breaks || count < 0 || count > _breakPieces.Length ||
                 !float.IsFinite(radius) || !float.IsFinite(mass) || radius <= 0f || mass <= 0f)
@@ -262,6 +270,13 @@ namespace Elemental.Runtime.Physics
                         new quaternion(childRotation.x, childRotation.y, childRotation.z, childRotation.w));
                     Vector3 direction = HashDirection(seed, index, normal);
                     Vector3 velocity = inheritedVelocity + direction * spread * Mathf.Lerp(0.65f, 1.25f, Hash01(seed ^ 0x91u, index));
+                    if (counterSplit)
+                    {
+                        // The guard arrests incoming momentum. Children leave outward, not into the defender.
+                        Vector3 outward = normal.normalized;
+                        velocity -= outward * Mathf.Min(0f, Vector3.Dot(velocity, outward));
+                        velocity = Vector3.ClampMagnitude(velocity, 4f);
+                    }
                     _childRecords[index] = EarthRockBreakPolicy.PartitionChild(parent, cells[index].Volume / totalCellVolume, pose, (float3)velocity);
                 }
             }
@@ -272,6 +287,7 @@ namespace Elemental.Runtime.Physics
             {
                 EarthRockDebris piece = _breakPieces[index];
                 piece.ConfigureBreak(this, seed ^ (uint)(index + 1), depth + 1, _childRadii[index]);
+                piece.CounterGuardEligible = !counterImmune;
                 piece.BindPersistentMatter(kernel, _childIds[index]);
                 piece.BeginBallistic(
                     (Vector3)_childRecords[index].CurrentPose.Position,
@@ -310,7 +326,7 @@ namespace Elemental.Runtime.Physics
             Rigidbody body = piece.GetComponent<Rigidbody>();
             float impulse = EarthRockBreakPolicy.ContactImpulse((float3)collision.relativeVelocity,
                 (float3)contact.normal, body.mass, collision.impulse.magnitude);
-            var hit = new EarthStructureImpact(contact.point, -contact.normal, impulse,
+            var hit = new EarthStructureImpact(contact.point, -contact.normal, EarthStructureImpactRouter.CollisionStrength(collision, body),
                 EarthStructureImpactKind.Projectile, piece.StableEarthId);
             EarthStructureImpactRouter.Apply(collision.collider, in hit);
             impulse = piece.AccumulateImpact(impulse);
@@ -607,6 +623,8 @@ namespace Elemental.Runtime.Physics
             return true;
         }
         public EarthMatterIdentity MatterIdentity => _matterIdentity;
+        public bool CounterGuardEligible { get; internal set; } = true;
+        public float BreakRadius => _breakRadius;
         public Rigidbody Body => _body;
         public uint StableEarthId => _matterIdentity != null && _matterIdentity.MatterId.IsValid
             ? 0xE0000000u | _matterIdentity.MatterId.StableId : 0u;
@@ -639,6 +657,7 @@ namespace Elemental.Runtime.Physics
 
         public void OnEarthMagicReleased(EarthMagicGripKind grip)
         {
+            CounterGuardEligible = true;
             _gripCount = Mathf.Max(0, _gripCount - 1);
             if (_gripCount == 0) _matterIdentity?.TryTransition(EarthMatterPhase.FreeDynamic);
             _body?.WakeUp();
@@ -665,6 +684,7 @@ namespace Elemental.Runtime.Physics
         public void ConfigureBreak(EarthRockDebrisPool owner, uint seed, int depth, float radius)
         {
             _impactDamage = default;
+            CounterGuardEligible = true;
             _breakOwner = owner;
             _breakSeed = seed;
             _breakDepth = depth;
@@ -802,12 +822,10 @@ namespace Elemental.Runtime.Physics
                 ResetPiece();
                 return;
             }
-            // Shrink is purely visual. Keep the body dynamic and colliding so the
-            // shard continues its fall, bounces and carries inherited momentum.
-            _body.isKinematic = false;
-            _body.detectCollisions = true;
-            _collider.enabled = true;
-            _body.WakeUp();
+            // Cosmetic chips remain dynamic/colliding throughout their lifetime.
+            // Activation owns those flags; do not force WakeUp every rendered shrink frame.
+            // This legacy shrink scales the collider too, so only transient chips use it.
+            // Canonical fragments return above and keep their physical dimensions.
             transform.localScale = _fullScale * Mathf.Max(0.0125f, lifecycle.Scale01);
         }
 

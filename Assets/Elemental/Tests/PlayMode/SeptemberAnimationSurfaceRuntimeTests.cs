@@ -120,6 +120,10 @@ namespace Elemental.Tests.PlayMode
                 Assert.That(motor.HasStableSupport,Is.True,"Actual track fixture was not grounded.");
                 run.leftRestClearance=RestClearance(feet.LeftActualFootWorld,collider,motor.LocalUp);
                 run.rightRestClearance=RestClearance(feet.RightActualFootWorld,collider,motor.LocalUp);
+                Vector3 restPlaneNormal=motor.GroundNormal.sqrMagnitude>.5f?motor.GroundNormal.normalized:motor.LocalUp.normalized;
+                Vector3 restPlanePoint=motor.SupportFeetPoint(motor.LocalUp);
+                run.leftRestSupportPlaneClearance=Vector3.Dot(feet.LeftActualFootWorld-restPlanePoint,restPlaneNormal);
+                run.rightRestSupportPlaneClearance=Vector3.Dot(feet.RightActualFootWorld-restPlanePoint,restPlaneNormal);
                 double previousWall=Time.realtimeSinceStartupAsDouble;
                 float until=Time.time+7f;
                 bool approachingPit=false,stoppingInPit=false;
@@ -129,9 +133,30 @@ namespace Elemental.Tests.PlayMode
                     yield return _frame;
                     double wall=Time.realtimeSinceStartupAsDouble;
                     float z=track.transform.InverseTransformPoint(body.position).z;
+                    Vector3 supportPlaneNormal=motor.GroundNormal.sqrMagnitude>.5f?motor.GroundNormal.normalized:up;
+                    Vector3 supportPlanePoint=motor.SupportFeetPoint(up);
                     var row=new SurfaceFrame { actor=run.actor,requestedStepHz=requestedHz,frame=Time.frameCount,
+                        supportPlanePointTrackLocal=track.transform.InverseTransformPoint(supportPlanePoint),
+                        supportPlaneNormalTrackLocal=track.transform.InverseTransformDirection(supportPlaneNormal),
+                        leftSupportPlaneExcursion=Vector3.Dot(feet.LeftActualFootWorld-supportPlanePoint,supportPlaneNormal)-run.leftRestSupportPlaneClearance,
+                        rightSupportPlaneExcursion=Vector3.Dot(feet.RightActualFootWorld-supportPlanePoint,supportPlaneNormal)-run.rightRestSupportPlaneClearance,
                         delta=Time.deltaTime,wallDelta=(float)(wall-previousWall),trackZ=z,
                         sourceFrame=eammSource!=null?eammSource.CurrentFrame:-1,
+                        leftStrideActive=SurfacePrivate<bool>(feet,"_leftSwingStrideActive"),rightStrideActive=SurfacePrivate<bool>(feet,"_rightSwingStrideActive"),
+                        leftFloorActive=SurfacePrivate<bool>(feet,"_leftSwingFloorActive"),rightFloorActive=SurfacePrivate<bool>(feet,"_rightSwingFloorActive"),
+                        leftFloorLift=feet.LeftSwingFloorCorrectionMeters,rightFloorLift=feet.RightSwingFloorCorrectionMeters,
+                        leftProjectedToesTrackLocal=track.transform.InverseTransformPoint(feet.LeftFloorProjectedToesWorld),
+                        rightProjectedToesTrackLocal=track.transform.InverseTransformPoint(feet.RightFloorProjectedToesWorld),
+                        leftFloorPredicted=feet.LeftFloorPredictedClearance,rightFloorPredicted=feet.RightFloorPredictedClearance,
+                        leftFloorBone=feet.LeftFloorBoneClearance,rightFloorBone=feet.RightFloorBoneClearance,
+                        leftFloorGoal=feet.LeftFloorGoalClearance,rightFloorGoal=feet.RightFloorGoalClearance,
+                        leftFloorTrackLocal=track.transform.InverseTransformPoint(SurfacePrivate<Vector3>(feet,"_leftSwingFloorTarget")),
+                        rightFloorTrackLocal=track.transform.InverseTransformPoint(SurfacePrivate<Vector3>(feet,"_rightSwingFloorTarget")),
+                        leftStrideTrackLocal=track.transform.InverseTransformPoint(SurfacePrivate<Vector3>(feet,"_leftSwingStrideTarget")),
+                        rightStrideTrackLocal=track.transform.InverseTransformPoint(SurfacePrivate<Vector3>(feet,"_rightSwingStrideTarget")),
+                        leftSubmittedContactWeight=EarthFootIkWeightBlend.ResolveSubmittedGoalWeight(feet.LeftFootIkWeight),
+                        rightSubmittedContactWeight=EarthFootIkWeightBlend.ResolveSubmittedGoalWeight(feet.RightFootIkWeight),
+                        poseSourceAttached=SurfacePrivate<EarthCharacterPoseController>(feet,"poseIntentSource")!=null,
                         contactFrame=feet.LastContactEvaluationFrame,leftWeight=feet.LeftFootIkWeight,
                         rightWeight=feet.RightFootIkWeight,leftLocked=feet.LeftFootLocked,rightLocked=feet.RightFootLocked,
                         leftReason=(int)feet.LeftReason,rightReason=(int)feet.RightReason,
@@ -158,6 +183,9 @@ namespace Elemental.Tests.PlayMode
                     row.hipsTrackLocal=visibleHips!=null?track.transform.InverseTransformPoint(visibleHips.position):Vector3.zero;
                     if(visibleAnimator!=null)
                     {
+                        Transform leftToes=visibleAnimator.GetBoneTransform(HumanBodyBones.LeftToes),rightToes=visibleAnimator.GetBoneTransform(HumanBodyBones.RightToes);
+                        if(leftToes!=null){row.leftToesTrackLocal=track.transform.InverseTransformPoint(leftToes.position);row.leftToesUpClearance=SurfaceToeClearance(leftToes.position,collider,up);}
+                        if(rightToes!=null){row.rightToesTrackLocal=track.transform.InverseTransformPoint(rightToes.position);row.rightToesUpClearance=SurfaceToeClearance(rightToes.position,collider,up);}
                         Transform leftThigh=visibleAnimator.GetBoneTransform(HumanBodyBones.LeftUpperLeg);
                         Transform rightThigh=visibleAnimator.GetBoneTransform(HumanBodyBones.RightUpperLeg);
                         Transform leftKnee=visibleAnimator.GetBoneTransform(HumanBodyBones.LeftLowerLeg);
@@ -223,8 +251,9 @@ namespace Elemental.Tests.PlayMode
                 Assert.That(run.swingSamples,Is.GreaterThan(4),"Walking never released the authored swing foot.");
                 Assert.That(run.pitContactSamples,Is.GreaterThan(0),"Neither final foot followed the actual asymmetric pit during the stopped stance.");
                 Assert.That(run.highestSwingClearance,Is.GreaterThan(.025f),"Swing feet were flattened onto the support.");
-                Assert.That(run.highestSwingClearance,Is.LessThan(.36f),
-                    $"{run.actor}/{run.requestedStepHz}: swing foot lifted {run.highestSwingClearance:F3}m; likely wrong locomotion pose or scale.");
+                Assert.That(run.highestSwingExcursion,Is.GreaterThan(.025f),"Walking must lift the final ankle above its grounded support-plane rest offset.");
+                Assert.That(run.highestSwingExcursion,Is.LessThan(.36f),
+                    $"{run.actor}/{run.requestedStepHz}: final support-plane swing excursion {run.highestSwingExcursion:F3}m; likely wrong locomotion pose or scale. Actual-floor clearance is reported separately ({run.highestSwingClearance:F3}m).");
                 Assert.That(motor.HasStableSupport,Is.True,"Stop lost destination support.");
                 run.completed=true;
             }
@@ -276,6 +305,12 @@ namespace Elemental.Tests.PlayMode
                 // not the released goal (which follows the animated swing).
                 run.highestSwingClearance=Mathf.Max(run.highestSwingClearance,
                     clearance-(left?run.leftRestClearance:run.rightRestClearance));
+                // G03 forbids flattening swing to terrain. A rear foot over a pit
+                // has more air below it without a higher authored step. Keep that
+                // physical clearance separate from this final-pose/scale guard.
+                float excursion=left?row.leftSupportPlaneExcursion:row.rightSupportPlaneExcursion;
+                Assert.That(float.IsFinite(excursion),Is.True);
+                run.highestSwingExcursion=Mathf.Max(run.highestSwingExcursion,excursion);
             }
         }
 
@@ -299,6 +334,8 @@ namespace Elemental.Tests.PlayMode
             }
         }
 
+        private static float SurfaceToeClearance(Vector3 toes,MeshCollider surface,Vector3 up)=>
+            surface.Raycast(new Ray(toes+up*.8f,-up),out RaycastHit hit,1.6f)?Vector3.Dot(toes-hit.point,up):float.NaN;
         private static float RestClearance(Vector3 ankle,MeshCollider surface,Vector3 up)
         {
             Assert.That(surface.Raycast(new Ray(ankle+up*.8f,-up),out RaycastHit hit,1.6f),Is.True);
@@ -383,16 +420,28 @@ namespace Elemental.Tests.PlayMode
         {
             public string actor;public int requestedStepHz,frames,plantedSamples,swingSamples,pitContactSamples;
             public double observedDeltaSum,wallDeltaSum;
+            public float highestSwingExcursion,leftRestSupportPlaneClearance,rightRestSupportPlaneClearance;
             public float maxDrift,maxAbsoluteGap,highestSwingClearance,leftRestClearance,rightRestClearance,soleOffset,pitStopBegan,deepestPitSample;
             public bool sawHump,sawPit,sawSlope,pitStopCompleted,completed;
             [NonSerialized] public Vector3 previousLeftTarget,previousRightTarget;
             [NonSerialized] public bool hasPreviousTargets;
         }
+        private static T SurfacePrivate<T>(EarthFootContactController controller,string field)=>
+            (T)typeof(EarthFootContactController).GetField(field,System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(controller);
         [Serializable] private sealed class SurfaceFrame
         {
+            public Vector3 supportPlanePointTrackLocal,supportPlaneNormalTrackLocal;
+            public float leftSupportPlaneExcursion,rightSupportPlaneExcursion;
             public string actor;public int requestedStepHz,frame,contactFrame,sourceFrame;
             public float delta,wallDelta,trackZ,leftWeight,rightWeight,leftGap,rightGap,leftDrift,rightDrift,leftClearance,rightClearance;
             public float leftRawTargetLag,rightRawTargetLag;
+            public float leftFloorLift,rightFloorLift,leftFloorPredicted,rightFloorPredicted,leftFloorBone,rightFloorBone,leftFloorGoal,rightFloorGoal;
+            public Vector3 leftFloorTrackLocal,rightFloorTrackLocal,leftToesTrackLocal,rightToesTrackLocal;
+            public Vector3 leftProjectedToesTrackLocal,rightProjectedToesTrackLocal;
+            public float leftToesUpClearance,rightToesUpClearance;
+            public bool leftStrideActive,rightStrideActive,leftFloorActive,rightFloorActive,poseSourceAttached;
+            public Vector3 leftStrideTrackLocal,rightStrideTrackLocal;
+            public float leftSubmittedContactWeight,rightSubmittedContactWeight;
             public float leftRawTrackGap,rightRawTrackGap,leftRawNormalUpDot,rightRawNormalUpDot;
             public float leftTargetStep,rightTargetStep,pelvisOffset,leftPelvisRequest,rightPelvisRequest,pelvisTarget;
             public int leftReason,rightReason,leftSupportKind,rightSupportKind;

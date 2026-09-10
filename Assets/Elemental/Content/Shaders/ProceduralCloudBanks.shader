@@ -6,7 +6,7 @@ Shader "Elemental/Procedural Cloud Banks"
   Tags {"RenderPipeline"="UniversalPipeline" "Queue"="Transparent-10" "RenderType"="Transparent"}
   Pass
   {
-   Tags {"LightMode"="ElementalValleyCloud"}
+   Tags {"LightMode"="ElementalAtmosphereCloud"}
    Cull Front ZWrite Off ZTest Always Blend One OneMinusSrcAlpha
    HLSLPROGRAM
    #pragma target 3.5

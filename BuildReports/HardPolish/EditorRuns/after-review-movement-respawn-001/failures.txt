@@ -1,0 +1,22 @@
+Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ActualSavedFighterRunStartsStopsAndTurnReleaseStayContinuous
+  left-turn 60Hz left release discontinuity at 34
+left-turn 60Hz right release discontinuity at 66
+left-turn 60Hz left release discontinuity at 97
+right-turn 60Hz right release discontinuity at 34
+right-turn 60Hz left release discontinuity at 65
+right-turn 60Hz right release discontinuity at 96
+right-turn 60Hz left release discontinuity at 127
+left-turn 120Hz left release discontinuity at 69
+left-turn 120Hz right release discontinuity at 131
+left-turn 120Hz left release discontinuity at 193
+right-turn 120Hz right release discontinuity at 68
+right-turn 120Hz left release discontinuity at 129
+right-turn 120Hz right release discontinuity at 191
+right-turn 120Hz left release discontinuity at 251
+  Expected: <empty>
+  But was:  < "left-turn 60Hz left release discontinuity at 34", "left-turn 60Hz right release discontinuity at 66", "left-turn 60Hz left release discontinuity at 97", "right-turn 60Hz right release discontinuity at 34", "right-turn 60Hz left release discontinuity at 65", "right-turn 60Hz right release discontinuity at 96", "right-turn 60Hz left release discontinuity at 127", "left-turn 120Hz left release discontinuity at 69", "left-turn 120Hz right release discontinuity at 131", "left-turn 120Hz left release discontinuity at 193"... >
+
+at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+<ActualSavedFighterRunStartsStopsAndTurnReleaseStayContinuous>d__37.MoveNext () [0x009d2] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\LocomotionGamefeelProductionTests.cs:132
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+
+

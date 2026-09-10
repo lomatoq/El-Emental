@@ -70,6 +70,8 @@ namespace Elemental.Presentation.Animation
         private Transform _leftToes, _rightToes;
         private float _leftRestLegLength, _rightRestLegLength;
         public int AnatomicalReachReleaseCount { get; private set; }
+        public Vector3 LeftFloorProjectedToesWorld { get; private set; }
+        public Vector3 RightFloorProjectedToesWorld { get; private set; }
         public float LeftSwingFloorCorrectionMeters { get; private set; }
         public float RightSwingFloorCorrectionMeters { get; private set; }
         public float LeftFloorPredictedClearance { get; private set; }
@@ -86,6 +88,13 @@ namespace Elemental.Presentation.Animation
         private EarthFootContactDecision _rightDecision;
         private float _leftAppliedWeight;
         private float _rightAppliedWeight;
+        private Quaternion _airborneBodyLean=Quaternion.identity, _airborneBaseBodyRotation;
+        private bool _airborneBodyLeanOwned;
+        private int _airborneBodyLeanFrame=-1;
+        public void SetAirborneBodyLean(Quaternion rotation,bool owned)
+        { _airborneBodyLean=rotation;_airborneBodyLeanOwned=owned; }
+        private Quaternion _kneeHistoryFrame;
+        private bool _hasKneeHistoryFrame;
         private float3 _leftKneeDirection;
         private float3 _rightKneeDirection;
         private float _pelvisOffset;
@@ -133,6 +142,23 @@ namespace Elemental.Presentation.Animation
         private float _basePoseRightContact;
         private bool _locomoting;
         private bool _pivotingInPlace;
+        private bool _hasRenderedReleaseHistory, _leftPivotPlant, _rightPivotPlant;
+        private Vector3 _leftRenderedRootLocal, _rightRenderedRootLocal;
+        private EarthFootReleaseTransition _leftReleaseTransition, _rightReleaseTransition;
+        private bool _leftReleaseActive, _rightReleaseActive;
+        private Vector3 _leftReleaseTarget, _rightReleaseTarget;
+        private Quaternion _leftRenderedRootRotation, _rightRenderedRootRotation;
+        private Quaternion _leftReleaseBoneRotation, _rightReleaseBoneRotation;
+        private Quaternion _leftReleaseGoalRotation, _rightReleaseGoalRotation;
+        private Quaternion _leftBoneToGoalRotation, _rightBoneToGoalRotation;
+        private bool _leftHasBoneToGoalRotation, _rightHasBoneToGoalRotation;
+        private Quaternion _leftSubmittedGoalRotation, _rightSubmittedGoalRotation;
+        private float _leftSubmittedRotationWeight, _rightSubmittedRotationWeight;
+        private int _leftRotationSubmissionFrame=-1, _rightRotationSubmissionFrame=-1;
+        public bool LeftReleaseRotationBasisReady => _leftHasBoneToGoalRotation;
+        public bool RightReleaseRotationBasisReady => _rightHasBoneToGoalRotation;
+        public float LeftPivotCaptureToeLift { get; private set; }
+        public float RightPivotCaptureToeLift { get; private set; }
         private bool _surfing;
 
         public float FootIkWeight => (_leftAppliedWeight + _rightAppliedWeight) * 0.5f;
@@ -191,6 +217,8 @@ namespace Elemental.Presentation.Animation
         public float PelvisTargetMeters { get; private set; }
         public bool IsLocomoting => _locomoting;
         public bool IsPivotingInPlace => _pivotingInPlace;
+        public bool LeftReleaseTransitionActive => _leftReleaseActive;
+        public bool RightReleaseTransitionActive => _rightReleaseActive;
         public bool IsSurfing => _surfing;
         public EarthAuthoredFootPolicy CurrentFootPolicy => _authoredFootPolicy;
         public float LeftKneeAngleDegrees => ResolveJointAngle(
@@ -267,6 +295,9 @@ namespace Elemental.Presentation.Animation
             _hasBasePoseContactMetadata = false;
             _leftState = default;
             _rightState = default;
+            _hasRenderedReleaseHistory = _leftPivotPlant = _rightPivotPlant = false;
+            _leftReleaseTransition = _rightReleaseTransition = default;
+            _leftReleaseActive = _rightReleaseActive = false;
             _leftDecision = default;
             _rightDecision = default;
             _leftAppliedWeight = 0f;
@@ -274,6 +305,8 @@ namespace Elemental.Presentation.Animation
             _pelvisOffset = 0f;
             _pelvisVelocity = 0f;
             _hasPreviousPelvisBaseWorld = false;
+            _hasKneeHistoryFrame = false;
+            _leftKneeDirection = _rightKneeDirection = float3.zero;
             LeftPelvisRequestMeters = 0f;
             RightPelvisRequestMeters = 0f;
             PelvisTargetMeters = 0f;
@@ -303,6 +336,9 @@ namespace Elemental.Presentation.Animation
             _hasBasePoseContactMetadata = false;
             _leftState = default;
             _rightState = default;
+            _hasRenderedReleaseHistory = _leftPivotPlant = _rightPivotPlant = false;
+            _leftReleaseTransition = _rightReleaseTransition = default;
+            _leftReleaseActive = _rightReleaseActive = false;
             _leftDecision = default;
             _rightDecision = default;
             _leftAppliedWeight = 0f;
@@ -310,6 +346,8 @@ namespace Elemental.Presentation.Animation
             _pelvisOffset = 0f;
             _pelvisVelocity = 0f;
             _hasPreviousPelvisBaseWorld = false;
+            _hasKneeHistoryFrame = false;
+            _leftKneeDirection = _rightKneeDirection = float3.zero;
             _hasPreviousAnimatedFeet = false;
             _leftSupportCollider = null;
             _rightSupportCollider = null;
@@ -337,8 +375,29 @@ namespace Elemental.Presentation.Animation
             // Smooth contact targets/weights before IK, never the resulting bones.
             _leftActualWorld = _leftFoot.position;
             _rightActualWorld = _rightFoot.position;
+            if (motor != null)
+            {
+                _leftRenderedRootLocal = motor.transform.InverseTransformPoint(_leftActualWorld);
+                _rightRenderedRootLocal = motor.transform.InverseTransformPoint(_rightActualWorld);
+                _leftRenderedRootRotation = Quaternion.Inverse(motor.transform.rotation) * _leftFoot.rotation;
+                _rightRenderedRootRotation = Quaternion.Inverse(motor.transform.rotation) * _rightFoot.rotation;
+                _hasRenderedReleaseHistory = true;
+            }
             _leftActualRotation = _leftFoot.rotation;
             _rightActualRotation = _rightFoot.rotation;
+            // Calibrate paired values from the SAME completed full-weight solve.
+            // A pre-IK goal getter may still contain last frame's target and cannot
+            // be paired with the freshly evaluated authored bone orientation.
+            if (!_leftReleaseActive && _leftRotationSubmissionFrame==Time.frameCount && _leftSubmittedRotationWeight>=.999f)
+            {
+                _leftBoneToGoalRotation=Quaternion.Inverse(_leftActualRotation)*_leftSubmittedGoalRotation;
+                _leftHasBoneToGoalRotation=true;
+            }
+            if (!_rightReleaseActive && _rightRotationSubmissionFrame==Time.frameCount && _rightSubmittedRotationWeight>=.999f)
+            {
+                _rightBoneToGoalRotation=Quaternion.Inverse(_rightActualRotation)*_rightSubmittedGoalRotation;
+                _rightHasBoneToGoalRotation=true;
+            }
             // These metrics describe the final rendered chain, after the graph
             // and final OnAnimatorIK contact pass, rather than the pre-IK pose.
             LeftAnchorErrorMeters = _leftDecision.Locked
@@ -357,6 +416,15 @@ namespace Elemental.Presentation.Animation
         {
             if (layerIndex != 0 || animator == null || motor == null ||
                 _leftFoot == null || _rightFoot == null) return;
+            if(_airborneBodyLeanOwned)
+            {
+                // This existing final body/contact owner supplies the whole-body
+                // airborne tilt. The Rigidbody and presentation root stay upright.
+                // The landing mixer may invoke IK twice: reuse one base per frame.
+                if(_airborneBodyLeanFrame!=Time.frameCount)
+                {_airborneBaseBodyRotation=animator.bodyRotation;_airborneBodyLeanFrame=Time.frameCount;}
+                animator.bodyRotation=_airborneBodyLean*_airborneBaseBodyRotation;
+            }
             if (_animationDriver == null) _animationDriver = GetComponent<EarthAnimationDriver>();
             if (_basePoseBridge == null) _basePoseBridge = GetComponent<EAMMBasePoseBridge>();
             // The landing mixer has two controller inputs. A second IK callback
@@ -400,9 +468,22 @@ namespace Elemental.Presentation.Animation
             Vector3 up = motor.LocalUp.sqrMagnitude > 0.5f
                 ? motor.LocalUp.normalized
                 : transform.up;
+            // Knee bend history is relative to the actor, not a compass direction.
+            // Transport it before the anti-flip gate; otherwise crossing the globe
+            // can preserve an old world-space knee direction behind the body.
+            Quaternion frameRotation = motor.transform.rotation;
+            if (_hasKneeHistoryFrame)
+            {
+                var previousFrame = new quaternion(_kneeHistoryFrame.x, _kneeHistoryFrame.y, _kneeHistoryFrame.z, _kneeHistoryFrame.w);
+                var currentFrame = new quaternion(frameRotation.x, frameRotation.y, frameRotation.z, frameRotation.w);
+                _leftKneeDirection = EarthStableKneeHintSolver.TransportHistory(_leftKneeDirection, previousFrame, currentFrame);
+                _rightKneeDirection = EarthStableKneeHintSolver.TransportHistory(_rightKneeDirection, previousFrame, currentFrame);
+            }
+            _kneeHistoryFrame = frameRotation;
+            _hasKneeHistoryFrame = true;
             bool supported = motor.HasStableSupport;
             bool surfLock = surfController != null && surfController.IsActive;
-            bool authoredFlight = _authoredFootPolicy == EarthAuthoredFootPolicy.FlightIkOff;
+            bool authoredFlight = _airborneBodyLeanOwned || _authoredFootPolicy == EarthAuthoredFootPolicy.FlightIkOff;
             bool authoredContact = _authoredFootPolicy == EarthAuthoredFootPolicy.AuthoredContact;
             bool authoredBrace = _authoredFootPolicy == EarthAuthoredFootPolicy.BraceBoth;
             bool contactSupported = supported && !authoredFlight && !authoredContact;
@@ -553,6 +634,10 @@ namespace Elemental.Presentation.Animation
                 out _rightNormalWorld);
             ReleaseUnreachableLocomotionPlant(true, in leftInput, up);
             ReleaseUnreachableLocomotionPlant(false, in rightInput, up);
+            bool leftReleasedPivot = _leftPivotPlant && !_leftDecision.Locked;
+            bool rightReleasedPivot = _rightPivotPlant && !_rightDecision.Locked;
+            _leftPivotPlant = _leftDecision.Locked && (_leftPivotPlant || pivotingInPlace);
+            _rightPivotPlant = _rightDecision.Locked && (_rightPivotPlant || pivotingInPlace);
             // Final IK follows the selected base pose. Idle retains its gentle
             // capture; moving plants and pivots acquire within their actual stance
             // window. Every lane bounds frame steps and releases swing promptly.
@@ -612,6 +697,8 @@ namespace Elemental.Presentation.Animation
                 _rightDecision = default;
             }
             ApplyPelvis(up, in poseIntent, requestLock, deltaTime);
+            UpdatePivotRelease(true, leftReleasedPivot, up, deltaTime);
+            UpdatePivotRelease(false, rightReleasedPivot, up, deltaTime);
             ResolveAuthoredSwingFloor(true, up);
             ResolveAuthoredSwingFloor(false, up);
             ApplyFoot(
@@ -703,7 +790,11 @@ namespace Elemental.Presentation.Animation
             // 0.9 m out of reach forever.
             float previousWeight = left ? _leftAppliedWeight : _rightAppliedWeight;
             bool needsFreshIdlePose = !_locomoting && previousWeight <= 0.001f;
-            Vector3 animated = !_hasPreviousAnimatedFeet || needsFreshIdlePose
+            // During an authored pivot the Humanoid IK goal still contains our
+            // previous planted world target. Feeding it back hides authored lift
+            // and reach from the contact solver until arbitration drops the lock.
+            // Read the freshly evaluated pre-IK bone, as swing-floor safety does.
+            Vector3 animated = !_hasPreviousAnimatedFeet || needsFreshIdlePose || _pivotingInPlace
                 ? foot.position
                 : animator.GetIKPosition(left ? AvatarIKGoal.LeftFoot : AvatarIKGoal.RightFoot);
             Vector3 baseFoot = default;
@@ -800,6 +891,33 @@ namespace Elemental.Presentation.Animation
             Vector3 target = hasContact
                 ? selected.point + normal * soleOffset
                 : animated + stanceOffset;
+            float pivotToeLift = 0f;
+            if (hasContact && _pivotingInPlace && !previousFootState.Locked)
+            {
+                Transform toes = left ? _leftToes : _rightToes;
+                if (toes != null)
+                {
+                    // A planted ankle on the lower side of a small ledge can put
+                    // its toe through the higher surface. The swing floor then
+                    // raises it abruptly when the lock releases. Fit the new
+                    // anchor to this same real toe footprint BEFORE capture.
+                    Vector3 toeOffset = toes.position-foot.position;
+                    bool basisReady = left ? _leftHasBoneToGoalRotation : _rightHasBoneToGoalRotation;
+                    Quaternion authoredGoal = animator.GetIKRotation(left ? AvatarIKGoal.LeftFoot : AvatarIKGoal.RightFoot);
+                    Quaternion submittedGoal = Quaternion.FromToRotation(up,normal)*authoredGoal;
+                    if (basisReady)
+                    {
+                        Quaternion basis = left ? _leftBoneToGoalRotation : _rightBoneToGoalRotation;
+                        Quaternion submittedBone = submittedGoal*Quaternion.Inverse(basis);
+                        toeOffset = submittedBone*Quaternion.Inverse(foot.rotation)*toeOffset;
+                    }
+                    else toeOffset = Quaternion.FromToRotation(up,normal)*toeOffset;
+                    pivotToeLift = RequiredSwingFloorLift(target+toeOffset,up,hits);
+                    target += up*pivotToeLift;
+                }
+            }
+            if(left) LeftPivotCaptureToeLift=pivotToeLift;
+            else RightPivotCaptureToeLift=pivotToeLift;
             float clearance = hasContact
                 ? Vector3.Dot(animated + stanceOffset - target, up)
                 : float.PositiveInfinity;
@@ -829,7 +947,7 @@ namespace Elemental.Presentation.Animation
             Quaternion authoredGoalRotation = animator.GetIKRotation(goal);
             float applied = EarthFootIkWeightBlend.ResolveSubmittedGoalWeight(weight);
             animator.SetIKPositionWeight(goal, applied);
-            animator.SetIKRotationWeight(goal, applied);
+            RecordFootRotationWeight(goal, applied);
             bool left = goal == AvatarIKGoal.LeftFoot;
             bool swingFloor = left ? _leftSwingFloorActive : _rightSwingFloorActive;
             if (swingFloor)
@@ -837,22 +955,43 @@ namespace Elemental.Presentation.Animation
                 // A collision floor changes only this frame's vertical trajectory.
                 // It never creates a stance anchor or changes contact metadata.
                 animator.SetIKPositionWeight(goal, 1f);
-                animator.SetIKRotationWeight(goal, applied);
+                RecordFootRotationWeight(goal, applied);
                 animator.SetIKPosition(goal, left ? _leftSwingFloorTarget : _rightSwingFloorTarget);
                 Vector3 floorUp = motor != null ? motor.LocalUp.normalized : transform.up;
-                animator.SetIKRotation(goal, Quaternion.FromToRotation(floorUp, normal) * authoredGoalRotation);
+                if (left ? _leftReleaseActive && _leftHasBoneToGoalRotation : _rightReleaseActive && _rightHasBoneToGoalRotation)
+                {
+                    RecordFootRotationWeight(goal, 1f);
+                    RecordFootRotation(goal, left ? _leftReleaseGoalRotation : _rightReleaseGoalRotation);
+                }
+                else RecordFootRotation(goal, Quaternion.FromToRotation(floorUp, normal) * authoredGoalRotation);
+                return;
+            }
+            if (left ? _leftReleaseActive : _rightReleaseActive)
+            {
+                // Contact is already released. This short root-relative offset
+                // preserves endpoint continuity while yielding to the authored step.
+                animator.SetIKPositionWeight(goal, 1f);
+                bool rotationReady=left?_leftHasBoneToGoalRotation:_rightHasBoneToGoalRotation;
+                RecordFootRotationWeight(goal, rotationReady?1f:0f);
+                animator.SetIKPosition(goal, left ? _leftReleaseTarget : _rightReleaseTarget);
+                if(rotationReady) RecordFootRotation(goal, left ? _leftReleaseGoalRotation : _rightReleaseGoalRotation);
                 return;
             }
             bool swingStride = left ? _leftSwingStrideActive && !_leftDecision.Locked &&
                 (_localHitPhysics == null || !_localHitPhysics.LeftLegActive) :
                 _rightSwingStrideActive && !_rightDecision.Locked && (_localHitPhysics == null || !_localHitPhysics.RightLegActive);
-            if (swingStride)
+            if (swingStride && applied < .999f)
             {
-                // This target is the current animated foot plus a bounded stride
-                // offset, never a released terrain anchor. Rotation stays authored.
+                // Stride changes the animated endpoint, not contact ownership.
+                // Capture may remain unlocked even at weight one after a release.
+                // Reconstruct the existing contact blend once from the warped base;
+                // full Humanoid goal weight avoids applying that blend a second time.
+                Vector3 strideBase = left ? _leftSwingStrideTarget : _rightSwingStrideTarget;
                 animator.SetIKPositionWeight(goal, 1f);
-                animator.SetIKRotationWeight(goal, 0f);
-                animator.SetIKPosition(goal, left ? _leftSwingStrideTarget : _rightSwingStrideTarget);
+                RecordFootRotationWeight(goal, applied);
+                animator.SetIKPosition(goal, Vector3.Lerp(strideBase, target, applied));
+                Vector3 strideUp = motor != null ? motor.LocalUp.normalized : transform.up;
+                RecordFootRotation(goal, Quaternion.FromToRotation(strideUp, normal) * authoredGoalRotation);
                 return;
             }
             if (applied <= 0.001f) return;
@@ -869,7 +1008,22 @@ namespace Elemental.Presentation.Animation
             // captured (70.9 degrees in the live audit). Surface adaptation is
             // only the bounded slope delta from character-up to contact normal.
             Quaternion slopeAlignment = Quaternion.FromToRotation(characterUp, normal);
-            animator.SetIKRotation(goal, slopeAlignment * authoredGoalRotation);
+            RecordFootRotation(goal, slopeAlignment * authoredGoalRotation);
+        }
+
+        private void RecordFootRotationWeight(AvatarIKGoal goal,float weight)
+        {
+            animator.SetIKRotationWeight(goal,weight);
+            if(goal==AvatarIKGoal.LeftFoot)_leftSubmittedRotationWeight=weight;
+            else _rightSubmittedRotationWeight=weight;
+        }
+        private void RecordFootRotation(AvatarIKGoal goal,Quaternion rotation)
+        {
+            animator.SetIKRotation(goal,rotation);
+            if(goal==AvatarIKGoal.LeftFoot)
+            {_leftSubmittedGoalRotation=rotation;_leftRotationSubmissionFrame=Time.frameCount;}
+            else
+            {_rightSubmittedGoalRotation=rotation;_rightRotationSubmissionFrame=Time.frameCount;}
         }
 
         private void ApplyKneeHints(Vector3 up, float leftWeight, float rightWeight)
@@ -966,9 +1120,10 @@ namespace Elemental.Presentation.Animation
             float rightError = _rightAppliedWeight > 0.05f
                 ? Vector3.Dot(_rightTargetWorld - _rightFoot.position, up)
                 : 0f;
-            bool finalContactOwned = Mathf.Max(
-                _leftAppliedWeight,
-                _rightAppliedWeight) >= 0.999f;
+            bool finalContactOwned = EarthPelvisCompensation.OwnsReach(
+                _leftAppliedWeight, _leftDecision.Locked, _leftDecision.Reason) ||
+                EarthPelvisCompensation.OwnsReach(
+                    _rightAppliedWeight, _rightDecision.Locked, _rightDecision.Reason);
             bool stanceCaptureOwned =
                 (_leftDecision.TargetWeight > 0.05f &&
                  (_leftDecision.Reason is EarthFootContactReason.Capture or EarthFootContactReason.Stance)) ||
@@ -1052,6 +1207,34 @@ namespace Elemental.Presentation.Animation
             AnatomicalReachReleaseCount++;
         }
 
+        private void UpdatePivotRelease(bool left, bool released, Vector3 up, float deltaTime)
+        {
+            ref EarthFootReleaseTransition state = ref (left ? ref _leftReleaseTransition : ref _rightReleaseTransition);
+            bool locked = left ? _leftDecision.Locked : _rightDecision.Locked;
+            bool physical = _localHitPhysics != null && (left ? _localHitPhysics.LeftLegActive : _localHitPhysics.RightLegActive);
+            bool allowed = _hasRenderedReleaseHistory && motor.HasStableSupport && !locked && !physical &&
+                _authoredFootPolicy == EarthAuthoredFootPolicy.DefaultContact;
+            if (!allowed) state = default;
+            Vector3 authored = (left ? _leftFoot.position : _rightFoot.position) + up * _pelvisOffset;
+            float3 authoredLocal = ToFloat3(motor.transform.InverseTransformPoint(authored));
+            Quaternion authoredLocalRotation = Quaternion.Inverse(motor.transform.rotation) * (left ? _leftFoot.rotation : _rightFoot.rotation);
+            Quaternion previousRotation = left ? _leftRenderedRootRotation : _rightRenderedRootRotation;
+            quaternion authoredQ = new quaternion(authoredLocalRotation.x,authoredLocalRotation.y,authoredLocalRotation.z,authoredLocalRotation.w);
+            if (allowed && released)
+                state.Begin(ToFloat3(left ? _leftRenderedRootLocal : _rightRenderedRootLocal), authoredLocal,
+                    new quaternion(previousRotation.x,previousRotation.y,previousRotation.z,previousRotation.w),authoredQ);
+            else state.Advance(deltaTime);
+            quaternion resolvedQ = state.ResolveRotation(authoredQ);
+            Quaternion boneRotation = motor.transform.rotation * new Quaternion(resolvedQ.value.x,resolvedQ.value.y,resolvedQ.value.z,resolvedQ.value.w);
+            if(left)
+            { _leftReleaseBoneRotation=boneRotation;_leftReleaseGoalRotation=boneRotation*_leftBoneToGoalRotation; }
+            else
+            { _rightReleaseBoneRotation=boneRotation;_rightReleaseGoalRotation=boneRotation*_rightBoneToGoalRotation; }
+            Vector3 target = motor.transform.TransformPoint(ToVector3(state.Resolve(authoredLocal)));
+            if (left) { _leftReleaseActive = state.Active; _leftReleaseTarget = target; }
+            else { _rightReleaseActive = state.Active; _rightReleaseTarget = target; }
+        }
+
         private void ResolveAuthoredSwingFloor(bool left, Vector3 up)
         {
             bool authoredLowerBody = _basePoseBridge == null ||
@@ -1060,7 +1243,11 @@ namespace Elemental.Presentation.Animation
             if (!motor.HasStableSupport || !authoredLowerBody ||
                 _authoredFootPolicy is EarthAuthoredFootPolicy.FlightIkOff or
                     EarthAuthoredFootPolicy.AuthoredContact or EarthAuthoredFootPolicy.BraceBoth) return;
-            float applied = left ? _leftAppliedWeight : _rightAppliedWeight;
+            // Reconstruct the same blend that ApplyFoot submits. Using the raw
+            // state ramp here bypassed its terminal capture weighting whenever
+            // floor safety took full position authority (16.38 mm stance drift).
+            float applied = EarthFootIkWeightBlend.ResolveSubmittedGoalWeight(
+                left ? _leftAppliedWeight : _rightAppliedWeight);
             if (applied >= .999f ||
                 (_localHitPhysics != null && (left ? _localHitPhysics.LeftLegActive : _localHitPhysics.RightLegActive))) return;
             Transform foot = left ? _leftFoot : _rightFoot;
@@ -1068,13 +1255,16 @@ namespace Elemental.Presentation.Animation
             // Continue collision safety through Capture and blend-to-idle. Match
             // the ordinary position blend first, then change only its vertical
             // clearance. The captured support target itself stays untouched.
-            // During partial contact, the internal goal is the solver's blend
-            // input. At zero contact that goal can retain a previous IK target;
-            // the released bone trajectory is then the actual authored input.
+            // Goals can retain a previously submitted stride/stance target even
+            // during partial contact. This callback follows graph evaluation;
+            // use its composed bone trajectory at every contact weight so that
+            // admitting the floor cannot replace that pose with a stale goal.
             Vector3 goal = animator.GetIKPosition(left ? AvatarIKGoal.LeftFoot : AvatarIKGoal.RightFoot) + up * _pelvisOffset;
-            Vector3 authored = applied <= .001f ? foot.position + up * _pelvisOffset : goal;
+            Vector3 authored = foot.position + up * _pelvisOffset;
             Vector3 animated = Vector3.Lerp(authored,
                 left ? _leftTargetWorld : _rightTargetWorld, applied);
+            if (left ? _leftReleaseActive : _rightReleaseActive)
+                animated = left ? _leftReleaseTarget : _rightReleaseTarget;
             RaycastHit[] hits = left ? _leftHits : _rightHits;
             float lift = RequiredSwingFloorLift(animated, up, hits);
             // Record all positions in one support plane before final Humanoid IK.
@@ -1095,8 +1285,29 @@ namespace Elemental.Presentation.Animation
                 RightFloorGoalClearance = _lastSwingFloorClearance + goalDelta;
                 RightFloorBoneClearance = _lastSwingFloorClearance + boneDelta;
             }
+            Vector3 projectedToe = animated;
             if (toes != null)
-                lift = Mathf.Max(lift, RequiredSwingFloorLift(animated + toes.position - foot.position, up, hits));
+            {
+                // IK retains the authored toe articulation but rotates its parent ankle
+                // toward this exact surface-aligned goal. Probe that blended endpoint,
+                // not a raw toe vector from the pre-IK pose beside the new ankle target.
+                Quaternion authoredRotation=animator.GetIKRotation(left?AvatarIKGoal.LeftFoot:AvatarIKGoal.RightFoot);
+                Vector3 normal=left?_leftNormalWorld:_rightNormalWorld;
+                Quaternion submittedRotation=Quaternion.FromToRotation(up,normal)*authoredRotation;
+                float3 projected=EarthPelvisCompensation.ProjectToeOffset(
+                    ToFloat3(toes.position-foot.position),
+                    new quaternion(authoredRotation.x,authoredRotation.y,authoredRotation.z,authoredRotation.w),
+                    new quaternion(submittedRotation.x,submittedRotation.y,submittedRotation.z,submittedRotation.w),applied);
+                projectedToe=animated+ToVector3(projected);
+                if(left ? _leftReleaseActive && _leftHasBoneToGoalRotation : _rightReleaseActive && _rightHasBoneToGoalRotation)
+                {
+                    Quaternion releaseBone = left ? _leftReleaseBoneRotation : _rightReleaseBoneRotation;
+                    projectedToe = animated + releaseBone * Quaternion.Inverse(foot.rotation) * (toes.position-foot.position);
+                }
+                lift=Mathf.Max(lift,RequiredSwingFloorLift(projectedToe,up,hits));
+            }
+            if(left)LeftFloorProjectedToesWorld=projectedToe+up*lift;
+            else RightFloorProjectedToesWorld=projectedToe+up*lift;
             if (lift <= .0001f) return;
             if (left)
             {

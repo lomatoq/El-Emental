@@ -63,6 +63,28 @@ namespace Elemental.Tests.PlayMode
                 view.Show(page);yield return new WaitForSecondsRealtime(.5f);yield return Capture(page.ToString());
             }
             view.Show(FrontendPage.Main);yield return new WaitForSecondsRealtime(.7f);
+            var magic=Find<EarthMvpDuelController>().PlayerTransform.GetComponentsInChildren<Elemental.Input.Gestures.MagicInputController>(true).Single();
+            var originalElement=magic.SelectedElement;
+            // Preview menu themes without enabling unavailable schools or combat while in the menu.
+            var elementField=typeof(Elemental.Input.Gestures.MagicInputController).GetField("selectedElement",BindingFlags.NonPublic|BindingFlags.Instance);
+            try
+            {
+                foreach(var element in new[]{Elemental.Simulation.Magic.ElementId.Earth,Elemental.Simulation.Magic.ElementId.Fire,Elemental.Simulation.Magic.ElementId.Water,Elemental.Simulation.Magic.ElementId.Air})
+                {
+                    elementField.SetValue(magic,element);yield return null;yield return null;
+                    var plate=view.GetComponentsInChildren<UnityEngine.UI.Image>(true).Single(i=>i.name=="Active element ribbon");
+                    Assert.That(plate.material.shader.name,Is.EqualTo("Elemental/UI/Menu Hue"));
+                    float expectedHue=element==Elemental.Simulation.Magic.ElementId.Earth?0:element==Elemental.Simulation.Magic.ElementId.Fire?-.155f:element==Elemental.Simulation.Magic.ElementId.Water?.36f:.37f;
+                    Assert.That(plate.material.GetFloat("_HueShift"),Is.EqualTo(expectedHue).Within(.0001f));
+                    var selectedButton=view.GetComponentsInChildren<FrontendButton>(true).First(b=>b.gameObject.activeInHierarchy);
+                    selectedButton.OnSelect(new UnityEngine.EventSystems.BaseEventData(UnityEngine.EventSystems.EventSystem.current));
+                    yield return new WaitForSecondsRealtime(.25f);
+                    var artwork=selectedButton.transform.Find("Press Visual/Button artwork").GetComponent<UnityEngine.UI.Image>();
+                    Assert.That(artwork.material.shader.name,Is.EqualTo("Elemental/UI/Menu Hue"));
+                    yield return Capture("Element-"+element);selectedButton.OnDeselect(null);
+                }
+            }
+            finally{elementField.SetValue(magic,originalElement);}
             var button=(RectTransform)view.transform.Find("Menu contents/Menu column/Main/PLAY VS BOT");
             var hostButton=(RectTransform)button.parent.Find("HOST GAME");
             var joinButton=(RectTransform)button.parent.Find("JOIN GAME");
@@ -87,25 +109,26 @@ namespace Elemental.Tests.PlayMode
             var menuGroup=view.transform.Find("Menu contents").GetComponent<CanvasGroup>();
             var panel=(RectTransform)view.transform.Find("Menu contents/Menu column");
             float panelStart=panel.anchoredPosition.x;
-            bool movingCaptured=false,veilCaptured=false,countdownCaptured=false;
+            bool movingCaptured=false,cameraCaptured=false,countdownCaptured=false;
             deadline=Time.realtimeSinceStartupAsDouble+15;
             try
             {
                 while(flow.State==FrontendState.Starting&&Time.realtimeSinceStartupAsDouble<deadline)
                 {
                     float age=(float)typeof(FrontendFlowController).GetField("_transition",BindingFlags.NonPublic|BindingFlags.Instance).GetValue(flow);
-                    if(age<view.StartIntroSeconds)Assert.That(view.CountdownText,Is.Empty,"Countdown must wait for sidebar departure and camera cover.");
+                    if(age<view.StartIntroSeconds)Assert.That(view.CountdownText,Is.Empty,"Countdown must wait for sidebar departure and visible camera departure.");
                     if(age>.18f&&age<.4f)
                     {
                         Assert.That(menuGroup.alpha,Is.GreaterThan(.98f),"Departing sidebar must slide, not dissolve halfway.");
                         Assert.That(panel.anchoredPosition.x,Is.LessThan(panelStart-150));
                         if(!movingCaptured){movingCaptured=true;yield return Capture("Start-01-sidebar-departure");}
                     }
-                    if(age>.6f&&!veilCaptured){veilCaptured=true;Assert.That(menuGroup.alpha,Is.LessThan(.01f));yield return Capture("Start-02-camera-cover");}
+                    Assert.That(view.StartVeilAlpha,Is.Zero);
+                    if(age>.6f&&!cameraCaptured){cameraCaptured=true;Assert.That(menuGroup.alpha,Is.LessThan(.01f));yield return Capture("Start-02-visible-camera");}
                     if(age>1.05f&&!countdownCaptured){countdownCaptured=true;Assert.That(view.CountdownText,Is.Not.Empty);yield return Capture("Start-03-countdown");}
                     yield return null;
                 }
-                Assert.That(movingCaptured&&veilCaptured&&countdownCaptured,Is.True,"Capture every phase of the real bot-start transition.");
+                Assert.That(movingCaptured&&cameraCaptured&&countdownCaptured,Is.True,"Capture every phase of the real bot-start transition.");
                 Assert.That(flow.State,Is.EqualTo(FrontendState.Combat));
             }
             finally{flow.Preferences.Set(flow.Preferences.MasterVolume,flow.Preferences.UIVolume,flow.Preferences.Sensitivity,oldReduced);}
@@ -117,6 +140,7 @@ namespace Elemental.Tests.PlayMode
             Assert.That(feedback.PanelMovePlayCount,Is.EqualTo(panelSoundsBeforeStart+3));
             var duel=Find<EarthMvpDuelController>();var hud=Find<EarthDuelHud>();
             var root=hud.GetComponent<UIDocument>().rootVisualElement.Q("duel-hud");
+            string[] sharedResultParts={"reference-result-brand","reference-result-emblem","reference-result-title","reference-result-score","restart-round","reference-result-menu"};Rect[] victoryBounds=null;
             foreach(var outcome in new[]{"Victory","Defeat","Draw"})
             {
                 duel.RestartRound();deadline=Time.realtimeSinceStartupAsDouble+30;
@@ -135,6 +159,22 @@ namespace Elemental.Tests.PlayMode
                 Assert.That(root.Q("result-positive-fringe").resolvedStyle.color.a,Is.GreaterThan(.2f));
                 Assert.That(root.Q("restart-round").resolvedStyle.height,Is.EqualTo(88).Within(.2f));
                 yield return Capture(outcome);
+                if(outcome=="Victory")victoryBounds=sharedResultParts.Select(name=>root.Q(name).worldBound).ToArray();
+                if(outcome=="Defeat")for(int part=0;part<sharedResultParts.Length;part++)
+                {
+                    Rect bounds=root.Q(sharedResultParts[part]).worldBound;
+                    Assert.That(Vector2.Distance(bounds.position,victoryBounds[part].position),Is.LessThan(1),sharedResultParts[part]+" shifted between win and loss");
+                    Assert.That(Vector2.Distance(bounds.size,victoryBounds[part].size),Is.LessThan(1),sharedResultParts[part]+" resized between win and loss");
+                }
+                var rematch=root.Q<Button>("restart-round");var back=root.Q<Button>("reference-result-menu");
+                rematch.Blur();back.Blur();yield return null;
+                Assert.That(rematch.Q("reference-button-artwork").style.backgroundImage.value.sprite,
+                    Is.SameAs(back.Q("reference-button-artwork").style.backgroundImage.value.sprite),"Both result buttons share the menu's normal plate.");
+                var normalPlate=rematch.Q("reference-button-artwork").style.backgroundImage.value.sprite;
+                rematch.Focus();yield return null;yield return null;
+                Assert.That(rematch.Q("reference-button-artwork").style.backgroundImage.value.sprite,Is.Not.SameAs(normalPlate),"Selection replaces the plate, as in the menu.");
+                yield return Capture(outcome+"-rematch-selected");
+                back.Focus();yield return null;yield return null;yield return Capture(outcome+"-back-selected");back.Blur();
                 if(outcome=="Victory")
                 {
                     hud.SetReducedMotion(true);var p=theme.menuPresentation.Get(MenuScreenId.Victory);float saved=p.chromaticOpacity;

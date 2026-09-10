@@ -45,6 +45,9 @@ namespace Elemental.Runtime.Physics
         public bool IsEarthTargetValid => gameObject.activeInHierarchy && Body != null;
         public Collider PieceCollider { get; private set; }
         public bool IsReleased => _released;
+        private float _restoreSiblingCollisionAt;
+        private bool _siblingCollisionRestored;
+        internal bool ReleasedSiblingCollisionReady => _released && Time.fixedTime >= _restoreSiblingCollisionAt;
         public bool IsPhysical => PieceCollider != null && PieceCollider.enabled && Body != null && Body.detectCollisions;
         public bool DefensiveCollisionEnabled => _defensiveCollisionEnabled;
         public int DefensiveCollisionStateChangeCount => _defensiveCollisionStateChangeCount;
@@ -101,6 +104,7 @@ namespace Elemental.Runtime.Physics
             _fullScale = new Vector3(width, thickness, height);
             transform.localScale = _fullScale;
             gameObject.SetActive(true);
+            _owner?.SetSiblingCollisionPolicy(this,true);
         }
 
         public void SetFormationScale(float multiplier)
@@ -206,7 +210,11 @@ namespace Elemental.Runtime.Physics
         {
             if (!gameObject.activeSelf) return;
             _owner?.Physicalize(this);
+            _owner?.SetSiblingCollisionPolicy(this,true);
             _released = true;
+            SetCameraSuppressed(false);
+            _restoreSiblingCollisionAt=Time.fixedTime+.12f;
+            _siblingCollisionRestored=false;
             _defensiveCollisionEnabled = true;
             _releasedElapsed = 0f;
             _restSeconds = Mathf.Max(0f, restSeconds);
@@ -233,6 +241,7 @@ namespace Elemental.Runtime.Physics
                 return false;
             _released = false;
             _releasedElapsed = 0f;
+            _owner?.SetSiblingCollisionPolicy(this,true);
             SetCameraSuppressed(false);
             Body.linearVelocity = Vector3.zero;
             Body.angularVelocity = Vector3.zero;
@@ -316,11 +325,12 @@ namespace Elemental.Runtime.Physics
         private void Update()
         {
             if (!_released || _gripCount > 0) return;
+            if(!_siblingCollisionRestored && ReleasedSiblingCollisionReady)
+            { _owner?.SetSiblingCollisionPolicy(this,false); _siblingCollisionRestored=true; }
             _releasedElapsed += Time.deltaTime;
             if (_releasedElapsed <= _restSeconds) return;
             float shrink01 = Mathf.Clamp01((_releasedElapsed - _restSeconds) / _shrinkSeconds);
             transform.localScale = Vector3.Lerp(_fullScale, Vector3.zero, shrink01);
-            Body.WakeUp();
             if (shrink01 >= 1f) ResetToPool();
         }
 
@@ -384,7 +394,7 @@ namespace Elemental.Runtime.Physics
                 ImpactSourceId);
             if (relativeSpeed >= .75f)
             {
-                var structuralImpact = new EarthStructureImpact(contact.point, direction, impulse,
+                var structuralImpact = new EarthStructureImpact(contact.point, direction, EarthStructureImpactRouter.CollisionStrength(collision, Body),
                     EarthStructureImpactKind.Projectile, ImpactSourceId);
                 EarthStructureImpactRouter.Apply(hit, in structuralImpact);
             }

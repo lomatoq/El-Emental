@@ -46,6 +46,7 @@ namespace Elemental.Presentation.MotionMatching
         };
 
         [SerializeField] private Animator animator;
+        private PlanetMotor motor;
         [SerializeField] private MotionMatchingController source;
         [SerializeField] private HumanoidCharacterPresentation presentation;
         [SerializeField] private HumanoidRagdollRig ragdoll;
@@ -182,6 +183,7 @@ namespace Elemental.Presentation.MotionMatching
 
         private void Awake()
         {
+            if (motor == null) motor = GetComponentInParent<PlanetMotor>();
             if (animator == null) animator = GetComponent<Animator>();
             if (presentation == null) presentation = GetComponent<HumanoidCharacterPresentation>();
             if (ragdoll == null) ragdoll = GetComponent<HumanoidRagdollRig>();
@@ -240,7 +242,7 @@ namespace Elemental.Presentation.MotionMatching
                                       presentation.CurrentAuthoredAction is EarthAuthoredActionId.None or
                                           EarthAuthoredActionId.Locomotion;
             bool authoredTurn = HasAuthoredTurnOwnership() || HasAuthoredShortTransitionOwnership();
-            authoredLocomotion &= !authoredTurn;
+            authoredLocomotion &= !authoredTurn && (presentation == null || !presentation.FireLiftPoseOwned);
             if (authoredTurn != _previousAuthoredTurn)
             {
                 _animationGraph.RequestInertialization(0.12f);
@@ -486,6 +488,19 @@ namespace Elemental.Presentation.MotionMatching
             if (!_initialized || _animationGraph == null || !_animationGraph.IsCreated) return;
             if (_visiblePoseRejected) return;
 
+            // JLPM evaluates its simulation root from the last search origin
+            // after the motor adapter's Update. Align the hidden query rig again
+            // at this source-sampling boundary, before any world-up validation.
+            // Local authored joint rotations remain untouched; final contact IK
+            // still belongs exclusively to EarthFootContactController.
+            if (motor != null && source != null && source.SkeletonTransforms != null &&
+                source.SkeletonTransforms.Length > 0)
+            {
+                Transform sourceRoot = source.SkeletonTransforms[0];
+                if (sourceRoot != null && sourceRoot != motor.transform &&
+                    !animator.transform.IsChildOf(sourceRoot))
+                    sourceRoot.SetPositionAndRotation(motor.transform.position, motor.transform.rotation);
+            }
             Transform sourceHips = _sourceBones[0];
             if (sourceHips == null)
             {

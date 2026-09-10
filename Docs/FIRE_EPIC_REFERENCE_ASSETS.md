@@ -1,0 +1,7 @@
+EpicBurnTongues.png derives from flameShape3 Texture2D, and EpicBurnNoise.png from flameNoise1, in the user-provided C:/Users/nirrt/Downloads/EpicFiresWindows/EpicFiresWindows/EpicFires_Data/sharedassets0.assets. Extracted losslessly with UnityPy for the user-requested local integration. Runtime URP shader and presentation code are new. Source textures are not represented as original art.
+
+
+HovlAccentFire.png is the RGBA EmberFire1 atlas; HovlAccentSmoke.png is RGBA EmberExpl2, extracted from the user-provided C:/Users/nirrt/Downloads/3D Fire and Explosions v1.1.zip inner Unity package. Original texture alpha is retained (RGB includes padded edge colors). The project uses a new URP atlas interpolation/soft-depth shader rather than importing the Built-in source shader or complete prefab framework. Source analysis is in ../Fire3D-reference/shader-audit/AUDIT.md. These textures are third-party supplied art, not newly authored assets.
+
+
+September10 additional Hovl integration: the supplied `source.unitypackage` also provides `EmberFire1Motion.png` and `EmberExpl2Motion.png`, imported as linear `HovlFireMotion` / `HovlSmokeMotion`. The shared URP fire atlas shader reproduces bounded motion-vector interpolation between two frames, retains real RGBA alpha, and uses the existing heat-haze pass. Original package/demo/renderer settings were not imported. See ADR0040 for the post-atmosphere draw order, surface area sampling and native validation.

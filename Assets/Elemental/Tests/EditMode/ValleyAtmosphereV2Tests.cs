@@ -62,7 +62,8 @@ namespace Elemental.Tests.EditMode
             const double radius=55.1;
             Assert.That(ValleyAtmosphereMath.UpperWindowProtection(10,radius,radius,radius,300),Is.Zero);
             Assert.That(ValleyAtmosphereMath.UpperWindowProtection(2200,radius,radius,radius,300),Is.Zero);
-            Assert.That(ValleyAtmosphereMath.UpperWindowProtection(10,radius,-radius,radius,300),Is.EqualTo(1));
+            Assert.That(ValleyAtmosphereMath.UpperWindowProtection(10,radius,-radius,radius,300),Is.Zero);
+            Assert.That(ValleyAtmosphereMath.UpperWindowProtection(80,radius,-radius,radius,300),Is.EqualTo(1));
             Assert.That(ValleyAtmosphereMath.LowerTerrainOpacity(-radius,radius),Is.EqualTo(1));
             Assert.That(ValleyAtmosphereMath.LowerTerrainOpacity(radius,radius),Is.Zero);
             double previous=1;
@@ -72,5 +73,31 @@ namespace Elemental.Tests.EditMode
         [Test]
         public void InvalidInputsDoNotLeakNanIntoShaderParameters()
         {Assert.Throws<ArgumentOutOfRangeException>(()=>ValleyAtmosphereMath.IntegratedDensity(double.NaN,0,100,32));Assert.Throws<ArgumentOutOfRangeException>(()=>ValleyAtmosphereMath.IntegratedDensity(0,0,100,0));}
+        [TestCase(-54d)]
+        [TestCase(0d)]
+        [TestCase(54d)]
+        public void ImmediateOpaqueGeometryIsClearAtEveryPlanetHeight(double height)
+        {
+            double near = ValleyAtmosphereMath.UpperWindowProtection(6,54,height,54,300);
+            Assert.That(ValleyAtmosphereMath.ComposeSurfaceOpacity(1,1,height,54,54,near,1), Is.Zero);
+        }
+
+        [Test]
+        public void UndersideForegroundTransitionIsContinuousAndDistantSealUnchanged()
+        {
+            double previous = 0;
+            for(int i=0;i<=2400;i++)
+            {
+                double distance = i*.01;
+                double protection = ValleyAtmosphereMath.UpperWindowProtection(distance,54,-54,54,300);
+                double alpha = ValleyAtmosphereMath.ComposeSurfaceOpacity(1,1,-54,54,54,protection,1);
+                Assert.That(alpha, Is.InRange(previous, previous+.002));
+                previous = alpha;
+            }
+            Assert.That(previous, Is.EqualTo(1));
+            foreach(double distance in new[]{24d,80d,300d,4000d})
+                Assert.That(ValleyAtmosphereMath.ComposeSurfaceOpacity(1,1,-54,54,54,
+                    ValleyAtmosphereMath.UpperWindowProtection(distance,54,-54,54,300),1), Is.EqualTo(1));
+        }
     }
 }

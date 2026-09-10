@@ -26,6 +26,7 @@ namespace Elemental.Runtime.Geometry
         private readonly List<Mesh> _owned = new();
         private static readonly ProfilerMarker PrepareMarker = new("Elemental.Earth.Fracture.PrepareConvexCells");
         public int PreparationCount { get; private set; }
+        public int RenderHullFallbackCount { get; private set; }
         public int OwnedMeshCount => _owned.Count;
         private readonly Queue<Mesh> _pendingCooking = new();
         private readonly HashSet<Mesh> _cookingQueued = new();
@@ -204,15 +205,9 @@ namespace Elemental.Runtime.Geometry
                     mesh.vertices=vertices; mesh.triangles=cell.Triangles;
                     mesh.RecalculateNormals(); mesh.RecalculateBounds();
                     _owned.Add(mesh);
-                    // Broad chipped edges soften brick-like arena boundaries while
-                    // retaining the exact collider partition and containing the render.
-                    float width=Mathf.Min(mesh.bounds.size.x,Mathf.Min(mesh.bounds.size.y,mesh.bounds.size.z))*.18f;
-                    Mesh render=EarthFractureBevelMeshBuilder.Create(mesh,width,.22f);
-                    if(render!=mesh)
-                    {
-                        _owned.Add(render);
-                        ContainBevel(render, cell);
-                    }
+                    Mesh render=EarthContainedRenderRepair.Create(mesh,out bool usedHull,out _);
+                    if(usedHull) RenderHullFallbackCount++;
+                    _owned.Add(render);
                     UnityEngine.Physics.BakeMesh(mesh.GetEntityId(),true);
                     plan[i]=new Child(mesh,render,cell.Center,cell.Volume);
                 }
@@ -220,28 +215,6 @@ namespace Elemental.Runtime.Geometry
             }
         }
 
-        private static void ContainBevel(Mesh render, EarthConvexPartitionCell collider)
-        {
-            // The shared bevel builder can extend acute corners beyond their source
-            // plane. Clip only those vertices radially back into THIS child convex.
-            // The interior origin is the cell's vertex barycenter, so every ray is safe.
-            Vector3[] vertices=render.vertices;
-            for(int v=0;v<vertices.Length;v++)
-            {
-                float3 point=vertices[v];
-                float scale=1f;
-                for(int t=0;t<collider.Triangles.Length;t+=3)
-                {
-                    float3 a=collider.Vertices[collider.Triangles[t]], b=collider.Vertices[collider.Triangles[t+1]], c=collider.Vertices[collider.Triangles[t+2]];
-                    float3 normal=math.cross(b-a,c-a);
-                    float projection=math.dot(normal,point);
-                    if(projection>1e-12f) scale=math.min(scale,math.max(0f,math.dot(normal,a))/projection);
-                }
-                if(scale<1f) vertices[v]*=scale*.999f;
-            }
-            render.vertices=vertices;
-            render.RecalculateNormals(); render.RecalculateBounds();
-        }
         public void Dispose()
         {
             if (_cookingScheduled) CompleteScheduledCooking();

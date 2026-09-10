@@ -53,7 +53,27 @@ namespace Elemental.Presentation.VFX
         private readonly bool[] seamVolume = new bool[512];
         private readonly Collider[] overlaps = new Collider[512], stones = new Collider[96];
         private readonly RaycastHit[] hits = new RaycastHit[24];
-        private int stoneCount, scanCursor, probeCursor, appliedCapacity;
+        private int stoneCount, scanCursor, appliedCapacity;
+        [SerializeField] private UnityEngine.Camera viewCamera;
+        private readonly float[] supportAge=new float[512],probeAges=new float[512],probePriority=new float[512];
+        private readonly bool[] selectedProbes=new bool[512];
+        private readonly Collider[] supports=new Collider[512];
+        private readonly Mesh[] supportMeshes=new Mesh[512];
+        private readonly IEarthPhysicalTarget[] supportOwners=new IEarthPhysicalTarget[512];
+        private readonly EarthPhysicalTargetHandle[] supportHandles=new EarthPhysicalTargetHandle[512];
+        private readonly EarthArenaSurfaceProvider[] supportArenas=new EarthArenaSurfaceProvider[512];
+        private readonly uint[] supportGenerations=new uint[512];
+        public int SupportQueriesLastFrame { get; private set; }
+        public int BirthQueriesLastFrame { get; private set; }
+        public int InvalidatedSupportCount { get; private set; }
+        public float MaximumSupportAgeSeconds { get; private set; }
+        public void ConfigureViewCamera(UnityEngine.Camera camera) => viewCamera=camera;
+        public void InvalidateSupport(Collider collider)
+        {
+            for(int slot=0;slot<supports.Length;slot++)
+                if(supports[slot]==collider && occupied[slot] && !retiring[slot])
+                {retiring[slot]=true;InvalidatedSupportCount++;}
+        }
         private float nextScan, groundBudget, stoneBudget;
         private uint random = 0x6A09E667u;
         public int LiveParticles => particles != null ? particles.particleCount : 0;
@@ -88,7 +108,7 @@ namespace Elemental.Presentation.VFX
                 new[] { new GradientAlphaKey(0,0), new GradientAlphaKey(1,.18f), new GradientAlphaKey(.65f,.7f), new GradientAlphaKey(0,1) });
             color.color = gradient;
             var size = particles.sizeOverLifetime; size.enabled = true;
-            size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0,.65f,1,1.3f));
+            size.size = profile.clusteredWisps ? new ParticleSystem.MinMaxCurve(1f) : new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0,.65f,1,1.3f));
             var renderer = particles.GetComponent<ParticleSystemRenderer>();
             renderer.sharedMaterial = dustMaterial; renderer.renderMode = ParticleSystemRenderMode.Stretch;
             if(profile.clusteredWisps)
@@ -109,6 +129,7 @@ namespace Elemental.Presentation.VFX
                 properties.SetFloat("_SoftParticleNearDistance",.015f);
                 properties.SetFloat("_SoftParticleInvDistance",8f);
                 properties.SetFloat("_SurfaceWisp",1f);
+                properties.SetFloat("_WispWaveHeight",.005f);
                 properties.SetVector("_WispUp",(arenaAnchor.position-planet.position).normalized);
                 renderer.SetActiveVertexStreams(WispStreams);
 
@@ -125,9 +146,11 @@ namespace Elemental.Presentation.VFX
         private void OnDestroy(){if(surfaceMesh!=null)Destroy(surfaceMesh);}
         private void LateUpdate()
         {
+            using var allocationScope = Elemental.Runtime.Diagnostics.HardPolishAllocationCounters.Measure(
+                Elemental.Runtime.Diagnostics.HardPolishAllocationCounters.Path.DustLate);
             if (profile == null || particles == null || arenaAnchor == null || planet == null) return;
             if (!profile.enabledEffect) { if (particles.particleCount > 0) particles.Clear(); return; }
-            float dt = Mathf.Min(Time.deltaTime, .05f); if (dt <= 0f) return;
+            float dt = Time.deltaTime; if (!float.IsFinite(dt) || dt <= 0f) return;
             using (Marker.Auto())
             {
                 int capacity = Mathf.Clamp(profile.maximumParticles, 32, 512);
@@ -135,15 +158,39 @@ namespace Elemental.Presentation.VFX
                 if (Time.time >= nextScan) { nextScan = Time.time + Mathf.Max(.2f, profile.stoneScanSeconds); ScanStones(); }
                 int count = particles.GetParticles(buffer);
                 Array.Clear(occupied, 0, occupied.Length);
-                int probes = Mathf.Min(8, count);
+                SupportQueriesLastFrame=BirthQueriesLastFrame=0;MaximumSupportAgeSeconds=0;
+                Array.Clear(selectedProbes,0,selectedProbes.Length);
+                Vector3 viewPosition=viewCamera!=null?viewCamera.transform.position:arenaAnchor.position;
+                for(int i=0;i<count;i++)
+                {
+                    int slot=(int)((buffer[i].randomSeed-1u)&511u);
+                    probePriority[i]=-1;
+                    if(buffer[i].randomSeed!=particleIds[slot] || retiring[slot])continue;
+                    supportAge[slot]+=dt;probeAges[i]=supportAge[slot];
+                    MaximumSupportAgeSeconds=Mathf.Max(MaximumSupportAgeSeconds,supportAge[slot]);
+                    if(!SupportIsCurrent(slot)) {retiring[slot]=true;InvalidatedSupportCount++;continue;}
+                    Vector3 ahead=buffer[i].position+buffer[i].velocity*.2f;
+                    ahead-=normals[slot]*Vector3.Dot(ahead-ground[slot],normals[slot]);
+                    Bounds bounds=supports[slot].bounds;
+                    float edgeRisk=(bounds.ClosestPoint(ahead)-ahead).magnitude>.05f?1f:0f;
+                    Vector3 viewport=viewCamera!=null?viewCamera.WorldToViewportPoint(buffer[i].position):new Vector3(.5f,.5f,1);
+                    bool visible=viewport.z>0 && viewport.x>=0 && viewport.x<=1 && viewport.y>=0 && viewport.y<=1;
+                    probePriority[i]=EarthDustSupportPolicy.Priority(supportAge[slot],visible,edgeRisk,(buffer[i].position-viewPosition).sqrMagnitude);
+                }
+                int probes=Mathf.Min(EarthDustSupportPolicy.MaximumRefreshQueries,count);
+                for(int p=0;p<probes;p++)
+                {
+                    int selected=EarthDustSupportPolicy.Select(probeAges,probePriority,selectedProbes,count,p<2);
+                    if(selected<0)break;selectedProbes[selected]=true;
+                }
                 for (int i = 0; i < count; i++)
                 {
                     int slot = (int)((buffer[i].randomSeed-1u)&511u);
                     if (buffer[i].randomSeed!=particleIds[slot]) { buffer[i].remainingLifetime = 0f; continue; }
                     occupied[slot] = true;
-                    int relative = (i - probeCursor + count) % Mathf.Max(1, count);
-                    if (relative < probes)
+                    if (selectedProbes[i] && !retiring[slot])
                     {
+                        SupportQueriesLastFrame++;
                         Vector3 radialUp = (buffer[i].position - planet.position).normalized;
                         if (TryGround(buffer[i].position + radialUp * .75f, radialUp, 1.6f, null, out RaycastHit support))
                         {
@@ -151,10 +198,11 @@ namespace Elemental.Presentation.VFX
                             // pull the wisp onto. Fade naturally without jumping
                             // lifetime (which also jumped the flipbook frame).
                             if(Mathf.Abs(Vector3.Dot(support.point-ground[slot],radialUp))>.55f)retiring[slot]=true;
-                            else{targetGround[slot] = support.point; targetNormals[slot] = support.normal;}
+                            else{targetGround[slot] = support.point; targetNormals[slot] = support.normal;BindSupport(slot,support.collider);}
                         }
                         else retiring[slot]=true;
                     }
+                    if(EarthDustSupportPolicy.Confidence(supportAge[slot])<=0)retiring[slot]=true;
                     if(retiring[slot])
                     {
                         retirementAlpha[slot]=Mathf.Max(0,retirementAlpha[slot]-dt/.3f);
@@ -171,7 +219,7 @@ namespace Elemental.Presentation.VFX
                     float life=Mathf.Clamp01(age/Mathf.Max(.01f,buffer[i].startLifetime));
                     float billow=Mathf.Sin(life*Mathf.PI);
                     float targetHeight=Mathf.Clamp(profile.hoverHeight,.02f,.4f)*.55f+
-                        liftAmounts[slot]*billow+billow*.035f*Mathf.Sin(phases[slot]+age*1.8f);
+                        liftAmounts[slot]*billow+billow*(profile.clusteredWisps?.006f:.035f)*Mathf.Sin(phases[slot]+age*1.8f);
                     buffer[i].position += normal * ((targetHeight - height)*(1-Mathf.Exp(-18*dt)));
                     Vector3 desired=WindAt(buffer[i].position, normal, slot)*speedFactors[slot];
                     buffer[i].velocity=Vector3.Lerp(buffer[i].velocity,desired,1-Mathf.Exp(-4*dt));
@@ -183,7 +231,6 @@ namespace Elemental.Presentation.VFX
                         buffer[i].startSize3D=Vector3.Scale(baseSizes[slot],new Vector3(breathing,1/breathing,.65f+.5f*billow));
                     }
                 }
-                probeCursor = count > 0 ? (probeCursor + probes) % count : 0;
                 particles.SetParticles(buffer, count);
                 float rateScale=Reduced?Mathf.Clamp01(profile.reducedMotionRate):1;
                 float densityScale=profile.clusteredWisps?Mathf.Lerp(profile.isolatedStoneWeight,profile.clusteredRateMultiplier,Mathf.Clamp01(MeanStoneNeighbours/Mathf.Max(1,profile.saturatedNeighbours))):1;
@@ -191,7 +238,7 @@ namespace Elemental.Presentation.VFX
                 groundBudget = Mathf.Min(8f, groundBudget + Mathf.Clamp(profile.groundRate,0,48)*rateScale * dt);
                 stoneBudget = Mathf.Min(8f, stoneBudget + EffectiveStoneRate * dt);
                 int remaining = capacity - count;
-                for (int i = 0; i < 8 && remaining > 0; i++)
+                for (int i = 0; i < 8 && remaining > 0 && SupportQueriesLastFrame+BirthQueriesLastFrame<EarthDustSupportPolicy.MaximumQueriesPerFrame; i++)
                 {
                     bool nearStone = stoneBudget >= 1f && (i % 2 == 0 || groundBudget < 1f);
                     if (!nearStone && groundBudget < 1f) break;
@@ -278,11 +325,12 @@ namespace Elemental.Presentation.VFX
             // The visible curl lives just behind the obstacle edge. Centering it
             // inside a large collider left almost no curl at the emitted particle.
             if(nearStone)wakeCenter=point-wind*.6f;
+            BirthQueriesLastFrame++;
             if (!TryGround(point + up * 3f, up, 7f, ignore, out RaycastHit hit)) return false;
             int slot = 0; while (slot < appliedCapacity && occupied[slot]) slot++;
             if (slot >= appliedCapacity) return false;
             occupied[slot] = true; ground[slot] = hit.point; normals[slot] = hit.normal;
-            targetGround[slot]=hit.point;targetNormals[slot]=hit.normal;
+            targetGround[slot]=hit.point;targetNormals[slot]=hit.normal;BindSupport(slot,hit.collider);
             retiring[slot]=false;retirementAlpha[slot]=1;
             // Stable shader randomness and diagnostics identify a birth, not a
             // reusable slot. Keep the slot in the low nine bits for O(1) lookup.
@@ -290,7 +338,7 @@ namespace Elemental.Presentation.VFX
             wakeCenters[slot]=wakeCenter;inWake[slot]=nearStone;
             seamVolume[slot]=nearStone&&Next()<profile.seamVolumeFraction;
             speedFactors[slot]=Mathf.Lerp(.45f,1.5f,Next());phases[slot]=Next()*Mathf.PI*2;
-            liftAmounts[slot]=Mathf.Lerp(.035f,seamVolume[slot]?.48f:.22f,Next());
+            liftAmounts[slot]=profile.clusteredWisps?Mathf.Lerp(.005f,seamVolume[slot]?.12f:.015f,Next()):Mathf.Lerp(.035f,seamVolume[slot]?.48f:.22f,Next());
             float size = Mathf.Clamp(Mathf.Lerp(profile.sizeMetres.x, profile.sizeMetres.y,Next())*(profile.clusteredWisps?Mathf.Lerp(.5f,1.25f,Next()):1),.1f,4.5f);
             var emit = new ParticleSystem.EmitParams
             {
@@ -303,13 +351,37 @@ namespace Elemental.Presentation.VFX
             if(profile.clusteredWisps)
             {
                 // A broad ground-parallel wisp stays above the surface. Tall camera-facing cards bury most alpha below the floor.
-                baseSizes[slot]=new Vector3(size*Mathf.Lerp(.35f,1.1f,Next()),size*Mathf.Lerp(1.2f,2.1f,Next()),size);
+                baseSizes[slot]=seamVolume[slot] ? new Vector3(Mathf.Lerp(.4f,.85f,Next()),Mathf.Lerp(.8f,1.6f,Next()),1.6f) :
+                    new Vector3(Mathf.Lerp(profile.streakWidthMetres.x,profile.streakWidthMetres.y,Next()),Mathf.Lerp(profile.streakLengthMetres.x,profile.streakLengthMetres.y,Next()),.4f);
                 emit.startSize3D=baseSizes[slot];
                 orientations[slot]=Quaternion.LookRotation(hit.normal,EarthSurfaceWindPolicy.TangentVelocity(profile.worldWind,hit.normal,1));
                 emit.rotation3D=orientations[slot].eulerAngles;
             }
             particles.Emit(emit,1); if(gap)GapEmitted++; if (nearStone) StoneEmitted++; else GroundEmitted++;
             return true;
+        }
+        private void BindSupport(int slot,Collider collider)
+        {
+            supports[slot]=collider;supportAge[slot]=0;
+            supportMeshes[slot]=collider is MeshCollider mesh?mesh.sharedMesh:null;
+            supportOwners[slot]=collider.GetComponentInParent(typeof(IEarthPhysicalTarget)) as IEarthPhysicalTarget;
+            supportHandles[slot]=supportOwners[slot]!=null?supportOwners[slot].TargetHandle:default;
+            supportArenas[slot]=collider.GetComponentInParent<EarthArenaSurfaceProvider>();
+            supportGenerations[slot]=0;
+            if(supportArenas[slot]!=null) supportArenas[slot].TryGetCharacterSupport(collider,out _,out supportGenerations[slot]);
+        }
+        private bool SupportIsCurrent(int slot)
+        {
+            Collider collider=supports[slot];
+            if(collider==null || !collider.enabled || !collider.gameObject.activeInHierarchy)return false;
+            if(collider.attachedRigidbody!=null && !collider.attachedRigidbody.isKinematic)return false;
+            if(collider is MeshCollider mesh && mesh.sharedMesh!=supportMeshes[slot])return false;
+            IEarthPhysicalTarget owner=supportOwners[slot];
+            if(owner is UnityEngine.Object ownerObject && ownerObject==null)return false;
+            if(owner!=null && (!owner.IsEarthTargetValid || owner.TargetHandle.StableId!=supportHandles[slot].StableId ||
+                owner.TargetHandle.Generation!=supportHandles[slot].Generation))return false;
+            EarthArenaSurfaceProvider arena=supportArenas[slot];
+            return arena==null || (arena.TryGetCharacterSupport(collider,out _,out uint generation) && generation==supportGenerations[slot]);
         }
         private bool TryGround(Vector3 origin, Vector3 up, float distance, Collider ignore, out RaycastHit support)
         {

@@ -25,7 +25,8 @@ namespace Elemental.Simulation.Bending
         StompStone = 20,
         PillarCrest = 21,
         GroundSlam = 22,
-        WallPush = 23
+        WallPush = 23,
+        StoneCounter = 24
     }
 
     public readonly struct EarthActionIntent

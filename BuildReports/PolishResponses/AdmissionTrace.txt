@@ -1,0 +1,90 @@
+present SchoolSwitch source=1 generation=1 frame=10823
+fixture ingress lease input=568105584919168474 enabled=False router=568105584919168494 enabled=False combat=True frame=10825
+player begin token=1 frame=10825
+bot begin token=1 frame=10825
+present FireIgnite source=1 generation=1 frame=10825
+present FireIgnite source=2 generation=1 frame=10825
+ingress after publish input=568105584919168474 enabled=False router=568105584919168494 enabled=False combat=True
+after publish playerActive=True botActive=True localPending=0 botPending=0 localConfirmed=True botConfirmed=True dropped=0 merged=0
+player ended token=1 frame=10827 stack=  at System.Environment.get_StackTrace () [0x00000] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
+  at Elemental.Tests.PlayMode.HardPolishResponseProductionTests+<>c__DisplayClass5_0.<ExistingResponseOwnersKeepSimultaneousFireDistinctAndFloodBounded>b__2 (System.UInt32 generation) [0x00000] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\HardPolishResponseProductionTests.cs:54 
+  at Elemental.Runtime.Fire.FireStreamSession.Stop () [0x0004b] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Runtime\Fire\FireStreamSession.cs:103 
+  at Elemental.Tests.PlayMode.HardPolishResponseProductionTests+<ExistingResponseOwnersKeepSimultaneousFireDistinctAndFloodBounded>d__5.MoveNext () [0x00866] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\HardPolishResponseProductionTests.cs:91 
+  at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44 
+  at UnityEngine.TestTools.EnumerableTestMethodCommand+<ExecuteEnumerableAndRecordExceptions>d__4.MoveNext () [0x0006b] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\EnumerableTestMethodCommand.cs:85 
+  at UnityEngine.TestTools.EnumerableTestMethodCommand.AdvanceEnumerator (System.Collections.IEnumerator enumerator) [0x00019] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\EnumerableTestMethodCommand.cs:64 
+  at UnityEngine.TestTools.EnumerableTestMethodCommand+<ExecuteEnumerable>d__2.MoveNext () [0x0010c] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\EnumerableTestMethodCommand.cs:47 
+  at UnityEngine.TestRunner.NUnitExtensions.Runner.UnityLogCheckDelegatingCommand+<ExecuteEnumerable>d__3.MoveNext () [0x00161] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Runner\UnityLogCheckDelegatingCommand.cs:48 
+  at UnityEngine.TestTools.BeforeAfterTestCommandBase`1+<ExecuteEnumerable>d__16[T].MoveNext () [0x00353] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\BeforeAfterTestCommandBase.cs:212 
+  at UnityEngine.TestTools.BeforeAfterTestCommandBase`1+<ExecuteEnumerable>d__16[T].MoveNext () [0x00353] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\BeforeAfterTestCommandBase.cs:212 
+  at UnityEngine.TestTools.BeforeAfterTestCommandBase`1+<ExecuteEnumerable>d__16[T].MoveNext () [0x00353] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\BeforeAfterTestCommandBase.cs:212 
+  at UnityEngine.TestTools.BeforeAfterTestCommandBase`1+<ExecuteEnumerable>d__16[T].MoveNext () [0x00353] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\BeforeAfterTestCommandBase.cs:212 
+  at UnityEngine.TestTools.RetryCommand+<ExecuteEnumerable>d__2.MoveNext () [0x000cf] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\RetryCommand.cs:37 
+  at UnityEngine.TestTools.RepeatCommand+<ExecuteEnumerable>d__2.MoveNext () [0x000cf] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\RepeatCommand.cs:36 
+  at UnityEngine.TestTools.EnumerableApplyChangesToContextCommand+<ExecuteEnumerable>d__1.MoveNext () [0x00091] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\EnumerableApplyChangesToContextCommand.cs:23 
+  at UnityEngine.TestTools.IgnoreTestCommand+<ExecuteEnumerable>d__3.MoveNext () [0x000ff] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\IgnoreTestCommand.cs:42 
+  at UnityEngine.TestTools.StrictCheckCommand+<ExecuteEnumerable>d__2.MoveNext () [0x00083] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\StrictCheckCommand.cs:29 
+  at UnityEngine.TestTools.Utils.CoroutineRunner+<WrapEnumeratorForChecks>d__8.MoveNext () [0x0006c] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\Utils\CoroutineRunner.cs:58 
+  at UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) [0x00000] in <5ecefda573de420b8643923ab4ab8ab5>:0 
+  at UnityEditor.EditorGUIUtility.RenderPlayModeViewCamerasInternal_Injected (System.IntPtr , System.Int32 , UnityEngine.Vector2& , System.Boolean , System.Boolean ) [0x00000] in <b35a5782b5d34eadbc5d7ed7c774d90f>:0 
+  at UnityEditor.EditorGUIUtility.RenderPlayModeViewCamerasInternal (UnityEngine.RenderTexture target, System.Int32 targetDisplay, UnityEngine.Vector2 mousePosition, System.Boolean gizmos, System.Boolean renderIMGUI) [0x00000] in <b35a5782b5d34eadbc5d7ed7c774d90f>:0 
+  at UnityEditor.PlayModeView.RenderView (UnityEngine.Vector2 mousePosition, System.Boolean clearTexture) [0x00000] in <b35a5782b5d34eadbc5d7ed7c774d90f>:0 
+  at UnityEditor.GameView.OnGUI () [0x00000] in <b35a5782b5d34eadbc5d7ed7c774d90f>:0 
+  at UnityEditor.HostView.InvokeOnGUI (UnityEngine.Rect onGUIPosition) [0x00000] in <b35a5782b5d34eadbc5d7ed7c774d90f>:0 
+  at UnityEditor.DockArea.DrawView (UnityEngine.Rect dockAreaRect) [0x00000] in <b35a5782b5d34eadbc5d7ed7c774d90f>:0 
+  at UnityEditor.DockArea.OldOnGUI () [0x00000] in <b35a5782b5d34eadbc5d7ed7c774d90f>:0 
+  at UnityEngine.UIElements.IMGUIContainer.DoOnGUI (UnityEngine.Event evt, UnityEngine.Matrix4x4 parentTransform, UnityEngine.Rect clippingRect, System.Boolean isComputingLayout, UnityEngine.Rect layoutSize, System.Action onGUIHandler, System.Boolean canAffectFocus) [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.IMGUIContainer.HandleIMGUIEvent (UnityEngine.Event e, UnityEngine.Matrix4x4 worldTransform, UnityEngine.Rect clippingRect, System.Action onGUIHandler, System.Boolean canAffectFocus) [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.IMGUIContainer.DoIMGUIRepaint () [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.UIR.RenderChainCommand.ExecuteNonDrawMesh (UnityEngine.UIElements.UIR.DrawParams drawParams, System.Single pixelsPerPoint, System.Exception& immediateException) [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.UIR.UIRenderDevice.EvaluateChain (UnityEngine.UIElements.UIR.RenderChainCommand head, UnityEngine.Material defaultMat, UnityEngine.Texture gradientSettings, UnityEngine.Texture shaderInfo, System.Nullable`1[T] scissor, UnityEngine.Vector2 boundsMin, System.Single pixelsPerPoint, System.Boolean isSerializing, UnityEngine.UIElements.TextureSlotCount defaultTextureSlotCount, System.Boolean isRenderingNestedTreeRT, System.Exception& immediateException) [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.UIR.RenderTreeManager.RenderSingleTree (UnityEngine.UIElements.UIR.RenderTree renderTree, UnityEngine.RenderTexture nestedTreeRT, UnityEngine.RectInt nestedTreeViewport, UnityEngine.Rect bounds) [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.UIR.RenderTreeManager.RenderRootTree () [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.UIRRepaintUpdater.Render () [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.BaseVisualElementPanel.Render () [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.Panel.Render () [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEditor.UIElements.EditorEventDispatchUtility.DoDispatch (UnityEngine.UIElements.BaseVisualElementPanel panel, UnityEngine.Event eventInstance) [0x00000] in <a213d82a960348c2affd831ddc45d99e>:0 
+  at UnityEditor.UIElements.DefaultWindowBackend.ProcessEvent (UnityEngine.Event e) [0x00000] in <a213d82a960348c2affd831ddc45d99e>:0 
+  at UnityEditor.GUIView.ProcessEvent (UnityEngine.EntityId entityId, System.IntPtr nativeEventPtr, System.Boolean& result) [0x00000] in <b35a5782b5d34eadbc5d7ed7c774d90f>:0 
+bot ended token=1 frame=10827 stack=  at System.Environment.get_StackTrace () [0x00000] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
+  at Elemental.Tests.PlayMode.HardPolishResponseProductionTests+<>c__DisplayClass5_0.<ExistingResponseOwnersKeepSimultaneousFireDistinctAndFloodBounded>b__3 (System.UInt32 generation) [0x00000] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\HardPolishResponseProductionTests.cs:55 
+  at Elemental.Runtime.Fire.FireStreamSession.Stop () [0x0004b] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Runtime\Fire\FireStreamSession.cs:103 
+  at Elemental.Tests.PlayMode.HardPolishResponseProductionTests+<ExistingResponseOwnersKeepSimultaneousFireDistinctAndFloodBounded>d__5.MoveNext () [0x00876] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\HardPolishResponseProductionTests.cs:91 
+  at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44 
+  at UnityEngine.TestTools.EnumerableTestMethodCommand+<ExecuteEnumerableAndRecordExceptions>d__4.MoveNext () [0x0006b] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\EnumerableTestMethodCommand.cs:85 
+  at UnityEngine.TestTools.EnumerableTestMethodCommand.AdvanceEnumerator (System.Collections.IEnumerator enumerator) [0x00019] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\EnumerableTestMethodCommand.cs:64 
+  at UnityEngine.TestTools.EnumerableTestMethodCommand+<ExecuteEnumerable>d__2.MoveNext () [0x0010c] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\EnumerableTestMethodCommand.cs:47 
+  at UnityEngine.TestRunner.NUnitExtensions.Runner.UnityLogCheckDelegatingCommand+<ExecuteEnumerable>d__3.MoveNext () [0x00161] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Runner\UnityLogCheckDelegatingCommand.cs:48 
+  at UnityEngine.TestTools.BeforeAfterTestCommandBase`1+<ExecuteEnumerable>d__16[T].MoveNext () [0x00353] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\BeforeAfterTestCommandBase.cs:212 
+  at UnityEngine.TestTools.BeforeAfterTestCommandBase`1+<ExecuteEnumerable>d__16[T].MoveNext () [0x00353] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\BeforeAfterTestCommandBase.cs:212 
+  at UnityEngine.TestTools.BeforeAfterTestCommandBase`1+<ExecuteEnumerable>d__16[T].MoveNext () [0x00353] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\BeforeAfterTestCommandBase.cs:212 
+  at UnityEngine.TestTools.BeforeAfterTestCommandBase`1+<ExecuteEnumerable>d__16[T].MoveNext () [0x00353] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\BeforeAfterTestCommandBase.cs:212 
+  at UnityEngine.TestTools.RetryCommand+<ExecuteEnumerable>d__2.MoveNext () [0x000cf] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\RetryCommand.cs:37 
+  at UnityEngine.TestTools.RepeatCommand+<ExecuteEnumerable>d__2.MoveNext () [0x000cf] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\RepeatCommand.cs:36 
+  at UnityEngine.TestTools.EnumerableApplyChangesToContextCommand+<ExecuteEnumerable>d__1.MoveNext () [0x00091] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\EnumerableApplyChangesToContextCommand.cs:23 
+  at UnityEngine.TestTools.IgnoreTestCommand+<ExecuteEnumerable>d__3.MoveNext () [0x000ff] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\IgnoreTestCommand.cs:42 
+  at UnityEngine.TestTools.StrictCheckCommand+<ExecuteEnumerable>d__2.MoveNext () [0x00083] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Commands\StrictCheckCommand.cs:29 
+  at UnityEngine.TestTools.Utils.CoroutineRunner+<WrapEnumeratorForChecks>d__8.MoveNext () [0x0006c] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\Utils\CoroutineRunner.cs:58 
+  at UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) [0x00000] in <5ecefda573de420b8643923ab4ab8ab5>:0 
+  at UnityEditor.EditorGUIUtility.RenderPlayModeViewCamerasInternal_Injected (System.IntPtr , System.Int32 , UnityEngine.Vector2& , System.Boolean , System.Boolean ) [0x00000] in <b35a5782b5d34eadbc5d7ed7c774d90f>:0 
+  at UnityEditor.EditorGUIUtility.RenderPlayModeViewCamerasInternal (UnityEngine.RenderTexture target, System.Int32 targetDisplay, UnityEngine.Vector2 mousePosition, System.Boolean gizmos, System.Boolean renderIMGUI) [0x00000] in <b35a5782b5d34eadbc5d7ed7c774d90f>:0 
+  at UnityEditor.PlayModeView.RenderView (UnityEngine.Vector2 mousePosition, System.Boolean clearTexture) [0x00000] in <b35a5782b5d34eadbc5d7ed7c774d90f>:0 
+  at UnityEditor.GameView.OnGUI () [0x00000] in <b35a5782b5d34eadbc5d7ed7c774d90f>:0 
+  at UnityEditor.HostView.InvokeOnGUI (UnityEngine.Rect onGUIPosition) [0x00000] in <b35a5782b5d34eadbc5d7ed7c774d90f>:0 
+  at UnityEditor.DockArea.DrawView (UnityEngine.Rect dockAreaRect) [0x00000] in <b35a5782b5d34eadbc5d7ed7c774d90f>:0 
+  at UnityEditor.DockArea.OldOnGUI () [0x00000] in <b35a5782b5d34eadbc5d7ed7c774d90f>:0 
+  at UnityEngine.UIElements.IMGUIContainer.DoOnGUI (UnityEngine.Event evt, UnityEngine.Matrix4x4 parentTransform, UnityEngine.Rect clippingRect, System.Boolean isComputingLayout, UnityEngine.Rect layoutSize, System.Action onGUIHandler, System.Boolean canAffectFocus) [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.IMGUIContainer.HandleIMGUIEvent (UnityEngine.Event e, UnityEngine.Matrix4x4 worldTransform, UnityEngine.Rect clippingRect, System.Action onGUIHandler, System.Boolean canAffectFocus) [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.IMGUIContainer.DoIMGUIRepaint () [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.UIR.RenderChainCommand.ExecuteNonDrawMesh (UnityEngine.UIElements.UIR.DrawParams drawParams, System.Single pixelsPerPoint, System.Exception& immediateException) [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.UIR.UIRenderDevice.EvaluateChain (UnityEngine.UIElements.UIR.RenderChainCommand head, UnityEngine.Material defaultMat, UnityEngine.Texture gradientSettings, UnityEngine.Texture shaderInfo, System.Nullable`1[T] scissor, UnityEngine.Vector2 boundsMin, System.Single pixelsPerPoint, System.Boolean isSerializing, UnityEngine.UIElements.TextureSlotCount defaultTextureSlotCount, System.Boolean isRenderingNestedTreeRT, System.Exception& immediateException) [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.UIR.RenderTreeManager.RenderSingleTree (UnityEngine.UIElements.UIR.RenderTree renderTree, UnityEngine.RenderTexture nestedTreeRT, UnityEngine.RectInt nestedTreeViewport, UnityEngine.Rect bounds) [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.UIR.RenderTreeManager.RenderRootTree () [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.UIRRepaintUpdater.Render () [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.BaseVisualElementPanel.Render () [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEngine.UIElements.Panel.Render () [0x00000] in <ae6c47847bbd4816bc952948c8cebf30>:0 
+  at UnityEditor.UIElements.EditorEventDispatchUtility.DoDispatch (UnityEngine.UIElements.BaseVisualElementPanel panel, UnityEngine.Event eventInstance) [0x00000] in <a213d82a960348c2affd831ddc45d99e>:0 
+  at UnityEditor.UIElements.DefaultWindowBackend.ProcessEvent (UnityEngine.Event e) [0x00000] in <a213d82a960348c2affd831ddc45d99e>:0 
+  at UnityEditor.GUIView.ProcessEvent (UnityEngine.EntityId entityId, System.IntPtr nativeEventPtr, System.Boolean& result) [0x00000] in <b35a5782b5d34eadbc5d7ed7c774d90f>:0 
+present FireEnd source=1 generation=1 frame=10828
+present FireEnd source=2 generation=1 frame=10828

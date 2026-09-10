@@ -113,6 +113,7 @@ namespace Elemental.Presentation.Animation
         [SerializeField] private bool driveMagicPresentation = true;
         [SerializeField] private EarthMagicMotionProfile magicMotionProfile;
         private EarthMagicClipClock _magicClipClock;
+        private bool _fireChannelRecovery;
         private EarthMagicClipClock _outgoingMagicClock;
         private EarthMagicClipTiming _outgoingMagicTiming;
         private int _livingHoldLayerIndex = -1;
@@ -174,6 +175,20 @@ namespace Elemental.Presentation.Animation
         private float _gaitPhase01;
         private float _locomotionCycleSeconds = 1f;
         private EarthMotionStateId _activeMotionState;
+        private bool _fireLiftAirbornePose;
+        private float2 _fireFlightLean;
+        private Elemental.Runtime.Fire.FireAbilityController _firePoseAbilities;
+        public Elemental.Runtime.Fire.FireAbilityController FirePoseAbilities => _firePoseAbilities;
+        public void ConfigureFireAbilities(Elemental.Runtime.Fire.FireAbilityController source)
+        {
+            if(source!=null && motor!=null && source.OwnerRoot!=motor.transform)
+                throw new System.InvalidOperationException("Fire presentation must bind the ability controller for its exact motor owner.");
+            _firePoseAbilities=source;
+        }
+        public bool FireLiftPoseOwned => motor != null && (motor.FireFlightPoseActive || _fireLiftAirbornePose) &&
+            _physicalMode != CharacterPhysicalMode.FullRagdoll &&
+            (visibleRagdoll == null || (!visibleRagdoll.IsRagdollActive && !visibleRagdoll.IsRecoveringToAnimation));
+        public float FireFlightLeanDegrees => math.length(_fireFlightLean);
         private float _dodgeUntil;
         private bool _dodgeWasActive;
         private bool _hasObservedLandingSupport;
@@ -206,7 +221,47 @@ namespace Elemental.Presentation.Animation
         public bool AuthoredTurnStepActive => _turnStep.Active;
         public float AuthoredTurnStepDirection => _turnStep.Active ? _turnStep.Direction : 0f;
         public float MeasuredYawRateDegrees { get; private set; }
+        private bool _externalFirePrepared, _externalFireLease;
+        public bool OwnsExternalFirePresentation => !driveMagicPresentation && _externalFireLease;
+        private bool OwnsMagicPresentation => driveMagicPresentation || _externalFireLease;
         public EarthCharacterPoseController PoseController => poseController;
+        public bool PrepareFireChannelPresentation()
+        {
+            if (driveMagicPresentation) return poseController != null;
+            if (_externalFirePrepared) return poseController != null;
+            if (animator == null || !animator.isInitialized || motor == null || rootBody == null) return false;
+            _externalFirePrepared = true;
+            ConfigurePoseController();
+            SetExternalFireDrivers(false);
+            return poseController != null;
+        }
+        public bool BeginFireChannelPresentation(uint generation, Vector3 focus)
+        {
+            if (!isActiveAndEnabled || !PrepareFireChannelPresentation()) return false;
+            bool acquired = !driveMagicPresentation && !_externalFireLease;
+            if (!driveMagicPresentation) { _externalFireLease = true; SetExternalFireDrivers(true); }
+            if (poseController.BeginFireChannelPresentation(generation, focus)) return true;
+            if (acquired) CancelExternalFirePresentation(); return false;
+        }
+        public void EndFireChannelPresentation(uint generation)
+        {
+            // Keep the exclusive writer through the existing layer/IK recovery.
+            poseController?.EndFireChannelPresentation(generation);
+        }
+        public void CancelExternalFirePresentation()
+        {
+            if (!_externalFireLease) return;
+            poseController?.CancelPresentationForAnimationOwnership();
+            ResetMagicIK(); _externalFireLease = false; SetExternalFireDrivers(false);
+        }
+        private void SetExternalFireDrivers(bool active)
+        {
+            if (driveMagicPresentation) return;
+            if (poseController != null) poseController.enabled = active;
+            if (choreographyDirector != null) choreographyDirector.enabled = active;
+            if (animationRigBridge != null) animationRigBridge.enabled = active;
+            footContactController?.SetPoseIntentSource(active ? poseController : null);
+        }
         public EarthFootContactController FootContactController => footContactController;
         public HumanoidProceduralBodyResponse ProceduralBodyResponse => proceduralBodyResponse;
         public EarthTransitionDirector TransitionDirector => transitionDirector;
@@ -323,7 +378,7 @@ namespace Elemental.Presentation.Animation
 
         private void ConfigurePoseController()
         {
-            if (!driveMagicPresentation || animator == null || motor == null || rootBody == null)
+            if ((!driveMagicPresentation && !_externalFirePrepared) || animator == null || motor == null || rootBody == null)
             {
                 footContactController?.SetPoseIntentSource(null);
                 return;
@@ -387,6 +442,9 @@ namespace Elemental.Presentation.Animation
 
         private void OnDisable()
         {
+            CancelExternalFirePresentation();
+            _fireLiftAirbornePose=false;_fireFlightLean=float2.zero;
+            footContactController?.SetAirborneBodyLean(Quaternion.identity,false);
             poseController?.SetPresentationSuppressed(true);
             ResetMagicIK();
             UnsubscribeRagdoll();
@@ -427,6 +485,8 @@ namespace Elemental.Presentation.Animation
 
         private void ResetTransientAnimationState()
         {
+            _fireLiftAirbornePose=false;_fireFlightLean=float2.zero;
+            footContactController?.SetAirborneBodyLean(Quaternion.identity,false);
             _shortTransitionState = default;
             _shortTransitionSample = default;
             _physicalMode = CharacterPhysicalMode.AnimatedMotor;
@@ -496,6 +556,8 @@ namespace Elemental.Presentation.Animation
             using (PresentationMarker.Auto())
             {
                 UpdatePresentation();
+                if (_externalFireLease && poseController != null && !poseController.FireChannelPresentationActive &&
+                    _castWeight < .005f && _livingHoldWeight < .005f) CancelExternalFirePresentation();
                 _wallBracePermitted = animator != null && motor != null &&
                     !_wasMantling && !_mantleAwaitingGroundedExit &&
                     _physicalMode != CharacterPhysicalMode.FullRagdoll &&
@@ -529,6 +591,8 @@ namespace Elemental.Presentation.Animation
                                             (visibleRagdoll != null &&
                                              (visibleRagdoll.IsRagdollActive ||
                                               visibleRagdoll.IsRecoveringToAnimation));
+            if(protectedAnimationOwner)
+            {_fireLiftAirbornePose=false;_fireFlightLean=float2.zero;footContactController?.SetAirborneBodyLean(Quaternion.identity,false);}
             poseController?.SetPresentationSuppressed(protectedAnimationOwner);
             if (!EnsureAnimationDriver(true)) return;
             if (PresentMantle())
@@ -557,12 +621,14 @@ namespace Elemental.Presentation.Animation
                 motor.LocalUp);
             float verticalSpeed = Vector3.Dot(rootBody.linearVelocity, motor.LocalUp);
             bool surfing = surfController != null && surfController.IsActive;
-            bool pillarCharge = pillarMobility != null && pillarMobility.IsCharging &&
+            bool fireRingCharge=_firePoseAbilities!=null&&_firePoseAbilities.IsAvailable&&(_firePoseAbilities.IsRingCharging||_firePoseAbilities.IsBoltCharging);
+            bool pillarCharge = ((pillarMobility != null && pillarMobility.IsCharging)||fireRingCharge) &&
                                 (motor.HasStableSupport || surfing) && !protectedAnimationOwner;
+            float sharedCharge=fireRingCharge ? Mathf.Max(_firePoseAbilities.RingCharge01,_firePoseAbilities.BoltCharge01) : pillarMobility!=null ? pillarMobility.Charge01 : 0f;
             bool chargePoseChanged = pillarCharge != _presentingPillarCharge;
             _presentingPillarCharge = pillarCharge;
             animationDriver.SetFloat(PillarCrouchHash,
-                pillarCharge ? Mathf.Lerp(.52f, .72f, pillarMobility.Charge01) : 0f);
+                pillarCharge ? Mathf.Lerp(.52f, .72f, sharedCharge) : 0f);
             Vector3 facing = Vector3.ProjectOnPlane(motor.FacingForward, motor.LocalUp);
             if (facing.sqrMagnitude < 0.001f) facing = Vector3.ProjectOnPlane(transform.forward, motor.LocalUp);
             facing.Normalize();
@@ -637,7 +703,21 @@ namespace Elemental.Presentation.Animation
 
             UpdateLandingEvidence(verticalSpeed, Vector3.Dot(tangentVelocity, facing));
             UpdateAnimationGrounded(verticalSpeed);
-            EarthLandingCandidateSnapshot candidate = !motor.HasStableSupport && contactPredictor != null
+            if(motor.FireFlightPoseActive)_fireLiftAirbornePose=true;
+            else if(motor.HasStableSupport)_fireLiftAirbornePose=false;
+            if(protectedAnimationOwner){_fireLiftAirbornePose=false;_fireFlightLean=float2.zero;}
+            if(motor.FireFlightPoseActive&&!protectedAnimationOwner){_animationGrounded=false;_deliberateJump=false;}
+            Vector3 localFlightVelocity=motor.transform.InverseTransformDirection(tangentVelocity);
+            _fireFlightLean=FireFlightPose.StepLean(_fireFlightLean,
+                new float2(localFlightVelocity.x,localFlightVelocity.z),motor.FireFlightPoseActive&&FireLiftPoseOwned,Time.deltaTime);
+            if(!FireLiftPoseOwned)_fireFlightLean=float2.zero;
+            Quaternion localLean=Quaternion.AngleAxis(math.length(_fireFlightLean),
+                new Vector3(_fireFlightLean.y,0,-_fireFlightLean.x));
+            Quaternion bodyLean=motor.transform.rotation*localLean*Quaternion.Inverse(motor.transform.rotation);
+            footContactController?.SetAirborneBodyLean(bodyLean,FireLiftPoseOwned);
+            // The existing fall lane supplies the relaxed airborne pose even during jet ascent.
+            float poseVerticalSpeed=FireLiftMotion.AnimationVerticalSpeed(verticalSpeed,_fireLiftAirbornePose);
+            EarthLandingCandidateSnapshot candidate = !motor.FireFlightPoseActive && !motor.HasStableSupport && contactPredictor != null
                 ? contactPredictor.Predict(
                     profile != null ? profile.LandingPredictionHorizon : 0.65f,
                     profile != null ? profile.LandingPredictionSteps : 6,
@@ -653,7 +733,7 @@ namespace Elemental.Presentation.Animation
                 _animationGrounded,
                 surfing || pillarCharge,
                 _physicalMode == CharacterPhysicalMode.FullRagdoll,
-                verticalSpeed,
+                poseVerticalSpeed,
                 tangentVelocity.magnitude,
                 Time.deltaTime,
                 LandingRollAllowed);
@@ -710,7 +790,7 @@ namespace Elemental.Presentation.Animation
             footContactController?.SetTurnIntent(playedTurn);
             animationDriver.SetBool(SurfingHash, surfing);
             animationDriver.SetBool(GroundedHash, _animationGrounded);
-            animationDriver.SetFloat(VerticalSpeedHash, verticalSpeed);
+            animationDriver.SetFloat(VerticalSpeedHash, poseVerticalSpeed);
             animationDriver.SetBool(HardLandingHash, rescue.LandingStyle == EarthLandingStyle.Hard &&
                                                     (rescue.Phase == EarthAnimationPhase.PreLanding ||
                                                      rescue.Phase == EarthAnimationPhase.LandingContact ||
@@ -732,12 +812,15 @@ namespace Elemental.Presentation.Animation
                 ProtectedOwner = protectedAnimationOwner || directionalDodge || authoredKnockdownRecovery ||
                     _wasCasting || _castWeight > .02f || HandConstraintWeight > .02f ||
                     (poseController != null && poseController.AuthoritativePhase != EarthCastPhase.Idle) ||
-                    (!driveMagicPresentation && animationDriver.GetBool(CastHash)) ||
+                    (!OwnsMagicPresentation && animationDriver.GetBool(CastHash)) ||
                     Time.time < _impactUntil || rescue.LandingStyle == EarthLandingStyle.Hard || LandingRollAllowed,
                 DeliberateJump = _deliberateJump || pillarMobility != null && pillarMobility.IsLaunchPending,
                 TangentSpeed = tangentVelocity.magnitude,
+                DesiredSpeed = math.length(motor.LocomotionMotion.DesiredVelocity),
+                MaximumStartWalkSpeed = _locomotionRhythm != null
+                    ? _locomotionRhythm.MaximumForwardWalkStartSpeed : 2f,
                 ForwardSpeed = Vector3.Dot(tangentVelocity, facing),
-                VerticalSpeed = verticalSpeed,
+                VerticalSpeed = poseVerticalSpeed,
                 HasLandingCandidate = candidate.IsValid,
                 FloorDistance = candidate.IsValid ? Mathf.Max(0f, Vector3.Dot(capsuleBottom - predictedPoint, motor.LocalUp)) : 0f
             };
@@ -759,10 +842,10 @@ namespace Elemental.Presentation.Animation
             // The bot's telegraph presenter owns its magic layer, while this shared
             // component still owns action/contact policy. Read the already-authored
             // Cast parameter so player and bot report the same semantic graph state.
-            bool externallyAuthoredCast = !driveMagicPresentation && animationDriver.GetBool(CastHash);
+            bool externallyAuthoredCast = !OwnsMagicPresentation && animationDriver.GetBool(CastHash);
             UpdateAuthoredAction(in rescue, externallyAuthoredCast, directionalDodge);
             UpdateImpactPresentation();
-            if (!driveMagicPresentation)
+            if (!OwnsMagicPresentation)
             {
                 // The bot presenter owns the cast layer. Clearing its parameters
                 // here every Update erased the telegraph authored the frame before.
@@ -783,12 +866,13 @@ namespace Elemental.Presentation.Animation
                              (executor.HeldBody != null || executor.IsGravityWellActive ||
                               executor.IsVectorFieldActive)));
             UpdateAuthoredAction(in rescue, casting, directionalDodge);
+            if (casting) _fireChannelRecovery = poseController != null && poseController.FireChannelPresentationActive;
             float targetWeight = casting && _physicalMode != CharacterPhysicalMode.FullRagdoll
                 ? (profile != null ? profile.HandIkWeight : 0.92f)
                 : 0f;
             float castingResponse = targetWeight > _castWeight
-                ? CastingBlendSeconds
-                : CastingRecoverySeconds;
+                ? (_fireChannelRecovery ? (magicMotionProfile != null ? Mathf.Clamp(magicMotionProfile.fireChannelAcquireSeconds,.10f,.16f) : .14f) : CastingBlendSeconds)
+                : (_fireChannelRecovery ? (magicMotionProfile != null ? Mathf.Clamp(magicMotionProfile.fireChannelRecoverySeconds,.12f,.18f) : .15f) : CastingRecoverySeconds);
             HandIkSample ikSample = HandIkSolver.Step(
                 _handIkState,
                 _castWeight,
@@ -824,7 +908,8 @@ namespace Elemental.Presentation.Animation
                 magicPresentationGeneration,
                 poseController != null ? poseController.CurrentRequest.Phase : EarthCastPhase.Sustain,
                 casting, in clipTiming, Time.deltaTime * animationDriver.PresentationClockMultiplier,
-                poseController != null && poseController.AuthoritativeStartsAtContact);
+                poseController != null && poseController.AuthoritativeStartsAtContact,
+                _activeMagicMotion != null ? _activeMagicMotion.releaseStartNormalized : -1f);
             if (poseController != null && poseController.TryGetComboMotionTime(out float comboTime))
                 motionTime = comboTime;
             // The clip clock already interpolates continuously. Smoothing it a
@@ -971,8 +1056,8 @@ namespace Elemental.Presentation.Animation
             if (_livingHoldLayerIndex < 0)
                 _livingHoldLayerIndex = animator.GetLayerIndex(EarthLivingHoldPolicy.LayerName);
             if (_livingHoldLayerIndex < 0) return;
-            bool held = executor != null && (executor.HeldBody != null ||
-                executor.IsGravityWellActive || executor.IsVectorFieldActive);
+            bool held = (poseController != null && poseController.FireChannelPresentationActive) ||
+                (executor != null && (executor.HeldBody != null || executor.IsGravityWellActive || executor.IsVectorFieldActive));
             bool contact = motionTime + .0005f >= timing.Contact && IsActiveMagicBufferRendered() &&
                 (poseController == null || !poseController.HasAuthoritativePresentation ||
                  poseController.RenderedContactReached);

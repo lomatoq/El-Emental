@@ -1,4 +1,4 @@
-﻿using Elemental.Runtime.Physics;
+using Elemental.Runtime.Physics;
 using Elemental.Simulation.Combat;
 using Unity.Profiling;
 using UnityEngine;
@@ -17,7 +17,7 @@ namespace Elemental.Runtime.Characters
             public EarthSettledLoad Settled;
         }
         private readonly LoadContact[] _loads = new LoadContact[64];
-        private float _loadDwell, _pinnedDwell, _nextPinClearanceProbe;
+        private float _loadDwell, _pinnedDwell, _pinnedUnloadedSeconds, _nextPinClearanceProbe;
         private static readonly ProfilerMarker CrushMarker = new("Elemental.Character.SustainedCrush");
         public bool IsUnderCrushingLoad { get; private set; }
         // Hold an existing physical body during the load qualification window.
@@ -26,6 +26,10 @@ namespace Elemental.Runtime.Characters
         public float SustainedLoadNewtons { get; private set; }
         public bool IsPinnedByStoneLoad => _pinnedDwell >= EarthSustainedCrush.PinnedDwellSeconds;
         public float PinnedLoadSeconds => _pinnedDwell;
+        public int ActiveStoneLoadContacts { get; private set; }
+        public int SleepingStoneLoadContacts { get; private set; }
+        public int RecordedStoneLoadSamples { get; private set; }
+        public int DiscardedStoneLoadContacts { get; private set; }
 
         // Called by the stone's collision adapter; normal points out of the receiver.
         public void RecordStoneLoad(Collision collision, Rigidbody source)
@@ -62,6 +66,7 @@ namespace Elemental.Runtime.Characters
                 EarthSettledLoad settled = duplicate ? previous.Settled : EarthSustainedCrush.SampleSettledLoad(
                     previous.Settled, force, collision.relativeVelocity.magnitude,
                     samePair && Time.time - previous.Time <= Time.fixedDeltaTime * 1.5f);
+                RecordedStoneLoadSamples++;
                 _loads[slot] = new LoadContact { Source = source, ReceiverBody = receiver.attachedRigidbody, Stone = stone, Receiver = receiver,
                     StonePoint = stone.transform.InverseTransformPoint(contact.point),
                     ReceiverPoint = receiver.transform.InverseTransformPoint(contact.point), Force = force, Time = Time.time, Settled = settled };
@@ -73,7 +78,7 @@ namespace Elemental.Runtime.Characters
         {
             using (CrushMarker.Auto())
             {
-                SustainedLoadNewtons = 0f;
+                SustainedLoadNewtons = 0f;ActiveStoneLoadContacts=SleepingStoneLoadContacts=0;
                 if (targetBody == null || !HasSimulationAuthority || Time.time < _suppressUntil ||
                     duelController != null && !duelController.CanReceiveDamage(fighterId))
                 { ClearCrushingLoad(); return; }
@@ -87,12 +92,13 @@ namespace Elemental.Runtime.Characters
                         valid = contact.Source.IsSleeping() && Vector3.SqrMagnitude(
                             contact.Stone.transform.TransformPoint(contact.StonePoint) -
                             contact.Receiver.transform.TransformPoint(contact.ReceiverPoint)) < .0025f;
-                    if (!valid) { _loads[i] = default; continue; }
+                    if (!valid) { if(contact.Source!=null)DiscardedStoneLoadContacts++;_loads[i] = default; continue; }
                 }
                 for (int i = 0; i < _loads.Length; i++)
                 {
                     LoadContact contact = _loads[i];
                     if (contact.Source == null) continue;
+                    ActiveStoneLoadContacts++;if(contact.Source.IsSleeping())SleepingStoneLoadContacts++;
                     float force = contact.Force;
                     if (Time.time - contact.Time > .12f)
                     {
@@ -122,7 +128,7 @@ namespace Elemental.Runtime.Characters
                     Vector3 up = _motor != null ? _motor.LocalUp : transform.up;
                     _visibleRagdoll.RefreshRecoveryClearance(up, Vector3.ProjectOnPlane(transform.forward, up));
                 }
-                _pinnedDwell = EarthSustainedCrush.StepPinned(_pinnedDwell, SustainedLoadNewtons, targetBody.mass,
+                _pinnedDwell = EarthSustainedCrush.StepPinnedWithBriefUnloading(_pinnedDwell, ref _pinnedUnloadedSeconds, SustainedLoadNewtons, targetBody.mass,
                     _visibleRagdoll != null && _visibleRagdoll.IsRagdollActive,
                     _visibleRagdoll != null && _visibleRagdoll.RecoveryBlockedByGeometry, Time.fixedDeltaTime);
                 float damage = Mathf.Max(EarthSustainedCrush.Damage(_loadDwell,
@@ -139,7 +145,8 @@ namespace Elemental.Runtime.Characters
         private void ClearCrushingLoad()
         {
             System.Array.Clear(_loads, 0, _loads.Length);
-            _loadDwell = _pinnedDwell = _nextPinClearanceProbe = 0f;
+            _loadDwell = _pinnedDwell = _pinnedUnloadedSeconds = _nextPinClearanceProbe = 0f;
+            ActiveStoneLoadContacts=SleepingStoneLoadContacts=RecordedStoneLoadSamples=DiscardedStoneLoadContacts=0;
             IsUnderCrushingLoad = false;
             SustainedLoadNewtons = 0f;
         }

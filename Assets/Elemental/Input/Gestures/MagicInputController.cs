@@ -232,7 +232,7 @@ namespace Elemental.Input.Gestures
         public float SurfSpeed => _onlineReplicaPresentation ? _onlineView.SurfSpeed : actionRouter != null ? actionRouter.SurfSpeed : 0f;
         public float ArmorPhase01 => _onlineReplicaPresentation ? _onlineView.ArmorPhase : _armorController != null ? _armorController.Phase01 : 0f;
         public int ArmorOverscrollSteps => _armorController != null ? _armorController.OverscrollSteps : 0;
-        public string BendParameterLabel => IsArmorActive
+        public string BendParameterLabel => selectedElement==ElementId.Fire ? "FIRE / "+FireFormLabel : IsArmorActive
             ? "ARMOR PHASE"
             : IsQuickStonePrimed
                 ? "QUICK WINDOW"
@@ -244,7 +244,7 @@ namespace Elemental.Input.Gestures
             : _selectedAbility == EarthAbilityIds.LineWall
                 ? inputAdapter != null && inputAdapter.BendModifierHeld ? "WALL THICKNESS" : "WALL HEIGHT"
             : "FORM SCALE";
-        public float BendParameter01 => IsArmorActive
+        public float BendParameter01 => selectedElement==ElementId.Fire ? FirePower01 : IsArmorActive
             ? ArmorPhase01
             : IsQuickStonePrimed
                 ? QuickStonePrime01
@@ -544,23 +544,13 @@ namespace Elemental.Input.Gestures
             ConfigureInputAdapter(configuredPlayerInput);
             castCamera = configuredCamera;
             thermalWaterExecutor = configuredExecutor;
-            executor = null;
-            airExecutor = null;
             planetCollider = configuredPlanetCollider;
             previewLine = configuredPreview;
             ConfigurePreviewPresenter(configuredPreview);
             SelectElement(initialElement);
         }
 
-        public void SelectElement(ElementId element)
-        {
-            if (thermalWaterExecutor == null || (element != ElementId.Fire && element != ElementId.Water))
-            {
-                return;
-            }
-            selectedElement = element;
-            _selectedAbility = element == ElementId.Fire ? FireAbilityIds.HeatJet : WaterAbilityIds.GatherWater;
-        }
+        public void SelectElement(ElementId element) => TrySelectElement(element);
 
         public bool SelectEarthAbility(AbilityId ability)
         {
@@ -900,6 +890,7 @@ namespace Elemental.Input.Gestures
 
         private void OnDisable()
         {
+            StopFireInput(true);
             executor?.CancelHeldEarthControl();
             executor?.CancelVectorField();
             executor?.CancelGravityWell();
@@ -926,6 +917,7 @@ namespace Elemental.Input.Gestures
 
         private void CancelInteraction()
         {
+            StopFireInput(true);
             executor?.CancelHeldEarthControl();
             executor?.CancelVectorField();
             executor?.CancelGravityWell();
@@ -953,6 +945,7 @@ namespace Elemental.Input.Gestures
 
         private void Update()
         {
+            if (!AcceptsDuelCommands || !SchoolInputContextAvailable) StopFireInput(true);
             if (actionRouter == null || !actionRouter.isActiveAndEnabled)
                 ProcessRoutedInput();
         }
@@ -973,6 +966,7 @@ namespace Elemental.Input.Gestures
 
         public void ProcessRoutedInput()
         {
+            if(!SchoolInputContextAvailable){StopFireInput(true);return;}
             if (_motor != null && _motor.IsImpactStunned)
             {
                 if (!_impactStunBlocked) { CancelForImpactStun(); _impactStunBlocked = true; }
@@ -981,7 +975,7 @@ namespace Elemental.Input.Gestures
             _impactStunBlocked = false;
             // Physical recovery may re-enable this component. Match permission is
             // independent of enabled state and is checked before reading any input.
-            if (!AcceptsDuelCommands) return;
+            if (!AcceptsDuelCommands) { StopFireInput(true); return; }
             if (_lastRoutedInputFrame == Time.frameCount) return;
             _lastRoutedInputFrame = Time.frameCount;
             if (inputAdapter == null) return;
@@ -994,7 +988,9 @@ namespace Elemental.Input.Gestures
                 CancelInteraction();
                 return;
             }
-            UpdateElementSelection();
+            PrepareElementRouting();
+            if (_schoolPrimarySuppressed) return;
+            if (selectedElement == ElementId.Fire && fireStream != null) { UpdateFireInput(); return; }
             UpdateAbilitySelection();
             Vector2 pointer = inputAdapter.PointerPixels;
             _aimScreenPosition = pointer;
@@ -2236,7 +2232,9 @@ namespace Elemental.Input.Gestures
         private void UpdateElementSelection()
         {
             if (inputAdapter.ElementFirePressed) SelectElement(ElementId.Fire);
+            else if (inputAdapter.ElementEarthPressed) SelectElement(ElementId.Earth);
             else if (inputAdapter.ElementWaterPressed) SelectElement(ElementId.Water);
+            else if (inputAdapter.ElementAirPressed) SelectElement(ElementId.Air);
         }
 
         private void UpdatePreview(float2 currentPointer)

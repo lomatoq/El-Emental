@@ -12,14 +12,14 @@ namespace Elemental.Presentation.Fire
   public static bool HasActive=>owners>0;
   private void OnEnable(){owners++;}
   public const string OwnedName="Arena Column Fires";
-  public const int MaximumFires=7,MaximumLights=4;
+  public const int MaximumFires=7,MaximumLights=7;
   [System.Serializable] public struct Seat {public MeshRenderer Source;public Vector3 LocalPoint;public Vector3 Up;}
   [SerializeField] private Seat[] seats;
   [SerializeField] private FireVisualProfile profile;
   [SerializeField] private CelestialSystemBehaviour sky;
   [SerializeField] private FrontendFlowController frontend;
   [SerializeField] private Light[] lights;
-  private FireCpuMeshBackend[] fire;
+  private FireFlowVolumeBackend[] fire;
   private FirePresentationSnapshot[] snapshots;
   private bool[] emitting;
   private float time;
@@ -40,11 +40,23 @@ namespace Elemental.Presentation.Fire
   private void Initialize()
   {
    if(fire!=null || profile==null || seats==null)return;
-   fire=new FireCpuMeshBackend[seats.Length];snapshots=new FirePresentationSnapshot[seats.Length];emitting=new bool[seats.Length];
+   fire=new FireFlowVolumeBackend[seats.Length];snapshots=new FirePresentationSnapshot[seats.Length];emitting=new bool[seats.Length];
+   Shader shader=Resources.Load<Shader>("FireFlowParcel");
+   Texture atlas=profile.CpuMaterial!=null?profile.CpuMaterial.GetTexture("_FlameAtlas"):null;
+   if(atlas==null)throw new System.InvalidOperationException("Column fire requires its authored flame atlas.");
    for(int i=0;i<seats.Length;i++)
    {
-    fire[i]=new FireCpuMeshBackend(lights[i].transform,profile);fire[i].Begin((uint)(91231+i*613));
-    snapshots[i]=new FirePresentationSnapshot{Group=new FireGroupHandle(i,1),Seed=(uint)(91231+i*613),Lifecycle=FireLifecycle.Active,Energy=1,NodeCount=3};
+    fire[i]=new FireFlowVolumeBackend(lights[i].transform,shader,Physics.DefaultRaycastLayers,atlas,false,64);
+    fire[i].ConfigureDetailedAbilityFlame(Resources.Load<Texture2D>("EpicBurnTongues"));
+    fire[i].ConfigureCoherentTower();
+    fire[i].ConfigureSurfaceAccentDetail(true);
+    // CoherentTower owns the .82 body support; do not overwrite it with the ring-tail preset.
+    // Smaller overlapping gas structures form a rising plume; the cooling tip
+    // separates into fine authored tongues instead of two inflated capsule lobes.
+    float3 up=math.normalizesafe((float3)seats[i].Up,new float3(0,1,0));
+    // Area injection is circular in the cap tangent plane from every camera angle.
+    fire[i].Solver.Injection=new FireFlowInjection(float3.zero,4.2f,104,.44f,3,.85f,1f,developmentScale:1.2f,tailAgeScale:.9f,staggerBirths:true,birthDiscRadius:.20f,nozzleRadius:.18f,coolingTail:.40f,uniformBirthSpread:true,angularSpeed:1.2f,elongation:.3f,smokeExpansion:1.65f,smokeStride:4);fire[i].Begin((uint)(91231+i*613));
+    snapshots[i]=new FirePresentationSnapshot{Group=new FireGroupHandle(i,1),Seed=(uint)(91231+i*613),Lifecycle=FireLifecycle.Active,Energy=1,NodeCount=1};
    }
   }
   private void Update()
@@ -53,7 +65,7 @@ namespace Elemental.Presentation.Fire
    {
     Initialize();if(fire==null || sky==null)return;
     bool reduced=frontend!=null && frontend.Preferences.ReducedMotion;
-    float dt=reduced?0:Mathf.Min(Time.unscaledDeltaTime,.05f);time+=dt;var camera=sky.TargetCamera;
+    float dt=reduced || Time.timeScale<=0?0:Mathf.Min(Time.unscaledDeltaTime,.05f);time+=dt;var camera=sky.TargetCamera;
     for(int i=0;i<seats.Length;i++)
     {
      bool active=seats[i].Source!=null && seats[i].Source.enabled && seats[i].Source.gameObject.activeInHierarchy;
@@ -62,29 +74,18 @@ namespace Elemental.Presentation.Fire
      // Seat the lamp just inside the arena-facing lip, so it illuminates the shaft instead of only the upward cap.
      Vector3 inward=Vector3.ProjectOnPlane(transform.position-point,up).normalized;
      lights[i].transform.position=point-up*.25f+inward*.75f;
-     Vector3 side=Vector3.Cross(up,Vector3.forward);if(side.sqrMagnitude<.1f)side=Vector3.Cross(up,Vector3.right);side.Normalize();
-     Vector3 wind=side*(.22f+.12f*Mathf.Sin(time*.41f+i));
      var snapshot=snapshots[i];snapshot.Origin=(float3)point;snapshot.FreeUp=(float3)up;snapshot.Time=time;
-     var node=FireFieldNode.Stream((float3)(point-up*.12f),(float3)(point+up*.10f),(float3)(up*.72f+wind),(float3)up);
-     node.Radius=.42f;node.Swirl=.25f;node.NoiseSpeed=.3f;node.Lift=.8f;node.MaxTargetSpeed=2.6f;
-     snapshot.Nodes[0]=node;
-     // Unequal adjoining tongues share one cap; slow independent gusts avoid seven identical torches.
-     for(int branch=1;branch<3;branch++)
-     {
-      float sign=branch==1?-1:1;float pulse=.5f+.5f*Mathf.Sin(time*(.7f+branch*.19f)+i*1.37f+branch);
-      Vector3 basePoint=point+side*(sign*(.18f+.06f*pulse));
-      var tongue=FireFieldNode.Stream((float3)(basePoint-up*.1f),(float3)(basePoint+up*(.12f+.16f*pulse)),(float3)(up*(.65f+.45f*pulse)+wind+side*sign*.16f),(float3)up);
-      tongue.Radius=branch==1?.18f:.13f;tongue.Swirl=.45f;tongue.NoiseSpeed=.5f;tongue.Lift=.8f;tongue.MaxTargetSpeed=2.4f;
-      snapshot.Nodes[branch]=tongue;
-     }
+     // The same hot-gas/cooling-smoke pipeline, injected slowly above the authored cap.
+     var origin=point+up*.25f;
+     snapshot.Nodes[0]=FireFieldNode.Stream((float3)origin,(float3)(origin+up*.2f),(float3)up,(float3)up);
      snapshot.BoundsMin=(float3)(point-Vector3.one*3);snapshot.BoundsMax=(float3)(point+Vector3.one*3);
-     if(!emitting[i]){for(int warm=0;warm<24;warm++){snapshot.Time=time-(24-warm)*.025f;fire[i].Step(snapshot,.025f,profile.SpawnRate,camera);}emitting[i]=true;snapshot.Time=time;}
-     fire[i].Step(snapshot,dt,profile.SpawnRate,camera);
+     if(!emitting[i]){for(int warm=0;warm<24;warm++){snapshot.Time=time-(24-warm)*.025f;fire[i].Step(snapshot,.025f,camera);}emitting[i]=true;snapshot.Time=time;}
+     fire[i].Step(snapshot,dt,camera);
      int closer=0;float distance=LightPriority(camera,point,i);
      for(int j=0;j<seats.Length;j++)if(j!=i && seats[j].Source!=null && seats[j].Source.enabled && seats[j].Source.gameObject.activeInHierarchy)
      {float other=LightPriority(camera,seats[j].Source.transform.TransformPoint(seats[j].LocalPoint),j);if(other<distance || (other==distance && j<i))closer++;}
      lights[i].enabled=closer<MaximumLights;
-     lights[i].intensity=NightIntensity(sky.Snapshot.Night01,reduced?1:1+.07f*Mathf.Sin(time*5.1f+i)*Mathf.Sin(time*3.2f+i));
+     lights[i].intensity=NightIntensity(sky.Snapshot.Night01,reduced?1:Elemental.Simulation.Fire.FireLightEnvelope.Sample(time,i*1.71f));
     }
    }
   }

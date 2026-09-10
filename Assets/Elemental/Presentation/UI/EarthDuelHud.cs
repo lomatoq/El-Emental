@@ -12,7 +12,7 @@ using UnityEngine.UIElements;
 namespace Elemental.Presentation.UI
 {
     [DisallowMultipleComponent, RequireComponent(typeof(UIDocument))]
-    public sealed class EarthDuelHud : MonoBehaviour
+    public sealed partial class EarthDuelHud : MonoBehaviour
     {
         [SerializeField] private EarthMvpDuelController duel;
         [SerializeField] private EarthSceneReadinessGate readiness;
@@ -61,6 +61,7 @@ namespace Elemental.Presentation.UI
         private EarthCoreHud _legacyHud;
         private bool _combatVisible = true;
         private EarthDuelFighterId _localFighter = EarthDuelFighterId.Player;
+        public EarthDuelFighterId LocalFighter=>_localFighter;
         private bool _restartAllowed = true;
         public void SetLocalPerspective(EarthDuelFighterId fighter, bool canRestart)
         {
@@ -182,7 +183,7 @@ namespace Elemental.Presentation.UI
             Build(); Subscribe();
 
         }
-        private void OnDisable() { Unsubscribe(); _root?.RemoveFromHierarchy(); ReleaseNotificationSprites(); }
+        private void OnDisable() { ClearSchoolHud(); Unsubscribe(); _root?.RemoveFromHierarchy(); ReleaseNotificationSprites(); }
         private void OnDestroy() => ReleaseNotificationSprites();
         private void Subscribe()
         {
@@ -213,7 +214,7 @@ namespace Elemental.Presentation.UI
         private void OnPillar(EarthPillarLaunchEvent value) => Spend(20f);
         private void OnWave(Vector3 point, float radius, int count) => Spend(20f);
         private void Spend(float value) { if (_ready && duel != null && !duel.IsRoundOver) { _mana.Spend(value); if (_manaGauge != null) _manaGauge.Flash = .7f; } }
-        private void OnRestarted() { _mana.Reset(); _lastSeconds = -1; _healthGauge.Trail = 1; ResetLifeResult(); }
+        private void OnRestarted() { _mana.Reset(); _lastSeconds = -1; _healthGauge.Trail = 1; ResetLifeResult(); _roundOver=false; _referenceHud?.ResetRound(); }
         private void ResetLifeResult()
         {
             _lifeResultState.Reset(LocalDeaths, OpponentDeaths);
@@ -409,18 +410,20 @@ namespace Elemental.Presentation.UI
                 }
                 float returningAlpha=_returningVisibility.Step(respawn>0,Time.unscaledDeltaTime,_reducedMotion);
                 _respawn.style.display=returningAlpha>0?DisplayStyle.Flex:DisplayStyle.None;
-                _returningVeil.style.display=returningAlpha>0?DisplayStyle.Flex:DisplayStyle.None;
-                _returningVeil.style.opacity=returningAlpha;
+                _returningVeil.style.display=DisplayStyle.None;
+                _returningVeil.style.opacity=0;
                 _returningMotion.Apply(returningAlpha,_reducedMotion?1:Mathf.Lerp(.92f,1,returningAlpha));
                 if (_roundOver != duel.IsRoundOver)
                 {
-                    _roundOver = duel.IsRoundOver; _result.style.display = _roundOver ? DisplayStyle.Flex : DisplayStyle.None;
+                    _roundOver = duel.IsRoundOver;
+                    if(_referenceHud==null)_result.style.display=_roundOver?DisplayStyle.Flex:DisplayStyle.None;
                     bool blueWon = playerIsBlue ? duel.PlayerScore > duel.BotScore : duel.BotScore > duel.PlayerScore;
                     _resultText.text = duel.PlayerScore == duel.BotScore ? "DRAW" : blueWon ? "BLUE WINS" : "RED WINS";
                     if (_roundOver) _restart.Focus();
                 }
                 if (_referenceHud != null)
                     _referenceHud.Tick(SelectedElement,_reducedMotion,_roundOver,OpponentDeaths>LocalDeaths,OpponentDeaths==LocalDeaths,OpponentDeaths,LocalDeaths,_restartAllowed);
+                TickSchoolHud();
                 Vector3 radial = planet.InverseTransformDirection(player.position - planet.position).normalized;
                 // Parallel transport the view instead of pinning world north near either pole.
                 Quaternion target = Quaternion.FromToRotation(_globe.View * radial, Vector3.forward) * _globe.View;

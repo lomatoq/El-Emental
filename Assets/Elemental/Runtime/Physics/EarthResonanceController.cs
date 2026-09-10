@@ -25,6 +25,7 @@ namespace Elemental.Runtime.Physics
         private Vector3 _aimDirection;
         private float _nextAutomaticFireAt;
 
+        public bool HasRequiredBindings => casterBody != null && fragmentPool != null && executor != null;
         public bool IsCharging => _session != null && _session.IsCharging;
         public bool IsVolleyActive => _session != null && _session.IsVolleyActive;
         public float Charge01 => _sample.Charge01;
@@ -64,6 +65,7 @@ namespace Elemental.Runtime.Physics
 
         public bool BeginCharge(float now)
         {
+            if (!HasRequiredBindings) return false;
             EnsureSession();
             if (!_session.Begin(now)) return false;
             _sample = default;

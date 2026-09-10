@@ -1,3 +1,4 @@
+using Elemental.Simulation.Rendering;
 using Elemental.Presentation.Animation;
 using Elemental.Presentation.Camera;
 using Elemental.Presentation.Rendering;
@@ -11,6 +12,7 @@ namespace Elemental.Presentation.UI
     [DisallowMultipleComponent]
     public sealed class CinematicMenuCamera : MonoBehaviour
     {
+        private static readonly Unity.Profiling.ProfilerMarker DepartureMarker = new("Elemental.MenuCamera.Departure");
         private static readonly Unity.Profiling.ProfilerMarker ReframeMarker = new("Elemental.MenuCamera.Reframe");
         [SerializeField] private CinemachineCamera menuCamera;
         [SerializeField] private CinemachineBrain brain;
@@ -35,7 +37,21 @@ namespace Elemental.Presentation.UI
         [SerializeField, Range(45, 120)] private float countdownAzimuth = 85f;
         [SerializeField, Range(5, 35)] private float countdownElevation = 18f;
         [SerializeField, Range(.3f, .65f)] private float countdownCharacterScreenHeight = .48f;
-        [SerializeField, Range(50f, 250f), Tooltip("Full-frame starting focal length, millimetres.")] private float countdownStartFocalLength = 150f;
+        [SerializeField, Range(30f, 55f)] private float countdownFieldOfView = 42f;
+        private struct Framing
+        {
+            public Vector3 Position, Center, Up;
+            public Quaternion Rotation;
+            public LensSettings Lens;
+            public float Height, Distance;
+        }
+        private Framing _departureStart, _departureTarget;
+        private bool _departureCaptured;
+        public bool DepartureComplete { get; private set; }
+        public float DepartureProgress { get; private set; }
+        public static float DepartureSeconds(bool reducedMotion) => reducedMotion ? .18f : .85f;
+        private Quaternion _dollyStartRotation;
+        private LensSettings _dollyStartLens;
         private float _countdownDollyProgress;
         private Vector3 _dollyCenter, _dollyStartDirection;
         private float _dollyStartDistance, _subjectHeight;
@@ -44,8 +60,15 @@ namespace Elemental.Presentation.UI
         private CinemachineBrain.LensModeOverrideSettings _previousLensModeOverride;
         private LensSettings _previousOutputLens;
         private bool _countdownFraming;
+        private bool _resultsFraming;private Transform _resultsVisualRoot;
+        private Framing _resultsStart;
+        public bool OwnsResultsStage=>_active&&_resultsFraming;
         public float CountdownFocalLength => UnityEngine.Camera.FieldOfViewToFocalLength(menuCamera.Lens.FieldOfView, 24f);
         private bool _active, _chargeWasEnabled;
+        private PrioritySettings _previousMenuPriority;
+        private LensSettings _previousMenuLens;
+        private bool _previousMenuActive;
+        private float _previousPresentationClock = 1f;
         private bool _previousIgnoreTimeScale, _returning;
         private CinemachineBrain.UpdateMethods _previousUpdateMethod;
         private CinemachineBrain.BrainUpdateMethods _previousBlendUpdateMethod;
@@ -62,6 +85,12 @@ namespace Elemental.Presentation.UI
         private Renderer[] _sceneRenderers = System.Array.Empty<Renderer>();
         private bool[] _rendererWasHidden = System.Array.Empty<bool>();
         private bool[] _suppressed = System.Array.Empty<bool>();
+        private static readonly int CameraFadeId = Shader.PropertyToID("_MenuOcclusionFade");
+        private static readonly Unity.Profiling.ProfilerMarker OcclusionMarker = new("Elemental.MenuCamera.OcclusionFade");
+        private MaterialPropertyBlock _cameraFadeBlock;
+        private bool[] _smoothOccluder = System.Array.Empty<bool>();
+        private float[] _cameraFade = System.Array.Empty<float>(), _cameraFadeTarget = System.Array.Empty<float>();
+        private bool _cameraFadePending;
         public bool OwnsPresentation => _active;
         public Vector3 SubjectCenter { get; private set; }
         public void Configure(CinemachineCamera camera, CinemachineBrain cameraBrain, UnityEngine.Camera output,
@@ -71,8 +100,9 @@ namespace Elemental.Presentation.UI
         public void Enter(bool reducedMotion, float transitionSeconds)
         {
             if (menuCamera == null || actor == null) return;
-            _returning = false;
-            _countdownFraming = false;
+            _cameraFadeBlock ??= new MaterialPropertyBlock();
+            _returning = false; _resultsFraming=false; _resultsVisualRoot=null;
+            _countdownFraming = false; _departureCaptured = false; DepartureComplete = false;
             if (_active)
             {
                 SetPresentationClock();
@@ -81,6 +111,9 @@ namespace Elemental.Presentation.UI
                 depthOfField?.SetPresentationWeight(1); Reframe(reducedMotion);
                 animationDriver?.SetPresentationClockMultiplier(.45f); return;
             }
+            _previousMenuPriority = menuCamera.Priority; _previousMenuLens = menuCamera.Lens;
+            _previousMenuActive = menuCamera.gameObject.activeSelf;
+            _previousPresentationClock = animationDriver != null ? animationDriver.PresentationClockMultiplier : 1f;
             _active = true;
             if (brain != null)
             {
@@ -95,7 +128,17 @@ namespace Elemental.Presentation.UI
             if (outputCamera != null) _previousOutputLens = LensSettings.FromCamera(outputCamera);
             var renderers = new System.Collections.Generic.List<Renderer>();
             foreach (var root in gameObject.scene.GetRootGameObjects()) renderers.AddRange(root.GetComponentsInChildren<Renderer>(true));
+            RestoreCameraFadeImmediate();
             _sceneRenderers = renderers.ToArray();
+            _smoothOccluder = new bool[_sceneRenderers.Length];
+            _cameraFade = new float[_sceneRenderers.Length]; _cameraFadeTarget = new float[_sceneRenderers.Length];
+            for (int i = 0; i < _sceneRenderers.Length; i++)
+            {
+                var renderer = _sceneRenderers[i];
+                var material = renderer != null ? renderer.sharedMaterial : null;
+                _smoothOccluder[i] = material != null && material.HasProperty(CameraFadeId);
+                _cameraFade[i] = _cameraFadeTarget[i] = 1;
+            }
             _rendererWasHidden = new bool[_sceneRenderers.Length]; _suppressed = new bool[_sceneRenderers.Length];
             for (int i = 0; i < _sceneRenderers.Length; i++) _rendererWasHidden[i] = _sceneRenderers[i] != null && _sceneRenderers[i].forceRenderingOff;
             if (brain != null) { _blend = brain.DefaultBlend; brain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut, reducedMotion ? 0 : transitionSeconds); }
@@ -115,6 +158,15 @@ namespace Elemental.Presentation.UI
         {
             if (!_active || actor == null || menuCamera == null) return;
             using var marker = ReframeMarker.Auto();
+            if (_departureCaptured || _resultsFraming) return;
+            Framing frame = ComputeFraming(_countdownFraming, reducedMotion);
+            ApplyFraming(in frame, reducedMotion);
+            _width = Screen.width; _height = Screen.height;
+            _framedActorPosition = actor.position; _framedActorRotation = actor.rotation; _hasFramedActor = true;
+            menuCamera.PreviousStateIsValid = false;
+        }
+        private Framing ComputeFraming(bool countdown, bool reducedMotion)
+        {
             Vector3 up = motor != null && motor.LocalUp.sqrMagnitude > .5f ? motor.LocalUp.normalized : actor.up;
             Vector3 facing = Vector3.ProjectOnPlane(motor != null ? motor.FacingForward : actor.forward, up).normalized;
             if (facing.sqrMagnitude < .1f) facing = Vector3.ProjectOnPlane(actor.forward, up).normalized;
@@ -134,18 +186,11 @@ namespace Elemental.Presentation.UI
                     height = Mathf.Max(height, Vector3.Dot(bounds.center - feet, up) + projectedHalfHeight);
                 }
             }
-            _subjectHeight = height;
-            float framingFov = fieldOfView;
-            if (_countdownFraming)
-            {
-                float normalFocalLength = UnityEngine.Camera.FieldOfViewToFocalLength(fieldOfView, 24f);
-                float t = reducedMotion ? 1f : Mathf.SmoothStep(0f, 1f, _countdownDollyProgress);
-                framingFov = UnityEngine.Camera.FocalLengthToFieldOfView(Mathf.Lerp(countdownStartFocalLength, normalFocalLength, t), 24f);
-            }
-            float distance = height / (2f * Mathf.Tan(framingFov * Mathf.Deg2Rad * .5f) * (_countdownFraming ? countdownCharacterScreenHeight : characterScreenHeight));
+            float framingFov = countdown ? countdownFieldOfView : fieldOfView;
+            float distance = height / (2f * Mathf.Tan(framingFov * Mathf.Deg2Rad * .5f) * (countdown ? Mathf.Min(countdownCharacterScreenHeight, .4f) : characterScreenHeight));
             Vector3 center = feet + up * height * .5f;
             Vector3 separation = Vector3.zero;
-            if (_countdownFraming && countdownOpponent != null)
+            if (countdown && countdownOpponent != null)
             {
                 if (_opponentMotor == null) _opponentMotor = countdownOpponent.GetComponent<PlanetMotor>();
                 Vector3 otherFeet = _opponentMotor != null ? _opponentMotor.SupportFeetPoint(up) : countdownOpponent.position;
@@ -154,40 +199,35 @@ namespace Elemental.Presentation.UI
                 Vector3 duelAxis = Vector3.ProjectOnPlane(separation, up);
                 if (duelAxis.sqrMagnitude > .01f) facing = duelAxis.normalized;
             }
-            SubjectCenter = center;
-            Vector3 requestedFacing = Quaternion.AngleAxis(_countdownFraming ? countdownAzimuth : presentationAzimuth, up) * facing;
+            Vector3 requestedFacing = Quaternion.AngleAxis(countdown ? countdownAzimuth : presentationAzimuth, up) * facing;
             facing = requestedFacing;
             Vector3 right = Vector3.Cross(up, -facing).normalized;
             float aspect = outputCamera != null ? outputCamera.aspect : 16f / 9f;
-            if (_countdownFraming)
+            if (countdown)
             {
                 float halfWidth = Mathf.Abs(Vector3.Dot(separation, right)) * .5f + height * .3f;
                 float depthMargin = Mathf.Abs(Vector3.Dot(separation, facing)) * .5f;
                 distance = Mathf.Max(distance, halfWidth / (Mathf.Tan(framingFov * Mathf.Deg2Rad * .5f) * aspect * .8f) + depthMargin);
             }
             Vector3 position = center + facing * distance;
-            if (_countdownFraming) position = center + (facing * Mathf.Cos(countdownElevation * Mathf.Deg2Rad) + up * Mathf.Sin(countdownElevation * Mathf.Deg2Rad)) * distance;
+            if (countdown) position = center + (facing * Mathf.Cos(countdownElevation * Mathf.Deg2Rad) + up * Mathf.Sin(countdownElevation * Mathf.Deg2Rad)) * distance;
             Vector3 target = center - right * distance * Mathf.Tan(framingFov * Mathf.Deg2Rad * .5f) * aspect * .40f;
-            if (_countdownFraming) target = center;
-            Quaternion rotation = _countdownFraming ? Quaternion.LookRotation(target - position, up) :
+            if (countdown) target = center;
+            Quaternion rotation = countdown ? Quaternion.LookRotation(target - position, up) :
                 PortraitRotation(position, center, up, framingFov, aspect, portraitViewport, reducedMotion ? 0 : dutchAngle);
-            menuCamera.transform.SetPositionAndRotation(position, rotation);
-            SuppressForegroundOccluders(position, center, up, height);
             var lens = menuCamera.Lens;
-            lens.ModeOverride = _countdownFraming ? LensSettings.OverrideModes.Physical : LensSettings.OverrideModes.Perspective;
-            if (_countdownFraming)
-            {
-                lens.PhysicalProperties = _previousOutputLens.PhysicalProperties;
-                lens.PhysicalProperties.SensorSize = new Vector2(36f, 24f);
-                lens.PhysicalProperties.GateFit = UnityEngine.Camera.GateFitMode.Vertical;
-                lens.PhysicalProperties.LensShift = Vector2.zero;
-                lens.PhysicalProperties.FocusDistance = distance;
-            }
-            lens.FieldOfView = framingFov; lens.Dutch = reducedMotion || _countdownFraming ? 0 : dutchAngle; menuCamera.Lens = lens;
-            _width = Screen.width; _height = Screen.height;
-            _framedActorPosition = actor.position; _framedActorRotation = actor.rotation; _hasFramedActor = true;
-            menuCamera.PreviousStateIsValid = false;
-            depthOfField?.ApplyPolicy(!reducedMotion, distance, 5.6f, 50f);
+            lens.ModeOverride = LensSettings.OverrideModes.Perspective;
+            lens.FieldOfView = framingFov; lens.Dutch = reducedMotion || countdown ? 0 : dutchAngle;
+            lens.PhysicalProperties.FocusDistance = distance;
+            return new Framing { Position = position, Rotation = rotation, Lens = lens,
+                Center = center, Up = up, Height = height, Distance = distance };
+        }
+        private void ApplyFraming(in Framing frame, bool reducedMotion)
+        {
+            menuCamera.transform.SetPositionAndRotation(frame.Position, frame.Rotation);
+            menuCamera.Lens = frame.Lens; SubjectCenter = frame.Center; _subjectHeight = frame.Height;
+            SuppressForegroundOccluders(frame.Position, frame.Center, frame.Up, frame.Height);
+            depthOfField?.ApplyPolicy(!reducedMotion, frame.Distance, 5.6f, 50f);
         }
         public static Quaternion PortraitRotation(Vector3 position, Vector3 subject, Vector3 up,
             float verticalFov, float aspect, Vector2 viewport, float dutch)
@@ -209,16 +249,26 @@ namespace Elemental.Presentation.UI
         private void SuppressForegroundOccluders(Vector3 position, Vector3 center, Vector3 up, float height)
         {
             RestoreOccluders();
+            for (int i = 0; i < _cameraFadeTarget.Length; i++) _cameraFadeTarget[i] = 1;
+            _cameraFadePending = true;
             Vector3 right = Vector3.Cross(up, center - position).normalized;
             for (int i = 0; i < _sceneRenderers.Length; i++)
             {
                 var renderer = _sceneRenderers[i];
                 if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy || renderer.transform.IsChildOf(actor) ||
+                    (_resultsVisualRoot!=null&&renderer.transform.IsChildOf(_resultsVisualRoot)) ||
                     (_countdownFraming && countdownOpponent != null && renderer.transform.IsChildOf(countdownOpponent)) ||
                     renderer is not (MeshRenderer or SkinnedMeshRenderer)) continue;
                 Bounds bounds = renderer.bounds;
+                // A floor's broad AABB can intersect the portrait's lowest rays
+                // even when the actual surface stays below the feet. Hiding that
+                // whole mesh creates a hole in the result screen.
+                if(IsBelowPortraitFeet(bounds,center,up,height))continue;
                 if (Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z) > height * 5f) continue;
-                bool occludes = false;
+                // Start fading before the lens enters the mesh bounds. Keep the
+                // authored near plane; otherwise clipped triangles pop into view.
+                float cameraClearance = Mathf.Max(1.25f, (outputCamera != null ? outputCamera.nearClipPlane : .1f) + .6f);
+                bool occludes = _smoothOccluder[i] && (bounds.ClosestPoint(position) - position).sqrMagnitude < cameraClearance * cameraClearance;
                 int subjects = _countdownFraming && countdownOpponent != null ? 3 : 1;
                 for (int subject = 0; subject < subjects && !occludes; subject++)
                 for (int row = -1; row <= 1 && !occludes; row++)
@@ -231,49 +281,129 @@ namespace Elemental.Presentation.UI
                     Vector3 ray = sample - position;
                     occludes = bounds.IntersectRay(new Ray(position, ray.normalized), out float hit) && hit < ray.magnitude - .2f;
                 }
-                if (occludes && !renderer.forceRenderingOff) { renderer.forceRenderingOff = true; _suppressed[i] = true; }
+                if (_smoothOccluder[i])
+                {
+                    _cameraFadeTarget[i] = occludes ? 0 : 1;
+                    // Restore before the rendered gameplay handoff, not in one
+                    // frame when the cinematic camera relinquishes ownership.
+                    if (_countdownFraming && DepartureComplete)
+                        _cameraFadeTarget[i] = Mathf.Max(_cameraFadeTarget[i], Mathf.InverseLerp(.72f, 1f, _countdownDollyProgress));
+                }
+                else if (occludes && !renderer.forceRenderingOff) { renderer.forceRenderingOff = true; _suppressed[i] = true; }
             }
+        }
+        private void LateUpdate()
+        {
+            if (!_cameraFadePending) return;
+            using var marker = OcclusionMarker.Auto();
+            bool pending = false;
+            for (int i = 0; i < _sceneRenderers.Length; i++)
+            {
+                var renderer = _sceneRenderers[i];
+                if (!_smoothOccluder[i] || renderer == null) continue;
+                float target = _active ? _cameraFadeTarget[i] : 1;
+                float next = MenuOcclusionFade.Step(_cameraFade[i], target, Time.unscaledDeltaTime);
+                if (next != _cameraFade[i])
+                {
+                    // Preserve heat, stone tint and destruction's independent fade.
+                    renderer.GetPropertyBlock(_cameraFadeBlock);
+                    _cameraFadeBlock.SetFloat(CameraFadeId, next);
+                    renderer.SetPropertyBlock(_cameraFadeBlock);
+                    _cameraFade[i] = next;
+                }
+                pending |= next != target;
+            }
+            _cameraFadePending = pending;
+        }
+        private void RestoreCameraFadeImmediate()
+        {
+            if (_cameraFadeBlock == null) return;
+            for (int i = 0; i < _sceneRenderers.Length; i++)
+            {
+                if (i >= _smoothOccluder.Length || !_smoothOccluder[i] || _sceneRenderers[i] == null) continue;
+                _sceneRenderers[i].GetPropertyBlock(_cameraFadeBlock);
+                _cameraFadeBlock.SetFloat(CameraFadeId, 1);
+                _sceneRenderers[i].SetPropertyBlock(_cameraFadeBlock);
+            }
+            _cameraFadePending = false;
+        }
+        public static bool IsBelowPortraitFeet(Bounds bounds,Vector3 center,Vector3 up,float height)
+        {
+            up=up.sqrMagnitude>.001f?up.normalized:Vector3.up;
+            float highest=Vector3.Dot(bounds.center,up)+Vector3.Dot(bounds.extents,new Vector3(Mathf.Abs(up.x),Mathf.Abs(up.y),Mathf.Abs(up.z)));
+            return highest<=Vector3.Dot(center,up)-Mathf.Max(.1f,height)*.5f+.20f;
+        }
+        public void CaptureDepartureStart()
+        {
+            if (!_active || menuCamera == null || actor == null) return;
+            // Final output already includes Cinemachine roll; clear lens Dutch to avoid applying it twice.
+            LensSettings lens = outputCamera != null ? LensSettings.FromCamera(outputCamera) : menuCamera.Lens;
+            Quaternion rotation = outputCamera != null ? outputCamera.transform.rotation : menuCamera.State.GetFinalOrientation();
+            lens.Dutch = 0;
+            _departureStart = new Framing {
+                Position = outputCamera != null ? outputCamera.transform.position : menuCamera.State.GetFinalPosition(),
+                Rotation = rotation, Lens = lens, Center = SubjectCenter,
+                Up = motor != null ? motor.LocalUp : actor.up, Height = _subjectHeight
+            };
+            _departureStart.Distance = Vector3.Distance(_departureStart.Position, SubjectCenter);
+            _departureCaptured = true; DepartureComplete = false; DepartureProgress = 0;
+            // Reserve the rendered camera without changing the current DOF/accessibility policy.
+            menuCamera.transform.SetPositionAndRotation(_departureStart.Position, _departureStart.Rotation);
+            menuCamera.Lens = _departureStart.Lens;
         }
         public void BeginCountdown(bool reducedMotion, float blendSeconds)
         {
+            if (!_departureCaptured) CaptureDepartureStart();
             _countdownFraming = true; _countdownDollyProgress = 0f;
+            _departureTarget = ComputeFraming(true, reducedMotion);
             if (brain != null) brain.LensModeOverride.Enabled = true;
-            if (brain != null) brain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut, blendSeconds);
-            Reframe(reducedMotion);
-            _dollyCenter = SubjectCenter;
-            Vector3 offset = menuCamera.transform.position - _dollyCenter;
-            _dollyStartDistance = offset.magnitude; _dollyStartDirection = offset.normalized;
             _dollyEndCaptured = false;
+            SetDepartureProgress(0, reducedMotion);
+        }
+        public void SetDepartureProgress(float progress, bool reducedMotion)
+        {
+            if (!_active || !_departureCaptured || !_countdownFraming) return;
+            using var marker = DepartureMarker.Auto();
+            DepartureProgress = Mathf.Clamp01(progress);
+            float t = Mathf.SmoothStep(0, 1, DepartureProgress);
+            Framing frame = _departureTarget;
+            frame.Position = Vector3.Lerp(_departureStart.Position, _departureTarget.Position, t);
+            frame.Rotation = Quaternion.Slerp(_departureStart.Rotation, _departureTarget.Rotation, t);
+            frame.Lens = LensSettings.Lerp(_departureStart.Lens, _departureTarget.Lens, t);
+            frame.Center = Vector3.Lerp(_departureStart.Center, _departureTarget.Center, t);
+            frame.Distance = Vector3.Distance(frame.Position, frame.Center);
+            ApplyFraming(in frame, reducedMotion);
+            DepartureComplete = DepartureProgress >= 1;
+            if (!DepartureComplete) return;
+            _dollyCenter = _departureTarget.Center;
+            Vector3 offset = _departureTarget.Position - _dollyCenter;
+            _dollyStartDistance = offset.magnitude; _dollyStartDirection = offset.normalized;
+            _dollyStartRotation = _departureTarget.Rotation; _dollyStartLens = _departureTarget.Lens;
         }
         public void SetCountdownDollyProgress(float progress, float alignmentProgress, bool reducedMotion)
         {
-            if (!_active || !_countdownFraming || menuCamera.Priority < 0) return;
+            if (!_active || !_countdownFraming || !DepartureComplete || menuCamera.Priority < 0) return;
             _countdownDollyProgress = Mathf.Clamp01(progress);
-            if (gameplayCamera == null) { Reframe(reducedMotion); return; }
+            if (gameplayCamera == null) return;
             if (!_dollyEndCaptured)
             {
                 gameplayController?.SnapToTarget();
                 gameplayCamera.PreviousStateIsValid = false;
                 gameplayCamera.UpdateCameraState(motor != null ? motor.LocalUp : actor.up, -1f);
                 _dollyEndState = gameplayCamera.State; _dollyEndCaptured = true;
-                _dollyStartDistance = Mathf.Max(_dollyStartDistance, Vector3.Distance(_dollyEndState.GetFinalPosition(), _dollyCenter) + 2f);
             }
             Vector3 endOffset = _dollyEndState.GetFinalPosition() - _dollyCenter;
-            float t = reducedMotion ? 1f : _countdownDollyProgress;
-            float align = reducedMotion ? 1f : Mathf.SmoothStep(0f, 1f, alignmentProgress);
+            float t = Mathf.SmoothStep(0f, 1f, _countdownDollyProgress);
+            float align = Mathf.SmoothStep(0f, 1f, alignmentProgress);
             float distance = Mathf.Lerp(_dollyStartDistance, endOffset.magnitude, t);
             Vector3 direction = Vector3.Slerp(_dollyStartDirection, endOffset.normalized, align).normalized;
             Vector3 position = _dollyCenter + direction * distance;
             Vector3 up = motor != null ? motor.LocalUp : actor.up;
             Quaternion endRotation = _dollyEndState.GetFinalOrientation();
-            Vector3 gameplayAim = _dollyEndState.GetFinalPosition() + endRotation * Vector3.forward * Mathf.Max(1f, endOffset.magnitude);
-            Vector3 aim = Vector3.Lerp(_dollyCenter, gameplayAim, align);
-            Quaternion rotation = Quaternion.LookRotation(aim - position, Vector3.Slerp(up, endRotation * Vector3.up, align));
+            Quaternion rotation = Quaternion.Slerp(_dollyStartRotation, endRotation, align);
             menuCamera.transform.SetPositionAndRotation(position, rotation);
             SuppressForegroundOccluders(position, _dollyCenter, up, _subjectHeight);
-            float normalFocal = UnityEngine.Camera.FieldOfViewToFocalLength(_dollyEndState.Lens.FieldOfView, 24f);
-            var lens = menuCamera.Lens;
-            lens.FieldOfView = UnityEngine.Camera.FocalLengthToFieldOfView(Mathf.Lerp(countdownStartFocalLength, normalFocal, t), 24f);
+            var lens = LensSettings.Lerp(_dollyStartLens, _dollyEndState.Lens, t);
             lens.PhysicalProperties.FocusDistance = distance; menuCamera.Lens = lens;
             depthOfField?.ApplyPolicy(!reducedMotion, distance, 5.6f, 50f);
         }
@@ -288,6 +418,31 @@ namespace Elemental.Presentation.UI
             brain.UpdateMethod = CinemachineBrain.UpdateMethods.LateUpdate;
             brain.BlendUpdateMethod = CinemachineBrain.BrainUpdateMethods.LateUpdate;
         }
+        public void BeginResultsStage(Transform visualRoot,Transform focusSubject,bool reducedMotion)
+        {
+            var start=new Framing{Position=outputCamera!=null?outputCamera.transform.position:menuCamera.transform.position,
+                Rotation=outputCamera!=null?outputCamera.transform.rotation:menuCamera.transform.rotation,
+                Lens=outputCamera!=null?LensSettings.FromCamera(outputCamera):menuCamera.Lens};
+            Enter(reducedMotion,0);_resultsStart=start;_resultsFraming=true;_resultsVisualRoot=visualRoot;
+            menuCamera.transform.SetPositionAndRotation(start.Position,start.Rotation);menuCamera.Lens=start.Lens;
+            _departureCaptured=false;
+            if(depthOfField!=null)depthOfField.ConfigureSubjects(focusSubject,focusSubject);
+        }
+        public void SetResultsStageFrame(Vector3 center,Vector3 up,Vector3 facing,float height,float progress,bool reducedMotion)
+        {
+            if(!OwnsResultsStage)return;
+            const float fov=38;float distance=height/(2*Mathf.Tan(fov*Mathf.Deg2Rad*.5f)*.65f);
+            Vector3 position=center+facing.normalized*distance+up*.08f;
+            float aspect=outputCamera!=null?outputCamera.aspect:16f/9;
+            Quaternion rotation=PortraitRotation(position,center,up,fov,aspect,new Vector2(.27f,.55f),0);
+            LensSettings lens=_resultsStart.Lens;lens.ModeOverride=LensSettings.OverrideModes.Perspective;
+            lens.FieldOfView=fov;lens.Dutch=0;lens.PhysicalProperties.FocusDistance=distance;
+            float t=Mathf.Clamp01(progress);
+            var frame=new Framing{Position=Vector3.Lerp(_resultsStart.Position,position,t),Rotation=Quaternion.Slerp(_resultsStart.Rotation,rotation,t),
+                Lens=LensSettings.Lerp(_resultsStart.Lens,lens,t),Center=center,Up=up,Height=height,Distance=distance};
+            ApplyFraming(frame,reducedMotion);
+        }
+        public void EndResultsStage(){if(OwnsResultsStage)FinishCombatTransition();}
         public void ReturnToGameplay(bool reducedMotion, float transitionSeconds)
         {
             if (!_active || menuCamera == null) return;
@@ -318,9 +473,9 @@ namespace Elemental.Presentation.UI
         public void FinishCombatTransition()
         {
             if (!_active) return;
-            _active = false; _returning = false; animationDriver?.SetPresentationClockMultiplier(1f);
-            RestoreOccluders();
-            if (menuCamera != null) { menuCamera.Priority = -1000; menuCamera.gameObject.SetActive(false); }
+            _active = false; _resultsFraming=false; _resultsVisualRoot=null; _returning = false; _departureCaptured = false; DepartureComplete = false; animationDriver?.SetPresentationClockMultiplier(_previousPresentationClock);
+            RestoreOccluders(); _cameraFadePending = true;
+            if (menuCamera != null) { menuCamera.Priority = _previousMenuPriority; menuCamera.Lens = _previousMenuLens; menuCamera.gameObject.SetActive(_previousMenuActive); }
             if (brain != null)
             {
                 brain.DefaultBlend = _blend; brain.LensModeOverride = _previousLensModeOverride;
@@ -345,9 +500,9 @@ namespace Elemental.Presentation.UI
             }
             if (chargeLook != null) chargeLook.enabled = _chargeWasEnabled;
         }
-        public bool NeedsReframe => _active && !_returning && !_countdownFraming && actor != null &&
+        public bool NeedsReframe => _active && !_resultsFraming && !_returning && !_countdownFraming && !_departureCaptured && actor != null &&
             (!_hasFramedActor || _width != Screen.width || _height != Screen.height ||
              (actor.position - _framedActorPosition).sqrMagnitude > .0004f || Quaternion.Angle(actor.rotation, _framedActorRotation) > .5f);
-        private void OnDisable() => FinishCombatTransition();
+        private void OnDisable() { FinishCombatTransition(); RestoreCameraFadeImmediate(); }
     }
 }

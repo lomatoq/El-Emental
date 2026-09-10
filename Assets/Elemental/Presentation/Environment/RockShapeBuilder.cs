@@ -61,29 +61,120 @@ namespace Elemental.Presentation.DistantScenery
         }
         public static RockShapeData FloatingPillar(int seed,int family,bool lowDetail,RockShapeSettings settings)
         {
-            // The middle is a continuous full-width body. Caps overlap this core;
-            // they never alternate wide shelves around a narrow, open waist.
+            // A closed tapered core and overlapping upper shoulders preserve readable mass.
             float targetRatio=math.lerp(.415f,.485f,math.clamp(family,0,5)/5f);
-            var result=FloatingBody(seed,lowDetail,settings);
-            var coarse=lowDetail?result:FloatingBody(seed,true,settings);
-            coarse.Bounds(out float3 min,out float3 max);
-            float scale=targetRatio/(max.y-min.y);
-            float3 origin=new float3((min.x+max.x)*.5f,min.y,(min.z+max.z)*.5f);
-            foreach(var part in result.Parts){part.Translation=(part.Translation-origin)*scale;part.Scale*=scale;}
+            var result=FloatingBody(seed,family,lowDetail,settings);
+            var coarse=lowDetail?result:FloatingBody(seed,family,true,settings);
+            // Saved scene roots were authored against the old narrow component envelopes.
+            // Match each new component to an old component, not merely to the union AABB:
+            // this preserves broad-phase non-overlap under any unchanged parent transform.
+            var legacyCoarse=LegacyFloatingEnvelope(seed,true,settings);
+            var legacyFine=LegacyFloatingEnvelope(seed,false,settings);
+            legacyCoarse.Bounds(out float3 legacyMin,out float3 legacyMax);
+            float legacyScale=targetRatio/(legacyMax.y-legacyMin.y);
+            float3 legacyOrigin=new float3((legacyMin.x+legacyMax.x)*.5f,legacyMin.y,(legacyMin.z+legacyMax.z)*.5f);
+            for(int i=0;i<result.Parts.Count;i++)
+            {
+                // The tapered body occupies the prior core. Both upper shoulders stay
+                // inside the prior upper cap; no new wide lower component is introduced.
+                BoundsOfPart(legacyFine.Parts[i==0?0:2],out float3 min,out float3 max);
+                min=(min-legacyOrigin)*legacyScale;max=(max-legacyOrigin)*legacyScale;
+                float3 center=(min+max)*.5f,half=(max-min)*.5f;
+                if(i==2){center+=half*new float3(-.10f,.05f,.08f);half*=.8f;}
+                half-=new float3(.000002f);
+                FitComponentEnvelope(result.Parts[i],coarse.Parts[i],center,half);
+            }
             return result;
         }
-        private static RockShapeData FloatingBody(int seed,bool low,RockShapeSettings settings)
+        private static void BoundsOfPart(RockShapeData.Part part,out float3 min,out float3 max)
+        {
+            min=new float3(float.PositiveInfinity);max=new float3(float.NegativeInfinity);
+            foreach(var face in part.Solid.Faces)foreach(var point in face.Points)
+            {float3 world=part.Point(point);min=math.min(min,world);max=math.max(max,world);}
+        }
+        private static void FitComponentEnvelope(RockShapeData.Part result,RockShapeData.Part coarse,float3 center,float3 half)
+        {
+            float3 min=new float3(float.PositiveInfinity),max=new float3(float.NegativeInfinity);
+            foreach(var face in coarse.Solid.Faces)foreach(var point in face.Points){min=math.min(min,point);max=math.max(max,point);}
+            float3 localCenter=(min+max)*.5f,localHalf=(max-min)*.5f;
+            float3x3 rotation=new float3x3(coarse.Rotation);
+            // abs(R)*diag(localHalf)*scale is a conservative rotated-box half extent.
+            // Solving the three positive scales preserves the original planar solid,
+            // its taper ratio and lean, without baking shear into its face normals.
+            var extentMatrix=new float3x3(math.abs(rotation.c0)*localHalf.x,math.abs(rotation.c1)*localHalf.y,math.abs(rotation.c2)*localHalf.z);
+            float3 scale=math.mul(math.inverse(extentMatrix),half);
+            if(!math.all(math.isfinite(scale))||math.any(scale<=0))
+                throw new InvalidOperationException("Floating component cannot fit its authored positive-scale envelope.");
+            result.Rotation=coarse.Rotation;result.Scale=scale;
+            result.Translation=center-math.rotate(coarse.Rotation,localCenter*scale);
+        }
+        // Frozen pre-polish envelope recipe, used only during cold generation.
+        // It is never emitted as the new floating silhouette.
+        private static RockShapeData LegacyFloatingEnvelope(int seed,bool low,RockShapeSettings settings)
         {
             var result=new RockShapeData();var random=new RockRandom(seed);
             float width=random.Next(.43f,.51f),depth=width*random.Next(.76f,.94f);
             float lean=random.Next(-.025f,.025f);
-            // Full-height core prevents a C-shaped hole from every viewing angle.
             Add(result,seed,new float3(width,.91f,depth),new float3(0,.045f,0),lean,low,settings);
             float lowerWidth=width*random.Next(.77f,.89f),upperWidth=width*random.Next(.75f,.88f);
             Add(result,unchecked(seed+73856093),new float3(lowerWidth,random.Next(.31f,.39f),depth*.87f),
                 new float3(random.Next(-.085f,.085f)*width,0,depth*.06f),-lean*.6f,low,settings);
             Add(result,unchecked(seed+147712186),new float3(upperWidth,random.Next(.32f,.42f),depth*.84f),
                 new float3(random.Next(-.10f,.10f)*width,.66f,random.Next(-.06f,.06f)*depth),lean*.7f,low,settings);
+            return result;
+        }
+        private static RockShapeData FloatingBody(int seed,int family,bool low,RockShapeSettings settings)
+        {
+            var result=new RockShapeData();var random=new RockRandom(seed);
+            int silhouette=((family%4)+4)%4;
+            // Broken pillar, broad shelf, asymmetric keel and inclined slab share
+            // closed planar construction, not a stretched full-width box core.
+            float width=random.Next(.48f,.57f)*(silhouette==1?1.45f:silhouette==3?1.3f:1f);
+            float depth=width*random.Next(.70f,.88f);
+            float lean=silhouette==3?random.Next(.08f,.14f):random.Next(-.04f,.04f);
+            float bottomRatio=random.Next(.20f,.35f);
+            var body=RockPolyhedron.Box(new float3(-1,0,-1),new float3(1,1,1));
+            int sides=6+seed%2;
+            for(int i=0;i<sides;i++)
+            {
+                float angle=(i+.07f*math.sin(seed+i*2.1f))*math.PI*2/sides;
+                float nx=math.cos(angle),nz=math.sin(angle);
+                float top=.5f*(1+settings.asymmetry*.35f*math.sin(i*1.7f+seed));
+                float bottom=top*bottomRatio;
+                float offsetX=silhouette==2?.055f:-.025f,offsetZ=.035f;
+                // n.x*x+n.z*z <= rb+(rt-rb)*y + offset*(1-y).
+                // RockPolyhedron.Clip normalizes both normal and distance.
+                float offset=nx*offsetX+nz*offsetZ;
+                Required(ref body,new float3(nx,-(top-bottom-offset),nz),bottom+offset);
+            }
+            Required(ref body,new float3(.10f,1,-.06f),.96f);
+            for(int i=0;i<3;i++)
+            {
+                float angle=random.Next(0,math.PI*2);
+                float3 normal=math.normalize(new float3(math.cos(angle),1.3f,math.sin(angle)));
+                float support=float.NegativeInfinity;
+                foreach(var face in body.Faces)foreach(float3 point in face.Points)support=math.max(support,math.dot(normal,point));
+                Optional(ref body,normal,support-random.Next(.035f,.07f),result);
+            }
+            // Detail randomness is separate: LODs retain coarse planes and transforms.
+            if(!low)
+            {
+                var detail=new RockRandom(unchecked(seed^0x174d261));int count=0;
+                foreach(var pair in body.Adjacencies())
+                {
+                    if(count++>=10)break;
+                    float3 sum=pair.Item1.Normal+pair.Item2.Normal;float length=math.length(sum);
+                    float d=(math.dot(pair.Item1.Normal,pair.Item1.Points[0])+math.dot(pair.Item2.Normal,pair.Item2.Points[0]))/length;
+                    Optional(ref body,sum/length,d-detail.Next(.008f,.02f),result);
+                }
+            }
+            result.Parts.Add(new RockShapeData.Part{Solid=body,Scale=new float3(width,.91f,depth),
+                Translation=float3.zero,Rotation=quaternion.EulerXYZ(0,0,lean),Tone=.995f});
+            // Upper shoulders overlap the tapered body; nothing widens its lower tip.
+            Add(result,unchecked(seed+73856093),new float3(width*.62f,.24f,depth*.65f),
+                new float3(width*.13f,.69f,-depth*.03f),-lean*.5f,low,settings);
+            Add(result,unchecked(seed+147712186),new float3(width*.38f,.19f,depth*.47f),
+                new float3(-width*.18f,.73f,depth*.11f),lean*.6f,low,settings);
             return result;
         }
         public static RockShapeData Group(int seed,int pillars,bool floating,int family,bool lowDetail,RockShapeSettings settings)

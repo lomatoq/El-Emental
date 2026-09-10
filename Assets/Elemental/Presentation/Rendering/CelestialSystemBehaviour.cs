@@ -1,4 +1,4 @@
-﻿using Elemental.Runtime.World;
+using Elemental.Runtime.World;
 using Elemental.Runtime.Characters;
 using Elemental.Runtime.Physics;
 using Elemental.Simulation.Time;
@@ -10,7 +10,7 @@ using Unity.Profiling;
 namespace Elemental.Presentation.Rendering
 {
     [DisallowMultipleComponent]
-    public sealed class CelestialSystemBehaviour : MonoBehaviour
+    public sealed partial class CelestialSystemBehaviour : MonoBehaviour
     {
         private static readonly ProfilerMarker UpdateMarker = new ProfilerMarker("Elemental.Celestial.Update");
         private const string RuntimeMoonLightName = "__Runtime Moon Key";
@@ -59,7 +59,7 @@ namespace Elemental.Presentation.Rendering
             EvaluateFrame(0f);
         }
 
-        private void OnDestroy() => BindMatchLifecycle(null);
+        private void OnDestroy() { RestoreReadabilityGrading(); BindMatchLifecycle(null); }
 
         private MaterialPropertyBlock _atmosphereProperties;
         private MaterialPropertyBlock _moonProperties;
@@ -163,6 +163,7 @@ namespace Elemental.Presentation.Rendering
 
         private void OnDisable()
         {
+            RestoreReadabilityGrading();
             if (_runtimeMoonLight != null)
                 _runtimeMoonLight.enabled = false;
         }
@@ -247,6 +248,7 @@ namespace Elemental.Presentation.Rendering
 
             float lightingSolarAltitude = Vector3.Dot(sunDirection.normalized, lightingUp);
             Shader.SetGlobalFloat("_ElementalNight01", Snapshot.Night01);
+            ApplyReadabilityGrading();
             _skyController?.Apply(
                 Snapshot, sunDirection, localUp, SolarColor, lightingSolarAltitude);
             float twilight = _skyController != null
@@ -340,6 +342,9 @@ namespace Elemental.Presentation.Rendering
                 profile.NightAmbient * 0.65f,
                 profile.DayAmbientGround,
                 daylight);
+            // Interpolate authored ambient endpoints continuously. A temporary
+            // DayAmbientSky*1.5 replacement created a blue flash as the warm
+            // solar key disappeared; exposure recovery already belongs to grading.
             RenderSettings.ambientIntensity = Mathf.Lerp(
                 profile.NightAmbientIntensity, 0.82f, daylight);
             return keyDirection.normalized;

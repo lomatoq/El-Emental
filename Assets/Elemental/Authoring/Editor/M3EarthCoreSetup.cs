@@ -330,6 +330,7 @@ namespace Elemental.Authoring.Editor
                 pool,
                 executor,
                 CreateOrLoadProfile<EarthResonanceProfile>(ResonanceProfilePath, "Earth Resonance Profile"));
+            EditorUtility.SetDirty(resonance);
             EarthSurfController surf = character.GetComponent<EarthSurfController>();
             if (surf == null) surf = character.AddComponent<EarthSurfController>();
             surf.Configure(
@@ -4129,6 +4130,11 @@ private static ParticleSystem CreateAmbientLightMotes(
                 ? effectsProfile.Materials.AmbientMotes
                 : CreateOrLoadShaderMaterial("LightDustMote.mat", "Elemental/Light Dust Mote");
             renderer.sortingFudge = 0.4f;
+            renderer.maxParticleSize=.015f;
+            renderer.sharedMaterial.SetFloat("_Brightness",.9f);
+            renderer.sharedMaterial.SetFloat("_CameraNearFadeStart",.3f);
+            renderer.sharedMaterial.SetFloat("_CameraNearFadeEnd",1.2f);
+            EditorUtility.SetDirty(renderer.sharedMaterial);
 
             particles.Play();
             return particles;

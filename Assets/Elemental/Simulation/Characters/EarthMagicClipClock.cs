@@ -54,7 +54,7 @@ namespace Elemental.Simulation.Characters
         public const float RaiseWallMaximumNormalizedSpeedPerSecond = 0.27f;
         public const float RaisePlatformMaximumNormalizedSpeedPerSecond = 0.60f;
         public const float PullStoneMaximumNormalizedSpeedPerSecond = 0.65f;
-        public const float HeavyThrowMaximumNormalizedSpeedPerSecond = 0.62f;
+        public const float HeavyThrowMaximumNormalizedSpeedPerSecond = 0.24f;
         public const float VectorPushMaximumNormalizedSpeedPerSecond = 0.85f;
         public const float GravityRepairMaximumNormalizedSpeedPerSecond = 0.65f;
         public const float WaveResonanceMaximumNormalizedSpeedPerSecond = 0.24f;
@@ -81,7 +81,7 @@ namespace Elemental.Simulation.Characters
 
         public float Step(int slot, uint sequence, EarthCastPhase phase, bool active,
             in EarthMagicClipTiming timing, float deltaTime,
-            bool startAtContact = false)
+            bool startAtContact = false, float releaseStartNormalized = -1f)
         {
             if (active && (!_active || slot != _slot || sequence != _sequence))
             {
@@ -90,7 +90,9 @@ namespace Elemental.Simulation.Characters
                 // Each accepted sequence owns the inactive A/B Animator buffer.
                 // Its time can restart at frame zero while the outgoing state's
                 // independent recovery clock advances through the crossfade.
-                NormalizedTime = startAtContact ? timing.Contact : 0f;
+                NormalizedTime = startAtContact ?
+                    (math.isfinite(releaseStartNormalized) && releaseStartNormalized >= 0f
+                        ? math.min(releaseStartNormalized, timing.Contact) : timing.Contact) : 0f;
             }
             _active = active;
             EarthCastPhase requested = active ? phase : EarthCastPhase.Recover;

@@ -12,6 +12,10 @@ namespace Elemental.Presentation.Rendering
     {
         [SerializeField] private Material material;
         private AtmospherePass _pass;
+        private AtmospherePass _backgroundPass;
+        private Material _fireDofMaterial;
+        public static bool FireDofActive {get;private set;}
+        public static bool DisableFireDofForQa {get;set;}
 
         public void Configure(Material configuredMaterial)
         {
@@ -21,16 +25,29 @@ namespace Elemental.Presentation.Rendering
 
         public override void Create()
         {
-            _pass = new AtmospherePass(material)
+            CoreUtils.Destroy(_fireDofMaterial);var fireShader=Resources.Load<Shader>("FireDepthBokeh");
+            _fireDofMaterial=fireShader!=null?CoreUtils.CreateEngineMaterial(fireShader):null;
+            _backgroundPass = new AtmospherePass(material,true,null)
+            {
+                // Depth-defined fog and clouds must be included in the background
+                // bokeh. Applying them later repaints a sharp island silhouette.
+                renderPassEvent = (RenderPassEvent)((int)RenderPassEvent.BeforeRenderingTransparents-1)
+            };
+            _pass = new AtmospherePass(material,false,_fireDofMaterial)
             {
                 renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing
             };
         }
 
+        protected override void Dispose(bool disposing){CoreUtils.Destroy(_fireDofMaterial);FireDofActive=false;}
+
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
             if (material != null && renderingData.cameraData.cameraType == CameraType.Game)
+            {
+                renderer.EnqueuePass(_backgroundPass);
                 renderer.EnqueuePass(_pass);
+            }
         }
 
         private sealed class AtmospherePass : ScriptableRenderPass
@@ -42,12 +59,16 @@ namespace Elemental.Presentation.Rendering
             private static readonly int CameraDepthTextureId =
                 Shader.PropertyToID("_CameraDepthTexture");
             private readonly Material _material;
+            private readonly bool _background;
+            private readonly Material _fireDof;
+            private static readonly int FireDofParamsId=Shader.PropertyToID("_ElementalFireDofParams");
             private static readonly int HeatSourceId = Shader.PropertyToID("_ElementalHeatSource");
             private static readonly int HeatTexelSizeId = Shader.PropertyToID("_ElementalHeatSource_TexelSize");
 
-            public AtmospherePass(Material material)
+            public AtmospherePass(Material material,bool background,Material fireDof)
             {
                 _material = material;
+                _background = background;_fireDof=fireDof;
                 ConfigureInput(ScriptableRenderPassInput.Depth);
                 requiresIntermediateTexture = true;
             }
@@ -62,28 +83,38 @@ namespace Elemental.Presentation.Rendering
                 TextureHandle depth = resources.activeDepthTexture;
                 if (!source.IsValid() || !depth.IsValid()) return;
                 TextureDesc destinationDescriptor = renderGraph.GetTextureDesc(source);
-                destinationDescriptor.name = "Elemental Atmosphere Color";
+                destinationDescriptor.name = _background?"Elemental Atmosphere Before Bokeh":"Elemental Fire After Bokeh";
                 destinationDescriptor.clearBuffer = false;
                 TextureHandle destination = renderGraph.CreateTexture(destinationDescriptor);
-                bool drawClouds=ValleyCloudParticles.HasActive || ProceduralCloudBanks.HasActive || Elemental.Presentation.Fire.ArenaColumnFires.HasActive;
+                bool drawClouds=_background?(ValleyCloudParticles.HasActive || ProceduralCloudBanks.HasActive):(Elemental.Presentation.Fire.ArenaColumnFires.HasActive ||
+                    Elemental.Presentation.Fire.FireCpuMeshBackend.HasVisibleGroups || Elemental.Presentation.Fire.FireFlowVolumeBackend.HasVisibleGroups || Elemental.Presentation.Fire.FireSurfaceFlameRenderer.HasVisibleGroups || Elemental.Presentation.Fire.FireProtectionSphereRenderer.HasVisibleGroups || Elemental.Presentation.Fire.FireRingRibbonRenderer.HasVisibleGroups);
+                EarthCinematicDepthOfFieldSettings fireSettings=default;
+                var camera=frameData.Get<UniversalCameraData>().camera;
+                bool fireDof=!DisableFireDofForQa&&!_background&&drawClouds&&_fireDof!=null&&camera.TryGetComponent<EarthCinematicDepthOfFieldController>(out var focus)&&focus.TryGetRenderSettings(out fireSettings);
+                if(!_background)FireDofActive=fireDof;
+                Vector4 fireParams=fireDof?new Vector4(fireSettings.SharpNearDistance,fireSettings.SharpFarDistance,fireSettings.NearTransition,fireSettings.FarTransition):new Vector4(0,100000,1,1);
+                TextureHandle fireMoments=default;
+                if(fireDof){var momentDesc=destinationDescriptor;momentDesc.name="Coverage weighted transported fire depth";momentDesc.colorFormat=UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_SFloat;momentDesc.clearBuffer=true;momentDesc.clearColor=Color.clear;fireMoments=renderGraph.CreateTexture(momentDesc);}
                 RendererListHandle cloudList=default;
                 if(drawClouds)
                 {
-                    var desc=new RendererListDesc(new ShaderTagId("ElementalValleyCloud"),frameData.Get<UniversalRenderingData>().cullResults,frameData.Get<UniversalCameraData>().camera)
+                    var desc=new RendererListDesc(new ShaderTagId(_background?"ElementalAtmosphereCloud":"ElementalValleyCloud"),frameData.Get<UniversalRenderingData>().cullResults,frameData.Get<UniversalCameraData>().camera)
                     {renderQueueRange=RenderQueueRange.transparent,sortingCriteria=SortingCriteria.CommonTransparent};
                     cloudList=renderGraph.CreateRendererList(desc);
                 }
                 using (IRasterRenderGraphBuilder builder =
                        renderGraph.AddRasterRenderPass<AtmospherePassData>(
-                           "Elemental Atmosphere Fullscreen",
+                           _background?"Elemental Atmosphere Before Bokeh":"Elemental Fire After Bokeh",
                            out AtmospherePassData passData))
                 {
+                    passData.fireParams=fireParams;
                     passData.clouds=cloudList;passData.drawClouds=drawClouds;
                     if(drawClouds)builder.UseRendererList(cloudList);
                     passData.source = source;
                     passData.depth = depth;
                     passData.material = _material;
-                    passData.targets = targets != null && targets.isActiveAndEnabled && targets.Blend > 0f
+                    passData.applyAtmosphere = _background;
+                    passData.targets = !_background && targets != null && targets.isActiveAndEnabled && targets.Blend > 0f
                         ? targets.Targets : null;
                     passData.blitTexelSize = new Vector4(
                         1f / Mathf.Max(1, destinationDescriptor.width),
@@ -94,6 +125,7 @@ namespace Elemental.Presentation.Rendering
                     builder.UseTexture(depth, AccessFlags.Read);
                     if(resources.mainShadowsTexture.IsValid())builder.UseTexture(resources.mainShadowsTexture,AccessFlags.Read);
                     builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
+                    if(fireDof)builder.SetRenderAttachment(fireMoments,1,AccessFlags.Write);
                     builder.AllowGlobalStateModification(true);
                     builder.SetRenderFunc(static (
                         AtmospherePassData data,
@@ -102,6 +134,7 @@ namespace Elemental.Presentation.Rendering
                         // Bind the exact RG handles consumed by this pass. The old
                         // material blit relied on an implicit global depth owner and
                         // read sky depth across opaque arena geometry.
+                        context.cmd.SetGlobalVector(FireDofParamsId,data.fireParams);
                         context.cmd.SetGlobalTexture(BlitTextureId, data.source);
                         context.cmd.SetGlobalTexture(CameraDepthTextureId, data.depth);
                         context.cmd.SetGlobalVector(
@@ -110,8 +143,12 @@ namespace Elemental.Presentation.Rendering
                         context.cmd.SetGlobalVector(
                             BlitTextureTexelSizeId,
                             data.blitTexelSize);
-                        CoreUtils.DrawFullScreen(context.cmd, data.material, null, 0);
-                        // Dedicated sprite geometry draws after the opaque sky veil, in
+                        if(data.applyAtmosphere)CoreUtils.DrawFullScreen(context.cmd, data.material, null, 0);
+                        else Blitter.BlitTexture(context.cmd,data.source,new Vector4(1,1,0,0),0,false);
+                        // Clouds, columns and transported flame/smoke draw once after the
+                        // background-depth veil: applying sky fog to already-composited
+                        // near fire erased it specifically over sky gaps.
+                        // Dedicated geometry draws after the opaque sky veil, in
                         // this same raster pass. Its custom LightMode excludes normal URP
                         // transparent drawing; exact scene depth is sampled in its shader.
                         if(data.drawClouds)context.cmd.DrawRendererList(data.clouds);
@@ -127,8 +164,9 @@ namespace Elemental.Presentation.Rendering
                             }
                     });
                 }
+                if(fireDof)destination=FireDepthOfFieldComposite.Record(renderGraph,_fireDof,source,destination,fireMoments,depth,fireParams,fireSettings.MaxRadiusPixels);
                 resources.cameraColor = destination;
-                if (Elemental.Presentation.Fire.FireCpuMeshBackend.HasVisibleGroups)
+                if (!_background && (Elemental.Presentation.Fire.FireCpuMeshBackend.HasVisibleGroups || Elemental.Presentation.Fire.FireFlowVolumeBackend.HasVisibleGroups || Elemental.Presentation.Fire.FireSurfaceFlameRenderer.HasVisibleGroups || Elemental.Presentation.Fire.FireProtectionSphereRenderer.HasVisibleGroups || Elemental.Presentation.Fire.FireRingRibbonRenderer.HasVisibleGroups))
                 {
                     // Read the completed atmosphere/cloud/flame image into a
                     // separate target: never sample the current attachment.
@@ -173,8 +211,10 @@ namespace Elemental.Presentation.Rendering
 
             private sealed class AtmospherePassData
             {
+                public Vector4 fireParams;
                 public RendererListHandle clouds;
                 public bool drawClouds;
+                public bool applyAtmosphere;
                 public TextureHandle source;
                 public TextureHandle depth;
                 public Material material;

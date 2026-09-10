@@ -30,6 +30,47 @@ namespace Elemental.Tests.EditMode
             }
             finally{Object.DestroyImmediate(host);}
         }
+        [TestCase(false), TestCase(true)]
+        public void DeparturePreservesRenderedStartAndUsesSavedBasisThroughInterruption(bool reduced)
+        {
+            var root = new GameObject("Departure contract");
+            try
+            {
+                var output = new GameObject("Output", typeof(Camera), typeof(CinemachineBrain)); output.transform.SetParent(root.transform);
+                var menuObject = new GameObject("Menu", typeof(CinemachineCamera)); menuObject.transform.SetParent(root.transform);
+                var gameplayObject = new GameObject("Gameplay", typeof(CinemachineCamera)); gameplayObject.transform.SetParent(root.transform);
+                gameplayObject.transform.position = new Vector3(0, 2, 40);
+                var actor = new GameObject("Actor"); actor.transform.SetParent(root.transform);
+                var camera = output.GetComponent<Camera>(); var menu = menuObject.GetComponent<CinemachineCamera>();
+                menu.Priority = -23; var originalLens = menu.Lens;
+                var presenter = root.AddComponent<CinematicMenuCamera>();
+                presenter.Configure(menu, output.GetComponent<CinemachineBrain>(), camera, null, null, null, null, actor.transform,
+                    gameplay: gameplayObject.GetComponent<CinemachineCamera>());
+                presenter.Enter(reduced, .2f);
+                // Simulate a final brain pose differing from the virtual camera during a blend.
+                camera.transform.SetPositionAndRotation(new Vector3(2, 3, 7), Quaternion.Euler(11, 193, 7)); camera.fieldOfView = 37;
+                Vector3 start = camera.transform.position; Quaternion rotation = camera.transform.rotation;
+                presenter.CaptureDepartureStart(); actor.transform.position += Vector3.right;
+                presenter.Reframe(reduced);
+                Assert.That(Vector3.Distance(menu.transform.position, start), Is.LessThan(.0001f), "Readiness wait must retain the rendered click pose.");
+                presenter.BeginCountdown(reduced, .2f);
+                Assert.That(Vector3.Distance(menu.transform.position, start), Is.LessThan(.0001f));
+                Assert.That(Quaternion.Angle(menu.transform.rotation, rotation), Is.LessThan(.01f));
+                Assert.That(menu.Lens.FieldOfView, Is.EqualTo(37).Within(.001f));
+                Assert.That(menu.Lens.Dutch, Is.Zero, "The output rotation already includes Dutch.");
+                presenter.SetDepartureProgress(.3f, reduced); Vector3 partial = menu.transform.position; Quaternion partialRotation = menu.transform.rotation;
+                presenter.SetDepartureProgress(.8f, reduced); presenter.SetDepartureProgress(.3f, reduced);
+                Assert.That(Vector3.Distance(menu.transform.position, partial), Is.LessThan(.0001f), "Sampling is independent of previous samples.");
+                Assert.That(Quaternion.Angle(menu.transform.rotation, partialRotation), Is.LessThan(.01f));
+                presenter.SetDepartureProgress(1, reduced); Assert.That(presenter.DepartureComplete, Is.True);
+                Vector3 endpoint = menu.transform.position;
+                presenter.SetCountdownDollyProgress(0, 0, reduced);
+                Assert.That(Vector3.Distance(menu.transform.position, endpoint), Is.LessThan(.0001f));
+                presenter.FinishCombatTransition();
+                Assert.That((int)menu.Priority, Is.EqualTo(-23)); Assert.That(menu.Lens.FieldOfView, Is.EqualTo(originalLens.FieldOfView));
+            }
+            finally { Object.DestroyImmediate(root); }
+        }
         [TestCase(false), TestCase(true)] public void PresentationScopesBrainClockAndTracksActorWarp(bool previousIgnoreTimeScale)
         {
             var root=new GameObject("Menu camera contract");

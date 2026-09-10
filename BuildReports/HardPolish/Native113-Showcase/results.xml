@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="9" result="Failed(Child)" total="9" passed="8" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-10 13:46:03Z" end-time="2026-09-10 13:51:15Z" duration="312.2506407">
+  <test-suite type="TestSuite" id="1642" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="485" result="Failed" site="Child" start-time="2026-09-10 13:46:03Z" end-time="2026-09-10 13:51:15Z" duration="312.250641" total="9" passed="8" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1635" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="479" result="Failed" site="Child" start-time="2026-09-10 13:46:03Z" end-time="2026-09-10 13:51:15Z" duration="312.119169" total="9" passed="8" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="34284" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1636" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="479" result="Failed" site="Child" start-time="2026-09-10 13:46:03Z" end-time="2026-09-10 13:51:15Z" duration="312.030293" total="9" passed="8" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1637" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="479" result="Failed" site="Child" start-time="2026-09-10 13:46:03Z" end-time="2026-09-10 13:51:15Z" duration="312.014789" total="9" passed="8" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1638" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="479" result="Failed" site="Child" start-time="2026-09-10 13:46:03Z" end-time="2026-09-10 13:51:15Z" duration="312.001062" total="9" passed="8" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1091" name="HardPolishFireStreamBindingRuntimeTests" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" testcasecount="71" result="Failed" site="Child" start-time="2026-09-10 13:46:03Z" end-time="2026-09-10 13:51:06Z" duration="302.363751" total="8" passed="7" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1147" name="GithubElementalDuel" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.GithubElementalDuel" methodname="GithubElementalDuel" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1754045376" result="Passed" start-time="2026-09-10 13:46:04Z" end-time="2026-09-10 13:46:47Z" duration="43.376900" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 5494.62ms; ground=exact baked base, cacheLoad=14.93ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=1317.55ms, peakCookingPoll=0.31ms; sync=ArenaInitialize=47.02ms/15;ArenaBevel=34.84ms/175;ArenaMeshPicking=1.11ms/175;WallAwake=98.39ms/1;WallPieceVisuals=61.51ms/40;PlatformPoolAwake=9.68ms/1;PlatformRuntimeMeshes=1.34ms/12;PillarPoolAwake=17.92ms/1;PillarMeshLibrary=4.07ms/1;PillarColumns=13.85ms/1;DebrisPoolAwake=153.02ms/1;HeroFragmentPoolAwake=12.24ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1144" name="GithubFireContour" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.GithubFireContour" methodname="GithubFireContour" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1936941089" result="Passed" start-time="2026-09-10 13:46:47Z" end-time="2026-09-10 13:47:06Z" duration="18.803526" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3637.16ms; ground=exact baked base, cacheLoad=10.19ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=671.20ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=47.02ms/15;ArenaBevel=34.84ms/175;ArenaMeshPicking=1.11ms/175;WallAwake=98.39ms/1;WallPieceVisuals=61.51ms/40;PlatformPoolAwake=9.68ms/1;PlatformRuntimeMeshes=1.34ms/12;PillarPoolAwake=17.92ms/1;PillarMeshLibrary=4.07ms/1;PillarColumns=13.85ms/1;DebrisPoolAwake=153.02ms/1;HeroFragmentPoolAwake=12.24ms/1.
+Error after 5 attempt(s): UserUnauthorized -  -- Result type: SettingsResult -- Url: https://generators.ai.unity.com -- Trace Id e021264f-7ce0-491f-ac82-f02bffc18638 => a2dbf59ceeb4ab47d2925d93332cc66a
+]]></output>
+              </test-case>
+              <test-case id="1146" name="GithubFireFlight" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.GithubFireFlight" methodname="GithubFireFlight" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="972580059" result="Passed" start-time="2026-09-10 13:47:06Z" end-time="2026-09-10 13:47:45Z" duration="39.206898" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 4679.68ms; ground=exact baked base, cacheLoad=13.08ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=789.39ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=47.02ms/15;ArenaBevel=34.84ms/175;ArenaMeshPicking=1.11ms/175;WallAwake=98.39ms/1;WallPieceVisuals=61.51ms/40;PlatformPoolAwake=9.68ms/1;PlatformRuntimeMeshes=1.34ms/12;PillarPoolAwake=17.92ms/1;PillarMeshLibrary=4.07ms/1;PillarColumns=13.85ms/1;DebrisPoolAwake=153.02ms/1;HeroFragmentPoolAwake=12.24ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1143" name="GithubFireOrbitAttacks" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.GithubFireOrbitAttacks" methodname="GithubFireOrbitAttacks" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1025302588" result="Passed" start-time="2026-09-10 13:47:45Z" end-time="2026-09-10 13:48:11Z" duration="26.129514" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 4099.42ms; ground=exact baked base, cacheLoad=10.96ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=585.76ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=47.02ms/15;ArenaBevel=34.84ms/175;ArenaMeshPicking=1.11ms/175;WallAwake=98.39ms/1;WallPieceVisuals=61.51ms/40;PlatformPoolAwake=9.68ms/1;PlatformRuntimeMeshes=1.34ms/12;PillarPoolAwake=17.92ms/1;PillarMeshLibrary=4.07ms/1;PillarColumns=13.85ms/1;DebrisPoolAwake=153.02ms/1;HeroFragmentPoolAwake=12.24ms/1.
+Error after 5 attempt(s): Unknown -  -- Result type: SettingsResult -- Url: https://generators.ai.unity.com -- Trace Id e021264f-7ce0-491f-ac82-f02bffc18638 => 739ef0b83f972ec57e1aa1eb9d2d222d
+]]></output>
+              </test-case>
+              <test-case id="1142" name="GithubFireProjectiles" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.GithubFireProjectiles" methodname="GithubFireProjectiles" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1026068339" result="Passed" start-time="2026-09-10 13:48:11Z" end-time="2026-09-10 13:48:37Z" duration="26.295331" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3808.45ms; ground=exact baked base, cacheLoad=10.50ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=701.47ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=47.02ms/15;ArenaBevel=34.84ms/175;ArenaMeshPicking=1.11ms/175;WallAwake=98.39ms/1;WallPieceVisuals=61.51ms/40;PlatformPoolAwake=9.68ms/1;PlatformRuntimeMeshes=1.34ms/12;PillarPoolAwake=17.92ms/1;PillarMeshLibrary=4.07ms/1;PillarColumns=13.85ms/1;DebrisPoolAwake=153.02ms/1;HeroFragmentPoolAwake=12.24ms/1.
+Error reason is 'NoSubscription' and no additional error information was provided (https://generators.ai.unity.com).
+Error reason is 'UserUnauthorized' and no additional error information was provided (https://generators.ai.unity.com).
+Error reason is 'NoSubscription' and no additional error information was provided (https://generators.ai.unity.com).
+Error reason is 'NoSubscription' and no additional error information was provided (https://generators.ai.unity.com).
+Error reason is 'NoSubscription' and no additional error information was provided (https://generators.ai.unity.com).
+]]></output>
+              </test-case>
+              <test-case id="1145" name="GithubFireRing" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.GithubFireRing" methodname="GithubFireRing" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="186151405" result="Passed" start-time="2026-09-10 13:48:37Z" end-time="2026-09-10 13:50:24Z" duration="106.404851" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3897.18ms; ground=exact baked base, cacheLoad=10.50ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=701.07ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=47.02ms/15;ArenaBevel=34.84ms/175;ArenaMeshPicking=1.11ms/175;WallAwake=98.39ms/1;WallPieceVisuals=61.51ms/40;PlatformPoolAwake=9.68ms/1;PlatformRuntimeMeshes=1.34ms/12;PillarPoolAwake=17.92ms/1;PillarMeshLibrary=4.07ms/1;PillarColumns=13.85ms/1;DebrisPoolAwake=153.02ms/1;HeroFragmentPoolAwake=12.24ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1141" name="GithubFireWeaving" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.GithubFireWeaving" methodname="GithubFireWeaving" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="260601105" result="Failed" start-time="2026-09-10 13:50:24Z" end-time="2026-09-10 13:50:45Z" duration="20.942389" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests+<RecordFireShowcase>d__82.MoveNext () [0x00447] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\GithubFireShowcaseTests.cs:54
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3578.08ms; ground=exact baked base, cacheLoad=11.17ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=721.97ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=47.02ms/15;ArenaBevel=34.84ms/175;ArenaMeshPicking=1.11ms/175;WallAwake=98.39ms/1;WallPieceVisuals=61.51ms/40;PlatformPoolAwake=9.68ms/1;PlatformRuntimeMeshes=1.34ms/12;PillarPoolAwake=17.92ms/1;PillarMeshLibrary=4.07ms/1;PillarColumns=13.85ms/1;DebrisPoolAwake=153.02ms/1;HeroFragmentPoolAwake=12.24ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1115" name="SavedFighterContinuousFireMotionCorpus" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedFighterContinuousFireMotionCorpus" methodname="SavedFighterContinuousFireMotionCorpus" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="335101749" result="Passed" start-time="2026-09-10 13:50:45Z" end-time="2026-09-10 13:51:06Z" duration="21.100172" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3457.97ms; ground=exact baked base, cacheLoad=10.77ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=600.46ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=47.02ms/15;ArenaBevel=34.84ms/175;ArenaMeshPicking=1.11ms/175;WallAwake=98.39ms/1;WallPieceVisuals=61.51ms/40;PlatformPoolAwake=9.68ms/1;PlatformRuntimeMeshes=1.34ms/12;PillarPoolAwake=17.92ms/1;PillarMeshLibrary=4.07ms/1;PillarColumns=13.85ms/1;DebrisPoolAwake=153.02ms/1;HeroFragmentPoolAwake=12.24ms/1.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1555" name="MenuCameraOcclusionProductionTests" fullname="Elemental.Tests.PlayMode.MenuCameraOcclusionProductionTests" classname="Elemental.Tests.PlayMode.MenuCameraOcclusionProductionTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-10 13:51:06Z" end-time="2026-09-10 13:51:15Z" duration="9.461865" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1556" name="StartupOrbitRetainsStoneGeometryAndFadesWithoutRendererPops" fullname="Elemental.Tests.PlayMode.MenuCameraOcclusionProductionTests.StartupOrbitRetainsStoneGeometryAndFadesWithoutRendererPops" methodname="StartupOrbitRetainsStoneGeometryAndFadesWithoutRendererPops" classname="Elemental.Tests.PlayMode.MenuCameraOcclusionProductionTests" runstate="Runnable" seed="1609094170" result="Passed" start-time="2026-09-10 13:51:06Z" end-time="2026-09-10 13:51:15Z" duration="9.436008" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3431.05ms; ground=exact baked base, cacheLoad=11.09ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=603.50ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=47.02ms/15;ArenaBevel=34.84ms/175;ArenaMeshPicking=1.11ms/175;WallAwake=98.39ms/1;WallPieceVisuals=61.51ms/40;PlatformPoolAwake=9.68ms/1;PlatformRuntimeMeshes=1.34ms/12;PillarPoolAwake=17.92ms/1;PillarMeshLibrary=4.07ms/1;PillarColumns=13.85ms/1;DebrisPoolAwake=153.02ms/1;HeroFragmentPoolAwake=12.24ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\Native113-Showcase\results.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

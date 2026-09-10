@@ -754,7 +754,7 @@ namespace Elemental.Authoring.Editor
                 DirectChild(LoadClip(MagicAttack05Path) ?? generic, 1),
                 DirectChild(LoadClip(MagicArea02Path) ?? generic, 2),
                 DirectChild(LoadClip(Magic2HCast01Path) ?? generic, 3),
-                DirectChild(LoadClip(WheelbarrowDumpPath) ?? generic, 4),
+                DirectChild(LoadClip(Magic2HAttack03Path) ?? generic, 4),
                 DirectChild(LoadClip(LeadJabPath) ?? generic, 5),
                 DirectChild(LoadClip(Magic1HCast01Path) ?? generic, 6),
                 DirectChild(LoadClip(Magic2HAttack03Path) ?? generic, 7),

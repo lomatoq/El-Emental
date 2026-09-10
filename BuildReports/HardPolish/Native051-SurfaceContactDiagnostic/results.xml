@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 20:20:59Z" end-time="2026-09-09 20:21:00Z" duration="0.4794428">
+  <test-suite type="TestSuite" id="1586" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="432" result="Failed" site="Child" start-time="2026-09-09 20:20:59Z" end-time="2026-09-09 20:21:00Z" duration="0.479443" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1579" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="426" result="Failed" site="Child" start-time="2026-09-09 20:20:59Z" end-time="2026-09-09 20:21:00Z" duration="0.332660" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="16264" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1580" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="426" result="Failed" site="Child" start-time="2026-09-09 20:20:59Z" end-time="2026-09-09 20:21:00Z" duration="0.296931" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1581" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="426" result="Failed" site="Child" start-time="2026-09-09 20:21:00Z" end-time="2026-09-09 20:21:00Z" duration="0.216409" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1582" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="426" result="Failed" site="Child" start-time="2026-09-09 20:21:00Z" end-time="2026-09-09 20:21:00Z" duration="0.182719" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1413" name="FireFlowShallowContactPlayTests" fullname="Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests" classname="Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests" runstate="Runnable" testcasecount="4" result="Failed" site="Child" start-time="2026-09-09 20:21:00Z" end-time="2026-09-09 20:21:00Z" duration="0.147862" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1414" name="SurfaceBandKeepsDenseGasAboveNonconvexFloor" fullname="Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests.SurfaceBandKeepsDenseGasAboveNonconvexFloor" methodname="SurfaceBandKeepsDenseGasAboveNonconvexFloor" classname="Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests" runstate="Runnable" seed="1958501452" result="Failed" start-time="2026-09-09 20:21:00Z" end-time="2026-09-09 20:21:00Z" duration="0.120456" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Invalid=0, blocked=56, unresolvedMesh=56, deepMesh=0, sentinel=0, last=unresolved-mesh-overlap, collider=Isolated fire nonconvex floor (UnityEngine.MeshCollider), center=float3(-0.07990486f, 100.9063f, -0.02863461f), radius=0.4563153, invalidCenter=float3(0f, 0f, 0f), invalidPoint=float3(0f, 0f, 0f), invalidRadius=0
+  Expected: 0
+  But was:  56
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests+<SurfaceBandKeepsDenseGasAboveNonconvexFloor>d__0.MoveNext () [0x003f4] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\FireFlowShallowContactPlayTests.cs:39
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\Native051-SurfaceContactDiagnostic\results.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

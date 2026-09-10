@@ -24,6 +24,12 @@ namespace Elemental.Presentation.UI
         private float _resultAge, _elementAge, _resultExitAge;
         private float _resultExitOpacity;
         private bool _closing;
+        public void ResetRound()
+        {
+            _wasOver=false;_closing=false;_resultAge=_resultExitAge=_resultExitOpacity=0;
+            _result.style.opacity=0;_result.style.display=DisplayStyle.None;_result.SetEnabled(false);
+            foreach(var pair in _combatVisibility)pair.Key.style.visibility=pair.Value;
+        }
         private ElementId _selected;
         private readonly System.Collections.Generic.Dictionary<VisualElement,StyleEnum<Visibility>> _combatVisibility=new System.Collections.Generic.Dictionary<VisualElement,StyleEnum<Visibility>>();
         public StoneReferenceHudPresentation(VisualElement root, ElementalUITheme theme, VisualElement result, Label title, Button restart, System.Action menu)
@@ -185,7 +191,14 @@ namespace Elemental.Presentation.UI
         {
             _exact?.Tick(selected,reduced);
             float dt=Time.unscaledDeltaTime;
-            if(over&&!_wasOver){_resultAge=0;_closing=false;_result.SetEnabled(true);}
+            if(over&&!_wasOver)
+            {
+                _resultAge=0;_closing=false;_result.style.opacity=0;
+                _resultVisual.style.translate=new Translate(0,reduced?0:18);
+                _title.style.opacity=_score.style.opacity=0;
+                foreach(var button in _resultButtons)button.Tick(reduced,0,localWon||draw,0);
+                _result.style.display=DisplayStyle.Flex;_result.SetEnabled(false);
+            }
             if(!over&&_wasOver){_closing=true;_resultExitAge=0;_resultExitOpacity=_result.style.opacity.value;_result.SetEnabled(false);}
             _wasOver=over;
             if(_closing)
@@ -212,23 +225,27 @@ namespace Elemental.Presentation.UI
                 _tokens[i].style.scale=new Scale(new Vector3(scale,scale,1));
             }
             if(!over)return; _resultAge+=dt;
+            // Parent gate preserves child authority (including WAITING FOR HOST) while blocking invisible buttons.
+            _result.SetEnabled(Elemental.Simulation.Time.MatchStageTimeline.Buttons(_resultAge,reduced)>=1f);
             for(int i=0;i<_resultButtons.Count;i++)
             {
-                float reveal=Mathf.SmoothStep(0,1,(_resultAge-(reduced?0:.16f+i*.065f))/(reduced?.07f:.24f));
+                float reveal=Elemental.Simulation.Time.MatchStageTimeline.Buttons(_resultAge,reduced);
                 _resultButtons[i].Tick(reduced,dt,localWon||draw,reveal);
             }
+            _title.style.opacity=Elemental.Simulation.Time.MatchStageTimeline.Title(_resultAge,reduced);
+            _score.style.opacity=Elemental.Simulation.Time.MatchStageTimeline.Score(_resultAge,reduced);
             _title.text=draw?"DRAW":localWon?"VICTORY":"DEFEAT";
             _score.text=localScore+"  -  "+opponentScore;
             Color accent=draw?new Color(.95f,.86f,.66f):localWon?new Color(.85f,1,.55f):new Color(1,.55f,.32f);
             _title.style.color=accent; _emblem.style.unityBackgroundImageTintColor=accent;
             _title.style.textShadow=new TextShadow { offset=Vector2.zero,blurRadius=localWon?12:9,color=new Color(accent.r,accent.g,accent.b,.42f) };
-            _resultMotto.style.display=localWon||draw?DisplayStyle.None:DisplayStyle.Flex;
+            _resultMotto.style.display=DisplayStyle.None;
             _halo.style.unityBackgroundImageTintColor=accent;
             _scrim.style.backgroundColor=localWon||draw?new Color(.02f,.045f,.06f,.14f):new Color(.13f,.025f,.01f,.34f);
             _resultAtmosphere.Tick(localWon||draw,reduced,_resultAge);
             string resultTrack=localWon?"success":"defeat";
             float t=_resultAge/_profile.Duration(resultTrack,localWon?.48f:.34f,reduced);
-            _result.style.opacity=_profile.Sample(resultTrack,"alpha",t,1);
+            _result.style.opacity=Elemental.Simulation.Time.MatchStageTimeline.Root(_resultAge,reduced);
             _resultVisual.style.translate=new Translate(0,reduced?0:_profile.Sample(resultTrack,"y",t));
             float resultScale=reduced?1:_profile.Sample(resultTrack,"scale",t,1);
             _resultVisual.style.scale=new Scale(new Vector3(resultScale,resultScale,1));
@@ -236,7 +253,10 @@ namespace Elemental.Presentation.UI
             var restart=_root.Q<Button>("restart-round"); restart.text=restartAllowed?(localWon||draw?"REMATCH":"RETRY"):"WAITING FOR HOST";
             restart.style.backgroundImage=StyleKeyword.None;
             var settings=_menuLayouts!=null?_menuLayouts.Get(draw?MenuScreenId.Draw:localWon?MenuScreenId.Victory:MenuScreenId.Defeat):null;
-            foreach(var binding in _layoutBindings)binding.Apply(settings);
+            // Win and loss share one authored geometry; outcome still owns its
+            // title, score, colors and atmosphere below.
+            var sharedLayout=_menuLayouts!=null?_menuLayouts.Get(MenuScreenId.Victory):null;
+            foreach(var binding in _layoutBindings)binding.Apply(sharedLayout??settings);
             float resultGlow=settings!=null?settings.glowStrength:.85f;
             _halo.style.opacity=resultGlow*.35f*(reduced?1:.88f+.12f*Mathf.Sin(_resultAge*1.6f));
             _resultAtmosphere.Settings=settings;
@@ -301,17 +321,20 @@ namespace Elemental.Presentation.UI
             {
                 bool enabled=_button.enabledInHierarchy,selected=enabled&&(_hover||_focus||_press);
                 bool primary=_button.name=="restart-round";
-                var sprite=primary?(victory?_skin.primary:_skin.danger):_skin.referenceNormal;
-                var insets=Vector4.zero;
+                bool cream=selected&&_skin.referenceSelected!=null;
+                var sprite=cream?_skin.referenceSelected:_skin.referenceNormal;
+                var insets=cream?_skin.referenceSelectedInsets:Vector4.zero;
                 Color accent=victory?new Color(.8f,1,.38f):new Color(1,.48f,.24f);
-                _icon.style.unityBackgroundImageTintColor=primary?accent:_theme.text;
+                Color ink=cream?new Color(.04f,.055f,.055f):_theme.text;
+                _icon.style.unityBackgroundImageTintColor=primary?Color.white:ink;
+                _arrow.style.unityBackgroundImageTintColor=ink;
                 float height=_button.resolvedStyle.height;if(!float.IsFinite(height)||height<1)height=84;
                 float nativeFace=sprite.rect.height-insets.y-insets.w,k=height/nativeFace;
                 _art.style.backgroundImage=new StyleBackground(sprite);
                 _art.style.left=-insets.x*k;_art.style.bottom=-insets.y*k;_art.style.right=-insets.z*k;_art.style.top=-insets.w*k;
                 var border=sprite.border;_art.style.unitySliceLeft=(int)border.x;_art.style.unitySliceBottom=(int)border.y;_art.style.unitySliceRight=(int)border.z;_art.style.unitySliceTop=(int)border.w;_art.style.unitySliceScale=k;
                 _art.style.opacity=enabled?1:.55f;
-                _caption.text=_button.text;_caption.style.fontSize=28;_caption.style.letterSpacing=3;_caption.style.color=_theme.text;_caption.style.unityFontStyleAndWeight=selected?FontStyle.Bold:FontStyle.Normal;
+                _caption.text=_button.text;_caption.style.fontSize=28;_caption.style.letterSpacing=3;_caption.style.color=ink;_caption.style.unityFontStyleAndWeight=selected?FontStyle.Bold:FontStyle.Normal;
                 _caption.style.textShadow=new TextShadow { offset=Vector2.zero,blurRadius=selected?5:0,color=new Color(accent.r,accent.g,accent.b,.35f) };
                 _button.style.color=Color.clear;
                 float target=reduced?1:_press?.984f:selected?1.04f:1;

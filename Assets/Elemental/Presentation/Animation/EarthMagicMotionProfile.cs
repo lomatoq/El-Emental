@@ -9,6 +9,8 @@ namespace Elemental.Presentation.Animation
     {
         public EarthHumanoidPoseSlot slot;
         public EarthMagicClipTiming timing = EarthMagicClipTiming.Default;
+        [Tooltip("Optional authored release entry before visual contact; -1 retains contact entry. Presentation only.")]
+        public float releaseStartNormalized = -1f;
         [Range(0f, 1f)] public float actionHandInfluence = 0.16f;
         [Range(0f, 1f)] public float sustainedHandInfluence = 0.48f;
     }
@@ -18,6 +20,9 @@ namespace Elemental.Presentation.Animation
     {
         [Tooltip("Eleven semantic slots. Values are clip-normalized markers and visual interpolation seconds; gameplay timing is unchanged.")]
         public EarthMagicMotionEntry[] motions = CreateDefaults();
+        [Tooltip("Visibility blend on the existing upper-body layer; source joint clock is unchanged.")]
+        [Range(.10f,.16f)] public float fireChannelAcquireSeconds = .14f;
+        [Range(.12f,.18f)] public float fireChannelRecoverySeconds = .15f;
 
         public static EarthMagicMotionEntry[] CreateDefaults()
         {
@@ -26,7 +31,7 @@ namespace Elemental.Presentation.Animation
                 Entry(EarthHumanoidPoseSlot.RaiseWall, Timing(.09f, .21f, .39f, .56f, .72f, .98f, .09f, .12f, .17f, .11f, .19f, .22f), .12f, .34f),
                 Entry(EarthHumanoidPoseSlot.RaisePlatform, Timing(.11f, .25f, .43f, .59f, .75f, .98f, .10f, .14f, .18f, .11f, .18f, .23f), .10f, .38f),
                 Entry(EarthHumanoidPoseSlot.PullStone, Timing(.08f, .20f, .36f, .50f, .73f, .98f, .08f, .12f, .15f, .09f, .22f, .22f), .18f, .62f),
-                Entry(EarthHumanoidPoseSlot.HeavyThrow, Timing(.10f, .27f, .47f, .64f, .76f, .98f, .10f, .16f, .20f, .11f, .15f, .23f), .08f, .24f),
+                Entry(EarthHumanoidPoseSlot.HeavyThrow, Timing(.035f, .09f, .18f, .23f, .27f, .32f, .15f, .24f, .38f, .11f, .17f, .21f), .08f, .24f, .205f),
                 Entry(EarthHumanoidPoseSlot.VectorPush, Timing(.07f, .17f, .31f, .46f, .61f, .96f, .07f, .10f, .13f, .08f, .14f, .18f), .08f, .28f),
                 Entry(EarthHumanoidPoseSlot.GravityRepair, Timing(.12f, .28f, .44f, .54f, .78f, .99f, .11f, .15f, .16f, .09f, .24f, .21f), .20f, .66f),
                 Entry(EarthHumanoidPoseSlot.WaveResonance, Timing(.10f, .24f, .42f, .58f, .77f, .99f, .10f, .14f, .18f, .10f, .20f, .22f), .10f, .42f),
@@ -41,10 +46,11 @@ namespace Elemental.Presentation.Animation
             EarthHumanoidPoseSlot slot,
             EarthMagicClipTiming timing,
             float actionHandInfluence,
-            float sustainedHandInfluence) => new EarthMagicMotionEntry
+            float sustainedHandInfluence, float releaseStartNormalized = -1f) => new EarthMagicMotionEntry
             {
                 slot = slot,
                 timing = timing,
+                releaseStartNormalized = releaseStartNormalized,
                 actionHandInfluence = actionHandInfluence,
                 sustainedHandInfluence = sustainedHandInfluence
             };
@@ -81,7 +87,7 @@ namespace Elemental.Presentation.Animation
             for (int slot = 1; slot <= 11; slot++)
             {
                 EarthMagicMotionEntry entry = Find(slot);
-                if (entry == null || !entry.timing.IsValid) { error = $"Magic slot {slot} needs ordered markers and positive durations."; return false; }
+                if (entry == null || !entry.timing.IsValid || !float.IsFinite(entry.releaseStartNormalized) || entry.releaseStartNormalized < -1f || entry.releaseStartNormalized > entry.timing.Contact) { error = $"Magic slot {slot} needs ordered markers and positive durations."; return false; }
             }
             error = string.Empty; return true;
         }

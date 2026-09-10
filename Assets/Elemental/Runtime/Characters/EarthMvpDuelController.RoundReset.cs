@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Elemental.Runtime.World;
 using UnityEngine;
 using Unity.Profiling;
@@ -38,6 +38,7 @@ namespace Elemental.Runtime.Characters
         { CaptureArenaBaselineIfReady(); _arenaMatchDirty = true; }
         public void RestoreArenaForMatchBoundary()
         {
+            CancelRespawnPresentations();
             if (!HasSimulationAuthority || _arenaRestoreRequested || !_arenaMatchDirty) return;
             CaptureArenaBaselineIfReady();
             if (_arenaSnapshot == null) return;

@@ -62,6 +62,7 @@ namespace Elemental.Runtime.Physics
         public Material SharedMaterial => fragmentMaterial;
         public GravityWorldBehaviour GravityWorld => gravityWorld;
         public EarthMaterialFeedbackHub MaterialFeedback => materialFeedback;
+        public EarthRockDebrisPool DebrisPool => debrisPool;
 
         public Mesh ResolveShapeVariant(int stableIndex)
         {

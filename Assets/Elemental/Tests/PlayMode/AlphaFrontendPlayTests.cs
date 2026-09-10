@@ -85,22 +85,24 @@ namespace Elemental.Tests.PlayMode
             flow.Preferences.Set(master, ui, sensitivity, reduced); flow.ApplyPreferences();
             var play = EventSystem.current.currentSelectedGameObject;
             Assert.That(play.name, Is.EqualTo("PLAY VS BOT"));
+            Vector3 renderedClickPosition = _camera.transform.position;
+            float renderedClickFov = _camera.fieldOfView;
             ExecuteEvents.Execute(play, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler);
             Assert.That(flow.State, Is.EqualTo(FrontendState.Starting), "Keyboard submit must start the same frontend transition.");
             Assert.That(flow.BeginBot(), Is.False);
-            if (!flow.Preferences.ReducedMotion) Assert.That(menu.CountdownFocalLength, Is.EqualTo(150f).Within(.01f));
+            Assert.That(_camera.transform.position, Is.EqualTo(renderedClickPosition));
+            Assert.That(_camera.fieldOfView, Is.EqualTo(renderedClickFov));
             float started = Time.unscaledTime;
             using var cpu = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", 64);
             using var gc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame", 64);
             int frame = 0;
             var digits = new System.Collections.Generic.HashSet<string>();
             float roundBeforeCountdown = duel.RoundRemainingSeconds;
-            float previousDollyDistance = float.PositiveInfinity;
             while (flow.State == FrontendState.Starting)
             {
                 Assert.That(duel.CombatAllowed, Is.False);
                 Assert.That(duel.RoundRemainingSeconds, Is.EqualTo(roundBeforeCountdown));
-                if (digits.Add(view.CountdownText))
+                if (!string.IsNullOrEmpty(view.CountdownText) && digits.Add(view.CountdownText))
                 {
                     string digit = view.CountdownText;
                     yield return new WaitForSecondsRealtime(.12f);
@@ -112,7 +114,6 @@ namespace Elemental.Tests.PlayMode
                         foreach (var component in _camera.GetComponents<MonoBehaviour>())
                             File.AppendAllText(Folder + "/countdown-camera.txt", $"{component.GetType().Name}: enabled={component.enabled}\n");
                     }
-                    if (digit == "4" && !flow.Preferences.ReducedMotion) Assert.That(_camera.focalLength, Is.GreaterThan(130f));
                     foreach (var subject in new[] { duel.PlayerTransform, duel.BotTransform })
                     {
                         Vector3 screen = _camera.WorldToViewportPoint(subject.position);
@@ -127,16 +128,11 @@ namespace Elemental.Tests.PlayMode
                         Assert.That(centerViewport.y, Is.EqualTo(.5f).Within(.025f));
                     }
                 }
-                if (Time.unscaledTime - started > .15f && flow.State == FrontendState.Starting)
-                {
-                    float distance = Vector3.Distance(_camera.transform.position, menu.SubjectCenter);
-                    Assert.That(distance, Is.LessThanOrEqualTo(previousDollyDistance + .10f), "Countdown camera moved away from the fighters.");
-                    previousDollyDistance = distance;
-                }
+                Assert.That(view.StartVeilAlpha, Is.Zero, "The camera departure must stay visible.");
                 frame++;
                 yield return null;
             }
-            Assert.That(Time.unscaledTime - started, Is.InRange(3.95f, 4.5f));
+            Assert.That(Time.unscaledTime - started, Is.InRange(flow.CountdownDurationSeconds + view.StartIntroSeconds - .05f, flow.CountdownDurationSeconds + view.StartIntroSeconds + 1f));
             CollectionAssert.AreEquivalent(new[] { "4", "3", "2", "1" }, digits);
             Assert.That(flow.State, Is.EqualTo(FrontendState.Combat)); Assert.That(duel.CombatAllowed, Is.True);
             Assert.That(driver.PresentationClockMultiplier, Is.EqualTo(1)); Assert.That(menu.OwnsPresentation, Is.False);
@@ -182,9 +178,185 @@ namespace Elemental.Tests.PlayMode
             flow.Back(); flow.EndMatch(); yield return new WaitForSecondsRealtime(1);
             Assert.That(flow.State, Is.EqualTo(FrontendState.Main)); Assert.That(duel.CombatAllowed, Is.False);
             Assert.That(flow.BeginBot(), Is.True);
-            yield return new WaitForSecondsRealtime(4.2f);
+            yield return new WaitForSecondsRealtime(flow.CountdownDurationSeconds + view.StartIntroSeconds + .3f);
             Assert.That(flow.State, Is.EqualTo(FrontendState.Combat)); Assert.That(driver.PresentationClockMultiplier, Is.EqualTo(1));
             File.WriteAllText(Folder + "/metrics.txt", $"Main Thread recorder valid={cpu.Valid}; last ns={cpu.LastValue}\nGC recorder valid={gc.Valid}; last bytes={gc.LastValue}\nTimeScale={Time.timeScale}\nTransitionFrames={frame}\n");
+        }
+        [System.Serializable]
+        private sealed class DepartureSample
+        {
+            public float time, progress, fov;
+            public Vector3 position;
+            public Quaternion rotation;
+        }
+        [System.Serializable]
+        private sealed class DepartureTrace { public DepartureSample[] samples; public long peakCpuNanoseconds; }
+        [UnityTest]
+        public IEnumerator BotDepartureKeepsRenderedContinuityAndWaitsForWorldAtBothAspects()
+        {
+            var flow = Find<FrontendFlowController>(); var duel = Find<EarthMvpDuelController>();
+            var menu = Find<CinematicMenuCamera>(); var view = Find<FrontendMenuView>(); var gate = Find<EarthSceneReadinessGate>();
+            _camera = Find<Unity.Cinemachine.CinemachineBrain>().GetComponent<UnityEngine.Camera>();
+            bool oldReduced = flow.Preferences.ReducedMotion, gateEnabled = gate.enabled;
+            var ready = typeof(EarthSceneReadinessGate).GetProperty("IsReady");
+            int restarts = 0; System.Action countRestart = () => restarts++; duel.RoundRestarted += countRestart;
+            try
+            {
+                foreach (bool reduced in new[] { false, true })
+                foreach (var size in new[] { new Vector2Int(1920, 1080), new Vector2Int(1920, 1200) })
+                {
+                    flow.Preferences.Set(flow.Preferences.MasterVolume, flow.Preferences.UIVolume, flow.Preferences.Sensitivity, reduced);
+                    flow.ShowMain(); double readyDeadline = Time.realtimeSinceStartupAsDouble + 30;
+                    while (!flow.IsWorldReady && Time.realtimeSinceStartupAsDouble < readyDeadline) yield return null;
+                    Assert.That(flow.IsWorldReady, Is.True);
+                    BindCapture(size); menu.Reframe(reduced); yield return new WaitForSecondsRealtime(.7f);
+                    yield return new WaitForEndOfFrame();
+                    Vector3 clickPosition = _camera.transform.position; Quaternion clickRotation = _camera.transform.rotation;
+                    float clickFov = _camera.fieldOfView, timer = duel.RoundRemainingSeconds;
+                    string prefix = $"Departure-{size.x}x{size.y}-{(reduced ? "reduced" : "normal")}";
+                    SaveRenderedCapture(prefix + "-00-main.png");
+                    var play = view.transform.Find("Menu contents/Menu column/Main/PLAY VS BOT").gameObject;
+                    int beforeRestarts = restarts;
+                    ExecuteEvents.Execute(play, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler);
+                    Assert.That(flow.State, Is.EqualTo(FrontendState.Starting)); Assert.That(restarts, Is.EqualTo(beforeRestarts + 1));
+                    Assert.That(flow.BeginBot(), Is.False); Assert.That(restarts, Is.EqualTo(beforeRestarts + 1));
+                    // Hold only the readiness dependency; disabling it also prevents its initial-loading overlay.
+                    gate.enabled = false; ready.SetValue(gate, false);
+                    float holdUntil = Time.unscaledTime + .3f;
+                    while (Time.unscaledTime < holdUntil)
+                    {
+                        yield return new WaitForEndOfFrame();
+                        Assert.That(Vector3.Distance(_camera.transform.position, clickPosition), Is.LessThan(.003f));
+                        Assert.That(Quaternion.Angle(_camera.transform.rotation, clickRotation), Is.LessThan(.03f));
+                        Assert.That(_camera.fieldOfView, Is.EqualTo(clickFov).Within(.01f));
+                        Assert.That(view.CountdownText, Is.Empty); Assert.That(view.StartVeilAlpha, Is.Zero);
+                        Assert.That(menu.DepartureProgress, Is.Zero); Assert.That(duel.CombatAllowed, Is.False);
+                    }
+                    SaveRenderedCapture(prefix + "-01-preparing.png");
+                    ready.SetValue(gate, true); gate.enabled = gateEnabled;
+                    var samples = new System.Collections.Generic.List<DepartureSample>();
+                    samples.Add(new DepartureSample { time = Time.unscaledTime, position = _camera.transform.position, rotation = _camera.transform.rotation, fov = _camera.fieldOfView });
+                    bool middle = false; long peak = 0;
+                    using var cpu = ProfilerRecorder.StartNew(ProfilerCategory.Scripts, "Elemental.MenuCamera.Departure", 64);
+                    double deadline = Time.realtimeSinceStartupAsDouble + 5;
+                    while (!menu.DepartureComplete && Time.realtimeSinceStartupAsDouble < deadline)
+                    {
+                        yield return new WaitForEndOfFrame();
+                        samples.Add(new DepartureSample { time = Time.unscaledTime, progress = menu.DepartureProgress, position = _camera.transform.position, rotation = _camera.transform.rotation, fov = _camera.fieldOfView });
+                        peak = System.Math.Max(peak, cpu.LastValue);
+                        Assert.That(view.StartVeilAlpha, Is.Zero); Assert.That(duel.CombatAllowed, Is.False);
+                        Assert.That(duel.RoundRemainingSeconds, Is.EqualTo(timer));
+                        if (!menu.DepartureComplete) Assert.That(view.CountdownText, Is.Empty);
+                        if (!middle && menu.DepartureProgress >= .45f) { middle = true; SaveRenderedCapture(prefix + "-02-moving.png"); }
+                    }
+                    Assert.That(menu.DepartureComplete, Is.True);
+                    SaveRenderedCapture(prefix + "-03-countdown.png");
+                    File.WriteAllText(Folder + "/" + prefix + ".json", JsonUtility.ToJson(new DepartureTrace { samples = samples.ToArray(), peakCpuNanoseconds = peak }, true));
+                    Assert.That(samples.Count, Is.GreaterThan(reduced ? 1 : 4));
+                    var first = samples[0]; var last = samples[samples.Count - 1];
+                    float travel = Vector3.Distance(first.position, last.position), turn = Quaternion.Angle(first.rotation, last.rotation);
+                    Assert.That(travel, Is.GreaterThan(.1f), "The visible departure must move the camera.");
+                    for (int index = 1; index < samples.Count; index++)
+                    {
+                        var previous = samples[index - 1]; var current = samples[index];
+                        float fraction = (current.time - previous.time) / CinematicMenuCamera.DepartureSeconds(reduced);
+                        Assert.That(Vector3.Distance(previous.position, current.position), Is.LessThanOrEqualTo(travel * 2f * fraction + .03f), "Rendered camera position jumped.");
+                        Assert.That(Quaternion.Angle(previous.rotation, current.rotation), Is.LessThanOrEqualTo(turn * 2f * fraction + .4f), "Rendered camera orientation jumped.");
+                        Assert.That(Mathf.Abs(previous.fov - current.fov), Is.LessThanOrEqualTo(Mathf.Abs(last.fov - first.fov) * 2f * fraction + .15f), "Rendered camera lens jumped.");
+                    }
+                    // Cancel from the completed departure while still in countdown; the same lease must reopen cleanly.
+                    flow.Back(); yield return new WaitForSecondsRealtime(.3f);
+                    Assert.That(flow.State, Is.EqualTo(FrontendState.Main)); Assert.That(menu.OwnsPresentation, Is.True);
+                }
+            }
+            finally
+            {
+                ready.SetValue(gate, true); gate.enabled = gateEnabled; duel.RoundRestarted -= countRestart;
+                flow.Preferences.Set(flow.Preferences.MasterVolume, flow.Preferences.UIVolume, flow.Preferences.Sensitivity, oldReduced);
+            }
+        }
+        [UnityTest]
+        public IEnumerator BotDepartureEscapeCancelsBeforeReadyAndDuringMotion()
+        {
+            var flow = Find<FrontendFlowController>(); var duel = Find<EarthMvpDuelController>();
+            var menu = Find<CinematicMenuCamera>(); var view = Find<FrontendMenuView>(); var gate = Find<EarthSceneReadinessGate>();
+            var brain = Find<Unity.Cinemachine.CinemachineBrain>(); _camera = brain.GetComponent<UnityEngine.Camera>();
+            var virtualCamera = (Unity.Cinemachine.CinemachineCamera)typeof(CinematicMenuCamera)
+                .GetField("menuCamera", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(menu);
+            var driver = duel.PlayerTransform.GetComponentInChildren<EarthAnimationDriver>();
+            var ready = typeof(EarthSceneReadinessGate).GetProperty("IsReady");
+            bool gateEnabled = gate.enabled, oldReduced = flow.Preferences.ReducedMotion;
+            var keyboard = UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Keyboard>();
+            int restarts = 0, networkCancels = 0;
+            System.Action restart = () => restarts++, cancel = () => networkCancels++;
+            duel.RoundRestarted += restart; flow.NetworkCancelRequested += cancel;
+            try
+            {
+                flow.Preferences.Set(flow.Preferences.MasterVolume, flow.Preferences.UIVolume, flow.Preferences.Sensitivity, false);
+                foreach (bool waitForReady in new[] { true, false })
+                {
+                    flow.ShowMain(); double deadline = Time.realtimeSinceStartupAsDouble + 30;
+                    while (!flow.IsWorldReady && Time.realtimeSinceStartupAsDouble < deadline) yield return null;
+                    Assert.That(flow.IsWorldReady, Is.True); yield return new WaitForSecondsRealtime(.7f);
+                    yield return new WaitForEndOfFrame();
+                    float fov = _camera.fieldOfView, clock = driver.PresentationClockMultiplier;
+                    var priority = virtualCamera.Priority; bool ignoreTime = brain.IgnoreTimeScale;
+                    var update = brain.UpdateMethod; var blendUpdate = brain.BlendUpdateMethod;
+                    var play = view.transform.Find("Menu contents/Menu column/Main/PLAY VS BOT").gameObject;
+                    int before = restarts;
+                    ExecuteEvents.Execute(play, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler);
+                    ExecuteEvents.Execute(play, new BaseEventData(EventSystem.current), ExecuteEvents.submitHandler);
+                    Assert.That(restarts, Is.EqualTo(before + 1)); Assert.That(flow.BeginBot(), Is.False);
+                    if (waitForReady)
+                    {
+                        gate.enabled = false; ready.SetValue(gate, false);
+                        yield return new WaitForSecondsRealtime(.2f);
+                        Assert.That(menu.DepartureProgress, Is.Zero);
+                    }
+                    else
+                    {
+                        deadline = Time.realtimeSinceStartupAsDouble + 5;
+                        while (menu.DepartureProgress < .25f && Time.realtimeSinceStartupAsDouble < deadline) yield return null;
+                        Assert.That(menu.DepartureProgress, Is.InRange(.25f, .9f));
+                    }
+                    // Exercise the same raw Escape action that invokes FrontendFlowController.Back.
+                    UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard,
+                        new UnityEngine.InputSystem.LowLevel.KeyboardState(UnityEngine.InputSystem.Key.Escape));
+                    yield return null;
+                    UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard, new UnityEngine.InputSystem.LowLevel.KeyboardState());
+                    yield return null;
+                    Assert.That(flow.State, Is.EqualTo(FrontendState.Main)); Assert.That(networkCancels, Is.Zero);
+                    Assert.That(duel.CombatAllowed, Is.False); Assert.That(menu.OwnsPresentation, Is.True);
+                    Assert.That(view.CountdownText, Is.Empty); Assert.That(view.StartVeilAlpha, Is.Zero);
+                    Assert.That(menu.DepartureComplete, Is.False);
+                    ready.SetValue(gate, true); gate.enabled = gateEnabled;
+                    yield return new WaitForSecondsRealtime(.5f); yield return new WaitForEndOfFrame();
+                    Assert.That(Time.timeScale, Is.EqualTo(1f));
+                    Assert.That((int)virtualCamera.Priority, Is.EqualTo((int)priority));
+                    Assert.That(driver.PresentationClockMultiplier, Is.EqualTo(clock));
+                    Assert.That(brain.IgnoreTimeScale, Is.EqualTo(ignoreTime)); Assert.That(brain.UpdateMethod, Is.EqualTo(update));
+                    Assert.That(brain.BlendUpdateMethod, Is.EqualTo(blendUpdate));
+                    Assert.That(_camera.fieldOfView, Is.EqualTo(fov).Within(.01f));
+                    Assert.That(Cursor.visible, Is.True); Assert.That(Cursor.lockState, Is.EqualTo(CursorLockMode.None));
+                    // Main deliberately enters pointer mode. Keyboard navigation
+                    // acquires the first button on its next navigation action.
+                    Assert.That(EventSystem.current.currentSelectedGameObject, Is.Null);
+                    SaveRenderedCapture(waitForReady ? "Departure-cancel-readiness.png" : "Departure-cancel-motion.png");
+                }
+            }
+            finally
+            {
+                ready.SetValue(gate, true); gate.enabled = gateEnabled;
+                UnityEngine.InputSystem.InputSystem.RemoveDevice(keyboard);
+                duel.RoundRestarted -= restart; flow.NetworkCancelRequested -= cancel;
+                flow.Preferences.Set(flow.Preferences.MasterVolume, flow.Preferences.UIVolume, flow.Preferences.Sensitivity, oldReduced);
+            }
+        }
+        private void SaveRenderedCapture(string name)
+        {
+            var texture = ScreenCapture.CaptureScreenshotAsTexture();
+            try { File.WriteAllBytes(Folder + "/" + name, texture.EncodeToPNG()); }
+            finally { Object.Destroy(texture); }
         }
         private void BindCapture(Vector2Int size)
         {

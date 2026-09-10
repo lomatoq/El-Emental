@@ -6,6 +6,14 @@ namespace Elemental.Tests.EditMode
 {
     public sealed class EarthBodyRestStateTests
     {
+        [TestCase(float.NaN)] [TestCase(float.PositiveInfinity)] [TestCase(-1f)]
+        public void InvalidClockCannotDeclareRest(float delta)
+        {
+            var state=new EarthBodyRestState();
+            Assert.That(state.Step(true,float3.zero,float3.zero,delta),Is.False);
+            for(int i=0;i<20;i++)Assert.That(state.Step(true,float3.zero,float3.zero,.02f),Is.False);
+        }
+
         [Test]
         public void SustainedSupportedRestSleepsButAirborneOrMovingBodiesDoNot()
         {

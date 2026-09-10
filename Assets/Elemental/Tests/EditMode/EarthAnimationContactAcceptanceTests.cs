@@ -5,6 +5,35 @@ namespace Elemental.Tests.EditMode
 {
     public sealed class EarthAnimationContactAcceptanceTests
     {
+        [TestCase(.9f, true, EarthFootContactReason.Stance, -.001f)]
+        [TestCase(.9166666f, true, EarthFootContactReason.Stance, -.02f)]
+        [TestCase(.9166666f, true, EarthFootContactReason.Capture, -.001f)]
+        [TestCase(.9166666f, false, EarthFootContactReason.Stance, -.02f)]
+        [TestCase(.92999995f, false, EarthFootContactReason.Stance, -.02f)]
+        [TestCase(.9f, false, EarthFootContactReason.Stance, -.001f)]
+        [TestCase(.93f, false, EarthFootContactReason.Swing, -.001f)]
+        [TestCase(1f, true, EarthFootContactReason.Stance, -.02f)]
+        public void PlantedReachDoesNotLagBehindTheContactRamp(
+            float weight, bool locked, EarthFootContactReason reason, float expected)
+        {
+            bool owns = EarthPelvisCompensation.OwnsReach(weight, locked, reason);
+            Assert.That(EarthPelvisCompensation.SelectAppliedOffset(0f, -.02f, -.001f, owns),
+                Is.EqualTo(expected).Within(.000001f));
+            Assert.That(EarthPelvisCompensation.SelectAppliedOffset(0f, -.2f, -.001f, owns),
+                Is.GreaterThanOrEqualTo(-EarthPelvisCompensation.MaximumDownwardFrameStep));
+        }
+
+        [Test] public void UnlockedStanceRepeatTraceReceivesReachWithinExistingWorldDropBound()
+        {
+            // Repeat01/frame3636: unlocked stance .93 still submits .98028 IK.
+            // Prior offset ~-.04; target -.12039; the old smooth value -.06172
+            // left the final ankle26.7mm above its submitted floor target.
+            bool owns=EarthPelvisCompensation.OwnsReach(.92999995f,false,EarthFootContactReason.Stance);
+            float offset=EarthPelvisCompensation.SelectAppliedOffset(-.04f,-.12038862f,-.061723985f,owns);
+            Assert.That(offset,Is.EqualTo(-.09f).Within(.000001f));
+            Assert.That(offset,Is.GreaterThanOrEqualTo(-.04f-EarthPelvisCompensation.MaximumDownwardFrameStep));
+        }
+
         [TestCase(0.050f, 1f / 30f, 0.025f)]
         [TestCase(0.025f, 1f / 60f, 0.025f)]
         [TestCase(0.0125f, 1f / 120f, 0.025f)]

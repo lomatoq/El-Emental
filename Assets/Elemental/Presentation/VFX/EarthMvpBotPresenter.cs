@@ -43,6 +43,9 @@ namespace Elemental.Presentation.VFX
         private Color[] _restingEdges;
         private Color[] _restingBaseColors;
         private int _magicLayerIndex = -1;
+        private bool _fireDelegated;
+        public int MagicLayerWriteCount { get; private set; }
+        public bool MagicLayerDelegated => sharedPresentation != null && sharedPresentation.OwnsExternalFirePresentation;
         private float _locomotionSpeed;
         private float _turn;
         private float _attackLayerWeight;
@@ -102,7 +105,7 @@ namespace Elemental.Presentation.VFX
         {
             Unsubscribe();
             if (strikeLine != null) strikeLine.positionCount = 0;
-            if (Application.isPlaying && animationDriver != null && animationDriver.IsUsable)
+            if (Application.isPlaying && animationDriver != null && animationDriver.IsUsable && !MagicLayerDelegated)
             {
                 animationDriver.SetBool(CastHash, false);
                 if (_magicLayerIndex >= 0) animationDriver.SetLayerWeight(_magicLayerIndex, 0f);
@@ -147,7 +150,7 @@ namespace Elemental.Presentation.VFX
             if (animationDriver == null) animationDriver = humanoidAnimator.gameObject.AddComponent<EarthAnimationDriver>();
             animationDriver.Configure(humanoidAnimator);
             humanoidAnimator.applyRootMotion = false;
-            if (!Application.isPlaying || !humanoidAnimator.isActiveAndEnabled) return;
+            if (!Application.isPlaying || !humanoidAnimator.isActiveAndEnabled || MagicLayerDelegated) return;
             _locomotionSpeed = 0f;
             _turn = 0f;
             _attackLayerWeight = 0f;
@@ -189,6 +192,12 @@ namespace Elemental.Presentation.VFX
                     rootBody != null ? Vector3.Dot(rootBody.linearVelocity, up) : 0f);
             }
 
+            if (MagicLayerDelegated) { _fireDelegated = true; return; }
+            if (_fireDelegated)
+            {
+                _fireDelegated = false; _previousAttack = false; _attackLayerWeight = 0f; _magicClock = default;
+            }
+            MagicLayerWriteCount++;
             bool attacking = controller.Phase is EarthMvpBotPhase.Windup or EarthMvpBotPhase.Strike ||
                              controller.IsCharging;
             float targetAttackWeight = attacking ? 1f : 0f;
@@ -291,12 +300,18 @@ namespace Elemental.Presentation.VFX
                 };
                 renderer.GetPropertyBlock(_properties);
                 _properties.SetColor("_EdgeColor", edge);
-                Color baseTint = Color.Lerp(restingBase, enemyTint, 0.88f);
-                Material material = renderer.sharedMaterial;
-                if (material != null && material.HasProperty("_BaseColor"))
-                    _properties.SetColor("_BaseColor", baseTint);
-                if (material != null && material.HasProperty("_Color"))
-                    _properties.SetColor("_Color", baseTint);
+                // The production Humanoid materials already carry the authored team palette.
+                // Planner reset/recovery changes the telegraph edge, not the rig's restored albedo.
+                // Keep the original tint fallback only for legacy stone-only bots without that owner.
+                if (sharedPresentation == null)
+                {
+                    Color baseTint = Color.Lerp(restingBase, enemyTint, 0.88f);
+                    Material material = renderer.sharedMaterial;
+                    if (material != null && material.HasProperty("_BaseColor"))
+                        _properties.SetColor("_BaseColor", baseTint);
+                    if (material != null && material.HasProperty("_Color"))
+                        _properties.SetColor("_Color", baseTint);
+                }
                 renderer.SetPropertyBlock(_properties);
             }
         }

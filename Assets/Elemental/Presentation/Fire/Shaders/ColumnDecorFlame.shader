@@ -8,6 +8,7 @@ Shader "Elemental/Fire/Column Decor Flame"
         [HDR] _BodyColor("Body",Color)=(1,0.19,0.008,1)
         [HDR] _CoreColor("Core",Color)=(1,0.72,0.19,1)
         _CoreEmission("Core HDR boost",Range(0,12))=0.65
+        _AdditiveEnergyScale("Additive parcel energy",Range(0,1))=0.26
         _FireTime("Scaled simulation time",Float)=0
         _Opacity("Opacity",Range(0,1))=0.72
         _ShapeFPS("Shape FPS",Float)=0
@@ -24,7 +25,8 @@ Shader "Elemental/Fire/Column Decor Flame"
         {
             Name "FireMeshUnlit"
             Tags { "LightMode"="ElementalValleyCloud" }
-            Blend SrcAlpha OneMinusSrcAlpha
+            Blend 0 SrcAlpha One
+            Blend 1 One One
             ZWrite Off
             // Existing atmosphere raster pass exposes sampled depth, not a depth attachment.
             ZTest Always
@@ -35,14 +37,16 @@ Shader "Elemental/Fire/Column Decor Flame"
             #pragma target 3.5
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
-            #include "Assets/Elemental/Presentation/Fire/Shaders/FireCpuFlame.hlsl"
-            #include "Assets/Elemental/Presentation/Fire/Shaders/FireAuthoredFlipbook.hlsl"
+            #include "Assets/Elemental/Presentation/Fire/Shaders/ColumnRestoredCpuFlame.hlsl"
+            #include "Assets/Elemental/Presentation/Fire/Shaders/ColumnRestoredAuthoredFlipbook.hlsl"
+            #include "FireDofOutput.hlsl"
             CBUFFER_START(UnityPerMaterial)
             float4 _EdgeColor,_BodyColor,_CoreColor;
             float4 _FlameAtlas_TexelSize;
             float _UseFlipbook;
             float _CoreEmission,_FireTime,_Opacity,_ShapeFPS,_Distortion,_SoftDistance,_NearStart,_NearRange;
             float _HeatDistortionPixels;
+            float _AdditiveEnergyScale;
             CBUFFER_END
             TEXTURE2D(_FlameAtlas); SAMPLER(sampler_FlameAtlas);
             float _EarthSeismicVision;
@@ -97,7 +101,7 @@ Shader "Elemental/Fire/Column Decor Flame"
                 output.uv=input.uv; output.fire=input.fire.xyz; output.ember=input.extent.y;
                 return output;
             }
-            float4 frag(Varyings input):SV_Target
+            float4 ShadeColumn(Varyings input)
             {
                 float3 color; float alpha;
                 if(_UseFlipbook>0.5)
@@ -166,8 +170,10 @@ Shader "Elemental/Fire/Column Decor Flame"
                     alpha*=saturate((sceneEye-eye)/max(_SoftDistance,1e-4));
                 }
                 alpha*=saturate((eye-_NearStart)/max(_NearRange,1e-4));
-                return float4(color,alpha*(1-saturate(_EarthSeismicVision)));
+                // Additive parcels accumulate; keep silhouette coverage independent of emitted energy.
+                return float4(color*_AdditiveEnergyScale,alpha*(1-saturate(_EarthSeismicVision)));
             }
+                        FireDofOutput frag(Varyings input){float4 color=ShadeColumn(input);float2 moments=0;FireDepthAccumulate(moments,input.positionWS,1);return FireDofPack(color,moments);}
             ENDHLSL
         }
         Pass

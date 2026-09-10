@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Elemental.Simulation.Structures;
 using Elemental.Simulation.Bending;
 using Elemental.Runtime.World;
@@ -56,8 +56,12 @@ namespace Elemental.Runtime.Physics
         [SerializeField] private bool repairable = true;
         [SerializeField] private EarthMaterialFeedbackHub materialFeedback;
         [SerializeField] private EarthStoneBevelProfile stoneBevelProfile;
+        [SerializeField] private bool preserveAuthoredFractureRendering;
+        public bool PreservesAuthoredFractureRendering => preserveAuthoredFractureRendering;
+        public void ConfigureAuthoredFractureRendering() => preserveAuthoredFractureRendering = true;
         [SerializeField] private EarthRockDebrisPool rockDebrisPool;
         [SerializeField, Min(1f)] private float cumulativeFractureImpulse = 95f;
+        [SerializeField, Range(0f, 1f)] private float minimumDamageImpulseFraction = .1f;
         public void ConfigureRockBreakup(EarthRockDebrisPool pool) => rockDebrisPool = pool;
         private EarthImpactDamage _impactDamage;
         private EarthImpactDamage[] _pieceImpactDamage;
@@ -67,6 +71,7 @@ namespace Elemental.Runtime.Physics
         private float[] _pieceLastHitAt, _pieceArmedAt;
         public float AccumulatedImpactImpulse => _impactDamage.Impulse;
         public int ShatteredPieceCount { get; private set; }
+        public int FractureRenderHullFallbackCount { get; private set; }
         public bool HasMaterialFeedback => materialFeedback != null;
         private readonly EarthContactFrictionFeedback _frictionFeedback = new();
         public void ReportPieceFriction(int pieceIndex, Collision collision) =>
@@ -113,8 +118,7 @@ namespace Elemental.Runtime.Physics
             (_repairRequestedCount > _repairStartReleased - _releasedCount && _repairStartReleased > 0);
         private static readonly ProfilerMarker RepairFlightMarker =
             new ProfilerMarker("Elemental.Earth.ArenaRepair.Flight");
-        private uint _lastImpactSourceId;
-        private float _lastImpactTime = float.NegativeInfinity;
+        private readonly EarthImpactContactWindow _impactContacts = new();
 
         public event Action<IEarthFractureSource> TargetsActivated;
         public event Action<EarthArenaFracturePulse> FracturePresented;
@@ -162,12 +166,10 @@ namespace Elemental.Runtime.Physics
         public bool ApplyEarthImpact(in EarthStructureImpact impact)
         {
             if (!ordinaryDamageEnabled || !_configured || PieceCount <= _releasedCount) return false;
-            if (impact.SourceId != 0u && impact.SourceId == _lastImpactSourceId &&
-                Time.time - _lastImpactTime < 0.35f) return false;
-            if (!_impactDamage.Add(impact.Impulse)) return false;
-            _lastImpactSourceId = impact.SourceId;
-            _lastImpactTime = Time.time;
             float threshold = Mathf.Max(1f, cumulativeFractureImpulse);
+            if (!EarthArenaFractureGate.IsMeaningfulDamage(impact.Impulse, threshold, minimumDamageImpulseFraction)) return false;
+            if (!_impactContacts.TryAdmit(impact.SourceId, Time.time)) return false;
+            if (!_impactDamage.Add(impact.Impulse)) return false;
             if (_impactDamage.Impulse < threshold) return false;
             float combined = _impactDamage.Impulse;
             EarthArenaFractureDecision decision = EarthArenaFractureGate.Resolve(
@@ -176,7 +178,7 @@ namespace Elemental.Runtime.Physics
                 combined * (EarthArenaFractureGate.MinimumOrdinaryImpulse / threshold),
                 PieceCount - _releasedCount);
             if (!decision.Accepted) return false;
-            bool released = ReleaseNearestPieces(impact.Point, impact.Direction, combined, decision.ReleaseCount);
+            bool released = ReleaseNearestPieces(impact.Point, impact.Direction, impact.Impulse, decision.ReleaseCount);
             if (released) _impactDamage.Consume(combined);
             return released;
         }
@@ -425,7 +427,16 @@ namespace Elemental.Runtime.Physics
                 _pieceTargets[pieceIndex] != null ? _pieceTargets[pieceIndex].StableEarthId : 0u);
             EarthArenaPiece otherPiece = collision.collider.GetComponentInParent<EarthArenaPiece>();
             EarthArenaStructure other = otherPiece != null ? otherPiece.Owner : collision.collider.GetComponentInParent<EarthArenaStructure>();
-            if (other != this) EarthStructureImpactRouter.Apply(collision.collider, in impact);
+            // Newly released cells may still be resolving their authored contacts.
+            // The same arm boundary already protects self-shatter. A deliberate magic
+            // release clears it via NotifyPieceMagicReleased, preserving heavy throws.
+            if (other != this && Time.time >= _pieceArmedAt[pieceIndex])
+            {
+                float admitted = EarthStructureImpactRouter.CollisionStrength(collision, _pieceBodies[pieceIndex]);
+                var structural = new EarthStructureImpact(contact.point, direction, admitted,
+                    EarthStructureImpactKind.Projectile, impact.SourceId);
+                EarthStructureImpactRouter.Apply(collision.collider, in structural);
+            }
             ApplyReleasedPieceImpact(pieceIndex, in ownImpact);
         }
 
@@ -545,8 +556,20 @@ namespace Elemental.Runtime.Physics
                     {
                         if (_beveledRenderMeshes[index] == null)
                             using (EarthStartupTiming.Measure(EarthStartupTiming.Category.ArenaBevel))
-                                _beveledRenderMeshes[index] = EarthFractureBevelMeshBuilder.Create(
-                                    bakedRenderMesh, stoneBevelProfile);
+                            {
+                                // Authored render fans can contain open seams even
+                                // while the matching convex collider cooks correctly.
+                                // Reconstruct only this individual physical cell.
+                                if (preserveAuthoredFractureRendering)
+                                {
+                                    ValidateAuthoredFractureRender(bakedRenderMesh);
+                                    _beveledRenderMeshes[index] = bakedRenderMesh;
+                                }
+                                else
+                                {
+                                _beveledRenderMeshes[index] = EarthContainedRenderRepair.PreserveAuthoredDetail(bakedRenderMesh);
+                                }
+                            }
                         filter.sharedMesh = _beveledRenderMeshes[index];
                     }
                     else
@@ -653,6 +676,7 @@ namespace Elemental.Runtime.Physics
             _releasedCount = 0;
             _repairStartReleased = 0;
             _impactDamage = default;
+            _impactContacts.Clear();
             ShatteredPieceCount = 0;
             for (int index = 0; index < _pieceStates.Length; index++)
             {
@@ -693,11 +717,12 @@ namespace Elemental.Runtime.Physics
             using (ImpactMarker.Auto())
             {
                 bool releasedAny = false;
+                float perPieceImpulse = EarthArenaFractureGate.ReleaseImpulsePerPiece(impulse, requestedCount);
                 for (int count = 0; count < requestedCount; count++)
                 {
                     int index = FindNearestAvailablePiece(point);
                     if (index < 0) break;
-                    if (!ReleasePiece(index, point, direction, impulse)) continue;
+                    if (!ReleasePiece(index, point, direction, perPieceImpulse)) continue;
                     releasedAny = true;
                     point += SafeDirection(direction) * 0.08f;
                 }
@@ -782,6 +807,21 @@ namespace Elemental.Runtime.Physics
                 }
                 if (changed) SolveIslands();
             }
+        }
+
+        private static readonly ProfilerMarker AuthoredRenderValidationMarker = new ProfilerMarker("Elemental.Earth.AuthoredFractureRender.Validate");
+        private static void ValidateAuthoredFractureRender(Mesh mesh)
+        {
+            using var sample = AuthoredRenderValidationMarker.Auto();
+            if (!EarthContainedRenderRepair.IsClosed(mesh))
+                throw new InvalidOperationException(mesh.name + ": authored fracture render is not closed; repair this asset without flattening its exterior normals.");
+            Vector3[] normals = mesh.normals;
+            if (normals.Length != mesh.vertexCount)
+                throw new InvalidOperationException(mesh.name + ": authored fracture normal stream is missing.");
+            foreach (Vector3 normal in normals)
+                if (!float.IsFinite(normal.x) || !float.IsFinite(normal.y) || !float.IsFinite(normal.z) ||
+                    normal.sqrMagnitude < .99f || normal.sqrMagnitude > 1.01f)
+                    throw new InvalidOperationException(mesh.name + ": authored fracture normal is not finite and unit length.");
         }
 
         private void EnsureFracturedProxy()

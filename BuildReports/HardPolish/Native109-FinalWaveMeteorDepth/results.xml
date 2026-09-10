@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="3" result="Failed(Child)" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-10 13:15:25Z" end-time="2026-09-10 13:16:30Z" duration="65.5200491">
+  <test-suite type="TestSuite" id="1632" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="476" result="Failed" site="Child" start-time="2026-09-10 13:15:25Z" end-time="2026-09-10 13:16:30Z" duration="65.520049" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1625" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="470" result="Failed" site="Child" start-time="2026-09-10 13:15:25Z" end-time="2026-09-10 13:16:30Z" duration="65.475538" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="34284" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1626" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="470" result="Failed" site="Child" start-time="2026-09-10 13:15:25Z" end-time="2026-09-10 13:16:30Z" duration="65.462686" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1627" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="470" result="Failed" site="Child" start-time="2026-09-10 13:15:25Z" end-time="2026-09-10 13:16:30Z" duration="65.450888" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1628" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="470" result="Failed" site="Child" start-time="2026-09-10 13:15:25Z" end-time="2026-09-10 13:16:30Z" duration="65.438911" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1091" name="HardPolishFireStreamBindingRuntimeTests" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" testcasecount="63" result="Failed" site="Child" start-time="2026-09-10 13:15:25Z" end-time="2026-09-10 13:16:30Z" duration="65.353930" total="3" passed="2" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1104" name="ActualFireDepthBokehKeepsFocusedFlameSharpAndSoftensDistantFlame" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.ActualFireDepthBokehKeepsFocusedFlameSharpAndSoftensDistantFlame" methodname="ActualFireDepthBokehKeepsFocusedFlameSharpAndSoftensDistantFlame" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1506945364" result="Passed" start-time="2026-09-10 13:15:25Z" end-time="2026-09-10 13:15:48Z" duration="22.900377" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 5383.45ms; ground=exact baked base, cacheLoad=16.30ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=1336.90ms, peakCookingPoll=0.33ms; sync=ArenaInitialize=47.72ms/15;ArenaBevel=34.52ms/175;ArenaMeshPicking=1.11ms/175;WallAwake=98.67ms/1;WallPieceVisuals=54.35ms/40;PlatformPoolAwake=10.10ms/1;PlatformRuntimeMeshes=1.35ms/12;PillarPoolAwake=18.36ms/1;PillarMeshLibrary=3.98ms/1;PillarColumns=14.37ms/1;DebrisPoolAwake=168.13ms/1;HeroFragmentPoolAwake=12.90ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1122" name="ActualWheelMorphDrawFadeAndSphericalWaveReviewCorpus" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.ActualWheelMorphDrawFadeAndSphericalWaveReviewCorpus" methodname="ActualWheelMorphDrawFadeAndSphericalWaveReviewCorpus" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1871160670" result="Passed" start-time="2026-09-10 13:15:48Z" end-time="2026-09-10 13:16:16Z" duration="28.346038" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 4354.27ms; ground=exact baked base, cacheLoad=14.99ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=1010.80ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=47.72ms/15;ArenaBevel=34.52ms/175;ArenaMeshPicking=1.11ms/175;WallAwake=98.67ms/1;WallPieceVisuals=54.35ms/40;PlatformPoolAwake=10.10ms/1;PlatformRuntimeMeshes=1.35ms/12;PillarPoolAwake=18.36ms/1;PillarMeshLibrary=3.98ms/1;PillarColumns=14.37ms/1;DebrisPoolAwake=168.13ms/1;HeroFragmentPoolAwake=12.90ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1121" name="SavedFighterMeteorSheathFollowsPosedBodyDuringUnobstructedFlight" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedFighterMeteorSheathFollowsPosedBodyDuringUnobstructedFlight" methodname="SavedFighterMeteorSheathFollowsPosedBodyDuringUnobstructedFlight" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="828982958" result="Failed" start-time="2026-09-10 13:16:16Z" end-time="2026-09-10 13:16:30Z" duration="14.014664" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: greater than 8
+  But was:  6.75912762f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests+<SavedFighterMeteorSheathFollowsPosedBodyDuringUnobstructedFlight>d__47.MoveNext () [0x01554] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\FireMeteorBodyAttachmentTests.cs:158
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3841.90ms; ground=exact baked base, cacheLoad=12.21ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=682.14ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=47.72ms/15;ArenaBevel=34.52ms/175;ArenaMeshPicking=1.11ms/175;WallAwake=98.67ms/1;WallPieceVisuals=54.35ms/40;PlatformPoolAwake=10.10ms/1;PlatformRuntimeMeshes=1.35ms/12;PillarPoolAwake=18.36ms/1;PillarMeshLibrary=3.98ms/1;PillarColumns=14.37ms/1;DebrisPoolAwake=168.13ms/1;HeroFragmentPoolAwake=12.90ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\Native109-FinalWaveMeteorDepth\results.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

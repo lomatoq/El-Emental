@@ -1,0 +1,84 @@
+{
+    "utc": "2026-09-09T08:35:52.1621909Z",
+    "scene": "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity",
+    "fogProfile": "",
+    "authoredBefore": 117,
+    "authoredAfter": 0,
+    "maximumAuthoredPositionChange": 0.0,
+    "maximumAuthoredRotationChange": 0.0,
+    "maximumAuthoredScaleChange": 0.0,
+    "sceneSaved": false,
+    "error": "System.InvalidOperationException: Saved geography was not moved. Candidate mesh bounds conflict: View_MainIsland0 newly overlaps component bounds of View_MainGround0; View_CombatIsland0 newly overlaps component bounds of View_CombatGround0; View_CombatIsland0 newly overlaps component bounds of View_CombatSatellite0; View_CombatIsland0 newly overlaps component bounds of View_CombatSatellite1; View_CombatSatellite0 newly overlaps component bounds of View_CombatIsland0; View_CombatSatellite1 newly overlaps component bounds of View_CombatIsland0; View_WestIslandNear newly overlaps component bounds of View_WestSatellite0; View_WestSatellite0 newly overlaps component bounds of View_WestIslandNear\r\n  at Elemental.Presentation.DistantScenery.DistantBackdrop.RefreshExistingGeometryAndAddSupplements (Elemental.Presentation.DistantScenery.DistantBackdrop+ExistingGeometrySnapshot before) [0x00906] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Presentation\\Environment\\DistantBackdropInPlace.cs:131 \r\n  at Elemental.Authoring.Editor.HardPolishSceneIntegration.Install () [0x001dd] in C:\\Users\\nirrt\\OneDrive\\Документы\\ChatGPT\\El Ements\\El-Emental\\Assets\\Elemental\\Authoring\\Editor\\HardPolishSceneIntegration.cs:132 ",
+    "newMeshBoundsConflicts": [
+        "View_MainIsland0 newly overlaps component bounds of View_MainGround0",
+        "View_CombatIsland0 newly overlaps component bounds of View_CombatGround0",
+        "View_CombatIsland0 newly overlaps component bounds of View_CombatSatellite0",
+        "View_CombatIsland0 newly overlaps component bounds of View_CombatSatellite1",
+        "View_CombatSatellite0 newly overlaps component bounds of View_CombatIsland0",
+        "View_CombatSatellite1 newly overlaps component bounds of View_CombatIsland0",
+        "View_WestIslandNear newly overlaps component bounds of View_WestSatellite0",
+        "View_WestSatellite0 newly overlaps component bounds of View_WestIslandNear"
+    ],
+    "floatingMeshes": [
+        {
+            "path": "Assets/Elemental/Content/Environment/DistantStone/Meshes/Island_6_LOD0.asset",
+            "guid": "c79b40a54d5c9d34b8abcea24a6af639",
+            "triangles": 252
+        },
+        {
+            "path": "Assets/Elemental/Content/Environment/DistantStone/Meshes/Island_6_LOD1.asset",
+            "guid": "74f5492f55f8c214285017c04c6cc134",
+            "triangles": 120
+        },
+        {
+            "path": "Assets/Elemental/Content/Environment/DistantStone/Meshes/Island_7_LOD0.asset",
+            "guid": "fe429c08b2b77e540adde1d9b2463ad6",
+            "triangles": 240
+        },
+        {
+            "path": "Assets/Elemental/Content/Environment/DistantStone/Meshes/Island_7_LOD1.asset",
+            "guid": "df8990a176e91dd4783a2df18880a01d",
+            "triangles": 96
+        },
+        {
+            "path": "Assets/Elemental/Content/Environment/DistantStone/Meshes/Island_8_LOD0.asset",
+            "guid": "c5444f28b255c41439259163d145de8f",
+            "triangles": 248
+        },
+        {
+            "path": "Assets/Elemental/Content/Environment/DistantStone/Meshes/Island_8_LOD1.asset",
+            "guid": "dad41948b2813f74faed575a49a09714",
+            "triangles": 104
+        },
+        {
+            "path": "Assets/Elemental/Content/Environment/DistantStone/Meshes/Island_9_LOD0.asset",
+            "guid": "612e0b054f92b4c47845caba1de8235c",
+            "triangles": 236
+        },
+        {
+            "path": "Assets/Elemental/Content/Environment/DistantStone/Meshes/Island_9_LOD1.asset",
+            "guid": "e736110a563b5a742bd4590a7bf9eabc",
+            "triangles": 96
+        },
+        {
+            "path": "Assets/Elemental/Content/Environment/DistantStone/Meshes/Island_10_LOD0.asset",
+            "guid": "a802d242bd914b04a9d58adfe2fa0fcd",
+            "triangles": 236
+        },
+        {
+            "path": "Assets/Elemental/Content/Environment/DistantStone/Meshes/Island_10_LOD1.asset",
+            "guid": "71e8b6cfe243df54ea3e5e95f48ed4f7",
+            "triangles": 100
+        },
+        {
+            "path": "Assets/Elemental/Content/Environment/DistantStone/Meshes/Island_11_LOD0.asset",
+            "guid": "7167ad9f02d72434aab851fac5b88aae",
+            "triangles": 244
+        },
+        {
+            "path": "Assets/Elemental/Content/Environment/DistantStone/Meshes/Island_11_LOD1.asset",
+            "guid": "85e01d0ab397f03468cafb85644f4702",
+            "triangles": 104
+        }
+    ]
+}

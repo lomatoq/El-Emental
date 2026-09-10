@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="9" result="Passed" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-10 09:48:16Z" end-time="2026-09-10 09:48:16Z" duration="0.6776136">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="1627" result="Passed" start-time="2026-09-10 09:48:16Z" end-time="2026-09-10 09:48:16Z" duration="0.677614" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="3066" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="1581" result="Passed" start-time="2026-09-10 09:48:16Z" end-time="2026-09-10 09:48:16Z" duration="0.580623" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="34284" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="3067" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="1575" result="Passed" start-time="2026-09-10 09:48:16Z" end-time="2026-09-10 09:48:16Z" duration="0.486771" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="3068" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="1575" result="Passed" start-time="2026-09-10 09:48:16Z" end-time="2026-09-10 09:48:16Z" duration="0.387007" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="3069" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="1575" result="Passed" start-time="2026-09-10 09:48:16Z" end-time="2026-09-10 09:48:16Z" duration="0.288221" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="2529" name="FireWeaveControlsTests" fullname="Elemental.Tests.EditMode.FireWeaveControlsTests" classname="Elemental.Tests.EditMode.FireWeaveControlsTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-09-10 09:48:16Z" end-time="2026-09-10 09:48:16Z" duration="0.186103" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2538" name="CatalystRejectsNonfiniteAndHandlesStationaryStream" fullname="Elemental.Tests.EditMode.FireWeaveControlsTests.CatalystRejectsNonfiniteAndHandlesStationaryStream" methodname="CatalystRejectsNonfiniteAndHandlesStationaryStream" classname="Elemental.Tests.EditMode.FireWeaveControlsTests" runstate="Runnable" seed="1849578177" result="Passed" start-time="2026-09-10 09:48:16Z" end-time="2026-09-10 09:48:16Z" duration="0.014401" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2537" name="CatalystUsesSweptPathAndCooldownRatherThanEndpointOnly" fullname="Elemental.Tests.EditMode.FireWeaveControlsTests.CatalystUsesSweptPathAndCooldownRatherThanEndpointOnly" methodname="CatalystUsesSweptPathAndCooldownRatherThanEndpointOnly" classname="Elemental.Tests.EditMode.FireWeaveControlsTests" runstate="Runnable" seed="945301399" result="Passed" start-time="2026-09-10 09:48:16Z" end-time="2026-09-10 09:48:16Z" duration="0.000765" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2533" name="ChargedBoltReleasesOnceAndMiddleCancelsWithoutDrill" fullname="Elemental.Tests.EditMode.FireWeaveControlsTests.ChargedBoltReleasesOnceAndMiddleCancelsWithoutDrill" methodname="ChargedBoltReleasesOnceAndMiddleCancelsWithoutDrill" classname="Elemental.Tests.EditMode.FireWeaveControlsTests" runstate="Runnable" seed="1428811811" result="Passed" start-time="2026-09-10 09:48:16Z" end-time="2026-09-10 09:48:16Z" duration="0.001719" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2536" name="DefaultPowerRetainsAcceptedStreamAndExtremesAreMonotonic" fullname="Elemental.Tests.EditMode.FireWeaveControlsTests.DefaultPowerRetainsAcceptedStreamAndExtremesAreMonotonic" methodname="DefaultPowerRetainsAcceptedStreamAndExtremesAreMonotonic" classname="Elemental.Tests.EditMode.FireWeaveControlsTests" runstate="Runnable" seed="1255427269" result="Passed" start-time="2026-09-10 09:48:16Z" end-time="2026-09-10 09:48:16Z" duration="0.013738" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2534" name="InterruptRequiresAllButtonsReleasedAndRetainsPower" fullname="Elemental.Tests.EditMode.FireWeaveControlsTests.InterruptRequiresAllButtonsReleasedAndRetainsPower" methodname="InterruptRequiresAllButtonsReleasedAndRetainsPower" classname="Elemental.Tests.EditMode.FireWeaveControlsTests" runstate="Runnable" seed="1141294196" result="Passed" start-time="2026-09-10 09:48:16Z" end-time="2026-09-10 09:48:16Z" duration="0.001487" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2530" name="MiddleOwnsStreamAndWheelDoesNotChangeIdleForm" fullname="Elemental.Tests.EditMode.FireWeaveControlsTests.MiddleOwnsStreamAndWheelDoesNotChangeIdleForm" methodname="MiddleOwnsStreamAndWheelDoesNotChangeIdleForm" classname="Elemental.Tests.EditMode.FireWeaveControlsTests" runstate="Runnable" seed="54427670" result="Passed" start-time="2026-09-10 09:48:16Z" end-time="2026-09-10 09:48:16Z" duration="0.001014" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2532" name="ModifierShotsAreEdgesAndReleasingMiddleCannotStartDraw" fullname="Elemental.Tests.EditMode.FireWeaveControlsTests.ModifierShotsAreEdgesAndReleasingMiddleCannotStartDraw" methodname="ModifierShotsAreEdgesAndReleasingMiddleCannotStartDraw" classname="Elemental.Tests.EditMode.FireWeaveControlsTests" runstate="Runnable" seed="1301889500" result="Passed" start-time="2026-09-10 09:48:16Z" end-time="2026-09-10 09:48:16Z" duration="0.000682" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2535" name="ShiftSpaceStillHoldsRingUntilRelease" fullname="Elemental.Tests.EditMode.FireWeaveControlsTests.ShiftSpaceStillHoldsRingUntilRelease" methodname="ShiftSpaceStillHoldsRingUntilRelease" classname="Elemental.Tests.EditMode.FireWeaveControlsTests" runstate="Runnable" seed="28029216" result="Passed" start-time="2026-09-10 09:48:16Z" end-time="2026-09-10 09:48:16Z" duration="0.000769" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2531" name="WheelTraversesAllFormsAndClamps" fullname="Elemental.Tests.EditMode.FireWeaveControlsTests.WheelTraversesAllFormsAndClamps" methodname="WheelTraversesAllFormsAndClamps" classname="Elemental.Tests.EditMode.FireWeaveControlsTests" runstate="Runnable" seed="1921239074" result="Passed" start-time="2026-09-10 09:48:16Z" end-time="2026-09-10 09:48:16Z" duration="0.002996" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\Native080-FireWeaveContracts\results.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

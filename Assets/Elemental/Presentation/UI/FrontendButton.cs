@@ -15,6 +15,9 @@ namespace Elemental.Presentation.UI
         private RectTransform _visual;
         private Sprite _restingSprite;
         private Color _normal, _highlight;
+        private Material _elementSelectedMaterial;
+        public void SetElementAppearance(Material selectedMaterial,Color accent)
+        { _elementSelectedMaterial=selectedMaterial;if(_rimGlow!=null)_rimGlow.color=accent; }
         private bool _hot, _pressed;
         private float _blend;
         private float _scaleStart = 1f, _scaleTarget = 1f, _scaleElapsed;
@@ -105,6 +108,8 @@ namespace Elemental.Presentation.UI
                 var sprite = _theme.stoneSkin.Button(active, _pressed, _hot, _restingSprite);
                 skinned.overrideSprite = null; // The cloned normal override must not mask live state sprites.
                 if (skinned.sprite != sprite) skinned.sprite = sprite;
+                var faceMaterial=ReferenceActive&&sprite==_theme.stoneSkin.referenceSelected?_elementSelectedMaterial:null;
+                if(skinned.material!=faceMaterial)skinned.material=faceMaterial;
                 skinned.color = active?Color.white:new Color(.6f,.6f,.6f,.65f);
                 var insets=ReferenceActive&&sprite==_theme.stoneSkin.referenceSelected?_theme.stoneSkin.referenceSelectedInsets:Vector4.zero;
                 float faceHeight=sprite.rect.height-insets.y-insets.w;

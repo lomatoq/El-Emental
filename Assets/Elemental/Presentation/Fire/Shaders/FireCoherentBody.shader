@@ -20,7 +20,7 @@ Shader "Elemental/Fire/CoherentBody"
         {
             Name "ConnectedFireBody"
             Tags { "LightMode"="SRPDefaultUnlit" }
-            Blend SrcAlpha OneMinusSrcAlpha
+            Blend One OneMinusSrcAlpha
             ZWrite Off ZTest LEqual Cull Off
             HLSLPROGRAM
             #pragma vertex vert
@@ -28,6 +28,7 @@ Shader "Elemental/Fire/CoherentBody"
             #pragma target 3.5
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "Assets/Elemental/Presentation/Fire/Shaders/FireCpuFlame.hlsl"
             CBUFFER_START(UnityPerMaterial)
                 float4 _EdgeColor, _BodyColor, _CoreColor;
                 float _CoreEmission, _Opacity, _FireTime, _BodyFade, _SoftDistance, _NearStart, _NearRange;
@@ -58,21 +59,35 @@ Shader "Elemental/Fire/CoherentBody"
                     if(dot(lateral,lateral)<patch.w*patch.w)
                         clip(signedDistance-_ContactNormalSkin[c].w);
                 }
-                float travel=input.uv.y*2.6-_FireTime*3.2;
+                float u=input.shape.x;
                 float phase=input.shape.y;
-                float wave=sin(travel+phase)*.065+sin(travel*.53-phase)*.045;
-                float side=abs(input.uv.x+wave*(.3+.7*input.shape.x));
-                float aa=max(fwidth(side),.008);
-                float coverage=1-smoothstep(.82-aa,1+aa,side);
-                // Three bands run continuously down the whole stream, never a core
-                // and outline repeated once per particle. Macro motion advects along arc length.
-                float body=1-smoothstep(.68,.86,side);
-                float core=(1-smoothstep(.24,.53,side))*(1-smoothstep(.45,.94,input.shape.x));
-                core*=.82+.12*sin(travel*.65+phase);
-                float3 color=lerp(_EdgeColor.rgb,_BodyColor.rgb,body);
+                // World arc, not triangle index: visible heat travels through the
+                // connected envelope. Keep a central bridge while the outer edge curls.
+                float travel=input.uv.y*2.6-_FireTime*4.1;
+                float macro=EF_Noise2(float2(travel*.69,phase+2));
+                float detail=EF_Noise2(float2(travel*1.61,phase-3));
+                float wave=(macro-.5)*.22*(.2+.8*u);
+                float x=input.uv.x+wave;
+                float side=abs(x);
+                float edgeNoise=EF_Noise2(float2(travel*1.12,phase+sign(x)*4.7));
+                float envelope=.58+.25*macro+.12*edgeNoise;
+                float aa=max(fwidth(side)*1.2,.008);
+                float coverage=1-smoothstep(envelope-aa,envelope+aa,side);
+                float interior=saturate(1-side/max(envelope,.001));
+                float body=smoothstep(0,.78,interior);
+                // Hot pockets elongate with flow and cool towards the tip. A short
+                // source core survives; there is no full-length three-band stripe.
+                float pockets=smoothstep(.26,.72,detail)*(.52+.48*macro);
+                float source=1-smoothstep(.04,.26,u);
+                float core=smoothstep(.65,.97,interior)*max(source,pockets*.94);
+                core*=1-smoothstep(.52,.98,u);
+                // Translucent warm edges merge the three tongues into one flame mass.
+                // Dark opaque outlines on every ribbon read as braided solid straps.
+                float3 edge=lerp(_EdgeColor.rgb,_BodyColor.rgb,.40);
+                float3 color=lerp(edge,_BodyColor.rgb,body);
                 color=lerp(color,_CoreColor.rgb,core);
                 color+=_CoreColor.rgb*core*_CoreEmission;
-                float alpha=coverage*_Opacity*_BodyFade;
+                float alpha=coverage*_Opacity*_BodyFade*lerp(.46,1,smoothstep(0,.24,interior));
                 alpha*=smoothstep(0,.035,input.shape.x)*(1-smoothstep(.88,1,input.shape.x));
                 float eye=-TransformWorldToView(input.positionWS).z;
                 if(_SoftDistance>0)
@@ -89,7 +104,10 @@ Shader "Elemental/Fire/CoherentBody"
                     alpha*=saturate((sceneEye-eye)/max(_SoftDistance,.0001));
                 }
                 alpha*=saturate((eye-_NearStart)/max(_NearRange,.0001));
-                return float4(color,alpha*(1-saturate(_EarthSeismicVision)));
+                alpha*=1-saturate(_EarthSeismicVision);
+                // Flame emits light while only lightly attenuating the scene behind it.
+                // Premultiplied emission avoids an opaque painted plane in near-front views.
+                return float4(color*alpha*.68,alpha*.24);
             }
             ENDHLSL
         }

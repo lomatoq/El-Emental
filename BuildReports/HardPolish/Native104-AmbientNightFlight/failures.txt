@@ -1,0 +1,27 @@
+Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedAmbientMotesKeepTheirRealSizeAndFadeNearCameraWithBloomComparison
+  Camera-near mote must fade, including bloom energy
+  Expected: less than 0.00100000005f
+  But was:  0.00556059275f
+
+at Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests+<SavedAmbientMotesKeepTheirRealSizeAndFadeNearCameraWithBloomComparison>d__0.MoveNext () [0x0099d] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\AmbientMoteNearCameraProductionTests.cs:72
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+
+
+Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedArenaNightBurnLampsWarmOpaqueReceiversWithVisibleFlamesAndSmoke
+  Pooled burn lamps must visibly warm nearby opaque surfaces.
+  Expected: greater than 20
+  But was:  0
+
+at Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests+<SavedArenaNightBurnLampsWarmOpaqueReceiversWithVisibleFlamesAndSmoke>d__53.MoveNext () [0x01635] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\FireNightBurnLightingProductionTests.cs:199
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+
+
+Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedFighterMeteorSheathFollowsPosedBodyDuringUnobstructedFlight
+  Selected elevated capsule corridor became obstructed; inspect lane-selection.txt.
+  Expected: False
+  But was:  True
+
+at Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests+<SavedFighterMeteorSheathFollowsPosedBodyDuringUnobstructedFlight>d__47.MoveNext () [0x007ed] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\FireMeteorBodyAttachmentTests.cs:78
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+
+

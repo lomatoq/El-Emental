@@ -35,6 +35,8 @@ namespace Elemental.Input.Actions
         private InputAction _ability4;
         private InputAction _elementFire;
         private InputAction _elementWater;
+        private InputAction _elementEarth;
+        private InputAction _elementAir;
         private InputAction _lookdevCharge;
         private InputAction _lookdevDay;
         private InputAction _lookdevSunset;
@@ -66,6 +68,8 @@ namespace Elemental.Input.Actions
         public bool JumpHeld => RemoteInputEnabled ? RemoteHeld(EarthInputBits.Jump) : _jumpOrStomp?.IsPressed() == true;
         public bool CancelPressed => RemoteInputEnabled ? RemotePressed(EarthInputBits.Cancel) : _cancel?.WasPressedThisFrame() == true;
         public bool ShoulderSwapPressed => RemoteInputEnabled ? RemotePressed(EarthInputBits.Shoulder) : _shoulderSwap?.WasPressedThisFrame() == true;
+        public bool ElementEarthPressed => !RemoteInputEnabled && _elementEarth?.WasPressedThisFrame() == true;
+        public bool ElementAirPressed => !RemoteInputEnabled && _elementAir?.WasPressedThisFrame() == true;
         public bool ElementFirePressed => !RemoteInputEnabled && _elementFire?.WasPressedThisFrame() == true;
         public bool ElementWaterPressed => !RemoteInputEnabled && _elementWater?.WasPressedThisFrame() == true;
         public bool DebugLookdevChargeHeld => !RemoteInputEnabled && _lookdevCharge?.IsPressed() == true;
@@ -233,6 +237,8 @@ namespace Elemental.Input.Actions
             _ability4 = Find("Ability4", false);
             _elementFire = Find("ElementFire", false);
             _elementWater = Find("ElementWater", false);
+            _elementEarth = Find("ElementEarth", false);
+            _elementAir = Find("ElementAir", false);
             _lookdevCharge = Find("LookdevCharge", false);
             _lookdevDay = Find("LookdevDay", false);
             _lookdevSunset = Find("LookdevSunset", false);

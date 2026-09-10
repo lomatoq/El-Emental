@@ -11,6 +11,9 @@ float _CoreEmission,_FireTime,_Opacity,_ShapeFPS,_Distortion,_SoftDistance,_Near
 float _CoreEmission,_FireTime,_Opacity,_ShapeFPS,_Distortion,_SoftDistance,_NearStart,_NearRange,_ParcelOpacityScale;
 #endif
 float _HeatDistortionPixels;
+#if defined(ELEMENTAL_COLUMN_HEAT)
+float _AdditiveEnergyScale;
+#endif
 CBUFFER_END
 TEXTURE2D_X(_ElementalHeatSource);
 float4 _ElementalHeatSource_TexelSize;

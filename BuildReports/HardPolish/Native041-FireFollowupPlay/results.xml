@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="9" result="Failed(Child)" total="9" passed="0" failed="9" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 19:19:41Z" end-time="2026-09-09 19:20:30Z" duration="48.5179367">
+  <test-suite type="TestSuite" id="1581" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="427" result="Failed" site="Child" start-time="2026-09-09 19:19:41Z" end-time="2026-09-09 19:20:30Z" duration="48.517937" total="9" passed="0" failed="9" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1574" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="421" result="Failed" site="Child" start-time="2026-09-09 19:19:42Z" end-time="2026-09-09 19:20:30Z" duration="48.368522" total="9" passed="0" failed="9" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="16264" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1575" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="421" result="Failed" site="Child" start-time="2026-09-09 19:19:42Z" end-time="2026-09-09 19:20:30Z" duration="48.355694" total="9" passed="0" failed="9" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1576" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="421" result="Failed" site="Child" start-time="2026-09-09 19:19:42Z" end-time="2026-09-09 19:20:30Z" duration="48.345916" total="9" passed="0" failed="9" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1577" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="421" result="Failed" site="Child" start-time="2026-09-09 19:19:42Z" end-time="2026-09-09 19:20:30Z" duration="48.334201" total="9" passed="0" failed="9" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1090" name="HardPolishFireStreamBindingRuntimeTests" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" testcasecount="23" result="Failed" site="Child" start-time="2026-09-09 19:19:42Z" end-time="2026-09-09 19:20:30Z" duration="47.999145" total="9" passed="0" failed="9" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1092" name="ActualArmorShotsAlwaysReleaseVisibleMatterAndEmitDepartureChips" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.ActualArmorShotsAlwaysReleaseVisibleMatterAndEmitDepartureChips" methodname="ActualArmorShotsAlwaysReleaseVisibleMatterAndEmitDepartureChips" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1874988344" result="Failed" start-time="2026-09-09 19:19:42Z" end-time="2026-09-09 19:19:59Z" duration="17.201131" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : Unhandled log message: '[Exception] UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                  <stack-trace><![CDATA[UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.
+UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 4713.73ms; ground=exact baked base, cacheLoad=15.47ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=1306.01ms, peakCookingPoll=0.32ms; sync=ArenaInitialize=46.42ms/15;ArenaBevel=33.63ms/175;ArenaMeshPicking=1.12ms/175;WallAwake=89.19ms/1;WallPieceVisuals=50.65ms/40;PlatformPoolAwake=10.26ms/1;PlatformRuntimeMeshes=1.40ms/12;PillarPoolAwake=18.53ms/1;PillarMeshLibrary=4.05ms/1;PillarColumns=14.46ms/1;DebrisPoolAwake=162.20ms/1;HeroFragmentPoolAwake=11.89ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1112" name="ActualSavedOpponentMatchesPlayerSkinnedGeometryHeight" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.ActualSavedOpponentMatchesPlayerSkinnedGeometryHeight" methodname="ActualSavedOpponentMatchesPlayerSkinnedGeometryHeight" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1690500938" result="Failed" start-time="2026-09-09 19:19:59Z" end-time="2026-09-09 19:20:03Z" duration="4.203105" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : Unhandled log message: '[Exception] UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                  <stack-trace><![CDATA[UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.
+UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3409.52ms; ground=exact baked base, cacheLoad=11.30ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=736.79ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=46.42ms/15;ArenaBevel=33.63ms/175;ArenaMeshPicking=1.12ms/175;WallAwake=89.19ms/1;WallPieceVisuals=50.65ms/40;PlatformPoolAwake=10.26ms/1;PlatformRuntimeMeshes=1.40ms/12;PillarPoolAwake=18.53ms/1;PillarMeshLibrary=4.05ms/1;PillarColumns=14.46ms/1;DebrisPoolAwake=162.20ms/1;HeroFragmentPoolAwake=11.89ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1100" name="ProductionSmolderCharsEmitsSmokeAndCools" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.ProductionSmolderCharsEmitsSmokeAndCools" methodname="ProductionSmolderCharsEmitsSmokeAndCools" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="883157497" result="Failed" start-time="2026-09-09 19:20:03Z" end-time="2026-09-09 19:20:07Z" duration="3.802065" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : Unhandled log message: '[Exception] UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                  <stack-trace><![CDATA[UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.
+UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3081.75ms; ground=exact baked base, cacheLoad=11.41ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=683.89ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=46.42ms/15;ArenaBevel=33.63ms/175;ArenaMeshPicking=1.12ms/175;WallAwake=89.19ms/1;WallPieceVisuals=50.65ms/40;PlatformPoolAwake=10.26ms/1;PlatformRuntimeMeshes=1.40ms/12;PillarPoolAwake=18.53ms/1;PillarMeshLibrary=4.05ms/1;PillarColumns=14.46ms/1;DebrisPoolAwake=162.20ms/1;HeroFragmentPoolAwake=11.89ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1109" name="SavedActualFireStreamBurnsCanonicalSmallRockThroughNearestCoverHook" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedActualFireStreamBurnsCanonicalSmallRockThroughNearestCoverHook" methodname="SavedActualFireStreamBurnsCanonicalSmallRockThroughNearestCoverHook" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="582408601" result="Failed" start-time="2026-09-09 19:20:07Z" end-time="2026-09-09 19:20:11Z" duration="3.940870" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="300000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : Unhandled log message: '[Exception] UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                  <stack-trace><![CDATA[UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.
+UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3180.47ms; ground=exact baked base, cacheLoad=11.16ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=670.55ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=46.42ms/15;ArenaBevel=33.63ms/175;ArenaMeshPicking=1.12ms/175;WallAwake=89.19ms/1;WallPieceVisuals=50.65ms/40;PlatformPoolAwake=10.26ms/1;PlatformRuntimeMeshes=1.40ms/12;PillarPoolAwake=18.53ms/1;PillarMeshLibrary=4.05ms/1;PillarColumns=14.46ms/1;DebrisPoolAwake=162.20ms/1;HeroFragmentPoolAwake=11.89ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1093" name="SavedFighterFireLiftGrowsUsesFallPoseAndReleaseFalls" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedFighterFireLiftGrowsUsesFallPoseAndReleaseFalls" methodname="SavedFighterFireLiftGrowsUsesFallPoseAndReleaseFalls" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1242024608" result="Failed" start-time="2026-09-09 19:20:11Z" end-time="2026-09-09 19:20:15Z" duration="3.769627" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : Unhandled log message: '[Exception] UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                  <stack-trace><![CDATA[UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.
+UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3038.63ms; ground=exact baked base, cacheLoad=11.75ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=660.86ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=46.42ms/15;ArenaBevel=33.63ms/175;ArenaMeshPicking=1.12ms/175;WallAwake=89.19ms/1;WallPieceVisuals=50.65ms/40;PlatformPoolAwake=10.26ms/1;PlatformRuntimeMeshes=1.40ms/12;PillarPoolAwake=18.53ms/1;PillarMeshLibrary=4.05ms/1;PillarColumns=14.46ms/1;DebrisPoolAwake=162.20ms/1;HeroFragmentPoolAwake=11.89ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1095" name="SavedFighterHandAndFootProjectilesTravelAndCancellationClearsEffects" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedFighterHandAndFootProjectilesTravelAndCancellationClearsEffects" methodname="SavedFighterHandAndFootProjectilesTravelAndCancellationClearsEffects" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1418656244" result="Failed" start-time="2026-09-09 19:20:15Z" end-time="2026-09-09 19:20:19Z" duration="4.100965" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : Unhandled log message: '[Exception] UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                  <stack-trace><![CDATA[UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.
+UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3356.35ms; ground=exact baked base, cacheLoad=10.78ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=694.62ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=46.42ms/15;ArenaBevel=33.63ms/175;ArenaMeshPicking=1.12ms/175;WallAwake=89.19ms/1;WallPieceVisuals=50.65ms/40;PlatformPoolAwake=10.26ms/1;PlatformRuntimeMeshes=1.40ms/12;PillarPoolAwake=18.53ms/1;PillarMeshLibrary=4.05ms/1;PillarColumns=14.46ms/1;DebrisPoolAwake=162.20ms/1;HeroFragmentPoolAwake=11.89ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1110" name="SavedFireContactArchivesSmallAndSplitsMediumLargeThroughCanonicalPool" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedFireContactArchivesSmallAndSplitsMediumLargeThroughCanonicalPool" methodname="SavedFireContactArchivesSmallAndSplitsMediumLargeThroughCanonicalPool" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="3844643" result="Failed" start-time="2026-09-09 19:20:19Z" end-time="2026-09-09 19:20:23Z" duration="3.658838" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="300000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : Unhandled log message: '[Exception] UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                  <stack-trace><![CDATA[UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.
+UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 2923.10ms; ground=exact baked base, cacheLoad=11.35ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=615.02ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=46.42ms/15;ArenaBevel=33.63ms/175;ArenaMeshPicking=1.12ms/175;WallAwake=89.19ms/1;WallPieceVisuals=50.65ms/40;PlatformPoolAwake=10.26ms/1;PlatformRuntimeMeshes=1.40ms/12;PillarPoolAwake=18.53ms/1;PillarMeshLibrary=4.05ms/1;PillarColumns=14.46ms/1;DebrisPoolAwake=162.20ms/1;HeroFragmentPoolAwake=11.89ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1099" name="SavedLivingOpponentReceivesPhysicalFireShove" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedLivingOpponentReceivesPhysicalFireShove" methodname="SavedLivingOpponentReceivesPhysicalFireShove" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="2083756130" result="Failed" start-time="2026-09-09 19:20:23Z" end-time="2026-09-09 19:20:26Z" duration="3.743068" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : Unhandled log message: '[Exception] UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                  <stack-trace><![CDATA[UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.
+UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 2977.81ms; ground=exact baked base, cacheLoad=11.60ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=634.98ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=46.42ms/15;ArenaBevel=33.63ms/175;ArenaMeshPicking=1.12ms/175;WallAwake=89.19ms/1;WallPieceVisuals=50.65ms/40;PlatformPoolAwake=10.26ms/1;PlatformRuntimeMeshes=1.40ms/12;PillarPoolAwake=18.53ms/1;PillarMeshLibrary=4.05ms/1;PillarColumns=14.46ms/1;DebrisPoolAwake=162.20ms/1;HeroFragmentPoolAwake=11.89ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1098" name="SavedRingChargesBeforeReleasingAndCancelsWithoutPhantomBlast" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedRingChargesBeforeReleasingAndCancelsWithoutPhantomBlast" methodname="SavedRingChargesBeforeReleasingAndCancelsWithoutPhantomBlast" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1723129686" result="Failed" start-time="2026-09-09 19:20:26Z" end-time="2026-09-09 19:20:30Z" duration="3.504482" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[SetUp : Unhandled log message: '[Exception] UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                  <stack-trace><![CDATA[UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[UnityException: CreateImpl is not allowed to be called from a MonoBehaviour constructor (or instance field initializer), call it in Awake or Start instead. Called from MonoBehaviour 'FireSmolderPresentation' on game object 'Local Fire Stream Integration'.
+See "Script Serialization" page in the Unity Manual for further details.
+UnityEngine.MaterialPropertyBlock..ctor () (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.Fire.FireSmolderPresentation..ctor () (at Assets/Elemental/Presentation/Fire/FireSmolderPresentation.cs:18)
+UnityEngine.GameObject:AddComponent()
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Initialize() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:110)
+Elemental.Presentation.Fire.FireStreamPresentationBinding:Update() (at Assets/Elemental/Presentation/Fire/FireStreamPresentationBinding.cs:81)
+
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 2829.98ms; ground=exact baked base, cacheLoad=10.76ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=629.90ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=46.42ms/15;ArenaBevel=33.63ms/175;ArenaMeshPicking=1.12ms/175;WallAwake=89.19ms/1;WallPieceVisuals=50.65ms/40;PlatformPoolAwake=10.26ms/1;PlatformRuntimeMeshes=1.40ms/12;PillarPoolAwake=18.53ms/1;PillarMeshLibrary=4.05ms/1;PillarColumns=14.46ms/1;DebrisPoolAwake=162.20ms/1;HeroFragmentPoolAwake=11.89ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\Native041-FireFollowupPlay\results.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

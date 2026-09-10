@@ -47,6 +47,22 @@ namespace Elemental.Simulation.Combat
             return math.min(PinnedDwellSeconds, math.max(0f, elapsed) + deltaTime);
         }
 
+        // A constrained ragdoll/stone pair unloads briefly as PhysX redistributes
+        // weight between bones. Preserve qualification, not damage, across that gap.
+        public const float PinnedUnloadingGraceSeconds = .30f;
+        public static float StepPinnedWithBriefUnloading(float elapsed, ref float unloadedSeconds,
+            float loadNewtons, float targetMass, bool physicalRagdoll, bool recoveryBlockedByGeometry, float deltaTime)
+        {
+            if (!physicalRagdoll || !recoveryBlockedByGeometry || !float.IsFinite(elapsed) ||
+                !float.IsFinite(unloadedSeconds) || !float.IsFinite(loadNewtons) || !float.IsFinite(targetMass) ||
+                !float.IsFinite(deltaTime) || targetMass<=0f || deltaTime<=0f || loadNewtons<0f)
+            { unloadedSeconds=0f;return 0f; }
+            float qualified=StepPinned(elapsed,loadNewtons,targetMass,true,true,deltaTime);
+            if (qualified>0f) { unloadedSeconds=0f;return qualified; }
+            unloadedSeconds=math.min(PinnedUnloadingGraceSeconds,math.max(0f,unloadedSeconds)+deltaTime);
+            return unloadedSeconds<PinnedUnloadingGraceSeconds?math.clamp(elapsed,0f,PinnedDwellSeconds):0f;
+        }
+
         public static float PinnedDamage(float elapsed, float loadNewtons, float targetMass, float deltaTime)
         {
             if (!float.IsFinite(elapsed) || elapsed < PinnedDwellSeconds || !float.IsFinite(loadNewtons) ||

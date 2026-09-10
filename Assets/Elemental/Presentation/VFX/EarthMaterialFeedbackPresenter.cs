@@ -174,10 +174,10 @@ namespace Elemental.Presentation.VFX
         private float Next() { seed = seed * 1664525u + 1013904223u; return (seed & 0x00ffffffu) / 16777216f; }
         private void Handle(EarthMaterialFeedbackCue cue)
         {
-            if (dust == null || chips == null || profile == null) return;
+            if (EarthResponsePreset.IsSignal(cue.Kind) || dust == null || chips == null || profile == null) return;
             using (Marker.Auto())
             {
-                seed = EarthStoneImpactDust.CueSeed(cue.SourceId, cue.Generation, cue.Kind, cue.Point);
+                seed = cue.Seed;
                 Vector3 up = cue.Normal, point = cue.Point;
                 Vector3 right = Vector3.Cross(up, Mathf.Abs(up.y) < .9f ? Vector3.up : Vector3.forward).normalized;
                 Vector3 forward = Vector3.Cross(right, up);
@@ -257,6 +257,25 @@ namespace Elemental.Presentation.VFX
                 }
                 // A short atlas breakup sits over the longer original soft veil.
                 if (!rubble && !useSoft) { p.startLifetime = Mathf.Clamp(p.startLifetime, .85f, 1.8f); p.startSize *= 1.2f; }
+                if(cue.Kind==EarthMaterialFeedbackKind.AirborneShed)
+                {
+                    // Real sampled lower-side stone surface: grit falls, no explosion impulse.
+                    p.position=point-up*(rubble?.045f:.10f)+radial*(cue.Radius*.3f);
+                    p.velocity=radial*(rubble?.22f:.14f)-up*(rubble?.65f:.12f);
+                    p.startSize=Mathf.Clamp(p.startSize,rubble?.04f:.18f,rubble?.12f:.55f);
+                    p.startLifetime=Mathf.Clamp(p.startLifetime,rubble?.8f:.65f,rubble?1.6f:1.35f);
+                    if (!rubble && !useSoft)
+                    {
+                        // Shed atlas bodies need to drift beyond the held pile silhouette.
+                        // Keep the existing six atlas births per cue; do not amplify the old spray.
+                        int shedRole = i % 10 < 8 ? 1 : 2;
+                        p.randomSeed = (p.randomSeed & ~3u) | (uint)shedRole;
+                        p.position = point - up * .18f + radial * (cue.Radius * .3f);
+                        p.velocity = radial * .48f - up * .30f;
+                        p.startSize = Mathf.Clamp(size * 1.35f, .40f, .85f);
+                        p.startLifetime = Mathf.Clamp(lifetime * 1.6f, 1.05f, 1.6f);
+                    }
+                }
                 (useSoft ? softDust : ps).Emit(p, 1);
             }
         }

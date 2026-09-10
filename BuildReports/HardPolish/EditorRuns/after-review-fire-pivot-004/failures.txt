@@ -1,0 +1,29 @@
+Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ActualSavedFighterRunStartsStopsAndTurnReleaseStayContinuous
+  left-turn 60Hz left release discontinuity at 21
+left-turn 60Hz right release discontinuity at 42
+left-turn 60Hz right release discontinuity at 65
+left-turn 60Hz left release discontinuity at 78
+left-turn 60Hz right release discontinuity at 127
+right-turn 60Hz right release discontinuity at 29
+right-turn 60Hz left release discontinuity at 53
+right-turn 60Hz right release discontinuity at 62
+right-turn 60Hz right release discontinuity at 96
+right-turn 60Hz left release discontinuity at 127
+left-turn 120Hz left release discontinuity at 41
+left-turn 120Hz right release discontinuity at 82
+left-turn 120Hz right release discontinuity at 131
+left-turn 120Hz left release discontinuity at 156
+left-turn 120Hz right release discontinuity at 253
+right-turn 120Hz right release discontinuity at 47
+right-turn 120Hz left release discontinuity at 85
+right-turn 120Hz left release discontinuity at 129
+right-turn 120Hz right release discontinuity at 152
+right-turn 120Hz right release discontinuity at 187
+right-turn 120Hz left release discontinuity at 251
+  Expected: <empty>
+  But was:  < "left-turn 60Hz left release discontinuity at 21", "left-turn 60Hz right release discontinuity at 42", "left-turn 60Hz right release discontinuity at 65", "left-turn 60Hz left release discontinuity at 78", "left-turn 60Hz right release discontinuity at 127", "right-turn 60Hz right release discontinuity at 29", "right-turn 60Hz left release discontinuity at 53", "right-turn 60Hz right release discontinuity at 62", "right-turn 60Hz right release discontinuity at 96", "right-turn 60Hz left release discontinuity at 127"... >
+
+at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+<ActualSavedFighterRunStartsStopsAndTurnReleaseStayContinuous>d__41.MoveNext () [0x009d2] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\LocomotionGamefeelProductionTests.cs:132
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+
+

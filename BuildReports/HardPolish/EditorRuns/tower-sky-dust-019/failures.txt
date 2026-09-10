@@ -1,0 +1,17 @@
+Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.ActualTransportedFireSurvivesSkyVeilAndStillHonorsForegroundDepth
+  Paired sky baseline changed without fire; radiance comparison is not deterministic.
+  Expected: less than or equal to 1064
+  But was:  66286
+
+at Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests+<ActualTransportedFireSurvivesSkyVeilAndStillHonorsForegroundDepth>d__3.MoveNext () [0x00914] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\FireFlowSkyBackgroundProductionTests.cs:72
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+
+
+Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedTowerFireUsesBoundedTransportAndPreservesSourcePauseAndLights
+  Expected: True
+  But was:  False
+
+at Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests+<WaitCombatReady>d__21.MoveNext () [0x00094] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\HardPolishFireStreamBindingRuntimeTests.cs:191
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+
+

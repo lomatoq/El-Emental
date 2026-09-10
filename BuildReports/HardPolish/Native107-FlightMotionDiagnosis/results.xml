@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-10 13:06:43Z" end-time="2026-09-10 13:07:06Z" duration="22.8444948">
+  <test-suite type="TestSuite" id="1631" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="475" result="Failed" site="Child" start-time="2026-09-10 13:06:43Z" end-time="2026-09-10 13:07:06Z" duration="22.844495" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1624" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="469" result="Failed" site="Child" start-time="2026-09-10 13:06:43Z" end-time="2026-09-10 13:07:06Z" duration="22.746754" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="34284" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1625" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="469" result="Failed" site="Child" start-time="2026-09-10 13:06:43Z" end-time="2026-09-10 13:07:06Z" duration="22.735133" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1626" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="469" result="Failed" site="Child" start-time="2026-09-10 13:06:43Z" end-time="2026-09-10 13:07:06Z" duration="22.725063" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1627" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="469" result="Failed" site="Child" start-time="2026-09-10 13:06:43Z" end-time="2026-09-10 13:07:06Z" duration="22.716053" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1091" name="HardPolishFireStreamBindingRuntimeTests" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" testcasecount="62" result="Failed" site="Child" start-time="2026-09-10 13:06:43Z" end-time="2026-09-10 13:07:06Z" duration="22.692460" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1121" name="SavedFighterMeteorSheathFollowsPosedBodyDuringUnobstructedFlight" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedFighterMeteorSheathFollowsPosedBodyDuringUnobstructedFlight" methodname="SavedFighterMeteorSheathFollowsPosedBodyDuringUnobstructedFlight" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="139804375" result="Failed" start-time="2026-09-10 13:06:43Z" end-time="2026-09-10 13:07:06Z" duration="22.659085" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests+<SavedFighterMeteorSheathFollowsPosedBodyDuringUnobstructedFlight>d__47.MoveNext () [0x00bc1] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\FireMeteorBodyAttachmentTests.cs:99
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 4810.34ms; ground=exact baked base, cacheLoad=15.39ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=1233.99ms, peakCookingPoll=0.30ms; sync=ArenaInitialize=142.96ms/15;ArenaBevel=130.10ms/175;ArenaMeshPicking=1.70ms/175;WallAwake=81.70ms/1;WallPieceVisuals=46.63ms/40;PlatformPoolAwake=9.15ms/1;PlatformRuntimeMeshes=1.31ms/12;PillarPoolAwake=17.69ms/1;PillarMeshLibrary=3.92ms/1;PillarColumns=13.76ms/1;DebrisPoolAwake=147.21ms/1;HeroFragmentPoolAwake=11.99ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\Native107-FlightMotionDiagnosis\results.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

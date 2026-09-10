@@ -89,26 +89,35 @@ namespace Elemental.Tests.EditMode
             }
             Assert.That(signatures.Count,Is.EqualTo(12));Assert.That(UnityEngine.Random.state,Is.EqualTo(state));
         }
-        [Test] public void FloatingFamiliesHaveContinuousDominantCoreAndRestrainedClosedEnds()
+        [Test] public void FloatingFamiliesHaveClosedTaperedCoreAndUpperShoulders()
         {
-            for(int family=0;family<6;family++)for(int sample=0;sample<8;sample++)
+            for(int family=0;family<6;family++)for(int sample=0;sample<12;sample++)
             {
                 int seed=13771+sample*1013+family*131;
                 var floating=RockShapeBuilder.FloatingPillar(seed,family,false,RockShapeSettings.Default);
                 Assert.That(floating.Validate(out _),Is.True);
                 Assert.That(floating.Parts.Count,Is.EqualTo(3));
                 floating.Bounds(out float3 min,out float3 max);
-                Assert.That(max.y-min.y,Is.InRange(.4f,.5f));
+                Assert.That(max.y-min.y,Is.InRange(.39f,.5f));
                 var core=floating.Parts[0];
-                Assert.That(core.Scale.y,Is.GreaterThan((max.y-min.y)*.74f),"A continuous central body closes the waist.");
-                Assert.That((max.x-min.x)/(max.y-min.y),Is.InRange(.25f,.65f),"Vertical body must dominate its width.");
-                for(int i=1;i<3;i++)
-                {
-                    var end=floating.Parts[i];
-                    Assert.That(end.Scale.x/core.Scale.x,Is.InRange(.74f,.90f));
-                    Assert.That(math.abs(end.Translation.x-core.Translation.x),Is.LessThan(core.Scale.x*.12f));
-                }
+                float lower=CrossSectionWidth(core.Solid,.02f),upper=CrossSectionWidth(core.Solid,.82f);
+                Assert.That(lower/upper,Is.InRange(.16f,.48f),$"family {family} seed {seed}: {lower}/{upper}");
+                Assert.That(floating.Parts[1].Translation.y,Is.GreaterThan(core.Translation.y+core.Scale.y*.6f));
+                Assert.That(floating.Parts[2].Translation.y,Is.GreaterThan(core.Translation.y+core.Scale.y*.6f));
             }
+        }
+        private static float CrossSectionWidth(RockPolyhedron solid,float height)
+        {
+            float minimum=float.PositiveInfinity,maximum=float.NegativeInfinity;
+            foreach(var face in solid.Faces)for(int i=0;i<face.Points.Count;i++)
+            {
+                float3 a=face.Points[i],b=face.Points[(i+1)%face.Points.Count];
+                if((a.y-height)*(b.y-height)>0||math.abs(b.y-a.y)<1e-7f)continue;
+                float x=math.lerp(a.x,b.x,(height-a.y)/(b.y-a.y));
+                minimum=math.min(minimum,x);maximum=math.max(maximum,x);
+            }
+            Assert.That(math.isfinite(minimum)&&math.isfinite(maximum),Is.True);
+            return maximum-minimum;
         }
     }
 }

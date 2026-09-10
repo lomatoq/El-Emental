@@ -1,0 +1,9 @@
+Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests.ActualSingleStoneWithProductionGravityCannotLeavePermanentlyPinnedBotAlive
+  A stable physically contacted, geometry-blocked single-stone pin left the opponent alive; inspect force threshold versus missing/sleeping contacts.
+  Expected: 0
+  But was:  27.5534668f
+
+at Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests+<ActualSingleStoneWithProductionGravityCannotLeavePermanentlyPinnedBotAlive>d__42.MoveNext () [0x004e0] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\LocalPhysicsProductionAcceptanceTests.cs:730
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+
+

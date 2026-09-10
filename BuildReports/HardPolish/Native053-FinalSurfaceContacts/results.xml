@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="5" result="Passed" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 20:29:23Z" end-time="2026-09-09 20:29:23Z" duration="0.4535911">
+  <test-suite type="TestSuite" id="1587" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="433" result="Passed" start-time="2026-09-09 20:29:23Z" end-time="2026-09-09 20:29:23Z" duration="0.453591" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1580" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="427" result="Passed" start-time="2026-09-09 20:29:23Z" end-time="2026-09-09 20:29:23Z" duration="0.387432" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="16264" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1581" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="427" result="Passed" start-time="2026-09-09 20:29:23Z" end-time="2026-09-09 20:29:23Z" duration="0.376879" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1582" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="427" result="Passed" start-time="2026-09-09 20:29:23Z" end-time="2026-09-09 20:29:23Z" duration="0.368088" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1583" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="427" result="Passed" start-time="2026-09-09 20:29:23Z" end-time="2026-09-09 20:29:23Z" duration="0.356776" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1413" name="FireFlowShallowContactPlayTests" fullname="Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests" classname="Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-09 20:29:23Z" end-time="2026-09-09 20:29:23Z" duration="0.329883" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1416" name="BroadphaseSkinAllowsTangentAndAwayButStillCatchesInwardMotion" fullname="Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests.BroadphaseSkinAllowsTangentAndAwayButStillCatchesInwardMotion" methodname="BroadphaseSkinAllowsTangentAndAwayButStillCatchesInwardMotion" classname="Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests" runstate="Runnable" seed="1649021663" result="Passed" start-time="2026-09-09 20:29:23Z" end-time="2026-09-09 20:29:23Z" duration="0.143527" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1414" name="NonconvexGrowthOverlapUsesRealTriangleAndKeepsCornerClosed" fullname="Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests.NonconvexGrowthOverlapUsesRealTriangleAndKeepsCornerClosed" methodname="NonconvexGrowthOverlapUsesRealTriangleAndKeepsCornerClosed" classname="Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests" runstate="Runnable" seed="1307265602" result="Passed" start-time="2026-09-09 20:29:23Z" end-time="2026-09-09 20:29:23Z" duration="0.056716" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1417" name="ResolvedInitialPenetrationContinuesAlongWallIntoRealCorner" fullname="Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests.ResolvedInitialPenetrationContinuesAlongWallIntoRealCorner" methodname="ResolvedInitialPenetrationContinuesAlongWallIntoRealCorner" classname="Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests" runstate="Runnable" seed="1923137854" result="Passed" start-time="2026-09-09 20:29:23Z" end-time="2026-09-09 20:29:23Z" duration="0.023947" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1418" name="SubmillimetreGrowingSphereGrazesWallWithoutWorldOriginSentinel" fullname="Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests.SubmillimetreGrowingSphereGrazesWallWithoutWorldOriginSentinel" methodname="SubmillimetreGrowingSphereGrazesWallWithoutWorldOriginSentinel" classname="Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests" runstate="Runnable" seed="1986211585" result="Passed" start-time="2026-09-09 20:29:23Z" end-time="2026-09-09 20:29:23Z" duration="0.013943" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1415" name="SurfaceBandKeepsDenseGasAboveNonconvexFloor" fullname="Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests.SurfaceBandKeepsDenseGasAboveNonconvexFloor" methodname="SurfaceBandKeepsDenseGasAboveNonconvexFloor" classname="Elemental.Tests.PlayMode.FireFlowShallowContactPlayTests" runstate="Runnable" seed="2007127945" result="Passed" start-time="2026-09-09 20:29:23Z" end-time="2026-09-09 20:29:23Z" duration="0.057654" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\Native053-FinalSurfaceContacts\results.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -91,46 +91,33 @@ namespace Elemental.Runtime.Geometry
                     metricNormals[i].z / metricScale.z).normalized;
             }
             metricSource.vertices = metricVertices; metricSource.normals = metricNormals;
-            Mesh render = EarthFractureBevelMeshBuilder.Create(metricSource,
-                profile != null ? profile.WallWidthMeters : EarthStoneBevelProfile.DefaultWallWidthMeters,
-                profile != null ? profile.WallMaxLocalEdgeFraction : EarthStoneBevelProfile.DefaultWallMaxLocalEdgeFraction,
-                seed, .25f, 1f);
-            if (Application.isPlaying) Object.Destroy(metricSource); else Object.DestroyImmediate(metricSource);
-            render.name = source.name + " Chipped Cell";
-            // Acute-corner chamfers may overshoot another face. Bound every
-            // generated point by the original convex cell; collision never changes.
-            Vector3[] hull = collider.vertices;
-            for (int i = 0; i < hull.Length; i++) hull[i] = Vector3.Scale(hull[i], metricScale);
-            int[] triangles = collider.triangles;
-            Vector3 center = Vector3.zero;
-            for (int index = 0; index < hull.Length; index++) center += hull[index];
-            center /= Mathf.Max(1, hull.Length);
-            Vector3[] vertices = render.vertices;
-            for (int index = 0; index < vertices.Length; index++)
+            Mesh metricCollider=Object.Instantiate(collider);
+            Vector3[] hull=metricCollider.vertices;
+            for(int i=0;i<hull.Length;i++)hull[i]=Vector3.Scale(hull[i],metricScale);
+            metricCollider.vertices=hull;metricCollider.RecalculateBounds();
+            Mesh contained=null;
+            try
             {
-                Vector3 ray = vertices[index] - center;
-                float fraction = 1f;
-                for (int face = 0; face < triangles.Length; face += 3)
-                {
-                    Vector3 a = hull[triangles[face]];
-                    Vector3 normal = Vector3.Cross(hull[triangles[face + 1]] - a,
-                        hull[triangles[face + 2]] - a).normalized;
-                    if (Vector3.Dot(normal, center - a) > 0f) normal = -normal;
-                    float distance = Vector3.Dot(normal, ray);
-                    if (distance > 0.000001f)
-                        fraction = Mathf.Min(fraction, Mathf.Max(0f, Vector3.Dot(normal, a - center)) / distance);
-                }
-                Vector3 metricVertex = center + ray * fraction;
-                vertices[index] = new Vector3(metricVertex.x / metricScale.x,
-                    metricVertex.y / metricScale.y, metricVertex.z / metricScale.z);
+                contained=EarthContainedRenderRepair.Create(metricSource,metricCollider,
+                    profile!=null?profile.WallWidthMeters:EarthStoneBevelProfile.DefaultWallWidthMeters,
+                    profile!=null?profile.WallMaxLocalEdgeFraction:EarthStoneBevelProfile.DefaultWallMaxLocalEdgeFraction,
+                    seed,.25f,1f,out bool usedHull,out _);
+                Vector3[] vertices=contained.vertices;
+                for(int i=0;i<vertices.Length;i++)vertices[i]=new Vector3(vertices[i].x/metricScale.x,
+                    vertices[i].y/metricScale.y,vertices[i].z/metricScale.z);
+                contained.vertices=vertices;contained.RecalculateBounds();
+                // Inverse metric transform changes face planes. Robust explicit
+                // triangle normals retain the hard seams without smoothing.
+                Mesh render=EarthContainedRenderRepair.FlatCopy(contained,out _);
+                render.name=source.name+(usedHull?" Chipped Cell Closed Hull":" Chipped Cell Closed Bevel");
+                return render;
             }
-            render.vertices = vertices;
-            // Clipping changes the actual triangle planes. Rebuild normals after
-            // the final geometry, preserving hard seams through duplicated corners.
-            render.RecalculateNormals();
-            render.RecalculateBounds();
-            render.RecalculateTangents();
-            return render;
+            finally
+            {
+                Release(metricSource);Release(metricCollider);if(contained!=null)Release(contained);
+            }
+            static void Release(Mesh mesh){if(Application.isPlaying)Object.Destroy(mesh);else Object.DestroyImmediate(mesh);}
+
         }
     }
 }

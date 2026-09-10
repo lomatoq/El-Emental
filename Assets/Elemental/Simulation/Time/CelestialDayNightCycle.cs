@@ -22,9 +22,11 @@ namespace Elemental.Simulation.Time
         }
 
         public static float Night(float3 sun, float3 observerUp) =>
-            1f - math.smoothstep(-.10f, .12f, math.dot(math.normalizesafe(sun), math.normalizesafe(observerUp, new float3(0, 1, 0))));
+            // World illumination remains daytime through late golden hour. The
+            // visible horizon crossing, not a high positive solar angle, owns dusk.
+            1f - math.smoothstep(-.16f, .06f, math.dot(math.normalizesafe(sun), math.normalizesafe(observerUp, new float3(0, 1, 0))));
 
-        public static float SolarStrength(float altitude) => math.smoothstep(-.025f, .16f, altitude);
+        public static float SolarStrength(float altitude) => math.smoothstep(-.06f, .08f, altitude);
         public static bool PlanetOccludesRay(float3 observerOffset, float3 ray, float radius)
         {
             float b = math.dot(observerOffset, math.normalizesafe(ray));

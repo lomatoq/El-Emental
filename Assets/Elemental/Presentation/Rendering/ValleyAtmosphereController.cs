@@ -1,4 +1,6 @@
 using UnityEngine;
+using Elemental.Presentation.UI;
+using Elemental.Simulation.Rendering;
 using Unity.Profiling;
 namespace Elemental.Presentation.Rendering
 {
@@ -19,6 +21,33 @@ namespace Elemental.Presentation.Rendering
         private readonly Vector4[] banks=new Vector4[4],sizes=new Vector4[4];
         private static readonly ProfilerMarker Marker=new ProfilerMarker("Elemental.ValleyAtmosphere.Publish");
         private bool invalidReported;
+        [SerializeField] private FrontendFlowController settingsSource;
+        [SerializeField] private AudioClip distantRumble;
+        public bool StormEnabled=true;
+        private DistantStormClock stormClock;
+        private AudioSource stormAudio;
+        public float StormPower { get; private set; }
+        public bool StormRumblePlaying=>stormAudio!=null && stormAudio.isPlaying;
+        public void ConfigureStorm(FrontendFlowController settings,AudioClip rumble){settingsSource=settings;distantRumble=rumble;}
+        private void PublishStorm()
+        {
+            bool allowed=Application.isPlaying && StormEnabled && FogEnabled && CloudsEnabled &&
+                profile!=null && profile.IsValid && settingsSource!=null && Time.timeScale>0 &&
+                settingsSource.State!=FrontendState.Paused &&
+                !settingsSource.Preferences.ReducedMotion && !settingsSource.Preferences.ReducedFlashes;
+            StormPower=stormClock.Step(Application.isPlaying?Time.unscaledDeltaTime:0,allowed);
+            Shader.SetGlobalVector("_ElementalValleyStorm",new Vector4(.20f,.03f,1,StormPower*.09f));
+            if(!allowed){if(stormAudio!=null)stormAudio.Stop();return;}
+            // Keep this optional ambience out of combat warning windows entirely.
+            if(settingsSource.State==FrontendState.Combat){if(stormAudio!=null)stormAudio.Stop();return;}
+            if(!stormClock.RumbleDue || distantRumble==null)return;
+            if(stormAudio==null)
+            {
+                stormAudio=gameObject.AddComponent<AudioSource>();stormAudio.playOnAwake=false;
+                stormAudio.loop=false;stormAudio.spatialBlend=0;stormAudio.priority=256;stormAudio.volume=.025f;
+            }
+            stormAudio.clip=distantRumble;stormAudio.Play();
+        }
         public void Configure(Transform planet,float radius,Vector3 authoredUp,Vector3 authoredForward,ValleyAtmosphereProfile settings)
         {
             if(planet==null || settings==null || radius<=0)throw new System.ArgumentException("Explicit planet, radius and valley profile required.");
@@ -40,11 +69,12 @@ namespace Elemental.Presentation.Rendering
         }
         private void OnEnable()=>Publish();
         private void LateUpdate()=>Publish();
-        private void OnDisable(){Shader.SetGlobalFloat("_ElementalValleyEnabled",0);Shader.SetGlobalFloat("_ElementalValleyParticleCloudsEnabled",0);}
+        private void OnDisable(){StormPower=0;Shader.SetGlobalVector("_ElementalValleyStorm",Vector4.zero);if(stormAudio!=null)stormAudio.Stop();Shader.SetGlobalFloat("_ElementalValleyEnabled",0);Shader.SetGlobalFloat("_ElementalValleyParticleCloudsEnabled",0);}
         public void Publish()
         {
             using(Marker.Auto())
             {
+                PublishStorm();
                 if(profile==null)return;
                 if(!profile.IsValid)
                 {
@@ -69,6 +99,7 @@ namespace Elemental.Presentation.Rendering
                 Shader.SetGlobalMatrix("_ElementalWorldToValley",Matrix4x4.TRS(transform.position,transform.rotation,Vector3.one).inverse);
                 Shader.SetGlobalVector("_ElementalValleyFog",new Vector4(top,Mathf.Max(1,profile.HeightFalloff),Mathf.Max(0,profile.VeilDensity),Mathf.Max(1000,profile.SkyDistance)));
                 Shader.SetGlobalVector("_ElementalValleyFar",new Vector4(Mathf.Max(100,profile.NearClearRange),Mathf.Max(1,profile.FarHazeDistance),Mathf.Clamp01(profile.MaximumOpaqueOpacity),CloudsEnabled && !UseParticleClouds?Mathf.Clamp01(profile.CloudOpacity):0));
+                Shader.SetGlobalFloat("_ElementalValleyMidAerial",Mathf.Clamp(profile.MidAerialOpacityMultiplier,.7f,1f));
                 Shader.SetGlobalColor("_ElementalValleyDay",profile.DayFog);Shader.SetGlobalColor("_ElementalValleyBottom",profile.DayFogBottom);Shader.SetGlobalColor("_ElementalValleyNight",profile.NightFog);Shader.SetGlobalColor("_ElementalValleyDusk",profile.DuskFog);
                 Shader.SetGlobalTexture("_ElementalValleyCloudArt",profile.CloudArt);
                 float t=Application.isPlaying && AnimateClouds?Time.time*Mathf.PI*2/Mathf.Max(5,profile.CloudDriftPeriod):0;

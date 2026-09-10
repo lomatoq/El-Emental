@@ -7,7 +7,7 @@ Shader "Elemental/Valley Image Cloud Particles"
         Pass
         {
             // Drawn only by the existing atmosphere owner after its veil composition.
-            Tags{"LightMode"="ElementalValleyCloud"}
+            Tags{"LightMode"="ElementalAtmosphereCloud"}
             Cull Off ZWrite Off ZTest Always Blend SrcAlpha OneMinusSrcAlpha
             HLSLPROGRAM
             #pragma target 3.5

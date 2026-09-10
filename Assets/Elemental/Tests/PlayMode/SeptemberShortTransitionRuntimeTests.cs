@@ -31,7 +31,7 @@ namespace Elemental.Tests.PlayMode
             yield return new WaitForSeconds(.65f);
             Assert.That(motor.HasStableSupport, Is.True);
             Vector3 initial = motor.Body.position;
-            actor.Input.Move = new float2(0f, 1f);
+            actor.Input.Move = new float2(0f, .2f);
             double deadline = Time.realtimeSinceStartupAsDouble + .58d;
             bool entered = false, captured = false;
             int entries = 0;
@@ -79,7 +79,7 @@ namespace Elemental.Tests.PlayMode
 
             actor.Input.Move = float2.zero;
             yield return new WaitForSeconds(.8f);
-            actor.Input.Move = new float2(0f, 1f);
+            actor.Input.Move = new float2(0f, .2f);
             deadline = Time.realtimeSinceStartupAsDouble + .8d;
             while (actor.Presentation.ShortTransition != EarthShortTransition.StartWalk &&
                 Time.realtimeSinceStartupAsDouble < deadline) yield return _frame;
@@ -201,8 +201,24 @@ namespace Elemental.Tests.PlayMode
             UnityEngine.Object.Destroy(block);
         }
 
-        private Actor ShortPlayer() => _actors.Single(value =>
-            value.Presentation.GetComponent<EarthCharacterPoseController>() != null);
+        private Actor ShortPlayer()
+        {
+            // Both saved fighters have pose controllers. Player identity belongs
+            // to the active frontend match, not to animation component presence.
+            var frontends = _scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<Elemental.Presentation.UI.FrontendFlowController>(true))
+                .ToArray();
+            Assert.That(frontends.Length, Is.EqualTo(1), "Production scene must have one frontend match authority.");
+            var match = frontends[0].MatchController;
+            Assert.That(match, Is.Not.Null, "Frontend must bind its actual local match, not an online placeholder.");
+            Transform player = match.PlayerTransform;
+            Assert.That(player, Is.Not.Null, "The authoritative match must bind its player body.");
+            var candidates = _actors.Where(value => value.Presentation != null &&
+                (value.Presentation.transform == player || value.Presentation.transform.IsChildOf(player))).ToArray();
+            Assert.That(candidates.Length, Is.EqualTo(1),
+                "Expected one registered HumanoidCharacterPresentation beneath the authoritative player body: " + player.name);
+            return candidates[0];
+        }
 
         [Serializable]
         private sealed class ShortPresentationProfile

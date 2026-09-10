@@ -1,0 +1,10 @@
+Elemental.Tests.PlayMode.MenuCameraOcclusionProductionTests.StartupOrbitRetainsStoneGeometryAndFadesWithoutRendererPops
+Unhandled log message: '[Exception] UnityException: CreateImpl is not allowed to be called during serialization, call it from Awake or Start instead. Called from MonoBehaviour 'EarthOnlinePresentationBridge' on game object 'Earth Online Runtime'.
+See "Script Serialization" page in the Unity Manual for further details.'. Use UnityEngine.TestTools.LogAssert.Expect
+TearDown : Unhandled log message: '[Exception] ArgumentException: Destination scene is being unloaded'. Use UnityEngine.TestTools.LogAssert.Expect
+UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene (UnityEngine.GameObject go, UnityEngine.SceneManagement.Scene scene) (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.VFX.GoldRespawnPresenter.Initialize () (at Assets/Elemental/Presentation/VFX/GoldRespawnPresenter.cs:66)
+Elemental.Presentation.VFX.GoldRespawnPresenter.Start () (at Assets/Elemental/Presentation/VFX/GoldRespawnPresenter.cs:56)
+
+
+

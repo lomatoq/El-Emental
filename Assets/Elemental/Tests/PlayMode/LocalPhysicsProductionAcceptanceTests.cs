@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Globalization;
 using System.IO;
@@ -679,6 +679,63 @@ namespace Elemental.Tests.PlayMode
 
         [UnityTest]
         public IEnumerator RemovingActualLooseRockPileStopsPinnedDamage() => ActualLooseRockPile(true);
+
+        [UnityTest]
+        public IEnumerator ActualSingleStoneWithProductionGravityCannotLeavePermanentlyPinnedBotAlive()
+        {
+            yield return HeavyFallingStone(EarthDuelFighterId.Bot);
+            _stoneObject.SetActive(false);
+            var duel=Find<EarthMvpDuelController>();var rig=_physics.GetComponent<HumanoidRagdollRig>();
+            var gravity=Find<GravityWorldBehaviour>();Assert.That(gravity,Is.Not.Null);
+            Vector3 up=_motor.LocalUp,chest=_physics.Bone(1).position;float highest=0;
+            for(int i=0;i<11;i++)highest=Mathf.Max(highest,Vector3.Dot(_physics.Bone(i).position-chest,up));
+            var stone=GameObject.CreatePrimitive(PrimitiveType.Cube);stone.name="Single production-gravity pin stone";
+            SceneManager.MoveGameObjectToScene(stone,_scene);
+            var body=stone.AddComponent<Rigidbody>();body.collisionDetectionMode=CollisionDetectionMode.ContinuousDynamic;
+            var gravityBody=stone.AddComponent<GravityBody>();gravityBody.Configure(gravity,body);
+            var fragment=stone.AddComponent<EarthFragment>();
+            fragment.Initialize(0xACCF3000u,null,chest+up*(highest+.44f),.4f,90f);
+            stone.transform.localScale=new Vector3(2.4f,.7f,2.4f);
+            stone.transform.rotation=Quaternion.FromToRotation(Vector3.up,up);
+            fragment.LaunchProjectile(-up,.25f,null);
+            var evidence=new StringBuilder("frame,health,load,pinSeconds,physical,blocked,authority,canDamage,contacts,sleepingContacts,recorded,discarded,stoneSleeping,stoneMass,receiverBodies,receiverColliders\n");
+            float blockedSeconds=0;bool sawLoad=false,sawStableBlock=false;
+            try
+            {
+                UnityEngine.Physics.SyncTransforms();
+                // Real GravityBody may sleep; unlike the older pile fixture, no per-frame
+                // AddForce call keeps the source artificially awake and hides sleep bugs.
+                for(int frame=0;frame<900&&duel.BotHealth>0;frame++)
+                {
+                    yield return _fixed;
+                    bool physical=rig.IsRagdollActive,blocked=rig.RecoveryBlockedByGeometry;
+                    sawLoad|=_target.SustainedLoadNewtons>0;
+                    blockedSeconds=physical&&blocked&&_target.ActiveStoneLoadContacts>0?blockedSeconds+Time.fixedDeltaTime:0;
+                    sawStableBlock|=blockedSeconds>2;
+                    int bodies=0,colliders=0;
+                    for(int i=0;i<11;i++)
+                    {
+                        var bone=_physics.Bone(i);var receiver=bone.GetComponent<Rigidbody>();var shape=bone.GetComponent<Collider>();
+                        if(receiver!=null&&!receiver.isKinematic)bodies++;if(shape!=null&&shape.enabled)colliders++;
+                    }
+                    evidence.AppendLine(string.Format(CultureInfo.InvariantCulture,
+                        "{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15}",
+                        frame,duel.BotHealth,_target.SustainedLoadNewtons,_target.PinnedLoadSeconds,physical,blocked,
+                        _target.HasSimulationAuthority,duel.CanReceiveDamage(EarthDuelFighterId.Bot),_target.ActiveStoneLoadContacts,
+                        _target.SleepingStoneLoadContacts,_target.RecordedStoneLoadSamples,_target.DiscardedStoneLoadContacts,
+                        body.IsSleeping(),body.mass,bodies,colliders));
+                }
+                Assert.That(sawLoad,Is.True,"Single stone never established measured load; inspect contact/ownership telemetry.");
+                Assert.That(sawStableBlock||duel.BotHealth<=0,Is.True,"Single stone escaped or did not block recovery; this run does not reproduce a sustained pin.");
+                Assert.That(duel.BotHealth,Is.Zero,"A stable physically contacted, geometry-blocked single-stone pin left the opponent alive; inspect force threshold versus missing/sleeping contacts.");
+                Assert.That(duel.BotKnockoutCount,Is.EqualTo(1));Assert.That(duel.PlayerScore,Is.EqualTo(1));
+            }
+            finally
+            {
+                File.WriteAllText(Path.Combine(Folder,"ActualSingleStoneCrush.csv"),evidence.ToString());
+                Object.Destroy(stone);
+            }
+        }
 
         private IEnumerator ActualLooseRockPile(bool releaseBeforeDeath)
         {

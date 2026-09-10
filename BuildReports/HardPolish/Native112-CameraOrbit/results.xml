@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-10 13:42:52Z" end-time="2026-09-10 13:43:07Z" duration="15.5394365">
+  <test-suite type="TestSuite" id="1635" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="478" result="Failed" site="Child" start-time="2026-09-10 13:42:52Z" end-time="2026-09-10 13:43:07Z" duration="15.539437" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1628" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="472" result="Failed" site="Child" start-time="2026-09-10 13:42:52Z" end-time="2026-09-10 13:43:07Z" duration="15.467344" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="34284" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1629" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="472" result="Failed" site="Child" start-time="2026-09-10 13:42:52Z" end-time="2026-09-10 13:43:07Z" duration="15.389489" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1630" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="472" result="Failed" site="Child" start-time="2026-09-10 13:42:52Z" end-time="2026-09-10 13:43:07Z" duration="15.349396" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1631" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="472" result="Failed" site="Child" start-time="2026-09-10 13:42:52Z" end-time="2026-09-10 13:43:07Z" duration="15.331895" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1548" name="MenuCameraOcclusionProductionTests" fullname="Elemental.Tests.PlayMode.MenuCameraOcclusionProductionTests" classname="Elemental.Tests.PlayMode.MenuCameraOcclusionProductionTests" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2026-09-10 13:42:52Z" end-time="2026-09-10 13:43:07Z" duration="15.288671" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1549" name="StartupOrbitRetainsStoneGeometryAndFadesWithoutRendererPops" fullname="Elemental.Tests.PlayMode.MenuCameraOcclusionProductionTests.StartupOrbitRetainsStoneGeometryAndFadesWithoutRendererPops" methodname="StartupOrbitRetainsStoneGeometryAndFadesWithoutRendererPops" classname="Elemental.Tests.PlayMode.MenuCameraOcclusionProductionTests" runstate="Runnable" seed="1703247327" result="Failed" start-time="2026-09-10 13:42:52Z" end-time="2026-09-10 13:43:07Z" duration="15.252075" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[Unhandled log message: '[Exception] UnityException: CreateImpl is not allowed to be called during serialization, call it from Awake or Start instead. Called from MonoBehaviour 'EarthOnlinePresentationBridge' on game object 'Earth Online Runtime'.
+See "Script Serialization" page in the Unity Manual for further details.'. Use UnityEngine.TestTools.LogAssert.Expect
+TearDown : Unhandled log message: '[Exception] ArgumentException: Destination scene is being unloaded'. Use UnityEngine.TestTools.LogAssert.Expect]]></message>
+                  <stack-trace><![CDATA[UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene (UnityEngine.GameObject go, UnityEngine.SceneManagement.Scene scene) (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.VFX.GoldRespawnPresenter.Initialize () (at Assets/Elemental/Presentation/VFX/GoldRespawnPresenter.cs:66)
+Elemental.Presentation.VFX.GoldRespawnPresenter.Start () (at Assets/Elemental/Presentation/VFX/GoldRespawnPresenter.cs:56)
+
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[ArgumentException: Destination scene is being unloaded
+UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene (UnityEngine.GameObject go, UnityEngine.SceneManagement.Scene scene) (at <5ecefda573de420b8643923ab4ab8ab5>:0)
+Elemental.Presentation.VFX.GoldRespawnPresenter.Initialize () (at Assets/Elemental/Presentation/VFX/GoldRespawnPresenter.cs:66)
+Elemental.Presentation.VFX.GoldRespawnPresenter.Start () (at Assets/Elemental/Presentation/VFX/GoldRespawnPresenter.cs:56)
+
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\Native112-CameraOrbit\results.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

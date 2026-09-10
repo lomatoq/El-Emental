@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Failed(Child)" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 07:38:21Z" end-time="2026-09-09 07:38:47Z" duration="25.9977756">
+  <test-suite type="TestSuite" id="1459" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="334" result="Failed" site="Child" start-time="2026-09-09 07:38:21Z" end-time="2026-09-09 07:38:47Z" duration="25.997776" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1452" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="328" result="Failed" site="Child" start-time="2026-09-09 07:38:21Z" end-time="2026-09-09 07:38:47Z" duration="25.976399" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="5816" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1453" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="328" result="Failed" site="Child" start-time="2026-09-09 07:38:21Z" end-time="2026-09-09 07:38:47Z" duration="25.967653" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1454" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="328" result="Failed" site="Child" start-time="2026-09-09 07:38:21Z" end-time="2026-09-09 07:38:47Z" duration="25.961908" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1455" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="328" result="Failed" site="Child" start-time="2026-09-09 07:38:21Z" end-time="2026-09-09 07:38:47Z" duration="25.956317" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1095" name="DistantBackdropProductionTests" fullname="Elemental.Tests.PlayMode.DistantBackdropProductionTests" classname="Elemental.Tests.PlayMode.DistantBackdropProductionTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-09 07:38:21Z" end-time="2026-09-09 07:38:46Z" duration="25.017732" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1096" name="HardPolishDayNightMaterialAndMeshEvidence" fullname="Elemental.Tests.PlayMode.DistantBackdropProductionTests.HardPolishDayNightMaterialAndMeshEvidence" methodname="HardPolishDayNightMaterialAndMeshEvidence" classname="Elemental.Tests.PlayMode.DistantBackdropProductionTests" runstate="Runnable" seed="904136493" result="Passed" start-time="2026-09-09 07:38:21Z" end-time="2026-09-09 07:38:46Z" duration="25.001963" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 4894.17ms; ground=exact baked base, cacheLoad=12.35ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1408.38ms, peakCookingPoll=0.28ms; sync=ArenaInitialize=362.22ms/15;ArenaBevel=344.53ms/175;ArenaMeshPicking=1.94ms/175;WallAwake=105.19ms/1;WallPieceVisuals=60.18ms/40;PlatformPoolAwake=9.35ms/1;PlatformRuntimeMeshes=1.10ms/12;PillarPoolAwake=17.90ms/1;PillarMeshLibrary=4.28ms/1;PillarColumns=13.61ms/1;DebrisPoolAwake=130.92ms/1;HeroFragmentPoolAwake=13.53ms/1.
+Account API did not become accessible within 30 seconds. This may be due to network issues or editor focus.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1352" name="HardPolishLightingRuntimeTests" fullname="Elemental.Tests.PlayMode.HardPolishLightingRuntimeTests" classname="Elemental.Tests.PlayMode.HardPolishLightingRuntimeTests" runstate="Runnable" testcasecount="1" result="Failed" site="Child" start-time="2026-09-09 07:38:46Z" end-time="2026-09-09 07:38:47Z" duration="0.914161" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1353" name="MaterialFamiliesReceiveMoonAndPointInForwardAndForwardPlus" fullname="Elemental.Tests.PlayMode.HardPolishLightingRuntimeTests.MaterialFamiliesReceiveMoonAndPointInForwardAndForwardPlus" methodname="MaterialFamiliesReceiveMoonAndPointInForwardAndForwardPlus" classname="Elemental.Tests.PlayMode.HardPolishLightingRuntimeTests" runstate="Runnable" seed="1536687336" result="Failed" start-time="2026-09-09 07:38:46Z" end-time="2026-09-09 07:38:47Z" duration="0.894080" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Elemental/Graphics V5/Rumble Rock Lit Forward lost the non-main directional.
+  Expected: greater than 0.0500000007f
+  But was:  0.0f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.HardPolishLightingRuntimeTests+<MaterialFamiliesReceiveMoonAndPointInForwardAndForwardPlus>d__2.MoveNext () [0x00751] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\HardPolishLightingRuntimeTests.cs:118
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

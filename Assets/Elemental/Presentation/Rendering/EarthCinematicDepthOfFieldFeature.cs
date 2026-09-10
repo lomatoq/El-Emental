@@ -26,7 +26,9 @@ namespace Elemental.Presentation.Rendering
         {
             _pass = new EarthCinematicDepthOfFieldPass
             {
-                renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing
+                // Transparent fire/smoke has no opaque depth. Blur the scene before it,
+                // otherwise a nearby flame inherits the sky CoC and loses its silhouette.
+                renderPassEvent = RenderPassEvent.BeforeRenderingTransparents
             };
         }
 

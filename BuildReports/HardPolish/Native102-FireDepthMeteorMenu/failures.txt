@@ -1,0 +1,34 @@
+Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.ActualFireDepthBokehKeepsFocusedFlameSharpAndSoftensDistantFlame
+  Focused flame cannot inherit the depth of sky behind it.
+  Expected: less than 0.00365603622f
+  But was:  0.00556793902f
+
+at Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests+<ActualFireDepthBokehKeepsFocusedFlameSharpAndSoftensDistantFlame>d__23.MoveNext () [0x00581] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\FireActualDepthBokehProductionTests.cs:37
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+
+
+Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedAmbientMotesKeepTheirRealSizeAndFadeNearCameraWithBloomComparison
+  Expected: not null
+  But was:  null
+
+at Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests+<SavedAmbientMotesKeepTheirRealSizeAndFadeNearCameraWithBloomComparison>d__0.MoveNext () [0x000f4] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\AmbientMoteNearCameraProductionTests.cs:23
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+
+
+Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedArenaNightBurnLampsWarmOpaqueReceiversWithVisibleFlamesAndSmoke
+  Pooled burn lamps must visibly warm nearby opaque surfaces.
+  Expected: greater than 20
+  But was:  0
+
+at Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests+<SavedArenaNightBurnLampsWarmOpaqueReceiversWithVisibleFlamesAndSmoke>d__51.MoveNext () [0x00d0e] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\FireNightBurnLightingProductionTests.cs:127
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+
+
+Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedFighterMeteorSheathFollowsPosedBodyDuringUnobstructedFlight
+  Expected: False
+  But was:  True
+
+at Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests+<SavedFighterMeteorSheathFollowsPosedBodyDuringUnobstructedFlight>d__46.MoveNext () [0x0045f] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\FireMeteorBodyAttachmentTests.cs:50
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+
+

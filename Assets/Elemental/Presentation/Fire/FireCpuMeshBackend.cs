@@ -82,6 +82,29 @@ namespace Elemental.Presentation.Fire
         private readonly GameObject visual;
         private readonly Material material;
         private readonly FireCoherentBodyMeshBackend coherentBody;
+        private FireCapsuleVolumeBackend capsuleVolume;
+        private FireFlowVolumeBackend flowVolume;
+        public FireFlowVolumeBackend FlowDiagnostics=>flowVolume;
+        public void EnableFluidDemonstration(Shader shader,int mask)
+        {
+            if(AliveCount!=0 || (coherentBody!=null&&coherentBody.Visible))throw new InvalidOperationException("Select fluid demonstration before a live hold.");
+            if(flowVolume!=null)throw new InvalidOperationException("Fluid demonstration already selected.");
+            capsuleVolume?.Dispose();capsuleVolume=null;
+            Texture atlas=profile.CpuMaterial!=null?profile.CpuMaterial.GetTexture("_FlameAtlas"):null;
+            if(atlas==null)throw new InvalidOperationException("Fluid demonstration requires the explicit Wallcoeur flame atlas on its CPU source material.");
+            flowVolume=new FireFlowVolumeBackend(visual.transform.parent,shader,mask,atlas);
+        }
+        public FireCapsuleVolumeBackend VolumeDiagnostics=>capsuleVolume;
+        public bool ActiveCapsuleVolume=>capsuleVolume!=null&&capsuleVolume.Visible;
+        // Explicit cold QA selection, invoked on prewarmed production slots before session admission.
+        public void EnableCapsuleVolumeForQa(Shader shader,int steps=40)
+        {
+            if(disposed)throw new ObjectDisposedException(nameof(FireCpuMeshBackend));
+            if(AliveCount!=0||(coherentBody!=null&&coherentBody.Visible))throw new InvalidOperationException("Select volume QA before a live/draining hold.");
+            if(capsuleVolume!=null)throw new InvalidOperationException("Capsule volume QA already selected.");
+            flowVolume?.Dispose();flowVolume=null;
+            capsuleVolume=new FireCapsuleVolumeBackend(visual.transform.parent,shader,steps);
+        }
         public FireCoherentBodyMeshBackend BodyDiagnostics => coherentBody;
         private uint randomState, nextId;
         private float birthRemainder;
@@ -139,9 +162,10 @@ namespace Elemental.Presentation.Fire
         }
         public void Begin(uint seed)
         {
-            coherentBody?.Clear();
+            coherentBody?.Clear();capsuleVolume?.Clear();flowVolume?.Clear();
             AliveCount=0; birthRemainder=0; randomState=seed!=0?seed:0x9e3779b9u; nextId=0;
             RejectedBirths=0; RedirectedExistingParticles=0; LastRedirectedId=0;
+            flowVolume?.Begin(seed);
         }
         public void Step(FirePresentationSnapshot snapshot,float delta,float emission,UnityEngine.Camera camera)
         {
@@ -152,6 +176,24 @@ namespace Elemental.Presentation.Fire
                     !math.isfinite(delta) || delta<0 || !math.isfinite(snapshot.Time) || !math.isfinite(emission) || emission<0)
                     throw new ArgumentException("Fire CPU frame/counts must be finite and within 6 nodes / 8 contacts.");
                 if(disposed) throw new ObjectDisposedException(nameof(FireCpuMeshBackend));
+                bool capsuleFrame=false;
+                for(int nodeIndex=0;nodeIndex<snapshot.NodeCount;nodeIndex++)capsuleFrame|=snapshot.Nodes[nodeIndex].Active&&snapshot.Nodes[nodeIndex].Shape==FireShape.Capsule;
+                if(flowVolume!=null&&capsuleFrame)
+                {
+                    coherentBody?.Clear();capsuleVolume?.Clear();renderer.enabled=false;
+                    flowVolume.Step(snapshot,delta,camera);AliveCount=flowVolume.Solver.Count;SetVisible(flowVolume.Visible);
+                    LastStepMilliseconds=(System.Diagnostics.Stopwatch.GetTimestamp()-cpuStart)*1000.0/System.Diagnostics.Stopwatch.Frequency;return;
+                }
+                flowVolume?.Clear();
+                if(capsuleVolume!=null&&capsuleFrame)
+                {
+                    // Volume replaces the capsule body completely: no hidden ribbon/parcel fallback.
+                    AliveCount=0;birthRemainder=0;renderer.enabled=false;coherentBody?.Clear();
+                    capsuleVolume.Step(snapshot,delta);SetVisible(capsuleVolume.Visible);
+                    LastStepMilliseconds=(System.Diagnostics.Stopwatch.GetTimestamp()-cpuStart)*1000.0/System.Diagnostics.Stopwatch.Frequency;
+                    return;
+                }
+                capsuleVolume?.Clear();
                 for(int j=0;j<snapshot.ContactCount;j++) { contacts[j]=snapshot.Contacts[j]; contacts[j].Point-=contacts[j].SurfaceVelocity*delta; }
                 if(delta>0)
                 {
@@ -366,15 +408,20 @@ namespace Elemental.Presentation.Fire
         }
         public bool TryTrace(uint id,out FireParticleTrace trace)
         {
+            if(flowVolume!=null)
+            {
+                for(int i=0;i<flowVolume.Solver.Count;i++)if(flowVolume.Solver.Particles[i].Id==id){var p=flowVolume.Solver.Particles[i];trace=new FireParticleTrace(p.Id,p.Age,Vec(p.Position),Vec(p.Velocity));return true;}
+                trace=default;return false;
+            }
             for(int i=0;i<AliveCount;i++) if(particles[i].Id==id) {var p=particles[i];trace=new FireParticleTrace(p.Id,p.Age,Vec(p.Position),Vec(p.Velocity));return true;}
             trace=default;return false;
         }
-        public void Clear(){AliveCount=0;birthRemainder=0;SetVisible(false);if(renderer!=null)renderer.enabled=false;coherentBody?.Clear();}
+        public void Clear(){AliveCount=0;birthRemainder=0;SetVisible(false);if(renderer!=null)renderer.enabled=false;coherentBody?.Clear();capsuleVolume?.Clear();flowVolume?.Clear();}
         public void Dispose()
         {
             if(disposed)return;disposed=true;if(vertices.IsCreated)vertices.Dispose();
             SetVisible(false);
-            coherentBody?.Dispose();
+            coherentBody?.Dispose();capsuleVolume?.Dispose();flowVolume?.Dispose();
             if(visual!=null)UnityEngine.Object.Destroy(visual);if(mesh!=null)UnityEngine.Object.Destroy(mesh);if(material!=null)UnityEngine.Object.Destroy(material);
         }
         private static Vector3 Vec(float3 value)=>new Vector3(value.x,value.y,value.z);

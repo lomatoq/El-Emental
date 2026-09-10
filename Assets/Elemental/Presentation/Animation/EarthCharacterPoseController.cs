@@ -18,6 +18,48 @@ namespace Elemental.Presentation.Animation
     public sealed class EarthCharacterPoseController : MonoBehaviour
     {
         private const int FootHitCapacity = 8;
+        private EarthChannelPresentationSession _fireChannel;
+        private uint _fireChannelPresentationGeneration;
+        public bool FireChannelPresentationActive => _fireChannel.Active;
+        public uint FireChannelSessionGeneration => _fireChannel.Generation;
+
+        /// <summary>Call once after gameplay accepts a fire session and cancels the prior school.
+        /// This adopts the existing one-hand cast slot; it creates no gameplay command.</summary>
+        public bool BeginFireChannelPresentation(uint sessionGeneration, Vector3 focus)
+        {
+            if (_presentationSuppressed || !isActiveAndEnabled) return false;
+            if (_fireChannel.Active && _fireChannel.Generation == sessionGeneration)
+                return UpdateFireChannelPresentation(sessionGeneration, focus);
+            EarthChannelPresentationSession candidate = _fireChannel;
+            if (!candidate.Begin(sessionGeneration, (float3)focus)) return false;
+            CancelPresentationForAnimationOwnership();
+            _fireChannel = candidate;
+            RequestSemanticPresentation(EarthTechniqueKind.Repair, EarthTechniqueId.GravityGrip,
+                _presentationTick, focus, 0f, 0f);
+            _fireChannelPresentationGeneration = _authoritativePresentationGeneration;
+            return true;
+        }
+
+        /// <summary>Target-only update. Old or cancelled tokens never restart animation.</summary>
+        public bool UpdateFireChannelPresentation(uint sessionGeneration, Vector3 focus)
+        {
+            if (_presentationSuppressed || !isActiveAndEnabled ||
+                !_fireChannel.Update(sessionGeneration, (float3)focus)) return false;
+            if (_authoritativePresentationGeneration == _fireChannelPresentationGeneration)
+                _target = focus;
+            return true;
+        }
+
+        /// <summary>Release on gameplay release, school switch, pause, focus loss, death or reset.
+        /// Existing A/B recovery and layer blend own the visible exit.</summary>
+        public bool EndFireChannelPresentation(uint sessionGeneration)
+        {
+            if (!_fireChannel.End(sessionGeneration)) return false;
+            if (_authoritativePresentationGeneration == _fireChannelPresentationGeneration)
+                CancelPresentationForAnimationOwnership();
+            else UpdatePoseIntent();
+            return true;
+        }
         private static readonly int CastKindHash = Animator.StringToHash("CastKind");
 
         [SerializeField] private Animator animator;
@@ -280,7 +322,13 @@ namespace Elemental.Presentation.Animation
                 uint elapsed = _presentationTick - _castStartTick + _castPhaseOffsetTicks;
                 // An unrelated held field must not pin a queued one-shot action in
                 // Sustain forever. The held field resumes after the accepted burst.
-                phase = EarthCastPhaseSolver.Evaluate(elapsed, in _timing, false);
+                // A channel owns the accepted presentation until its gameplay session ends.
+                // Keep the same A/B buffer after contact instead of passing through a
+                // one-frame Idle and restarting the anticipation clock during a long hold.
+                bool heldFireContact = _fireChannel.Active && _renderedContactReached &&
+                    _authoritativePresentationGeneration == _fireChannelPresentationGeneration;
+                phase = heldFireContact ? EarthCastPhase.Sustain :
+                    EarthCastPhaseSolver.Evaluate(elapsed, in _timing, false);
                 if (phase == EarthCastPhase.Idle)
                 {
                     if (!_renderedContactReached &&
@@ -421,6 +469,13 @@ namespace Elemental.Presentation.Animation
             technique = EarthTechniqueKind.None;
             presentationTechnique = EarthTechniqueId.None;
             focus = transform.position + transform.forward * 2f;
+            if (_fireChannel.Active)
+            {
+                technique = EarthTechniqueKind.Repair;
+                presentationTechnique = EarthTechniqueId.GravityGrip;
+                focus = (Vector3)_fireChannel.Focus;
+                return true;
+            }
             if (input != null)
             {
                 EarthActionIntentKind intent = input.LastActionIntent.Kind;
@@ -1186,6 +1241,7 @@ namespace Elemental.Presentation.Animation
         /// </summary>
         public void CancelPresentationForAnimationOwnership()
         {
+            _fireChannel.Cancel();
             if (_authoritativeTransient || CurrentRequest.IsActive || _hasPendingPresentation)
                 ReportAuthoritativePhase(EarthCastPhase.Idle, true);
             _pendingPresentation = default;

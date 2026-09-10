@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="6" result="Passed" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 14:42:17Z" end-time="2026-09-09 14:42:18Z" duration="0.9494835">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="1561" result="Passed" start-time="2026-09-09 14:42:17Z" end-time="2026-09-09 14:42:18Z" duration="0.949484" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2985" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="1515" result="Passed" start-time="2026-09-09 14:42:17Z" end-time="2026-09-09 14:42:18Z" duration="0.849904" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="16264" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2986" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="1509" result="Passed" start-time="2026-09-09 14:42:17Z" end-time="2026-09-09 14:42:18Z" duration="0.760069" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2987" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="1509" result="Passed" start-time="2026-09-09 14:42:17Z" end-time="2026-09-09 14:42:18Z" duration="0.659449" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2988" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="1509" result="Passed" start-time="2026-09-09 14:42:17Z" end-time="2026-09-09 14:42:18Z" duration="0.560233" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1587" name="EarthContainedRenderRepairTests" fullname="Elemental.Tests.EditMode.EarthContainedRenderRepairTests" classname="Elemental.Tests.EditMode.EarthContainedRenderRepairTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-09 14:42:17Z" end-time="2026-09-09 14:42:17Z" duration="0.195234" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1590" name="ClosureAuditRejectsMissingFace" fullname="Elemental.Tests.EditMode.EarthContainedRenderRepairTests.ClosureAuditRejectsMissingFace" methodname="ClosureAuditRejectsMissingFace" classname="Elemental.Tests.EditMode.EarthContainedRenderRepairTests" runstate="Runnable" seed="251355486" result="Passed" start-time="2026-09-09 14:42:17Z" end-time="2026-09-09 14:42:17Z" duration="0.029049" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1589" name="ReconstructionRetainsClosedHullAndNeverChangesColliderGeometry" fullname="Elemental.Tests.EditMode.EarthContainedRenderRepairTests.ReconstructionRetainsClosedHullAndNeverChangesColliderGeometry" methodname="ReconstructionRetainsClosedHullAndNeverChangesColliderGeometry" classname="Elemental.Tests.EditMode.EarthContainedRenderRepairTests" runstate="Runnable" seed="1904354098" result="Passed" start-time="2026-09-09 14:42:17Z" end-time="2026-09-09 14:42:17Z" duration="0.049894" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1588" name="TinyValidFacesRetainUnitNormalsAndOnlyZeroAreaFacesAreRemoved" fullname="Elemental.Tests.EditMode.EarthContainedRenderRepairTests.TinyValidFacesRetainUnitNormalsAndOnlyZeroAreaFacesAreRemoved" methodname="TinyValidFacesRetainUnitNormalsAndOnlyZeroAreaFacesAreRemoved" classname="Elemental.Tests.EditMode.EarthContainedRenderRepairTests" runstate="Runnable" seed="164831875" result="Passed" start-time="2026-09-09 14:42:17Z" end-time="2026-09-09 14:42:17Z" duration="0.001662" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1615" name="EarthConvexRenderEnvelopeTests" fullname="Elemental.Tests.EditMode.EarthConvexRenderEnvelopeTests" classname="Elemental.Tests.EditMode.EarthConvexRenderEnvelopeTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-09-09 14:42:17Z" end-time="2026-09-09 14:42:17Z" duration="0.024327" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1616" name="ActualFailedColliderFanReconstructsClosedWithoutChangingCollider" fullname="Elemental.Tests.EditMode.EarthConvexRenderEnvelopeTests.ActualFailedColliderFanReconstructsClosedWithoutChangingCollider" methodname="ActualFailedColliderFanReconstructsClosedWithoutChangingCollider" classname="Elemental.Tests.EditMode.EarthConvexRenderEnvelopeTests" runstate="Runnable" seed="596168356" result="Passed" start-time="2026-09-09 14:42:17Z" end-time="2026-09-09 14:42:17Z" duration="0.017568" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1677" name="EarthEnvelopeCorpusRegressionTests" fullname="Elemental.Tests.EditMode.EarthEnvelopeCorpusRegressionTests" classname="Elemental.Tests.EditMode.EarthEnvelopeCorpusRegressionTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-09 14:42:17Z" end-time="2026-09-09 14:42:18Z" duration="0.185657" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1680" name="ActualCorpusNearCoincidentEdgesAndCoplanarPlanesRemainClosed" fullname="Elemental.Tests.EditMode.EarthEnvelopeCorpusRegressionTests.ActualCorpusNearCoincidentEdgesAndCoplanarPlanesRemainClosed" classname="Elemental.Tests.EditMode.EarthEnvelopeCorpusRegressionTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-09 14:42:17Z" end-time="2026-09-09 14:42:18Z" duration="0.109531" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1678" name="ActualCorpusNearCoincidentEdgesAndCoplanarPlanesRemainClosed(343)" fullname="Elemental.Tests.EditMode.EarthEnvelopeCorpusRegressionTests.ActualCorpusNearCoincidentEdgesAndCoplanarPlanesRemainClosed(343)" methodname="ActualCorpusNearCoincidentEdgesAndCoplanarPlanesRemainClosed" classname="Elemental.Tests.EditMode.EarthEnvelopeCorpusRegressionTests" runstate="Runnable" seed="761874712" result="Passed" start-time="2026-09-09 14:42:18Z" end-time="2026-09-09 14:42:18Z" duration="0.006047" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1679" name="ActualCorpusNearCoincidentEdgesAndCoplanarPlanesRemainClosed(12285)" fullname="Elemental.Tests.EditMode.EarthEnvelopeCorpusRegressionTests.ActualCorpusNearCoincidentEdgesAndCoplanarPlanesRemainClosed(12285)" methodname="ActualCorpusNearCoincidentEdgesAndCoplanarPlanesRemainClosed" classname="Elemental.Tests.EditMode.EarthEnvelopeCorpusRegressionTests" runstate="Runnable" seed="1208550908" result="Passed" start-time="2026-09-09 14:42:18Z" end-time="2026-09-09 14:42:18Z" duration="0.001583" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\EditorRuns\corpus-edit-023\results.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

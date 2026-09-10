@@ -21,11 +21,12 @@ using Object = UnityEngine.Object;
 
 namespace Elemental.Tests.PlayMode
 {
-    public sealed class DistantBackdropProductionTests
+    public sealed partial class DistantBackdropProductionTests
     {
         private const string ScenePath = "Assets/Elemental/Content/Scenes/EarthCoreSlice.unity";
         private const string Folder = "BuildReports/DistantBackdrop";
         private Scene scene, previous;
+        private ProductionCaptureResolution captureResolution;
         private float timeScale;
         private bool environmentWasPaused;
         private CelestialSystemBehaviour celestial;
@@ -50,6 +51,7 @@ namespace Elemental.Tests.PlayMode
         }
         [UnitySetUp] public IEnumerator Load()
         {
+            captureResolution=new ProductionCaptureResolution();
             previous = SceneManager.GetActiveScene(); timeScale = Time.timeScale;
             Directory.CreateDirectory(Folder);
             report = new Report { utc = DateTime.UtcNow.ToString("O"), graphicsApi = SystemInfo.graphicsDeviceType.ToString(),
@@ -74,13 +76,96 @@ namespace Elemental.Tests.PlayMode
             lightingMode = celestial.LightingAuthority; phase = celestial.Snapshot.TimeOfDay01;
             var director = new SerializedObject(flow).FindProperty("cameraDirector").objectReferenceValue as EarthCameraDirector;
             Assert.That(director, Is.Not.Null);
-            camera = director.GetComponent<UnityEngine.Camera>(); Assert.That(camera, Is.Not.Null);
+            camera = celestial.TargetCamera; Assert.That(camera, Is.Not.Null);
+            yield return captureResolution.WaitForRenderedSize(camera);
+            ProductionCaptureResolution.SaveScreen(Folder+"/00-native1080-combat-ui.png");
             cameraPosition = camera.transform.position; cameraRotation = camera.transform.rotation;
             renderers = backdrop.GetComponentsInChildren<Renderer>(true);
             rendererStates = renderers.Select(item => item.enabled).ToArray();
             report.preferenceBound = backdrop.SettingsSource == flow;
             Assert.That(report.preferenceBound, Is.True, "Installer must bind the actual existing preference owner.");
         }
+        [UnityTest] public IEnumerator HardPolishGradingVariants()
+        {
+            const string evidence = "BuildReports/HardPolish/G02/Grading";
+            Directory.CreateDirectory(evidence);
+            var volumes = All<Volume>().Where(v => v.enabled && v.weight > 0 && v.isGlobal &&
+                (camera.GetUniversalAdditionalCameraData().volumeLayerMask.value & (1 << v.gameObject.layer)) != 0)
+                .OrderByDescending(v => v.priority).ToArray();
+            Assert.That(volumes, Is.Not.Empty);
+            File.WriteAllText(evidence + "/owners.json", string.Join("\n", volumes.Select(v =>
+                v.name + " priority=" + v.priority + " profile=" + v.profile.name + " shared=" + AssetDatabase.GetAssetPath(v.sharedProfile) +
+                "\n" + string.Join("\n", v.profile.components.Select(c => JsonUtility.ToJson(c, true))))));
+            VolumeProfile grading = volumes.First(v => v.profile.TryGet(out ColorAdjustments _)).profile;
+            grading.TryGet(out ColorAdjustments color); grading.TryGet(out Tonemapping tone);
+            float contrast = color.contrast.value; TonemappingMode mode = tone.mode.value;
+            bool hadShadows = grading.TryGet(out ShadowsMidtonesHighlights shadows);
+            string oldShadows = hadShadows ? JsonUtility.ToJson(shadows) : null;
+            if (!hadShadows) shadows = grading.Add<ShadowsMidtonesHighlights>(true);
+            celestial.SetLightingAuthorityForQa(CelestialLightingAuthorityMode.AnimatedEphemeris);
+            try
+            {
+                foreach (var sample in new[] { ("day", .25f), ("sunset", .50f), ("night", .75f) })
+                {
+                    celestial.SetTimeOfDayForQa(sample.Item2); celestial.EvaluatePresentationForQa();
+                    color.contrast.value = contrast; tone.mode.value = mode; shadows.active = false;
+                    yield return null; Capture(sample.Item1 + "-original", evidence);
+                    color.contrast.value = 0;
+                    yield return null; Capture(sample.Item1 + "-contrast-zero", evidence);
+                    shadows.active = true;
+                    shadows.shadowsStart.Override(0); shadows.shadowsEnd.Override(.3f);
+                    foreach (float gain in new[] { .2f, .4f, .6f })
+                    {
+                        shadows.shadows.Override(new Vector4(1, 1, 1, gain * celestial.Snapshot.Night01));
+                        yield return null; Capture(sample.Item1 + "-shadows-" + gain.ToString("F1", System.Globalization.CultureInfo.InvariantCulture), evidence);
+                    }
+                }
+            }
+            finally
+            {
+                color.contrast.value = contrast; tone.mode.value = mode;
+                if (hadShadows) JsonUtility.FromJsonOverwrite(oldShadows, shadows);
+                else { grading.Remove<ShadowsMidtonesHighlights>(); Object.Destroy(shadows); }
+            }
+        }
+
+        [UnityTest] public IEnumerator HardPolishDayNightMaterialAndMeshEvidence()
+        {
+            const string evidence = "BuildReports/HardPolish/Lighting";
+            Directory.CreateDirectory(evidence);
+            var provenance = new System.Text.StringBuilder("renderer\tmesh\tmeshPath\tmeshGuid\tmaterial\tshader\tmaterialGuid\ttriangles\tdistance\n");
+            foreach (Renderer renderer in All<Renderer>())
+            {
+                Mesh mesh = renderer is SkinnedMeshRenderer skin ? skin.sharedMesh :
+                    renderer.TryGetComponent<MeshFilter>(out var filter) ? filter.sharedMesh : null;
+                if (mesh == null) continue;
+                string path = AssetDatabase.GetAssetPath(mesh);
+                foreach (Material material in renderer.sharedMaterials)
+                {
+                    if (material == null) continue;
+                    provenance.AppendLine($"{AnimationUtility.CalculateTransformPath(renderer.transform, null)}\t{mesh.name}\t{path}\t{AssetDatabase.AssetPathToGUID(path)}\t{material.name}\t{material.shader.name}\t{AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(material))}\t{Enumerable.Range(0, mesh.subMeshCount).Sum(submesh => (long)mesh.GetIndexCount(submesh)) / 3}\t{Vector3.Distance(camera.transform.position, renderer.bounds.center):F2}");
+                }
+            }
+            File.WriteAllText(evidence + "/renderer-provenance.tsv", provenance.ToString());
+            var data = camera.GetUniversalAdditionalCameraData();
+            bool post = data.renderPostProcessing;
+            celestial.SetLightingAuthorityForQa(CelestialLightingAuthorityMode.AnimatedEphemeris);
+            try
+            {
+                foreach (var sample in new[] { ("day", .25f), ("sunset", .50f), ("night", .75f) })
+                {
+                    celestial.SetTimeOfDayForQa(sample.Item2);
+                    celestial.EvaluatePresentationForQa();
+                    yield return null;
+                    data.renderPostProcessing = false;
+                    Capture(sample.Item1 + "-no-post", evidence);
+                    data.renderPostProcessing = post;
+                    Capture(sample.Item1 + "-final", evidence);
+                }
+            }
+            finally { data.renderPostProcessing = post; }
+        }
+
         [UnityTest] public IEnumerator SavedBackdropRendersInGameplayAndUsesExistingLightingPreferences()
         {
             Assert.That(backdrop.GeneratedCount, Is.GreaterThan(0)); report.generated = backdrop.GeneratedCount;
@@ -123,6 +208,8 @@ namespace Elemental.Tests.PlayMode
             }
             camera.transform.rotation = cameraRotation;
             celestial.SetTimeOfDayForQa(.75f); celestial.EvaluatePresentationForQa(); Capture("04-night-gameplay");
+            yield return new WaitForEndOfFrame();
+            ProductionCaptureResolution.SaveScreen(Folder+"/04-native1080-night-ui.png");
             Assert.That(Shader.GetGlobalFloat("_ElementalNight01"), Is.GreaterThan(.9f));
             Assert.That(RenderSettings.fog, Is.False, "Backdrop must not add legacy fog over the existing atmosphere.");
             Transform floating = backdrop.GetComponentsInChildren<Transform>(true).First(t => t.name.StartsWith("Island_", StringComparison.Ordinal));
@@ -162,6 +249,7 @@ namespace Elemental.Tests.PlayMode
         }
         [UnityTearDown] public IEnumerator Restore()
         {
+            captureResolution?.Dispose();captureResolution=null;
             RestoreRenderers();
             if (flow != null) SetPreference(reduced);
             if (backdrop != null) { backdrop.SetReducedMotion(reduced);backdrop.environmentPaused=environmentWasPaused; }
@@ -187,10 +275,10 @@ namespace Elemental.Tests.PlayMode
             for (int i = 0; i < renderers.Length; i++) if (renderers[i] != null) renderers[i].enabled = rendererStates[i];
         }
         private T[] All<T>() where T : Component => scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<T>(true)).ToArray();
-        private Color32[] Capture(string name)
+        private Color32[] Capture(string name, string folder = Folder)
         {
-            var target = new RenderTexture(1280, 800, 24, RenderTextureFormat.ARGB32);
-            var texture = new Texture2D(1280, 800, TextureFormat.RGB24, false);
+            var target = new RenderTexture(1920, 1080, 24, RenderTextureFormat.ARGB32);
+            var texture = new Texture2D(1920, 1080, TextureFormat.RGB24, false);
             RenderTexture active = RenderTexture.active;
             var data = camera.GetUniversalAdditionalCameraData(); bool dither = data.dithering;
             try
@@ -199,8 +287,8 @@ namespace Elemental.Tests.PlayMode
                 var request = new RenderPipeline.StandardRequest { destination = target };
                 Assert.That(RenderPipeline.SupportsRenderRequest(camera, request), Is.True);
                 RenderPipeline.SubmitRenderRequest(camera, request);
-                RenderTexture.active = target; texture.ReadPixels(new Rect(0, 0, 1280, 800), 0, 0); texture.Apply(false, false);
-                File.WriteAllBytes(Folder + "/" + name + ".png", texture.EncodeToPNG()); return texture.GetPixels32();
+                RenderTexture.active = target; texture.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0); texture.Apply(false, false);
+                File.WriteAllBytes(folder + "/" + name + ".png", texture.EncodeToPNG()); return texture.GetPixels32();
             }
             finally
             { data.dithering = dither; RenderTexture.active = active; Object.Destroy(texture); target.Release(); Object.Destroy(target); }

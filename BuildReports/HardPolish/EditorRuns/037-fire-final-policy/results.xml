@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="38" result="Passed" total="38" passed="38" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 18:25:39Z" end-time="2026-09-09 18:25:41Z" duration="2.3238409">
+  <test-suite type="TestSuite" id="1000" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="1580" result="Passed" start-time="2026-09-09 18:25:39Z" end-time="2026-09-09 18:25:41Z" duration="2.323841" total="38" passed="38" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="3009" name="Elemental.Tests.EditMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.EditMode.dll" runstate="Runnable" testcasecount="1534" result="Passed" start-time="2026-09-09 18:25:39Z" end-time="2026-09-09 18:25:41Z" duration="2.208975" total="38" passed="38" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="16264" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="3010" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="1528" result="Passed" start-time="2026-09-09 18:25:39Z" end-time="2026-09-09 18:25:41Z" duration="2.114894" total="38" passed="38" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="3011" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="1528" result="Passed" start-time="2026-09-09 18:25:39Z" end-time="2026-09-09 18:25:41Z" duration="2.005544" total="38" passed="38" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="3012" name="EditMode" fullname="Elemental.Tests.EditMode" runstate="Runnable" testcasecount="1528" result="Passed" start-time="2026-09-09 18:25:39Z" end-time="2026-09-09 18:25:41Z" duration="1.897171" total="38" passed="38" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="2434" name="FireAbilityControlsTests" fullname="Elemental.Tests.EditMode.FireAbilityControlsTests" classname="Elemental.Tests.EditMode.FireAbilityControlsTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-09 18:25:39Z" end-time="2026-09-09 18:25:40Z" duration="0.176326" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2435" name="DoubleTapIsHandAndFurtherRapidTapIsFoot" fullname="Elemental.Tests.EditMode.FireAbilityControlsTests.DoubleTapIsHandAndFurtherRapidTapIsFoot" methodname="DoubleTapIsHandAndFurtherRapidTapIsFoot" classname="Elemental.Tests.EditMode.FireAbilityControlsTests" runstate="Runnable" seed="854692156" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.018976" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2437" name="DualMouseSwipeCommitsOnlyOnceAboveTravelThreshold" fullname="Elemental.Tests.EditMode.FireAbilityControlsTests.DualMouseSwipeCommitsOnlyOnceAboveTravelThreshold" methodname="DualMouseSwipeCommitsOnlyOnceAboveTravelThreshold" classname="Elemental.Tests.EditMode.FireAbilityControlsTests" runstate="Runnable" seed="1551423829" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.000730" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2438" name="ResetPreventsStaleSecondTapAndLiftChargeIsMonotonicBounded" fullname="Elemental.Tests.EditMode.FireAbilityControlsTests.ResetPreventsStaleSecondTapAndLiftChargeIsMonotonicBounded" methodname="ResetPreventsStaleSecondTapAndLiftChargeIsMonotonicBounded" classname="Elemental.Tests.EditMode.FireAbilityControlsTests" runstate="Runnable" seed="488539573" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.021045" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2436" name="ShiftSpaceOwnsOneRingAndNeverLift" fullname="Elemental.Tests.EditMode.FireAbilityControlsTests.ShiftSpaceOwnsOneRingAndNeverLift" methodname="ShiftSpaceOwnsOneRingAndNeverLift" classname="Elemental.Tests.EditMode.FireAbilityControlsTests" runstate="Runnable" seed="1135081271" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.000766" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="2447" name="FireFlowParticleSolverTests" fullname="Elemental.Tests.EditMode.FireFlowParticleSolverTests" classname="Elemental.Tests.EditMode.FireFlowParticleSolverTests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.256667" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2457" name="ActualTransportHitsHeadOnPlaneAndFansOutWithoutCrossing" fullname="Elemental.Tests.EditMode.FireFlowParticleSolverTests.ActualTransportHitsHeadOnPlaneAndFansOutWithoutCrossing" methodname="ActualTransportHitsHeadOnPlaneAndFansOutWithoutCrossing" classname="Elemental.Tests.EditMode.FireFlowParticleSolverTests" runstate="Runnable" seed="1025252206" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.044572" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2459" name="CornerKeepsAllCentersOutsideBothWallsAndBounded" fullname="Elemental.Tests.EditMode.FireFlowParticleSolverTests.CornerKeepsAllCentersOutsideBothWallsAndBounded" methodname="CornerKeepsAllCentersOutsideBothWallsAndBounded" classname="Elemental.Tests.EditMode.FireFlowParticleSolverTests" runstate="Runnable" seed="1693241322" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.082630" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2454" name="DefaultWorldOriginContactCannotTeleportDistantGas" fullname="Elemental.Tests.EditMode.FireFlowParticleSolverTests.DefaultWorldOriginContactCannotTeleportDistantGas" methodname="DefaultWorldOriginContactCannotTeleportDistantGas" classname="Elemental.Tests.EditMode.FireFlowParticleSolverTests" runstate="Runnable" seed="1961893621" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.001170" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2451" name="DownJetOvercomesUpwardOwnerMotionAndStillRespectsContactPlane" fullname="Elemental.Tests.EditMode.FireFlowParticleSolverTests.DownJetOvercomesUpwardOwnerMotionAndStillRespectsContactPlane" methodname="DownJetOvercomesUpwardOwnerMotionAndStillRespectsContactPlane" classname="Elemental.Tests.EditMode.FireFlowParticleSolverTests" runstate="Runnable" seed="8028565" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.006024" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2455" name="HeadOnMomentumSpreadsAlongWallWithoutEnergyAmplification" fullname="Elemental.Tests.EditMode.FireFlowParticleSolverTests.HeadOnMomentumSpreadsAlongWallWithoutEnergyAmplification" methodname="HeadOnMomentumSpreadsAlongWallWithoutEnergyAmplification" classname="Elemental.Tests.EditMode.FireFlowParticleSolverTests" runstate="Runnable" seed="2003249738" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.000987" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2450" name="InjectionInheritsMotionWithoutMovingExistingParcelsOrChangingDefaultBudget" fullname="Elemental.Tests.EditMode.FireFlowParticleSolverTests.InjectionInheritsMotionWithoutMovingExistingParcelsOrChangingDefaultBudget" methodname="InjectionInheritsMotionWithoutMovingExistingParcelsOrChangingDefaultBudget" classname="Elemental.Tests.EditMode.FireFlowParticleSolverTests" runstate="Runnable" seed="323767476" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.001723" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2460" name="InsideSolidOrSaturatedQueryRetiresGasWithoutUnqueriedMotion" fullname="Elemental.Tests.EditMode.FireFlowParticleSolverTests.InsideSolidOrSaturatedQueryRetiresGasWithoutUnqueriedMotion" methodname="InsideSolidOrSaturatedQueryRetiresGasWithoutUnqueriedMotion" classname="Elemental.Tests.EditMode.FireFlowParticleSolverTests" runstate="Runnable" seed="2019558900" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.000649" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2449" name="MovingTailUsesReducedRadiusInActualQueries" fullname="Elemental.Tests.EditMode.FireFlowParticleSolverTests.MovingTailUsesReducedRadiusInActualQueries" methodname="MovingTailUsesReducedRadiusInActualQueries" classname="Elemental.Tests.EditMode.FireFlowParticleSolverTests" runstate="Runnable" seed="1292701174" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.001326" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2456" name="ObliqueImpactKeepsTangentialDirectionAndMovingWallVelocity" fullname="Elemental.Tests.EditMode.FireFlowParticleSolverTests.ObliqueImpactKeepsTangentialDirectionAndMovingWallVelocity" methodname="ObliqueImpactKeepsTangentialDirectionAndMovingWallVelocity" classname="Elemental.Tests.EditMode.FireFlowParticleSolverTests" runstate="Runnable" seed="123510205" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.000735" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2458" name="OldParticlesKeepMomentumWhenAimTurnsAndReleaseDrains" fullname="Elemental.Tests.EditMode.FireFlowParticleSolverTests.OldParticlesKeepMomentumWhenAimTurnsAndReleaseDrains" methodname="OldParticlesKeepMomentumWhenAimTurnsAndReleaseDrains" classname="Elemental.Tests.EditMode.FireFlowParticleSolverTests" runstate="Runnable" seed="494717246" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.005772" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2448" name="TailRadiusKeepsMiddleAndDissipatesMonotonically" fullname="Elemental.Tests.EditMode.FireFlowParticleSolverTests.TailRadiusKeepsMiddleAndDissipatesMonotonically" methodname="TailRadiusKeepsMiddleAndDissipatesMonotonically" classname="Elemental.Tests.EditMode.FireFlowParticleSolverTests" runstate="Runnable" seed="69215928" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.001065" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2452" name="TransportedHeatCoolsIntoSootBeforeRetirementAndRemainsBounded" fullname="Elemental.Tests.EditMode.FireFlowParticleSolverTests.TransportedHeatCoolsIntoSootBeforeRetirementAndRemainsBounded" methodname="TransportedHeatCoolsIntoSootBeforeRetirementAndRemainsBounded" classname="Elemental.Tests.EditMode.FireFlowParticleSolverTests" runstate="Runnable" seed="1402496551" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.001649" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2453" name="WallFlowRetainsSmallTonguesAndLargerBodyScales" fullname="Elemental.Tests.EditMode.FireFlowParticleSolverTests.WallFlowRetainsSmallTonguesAndLargerBodyScales" methodname="WallFlowRetainsSmallTonguesAndLargerBodyScales" classname="Elemental.Tests.EditMode.FireFlowParticleSolverTests" runstate="Runnable" seed="1149188294" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.015771" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="2461" name="FireLiftMotionTests" fullname="Elemental.Tests.EditMode.FireLiftMotionTests" classname="Elemental.Tests.EditMode.FireLiftMotionTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.234311" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2466" name="CeilingConstraintCancelsPredictedUpwardTravelWithoutReposition" fullname="Elemental.Tests.EditMode.FireLiftMotionTests.CeilingConstraintCancelsPredictedUpwardTravelWithoutReposition" methodname="CeilingConstraintCancelsPredictedUpwardTravelWithoutReposition" classname="Elemental.Tests.EditMode.FireLiftMotionTests" runstate="Runnable" seed="2027415745" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.001534" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="2465" name="ChargeRisesSmoothlyAndReleaseFalls" fullname="Elemental.Tests.EditMode.FireLiftMotionTests.ChargeRisesSmoothlyAndReleaseFalls" classname="Elemental.Tests.EditMode.FireLiftMotionTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.114447" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2462" name="ChargeRisesSmoothlyAndReleaseFalls(30)" fullname="Elemental.Tests.EditMode.FireLiftMotionTests.ChargeRisesSmoothlyAndReleaseFalls(30)" methodname="ChargeRisesSmoothlyAndReleaseFalls" classname="Elemental.Tests.EditMode.FireLiftMotionTests" runstate="Runnable" seed="577354634" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.001501" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2463" name="ChargeRisesSmoothlyAndReleaseFalls(60)" fullname="Elemental.Tests.EditMode.FireLiftMotionTests.ChargeRisesSmoothlyAndReleaseFalls(60)" methodname="ChargeRisesSmoothlyAndReleaseFalls" classname="Elemental.Tests.EditMode.FireLiftMotionTests" runstate="Runnable" seed="376024107" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.001069" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2464" name="ChargeRisesSmoothlyAndReleaseFalls(120)" fullname="Elemental.Tests.EditMode.FireLiftMotionTests.ChargeRisesSmoothlyAndReleaseFalls(120)" methodname="ChargeRisesSmoothlyAndReleaseFalls" classname="Elemental.Tests.EditMode.FireLiftMotionTests" runstate="Runnable" seed="722857045" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.001577" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-case id="2471" name="InvalidOrPausedClockProducesNoMotorImpulse" fullname="Elemental.Tests.EditMode.FireLiftMotionTests.InvalidOrPausedClockProducesNoMotorImpulse" methodname="InvalidOrPausedClockProducesNoMotorImpulse" classname="Elemental.Tests.EditMode.FireLiftMotionTests" runstate="Runnable" seed="768928834" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.000524" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="2470" name="LiftPresentationUsesFallNotApexWithoutChangingOrdinaryMotion" fullname="Elemental.Tests.EditMode.FireLiftMotionTests.LiftPresentationUsesFallNotApexWithoutChangingOrdinaryMotion" classname="Elemental.Tests.EditMode.FireLiftMotionTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.093725" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2467" name="LiftPresentationUsesFallNotApexWithoutChangingOrdinaryMotion(-4.0f)" fullname="Elemental.Tests.EditMode.FireLiftMotionTests.LiftPresentationUsesFallNotApexWithoutChangingOrdinaryMotion(-4.0f)" methodname="LiftPresentationUsesFallNotApexWithoutChangingOrdinaryMotion" classname="Elemental.Tests.EditMode.FireLiftMotionTests" runstate="Runnable" seed="135061973" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.005066" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2468" name="LiftPresentationUsesFallNotApexWithoutChangingOrdinaryMotion(0.0f)" fullname="Elemental.Tests.EditMode.FireLiftMotionTests.LiftPresentationUsesFallNotApexWithoutChangingOrdinaryMotion(0.0f)" methodname="LiftPresentationUsesFallNotApexWithoutChangingOrdinaryMotion" classname="Elemental.Tests.EditMode.FireLiftMotionTests" runstate="Runnable" seed="573923740" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.000404" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2469" name="LiftPresentationUsesFallNotApexWithoutChangingOrdinaryMotion(8.0f)" fullname="Elemental.Tests.EditMode.FireLiftMotionTests.LiftPresentationUsesFallNotApexWithoutChangingOrdinaryMotion(8.0f)" methodname="LiftPresentationUsesFallNotApexWithoutChangingOrdinaryMotion" classname="Elemental.Tests.EditMode.FireLiftMotionTests" runstate="Runnable" seed="1529325117" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.000456" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+            </test-suite>
+            <test-suite type="TestFixture" id="2472" name="FireStoneExposureTests" fullname="Elemental.Tests.EditMode.FireStoneExposureTests" classname="Elemental.Tests.EditMode.FireStoneExposureTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.101911" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2474" name="DuplicateColliderCannotMultiplyExposureAndGenerationsDoNotInheritHeat" fullname="Elemental.Tests.EditMode.FireStoneExposureTests.DuplicateColliderCannotMultiplyExposureAndGenerationsDoNotInheritHeat" methodname="DuplicateColliderCannotMultiplyExposureAndGenerationsDoNotInheritHeat" classname="Elemental.Tests.EditMode.FireStoneExposureTests" runstate="Runnable" seed="404326661" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.001616" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2475" name="RemovalExpiresDoseAndInvalidInputsCannotDamage" fullname="Elemental.Tests.EditMode.FireStoneExposureTests.RemovalExpiresDoseAndInvalidInputsCannotDamage" methodname="RemovalExpiresDoseAndInvalidInputsCannotDamage" classname="Elemental.Tests.EditMode.FireStoneExposureTests" runstate="Runnable" seed="3172441" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.000922" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2473" name="SmallMediumLargeRequireProgressivelyMoreExposure" fullname="Elemental.Tests.EditMode.FireStoneExposureTests.SmallMediumLargeRequireProgressivelyMoreExposure" methodname="SmallMediumLargeRequireProgressivelyMoreExposure" classname="Elemental.Tests.EditMode.FireStoneExposureTests" runstate="Runnable" seed="454728225" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.000516" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="2529" name="GoldRespawnTimelineTests" fullname="Elemental.Tests.EditMode.GoldRespawnTimelineTests" classname="Elemental.Tests.EditMode.GoldRespawnTimelineTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.211999" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2536" name="InitialSpawnAndInvalidReservationsCannotProduceVisuals" fullname="Elemental.Tests.EditMode.GoldRespawnTimelineTests.InitialSpawnAndInvalidReservationsCannotProduceVisuals" methodname="InitialSpawnAndInvalidReservationsCannotProduceVisuals" classname="Elemental.Tests.EditMode.GoldRespawnTimelineTests" runstate="Runnable" seed="1584432526" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.015348" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2534" name="LateReplacementShortensRevealAndNeverReplaysAfterActiveDeadline" fullname="Elemental.Tests.EditMode.GoldRespawnTimelineTests.LateReplacementShortensRevealAndNeverReplaysAfterActiveDeadline" methodname="LateReplacementShortensRevealAndNeverReplaysAfterActiveDeadline" classname="Elemental.Tests.EditMode.GoldRespawnTimelineTests" runstate="Runnable" seed="2137608401" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.000931" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2535" name="PausedClockIsIdempotentAndReducedMotionBoundsBrightnessAndOvershoot" fullname="Elemental.Tests.EditMode.GoldRespawnTimelineTests.PausedClockIsIdempotentAndReducedMotionBoundsBrightnessAndOvershoot" methodname="PausedClockIsIdempotentAndReducedMotionBoundsBrightnessAndOvershoot" classname="Elemental.Tests.EditMode.GoldRespawnTimelineTests" runstate="Runnable" seed="1860468568" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.002146" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="2533" name="TerminalRevealNeverExtendsExistingKnockoutOrSurvivesDeadline" fullname="Elemental.Tests.EditMode.GoldRespawnTimelineTests.TerminalRevealNeverExtendsExistingKnockoutOrSurvivesDeadline" classname="Elemental.Tests.EditMode.GoldRespawnTimelineTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.092731" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2530" name="TerminalRevealNeverExtendsExistingKnockoutOrSurvivesDeadline(30)" fullname="Elemental.Tests.EditMode.GoldRespawnTimelineTests.TerminalRevealNeverExtendsExistingKnockoutOrSurvivesDeadline(30)" methodname="TerminalRevealNeverExtendsExistingKnockoutOrSurvivesDeadline" classname="Elemental.Tests.EditMode.GoldRespawnTimelineTests" runstate="Runnable" seed="1343908950" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.003171" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2531" name="TerminalRevealNeverExtendsExistingKnockoutOrSurvivesDeadline(60)" fullname="Elemental.Tests.EditMode.GoldRespawnTimelineTests.TerminalRevealNeverExtendsExistingKnockoutOrSurvivesDeadline(60)" methodname="TerminalRevealNeverExtendsExistingKnockoutOrSurvivesDeadline" classname="Elemental.Tests.EditMode.GoldRespawnTimelineTests" runstate="Runnable" seed="299948862" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.001222" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2532" name="TerminalRevealNeverExtendsExistingKnockoutOrSurvivesDeadline(120)" fullname="Elemental.Tests.EditMode.GoldRespawnTimelineTests.TerminalRevealNeverExtendsExistingKnockoutOrSurvivesDeadline(120)" methodname="TerminalRevealNeverExtendsExistingKnockoutOrSurvivesDeadline" classname="Elemental.Tests.EditMode.GoldRespawnTimelineTests" runstate="Runnable" seed="1489563369" result="Passed" start-time="2026-09-09 18:25:40Z" end-time="2026-09-09 18:25:40Z" duration="0.002907" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+            </test-suite>
+            <test-suite type="TestFixture" id="2880" name="StationaryFireFlowTests" fullname="Elemental.Tests.EditMode.StationaryFireFlowTests" classname="Elemental.Tests.EditMode.StationaryFireFlowTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-09 18:25:41Z" end-time="2026-09-09 18:25:41Z" duration="0.444396" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2885" name="HandPresetRetainsOriginalAllocationAndEightMetreTravelBudget" fullname="Elemental.Tests.EditMode.StationaryFireFlowTests.HandPresetRetainsOriginalAllocationAndEightMetreTravelBudget" methodname="HandPresetRetainsOriginalAllocationAndEightMetreTravelBudget" classname="Elemental.Tests.EditMode.StationaryFireFlowTests" runstate="Runnable" seed="252247355" result="Passed" start-time="2026-09-09 18:25:41Z" end-time="2026-09-09 18:25:41Z" duration="0.000423" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="2884" name="TowerGasHasFiniteLocalCoolingAndBoundedWork" fullname="Elemental.Tests.EditMode.StationaryFireFlowTests.TowerGasHasFiniteLocalCoolingAndBoundedWork" classname="Elemental.Tests.EditMode.StationaryFireFlowTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-09-09 18:25:41Z" end-time="2026-09-09 18:25:41Z" duration="0.349179" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2881" name="TowerGasHasFiniteLocalCoolingAndBoundedWork(15)" fullname="Elemental.Tests.EditMode.StationaryFireFlowTests.TowerGasHasFiniteLocalCoolingAndBoundedWork(15)" methodname="TowerGasHasFiniteLocalCoolingAndBoundedWork" classname="Elemental.Tests.EditMode.StationaryFireFlowTests" runstate="Runnable" seed="1456640585" result="Passed" start-time="2026-09-09 18:25:41Z" end-time="2026-09-09 18:25:41Z" duration="0.047358" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2882" name="TowerGasHasFiniteLocalCoolingAndBoundedWork(60)" fullname="Elemental.Tests.EditMode.StationaryFireFlowTests.TowerGasHasFiniteLocalCoolingAndBoundedWork(60)" methodname="TowerGasHasFiniteLocalCoolingAndBoundedWork" classname="Elemental.Tests.EditMode.StationaryFireFlowTests" runstate="Runnable" seed="1946040363" result="Passed" start-time="2026-09-09 18:25:41Z" end-time="2026-09-09 18:25:41Z" duration="0.080974" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2883" name="TowerGasHasFiniteLocalCoolingAndBoundedWork(120)" fullname="Elemental.Tests.EditMode.StationaryFireFlowTests.TowerGasHasFiniteLocalCoolingAndBoundedWork(120)" methodname="TowerGasHasFiniteLocalCoolingAndBoundedWork" classname="Elemental.Tests.EditMode.StationaryFireFlowTests" runstate="Runnable" seed="196421076" result="Passed" start-time="2026-09-09 18:25:41Z" end-time="2026-09-09 18:25:41Z" duration="0.115867" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\EditorRuns\037-fire-final-policy\results.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

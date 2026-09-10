@@ -92,7 +92,7 @@ namespace Elemental.Runtime.World
         private EarthMaterialEventsTuning Tuning => effectsProfile != null ? effectsProfile.MaterialEvents : defaults;
 
         public void Emit(EarthMaterialFeedbackKind kind, Vector3 point, Vector3 normal, float strength = 1f,
-            float radius = .35f, uint sourceId = 0, uint generation = 0, int dustCount = -1, int chipCount = -1)
+            float radius = .35f, uint sourceId = 0, uint generation = 0, int dustCount = -1, int chipCount = -1, Elemental.Simulation.Magic.ElementId element = Elemental.Simulation.Magic.ElementId.Earth)
         {
             if (!isActiveAndEnabled) return;
             if (!IsFinite(point) || !IsFinite(normal) || !float.IsFinite(strength) || !float.IsFinite(radius))
@@ -118,11 +118,13 @@ namespace Elemental.Runtime.World
                 bool small = kind == EarthMaterialFeedbackKind.Footstep || kind == EarthMaterialFeedbackKind.Roll || kind == EarthMaterialFeedbackKind.Friction || kind == EarthMaterialFeedbackKind.RepairSeat;
                 int dust = Mathf.Clamp(Mathf.RoundToInt((dustCount >= 0 ? dustCount : small ? 8 : 32) * gain), 0, 512);
                 int chips = Mathf.Clamp(Mathf.RoundToInt((chipCount >= 0 ? chipCount : small ? 2 : 8) * gain), 0, 128);
-                if (dust + chips == 0) return;
+                if (kind == EarthMaterialFeedbackKind.Impact) chips = Mathf.Min(chips, 5);
+                if (EarthResponsePreset.IsSignal(kind)) { dust = 0; chips = 0; }
+                if (dust + chips == 0 && !EarthResponsePreset.IsSignal(kind)) return;
                 var cue = new EarthMaterialFeedbackCue(kind, point, normal, safeStrength,
-                    Mathf.Clamp(radius, .02f, 4f), sourceId, generation, dust, chips, particleScale);
+                    Mathf.Clamp(radius, .02f, 4f), sourceId, generation, dust, chips, particleScale, element);
                 if (kind == EarthMaterialFeedbackKind.WaveSurfaceContact || kind == EarthMaterialFeedbackKind.WaveSurfaceBurst ||
-                    kind == EarthMaterialFeedbackKind.ExtractionSurfaceContact)
+                    kind == EarthMaterialFeedbackKind.ExtractionSurfaceContact || kind == EarthMaterialFeedbackKind.AirborneShed)
                 {
                     // Separate spatial contacts must survive the ordinary 1.5m impact
                     // merge. Still share the global per-frame particle budget.
@@ -134,23 +136,33 @@ namespace Elemental.Runtime.World
                 float mergeSq = mergeDistance * mergeDistance;
                 for (int i = 0; i < count; i++)
                 {
-                    if (pending[i].Kind != kind || math.distancesq(pending[i].Point, cue.Point) > mergeSq) continue;
-                    pending[i] = pending[i].WithCounts(Mathf.Min(512, pending[i].DustCount + dust), Mathf.Min(128, pending[i].ChipCount + chips));
+                    if (pending[i].Kind != kind || (EarthResponsePreset.IsSignal(kind) && (pending[i].SourceId != sourceId || pending[i].Generation != generation)) || math.distancesq(pending[i].Point, cue.Point) > mergeSq) continue;
+                    pending[i] = pending[i].WithCounts(Mathf.Min(512, pending[i].DustCount + dust), Mathf.Min(kind == EarthMaterialFeedbackKind.Impact ? 5 : 128, pending[i].ChipCount + chips));
                     CoalescedEvents++; return;
                 }
                 if (count < pending.Length) { pending[count++] = cue; return; }
-                // Keep actual contact locations, never average distant hits into empty space.
-                if (prioritySubject != null)
+                // Preserve admitted lifecycle signals in the same bounded queue.
+                // Distance alone allowed nearby dust to evict the farther fighter's
+                // ignition. Repeating contact accents rank below begin/end/switch.
+                int incomingPriority=ResponsePriority(kind),candidate=-1,lowestPriority=int.MaxValue;
+                float farthestDistance=-1;
+                float3 origin=prioritySubject!=null?(float3)prioritySubject.position:float3.zero;
+                for(int i=0;i<count;i++)
                 {
-                    float3 origin = prioritySubject.position;
-                    int farthest = 0;
-                    for (int i = 1; i < count; i++)
-                        if (math.distancesq(pending[i].Point, origin) > math.distancesq(pending[farthest].Point, origin)) farthest = i;
-                    if (math.distancesq(cue.Point, origin) < math.distancesq(pending[farthest].Point, origin)) pending[farthest] = cue;
+                    int priority=ResponsePriority(pending[i].Kind);
+                    float distance=prioritySubject!=null?math.distancesq(pending[i].Point,origin):i;
+                    if(priority<lowestPriority||(priority==lowestPriority&&distance>farthestDistance))
+                    {candidate=i;lowestPriority=priority;farthestDistance=distance;}
                 }
+                if(candidate>=0&&(incomingPriority>lowestPriority||
+                    (incomingPriority==lowestPriority&&prioritySubject!=null&&math.distancesq(cue.Point,origin)<farthestDistance)))
+                    pending[candidate]=cue;
                 DroppedEvents++;
             }
         }
+
+        private static int ResponsePriority(EarthMaterialFeedbackKind kind) =>
+            !EarthResponsePreset.IsSignal(kind)?0:kind==EarthMaterialFeedbackKind.FireContact?1:2;
 
         private void LateUpdate() => FlushPending();
 

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-10 13:58:27Z" end-time="2026-09-10 13:58:51Z" duration="23.0410693">
+  <test-suite type="TestSuite" id="1652" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="495" result="Failed" site="Child" start-time="2026-09-10 13:58:27Z" end-time="2026-09-10 13:58:51Z" duration="23.041069" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1645" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="489" result="Failed" site="Child" start-time="2026-09-10 13:58:28Z" end-time="2026-09-10 13:58:51Z" duration="22.922974" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="34284" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1646" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="489" result="Failed" site="Child" start-time="2026-09-10 13:58:28Z" end-time="2026-09-10 13:58:51Z" duration="22.893018" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1647" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="489" result="Failed" site="Child" start-time="2026-09-10 13:58:28Z" end-time="2026-09-10 13:58:51Z" duration="22.877147" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1648" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="489" result="Failed" site="Child" start-time="2026-09-10 13:58:28Z" end-time="2026-09-10 13:58:51Z" duration="22.861479" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1091" name="HardPolishFireStreamBindingRuntimeTests" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" testcasecount="81" result="Failed" site="Child" start-time="2026-09-10 13:58:28Z" end-time="2026-09-10 13:58:51Z" duration="22.830302" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1096" name="SavedProductionDustHaloSeparatesLightingBloomAndRendererSources" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedProductionDustHaloSeparatesLightingBloomAndRendererSources" methodname="SavedProductionDustHaloSeparatesLightingBloomAndRendererSources" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1900400390" result="Failed" label="Error" start-time="2026-09-10 13:58:28Z" end-time="2026-09-10 13:58:51Z" duration="22.782721" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[System.InvalidOperationException : Sequence contains no elements]]></message>
+                  <stack-trace><![CDATA[  at System.Linq.Enumerable.First[TSource] (System.Collections.Generic.IEnumerable`1[T] source) [0x00010] in <fe644d7ad1cf499ebe4e7ad937bc03bf>:0 
+  at Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests+<SavedProductionDustHaloSeparatesLightingBloomAndRendererSources>d__4.MoveNext () [0x0035f] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\DustHaloSourceProductionTests.cs:38 
+  at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44 ]]></stack-trace>
+                </failure>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 5146.07ms; ground=exact baked base, cacheLoad=15.52ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=1350.50ms, peakCookingPoll=0.32ms; sync=ArenaInitialize=146.81ms/15;ArenaBevel=132.02ms/175;ArenaMeshPicking=1.84ms/175;WallAwake=85.66ms/1;WallPieceVisuals=48.64ms/40;PlatformPoolAwake=9.72ms/1;PlatformRuntimeMeshes=1.33ms/12;PillarPoolAwake=17.95ms/1;PillarMeshLibrary=4.03ms/1;PillarColumns=13.91ms/1;DebrisPoolAwake=150.63ms/1;HeroFragmentPoolAwake=12.33ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\Native115-DustHalo\results.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

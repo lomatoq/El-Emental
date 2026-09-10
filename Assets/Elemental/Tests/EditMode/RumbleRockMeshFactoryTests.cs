@@ -10,6 +10,57 @@ namespace Elemental.Tests.EditMode
 {
     public sealed class RumbleRockMeshFactoryTests
     {
+        [TestCase(RumbleRockFamily.Boulder)]
+        [TestCase(RumbleRockFamily.Slab)]
+        [TestCase(RumbleRockFamily.Wedge)]
+        [TestCase(RumbleRockFamily.Pebble)]
+        [TestCase(RumbleRockFamily.Pillar)]
+        public void ThousandRecipeCourt_IsClosedPlanarAndDeterministic(RumbleRockFamily family)
+        {
+            float maximumAdjustment = 0, minimumAreaMargin = float.PositiveInfinity;
+            int reducedBevels = 0, retainedEdges = 0, rejectedShapeCuts = 0;
+            var policy = new EarthMeshIntegrityPolicy(true, true, false, 4096,
+                weldTolerance: 0.000001f, strictFlatNormals: true);
+            for (int sample = 0; sample < 200; sample++)
+            {
+                int seed = unchecked(51803 + sample * 7919 + (int)family * 104729);
+                RumbleRockRecipe original = RumbleRockMeshFactory.CreateDefaultRecipe(seed, family,
+                    0.4f + (sample % 9) * 0.2f);
+                Vector3 anisotropy = new Vector3(0.5f + (sample % 5) * 0.45f,
+                    0.6f + (sample % 7) * 0.3f, 0.45f + (sample % 3) * 0.65f);
+                var recipe = new RumbleRockRecipe(seed, family, Vector3.Scale(original.Size, anisotropy),
+                    original.CutCount, original.BevelWidth, original.SilhouetteBias);
+                Mesh mesh = RumbleRockMeshFactory.Build(recipe, out RumbleRockMeshFactory.BuildDiagnostics diagnostics);
+                maximumAdjustment = Mathf.Max(maximumAdjustment, diagnostics.MaximumCanonicalAdjustment);
+                minimumAreaMargin = Mathf.Min(minimumAreaMargin, diagnostics.MinimumCross / diagnostics.RequiredCross);
+                reducedBevels += diagnostics.ReducedBevelCuts;
+                retainedEdges += diagnostics.RetainedEdges;
+                rejectedShapeCuts += diagnostics.RejectedShapeCuts;
+                try
+                {
+                    EarthMeshIntegrityReport report = EarthMeshIntegrityValidator.Validate(mesh, policy,
+                        Matrix4x4.TRS(new Vector3(7, -2, 11), Quaternion.Euler(13, sample, 27), anisotropy));
+                    Assert.That(report.IsValid, Is.True, $"{family}/{seed}: {report}");
+                    Assert.That(report.ComponentCount, Is.EqualTo(1));
+                    Assert.That(report.SignedVolume, Is.GreaterThan(0));
+                    Assert.That(mesh.bounds.min.y, Is.EqualTo(0).Within(0.00001f));
+                    if (sample % 40 != 0) continue;
+                    Mesh repeated = RumbleRockMeshFactory.Build(recipe);
+                    try
+                    {
+                        Assert.That(Signature(repeated), Is.EqualTo(Signature(mesh)));
+                        Assert.That(repeated.normals, Is.EqualTo(mesh.normals));
+                        Assert.That(repeated.colors, Is.EqualTo(mesh.colors));
+                    }
+                    finally { UnityEngine.Object.DestroyImmediate(repeated); }
+                }
+                finally { UnityEngine.Object.DestroyImmediate(mesh); }
+            }
+            TestContext.WriteLine($"{family}: recipes=200, maxCanonicalDelta={maximumAdjustment:G9}, " +
+                $"minCrossMargin={minimumAreaMargin:G9}, reducedBevelCuts={reducedBevels}, " +
+                $"retainedEdges={retainedEdges}, rejectedShapeCuts={rejectedShapeCuts}");
+        }
+
         [Test]
         public void ApprovedTwentyRockCorpus_IsValidAndVisiblyDiverse()
         {
@@ -200,8 +251,32 @@ namespace Elemental.Tests.EditMode
             }
         }
 
+        [TestCase(.1f)]
+        [TestCase(1f)]
+        [TestCase(10f)]
+        public void PhysicsWindingAcceptance_IsInvariantUnderUniformUnitConversion(float units)
+        {
+            Mesh source=AssetDatabase.LoadAssetAtPath<Mesh>(
+                "Assets/Elemental/Content/GraphicsV5/Physics/V5_Physics_Boulder_05_CenteredUnit.asset");
+            Assert.That(source,Is.Not.Null);
+            Mesh copy=UnityEngine.Object.Instantiate(source);
+            try
+            {
+                Vector3[] positions=copy.vertices;
+                for(int i=0;i<positions.Length;i++)positions[i]*=units;
+                copy.vertices=positions;copy.RecalculateBounds();
+                AssertNormalsFollowTriangleWinding(copy);
+                Assert.That(copy.triangles,Is.EqualTo(source.triangles),"Unit conversion must preserve every closed face.");
+                Assert.That(copy.normals,Is.EqualTo(source.normals));
+            }
+            finally{UnityEngine.Object.DestroyImmediate(copy);}
+        }
+
         private static void AssertNormalsFollowTriangleWinding(Mesh mesh)
         {
+            // Use the same scale-invariant degeneracy/manifold/flat-normal contract
+            // as publication. An absolute cross-squared cutoff changes under scale^4.
+            Assert.That(RumbleRockMeshFactory.Validate(mesh,out string reason),Is.True,reason);
             Vector3[] vertices = mesh.vertices;
             Vector3[] normals = mesh.normals;
             for (int submesh = 0; submesh < mesh.subMeshCount; submesh++)
@@ -214,10 +289,11 @@ namespace Elemental.Tests.EditMode
                     int c = indices[offset + 2];
                     Vector3 geometric = Vector3.Cross(vertices[b] - vertices[a], vertices[c] - vertices[a]);
                     Vector3 authored = normals[a] + normals[b] + normals[c];
-                    Assert.That(geometric.sqrMagnitude, Is.GreaterThan(0.0000000001f));
-                    Assert.That(authored.sqrMagnitude, Is.GreaterThan(0.0000000001f));
-                    float alignment = Vector3.Dot(geometric.normalized, authored.normalized);
-                    Assert.That(alignment, Is.GreaterThan(0.5f),
+                    // Vector3.normalized returns zero below magnitude1e-5 even for
+                    // a valid small face. Strict validation above established nonzero area.
+                    float alignment=Vector3.Dot(geometric/Mathf.Sqrt(geometric.sqrMagnitude),
+                        authored/Mathf.Sqrt(authored.sqrMagnitude));
+                    Assert.That(alignment, Is.GreaterThanOrEqualTo(0.999f),
                         $"Physics triangle {offset / 3} in submesh {submesh} has normals opposed to its winding.");
                 }
             }

@@ -15,6 +15,7 @@ namespace Elemental.Runtime.Fire
         private readonly RaycastHit[] _hits = new RaycastHit[16];
         private readonly SphereCollider _querySphere;
         private readonly Transform _ignoredRoot;
+        private Transform _activeIgnoredRoot;
         private readonly int _mask;
         public FireSurfaceResolver Resolver { get; }
         public int QueryCount { get; private set; }
@@ -35,7 +36,11 @@ namespace Elemental.Runtime.Fire
         // Six wide-domain sweeps at most. Overlap, penetration and sweep calls all share 12 calls.
         // Analytic box normal / finite edge refinement consumes no extra physics query.
         public void Collect(FireFieldNode[] nodes, int count, float dt, float time, FireContactCache cache)
+            => Collect(nodes, count, dt, time, cache, _ignoredRoot);
+
+        public void Collect(FireFieldNode[] nodes, int count, float dt, float time, FireContactCache cache, Transform emitterRoot)
         {
+            _activeIgnoredRoot = emitterRoot;
             using (ProbeMarker.Auto())
             {
                 QueryCount = ProbeCount = 0;
@@ -87,7 +92,7 @@ namespace Elemental.Runtime.Fire
             QueryCount++; return true;
         }
         private bool Ignore(Collider collider) => collider == null || collider == _querySphere ||
-            (_ignoredRoot != null && collider.transform.IsChildOf(_ignoredRoot));
+            (_activeIgnoredRoot != null && collider.transform.IsChildOf(_activeIgnoredRoot));
 
         private bool Probe(Vector3 origin, Vector3 target, float radius, float footprint, float time,
             FireContactCache cache, out Vector3 permitted)
@@ -129,7 +134,12 @@ namespace Elemental.Runtime.Fire
             RaycastHit hit = _hits[nearest];
             permitted = origin + delta / length * math.max(hit.distance - 0.015f, 0);
             if (!Resolver.TryResolve(hit.collider, hit.point, footprint, out FireSurfaceAnchor surface, out _))
-            { UnresolvedContacts++; return false; }
+            {
+                // The physics sweep proves only the free segment before the hit.
+                // Keep that conservative segment for capsules/unknown surfaces;
+                // grant no surface projection, cached anchor or burn authority.
+                UnresolvedContacts++; return true;
+            }
             if (!cache.Add(in surface, time)) { UnresolvedContacts++; return false; }
             return true;
         }

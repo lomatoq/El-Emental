@@ -27,6 +27,8 @@ namespace Elemental.Input.Actions
         [SerializeField] private ActiveRagdollPuppet puppet;
         [SerializeField] private EarthDualMouseAbilityController dualMouseAbilities;
         [SerializeField] private EarthMvpDuelController duel;
+        private EarthStoneCounterGuard _stoneCounter;
+        public EarthStoneCounterGuard StoneCounter => _stoneCounter;
         private bool _matchBlocked;
         private bool _impactBlocked;
         private EarthDuelFighterId _boundDuelFighter;
@@ -101,6 +103,7 @@ namespace Elemental.Input.Actions
                                      gameObject.AddComponent<EarthDualMouseAbilityController>();
             if (landingSlam == null) landingSlam = GetComponent<EarthLandingSlam>() ?? gameObject.AddComponent<EarthLandingSlam>();
             landingSlam.Configure(casterBody, motor, magicInput != null ? magicInput.EarthExecutor : null, waveAbility);
+            ConfigureStoneCounter();
             dualMouseAbilities.Configure(
                 magicInput != null ? magicInput.EarthExecutor : null,
                 FindAnyObjectByType<EarthPillarWavePool>(FindObjectsInactive.Include),
@@ -121,7 +124,15 @@ namespace Elemental.Input.Actions
                 dualMouseAbilities = GetComponent<EarthDualMouseAbilityController>();
             if (pillarMobility == null) pillarMobility = GetComponent<EarthPillarMobility>();
             if (puppet == null) puppet = GetComponent<ActiveRagdollPuppet>();
+            ConfigureStoneCounter();
             if (motor != null) motor.ImpactStunBegan += CancelForImpactStun;
+        }
+
+        private void ConfigureStoneCounter()
+        {
+            _stoneCounter ??= GetComponent<EarthStoneCounterGuard>() ?? gameObject.AddComponent<EarthStoneCounterGuard>();
+            _stoneCounter.Configure(casterBody, motor,
+                magicInput != null ? magicInput.EarthExecutor?.FragmentPool?.DebrisPool : null, puppet);
         }
 
         private void OnDestroy()
@@ -138,8 +149,16 @@ namespace Elemental.Input.Actions
             _impactBlocked = true;
         }
 
+        public void CancelForElementSwitch()
+        {
+            OnDisable();
+            resonanceController?.Cancel();
+            surfController?.Cancel();
+        }
+
         private void OnDisable()
         {
+            _stoneCounter?.SetHeld(false, transform.forward);
             CancelWallPush();
             landingSlam?.Cancel();
             waveAbility?.CancelCharge();
@@ -154,8 +173,15 @@ namespace Elemental.Input.Actions
             _current = default;
         }
 
+        private bool _schoolContextBlocked;
         private void Update()
         {
+            if(magicInput!=null&&!magicInput.SchoolInputContextAvailable)
+            {
+                if(!_schoolContextBlocked){CancelForElementSwitch();magicInput.CancelForImpactStun();_schoolContextBlocked=true;}
+                return;
+            }
+            _schoolContextBlocked=false;
             if (motor != null && motor.IsImpactStunned)
             {
                 if (!_impactBlocked) CancelForImpactStun();
@@ -175,6 +201,31 @@ namespace Elemental.Input.Actions
             }
             _matchBlocked = false;
             if (inputAdapter == null) return;
+            // School edges are resolved before Earth can buffer a dual-mouse chord.
+            if (magicInput != null && magicInput.isActiveAndEnabled)
+            {
+                magicInput.PrepareElementRouting();
+                if (magicInput.SchoolPrimarySuppressed || magicInput.SelectedElement != Elemental.Simulation.Magic.ElementId.Earth)
+                {
+                    if (inputAdapter.JumpPressed && !magicInput.ConsumesFireJump) motorInput?.RoutePlainJump();
+                    magicInput.ProcessRoutedInput();
+                    return;
+                }
+            }
+            bool counterChord = inputAdapter.WallPushModifierHeld && inputAdapter.JumpHeld && !inputAdapter.BendModifierHeld;
+            if (counterChord || _router.Owner == EarthActionOwner.StoneCounter)
+            {
+                _dualMouse.Reset();
+                _bufferedPrimaryPathCount = 0;
+                var counterFrame = new EarthActionRouterFrame(Time.unscaledTime,
+                    cancelPressed: inputAdapter.CancelPressed,
+                    jumpHeld: inputAdapter.JumpHeld,
+                    modifierHeld: inputAdapter.BendModifierHeld,
+                    wallPushModifierHeld: inputAdapter.WallPushModifierHeld);
+                _current = _router.Step(in counterFrame);
+                ExecuteRoute(in _current);
+                return;
+            }
             Vector2 move = inputAdapter.Move;
             Vector3 up = motor != null && motor.LocalUp.sqrMagnitude > 0.5f
                 ? motor.LocalUp.normalized
@@ -401,6 +452,7 @@ namespace Elemental.Input.Actions
                 dualMouseAbilities?.CancelStompStone();
             if (route.Intent == EarthActionIntentKind.Cancel || route.Phase == EarthActionRoutePhase.Cancel)
             {
+                _stoneCounter?.SetHeld(false, transform.forward);
                 CancelWallPush();
                 landingSlam?.Cancel();
                 waveAbility?.CancelCharge();
@@ -413,6 +465,16 @@ namespace Elemental.Input.Actions
 
             switch (route.Owner)
             {
+                case EarthActionOwner.StoneCounter:
+                    if (route.Phase == EarthActionRoutePhase.Begin)
+                    {
+                        CancelWallPush(); landingSlam?.Cancel(); waveAbility?.CancelCharge();
+                        pillarMobility?.CancelCharge(); resonanceController?.Cancel(); surfController?.Cancel();
+                        motorInput?.RouteCancel(); magicInput?.CancelForImpactStun();
+                        ConfigureStoneCounter();
+                    }
+                    _stoneCounter?.SetHeld(true, AimDirection());
+                    break;
                 case EarthActionOwner.WallPush:
                     ExecuteWallPush(in route);
                     break;

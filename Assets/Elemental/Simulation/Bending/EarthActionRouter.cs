@@ -15,7 +15,8 @@ namespace Elemental.Simulation.Bending
         LandingCushion = 10,
         DualMouseEarth = 11,
         LandingSlam = 12,
-        WallPush = 13
+        WallPush = 13,
+        StoneCounter = 14
     }
 
     public enum EarthActionRoutePhase : byte
@@ -167,6 +168,9 @@ namespace Elemental.Simulation.Bending
     /// </summary>
     public sealed class EarthActionRouter
     {
+        public const EarthInputConsumption CounterConsumption = EarthInputConsumption.Jump |
+            EarthInputConsumption.WallPushModifier | EarthInputConsumption.Primary |
+            EarthInputConsumption.Force | EarthInputConsumption.Field | EarthInputConsumption.Parameter;
         public const float DefaultChordWindowSeconds = 0.15f;
         public const float DefaultSurfForwardThreshold = 0.18f;
 
@@ -203,6 +207,23 @@ namespace Elemental.Simulation.Bending
                     EarthActionRoutePhase.Cancel,
                     EarthActionIntentKind.Cancel,
                     EarthInputConsumption.Cancel);
+            }
+
+            // A deliberate two-key guard takes the hands but never consumes movement.
+            bool counterChord = frame.WallPushModifierHeld && frame.JumpHeld && !frame.ModifierHeld;
+            if (counterChord)
+            {
+                if (_owner != EarthActionOwner.StoneCounter)
+                    return Begin(EarthActionOwner.StoneCounter, EarthActionIntentKind.StoneCounter,
+                        CounterConsumption, frame.Time);
+                return Route(_owner, EarthActionRoutePhase.Continue, EarthActionIntentKind.StoneCounter,
+                    CounterConsumption);
+            }
+            if (_owner == EarthActionOwner.StoneCounter)
+            {
+                Reset();
+                return Route(EarthActionOwner.StoneCounter, EarthActionRoutePhase.Cancel,
+                    EarthActionIntentKind.Cancel, CounterConsumption);
             }
 
             // A spent chord survives cancellation/stun until either key is released.

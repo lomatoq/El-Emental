@@ -130,7 +130,7 @@ namespace Elemental.Tests.EditMode
                 (EarthHumanoidPoseSlot.RaiseWall, 3.5333f, 47.70f),
                 (EarthHumanoidPoseSlot.RaisePlatform, 3.2667f, 13.21f),
                 (EarthHumanoidPoseSlot.PullStone, 2.1667f, 33.15f),
-                (EarthHumanoidPoseSlot.HeavyThrow, 3.1667f, 16.63f),
+                (EarthHumanoidPoseSlot.HeavyThrow, 4.3000f, 42.85f),
                 (EarthHumanoidPoseSlot.VectorPush, 1.5000f, 33.54f),
                 (EarthHumanoidPoseSlot.GravityRepair, 2.2667f, 27.29f),
                 (EarthHumanoidPoseSlot.WaveResonance, 4.3000f, 42.85f),

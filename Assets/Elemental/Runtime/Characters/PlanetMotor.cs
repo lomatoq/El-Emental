@@ -348,6 +348,16 @@ namespace Elemental.Runtime.Characters
             _hasAimForward = true;
         }
 
+        public void ApplyFireImpulse(Vector3 velocityChange)
+        {
+            if(targetBody==null||!float.IsFinite(velocityChange.x)||!float.IsFinite(velocityChange.y)||!float.IsFinite(velocityChange.z))return;
+            Vector3 delta=Vector3.ClampMagnitude(velocityChange,12f);
+            if(delta.sqrMagnitude<.0001f)return;
+            BeginDirectedExternalLaunch(3,8);
+            if(_puppet!=null)_puppet.ApplyUniformVelocityChange(delta);
+            else if(!targetBody.isKinematic)targetBody.AddForce(delta,ForceMode.VelocityChange);
+        }
+
         public void BeginExternalLaunch(int ignoredGroundTicks)
         {
             _ignoreGroundTicks = Mathf.Max(_ignoreGroundTicks, Mathf.Max(1, ignoredGroundTicks));
@@ -413,6 +423,7 @@ namespace Elemental.Runtime.Characters
 
         private void OnDisable()
         {
+            SetFireLift(0f,false);SetFireLowFlight(false);
             CancelMantle();
             if (!_ownsRotationConstraints || targetBody == null) return;
             targetBody.constraints = (targetBody.constraints & ~RigidbodyConstraints.FreezeRotation) |
@@ -496,10 +507,13 @@ namespace Elemental.Runtime.Characters
                         ToFloat3(_aimForward),
                         ToFloat3(transform.forward)));
                 }
+                PrepareFireLift();
+                PrepareFireLowFlight();
                 UpdateGrounding();
 
                 LastCommand = _inputSource?.SampleCommand(_tick)
                     ?? new PlanetMotorCommand(_tick, float2.zero, false);
+                if (FireFlightPoseActive) LastCommand = new PlanetMotorCommand(_tick, LastCommand.Move, false);
                 if (IsImpactStunned) LastCommand = new PlanetMotorCommand(_tick, float2.zero, false);
                 ushort coyoteTicks = (ushort)Mathf.Clamp(Mathf.CeilToInt(
                     (feelProfile != null ? feelProfile.CoyoteSeconds : 0.12f) /
@@ -511,7 +525,7 @@ namespace Elemental.Runtime.Characters
                     HasStableSupport, LastCommand.JumpPressed, coyoteTicks, bufferTicks);
                 _tick++;
 
-                if (!IsImpactStunned && StepAutoMantle())
+                if (!FireFlightPoseActive && !IsImpactStunned && StepAutoMantle())
                 {
                     ApplyOrientation();
                     RecordMotionFrame();
@@ -520,6 +534,7 @@ namespace Elemental.Runtime.Characters
 
                 UpdateLandingRoll();
                 ApplyMovement(LastCommand);
+                ApplyFireLift();
                 ApplyOrientation();
                 RecordMotionFrame();
 
@@ -745,6 +760,8 @@ namespace Elemental.Runtime.Characters
             {
                 desiredDirection = (forward * move.y) + (right * move.x);
             }
+
+            if(FireLowFlightActive){ApplyFireLowFlight(desiredDirection);return;}
 
             bool stableSupport = HasStableSupport;
             Vector3 movementUp = _localUp;

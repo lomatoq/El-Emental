@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 14:00:30Z" end-time="2026-09-09 14:01:03Z" duration="33.0717416">
+  <test-suite type="TestSuite" id="1554" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="401" result="Failed" site="Child" start-time="2026-09-09 14:00:30Z" end-time="2026-09-09 14:01:03Z" duration="33.071742" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1547" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="395" result="Failed" site="Child" start-time="2026-09-09 14:00:30Z" end-time="2026-09-09 14:01:03Z" duration="33.040977" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="16264" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1548" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="395" result="Failed" site="Child" start-time="2026-09-09 14:00:30Z" end-time="2026-09-09 14:01:03Z" duration="33.031297" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1549" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="395" result="Failed" site="Child" start-time="2026-09-09 14:00:30Z" end-time="2026-09-09 14:01:03Z" duration="33.021865" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1550" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="395" result="Failed" site="Child" start-time="2026-09-09 14:00:30Z" end-time="2026-09-09 14:01:03Z" duration="33.012670" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1449" name="LocalPhysicsProductionAcceptanceTests" fullname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests" classname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests" runstate="Runnable" testcasecount="15" result="Failed" site="Child" start-time="2026-09-09 14:00:31Z" end-time="2026-09-09 14:01:03Z" duration="32.978424" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1464" name="ActualSingleStoneWithProductionGravityCannotLeavePermanentlyPinnedBotAlive" fullname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests.ActualSingleStoneWithProductionGravityCannotLeavePermanentlyPinnedBotAlive" methodname="ActualSingleStoneWithProductionGravityCannotLeavePermanentlyPinnedBotAlive" classname="Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests" runstate="Runnable" seed="1636704506" result="Failed" start-time="2026-09-09 14:00:31Z" end-time="2026-09-09 14:01:03Z" duration="32.885882" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  A stable physically contacted, geometry-blocked single-stone pin left the opponent alive; inspect force threshold versus missing/sleeping contacts.
+  Expected: 0
+  But was:  27.5534668f
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.LocalPhysicsProductionAcceptanceTests+<ActualSingleStoneWithProductionGravityCannotLeavePermanentlyPinnedBotAlive>d__42.MoveNext () [0x004e0] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\LocalPhysicsProductionAcceptanceTests.cs:730
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 4565.70ms; ground=exact baked base, cacheLoad=16.64ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=1606.29ms, peakCookingPoll=0.40ms; sync=ArenaInitialize=393.23ms/15;ArenaBevel=372.82ms/175;ArenaMeshPicking=2.24ms/175;WallAwake=96.37ms/1;WallPieceVisuals=54.82ms/40;PlatformPoolAwake=9.90ms/1;PlatformRuntimeMeshes=1.36ms/12;PillarPoolAwake=19.10ms/1;PillarMeshLibrary=4.11ms/1;PillarColumns=14.98ms/1;DebrisPoolAwake=188.84ms/1;HeroFragmentPoolAwake=12.34ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\EditorRuns\single-stone-crush-012\results.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

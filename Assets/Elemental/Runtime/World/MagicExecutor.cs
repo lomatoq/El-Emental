@@ -1009,6 +1009,7 @@ namespace Elemental.Runtime.World
             if (_onlineReplicaPresentation) return;
             UpdateHeldFractureFormation();
             if (_gravityWellActive && _repairController == null) ApplyGravityWell();
+            EmitHeldMaterialShed();
             IEarthPhysicalTarget target = _vectorFieldTarget;
             if (target == null) return;
             if (!target.IsEarthTargetValid || target.Body == null)
@@ -1673,7 +1674,7 @@ namespace Elemental.Runtime.World
                 var arenaImpact = new EarthStructureImpact(
                     contact.point,
                     direction,
-                    impulse,
+                    EarthStructureImpactRouter.CollisionStrength(collision, fragment.Body),
                     EarthStructureImpactKind.Projectile,
                     fragment.FragmentId);
                 EarthStructureImpactRouter.Apply(collision.collider, in arenaImpact);

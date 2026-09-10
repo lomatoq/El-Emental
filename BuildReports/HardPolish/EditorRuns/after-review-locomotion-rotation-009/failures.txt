@@ -1,0 +1,26 @@
+Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ActualSavedFighterRunStartsStopsAndTurnReleaseStayContinuous
+  left-turn 60Hz right release rotation discontinuity at 42
+left-turn 60Hz right release rotation discontinuity at 65
+left-turn 60Hz right release rotation discontinuity at 127
+right-turn 60Hz right release rotation discontinuity at 30
+right-turn 60Hz right release rotation discontinuity at 66
+right-turn 60Hz right release rotation discontinuity at 94
+left-turn 120Hz left release rotation discontinuity at 40
+left-turn 120Hz right release rotation discontinuity at 81
+left-turn 120Hz right release rotation discontinuity at 130
+left-turn 120Hz left release rotation discontinuity at 155
+left-turn 120Hz right release rotation discontinuity at 252
+right-turn 120Hz right release rotation discontinuity at 46
+right-turn 120Hz left release rotation discontinuity at 84
+right-turn 120Hz left release rotation discontinuity at 131
+right-turn 120Hz right release rotation discontinuity at 154
+right-turn 120Hz left release rotation discontinuity at 175
+right-turn 120Hz right release rotation discontinuity at 189
+right-turn 120Hz left release rotation discontinuity at 253
+  Expected: <empty>
+  But was:  < "left-turn 60Hz right release rotation discontinuity at 42", "left-turn 60Hz right release rotation discontinuity at 65", "left-turn 60Hz right release rotation discontinuity at 127", "right-turn 60Hz right release rotation discontinuity at 30", "right-turn 60Hz right release rotation discontinuity at 66", "right-turn 60Hz right release rotation discontinuity at 94", "left-turn 120Hz left release rotation discontinuity at 40", "left-turn 120Hz right release rotation discontinuity at 81", "left-turn 120Hz right release rotation discontinuity at 130", "left-turn 120Hz left release rotation discontinuity at 155"... >
+
+at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+<ActualSavedFighterRunStartsStopsAndTurnReleaseStayContinuous>d__45.MoveNext () [0x00cac] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\LocomotionGamefeelProductionTests.cs:153
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+
+

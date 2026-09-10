@@ -105,6 +105,7 @@ namespace Elemental.Simulation.Characters
         public uint SupportId;
         public uint SupportGeneration;
         public float3 AnchorLocal;
+        public float3 CapturedAnimatedPoseLocal;
         public bool HasFilteredTarget;
         public uint FilterSupportId;
         public uint FilterSupportGeneration;
@@ -349,7 +350,14 @@ namespace Elemental.Simulation.Characters
                 previous.AnchorLocal) <= maximumLockReach;
             // A pivot is still a sequence of steps. It must yield to authored
             // swing and obey reach/clearance just like ordinary locomotion.
-            bool clearanceAllowsMaintenance = input.SoleClearance <= ReleaseClearance;
+            // Confidence curves can remain high while the actual turn foot is already
+            // lifting. Release near lift-off, before a large locked-to-authored
+            // displacement accumulates. Support-local displacement excludes platform motion.
+            bool pivotLiftOff = input.PivotingInPlace && previous.Locked &&
+                input.VerticalVelocity > .04f &&
+                math.dot(input.FallbackTargetLocal - previous.CapturedAnimatedPoseLocal,
+                    input.LocalUpLocal) > .015f;
+            bool clearanceAllowsMaintenance = input.SoleClearance <= ReleaseClearance && !pivotLiftOff;
             bool reachAllowsMaintenance = anchorReachValid;
             if (previous.Locked && sameSupport && phaseAllowsStance &&
                 reachAllowsMaintenance && clearanceAllowsMaintenance)
@@ -372,9 +380,10 @@ namespace Elemental.Simulation.Characters
 
             bool armed = input.PivotingInPlace || previous.Armed || !previous.HasPreviousClearance ||
                          input.SoleClearance >= RearmClearance;
-            bool descending = !previous.HasPreviousClearance ||
-                              input.VerticalVelocity <= 0.12f &&
-                              input.SoleClearance <= previous.PreviousClearance + DescendingTolerance;
+            bool descending = (!previous.HasPreviousClearance ||
+                               input.VerticalVelocity <= .12f &&
+                               input.SoleClearance <= previous.PreviousClearance + DescendingTolerance) &&
+                              (!input.PivotingInPlace || input.VerticalVelocity <= .02f);
             float maximumCaptureClearance = input.PivotingInPlace
                 ? 0.14f
                 : MaximumCaptureClearance;
@@ -403,6 +412,7 @@ namespace Elemental.Simulation.Characters
             {
                 if (!prepared.Maintained)
                 {
+                    state.CapturedAnimatedPoseLocal = input.FallbackTargetLocal;
                     state.AnchorLocal = input.PivotingInPlace
                         ? CaptureRenderedPivotAnchor(
                             input.FallbackTargetLocal,

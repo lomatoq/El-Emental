@@ -7,13 +7,18 @@ using Elemental.Presentation.UI;
 namespace Elemental.Presentation.DistantScenery
 {
     /// <summary>Optional additive background. No colliders, rigidbodies, network entities or gameplay changes.</summary>
-    public sealed class DistantBackdrop : MonoBehaviour
+    public sealed partial class DistantBackdrop : MonoBehaviour
     {
         [Serializable] private struct Drift
         {
             public Transform target;public Vector3 origin;public Quaternion rotation;
             public float phase,period,amplitude,angle;
             public Vector3 tangent,bitangent;public float horizontalFraction;public Vector3 spinAxis,centerOffset;public float spinDegreesPerSecond;
+        }
+        private struct SatelliteRequest
+        {
+            public int index;public Vector3 position;public Quaternion rotation;public float scale;
+            public Mesh high,low;public Bounds envelope;
         }
         public DistantBackdropProfile profile;
         public Transform planetCenter;
@@ -127,20 +132,24 @@ namespace Elemental.Presentation.DistantScenery
         private void BuildValley(Vector3 center,Vector3 forward,Vector3 right)
         {
             var occupied=new List<Bounds>();
+            var satellites=new List<SatelliteRequest>();
             var componentCache=new Dictionary<Mesh,Bounds[]>();
             int ground=Mathf.Clamp(profile.valleyGroups,8,12),floating=Mathf.Clamp(profile.floatingGroups,4,6);
             int originalCount=ground+floating, acceptedGround=0, acceptedFloating=0;
             int legacyCount=originalCount+(profile.rearContinuation?4:0);
-            int authoredCount=profile.viewComposition?Mathf.Min(44,profile.viewLandmarks.Length):0;
+            int savedCount=profile.viewComposition?Mathf.Min(44,profile.viewLandmarks.Length):0;
+            int nearCount=profile.viewComposition&&profile.hardPolishSupplements&&profile.nearLandmarks!=null?Mathf.Min(5,profile.nearLandmarks.Length):0;
+            int authoredCount=savedCount+nearCount;
             for(int i=0;i<legacyCount+authoredCount;i++)
             {
                 bool authored=i>=legacyCount;
-                var landmark=authored?profile.viewLandmarks[i-legacyCount]:default;
+                int authoredIndex=i-legacyCount;
+                var landmark=authored?(authoredIndex<savedCount?profile.viewLandmarks[authoredIndex]:profile.nearLandmarks[authoredIndex-savedCount]):default;
                 bool rear=!authored&&i>=originalCount;int rearIndex=i-originalCount;
                 bool airborne=authored?landmark.airborne:rear?rearIndex==3:i>=ground;
                 if(profile.viewComposition&&!authored&&airborne)continue;
                 int index=authored?100+i-legacyCount:rear?(airborne?floating:ground+rearIndex):(airborne?i-ground:i);
-                if(authored&&(airborne?acceptedFloating>=32:acceptedGround>=24))continue;
+                if(authored&&(airborne?acceptedFloating>=32+nearCount:acceptedGround>=24))continue;
                 if(rear && (airborne?acceptedFloating>=6:acceptedGround>=12))continue;
                 var placement=new RockRandom(unchecked(profile.seed+index*73856093+(airborne?19391:0)));
                 Mesh[] bank=airborne?profile.islandSilhouettes:authored?profile.viewGroundPillars:profile.silhouettes;
@@ -185,11 +194,9 @@ namespace Elemental.Presentation.DistantScenery
                     envelope=WorldBounds(mesh.bounds,Matrix4x4.TRS(position,rotation,Vector3.one*height));
                     if(airborne)
                     {
-                        float driftPad=Mathf.Max(Mathf.Abs(profile.levitationAmplitude.x),Mathf.Abs(profile.levitationAmplitude.y))*1.6f;
-                        // Rotation is world-up yaw only. Height must not inflate the horizontal sweep.
-                        Vector3 e=mesh.bounds.extents*height;
-                        float radius=Mathf.Sqrt(e.x*e.x+e.z*e.z)+driftPad+1f;
-                        envelope=new Bounds(envelope.center,new Vector3(2f*radius,2f*(e.y+driftPad+1f),2f*radius));
+                        envelope=FloatingMotionEnvelope(mesh.bounds,height,position,rotation,
+                            FloatingAmplitude(mesh.bounds.size.y*height,profile.levitationAmplitude),
+                            profile.horizontalMotionFraction,Mathf.Max(profile.rockingDegrees.x,profile.rockingDegrees.y));
                     }
                     bool blocked=envelope.SqrDistance(center)<Mathf.Pow(profile.planetRadius+profile.arenaExclusionPadding,2);
                     if(airborne)foreach(Bounds prior in occupied)if(prior.Intersects(envelope)){blocked=true;break;}
@@ -210,13 +217,19 @@ namespace Elemental.Presentation.DistantScenery
                 var motion=new RockRandom(unchecked(profile.motionSeed+index*19349663));
                 drift.Add(new Drift{target=pivot,origin=position,rotation=rotation,tangent=right,bitangent=forward,
                     phase=motion.Next(0,1),period=motion.Next(profile.levitationPeriod.x,profile.levitationPeriod.y),
-                    amplitude=airborne?Mathf.Clamp(height*.02f,profile.levitationAmplitude.x,profile.levitationAmplitude.y):0,
-                    angle=0,
+                    amplitude=airborne?FloatingAmplitude(mesh.bounds.size.y*height,profile.levitationAmplitude):0,
+                    angle=airborne?motion.Next(profile.rockingDegrees.x,profile.rockingDegrees.y):0,
                     horizontalFraction=airborne?profile.horizontalMotionFraction:0,
                     centerOffset=airborne?mesh.bounds.center*height:Vector3.zero,
                     spinAxis=Vector3.up,
                     spinDegreesPerSecond=airborne?motion.Next(.035f,.075f)*(index%2==0?1:-1):0});
-                if(airborne)occupied.Add(envelope);
+                if(airborne)
+                {
+                    occupied.Add(envelope);
+                    if(authored&&profile.hardPolishSupplements&&(landmark.name.StartsWith("MainIsland")||landmark.name.StartsWith("CombatIsland")))
+                        satellites.Add(new SatelliteRequest{index=index,position=position,rotation=rotation,scale=height,high=mesh,
+                            low=lowBank!=null&&variant<lowBank.Length?lowBank[variant]:null,envelope=envelope});
+                }
                 else
                 {
                     if(!componentCache.TryGetValue(mesh,out Bounds[] components))
@@ -224,6 +237,61 @@ namespace Elemental.Presentation.DistantScenery
                     Matrix4x4 matrix=Matrix4x4.TRS(position,rotation,Vector3.one*height);
                     foreach(Bounds component in components)occupied.Add(WorldBounds(component,matrix));
                 }
+            }
+            foreach(var request in satellites)
+                AddSatellites(request.index,request.position,request.rotation,request.scale,request.high,request.low,
+                    request.envelope,occupied,center,forward,right);
+        }
+        public static float FloatingAmplitude(float bodyHeight,Vector2 authoredRange)
+        {
+            float desired=Mathf.Clamp(bodyHeight*.015f,Mathf.Max(0,authoredRange.x),Mathf.Max(authoredRange.x,authoredRange.y));
+            return Mathf.Min(desired,Mathf.Max(0,bodyHeight)*.02f);
+        }
+        public static Bounds FloatingMotionEnvelope(Bounds meshBounds,float scale,Vector3 position,Quaternion rotation,
+            float amplitude,float horizontalFraction,float rockingDegrees)
+        {
+            Vector3 e=meshBounds.extents*scale;
+            // Full yaw plus two bounded rock axes about the geometric center.
+            float tiltPad=2f*e.magnitude*Mathf.Sin(Mathf.Min(90,Mathf.Abs(rockingDegrees)*2)*Mathf.Deg2Rad*.5f);
+            float horizontalPad=Mathf.Abs(amplitude*horizontalFraction)*Mathf.Sqrt(2);
+            float radius=Mathf.Sqrt(e.x*e.x+e.z*e.z)+tiltPad+horizontalPad;
+            // Vertical levitation follows the authored arena up, which need not be
+            // global Y. Include its full amplitude on every axis conservatively.
+            return new Bounds(position+rotation*(meshBounds.center*scale),
+                new Vector3(radius+Mathf.Abs(amplitude),e.y+tiltPad+Mathf.Abs(amplitude)+horizontalPad,radius+Mathf.Abs(amplitude))*2);
+        }
+        private void AddSatellites(int index,Vector3 origin,Quaternion rotation,float scale,Mesh highMesh,Mesh lowMesh,
+            Bounds mainEnvelope,List<Bounds> occupied,Vector3 center,Vector3 forward,Vector3 right)
+        {
+            var random=new RockRandom(unchecked(profile.geometrySeed+index*92821));
+            int count=Mathf.Clamp(profile.satellitesPerMainIsland,2,5);
+            for(int satellite=0;satellite<count;satellite++)
+            {
+                float size=scale*(satellite==0?.18f:random.Next(.07f,.12f));
+                float side=(index%2==0?-1:1)*(satellite==1?-1:1);
+                Vector3 position=origin+right*(side*(mainEnvelope.extents.x+size*.7f+8+satellite*5))+
+                    _up*(-scale*(.055f+satellite*.024f))+forward*random.Next(-12,12);
+                float amplitude=FloatingAmplitude(highMesh.bounds.size.y*size,profile.levitationAmplitude);
+                Bounds envelope=FloatingMotionEnvelope(highMesh.bounds,size,position,rotation,amplitude,profile.horizontalMotionFraction,profile.rockingDegrees.y);
+                bool blocked=envelope.SqrDistance(center)<Mathf.Pow(profile.planetRadius+profile.arenaExclusionPadding,2);
+                foreach(Bounds prior in occupied)if(prior.Intersects(envelope)){blocked=true;break;}
+                if(profile.exclusionVolumes!=null)foreach(Bounds box in profile.exclusionVolumes)
+                    if(envelope.Intersects(WorldBounds(box,Matrix4x4.TRS(center,Quaternion.LookRotation(forward,_up),Vector3.one))))blocked=true;
+                if(blocked){RejectedPlacements++;continue;}
+                var pivot=new GameObject("Satellite_"+index+"_"+satellite).transform;
+                pivot.SetParent(generatedRoot,false);pivot.SetPositionAndRotation(position,rotation);
+                var high=new List<Renderer>();AddRenderer(pivot,"LOD0",highMesh,Vector3.one*size,high);
+                if(lowMesh!=null)
+                {
+                    var low=new List<Renderer>();AddRenderer(pivot,"LOD1",lowMesh,Vector3.one*size,low);
+                    var lod=pivot.gameObject.AddComponent<LODGroup>();lod.SetLODs(new[]{new LOD(.04f,high.ToArray()),new LOD(.002f,low.ToArray())});lod.RecalculateBounds();
+                }
+                var motion=new RockRandom(unchecked(profile.motionSeed+index*19349663+satellite*73856093));
+                drift.Add(new Drift{target=pivot,origin=position,rotation=rotation,tangent=right,bitangent=forward,
+                    phase=motion.Next(0,1),period=motion.Next(profile.levitationPeriod.x,profile.levitationPeriod.y),
+                    amplitude=amplitude,angle=motion.Next(profile.rockingDegrees.x,profile.rockingDegrees.y),
+                    horizontalFraction=profile.horizontalMotionFraction,centerOffset=highMesh.bounds.center*size});
+                occupied.Add(envelope);
             }
         }
         // Ground libraries combine disconnected pillars. A whole-group AABB falsely fills

@@ -11,6 +11,7 @@ namespace Elemental.Presentation.Rendering
         [Min(100)] public float NearClearRange=300;
         [Min(1)] public float FarHazeDistance=1800;
         [Range(0,1)] public float MaximumOpaqueOpacity=0.60f;
+        [Range(.7f,1f)] public float MidAerialOpacityMultiplier=1f;
         [Min(400)] public float FarClosureStart=1800;
         [Min(401)] public float FarClosureEnd=3200;
         public Color DayFog=new Color(0.64f,0.82f,0.98f);
@@ -24,7 +25,7 @@ namespace Elemental.Presentation.Rendering
         [Min(5)] public float CloudDriftPeriod=160;
         private static bool Finite(Vector3 v)=>float.IsFinite(v.x)&&float.IsFinite(v.y)&&float.IsFinite(v.z);
         private static bool Finite(Vector2 v)=>float.IsFinite(v.x)&&float.IsFinite(v.y)&&v.x>0&&v.y>0;
-        public bool IsValid=>float.IsFinite(FarClosureStart)&&float.IsFinite(FarClosureEnd)&&FarClosureStart>=NearClearRange+100&&FarClosureEnd>FarClosureStart && float.IsFinite(FarChromaticPixels)&&FarChromaticPixels>=0&&FarChromaticPixels<=0.75f && CloudArt!=null && float.IsFinite(PlaneClearance)&&PlaneClearance>0 &&
+        public bool IsValid=>float.IsFinite(MidAerialOpacityMultiplier)&&MidAerialOpacityMultiplier>=.7f&&MidAerialOpacityMultiplier<=1f && float.IsFinite(FarClosureStart)&&float.IsFinite(FarClosureEnd)&&FarClosureStart>=NearClearRange+100&&FarClosureEnd>FarClosureStart && float.IsFinite(FarChromaticPixels)&&FarChromaticPixels>=0&&FarChromaticPixels<=0.75f && CloudArt!=null && float.IsFinite(PlaneClearance)&&PlaneClearance>0 &&
             float.IsFinite(HeightFalloff)&&HeightFalloff>0 && float.IsFinite(VeilDensity)&&VeilDensity>=0 &&
             float.IsFinite(SkyDistance)&&SkyDistance>=1000 && float.IsFinite(NearClearRange)&&NearClearRange>=100 &&
             float.IsFinite(FarHazeDistance)&&FarHazeDistance>0 && float.IsFinite(MaximumOpaqueOpacity)&&MaximumOpaqueOpacity>=0&&MaximumOpaqueOpacity<=1 &&

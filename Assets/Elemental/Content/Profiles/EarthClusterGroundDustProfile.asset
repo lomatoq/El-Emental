@@ -21,23 +21,23 @@ MonoBehaviour:
   gapEmissionChance: 0.8
   reducedMotionRate: 0.3
   reducedMotionSpeed: 0.35
-  maximumParticles: 384
+  maximumParticles: 112
   areaRadius: 16
-  groundRate: 18
-  stoneRate: 80
-  seamVolumeFraction: 0.35
+  groundRate: 10
+  stoneRate: 36
+  seamVolumeFraction: 0.12
   worldWind: {x: 0.9, y: 0.08, z: 0.4}
   speed: 1.45
-  gustStrength: 0.4
-  gustPeriodSeconds: 4.5
-  gustWavelengthMetres: 9
-  turbulenceStrength: 0.2
-  sizeMetres: {x: 2, y: 3.5}
-  wakeStrength: 1.4
+  gustStrength: 0.18
+  gustPeriodSeconds: 9
+  gustWavelengthMetres: 20
+  turbulenceStrength: 0.075
+  sizeMetres: {x: 0.45, y: 1.1}
+  wakeStrength: 0.85
   wakeRadius: 3
-  lifetimeSeconds: {x: 2.8, y: 4.2}
-  opacity: 0.55
-  hoverHeight: 0.18
+  lifetimeSeconds: {x: 1.2, y: 2.4}
+  opacity: 0.18
+  hoverHeight: 0.04
   stoneScanSeconds: 0.8
   maximumSettledSpeed: 0.7
   stoneMargin: 0.1

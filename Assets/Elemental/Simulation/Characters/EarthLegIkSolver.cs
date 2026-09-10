@@ -4,6 +4,17 @@ namespace Elemental.Simulation.Characters
 {
     public static class EarthStableKneeHintSolver
     {
+        public static float3 TransportHistory(float3 direction, quaternion previousFrame, quaternion currentFrame)
+        {
+            float previousLength = math.lengthsq(previousFrame.value);
+            float currentLength = math.lengthsq(currentFrame.value);
+            if (!math.all(math.isfinite(direction)) || !math.isfinite(previousLength) ||
+                !math.isfinite(currentLength) || previousLength < 1e-8f || currentLength < 1e-8f)
+                return float3.zero;
+            return math.rotate(math.mul(math.normalize(currentFrame),
+                math.inverse(math.normalize(previousFrame))), direction);
+        }
+
         public static float3 Solve(
             float3 hip,
             float3 characterForward,

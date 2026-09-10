@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="4" result="Failed(Child)" total="4" passed="2" failed="2" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 13:01:38Z" end-time="2026-09-09 13:03:01Z" duration="82.9057949">
+  <test-suite type="TestSuite" id="1552" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="399" result="Failed" site="Child" start-time="2026-09-09 13:01:38Z" end-time="2026-09-09 13:03:01Z" duration="82.905795" total="4" passed="2" failed="2" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1545" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="393" result="Failed" site="Child" start-time="2026-09-09 13:01:38Z" end-time="2026-09-09 13:03:01Z" duration="82.869361" total="4" passed="2" failed="2" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="16264" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1546" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="393" result="Failed" site="Child" start-time="2026-09-09 13:01:38Z" end-time="2026-09-09 13:03:01Z" duration="82.857163" total="4" passed="2" failed="2" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1547" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="393" result="Failed" site="Child" start-time="2026-09-09 13:01:38Z" end-time="2026-09-09 13:03:01Z" duration="82.845679" total="4" passed="2" failed="2" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1548" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="393" result="Failed" site="Child" start-time="2026-09-09 13:01:38Z" end-time="2026-09-09 13:03:01Z" duration="82.832824" total="4" passed="2" failed="2" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1023" name="SeptemberAnimationRescueRuntimeTests" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" testcasecount="57" result="Failed" site="Child" start-time="2026-09-09 13:01:38Z" end-time="2026-09-09 13:03:01Z" duration="82.677787" total="4" passed="2" failed="2" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1036" name="ActualLinebreakerMovingCounterPunchLargeUsesRealStonePartitions" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ActualLinebreakerMovingCounterPunchLargeUsesRealStonePartitions" methodname="ActualLinebreakerMovingCounterPunchLargeUsesRealStonePartitions" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1363550383" result="Failed" start-time="2026-09-09 13:01:38Z" end-time="2026-09-09 13:02:01Z" duration="23.246618" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  No unobstructed real incoming path: lift=0 distance=4.45 sample=0 blocker=Arena_Gate_INTACT penetration=1.554758; lift=0 distance=4.0625 sample=0 blocker=Arena_Gate_INTACT penetration=1.167264; lift=0 distance=3.675 sample=0 blocker=Arena_Gate_INTACT penetration=0.7797699; lift=0 distance=3.2875 sample=0 blocker=Arena_Gate_INTACT penetration=0.3922758; lift=0 distance=2.9 sample=0 blocker=Arena_Gate_INTACT penetration=0.004781961; lift=0.25 distance=4.45 sample=0 blocker=Arena_Gate_INTACT penetration=1.556145; lift=0.25 distance=4.0625 sample=0 blocker=Arena_Gate_INTACT penetration=1.168651; lift=0.25 distance=3.675 sample=0 blocker=Arena_Gate_INTACT penetration=0.7811573; lift=0.25 distance=3.2875 sample=0 blocker=Arena_Gate_INTACT penetration=0.3936632; lift=0.25 distance=2.9 sample=0 blocker=Arena_Gate_INTACT penetration=0.006169558; lift=0.5 distance=4.45 sample=0 blocker=Arena_Gate_INTACT penetration=1.557532; lift=0.5 distance=4.0625 sample=0 blocker=Arena_Gate_INTACT penetration=1.170039; lift=0.5 distance=3.675 sample=0 blocker=Arena_Gate_INTACT penetration=0.7825446; lift=0.5 distance=3.2875 sample=0 blocker=Arena_Gate_INTACT penetration=0.3950505; lift=0.5 distance=2.9 sample=0 blocker=Arena_Gate_INTACT penetration=0.007556438; lift=0.75 distance=4.45 sample=0 blocker=Arena_Gate_INTACT penetration=1.55892; lift=0.75 distance=4.0625 sample=0 blocker=Arena_Gate_INTACT penetration=1.171426; lift=0.75 distance=3.675 sample=0 blocker=Arena_Gate_INTACT penetration=0.7839319; lift=0.75 distance=3.2875 sample=0 blocker=Arena_Gate_INTACT penetration=0.3964376; lift=0.75 distance=2.9 sample=0 blocker=Arena_Gate_INTACT penetration=0.008944035
+  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+<CaptureActualCounter>d__29.MoveNext () [0x00421] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\HardPolishStoneCounterProductionTests.cs:71
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 4531.77ms; ground=exact baked base, cacheLoad=17.73ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=1592.22ms, peakCookingPoll=0.39ms; sync=ArenaInitialize=321.20ms/15;ArenaBevel=300.81ms/175;ArenaMeshPicking=1.96ms/175;WallAwake=110.18ms/1;WallPieceVisuals=60.85ms/40;PlatformPoolAwake=11.08ms/1;PlatformRuntimeMeshes=1.46ms/12;PillarPoolAwake=19.50ms/1;PillarMeshLibrary=4.29ms/1;PillarColumns=15.20ms/1;DebrisPoolAwake=170.05ms/1;HeroFragmentPoolAwake=14.36ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1035" name="ActualLinebreakerMovingCounterPunchMediumUsesRealStonePartitions" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ActualLinebreakerMovingCounterPunchMediumUsesRealStonePartitions" methodname="ActualLinebreakerMovingCounterPunchMediumUsesRealStonePartitions" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1212295508" result="Failed" start-time="2026-09-09 13:02:01Z" end-time="2026-09-09 13:02:12Z" duration="10.889429" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  No unobstructed real incoming path: lift=0 distance=3.8 sample=0 blocker=Arena_Gate_INTACT penetration=0.2095084; lift=0 distance=3.4125 sample=0 blocker=Rumble Linebreaker Bot penetration=0.9418623; lift=0 distance=3.025 sample=0 blocker=Rumble Linebreaker Bot penetration=0.9966273; lift=0 distance=2.6375 sample=0 blocker=Rumble Linebreaker Bot penetration=0.7230564; lift=0 distance=2.25 sample=0 blocker=Rumble Linebreaker Bot penetration=0.3579156; lift=0.25 distance=3.8 sample=0 blocker=Arena_Gate_INTACT penetration=0.2108957; lift=0.25 distance=3.4125 sample=0 blocker=Rumble Linebreaker Bot penetration=0.9511178; lift=0.25 distance=3.025 sample=0 blocker=Rumble Linebreaker Bot penetration=0.9874244; lift=0.25 distance=2.6375 sample=0 blocker=Rumble Linebreaker Bot penetration=0.7086293; lift=0.25 distance=2.25 sample=0 blocker=Rumble Linebreaker Bot penetration=0.3420854; lift=0.5 distance=3.8 sample=0 blocker=Arena_Gate_INTACT penetration=0.2122828; lift=0.5 distance=3.4125 sample=0 blocker=Rumble Linebreaker Bot penetration=0.735415; lift=0.5 distance=3.025 sample=0 blocker=Rumble Linebreaker Bot penetration=0.7595578; lift=0.5 distance=2.6375 sample=0 blocker=Rumble Linebreaker Bot penetration=0.6663031; lift=0.5 distance=2.25 sample=0 blocker=Rumble Linebreaker Bot penetration=0.3262552; lift=0.75 distance=3.8 sample=0 blocker=Arena_Gate_INTACT penetration=0.2136705; lift=0.75 distance=3.4125 sample=0 blocker=Rumble Linebreaker Bot penetration=0.48827; lift=0.75 distance=3.025 sample=0 blocker=Rumble Linebreaker Bot penetration=0.5109432; lift=0.75 distance=2.6375 sample=0 blocker=Rumble Linebreaker Bot penetration=0.4607911; lift=0.75 distance=2.25 sample=0 blocker=Rumble Linebreaker Bot penetration=0.2283928
+  Expected: True
+  But was:  False
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+<CaptureActualCounter>d__29.MoveNext () [0x00421] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\HardPolishStoneCounterProductionTests.cs:71
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3522.31ms; ground=exact baked base, cacheLoad=10.90ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=964.87ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=321.20ms/15;ArenaBevel=300.81ms/175;ArenaMeshPicking=1.96ms/175;WallAwake=110.18ms/1;WallPieceVisuals=60.85ms/40;PlatformPoolAwake=11.08ms/1;PlatformRuntimeMeshes=1.46ms/12;PillarPoolAwake=19.50ms/1;PillarMeshLibrary=4.29ms/1;PillarColumns=15.20ms/1;DebrisPoolAwake=170.05ms/1;HeroFragmentPoolAwake=14.36ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1034" name="ActualLinebreakerMovingCounterPunchUsesRealStonePartitions" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ActualLinebreakerMovingCounterPunchUsesRealStonePartitions" methodname="ActualLinebreakerMovingCounterPunchUsesRealStonePartitions" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1774832039" result="Passed" start-time="2026-09-09 13:02:12Z" end-time="2026-09-09 13:02:25Z" duration="12.377920" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3250.22ms; ground=exact baked base, cacheLoad=12.28ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=989.38ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=321.20ms/15;ArenaBevel=300.81ms/175;ArenaMeshPicking=1.96ms/175;WallAwake=110.18ms/1;WallPieceVisuals=60.85ms/40;PlatformPoolAwake=11.08ms/1;PlatformRuntimeMeshes=1.46ms/12;PillarPoolAwake=19.50ms/1;PillarMeshLibrary=4.29ms/1;PillarColumns=15.20ms/1;DebrisPoolAwake=170.05ms/1;HeroFragmentPoolAwake=14.36ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1025" name="ActualSavedCharacterAndDustCrossSunsetContinuously" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ActualSavedCharacterAndDustCrossSunsetContinuously" methodname="ActualSavedCharacterAndDustCrossSunsetContinuously" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="1209088586" result="Passed" start-time="2026-09-09 13:02:25Z" end-time="2026-09-09 13:03:01Z" duration="36.072589" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="300000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3442.35ms; ground=exact baked base, cacheLoad=11.06ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=937.99ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=321.20ms/15;ArenaBevel=300.81ms/175;ArenaMeshPicking=1.96ms/175;WallAwake=110.18ms/1;WallPieceVisuals=60.85ms/40;PlatformPoolAwake=11.08ms/1;PlatformRuntimeMeshes=1.46ms/12;PillarPoolAwake=19.50ms/1;PillarMeshLibrary=4.29ms/1;PillarColumns=15.20ms/1;DebrisPoolAwake=170.05ms/1;HeroFragmentPoolAwake=14.36ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\EditorRuns\after-review-dusk-counter-002\results.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

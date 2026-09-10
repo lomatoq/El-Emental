@@ -30,7 +30,7 @@ namespace Elemental.Presentation.UI
         private TMP_InputField _codeInput;
         private Slider _master, _ui, _sensitivity;
         private TMP_Text _masterValue, _uiValue, _sensitivityValue;
-        private Toggle _reduced;
+        private Toggle _reduced, _reducedFlashes;
         private FrontendButton[] _buttons;
         private bool _built;
         private readonly System.Collections.Generic.List<MenuLayoutBinding> _sidebarLayout=new();
@@ -47,8 +47,21 @@ namespace Elemental.Presentation.UI
         private bool _departing;
         private float _departureAge, _departureStartX, _departureStartAlpha;
         private Image _startVeil;
-        public float StartIntroSeconds => _flow.Preferences.ReducedMotion ? .18f : .82f;
-        public float StartCameraCueSeconds => _flow.Preferences.ReducedMotion ? .08f : .58f;
+        public float StartIntroSeconds => CinematicMenuCamera.DepartureSeconds(_flow.Preferences.ReducedMotion);
+        public float StartCameraCueSeconds => 0;
+        public float StartVeilAlpha => _startVeil != null && _startVeil.gameObject.activeSelf ? _startVeil.color.a : 0;
+        public void PrepareDeparture()
+        {
+            _group.interactable = false; _group.blocksRaycasts = false;
+            SetCountdown(0); SetStartVeil(0);
+        }
+        public void CancelDeparture()
+        {
+            _departing = false;
+            _panelStartAlpha = _group.alpha; _panelStartX = _renderedPanelX;
+            _panelTrack = "panel_enter"; _panelTrackAge = 0; _panelMotionInitialized = true;
+            SetCountdown(0); SetStartVeil(0);
+        }
         public void BeginDeparture()
         {
             if(!_departing)_audio?.PlayPanelMove();
@@ -59,13 +72,8 @@ namespace Elemental.Presentation.UI
         public void SetStartVeil(float age)
         {
             if(_startVeil==null)return;
-            bool reduced=_flow.Preferences.ReducedMotion;
-            float cue=StartCameraCueSeconds;
-            float enter=reduced?0:.44f;
-            float a=age<cue?Mathf.SmoothStep(0,1,Mathf.InverseLerp(enter,cue,age)):
-                1-Mathf.SmoothStep(0,1,Mathf.InverseLerp(cue,StartIntroSeconds,age));
-            _startVeil.color=new Color(.012f,.017f,.024f,a);
-            _startVeil.gameObject.SetActive(a>0);
+            _startVeil.color = Color.clear;
+            _startVeil.gameObject.SetActive(false);
         }
         private float _pageRevealLead;
         private void LateUpdate()
@@ -119,6 +127,7 @@ namespace Elemental.Presentation.UI
         private readonly Graphic[] _elementGlints = new Graphic[4];
         private readonly Graphic[] _elementGlows = new Graphic[4];
         private Image _activeElementGlyph;
+        private Material _elementCardHue, _elementButtonHue;
         private readonly UiContourBloom[] _elementBlooms = new UiContourBloom[4];
         private UiContourBloom _cardBloom;
         private TMP_Text _activeElementTraits;
@@ -304,7 +313,13 @@ namespace Elemental.Presentation.UI
             var label = Label(_reduced.transform, "REDUCED MOTION", 24, _theme.text); Place(label.rectTransform, 52, 0, 410, 44);
             _master.onValueChanged.AddListener(_ => SaveSettings()); _ui.onValueChanged.AddListener(_ => SaveSettings());
             _sensitivity.onValueChanged.AddListener(_ => SaveSettings()); _reduced.onValueChanged.AddListener(_ => SaveSettings());
-            Button(parent, "BACK", settingsOffset + 348, 2, () => _flow.Back(), _theme.stoneSkin?.backIcon);
+            _reducedFlashes=Instantiate(_reduced,parent);
+            _reducedFlashes.name="Reduced flashes";
+            Place((RectTransform)_reducedFlashes.transform,0,settingsOffset+337,ReferenceActive?560:470,48);
+            _reducedFlashes.GetComponentInChildren<TextMeshProUGUI>().text="REDUCED FLASHES";
+            _reducedFlashes.onValueChanged.RemoveAllListeners();
+            _reducedFlashes.onValueChanged.AddListener(_=>SaveSettings());
+            Button(parent, "BACK", settingsOffset + 398, 2, () => _flow.Back(), _theme.stoneSkin?.backIcon);
         }
         private void BuildHost(Transform parent)
         {
@@ -417,7 +432,7 @@ namespace Elemental.Presentation.UI
         {
             var p = _flow.Preferences;
             _master.SetValueWithoutNotify(p.MasterVolume); _ui.SetValueWithoutNotify(p.UIVolume);
-            _sensitivity.SetValueWithoutNotify(p.Sensitivity); _reduced.SetIsOnWithoutNotify(p.ReducedMotion);
+            _sensitivity.SetValueWithoutNotify(p.Sensitivity); _reduced.SetIsOnWithoutNotify(p.ReducedMotion); _reducedFlashes.SetIsOnWithoutNotify(p.ReducedFlashes);
             _masterValue.text = Mathf.RoundToInt(p.MasterVolume * 100f).ToString() + "%";
             _uiValue.text = Mathf.RoundToInt(p.UIVolume * 100f).ToString() + "%";
             _sensitivityValue.text = p.Sensitivity.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + "x";
@@ -425,6 +440,7 @@ namespace Elemental.Presentation.UI
         }
         private void SaveSettings()
         {
+            _flow.Preferences.SetReducedFlashes(_reducedFlashes.isOn);
             _flow.Preferences.Set(_master.value, _ui.value, _sensitivity.value, _reduced.isOn);
             _flow.ApplyPreferences(); _flow.Preferences.Save(); RefreshSettings();
         }
@@ -522,12 +538,14 @@ namespace Elemental.Presentation.UI
             }
             var ribbon=Image(parent,"Active element ribbon",Color.white); ribbon.sprite=skin.referenceCard!=null?skin.referenceCard:skin.ribbon; ribbon.type=UnityEngine.UI.Image.Type.Simple;
             ribbon.raycastTarget=false; Place(ribbon.rectTransform,-12,154,594,133);
+            _elementCardHue=ElementalMenuHue.Create();_elementButtonHue=ElementalMenuHue.Create();ribbon.material=_elementCardHue;
             _activeElementGlyph=Image(ribbon.transform,"Active element glyph",Color.white); _activeElementGlyph.preserveAspect=true; _activeElementGlyph.raycastTarget=false; Place(_activeElementGlyph.rectTransform,65,18,68,68);
             _cardBloom=UiContourBloom.Create(_activeElementGlyph,new Color(.84f,1,.45f),11);
             _activeElementLabel=Label(ribbon.transform,"",21,_theme.accent); Place(_activeElementLabel.rectTransform,180,8,348,34);
-            _activeElementLabel.alignment=TextAlignmentOptions.Center;
-            _activeElementTraits=Label(ribbon.transform,"",13,_theme.text); Place(_activeElementTraits.rectTransform,180,48,348,26);
-            _activeElementTraits.fontSize=13; _activeElementTraits.characterSpacing=2; _activeElementTraits.alignment=TextAlignmentOptions.Center;
+            _activeElementLabel.alignment=TextAlignmentOptions.Midline;
+            // Sprite crop: separator y50, lower inside edge y94. Center text at y72.
+            _activeElementTraits=Label(ribbon.transform,"",13,_theme.text); Place(_activeElementTraits.rectTransform,174,55,354,34);
+            _activeElementTraits.fontSize=16; _activeElementTraits.characterSpacing=.8f; _activeElementTraits.alignment=TextAlignmentOptions.Midline;
             _lastStatusElement=(Elemental.Simulation.Magic.ElementId)byte.MaxValue;
         }
         private void UpdateReferenceMotion()
@@ -584,6 +602,7 @@ namespace Elemental.Presentation.UI
                 if(selected!=_lastStatusElement)
                 {
                     _menuElementAge=0;
+                    ApplyElementHue(selected);
                     _lastStatusElement=selected;_activeElementLabel.text=selected.ToString().ToUpperInvariant()+" ELEMENT ACTIVE";
                     _footerMarkerFrom=_footerMarker!=null?_footerMarker.anchoredPosition.x:50;
                     for(int i=0;i<FooterNames.Length;i++)
@@ -623,6 +642,20 @@ namespace Elemental.Presentation.UI
                     _elementGlints[i].canvasRenderer.SetAlpha(active?(reduced?.5f:.55f+.35f*Mathf.Pow(.5f+.5f*Mathf.Sin(Time.unscaledTime*1.8f),4)):0);
                 }
             }
+        }
+        private void ApplyElementHue(Elemental.Simulation.Magic.ElementId selected)
+        {
+            ElementalMenuHue.Apply(_elementCardHue,selected,.20f);
+            ElementalMenuHue.Apply(_elementButtonHue,selected,.13f);
+            Color tint=ElementalMenuHue.Accent(selected);
+            foreach(var button in _buttons)button.SetElementAppearance(_elementButtonHue,tint);
+            _cardBloom.color=tint;if(_menuMotes!=null)_menuMotes.color=tint;
+            for(int i=0;i<4;i++){_elementBlooms[i].color=tint;_elementGlows[i].color=tint;}
+        }
+        private void OnDestroy()
+        {
+            if(_elementCardHue!=null)Destroy(_elementCardHue);
+            if(_elementButtonHue!=null)Destroy(_elementButtonHue);
         }
         private static void Ornament(Transform parent, string name, Sprite sprite, float x, float y, float width, float height)
         {

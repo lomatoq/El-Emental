@@ -31,6 +31,25 @@ namespace Elemental.Simulation.Structures
     {
         public const float MinimumOrdinaryImpulse = 95f;
 
+        public static float NormalContactImpulse(float closingSpeed,float effectiveMass,float solverImpulse)
+        {
+            if(!float.IsFinite(closingSpeed)||!float.IsFinite(effectiveMass)||!float.IsFinite(solverImpulse)||
+                closingSpeed<.75f||effectiveMass<=0f||solverImpulse<0f)return 0f;
+            float momentum=closingSpeed*effectiveMass;
+            return float.IsFinite(momentum)?Math.Min(2f*momentum,Math.Max(momentum,solverImpulse)):0f;
+        }
+
+        // Damage is a persistent history, while momentum belongs only to this hit.
+        // This budget is shared across direct releases; unsupported pieces get no kick.
+        public static float ReleaseImpulsePerPiece(float currentImpulse, int requestedCount)
+            => float.IsFinite(currentImpulse) && currentImpulse > 0f && requestedCount > 0
+                ? currentImpulse / requestedCount : 0f;
+
+        public static bool IsMeaningfulDamage(float impulse, float threshold, float minimumFraction)
+            => float.IsFinite(impulse) && float.IsFinite(threshold) && float.IsFinite(minimumFraction) &&
+                impulse >= Math.Max(1f, Math.Max(1f, threshold) * Math.Clamp(minimumFraction, 0f, 1f));
+
+
         public static EarthArenaFractureDecision Resolve(
             bool ordinaryDamageEnabled,
             EarthArenaFractureTrigger trigger,

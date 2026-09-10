@@ -50,6 +50,8 @@ namespace Elemental.Presentation.UI
         private bool _networkRound;
         public FrontendPreferences Preferences { get; } = new FrontendPreferences();
         public FrontendState State { get; private set; } = FrontendState.Loading;
+        public bool IsNetworkRound => _networkRound;
+        public EarthMvpDuelController MatchController => duel;
         public bool HasEnteredCombat { get; private set; }
         public bool IsWorldReady => (readiness == null || readiness.IsReady) &&
             (duel == null || !duel.ArenaResetInProgress && duel.ArenaResetError == null);
@@ -88,19 +90,26 @@ namespace Elemental.Presentation.UI
             if (State == FrontendState.Main) view.SetPlayAvailable(IsWorldReady);
             if (State == FrontendState.Starting)
             {
-                if (!IsWorldReady) return;
-                _transition += Time.unscaledDeltaTime;
-                view.SetStartVeil(_transition);
-                if(!_countdownFramingStarted && _transition>=view.StartCameraCueSeconds)
+                if (!IsWorldReady)
                 {
-                    _countdownFramingStarted=true;
-                    menuCamera.BeginCountdown(Preferences.ReducedMotion,theme.countdownCameraBlendSeconds);
+                    view.SetStatus(duel.ArenaResetError ?? "PREPARING ARENA", duel.ArenaResetError != null);
+                    return;
                 }
-                if(_transition<view.StartIntroSeconds)return;
+                if (!_countdownFramingStarted)
+                {
+                    _countdownFramingStarted = true;
+                    view.SetStatus(""); view.BeginDeparture();
+                    menuCamera.BeginCountdown(Preferences.ReducedMotion, theme.countdownCameraBlendSeconds);
+                }
+                _transition += Time.unscaledDeltaTime;
+                float departureSeconds = CinematicMenuCamera.DepartureSeconds(Preferences.ReducedMotion);
+                if (!menuCamera.DepartureComplete)
+                    menuCamera.SetDepartureProgress(_transition / departureSeconds, Preferences.ReducedMotion);
+                if (!menuCamera.DepartureComplete) return;
                 float duration = Mathf.Max(1f, theme.countdownSeconds);
                 float blendDuration = Mathf.Clamp(theme.countdownCameraBlendSeconds, .1f, duration);
                 float remaining = _networkRound && _networkCountdownRemaining != null
-                    ? _networkCountdownRemaining() : Mathf.Max(0f, duration - (_transition-view.StartIntroSeconds));
+                    ? _networkCountdownRemaining() : Mathf.Max(0f, duration - (_transition-departureSeconds));
                 view.SetCountdown(Mathf.CeilToInt(remaining));
                 menuCamera.SetCountdownDollyProgress((duration - remaining) / duration,
                     Mathf.Clamp01(1f - remaining / blendDuration), Preferences.ReducedMotion);
@@ -128,7 +137,7 @@ namespace Elemental.Presentation.UI
             if(!_restartSubscribed){duel.RoundRestarted+=OnRoundRestarted;duel.ArenaRestoreFinished+=OnArenaRestoreFinished;_restartSubscribed=true;}
         }
         private void OnRoundRestarted()=>SyncWorldHold();
-        private void OnArenaRestoreFinished() { if(menuCamera!=null && menuCamera.OwnsPresentation)menuCamera.Reframe(Preferences.ReducedMotion); }
+        private void OnArenaRestoreFinished() { if(State!=FrontendState.Starting && menuCamera!=null && menuCamera.OwnsPresentation)menuCamera.Reframe(Preferences.ReducedMotion); }
         private void SyncWorldHold()
         {
             bool hold=Elemental.Simulation.Time.FrontendWorldClockPolicy.ShouldHold(
@@ -150,6 +159,7 @@ namespace Elemental.Presentation.UI
         public bool BeginBot()
         {
             if (!_built || !IsWorldReady || State != FrontendState.Main) return false;
+            menuCamera.CaptureDepartureStart();
             _networkRound = false;
             audioFeedback.Play(UIAudioCue.Confirm); State = FrontendState.Starting; _transition = 0;
             duel.SetRoundReady(false); duel.RestartRound();
@@ -159,7 +169,7 @@ namespace Elemental.Presentation.UI
         {
             _music?.SetContext(State);
             _countdownCameraReleased = false; _countdownFramingStarted=false;
-            view.BeginDeparture();
+            view.PrepareDeparture();
         }
         public void ShowMain(string message = null)
         {
@@ -222,9 +232,10 @@ namespace Elemental.Presentation.UI
         }
         public void EndMatch()
         {
-            if (State != FrontendState.Paused && State != FrontendState.Combat &&
+            if (State != FrontendState.Starting && State != FrontendState.Paused && State != FrontendState.Combat &&
                 !(State == FrontendState.Settings && _settingsFromPause)) return;
             RestorePauseState();
+            if (State == FrontendState.Starting) view.CancelDeparture();
             if (_networkRound)
             {
                 State = FrontendState.Ending; view.SetVisibility(1, false); view.SetStatus("ENDING MATCH...");
@@ -234,8 +245,9 @@ namespace Elemental.Presentation.UI
         }
         public void Back()
         {
-            if (!_built || State is FrontendState.Starting or FrontendState.Loading or FrontendState.Ending) return;
+            if (!_built || State is FrontendState.Loading or FrontendState.Ending) return;
             audioFeedback.Play(UIAudioCue.Back);
+            if (State == FrontendState.Starting) { EndMatch(); return; }
             if (State == FrontendState.Combat) { Pause(); return; }
             if (State == FrontendState.Paused) { Resume(); return; }
             if (State == FrontendState.Settings && _settingsFromPause) { ShowPausePage(); return; }
@@ -261,6 +273,7 @@ namespace Elemental.Presentation.UI
         public bool BeginOnlineMatch(Func<float> countdownRemaining)
         {
             if (!_built || !IsWorldReady || State is not (FrontendState.Host or FrontendState.Join)) return false;
+            menuCamera.CaptureDepartureStart();
             _networkCountdownRemaining = countdownRemaining ?? throw new ArgumentNullException(nameof(countdownRemaining));
             _networkRound = true; State = FrontendState.Starting; _transition = 0;
             audioFeedback.Play(UIAudioCue.Connect); view.SetVisibility(1, false);
@@ -295,4 +308,3 @@ namespace Elemental.Presentation.UI
         }
     }
 }
-

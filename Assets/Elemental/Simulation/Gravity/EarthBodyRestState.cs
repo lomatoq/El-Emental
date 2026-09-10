@@ -7,7 +7,7 @@ namespace Elemental.Simulation.Gravity
         private float _quietSeconds;
         public bool Step(bool supported, float3 velocity, float3 angularVelocity, float deltaTime)
         {
-            if (!supported || !math.all(math.isfinite(velocity)) || !math.all(math.isfinite(angularVelocity)) ||
+            if (!math.isfinite(deltaTime) || deltaTime <= 0f || !supported || !math.all(math.isfinite(velocity)) || !math.all(math.isfinite(angularVelocity)) ||
                 math.lengthsq(velocity) > .07f*.07f || math.lengthsq(angularVelocity) > .12f*.12f)
             { _quietSeconds=0f; return false; }
             _quietSeconds += math.max(0f,deltaTime);

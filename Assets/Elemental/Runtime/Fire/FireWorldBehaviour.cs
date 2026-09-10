@@ -20,12 +20,14 @@ namespace Elemental.Runtime.Fire
         private uint[] _generations;
         private FireFieldNode[][] _requested;
         private int[] _requestedCount;
+        private Transform[] _emitterRoots;
         private GameObject _queryObject;
         private FireEnvironmentAdapter _environment;
         private uint _tick;
         public FireWorld World { get; private set; }
         public FireEnvironmentAdapter Environment => _environment;
-        public bool IsReady => World != null && gravityWorld != null && gravityWorld.IsReady;
+        public Vector3 SampleUp(Vector3 point) => (Vector3)gravityWorld.World.Sample((float3)point, _tick).Up;
+        public bool IsReady => isActiveAndEnabled && World != null && gravityWorld != null && gravityWorld.IsReady;
 
         public void Configure(GravityWorldBehaviour gravity, FireWorldSettings settings, int mask = ~0, Transform ignoredRoot = null)
         {
@@ -50,6 +52,7 @@ namespace Elemental.Runtime.Fire
             World = new FireWorld(settings);
             _caches = new FireContactCache[World.Capacity]; _generations = new uint[World.Capacity];
             _requested = new FireFieldNode[World.Capacity][]; _requestedCount = new int[World.Capacity];
+            _emitterRoots = new Transform[World.Capacity];
             for (int i = 0; i < _caches.Length; i++)
             { _caches[i] = new FireContactCache(); _requested[i] = new FireFieldNode[FireWorld.MaximumNodes]; }
             _queryObject = new GameObject("Fire overlap query (disabled collider)") { hideFlags = HideFlags.HideAndDontSave };
@@ -58,6 +61,9 @@ namespace Elemental.Runtime.Fire
         }
 
         public bool TryCreate(uint seed, float energy, FireFieldNode node, out FireGroupHandle handle)
+            => TryCreate(seed, energy, node, ignoredEmitterRoot, out handle);
+
+        public bool TryCreate(uint seed, float energy, FireFieldNode node, Transform emitterRoot, out FireGroupHandle handle)
         {
             handle = default;
             if (!IsReady) return false;
@@ -65,8 +71,9 @@ namespace Elemental.Runtime.Fire
             if (!World.TryCreate(seed, energy, in node, out handle)) return false;
             _requested[handle.Slot][0] = node; _requestedCount[handle.Slot] = 1;
             _caches[handle.Slot].Clear(); _generations[handle.Slot] = handle.Generation;
+            _emitterRoots[handle.Slot] = emitterRoot;
             _scratch.Nodes[0] = node;
-            _environment.Collect(_scratch.Nodes, 1, UnityEngine.Time.fixedDeltaTime, World.Time, _caches[handle.Slot]);
+            _environment.Collect(_scratch.Nodes, 1, UnityEngine.Time.fixedDeltaTime, World.Time, _caches[handle.Slot], emitterRoot);
             World.TrySetNodes(handle, _scratch.Nodes, 1);
             int contacts = _caches[handle.Slot].CopyCurrent(_environment.Resolver, World.Time, _patches);
             World.TrySetContacts(handle, _patches, contacts);
@@ -108,7 +115,7 @@ namespace Elemental.Runtime.Fire
                         node.Up = gravityWorld.World.Sample((node.A + node.B) * 0.5f, _tick).Up;
                         _scratch.Nodes[i] = node;
                     }
-                    _environment.Collect(_scratch.Nodes, _scratch.NodeCount, UnityEngine.Time.fixedDeltaTime, World.Time, _caches[slot]);
+                    _environment.Collect(_scratch.Nodes, _scratch.NodeCount, UnityEngine.Time.fixedDeltaTime, World.Time, _caches[slot], _emitterRoots[slot]);
                     World.TrySetNodes(group, _scratch.Nodes, _scratch.NodeCount);
                     int count = _caches[slot].CopyCurrent(_environment.Resolver, World.Time, _patches);
                     World.TrySetContacts(group, _patches, count);

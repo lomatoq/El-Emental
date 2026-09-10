@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="4" result="Failed(Child)" total="4" passed="1" failed="3" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-10 10:11:40Z" end-time="2026-09-10 10:15:35Z" duration="234.675125">
+  <test-suite type="TestSuite" id="1608" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="454" result="Failed" site="Child" start-time="2026-09-10 10:11:40Z" end-time="2026-09-10 10:15:35Z" duration="234.675125" total="4" passed="1" failed="3" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1601" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="448" result="Failed" site="Child" start-time="2026-09-10 10:11:40Z" end-time="2026-09-10 10:15:35Z" duration="234.606427" total="4" passed="1" failed="3" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="34284" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1602" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="448" result="Failed" site="Child" start-time="2026-09-10 10:11:40Z" end-time="2026-09-10 10:15:35Z" duration="234.595970" total="4" passed="1" failed="3" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1603" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="448" result="Failed" site="Child" start-time="2026-09-10 10:11:40Z" end-time="2026-09-10 10:15:35Z" duration="234.586197" total="4" passed="1" failed="3" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1604" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="448" result="Failed" site="Child" start-time="2026-09-10 10:11:40Z" end-time="2026-09-10 10:15:35Z" duration="234.576712" total="4" passed="1" failed="3" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1091" name="HardPolishFireStreamBindingRuntimeTests" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" testcasecount="44" result="Passed" start-time="2026-09-10 10:11:40Z" end-time="2026-09-10 10:12:08Z" duration="27.931462" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1119" name="FireSphereDeflectsIncomingPhysicalBodyAndCancelClearsState" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.FireSphereDeflectsIncomingPhysicalBodyAndCancelClearsState" methodname="FireSphereDeflectsIncomingPhysicalBodyAndCancelClearsState" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="797985683" result="Passed" start-time="2026-09-10 10:11:40Z" end-time="2026-09-10 10:12:08Z" duration="27.883933" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 4591.34ms; ground=exact baked base, cacheLoad=15.89ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=1214.68ms, peakCookingPoll=0.31ms; sync=ArenaInitialize=52.19ms/15;ArenaBevel=37.95ms/175;ArenaMeshPicking=1.24ms/175;WallAwake=94.03ms/1;WallPieceVisuals=52.61ms/40;PlatformPoolAwake=9.48ms/1;PlatformRuntimeMeshes=1.28ms/12;PillarPoolAwake=17.41ms/1;PillarMeshLibrary=4.05ms/1;PillarColumns=13.35ms/1;DebrisPoolAwake=162.55ms/1;HeroFragmentPoolAwake=14.17ms/1.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+Physics.ClosestPoint can only be used with a BoxCollider, SphereCollider, CapsuleCollider and a convex MeshCollider.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1408" name="HardPolishSchoolInputTests" fullname="Elemental.Tests.PlayMode.HardPolishSchoolInputTests" classname="Elemental.Tests.PlayMode.HardPolishSchoolInputTests" runstate="Runnable" testcasecount="8" result="Failed" site="Child" start-time="2026-09-10 10:12:08Z" end-time="2026-09-10 10:15:35Z" duration="206.544709" total="3" passed="0" failed="3" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1412" name="ActualMouseWeavesPowerShootsChargesAndCancelsHeldInput" fullname="Elemental.Tests.PlayMode.HardPolishSchoolInputTests.ActualMouseWeavesPowerShootsChargesAndCancelsHeldInput" methodname="ActualMouseWeavesPowerShootsChargesAndCancelsHeldInput" classname="Elemental.Tests.PlayMode.HardPolishSchoolInputTests" runstate="Runnable" seed="507953047" result="Failed" start-time="2026-09-10 10:12:08Z" end-time="2026-09-10 10:12:58Z" duration="49.933476" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: Orbit
+  But was:  Flood
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.HardPolishSchoolInputTests+<ActualMouseWeavesPowerShootsChargesAndCancelsHeldInput>d__3.MoveNext () [0x0042d] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\FireWeaveProductionTests.cs:30
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3578.19ms; ground=exact baked base, cacheLoad=11.21ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=793.93ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=52.19ms/15;ArenaBevel=37.95ms/175;ArenaMeshPicking=1.24ms/175;WallAwake=94.03ms/1;WallPieceVisuals=52.61ms/40;PlatformPoolAwake=9.48ms/1;PlatformRuntimeMeshes=1.28ms/12;PillarPoolAwake=17.41ms/1;PillarMeshLibrary=4.05ms/1;PillarColumns=13.35ms/1;DebrisPoolAwake=162.55ms/1;HeroFragmentPoolAwake=14.17ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1410" name="MiddleContextDoesNotReinterpretAlreadyHeldMouseButtons" fullname="Elemental.Tests.PlayMode.HardPolishSchoolInputTests.MiddleContextDoesNotReinterpretAlreadyHeldMouseButtons" methodname="MiddleContextDoesNotReinterpretAlreadyHeldMouseButtons" classname="Elemental.Tests.PlayMode.HardPolishSchoolInputTests" runstate="Runnable" seed="758619172" result="Failed" start-time="2026-09-10 10:12:58Z" end-time="2026-09-10 10:13:13Z" duration="15.231854" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Fresh modifier edge is admitted
+  Expected: 2
+  But was:  1
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.HardPolishSchoolInputTests+<MiddleContextDoesNotReinterpretAlreadyHeldMouseButtons>d__1.MoveNext () [0x00486] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\FireDualShortClickProductionTests.cs:24
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3089.47ms; ground=exact baked base, cacheLoad=10.48ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=644.42ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=52.19ms/15;ArenaBevel=37.95ms/175;ArenaMeshPicking=1.24ms/175;WallAwake=94.03ms/1;WallPieceVisuals=52.61ms/40;PlatformPoolAwake=9.48ms/1;PlatformRuntimeMeshes=1.28ms/12;PillarPoolAwake=17.41ms/1;PillarMeshLibrary=4.05ms/1;PillarColumns=13.35ms/1;DebrisPoolAwake=162.55ms/1;HeroFragmentPoolAwake=14.17ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1411" name="RealLeftDragDrawsSupportedBurningContourWithoutHandStream" fullname="Elemental.Tests.PlayMode.HardPolishSchoolInputTests.RealLeftDragDrawsSupportedBurningContourWithoutHandStream" methodname="RealLeftDragDrawsSupportedBurningContourWithoutHandStream" classname="Elemental.Tests.PlayMode.HardPolishSchoolInputTests" runstate="Runnable" seed="965780688" result="Failed" start-time="2026-09-10 10:13:13Z" end-time="2026-09-10 10:15:35Z" duration="141.344243" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Expected: Fire
+  But was:  Earth
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.HardPolishSchoolInputTests+<RealLeftDragDrawsSupportedBurningContourWithoutHandStream>d__2.MoveNext () [0x000a7] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\FireGroundLinePressOrderProductionTests.cs:12
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 3040.65ms; ground=exact baked base, cacheLoad=10.74ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=553.53ms, peakCookingPoll=0.00ms; sync=ArenaInitialize=52.19ms/15;ArenaBevel=37.95ms/175;ArenaMeshPicking=1.24ms/175;WallAwake=94.03ms/1;WallPieceVisuals=52.61ms/40;PlatformPoolAwake=9.48ms/1;PlatformRuntimeMeshes=1.28ms/12;PillarPoolAwake=17.41ms/1;PillarMeshLibrary=4.05ms/1;PillarColumns=13.35ms/1;DebrisPoolAwake=162.55ms/1;HeroFragmentPoolAwake=14.17ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\Native086-IsolatedShiftInput\results.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

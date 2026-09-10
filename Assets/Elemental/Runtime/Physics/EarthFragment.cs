@@ -473,6 +473,13 @@ namespace Elemental.Runtime.Physics
             _matterIdentity.TryTransition(EarthMatterPhase.Consumed);
         }
 
+        internal void RetireAfterCounterSplit()
+        {
+            StopBendControl();
+            _sourcePool?.NotifyReleased(this);
+            gameObject.SetActive(false);
+        }
+
         public bool TryShatter(Vector3 point, Vector3 normal, float impulse)
         {
             return _sourcePool != null && _sourcePool.TryShatter(this, point, normal, impulse);
@@ -681,11 +688,9 @@ namespace Elemental.Runtime.Physics
                 surfaceVelocity,
                 contact.normal,
                 Mathf.Max(0f, contact.separation));
-            if (!result.AcceptImpact)
-            {
-                PreserveRejectedContactTravel(in result, contact.normal, surfaceVelocity);
-                return;
-            }
+            // Rejected semantic damage still leaves the real friction/contact solution to PhysX.
+            // Restoring a pre-solver velocity here continually re-energized grazing loose stones.
+            if (!result.AcceptImpact) return;
 
             float impulse = Mathf.Max(
                 collision.impulse.magnitude,
@@ -712,13 +717,15 @@ namespace Elemental.Runtime.Physics
             Vector3 normal,
             float surfaceClearance,
             float impulse,
-            out float approachSpeed)
+            out float approachSpeed,
+            Vector3? incomingVelocity = null,
+            Vector3? incomingSurfaceVelocity = null)
         {
             approachSpeed = 0f;
             if (hitCollider == null || targetBody == null) return false;
             Rigidbody surfaceBody = hitCollider.attachedRigidbody;
-            Vector3 surfaceVelocity = SurfaceVelocity(surfaceBody, point);
-            Vector3 projectileVelocity = targetBody.linearVelocity;
+            Vector3 surfaceVelocity = incomingSurfaceVelocity ?? SurfaceVelocity(surfaceBody, point);
+            Vector3 projectileVelocity = incomingVelocity ?? targetBody.linearVelocity;
             EarthProjectileSurfaceContactResult result = ResolveSurfaceContact(
                 hitCollider,
                 projectileVelocity,
@@ -774,24 +781,6 @@ namespace Elemental.Runtime.Physics
                 in _surfaceContactState,
                 in sample,
                 in tuning);
-        }
-
-        private void PreserveRejectedContactTravel(
-            in EarthProjectileSurfaceContactResult result,
-            Vector3 normal,
-            Vector3 surfaceVelocity)
-        {
-            if (!result.PreserveTangentialTravel || targetBody == null || targetBody.isKinematic) return;
-            Vector3 safeNormal = normal.sqrMagnitude > 0.0001f ? normal.normalized : Vector3.up;
-            if (result.Decision == EarthProjectileSurfaceContactDecision.OutsideClearance)
-            {
-                targetBody.linearVelocity = _prePhysicsVelocity;
-                return;
-            }
-
-            Vector3 relative = _prePhysicsVelocity - surfaceVelocity;
-            Vector3 outward = safeNormal * Mathf.Max(0f, Vector3.Dot(relative, safeNormal));
-            targetBody.linearVelocity = surfaceVelocity + Vector3.ProjectOnPlane(relative, safeNormal) + outward;
         }
 
         private void PublishSurfaceImpact(

@@ -87,7 +87,11 @@ namespace Elemental.Presentation.MotionMatching
                 NotifyInputChangedQuickly();
             _lastMove = move;
 
-            bool hasMoveIntent = math.lengthsq(move) > QueryMoveDeadZone * QueryMoveDeadZone;
+            // Tank X rotates without translating. Treating it as travel searched a
+            // forward gait for the first .2s of every stationary turn.
+            bool hasMoveIntent = motor.UsesTankSteering
+                ? math.abs(move.y) > QueryMoveDeadZone
+                : math.lengthsq(move) > QueryMoveDeadZone * QueryMoveDeadZone;
             if (hasMoveIntent) _lastDirectionalMove = move;
             float actualSpeed = GetTargetSpeed();
             _stalledIntentSeconds = hasMoveIntent && actualSpeed < .12f && motor.HasStableSupport

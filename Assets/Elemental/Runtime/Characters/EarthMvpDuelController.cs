@@ -110,6 +110,7 @@ namespace Elemental.Runtime.Characters
         public void RestartRound()
         {
             if (!HasSimulationAuthority) return;
+            CancelRespawnPresentations();
             CaptureArenaBaselineIfReady();
             bool resume = Match.IsReady;
             RestoreArenaForMatchBoundary();
@@ -269,6 +270,7 @@ namespace Elemental.Runtime.Characters
             if (_playerState.Phase != EarthDuelFighterPhase.Active) return;
             _playerKnockdown = default;
             _playerState = EarthDuelRespawnSolver.KnockOut(respawnSeconds);
+            BeginRespawnLife(EarthDuelFighterId.Player);
             PlayerKnockoutCount++;
             // The visible rig receives the handoff. Giving the same velocity to the
             // motor puppet first would make the rig inherit it and then apply it a
@@ -289,6 +291,7 @@ namespace Elemental.Runtime.Characters
             if (_botState.Phase != EarthDuelFighterPhase.Active) return;
             _botKnockdown = default;
             _botState = EarthDuelRespawnSolver.KnockOut(respawnSeconds);
+            BeginRespawnLife(EarthDuelFighterId.Bot);
             BotKnockoutCount++;
             if (botBody == null) return;
             botCombatBody?.ForceFullRagdoll(respawnSeconds + 0.2f);
@@ -336,7 +339,7 @@ namespace Elemental.Runtime.Characters
         }
 
         private void OnEnable() => Subscribe();
-        private void OnDisable() => Unsubscribe();
+        private void OnDisable() { CancelRespawnPresentations(); Unsubscribe(); }
 
         private void FixedUpdate()
         {
@@ -355,6 +358,7 @@ namespace Elemental.Runtime.Characters
                 }
             }
             if (!CombatAllowed) return;
+            AdvanceRespawnClock(Time.fixedDeltaTime);
             StepRecoverableKnockdown(
                 EarthDuelFighterId.Player,
                 ref _playerKnockdown,
@@ -370,15 +374,17 @@ namespace Elemental.Runtime.Characters
                 in _playerState,
                 Time.fixedDeltaTime);
             _playerState = playerStep.State;
+            UpdateRespawnReservation(EarthDuelFighterId.Player, _playerState.RemainingSeconds, playerStep.RespawnThisTick);
             playerHumanoidRagdoll?.SetStoneFade(playerStep.StoneFade01);
-            if (playerStep.RespawnThisTick) RespawnPlayer();
+            if (playerStep.RespawnThisTick) { RespawnPlayer(); CompleteRespawnLife(EarthDuelFighterId.Player); }
 
             EarthDuelFighterStep botStep = EarthDuelRespawnSolver.Step(
                 in _botState,
                 Time.fixedDeltaTime);
             _botState = botStep.State;
+            UpdateRespawnReservation(EarthDuelFighterId.Bot, _botState.RemainingSeconds, botStep.RespawnThisTick);
             botHumanoidRagdoll?.SetStoneFade(botStep.StoneFade01);
-            if (botStep.RespawnThisTick) RespawnBot();
+            if (botStep.RespawnThisTick) { RespawnBot(); CompleteRespawnLife(EarthDuelFighterId.Bot); }
         }
 
         private void HandlePlayerState(CharacterPhysicalState state)
@@ -396,24 +402,25 @@ namespace Elemental.Runtime.Characters
         private void RespawnPlayer()
         {
             Match.Respawn(EarthDuelFighterId.Player);
-            StateChanged?.Invoke();
-            if (playerPuppet == null) return;
+            if (playerPuppet == null) { StateChanged?.Invoke(); return; }
             _playerKnockdown = default;
-            playerPuppet.ResetPhysicalState(_playerSpawnPosition, _playerSpawnRotation);
+            playerPuppet.ResetPhysicalState(ReservedRespawnPosition(EarthDuelFighterId.Player, _playerSpawnPosition),
+                ReservedRespawnRotation(EarthDuelFighterId.Player, _playerSpawnRotation));
             playerHumanoidRagdoll?.ResetToAnimated();
+            SynchronizeRespawnRenderRoot(playerBody);
             playerBody?.GetComponent<PlanetMotor>()?.ResetAfterTeleport();
             playerImpactTarget?.SuppressImpacts(0.75f);
             playerCharacterImpactTarget?.SuppressImpacts(0.75f);
+            StateChanged?.Invoke();
         }
 
         private void RespawnBot()
         {
             Match.Respawn(EarthDuelFighterId.Bot);
-            StateChanged?.Invoke();
-            if (botBody == null) return;
+            if (botBody == null) { StateChanged?.Invoke(); return; }
             _botKnockdown = default;
-            botBody.position = _botSpawnPosition;
-            botBody.rotation = _botSpawnRotation;
+            botBody.position = ReservedRespawnPosition(EarthDuelFighterId.Bot, _botSpawnPosition);
+            botBody.rotation = ReservedRespawnRotation(EarthDuelFighterId.Bot, _botSpawnRotation);
             if (!botBody.isKinematic)
             {
                 botBody.linearVelocity = Vector3.zero;
@@ -431,12 +438,28 @@ namespace Elemental.Runtime.Characters
                 botAnimator.Update(0f);
             }
             if (botMotor != null) botMotor.enabled = true;
+            SynchronizeRespawnRenderRoot(botBody);
             botMotor?.ResetAfterTeleport();
             if (botController != null)
             {
                 botController.enabled = true;
                 botController.ResetPlanner();
             }
+            UnityEngine.Physics.SyncTransforms();
+            StateChanged?.Invoke();
+        }
+
+        // A teleport must publish the same pose to rendering before the proxy lease ends.
+        // Flush the old interpolation history; preserve the authored interpolation policy.
+        private static void SynchronizeRespawnRenderRoot(Rigidbody body)
+        {
+            if (body == null) return;
+            Vector3 position = body.position;
+            Quaternion rotation = body.rotation;
+            RigidbodyInterpolation interpolation = body.interpolation;
+            body.interpolation = RigidbodyInterpolation.None;
+            body.transform.SetPositionAndRotation(position, rotation);
+            body.interpolation = interpolation;
             UnityEngine.Physics.SyncTransforms();
         }
 

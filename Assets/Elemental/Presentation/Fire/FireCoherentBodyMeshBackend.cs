@@ -12,7 +12,7 @@ namespace Elemental.Presentation.Fire
     /// <summary>Bounded cosmetic streamlines; FireWorld and its finite contact patches remain authoritative.</summary>
     public sealed class FireCoherentBodyMeshBackend : IDisposable
     {
-        private const int Nodes = 6, Lanes = 3, Sections = 25;
+        private const int Nodes = 6, Lanes = 3, Sections = 49;
         private const int VertexCapacity = Nodes * Lanes * Sections * 2;
         private static readonly ProfilerMarker Marker = new ProfilerMarker("Fire.CoherentBody.Step");
         private static readonly int ClockId = Shader.PropertyToID("_FireTime");
@@ -121,10 +121,15 @@ namespace Elemental.Presentation.Fire
                     float3 axis = FireContactMath.SafeNormal(node.B - node.A, node.Up);
                     float3 side = FireContactMath.Tangent(axis);
                     float duration = math.clamp(profile.MaxLifetime * .8f, .15f, .85f);
-                    float h = duration / (Sections - 1);
+                    float length = math.length(node.B-node.A);
+                    bool capsule = node.Shape == FireShape.Capsule;
+                    // A clipped source has a clipped cosmetic trace too, including
+                    // unsupported cover that cannot publish a surface patch.
+                    if(capsule)duration=math.min(duration,length/math.max(1,math.length(node.Flow)));
                     for (int lane = 0; lane < Lanes; lane++)
                     {
-                        float offset = lane == 0 ? 0 : lane == 1 ? -.32f : .32f;
+                        float h = duration * (capsule ? (lane == 0 ? 1f : lane == 1 ? .81f : .67f) : 1f) / (Sections-1);
+                        float offset = capsule ? 0 : lane == 0 ? 0 : lane == 1 ? -.32f : .32f;
                         float phase = node.Phase + lane * 2.0944f;
                         float3 position = node.A + side * (node.Radius * offset);
                         // Shell emission is located on its surface rather than inside the sphere.
@@ -139,10 +144,54 @@ namespace Elemental.Presentation.Fire
                             float3 ribbonSide = FireContactMath.SafeNormal(math.cross(tangent, facing), cameraRight);
                             float width = node.Radius * (lane == 0 ? .96f : .66f) *
                                 (1 - math.smoothstep(.58f, 1f, u)) * (.86f + .14f * math.sin(u * math.PI));
-                            // Macro breathing follows scaled time, never the render frame count.
-                            width *= 1 + .07f * math.sin(arc * 2.1f - snapshot.Time * 3 + phase);
+                            float3 displayPosition=position;
+                            if(capsule)
+                            {
+                                // A connected muzzle opens into staggered, curling tongues.
+                                // These bounded cosmetic offsets never feed back into field/damage.
+                                float travel=arc*1.35f-snapshot.Time*4.1f+phase;
+                                float open=math.smoothstep(0,.16f,u);
+                                float tip=1-math.smoothstep(.60f,1,u);
+                                float flutter=node.Radius*open*math.sin(u*math.PI)*
+                                    (lane==0?.7f:1.05f);
+                                float3 transverse=math.cross(axis,side);
+                                displayPosition+=side*(flutter*math.sin(travel))+
+                                    transverse*(flutter*.65f*math.sin(travel*.71f+phase));
+                                // The two shorter tongues finish off-axis instead of converging
+                                // into the same spear tip. Their roots remain exactly shared.
+                                float3 liftAxis=FireContactMath.SafeNormal(node.Up-axis*math.dot(node.Up,axis),transverse);
+                                float branch=lane==0?.18f:lane==1?2.7f:1.4f;
+                                float terminal=math.saturate((u-.55f)/.45f);
+                                float fork=terminal*terminal*math.saturate(length/8f);
+                                displayPosition+=liftAxis*(node.Radius*branch*fork)+
+                                    side*(node.Radius*(lane-1)*.9f*fork);
+                                float laneLength=math.max(.01f,length*(lane==0?1f:lane==1?.81f:.67f));
+                                float derivative=2*terminal*math.saturate(length/8f)/(.45f*laneLength);
+                                float3 curvedTangent=FireContactMath.SafeNormal(tangent+
+                                    liftAxis*(node.Radius*branch*derivative)+side*(node.Radius*(lane-1)*.9f*derivative),tangent);
+                                ribbonSide=FireContactMath.SafeNormal(math.cross(curvedTangent,facing),cameraRight);
+                                float lobe=.79f+.14f*math.sin(travel*1.17f)+.07f*math.sin(travel*2.31f+phase);
+                                width=node.Radius*(lane==0?1.9f:1.25f)*
+                                    open*tip*lobe;
+                            }
+                            else width*=1+.07f*math.sin(arc*2.1f-snapshot.Time*3+phase);
                             int vertex = (ribbons * Sections + section) * 2;
-                            float3 left = position - ribbonSide * width, right = position + ribbonSide * width;
+                            float3 left = displayPosition-ribbonSide*width, right = displayPosition+ribbonSide*width;
+                            if(capsule)
+                            {
+                                left=LimitToSourceLength(left,node.A,axis,length);
+                                right=LimitToSourceLength(right,node.A,axis,length);
+                                // Correct visible offsets against finite real patches, not an
+                                // invented infinite plane. Shader clipping remains the final guard.
+                                float3 cosmeticVelocity=float3.zero;
+                                for(int pass=0;pass<3;pass++)for(int c=0;c<snapshot.ContactCount;c++)
+                                {
+                                    FireContactMath.ResolveSwept(contacts[c],position,0,0,profile.ParticleRadius,phase,ref left,ref cosmeticVelocity);
+                                    FireContactMath.ResolveSwept(contacts[c],position,0,0,profile.ParticleRadius,phase,ref right,ref cosmeticVelocity);
+                                }
+                                left=LimitToSourceLength(left,node.A,axis,length);
+                                right=LimitToSourceLength(right,node.A,axis,length);
+                            }
                             vertices[vertex] = new Vertex { Position = (Vector3)left, UV = new Vector2(-1, arc), Shape = new Vector2(u, phase) };
                             vertices[vertex + 1] = new Vertex { Position = (Vector3)right, UV = new Vector2(1, arc), Shape = new Vector2(u, phase) };
                             min = math.min(min, math.min(left, right)); max = math.max(max, math.max(left, right));
@@ -175,6 +224,11 @@ namespace Elemental.Presentation.Fire
                 }
                 LastStepMilliseconds = (System.Diagnostics.Stopwatch.GetTimestamp() - start) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
             }
+        }
+        private static float3 LimitToSourceLength(float3 position,float3 origin,float3 axis,float length)
+        {
+            float projected=math.dot(position-origin,axis);
+            return position+axis*(math.clamp(projected,0,length)-projected);
         }
         public void Clear() { fade = 0; ActiveTriangles = 0; if (renderer != null) renderer.enabled = false; }
         public void Dispose()

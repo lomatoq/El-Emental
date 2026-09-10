@@ -94,6 +94,23 @@ namespace Elemental.Tests.PlayMode
                 material.SetColor("_BaseColor",Color.black);var nearBlack=Capture(camera,"near-black");
                 material.SetColor("_BaseColor",Color.white);var nearWhite=Capture(camera,"near-white");
                 long near=CentreDifference(nearBlack,nearWhite);
+                // Original top-cap coverage missed the near actor under the
+                // equator/underside seal. Probe the same production pass there.
+                foreach(float height in new[]{0f,-radius-20f})
+                {
+                    camera.transform.position=owner.transform.TransformPoint(new Vector3(0,height,0));
+                    target.transform.position=camera.transform.position+camera.transform.forward*6f;
+                    material.SetColor("_BaseColor",Color.black);var localBlack=Capture(camera,"near-radial-"+height+"-black");
+                    material.SetColor("_BaseColor",Color.white);var localWhite=Capture(camera,"near-radial-"+height+"-white");
+                    Assert.That(CentreDifference(localBlack,localWhite),Is.GreaterThan(700000),
+                        "Immediate opaque geometry must retain contrast below the top cap at height "+height);
+                }
+                target.transform.position=camera.transform.position+camera.transform.forward*80f;
+                target.transform.localScale=new Vector3(200,200,1);
+                material.SetColor("_BaseColor",Color.black);var undersideBlack=Capture(camera,"underside-80m-black");
+                material.SetColor("_BaseColor",Color.white);var undersideWhite=Capture(camera,"underside-80m-white");
+                Assert.That(CentreDifference(undersideBlack,undersideWhite),Is.Zero,
+                    "The distant lower-planet seal must remain fully opaque.");
                 File.WriteAllText(Folder+"/evidence.txt","Production URP render request, 640x360, central32x32 RGB absolute differences.\n"+
                     "Far fog-off contrast="+farOff+"\nFar closed source difference="+closed+
                     "\nClosed 4000m/4500m depth difference="+hiddenDepth+"\nNear protected contrast="+near+

@@ -1,0 +1,260 @@
+{
+    "scope": "Actual saved Linebreaker, real incoming pooled stone and runtime guard/punch while idle or moving. Hold is injected at semantic guard adapter; keyboard chord is independently tested. Existing animation fixture suppresses actor damage, so this does not establish damage immunity or arbitrary crowd performance.",
+    "ingress": {
+        "x": 2.002220630645752,
+        "y": 56.77192687988281,
+        "z": 2.3816206455230715
+    },
+    "selectedHeading": {
+        "x": 0.7070931792259216,
+        "y": 0.0046022734604775909,
+        "z": 0.7071053981781006
+    },
+    "finalHeading": {
+        "x": 0.6708462238311768,
+        "y": -0.0030437519308179619,
+        "z": 0.7415902614593506
+    },
+    "initialShapePosition": {
+        "x": -0.34493744373321535,
+        "y": 76.76417541503906,
+        "z": -0.15469661355018617
+    },
+    "initialBodyPosition": {
+        "x": -0.34493744373321535,
+        "y": 76.76417541503906,
+        "z": -0.15469661355018617
+    },
+    "initialPhysicsBounds": {
+        "m_Center": {
+            "x": -0.4574987590312958,
+            "y": 76.78465270996094,
+            "z": -0.19985675811767579
+        },
+        "m_Extent": {
+            "x": 1.3257713317871094,
+            "y": 0.6950836181640625,
+            "z": 1.491392970085144
+        }
+    },
+    "finalPhysicsBounds": {
+        "m_Center": {
+            "x": -0.4574987590312958,
+            "y": 76.78465270996094,
+            "z": -0.19985675811767579
+        },
+        "m_Extent": {
+            "x": 1.3257713317871094,
+            "y": 0.6950836181640625,
+            "z": 1.491392970085144
+        }
+    },
+    "clearance": "Clear actual collider approach; prior rejections: lift=0 distance=4.45 sample=0 blocker=Arena_Gate_INTACT penetration=0.2720616; lift=0 distance=4.0625 sample=0 blocker=Arena_Wall_East_INTACT penetration=0.8230033; lift=0 distance=3.675 sample=0 blocker=Arena_Wall_East_INTACT penetration=0.4383941; lift=0 distance=3.2875 sample=0 blocker=Arena_Wall_East_INTACT penetration=0.05378485",
+    "primarySourceId": 1,
+    "primaryGeneration": 1,
+    "counterEvents": [
+        {
+            "sequence": 1,
+            "sourceId": 1,
+            "generation": 1,
+            "tier": "Large",
+            "time": 8.81999683380127,
+            "mass": 1800.0,
+            "radius": 1.350000023841858
+        }
+    ],
+    "frames": [
+        {
+            "pass": 2,
+            "elapsed": 0.0,
+            "handTravel": 0.003176520112901926,
+            "sequence": 0,
+            "presented": 0,
+            "actorPosition": {
+                "x": 0.05676652118563652,
+                "y": 56.78075408935547,
+                "z": 0.23100882768630982
+            },
+            "stonePosition": {
+                "x": 2.002220392227173,
+                "y": 56.77192687988281,
+                "z": 2.3816206455230715
+            },
+            "stoneVelocity": {
+                "x": -6.708462238311768,
+                "y": 0.030437519773840905,
+                "z": -7.415902614593506
+            },
+            "stoneActive": true,
+            "rejection": "None"
+        },
+        {
+            "pass": 2,
+            "elapsed": 0.1733236312866211,
+            "handTravel": 0.05232072249054909,
+            "sequence": 1,
+            "presented": 1,
+            "actorPosition": {
+                "x": -0.30401840806007388,
+                "y": 56.76215362548828,
+                "z": -0.16160237789154054
+            },
+            "stonePosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "stoneVelocity": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "stoneActive": false,
+            "rejection": "None"
+        },
+        {
+            "pass": 2,
+            "elapsed": 0.3586740493774414,
+            "handTravel": 0.07090083509683609,
+            "sequence": 1,
+            "presented": 1,
+            "actorPosition": {
+                "x": -0.2201831042766571,
+                "y": 56.76605987548828,
+                "z": -0.0646665170788765
+            },
+            "stonePosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "stoneVelocity": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "stoneActive": false,
+            "rejection": "None"
+        },
+        {
+            "pass": 2,
+            "elapsed": 0.5493316650390625,
+            "handTravel": 0.10880890488624573,
+            "sequence": 1,
+            "presented": 1,
+            "actorPosition": {
+                "x": -0.0009646080434322357,
+                "y": 56.775997161865237,
+                "z": 0.17807434499263764
+            },
+            "stonePosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "stoneVelocity": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "stoneActive": false,
+            "rejection": "None"
+        },
+        {
+            "pass": 2,
+            "elapsed": 0.7454366683959961,
+            "handTravel": 0.14040519297122956,
+            "sequence": 1,
+            "presented": 1,
+            "actorPosition": {
+                "x": 0.23086796700954438,
+                "y": 56.785057067871097,
+                "z": 0.4341123104095459
+            },
+            "stonePosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "stoneVelocity": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "stoneActive": false,
+            "rejection": "None"
+        },
+        {
+            "pass": 2,
+            "elapsed": 0.9338769912719727,
+            "handTravel": 0.1505041867494583,
+            "sequence": 1,
+            "presented": 1,
+            "actorPosition": {
+                "x": 0.48006781935691836,
+                "y": 56.78721618652344,
+                "z": 0.7095547318458557
+            },
+            "stonePosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "stoneVelocity": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "stoneActive": false,
+            "rejection": "None"
+        },
+        {
+            "pass": 2,
+            "elapsed": 1.120743751525879,
+            "handTravel": 0.08912209421396256,
+            "sequence": 1,
+            "presented": 1,
+            "actorPosition": {
+                "x": 0.6951406002044678,
+                "y": 56.7923583984375,
+                "z": 0.9462324976921082
+            },
+            "stonePosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "stoneVelocity": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "stoneActive": false,
+            "rejection": "None"
+        },
+        {
+            "pass": 2,
+            "elapsed": 1.3111400604248047,
+            "handTravel": 0.11578930169343949,
+            "sequence": 1,
+            "presented": 1,
+            "actorPosition": {
+                "x": 0.9153033494949341,
+                "y": 56.78281784057617,
+                "z": 1.1892391443252564
+            },
+            "stonePosition": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "stoneVelocity": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "stoneActive": false,
+            "rejection": "None"
+        }
+    ]
+}

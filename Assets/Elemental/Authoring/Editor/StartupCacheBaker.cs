@@ -29,6 +29,7 @@ namespace Elemental.Authoring.Editor
             var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
             var planets = new List<VoxelPlanetBehaviour>();
             var pools = new List<EarthRockDebrisPool>();
+            var gates = new List<EarthSceneReadinessGate>();
             var fragmentPools = new List<EarthFragmentPool>();
             var scatters = new List<EarthPlanetRockScatter>();
             var structures = new List<EarthArenaStructure>();
@@ -37,42 +38,61 @@ namespace Elemental.Authoring.Editor
             {
                 planets.AddRange(root.GetComponentsInChildren<VoxelPlanetBehaviour>(true));
                 pools.AddRange(root.GetComponentsInChildren<EarthRockDebrisPool>(true));
+                gates.AddRange(root.GetComponentsInChildren<EarthSceneReadinessGate>(true));
                 fragmentPools.AddRange(root.GetComponentsInChildren<EarthFragmentPool>(true));
                 scatters.AddRange(root.GetComponentsInChildren<EarthPlanetRockScatter>(true));
                 structures.AddRange(root.GetComponentsInChildren<EarthArenaStructure>(true));
                 colliders.AddRange(root.GetComponentsInChildren<Collider>(true));
             }
-            if (planets.Count != 1 || pools.Count != 1)
-                throw new InvalidOperationException($"Expected one planet and debris pool in current scene; got {planets.Count}/{pools.Count}.");
+            if (planets.Count != 1 || pools.Count < 1 || gates.Count > 1)
+                throw new InvalidOperationException($"Expected one planet, at least one debris pool and at most one readiness owner; got {planets.Count}/{pools.Count}/{gates.Count}.");
+            EarthSceneReadinessGate gate=gates.Count==1?gates[0]:null;
+            EarthRockDebrisPool primary=ResolveReadinessPool(pools,gate);
+            if(gate!=null&&new SerializedObject(gate).FindProperty("planet").objectReferenceValue!=planets[0])
+                throw new InvalidOperationException("Existing readiness owner must explicitly bind the scene planet before baking.");
             // Publish component references only after both independent cache builds succeeded.
             PlanetBaseMeshCache planetCache = BakePlanet(planets[0], scene.name);
             EarthConvexFractureCacheAsset convexCache = BakeConvex(
-                pools[0], fragmentPools, scatters, structures, colliders, scene.name);
+                pools, fragmentPools, scatters, structures, colliders, scene.name);
             Undo.RecordObject(planets[0], "Use exact baked planet base");
-            Undo.RecordObject(pools[0], "Use baked convex fracture cache");
             planets[0].ConfigureBaseMeshCache(planetCache);
-            pools[0].ConfigureBakedFractureCache(convexCache);
-            EditorUtility.SetDirty(planets[0]); EditorUtility.SetDirty(pools[0]);
+            foreach(EarthRockDebrisPool pool in pools)
+            {
+                Undo.RecordObject(pool,"Use complete shared convex fracture cache");
+                pool.ConfigureBakedFractureCache(convexCache);EditorUtility.SetDirty(pool);
+            }
+            EditorUtility.SetDirty(planets[0]);
             var controls = new List<Behaviour>();
-            EarthSceneReadinessGate gate = null;
             foreach (GameObject root in scene.GetRootGameObjects())
             {
                 controls.AddRange(root.GetComponentsInChildren<EarthInputAdapter>(true));
                 controls.AddRange(root.GetComponentsInChildren<EarthMvpBotController>(true));
-                gate ??= root.GetComponentInChildren<EarthSceneReadinessGate>(true);
             }
             if (gate == null)
             {
                 var go = new GameObject("Scene Readiness");
                 Undo.RegisterCreatedObjectUndo(go, "Create scene readiness boundary");
                 gate = go.AddComponent<EarthSceneReadinessGate>();
+                Undo.RecordObject(gate,"Configure scene readiness");
+                gate.Configure(planets[0],primary,controls.ToArray());EditorUtility.SetDirty(gate);
             }
-            Undo.RecordObject(gate, "Configure scene readiness");
-            gate.Configure(planets[0], pools[0], controls.ToArray());
-            EditorUtility.SetDirty(gate);
+            // Existing primary binding and paused controls are authored ownership.
+            // Additional online pools receive the complete cache without changing that gate.
             AssetDatabase.SaveAssets();
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
+        }
+
+        private static EarthRockDebrisPool ResolveReadinessPool(IReadOnlyList<EarthRockDebrisPool> pools,EarthSceneReadinessGate gate)
+        {
+            if(gate!=null)
+            {
+                var bound=new SerializedObject(gate).FindProperty("debris").objectReferenceValue as EarthRockDebrisPool;
+                if(bound==null||!pools.Contains(bound))throw new InvalidOperationException("The existing readiness pool must belong to the current scene.");
+                return bound;
+            }
+            if(pools.Count==1)return pools[0];
+            throw new InvalidOperationException("Multiple pools require an explicitly configured scene readiness owner; no primary can be inferred.");
         }
 
         private static PlanetBaseMeshCache BakePlanet(VoxelPlanetBehaviour planet, string sceneName)
@@ -138,7 +158,7 @@ namespace Elemental.Authoring.Editor
             public string Label;
         }
 
-        private static EarthConvexFractureCacheAsset BakeConvex(EarthRockDebrisPool pool,
+        private static EarthConvexFractureCacheAsset BakeConvex(List<EarthRockDebrisPool> pools,
             List<EarthFragmentPool> fragmentPools, List<EarthPlanetRockScatter> scatters,
             List<EarthArenaStructure> structures,
             List<Collider> colliders, string sceneName)
@@ -151,7 +171,7 @@ namespace Elemental.Authoring.Editor
             if (sources.Count == 0)
                 throw new InvalidOperationException("No authoritative arena/decor fracture sources were found. Complete arena/column scene integration before baking.");
             var poolSources = new List<Mesh>();
-            pool.AppendAuthoredFractureSources(poolSources);
+            foreach(EarthRockDebrisPool pool in pools)pool.AppendAuthoredFractureSources(poolSources);
             foreach (EarthFragmentPool fragmentPool in fragmentPools)
                 fragmentPool.AppendAuthoredFractureSources(poolSources);
             foreach (EarthPlanetRockScatter scatter in scatters)
@@ -180,9 +200,15 @@ namespace Elemental.Authoring.Editor
             }
             sourceKeys.Sort(StringComparer.Ordinal);
             // Policy changes can alter which second-generation plans must be present.
-            var policy = new SerializedObject(pool).FindProperty("profile").objectReferenceValue;
-            string policyPath = policy != null ? AssetDatabase.GetAssetPath(policy) : "";
-            string key = Key(string.Join("|", sourceKeys) + "|" + (policyPath.Length > 0 ? AssetDatabase.GetAssetDependencyHash(policyPath).ToString() : "default") + "|" + EarthConvexFractureCacheAsset.CurrentRevision,
+            var policyKeys=new HashSet<string>(StringComparer.Ordinal);
+            foreach(EarthRockDebrisPool pool in pools)
+            {
+                var policy=new SerializedObject(pool).FindProperty("profile").objectReferenceValue;
+                string policyPath=policy!=null?AssetDatabase.GetAssetPath(policy):"";
+                if(policy!=null&&policyPath.Length==0)throw new InvalidOperationException("Persist each debris policy before baking startup caches.");
+                policyKeys.Add(policyPath.Length>0?AssetDatabase.GetAssetDependencyHash(policyPath).ToString():"default");
+            }
+            string key = Key(string.Join("|", sourceKeys) + "|" + string.Join("|",policyKeys.OrderBy(k=>k,StringComparer.Ordinal)) + "|" + EarthConvexFractureCacheAsset.CurrentRevision,
                 "Assets/Elemental/Simulation/Structures/EarthConvexPartitionSolver.cs",
                 "Assets/Elemental/Simulation/Structures/EarthRockBreakPolicy.cs",
                 "Assets/Elemental/Runtime/Geometry/EarthFractureBevelMeshBuilder.cs",
@@ -212,23 +238,28 @@ namespace Elemental.Authoring.Editor
             {
                 Mesh source = entry.Mesh != null ? entry.Mesh : cache.SourceMesh(entry.Collider);
                 float volumeScale = entry.VolumeScale;
-                for (int count = 3; count <= 4; count++)
+                for (int count = 2; count <= 4; count++)
                     foreach (var child in cache.Get(source, count))
                     {
+                        cache.Get(child.ColliderMesh, 2);
                         float radius = Mathf.Pow(child.Volume * volumeScale * .2387324f, 1f / 3f);
-                        int next = pool.ResolveBreak(radius, 1f, 100000f, false, 1).PhysicalPieces;
-                        if (next > 0) cache.Get(child.ColliderMesh, next);
+                        foreach(EarthRockDebrisPool pool in pools)
+                        {
+                            int next=pool.ResolveBreak(radius,1f,100000f,false,1).PhysicalPieces;
+                            if(next>0)cache.Get(child.ColliderMesh,next);
+                        }
                     }
                 bakedSources++;
             }
             // Pool shapes can be resized before a later collision. Bake both supported
-            // child counts for every first-generation cell so an impact cannot select a
+            // child counts (including the counter guard's two-way split) for every first-generation cell so an impact cannot select a
             // policy-valid plan that was absent from the loading cache.
             foreach (Mesh source in poolSources)
             {
-                for (int count = 3; count <= 4; count++)
+                for (int count = 2; count <= 4; count++)
                     foreach (var child in cache.Get(source, count))
                     {
+                        cache.Get(child.ColliderMesh, 2);
                         cache.Get(child.ColliderMesh, 3);
                         cache.Get(child.ColliderMesh, 4);
                     }
@@ -374,12 +405,12 @@ namespace Elemental.Authoring.Editor
 
         private static void ValidatePoolCoverage(EarthConvexFragmentCache cache, Mesh source)
         {
-            for (int count = 3; count <= 4; count++)
+            for (int count = 2; count <= 4; count++)
             {
                 if (!cache.HasPlan(source, count))
                     throw new InvalidOperationException($"Missing top-level pool fracture plan for {source.name}/{count}.");
                 foreach (var child in cache.Get(source, count))
-                    for (int descendantCount = 3; descendantCount <= 4; descendantCount++)
+                    for (int descendantCount = 2; descendantCount <= 4; descendantCount++)
                         if (!cache.HasPlan(child.ColliderMesh, descendantCount))
                             throw new InvalidOperationException($"Missing descendant pool fracture plan for {source.name}/{count}/{descendantCount}.");
             }

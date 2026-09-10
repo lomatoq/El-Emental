@@ -10,6 +10,28 @@ namespace Elemental.Tests.PlayMode
 {
     public sealed class FireEnvironmentRuntimeTests
     {
+        [Test] public void CapsuleClipsTheFreeSegmentWithoutInventingASurfaceAnchorAndOwnerIsPerCollect()
+        {
+            var target = new GameObject("Unanchored capsule"); var query = new GameObject("Disabled query");
+            try
+            {
+                target.layer = 30; target.AddComponent<CapsuleCollider>();
+                var sphere = query.AddComponent<SphereCollider>(); sphere.enabled = false;
+                var resolver = new FireSurfaceResolver(); var cache = new FireContactCache();
+                var environment = new FireEnvironmentAdapter(resolver, sphere, 1 << 30);
+                var nodes = new[] { FireFieldNode.Stream(new float3(0,0,-2), new float3(0,0,2), new float3(0,0,12), new float3(0,1,0)) };
+                UnityEngine.Physics.SyncTransforms();
+                environment.Collect(nodes, 1, .02f, 0, cache);
+                Assert.That(nodes[0].B.z, Is.InRange(-1f, -.5f));
+                Assert.That(cache.CopyCurrent(resolver, 0, new FireContactPatch[8]), Is.Zero);
+                nodes[0] = FireFieldNode.Stream(new float3(0,0,-2), new float3(0,0,2), new float3(0,0,12), new float3(0,1,0));
+                environment.Collect(nodes, 1, .02f, 0, cache, target.transform);
+                Assert.That(nodes[0].B.z, Is.EqualTo(2));
+                environment.Collect(nodes, 1, .02f, 0, cache);
+                Assert.That(nodes[0].B.z, Is.LessThan(-.5f), "A previous emitter's ignore root must not leak into the next group.");
+            }
+            finally { Object.DestroyImmediate(target); Object.DestroyImmediate(query); }
+        }
         [UnityTest] public IEnumerator SweepsAndInitialOverlapUseBoundedQueriesAndFiniteContacts()
         {
             var wall = new GameObject("Fire runtime test wall");

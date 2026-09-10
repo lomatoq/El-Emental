@@ -8,7 +8,7 @@ namespace Elemental.Simulation.Rendering
         public bool Allowed;
         public float Bend, PushOrGroundWave, VectorField, GravityThrow, FractureThrow;
         public float Resonance, Pillar, PillarWave, PillarCrest;
-        public float Accumulation, WallPush;
+        public float Accumulation, WallPush, FireRing;
     }
 
     public readonly struct EarthChargeFeedbackOutput
@@ -32,6 +32,7 @@ namespace Elemental.Simulation.Rendering
             value = math.max(value, math.max(Unit(input.VectorField), Unit(input.GravityThrow)));
             value = math.max(value, math.max(Unit(input.FractureThrow), Unit(input.Resonance)));
             value = math.max(value, math.max(Unit(input.Pillar), Unit(input.PillarWave)));
+            value = math.max(value, Unit(input.FireRing));
             return math.max(Unit(input.WallPush), math.max(value, math.max(Unit(input.PillarCrest), Unit(input.Accumulation))));
         }
 

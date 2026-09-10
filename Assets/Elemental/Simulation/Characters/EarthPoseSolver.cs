@@ -623,6 +623,15 @@ namespace Elemental.Simulation.Characters
 
     public static class EarthPelvisCompensation
     {
+        // A locked stance is already judged as planted above .9 contact weight.
+        // Its reach request must not wait for the final ramp sample while the
+        // visible ankle is required to stay on the support. Capture still blends.
+        // Releasing an anchor does not release the already-submitted stance weight.
+        // Match final contact ownership while the existing ramp still plants the foot.
+        public static bool OwnsReach(float appliedWeight, bool locked, EarthFootContactReason reason) =>
+            math.isfinite(appliedWeight) && (appliedWeight >= .999f ||
+                (reason == EarthFootContactReason.Stance && appliedWeight > .9f));
+
         // A 30 Hz rendered locomotion step can combine roughly five centimetres
         // of authored leg extension and rising terrain. Keep a fully owned
         // stance planted through that legitimate change while still splitting
@@ -638,6 +647,13 @@ namespace Elemental.Simulation.Characters
             float3 delta = hip - target;
             float drop = math.clamp(math.dot(delta, normal), 0f, math.max(0f, maximumDrop));
             return math.lengthsq(delta - normal * drop) <= legLength * legLength;
+        }
+
+        /// <summary>Move the evaluated toe vector by the same weighted parent-goal rotation as final foot IK.</summary>
+        public static float3 ProjectToeOffset(float3 evaluatedOffset,quaternion authoredGoal,quaternion submittedGoal,float rotationWeight)
+        {
+            quaternion blended=math.slerp(authoredGoal,submittedGoal,math.saturate(rotationWeight));
+            return math.rotate(math.mul(blended,math.inverse(authoredGoal)),evaluatedOffset);
         }
 
         public static float SolveSwingFloorLift(float3 animated, float3 floor, float3 up,

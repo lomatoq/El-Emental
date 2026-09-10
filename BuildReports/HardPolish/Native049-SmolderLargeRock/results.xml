@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Passed" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 20:13:20Z" end-time="2026-09-09 20:14:05Z" duration="45.2920305">
+  <test-suite type="TestSuite" id="1585" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="431" result="Passed" start-time="2026-09-09 20:13:20Z" end-time="2026-09-09 20:14:05Z" duration="45.292031" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1578" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="425" result="Passed" start-time="2026-09-09 20:13:20Z" end-time="2026-09-09 20:14:05Z" duration="45.126009" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="16264" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1579" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="425" result="Passed" start-time="2026-09-09 20:13:20Z" end-time="2026-09-09 20:14:05Z" duration="45.100728" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1580" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="425" result="Passed" start-time="2026-09-09 20:13:20Z" end-time="2026-09-09 20:14:05Z" duration="45.082272" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1581" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="425" result="Passed" start-time="2026-09-09 20:13:20Z" end-time="2026-09-09 20:14:05Z" duration="45.069186" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1091" name="HardPolishFireStreamBindingRuntimeTests" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" testcasecount="25" result="Passed" start-time="2026-09-09 20:13:20Z" end-time="2026-09-09 20:14:05Z" duration="44.973009" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1101" name="ProductionSmolderCharsEmitsSmokeAndCools" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.ProductionSmolderCharsEmitsSmokeAndCools" methodname="ProductionSmolderCharsEmitsSmokeAndCools" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1238610761" result="Passed" start-time="2026-09-09 20:13:20Z" end-time="2026-09-09 20:13:56Z" duration="35.853730" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="240000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 5046.78ms; ground=exact baked base, cacheLoad=16.63ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=1483.28ms, peakCookingPoll=0.33ms; sync=ArenaInitialize=49.47ms/15;ArenaBevel=35.68ms/175;ArenaMeshPicking=1.20ms/175;WallAwake=91.30ms/1;WallPieceVisuals=51.28ms/40;PlatformPoolAwake=10.41ms/1;PlatformRuntimeMeshes=1.41ms/12;PillarPoolAwake=18.51ms/1;PillarMeshLibrary=4.17ms/1;PillarColumns=14.33ms/1;DebrisPoolAwake=172.32ms/1;HeroFragmentPoolAwake=12.48ms/1.
+]]></output>
+              </test-case>
+              <test-case id="1111" name="SavedActualFireStreamPushesAndSplitsLargeRockStartingAtNozzle" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedActualFireStreamPushesAndSplitsLargeRockStartingAtNozzle" methodname="SavedActualFireStreamPushesAndSplitsLargeRockStartingAtNozzle" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1874502042" result="Passed" start-time="2026-09-09 20:13:56Z" end-time="2026-09-09 20:14:05Z" duration="8.945894" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="300000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 2951.58ms; ground=exact baked base, cacheLoad=10.43ms, bakedPlans=4589, planMisses=0, cookedMeshes=13518/13518, backgroundCooking=633.06ms, peakCookingPoll=0.01ms; sync=ArenaInitialize=49.47ms/15;ArenaBevel=35.68ms/175;ArenaMeshPicking=1.20ms/175;WallAwake=91.30ms/1;WallPieceVisuals=51.28ms/40;PlatformPoolAwake=10.41ms/1;PlatformRuntimeMeshes=1.41ms/12;PillarPoolAwake=18.51ms/1;PillarMeshLibrary=4.17ms/1;PillarColumns=14.33ms/1;DebrisPoolAwake=172.32ms/1;HeroFragmentPoolAwake=12.48ms/1.
+Saving results to: C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\BuildReports\HardPolish\Native049-SmolderLargeRock\results.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

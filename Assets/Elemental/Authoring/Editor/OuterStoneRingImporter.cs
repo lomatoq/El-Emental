@@ -61,6 +61,25 @@ namespace Elemental.Authoring.Editor
             Debug.Log("[Elemental] Updated seven seamless intact column proxies; placement and fracture cells retained.");
         }
 
+        [MenuItem("Elemental/Arena/Preserve Authored Outer Arch Fracture Renders")]
+        public static void PreserveAuthoredFractureRenders()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                throw new BuildFailedException("Exit Play mode before changing saved arch render policy.");
+            var root=GameObject.Find(SceneRootName);
+            if(root==null)throw new BuildFailedException("The saved Outer Stone Ring root is missing.");
+            var structures=root.GetComponentsInChildren<EarthArenaStructure>(true);
+            if(structures.Length!=7)throw new BuildFailedException("Expected exactly seven authored OuterRing owners.");
+            foreach(var structure in structures)
+            {
+                Undo.RecordObject(structure,"Preserve authored arch fracture rendering");
+                structure.ConfigureAuthoredFractureRendering();
+                EditorUtility.SetDirty(structure);
+            }
+            EditorSceneManager.MarkSceneDirty(root.scene);
+            Debug.Log("[Elemental] Enabled authored fracture render preservation on seven OuterRing owners; save the scene.");
+        }
+
         [MenuItem("Elemental/Arena/Place Outer Stone Ring In Current Scene")]
         public static void Place()
         {
@@ -111,6 +130,7 @@ namespace Elemental.Authoring.Editor
                 var pieces = new Transform[entry.fractureAsset.PieceCount];
                 for (int i=0;i<pieces.Length;i++) pieces[i]=named[$"FR_{entry.structureId}_P{i+1:000}"];
                 var runtime = intact.gameObject.AddComponent<EarthArenaStructure>();
+                runtime.ConfigureAuthoredFractureRendering();
                 if (!runtime.Configure(entry.fractureAsset,frame,fracture,renderer,collider,pieces,
                     gravity,exterior,interior,StableId(entry.structureId),true,true))
                     throw new BuildFailedException(entry.structureId + ": runtime configuration failed.");

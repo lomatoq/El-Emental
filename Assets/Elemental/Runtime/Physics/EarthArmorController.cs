@@ -28,6 +28,12 @@ namespace Elemental.Runtime.Physics
             materialFeedback?.Emit(EarthMaterialFeedbackKind.Fracture, point, normal, 1f, 0.3f, id,
                 0, 24, 8);
         }
+        private void PresentProjectileLaunch(EarthArmorPiece piece,Vector3 direction)
+        {
+            // Every admitted shot has a bounded departure cue, even when it misses.
+            materialFeedback?.Emit(EarthMaterialFeedbackKind.Release,piece.transform.position,
+                SafeDirection(direction,Vector3.up),1f,.22f,piece.ImpactSourceId,0,12,6);
+        }
         private const int MaximumPieces = EarthArmorProfile.MaximumPieceCount;
         private const int MaximumCasterColliders = 32;
         private const int MaximumBodyRenderers = 24;
@@ -317,6 +323,7 @@ namespace Elemental.Runtime.Physics
             ArmCasterMomentumGuard(0.10f);
             float speed = _profile != null ? _profile.AimedProjectileSpeed : 44f;
             Vector3 launchDirection = SafeDirection(aimPoint - _pieces[best].transform.position, aim);
+            PresentProjectileLaunch(_pieces[best],launchDirection);
             _pieces[best].Release(launchDirection * speed, DebrisRestSeconds, DebrisShrinkSeconds);
             EndIfEmpty();
             return true;
@@ -623,6 +630,7 @@ namespace Elemental.Runtime.Physics
                             velocity = radial.normalized * Mathf.Lerp(minimum, maximum, Hash01(index + 91));
                         }
                     }
+                    if(releasedThisSlice==0 && _releaseMode!=ReleaseMode.Debris)PresentProjectileLaunch(piece,velocity);
                     piece.Release(velocity, DebrisRestSeconds, DebrisShrinkSeconds);
                     _queuedReleaseCount++;
                     releasedThisSlice++;
@@ -657,6 +665,18 @@ namespace Elemental.Runtime.Physics
                 if (piece != null && piece.gameObject.activeSelf) destination[count++] = piece;
             }
             return count;
+        }
+
+        internal void SetSiblingCollisionPolicy(EarthArmorPiece piece, bool formationIgnore)
+        {
+            if (piece == null || piece.PieceCollider == null) return;
+            for (int index=0;index<_pieces.Length;index++)
+            {
+                EarthArmorPiece other=_pieces[index];
+                if(other==null||other==piece||other.PieceCollider==null)continue;
+                if(!formationIgnore && (!piece.ReleasedSiblingCollisionReady || !other.ReleasedSiblingCollisionReady))continue;
+                UnityEngine.Physics.IgnoreCollision(piece.PieceCollider,other.PieceCollider,formationIgnore);
+            }
         }
 
         internal void ReapplyCasterCollisionIgnores(Collider pieceCollider)

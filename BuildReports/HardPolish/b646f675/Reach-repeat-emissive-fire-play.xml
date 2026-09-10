@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="2" result="Failed(Child)" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-09 10:13:42Z" end-time="2026-09-09 10:15:39Z" duration="117.118208">
+  <test-suite type="TestSuite" id="1519" name="El-Emental" fullname="El-Emental" runstate="Runnable" testcasecount="376" result="Failed" site="Child" start-time="2026-09-09 10:13:42Z" end-time="2026-09-09 10:15:39Z" duration="117.118208" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1512" name="Elemental.Tests.PlayMode.dll" fullname="C:/Users/nirrt/OneDrive/Документы/ChatGPT/El Ements/El-Emental/Library/ScriptAssemblies/Elemental.Tests.PlayMode.dll" runstate="Runnable" testcasecount="370" result="Failed" site="Child" start-time="2026-09-09 10:13:42Z" end-time="2026-09-09 10:15:39Z" duration="117.103810" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13564" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1513" name="Elemental" fullname="Elemental" runstate="Runnable" testcasecount="370" result="Failed" site="Child" start-time="2026-09-09 10:13:42Z" end-time="2026-09-09 10:15:39Z" duration="117.097856" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1514" name="Tests" fullname="Elemental.Tests" runstate="Runnable" testcasecount="370" result="Failed" site="Child" start-time="2026-09-09 10:13:42Z" end-time="2026-09-09 10:15:39Z" duration="117.092207" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestSuite" id="1515" name="PlayMode" fullname="Elemental.Tests.PlayMode" runstate="Runnable" testcasecount="370" result="Failed" site="Child" start-time="2026-09-09 10:13:42Z" end-time="2026-09-09 10:15:39Z" duration="117.086751" total="2" passed="1" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-suite type="TestFixture" id="1384" name="HardPolishFireStreamBindingRuntimeTests" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-09-09 10:13:42Z" end-time="2026-09-09 10:14:08Z" duration="26.094904" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1389" name="ProductionStoneFireFrontSideCoverAndReleaseAtNative1080" fullname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.ProductionStoneFireFrontSideCoverAndReleaseAtNative1080" methodname="ProductionStoneFireFrontSideCoverAndReleaseAtNative1080" classname="Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests" runstate="Runnable" seed="1387786745" result="Passed" start-time="2026-09-09 10:13:42Z" end-time="2026-09-09 10:14:08Z" duration="26.078088" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Timeout" value="300000" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Error reason is 'NoSubscription' and no additional error information was provided (https://generators.ai.unity.com).
+Error reason is 'NoSubscription' and no additional error information was provided (https://generators.ai.unity.com).
+Error reason is 'NoSubscription' and no additional error information was provided (https://generators.ai.unity.com).
+Error reason is 'NoSubscription' and no additional error information was provided (https://generators.ai.unity.com).
+Error reason is 'NoSubscription' and no additional error information was provided (https://generators.ai.unity.com).
+Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 4036.60ms; ground=exact baked base, cacheLoad=10.65ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=1274.89ms, peakCookingPoll=0.27ms; sync=ArenaInitialize=337.14ms/15;ArenaBevel=324.40ms/175;ArenaMeshPicking=1.45ms/175;WallAwake=88.24ms/1;WallPieceVisuals=53.69ms/40;PlatformPoolAwake=8.32ms/1;PlatformRuntimeMeshes=0.99ms/12;PillarPoolAwake=15.94ms/1;PillarMeshLibrary=4.03ms/1;PillarColumns=11.90ms/1;DebrisPoolAwake=101.83ms/1;HeroFragmentPoolAwake=11.24ms/1.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1023" name="SeptemberAnimationRescueRuntimeTests" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" testcasecount="52" result="Failed" site="Child" start-time="2026-09-09 10:14:08Z" end-time="2026-09-09 10:15:39Z" duration="90.972315" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <failure>
+                <message><![CDATA[One or more child tests had errors]]></message>
+              </failure>
+              <test-case id="1033" name="ActualSurfaceSixRatesRepeatThreeTimesWithIndependentEvidence" fullname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests.ActualSurfaceSixRatesRepeatThreeTimesWithIndependentEvidence" methodname="ActualSurfaceSixRatesRepeatThreeTimesWithIndependentEvidence" classname="Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests" runstate="Runnable" seed="722811663" result="Failed" start-time="2026-09-09 10:14:08Z" end-time="2026-09-09 10:15:39Z" duration="90.942931" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <failure>
+                  <message><![CDATA[  Repeat 1:   Linebreaker X Bot Presentation/30: swing foot lifted 0.377m; likely wrong locomotion pose or scale.
+  Expected: less than 0.360000014f
+  But was:  0.37667039f
+
+Repeat 3:   Linebreaker X Bot Presentation/120: left final planted gap=0.0184m.
+  Expected: True
+  But was:  False
+
+  Expected: <empty>
+  But was:  < "Repeat 1:   Linebreaker X Bot Presentation/30: swing foot lifted 0.377m; likely wrong locomotion pose or scale.
+  Expected: less than 0.360000014f
+  But was:  0.37667039f
+", "Repeat 3:   Linebreaker X Bot Presentation/120: left final planted gap=0.0184m.
+  Expected: True
+  But was:  False
+" >
+]]></message>
+                  <stack-trace><![CDATA[at Elemental.Tests.PlayMode.SeptemberAnimationRescueRuntimeTests+<ActualSurfaceSixRatesRepeatThreeTimesWithIndependentEvidence>d__19.MoveNext () [0x00213] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\HardPolishSurfaceRepeatTests.cs:57
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+]]></stack-trace>
+                </failure>
+                <output><![CDATA[Planet rock scatter seed 20260904: large 24/24, medium 160/160, clusters 128/128 (1515 cosmetic stones); rejected slots 0, surface attempts 3, overlap attempts 40.
+[StartupCache] Scene ready in 2722.32ms; ground=exact baked base, cacheLoad=6.24ms, bakedPlans=1939, planMisses=0, cookedMeshes=7368/7368, backgroundCooking=754.93ms, peakCookingPoll=0.00ms; sync=ArenaInitialize=337.14ms/15;ArenaBevel=324.40ms/175;ArenaMeshPicking=1.45ms/175;WallAwake=88.24ms/1;WallPieceVisuals=53.69ms/40;PlatformPoolAwake=8.32ms/1;PlatformRuntimeMeshes=0.99ms/12;PillarPoolAwake=15.94ms/1;PillarMeshLibrary=4.03ms/1;PillarColumns=11.90ms/1;DebrisPoolAwake=101.83ms/1;HeroFragmentPoolAwake=11.24ms/1.
+Saving results to: C:/Users/nirrt/AppData/LocalLow/El-Emental Team/El-Emental\TestResults.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

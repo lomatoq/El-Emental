@@ -26,7 +26,8 @@ namespace Elemental.Runtime.Geometry
         MissingOrInvalidTangents = 1 << 13,
         InvalidBounds = 1 << 14,
         TriangleBudgetExceeded = 1 << 15,
-        NegativeTransformDeterminant = 1 << 16
+        NegativeTransformDeterminant = 1 << 16,
+        DegenerateClosedComponent = 1 << 17
     }
 
     public readonly struct EarthMeshIntegrityPolicy
@@ -36,9 +37,11 @@ namespace Elemental.Runtime.Geometry
             bool requireNormals,
             bool requireTangents,
             int maximumTriangleCount,
-            float weldTolerance = 0.00001f)
+            float weldTolerance = 0.00001f,
+            bool strictFlatNormals = false)
         {
             RequireClosedVolume = requireClosedVolume;
+            StrictFlatNormals = strictFlatNormals;
             RequireNormals = requireNormals;
             RequireTangents = requireTangents;
             MaximumTriangleCount = Mathf.Max(0, maximumTriangleCount);
@@ -46,6 +49,7 @@ namespace Elemental.Runtime.Geometry
         }
 
         public bool RequireClosedVolume { get; }
+        public bool StrictFlatNormals { get; }
         public bool RequireNormals { get; }
         public bool RequireTangents { get; }
         public int MaximumTriangleCount { get; }
@@ -167,10 +171,11 @@ namespace Elemental.Runtime.Geometry
                 bounds.extents.x < 0f || bounds.extents.y < 0f || bounds.extents.z < 0f)
                 issues |= EarthMeshIntegrityIssue.InvalidBounds;
 
-            float scale = Mathf.Max(1f, bounds.size.magnitude);
+            float scale = Mathf.Max(policy.StrictFlatNormals ? 0.000001f : 1f, bounds.size.magnitude);
             float weldTolerance = policy.WeldTolerance * scale;
             float boundsTolerance = weldTolerance * 4f;
-            var weldMap = new Dictionary<QuantizedVertex, int>(vertexCount);
+            var weldMap = new Dictionary<QuantizedVertex, List<int>>(vertexCount);
+            var weldRepresentatives = new List<Vector3>(vertexCount);
             var welded = new int[vertexCount];
             int weldedCount = 0;
             int invalidNormalCount = 0;
@@ -189,10 +194,38 @@ namespace Elemental.Runtime.Geometry
                     issues |= EarthMeshIntegrityIssue.InvalidBounds;
 
                 var key = new QuantizedVertex(vertex, weldTolerance);
-                if (!weldMap.TryGetValue(key, out int weldIndex))
+                int weldIndex = -1;
+                double closestDistance = (double)weldTolerance * weldTolerance;
+                // Cells are only an acceleration structure. Welding uses actual
+                // distance, including neighboring cells, without touching render data.
+                for (int x = -1; x <= 1; x++)
+                for (int y = -1; y <= 1; y++)
+                for (int z = -1; z <= 1; z++)
+                {
+                    if (!weldMap.TryGetValue(key.Offset(x, y, z), out List<int> candidates)) continue;
+                    foreach (int candidate in candidates)
+                    {
+                        Vector3 representative = weldRepresentatives[candidate];
+                        double dx = (double)vertex.x - representative.x;
+                        double dy = (double)vertex.y - representative.y;
+                        double dz = (double)vertex.z - representative.z;
+                        double distance = dx * dx + dy * dy + dz * dz;
+                        if (distance > closestDistance) continue;
+                        if (distance == closestDistance && weldIndex >= 0 && candidate > weldIndex) continue;
+                        closestDistance = distance;
+                        weldIndex = candidate;
+                    }
+                }
+                if (weldIndex < 0)
                 {
                     weldIndex = weldedCount++;
-                    weldMap.Add(key, weldIndex);
+                    weldRepresentatives.Add(vertex);
+                    if (!weldMap.TryGetValue(key, out List<int> bucket))
+                    {
+                        bucket = new List<int>(1);
+                        weldMap.Add(key, bucket);
+                    }
+                    bucket.Add(weldIndex);
                 }
                 welded[index] = weldIndex;
 
@@ -247,7 +280,7 @@ namespace Elemental.Runtime.Geometry
                     int wc = welded[ic];
                     Vector3 cross = Vector3.Cross(b - a, c - a);
                     if (wa < 0 || wb < 0 || wc < 0 || wa == wb || wb == wc || wc == wa ||
-                        !IsFinite(cross) || cross.sqrMagnitude <= AreaEpsilon * scale * scale)
+                        !IsFinite(cross) || cross.sqrMagnitude <= AreaEpsilon * scale * scale * (policy.StrictFlatNormals ? scale * scale : 1f))
                     {
                         degenerateCount++;
                         continue;
@@ -265,6 +298,16 @@ namespace Elemental.Runtime.Geometry
                         {
                             normalVotes++;
                             if (Vector3.Dot(cross, averageNormal) < 0f) invertedNormalVotes++;
+                        }
+                        if (policy.StrictFlatNormals)
+                        {
+                            // Area validity was checked above. Vector3.normalized has a
+                            // fixed cutoff that incorrectly zeros valid small triangles.
+                            Vector3 geometric = cross / Mathf.Sqrt(cross.sqrMagnitude);
+                            if (Vector3.Dot(geometric, normals[ia].normalized) < 0.999f ||
+                                Vector3.Dot(geometric, normals[ib].normalized) < 0.999f ||
+                                Vector3.Dot(geometric, normals[ic].normalized) < 0.999f)
+                                issues |= EarthMeshIntegrityIssue.InvertedNormals;
                         }
                     }
                 }
@@ -307,27 +350,49 @@ namespace Elemental.Runtime.Geometry
                 issues |= EarthMeshIntegrityIssue.InconsistentWinding;
 
             var componentVolumes = new Dictionary<int, double>();
-            Vector3 origin = bounds.center;
+            var componentBounds = new Dictionary<int, Bounds>();
             for (int index = 0; index < triangles.Count; index++)
             {
                 TriangleRecord triangle = triangles[index];
                 int root = union.Find(index);
+                if (!componentBounds.TryGetValue(root, out Bounds componentBound))
+                    componentBound = new Bounds(vertices[triangle.Ia], Vector3.zero);
+                componentBound.Encapsulate(vertices[triangle.Ia]);
+                componentBound.Encapsulate(vertices[triangle.Ib]);
+                componentBound.Encapsulate(vertices[triangle.Ic]);
+                componentBounds[root] = componentBound;
+            }
+            for (int index = 0; index < triangles.Count; index++)
+            {
+                TriangleRecord triangle = triangles[index];
+                int root = union.Find(index);
+                Vector3 origin = componentBounds[root].center;
                 Vector3 a = vertices[triangle.Ia] - origin;
                 Vector3 b = vertices[triangle.Ib] - origin;
                 Vector3 c = vertices[triangle.Ic] - origin;
-                double volume = Vector3.Dot(a, Vector3.Cross(b, c)) / 6.0;
+                double volume = ((double)a.x * ((double)b.y * c.z - (double)b.z * c.y) +
+                    (double)a.y * ((double)b.z * c.x - (double)b.x * c.z) +
+                    (double)a.z * ((double)b.x * c.y - (double)b.y * c.x)) / 6.0;
                 componentVolumes.TryGetValue(root, out double current);
                 componentVolumes[root] = current + volume;
             }
 
             int invertedComponentCount = 0;
             double signedVolume = 0d;
-            bool closedAndConsistent = openEdgeCount == 0 && nonManifoldEdgeCount == 0 && inconsistentEdgeCount == 0;
-            foreach (double volume in componentVolumes.Values)
+            var nonClosedComponents = new HashSet<int>();
+            foreach (EdgeAccumulator edge in edges.Values)
+                if (edge.Count != 2 || edge.DirectionBalance != 0)
+                    nonClosedComponents.Add(union.Find(edge.FirstTriangle));
+            foreach (KeyValuePair<int, double> component in componentVolumes)
             {
+                double volume = component.Value;
                 signedVolume += volume;
-                if (closedAndConsistent && volume < -VolumeEpsilon * scale * scale * scale)
-                    invertedComponentCount++;
+                if (nonClosedComponents.Contains(component.Key)) continue;
+                double componentScale = Math.Max(0.000001, componentBounds[component.Key].size.magnitude);
+                double minimumVolume = VolumeEpsilon * componentScale * componentScale * componentScale;
+                if (volume < -minimumVolume) invertedComponentCount++;
+                if (policy.StrictFlatNormals && Math.Abs(volume) <= minimumVolume)
+                    issues |= EarthMeshIntegrityIssue.DegenerateClosedComponent;
             }
             if (invertedComponentCount > 0)
                 issues |= EarthMeshIntegrityIssue.InvertedClosedComponent;
@@ -432,10 +497,13 @@ namespace Elemental.Runtime.Geometry
             public QuantizedVertex(Vector3 point, float tolerance)
             {
                 double inverse = 1.0 / tolerance;
-                _x = (long)Math.Round(point.x * inverse);
-                _y = (long)Math.Round(point.y * inverse);
-                _z = (long)Math.Round(point.z * inverse);
+                _x = (long)Math.Floor(point.x * inverse);
+                _y = (long)Math.Floor(point.y * inverse);
+                _z = (long)Math.Floor(point.z * inverse);
             }
+
+            private QuantizedVertex(long x, long y, long z) { _x = x; _y = y; _z = z; }
+            public QuantizedVertex Offset(int x, int y, int z) => new QuantizedVertex(_x + x, _y + y, _z + z);
 
             public bool Equals(QuantizedVertex other) => _x == other._x && _y == other._y && _z == other._z;
             public override bool Equals(object obj) => obj is QuantizedVertex other && Equals(other);

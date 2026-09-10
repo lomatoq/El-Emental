@@ -20,6 +20,7 @@ namespace Elemental.Tests.PlayMode
 {
     public sealed partial class SeptemberAnimationRescueRuntimeTests
     {
+        private LocomotionProductionIngressLease _locomotionIngress;
         private Scene _scene;
         private bool _loaded;
         private readonly List<Actor> _actors = new();
@@ -79,6 +80,14 @@ namespace Elemental.Tests.PlayMode
                 }
             }
             Assert.That(_actors.Count, Is.EqualTo(2));
+            string fixtureName = TestContext.CurrentContext.Test.MethodName;
+            if (fixtureName == "ActualSavedFighterRunStartsStopsAndTurnReleaseStayContinuous" ||
+                fixtureName == "ActualSavedFighterRunsWithCoherentLegsAtFourPlanetNormals")
+            {
+                var motors = new List<PlanetMotor>();
+                foreach (Actor actor in _actors) motors.Add(actor.Presentation.GetComponentInParent<PlanetMotor>());
+                _locomotionIngress = new LocomotionProductionIngressLease(motors);
+            }
             yield return new WaitForSeconds(1.5f);
         }
 
@@ -121,7 +130,10 @@ namespace Elemental.Tests.PlayMode
                     before = feet.ContactEvaluationCount;
                     int finalBefore = driver.FinalIkEvaluationCount;
                     graph.Evaluate(0f);
+                    Vector3 firstBody = driver.GetComponent<Animator>().bodyPosition;
                     graph.Evaluate(0f);
+                    Assert.That(Vector3.Distance(firstBody, driver.GetComponent<Animator>().bodyPosition),
+                        Is.LessThan(.0001f), "Repeated graph evaluation must preserve the solved pelvis, without adding its offset twice.");
                     Assert.That(driver.FinalIkEvaluationCount - finalBefore, Is.GreaterThanOrEqualTo(2),
                         "The duplicate-callback fixture must evaluate the real output graph twice.");
                     Assert.That(feet.ContactEvaluationCount - before, Is.EqualTo(1u),
@@ -362,7 +374,7 @@ namespace Elemental.Tests.PlayMode
             {
             Vector3 previous = player.Presentation.transform.InverseTransformPoint(hand.position);
             begin.Invoke(pose, new object[] { EarthTechniqueKind.Wall, technique, pose.PresentationTick,
-                player.Presentation.transform.position + player.Presentation.transform.forward * 3f, 80f, 4f });
+                player.Presentation.transform.position + player.Presentation.transform.forward * 3f, 80f, 4f, false });
             float maxMotion = 0f, minTime = 1f, maxTime = 0f;
             bool castSeen = false;
             float until = Time.time + 1.2f;
@@ -422,6 +434,8 @@ namespace Elemental.Tests.PlayMode
         [UnityTearDown]
         public IEnumerator Cleanup()
         {
+            _locomotionIngress?.Dispose();
+            _locomotionIngress = null;
             if (_batchInputConfigured)
             {
                 var settings = UnityEngine.InputSystem.InputSystem.settings;

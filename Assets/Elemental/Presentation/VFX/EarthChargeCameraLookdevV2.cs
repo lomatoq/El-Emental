@@ -68,7 +68,9 @@ namespace Elemental.Presentation.VFX
             new ProfilerMarker("Elemental.Presentation.Clarity");
         [SerializeField] private EarthCameraDirector cameraDirector;
         [SerializeField] private Volume volume;
+        [SerializeField] private CelestialSystemBehaviour readabilityCelestial;
         [SerializeField] private ParticleSystem lightDust;
+        private ParticleSystemRenderer ambientMoteRenderer;
         [SerializeField] private CapabilityProfileKind capability = CapabilityProfileKind.NativeHigh;
         [Header("Charge tension")]
         [SerializeField, Range(0f, 12f)] private float maximumChargeFov = 10f;
@@ -147,7 +149,7 @@ namespace Elemental.Presentation.VFX
             cameraDirector = configuredDirector;
             ResolveInput();
             volume = configuredVolume;
-            lightDust = configuredLightDust;
+            lightDust = configuredLightDust;ambientMoteRenderer=null;
             capability = ResolveCapability();
             _cinematicDepthOfField = GetComponent<EarthCinematicDepthOfFieldController>();
             if (_cinematicDepthOfField == null)
@@ -165,6 +167,12 @@ namespace Elemental.Presentation.VFX
         {
             cameraDirector = configuredDirector;
             ResolveInput();
+        }
+
+        public void BindCelestialReadability(CelestialSystemBehaviour celestial)
+        {
+            readabilityCelestial = celestial;
+            if (volume != null) readabilityCelestial?.BindReadabilityVolume(volume);
         }
 
         public void BindDuel(EarthMvpDuelController configuredDuel)
@@ -414,6 +422,8 @@ namespace Elemental.Presentation.VFX
             return new EarthChargeFeedbackInput
             {
                 Allowed = true,
+                FireRing = _input.FireAbilities != null && _input.FireAbilities.isActiveAndEnabled && (_input.FireAbilities.IsRingCharging||_input.FireAbilities.IsBoltCharging)
+                    ? Mathf.Max(_input.FireAbilities.RingCharge01,_input.FireAbilities.BoltCharge01) : 0f,
                 Accumulation = _input.AccumulationCharge01,
                 WallPush = heldWall != null && heldWall.isActiveAndEnabled && heldWall.IsHeldPushActive
                     ? heldWall.HeldPushCharge01 : 0f,
@@ -522,6 +532,7 @@ namespace Elemental.Presentation.VFX
                 _chromatic = profile.Add<ChromaticAberration>(true);
             _chromatic.active = true;
             _chromatic.intensity.Override(0f);
+            readabilityCelestial?.BindReadabilityVolume(volume);
         }
 
         private void ApplyClarity(in EarthVisualClarityOutput clarity)
@@ -557,13 +568,15 @@ namespace Elemental.Presentation.VFX
                 _depthOfField.highQualitySampling.value =
                     clarity.DepthOfFieldTier == EarthDepthOfFieldTier.Gaussian;
             }
-            if (_bloom != null) _bloom.intensity.value = capability == CapabilityProfileKind.NativeHigh && Elemental.Presentation.Fire.ArenaColumnFires.HasActive
+            if (_bloom != null) _bloom.intensity.value = capability == CapabilityProfileKind.NativeHigh && (Elemental.Presentation.Fire.ArenaColumnFires.HasActive || Elemental.Presentation.Fire.FireFlowVolumeBackend.HasVisibleGroups)
                 ? Mathf.Max(.3f, clarity.BloomIntensity) : clarity.BloomIntensity;
             if (_vignette != null)
                 _vignette.intensity.value = EarthChargeVignette.Solve(clarity.VignetteIntensity,
                     _charge, maximumChargeVignette, chargeVignettePulseDepth, chargeVignettePulseHz,
                     Time.time, cameraDirector != null && cameraDirector.Profile != null && cameraDirector.Profile.ReducedMotion);
             if (lightDust == null) return;
+            if(ambientMoteRenderer==null)ambientMoteRenderer=lightDust.GetComponent<ParticleSystemRenderer>();
+            if(ambientMoteRenderer!=null&&ambientMoteRenderer.maxParticleSize!=.015f)ambientMoteRenderer.maxParticleSize=.015f;
             if (_appliedDustCapacity != clarity.DustCapacity)
             {
                 ParticleSystem.MainModule main = lightDust.main;

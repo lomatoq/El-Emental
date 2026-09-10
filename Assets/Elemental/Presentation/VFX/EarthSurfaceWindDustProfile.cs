@@ -29,6 +29,9 @@ namespace Elemental.Presentation.VFX
         [Range(4f, 60f)] public float gustWavelengthMetres = 24f;
         [Range(0f, .2f), Tooltip("Small tangential meander; zero keeps the wind direction straight.")] public float turbulenceStrength = .075f;
         public Vector2 sizeMetres = new Vector2(.55f, 1.25f);
+        [Tooltip("Ground streak bounds before the small birth-stable breathing curve.")]
+        public Vector2 streakWidthMetres = new Vector2(.25f,.75f);
+        public Vector2 streakLengthMetres = new Vector2(.8f,1.85f);
         [Header("Stone wake curls")]
         [Range(0f, 2f)] public float wakeStrength = .85f;
         [Range(.5f, 5f)] public float wakeRadius = 2.4f;

@@ -33,6 +33,21 @@ namespace Elemental.Presentation.Animation
         public float LeftPhase => SourcePhase(_leftPhases);
         public float RightPhase => SourcePhase(_rightPhases);
         public LocomotionMotionSample Motion => _motor != null ? _motor.LocomotionMotion : default;
+        // The short walking anticipation must not be imposed on a run command.
+        // Its admissible envelope follows the saved avatar's measured slow forward gait.
+        public float MaximumForwardWalkStartSpeed
+        {
+            get
+            {
+                float slowest = float.PositiveInfinity;
+                if (catalog != null)
+                    foreach (var entry in catalog.Entries)
+                        if (entry.NominalSpeed > .12f && entry.BlendPosition.y > 0f &&
+                            Mathf.Abs(entry.BlendPosition.y) > Mathf.Abs(entry.BlendPosition.x))
+                            slowest = Mathf.Min(slowest, entry.NominalSpeed * VisualStrideScale);
+                return float.IsFinite(slowest) ? slowest * 1.25f : 2f;
+            }
+        }
         public void Configure(LocomotionClipCatalog value) => catalog = value;
         public bool HasCompatibleSourceTags(PoseSet poses)
         {

@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Elemental.Presentation.VFX
 {
     [DisallowMultipleComponent]
-    public sealed class EarthMagicFeedback : MonoBehaviour
+    public sealed partial class EarthMagicFeedback : MonoBehaviour
     {
         private readonly EarthCosmeticMaterialCache cosmeticMaterials = new();
         private void OnDestroy() => cosmeticMaterials.Dispose();
@@ -33,11 +33,20 @@ namespace Elemental.Presentation.VFX
 
         private void Awake()
         {
+            ResolveExplicitExecutorBinding();
             // Repair only known children of this authored feedback object.
             if (dust == null) dust = transform.Find("Chunky Earth Dust")?.GetComponent<ParticleSystem>();
             if (rubble == null) rubble = transform.Find("Loose Earth Chips")?.GetComponent<ParticleSystem>();
             if (sparks == null) sparks = transform.Find("Amber Shards")?.GetComponent<ParticleSystem>();
             ApplyEffectsProfile();
+        }
+
+        private void ResolveExplicitExecutorBinding()
+        {
+            // The saved polish response input is already explicitly bound to the player.
+            // Recover stale legacy fields from that owner; never search another actor/scene.
+            if(input==null)input=responseLocalInput;
+            if(executor==null&&input!=null)executor=input.EarthExecutor;
         }
 
         private float _pulse;
@@ -85,6 +94,7 @@ namespace Elemental.Presentation.VFX
 
         private void OnEnable()
         {
+            ResolveExplicitExecutorBinding();
             ApplyEffectsProfile();
             Subscribe();
         }
@@ -97,6 +107,7 @@ namespace Elemental.Presentation.VFX
         private void Update()
         {
             using var marker = RouteMarker.Auto();
+            UpdatePolishResponses();
             FlushImpactBatch();
             if (pulseLight == null) return;
             _pulse = Mathf.MoveTowards(_pulse, 0f, Time.deltaTime * 5f);
@@ -110,6 +121,7 @@ namespace Elemental.Presentation.VFX
 
         private void Subscribe()
         {
+            SubscribePolishResponses();
             if (executor != null)
             {
                 executor.Events.TerrainEdited += OnTerrainEdited;
@@ -128,6 +140,7 @@ namespace Elemental.Presentation.VFX
 
         private void Unsubscribe()
         {
+            UnsubscribePolishResponses();
             if (executor != null)
             {
                 executor.Events.TerrainEdited -= OnTerrainEdited;
@@ -238,7 +251,7 @@ namespace Elemental.Presentation.VFX
             if (effectsProfile == null) return;
             EarthImpactEffectsSample evaluated = effectsProfile.EvaluateImpact(in value);
             if (materialFeedback != null) materialFeedback.Emit(EarthMaterialFeedbackKind.Impact,
-                value.Point, value.Normal, 1f, .35f, dustCount: evaluated.DustCount, chipCount: evaluated.RubbleCount);
+                value.Point, value.Normal, 1f, .35f, value.SourceId, value.Tick, dustCount: evaluated.DustCount, chipCount: evaluated.RubbleCount);
             var sample = new EarthFeedbackSample(evaluated.DustCount, evaluated.RubbleCount, 0f, 0f);
             _impactBatch.Add(
                 in value,

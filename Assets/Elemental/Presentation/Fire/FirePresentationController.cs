@@ -133,6 +133,11 @@ namespace Elemental.Presentation.Fire
         {
             if (lightPool == null) return;
             if (lod < 1 || !snapshot.Emits) lightPool.Release(this);
+            else if(cpu!=null&&cpu.FlowDiagnostics!=null)
+            {
+                int count=cpu.FlowDiagnostics.SampleGroundLights(out Vector3 first,out Vector3 second,out Vector3 third);
+                lightPool.PublishFlow(this,first,second,third,count,profile.LightIntensity*Mathf.Clamp01(snapshot.Energy),Mathf.Max(3,profile.LightRange));
+            }
             else lightPool.Publish(this, Vec(snapshot.Origin), profile.LightIntensity * Mathf.Clamp01(snapshot.Energy), profile.LightRange);
         }
         public void Retire()

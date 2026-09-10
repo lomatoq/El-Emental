@@ -122,3 +122,9 @@ also inspected after import: its concave inner shaft shows a continuous broad
 gradient without the rejected global-flat faceting or black inverted faces.
 This accepts the scoped imported curve view, not every possible lighting angle.
 
+
+## September 9 — preserve authored cells after first damage
+
+The generic closed-fragment repair introduced a visual regression when an intact arch first exposed its cell renderers: smooth exterior normals and detailed cell faces were replaced by flat collider-envelope rendering. Seven intact FBX proxies were unchanged. The seven saved OuterRing owners now explicitly preserve validated authored fracture render meshes; the importer retains that setting for future placement. No original FBX, collider, material, placement or other arena cell policy changed.
+
+Native031 verifies all seven damage/restore cycles: every attached and released OuterRing cell keeps its original mesh reference and captured normal array; restored intact proxies reappear; no hull fallback occurs. All85 referenced cells retain authored smooth corner evidence. Native prepared-render audit also validates the remaining90 arena cells separately. Reports are under BuildReports/HardPolish/G01, especially outer-arch-authored-damage-restore.txt. This corrects the after-damage regression; it is not a new global smoothing or geometry export.

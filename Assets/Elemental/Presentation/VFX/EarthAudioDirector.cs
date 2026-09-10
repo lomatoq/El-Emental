@@ -66,7 +66,7 @@ namespace Elemental.Presentation.VFX
     /// Gameplay events remain the sole authority.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class EarthAudioDirector : MonoBehaviour
+    public sealed partial class EarthAudioDirector : MonoBehaviour
     {
         [SerializeField] private MagicExecutor executor;
         [SerializeField, Range(0f, 1f)] private float masterVolume = 0.72f;
@@ -96,11 +96,12 @@ namespace Elemental.Presentation.VFX
             EnsureSources();
         }
 
-        private void OnEnable() => Subscribe();
-        private void OnDisable() => Unsubscribe();
+        private void OnEnable() { Subscribe(); SubscribeResponseAudio(); }
+        private void OnDisable() { Unsubscribe(); UnsubscribeResponseAudio(); }
 
         private void OnDestroy()
         {
+            DestroyResponseAudio();
             Unsubscribe();
             if (_bodyClip != null) Destroy(_bodyClip);
             if (_crackClip != null) Destroy(_crackClip);
@@ -125,6 +126,7 @@ namespace Elemental.Presentation.VFX
 
         private void OnImpact(EarthImpactEvent value)
         {
+            if (!_impactAdmission.Admit(value.SourceId, 0, Time.time, Time.frameCount)) return;
             LastResponse = EarthAudioResponseSolver.Impact(in value);
             Vector3 point = ToVector3(value.Point);
             EarthAudioResponse response = LastResponse;
@@ -133,6 +135,7 @@ namespace Elemental.Presentation.VFX
 
         private void OnReturn(EarthReturnEvent value)
         {
+            if (!_impactAdmission.Admit(value.MatterId ^ 0x80000000u, value.Generation, Time.time, Time.frameCount)) return;
             LastResponse = EarthAudioResponseSolver.Return(in value);
             EarthAudioResponse response = LastResponse;
             PlayLayers(in response, ToVector3(value.Position));
@@ -181,7 +184,8 @@ namespace Elemental.Presentation.VFX
         {
             if (source == null || clip == null || volume <= 0.002f) return;
             source.pitch = Mathf.Clamp(pitch, 0.5f, 1.8f);
-            source.PlayOneShot(clip, Mathf.Clamp01(volume));
+            // Three existing spatial layer voices remain a hard bound under destruction floods.
+            source.clip = clip; source.volume = Mathf.Clamp01(volume); source.Play();
         }
 
         private static AudioClip CreateClip(string clipName, int layer, float seconds)

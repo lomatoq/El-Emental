@@ -10,6 +10,7 @@ namespace Elemental.Runtime.Characters
         /// <summary>Clear motion history after an explicit authoritative relocation.</summary>
         public void ResetAfterTeleport()
         {
+            SetFireLift(0f,false);SetFireLowFlight(false);
             ResolveReferences();
             ResetLocomotionMotion();
             CancelMantle();

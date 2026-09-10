@@ -86,3 +86,19 @@ __pycache__/
 # Reproducible experimental SONIC weights (pinned download in Tools/SonicPrototype).
 /Tools/SonicPrototype/Models/
 /Assets/Experimental/SonicPrototype/Models/*.onnx
+
+# Local graphical capture sources and compiled profiling players. Selected,
+# reviewed GIF derivatives live in Docs/media; test summaries remain versioned.
+/BuildReports/HardPolishPlayer*/
+/BuildReports/Showcase/
+/BuildReports/HardPolish/G05/
+/BuildReports/MenuCamera/OrbitOcclusion-*/
+/BuildReports/**/*.png
+/BuildReports/**/*.jpg
+/BuildReports/**/*.jpeg
+/BuildReports/**/*.gif
+/BuildReports/**/*.mp4
+/BuildReports/HardPolish/G0*/
+/BuildReports/**/*.raw
+/BuildReports/**/*.bin
+/BuildReports/**/*.zip

@@ -1,0 +1,9 @@
+Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests.SavedProductionDustHaloSeparatesLightingBloomAndRendererSources
+  The on/on control must be stable before attributing lighting differences.
+  Expected: less than 0.00100000005f
+  But was:  0.00533550465f
+
+at Elemental.Tests.PlayMode.HardPolishFireStreamBindingRuntimeTests+<SavedProductionDustHaloSeparatesLightingBloomAndRendererSources>d__4.MoveNext () [0x007bc] in C:\Users\nirrt\OneDrive\Документы\ChatGPT\El Ements\El-Emental\Assets\Elemental\Tests\PlayMode\DustHaloSourceProductionTests.cs:57
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+
+
